@@ -1,0 +1,151 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>REPORTO DE INVERSIONES</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios_general.codigo, CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ', socios_general.apellidomaterno) AS
+		'nombre_completo',captacion_cuentas.numero_cuenta AS 'numero_de_cuenta',
+		captacion_cuentas.fecha_apertura AS 'fecha_de_apertura',
+		captacion_cuentastipos.descripcion_cuentastipos AS 'tipo_de_cuenta' ,
+		captacion_cuentas.saldo_cuenta AS 'saldo_actual',
+		captacion_cuentas.inversion_fecha_vcto AS 'proximo_vencimiento',
+		captacion_cuentas.tasa_otorgada, captacion_cuentas.dias_invertidos AS
+		'numero_de_dias', captacion_cuentas.observacion_cuenta AS 'observaciones',
+		operaciones_mvtos.fecha_afectacion AS 'fecha_de_operacion',
+		operaciones_tipos.descripcion_operacion AS 'tipo_de_operacion',
+		operaciones_mvtos.afectacion_real AS 'monto',
+		operaciones_mvtos.saldo_anterior, operaciones_mvtos.saldo_actual FROM
+		socios_general, captacion_cuentas, operaciones_mvtos, captacion_cuentastipos,
+		operaciones_tipos
+		WHERE captacion_cuentas.tipo_cuenta=20 and captacion_cuentas.saldo_cuenta>0 and
+		captacion_cuentas.numero_socio=socios_general.codigo AND
+		operaciones_mvtos.docto_afectado=captacion_cuentas.numero_cuenta AND
+		operaciones_mvtos.tipo_operacion=operaciones_tipos.idoperaciones_tipos AND
+		captacion_cuentas.tipo_cuenta=captacion_cuentastipos.idcaptacion_cuentastipos
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='2'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='4' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='4'>REPORTO DE INVERSIONES</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='4'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='4' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='numero_de_cuenta'>
+			<HEADER>
+
+				<ROW>
+					<COL CELLCLASS='GHL'>CODIGO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('codigo')</COL>
+					<COL CELLCLASS='GHL'>NOMBRE</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('nombre_completo')</COL>
+				</ROW>
+				<ROW>
+
+					<COL CELLCLASS='GHL'>CUENTA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('numero_de_cuenta')</COL>
+					<COL CELLCLASS='GHL'>SALDO AL CORTE</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR' NUMBERFORMATEX='2'>$this->getValue('saldo_actual')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHL'>APERTURA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue('fecha_de_apertura')</COL>
+					<COL CELLCLASS='GHL'>VENCIMIENTO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue('proximo_vencimiento')</COL>
+				</ROW>
+				<ROW>
+
+					<COL CELLCLASS='GHL'>TASA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('tasa_otorgada')</COL>
+					<COL CELLCLASS='GHL'>DIAS INVS.</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('numero_de_dias')</COL>
+				</ROW>
+				<ROW>
+
+
+					<COL CELLCLASS='GHC'>OBSERVACIONES</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('observaciones')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='4'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>NUMERO OPERACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>FECHA DE OPERACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='40%'>TIPO DE OPERACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='30%'>MONTO</COL>
+					<!-- <COL CELLCLASS='GHC' WIDTH='40%' >DETALLES</COL> -->
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='4'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>idoperaciones_mvtos</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_de_operacion</COL>
+					<COL TYPE='FIELD'>tipo_de_operacion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto</COL>
+					<!-- <COL TYPE='FIELD' >detalles</COL> -->
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='4'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL />
+					<COL />
+					<COL CELLCLASS='GHC'>SUMA DE OPERACIONES</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='2'>$this->getSum('monto')</COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

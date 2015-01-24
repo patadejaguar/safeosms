@@ -1,0 +1,68 @@
+#jMenu {
+	display:table;
+	margin:0;
+	padding:0;
+}
+
+#jMenu li {
+	display:table-cell;
+	background-color: #12658d;
+	margin:0;
+	
+}
+#jMenu li a {
+	padding:.7em;
+	display:block;
+	background-color: transparent;
+	color:#fff;
+	text-transform:uppercase;
+	cursor:pointer;
+	font-size:.7em !important;
+	text-decoration: none !important;
+}
+
+#jMenu a {
+        overflow: hidden;
+}
+
+#jMenu li ul {
+	display:none;
+	position:absolute;
+	padding:0;
+	margin:0;
+	font-family: monospace;
+}
+/*2o Nivel normal*/
+#jMenu li ul li {
+	background-color:#12658d;
+	display:block;
+	border-bottom:1px solid #484548;
+	padding:0;
+}
+#jMenu li ul li.arrow {
+	background:#FBC700 url('../images/jmenu/arrow_down.png') no-repeat center center;
+	height:.7em;
+	padding:0;
+	border-bottom:none;
+	padding-bottom:.8em
+}
+#jMenu li ul li a {
+	font-size:.8em !important;
+	text-transform: uppercase;
+	text-decoration: none !important;
+	padding:.7em;
+	display:block;
+	border-top:1px solid transparent;
+	border-bottom:1px solid transparent;
+	text-align: left;
+}
+/* como parent */
+#jMenu li ul li a.isParent {
+	background:#12658d url('../images/jmenu/arrow_right.png') no-repeat right center;
+}
+/* Hover de todo */
+#jMenu li ul li a:hover {
+	background-color:#0292C0;
+	border-top:1px solid #322f32;
+	border-bottom:1px solid #322f32;
+}

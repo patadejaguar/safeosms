@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Listado de Trabajadores</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT trabajador_general.codigo, trabajador_general.apellido_materno,
+		trabajador_general.apellido_paterno, trabajador_general.nombre_completo,
+		trabajador_general.rfc, trabajador_general.curp,
+		trabajador_general.departamento, trabajador_general.puesto FROM
+		trabajador_general</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='8'>Listado de Trabajadores</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CODIGO</COL>
+					<COL CELLCLASS='GHC'>APELLIDO MATERNO</COL>
+					<COL CELLCLASS='GHC'>APELLIDO PATERNO</COL>
+					<COL CELLCLASS='GHC'>NOMBRE COMPLETO</COL>
+					<COL CELLCLASS='GHC'>RFC</COL>
+					<COL CELLCLASS='GHC'>CURP</COL>
+					<COL CELLCLASS='GHC'>DEPARTAMENTO</COL>
+					<COL CELLCLASS='GHC'>PUESTO</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR'>codigo</COL>
+					<COL TYPE='FIELD'>apellido_materno</COL>
+					<COL TYPE='FIELD'>apellido_paterno</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD'>rfc</COL>
+					<COL TYPE='FIELD'>curp</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>departamento</COL>
+					<COL TYPE='FIELD'>puesto</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='8'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

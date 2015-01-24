@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>INFORME DE CREDITOS MINISTRADOS</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>
+		SELECT socios_general.codigo,
+		CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ',
+		socios_general.apellidomaterno) AS
+		'nombre_completo',
+		socios_tipoingreso.descripcion_tipoingreso AS
+		'tipo_de_ingreso',
+		creditos_tipoconvenio.descripcion_tipoconvenio AS
+		'tipo_de_convenio', creditos_solicitud.numero_solicitud AS
+		'numero_de_solicitud', creditos_solicitud.fecha_ministracion AS
+		'fecha_de_ministracion', creditos_solicitud.monto_autorizado AS
+		'monto_ministrado',creditos_periocidadpagos.descripcion_periocidadpagos
+		AS
+		'frecuencia_de_pagos', creditos_solicitud.pagos_autorizados
+		AS
+		'numero_de_pagos', creditos_solicitud.fecha_vencimiento AS
+		'fecha_de_vencimiento' FROM socios_general, socios_tipoingreso,
+		creditos_solicitud, creditos_tipoconvenio,
+		creditos_periocidadpagos WHERE
+		creditos_solicitud.numero_socio=socios_general.codigo AND
+		socios_tipoingreso.idsocios_tipoingreso=socios_general.tipoingreso
+		AND
+		creditos_solicitud.tipo_convenio=creditos_tipoconvenio.idcreditos_tipoconvenio
+		AND
+		creditos_periocidadpagos.idcreditos_periocidadpagos=creditos_solicitud.periocidad_de_pago
+		LIMIT 0,100
+	</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='0' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='11'>
+					INFORME DE CREDITOS MINISTRADOS
+				</COL>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='5%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>NOMBRE COMPLETO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TIPO DE INGRESO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>CONVENIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>MINISTRACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>MONTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>FRECUENCIA</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>NUM. PAGOS</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>VENCIMIENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>DEPENDENCIA</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>codigo</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD'>tipo_de_ingreso</COL>
+					<COL TYPE='FIELD'>tipo_de_convenio</COL>
+					<COL TYPE='FIELD'>numero_de_solicitud</COL>
+					<COL TYPE='FIELD'>fecha_de_ministracion</COL>
+					<COL TYPE='FIELD'>monto_ministrado</COL>
+					<COL TYPE='FIELD'>frecuencia_de_pagos</COL>
+					<COL TYPE='FIELD'>numero_de_pagos</COL>
+					<COL TYPE='FIELD'>fecha_de_vencimiento</COL>
+					<COL TYPE='FIELD'>dependencia</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' COLSPAN='11'
+						NUMBERFORMAT='TOTAL MINISTRADO: $ %01.2f'>$this->getSum("monto_ministrado")</COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

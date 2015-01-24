@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Errores en el Sistema</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`general_log`.`fecha_log` AS `fecha`,
+		`general_log`.`hour_log` AS `hora`,
+		`general_error_codigos`.`description_error` AS `Descripcion`,
+		`usuarios`.`nombreusuario` AS `usuario`,
+		`general_log`.`text_log` AS `texto`,
+		`general_error_codigos`.`type_err` AS `tipo`
+		FROM
+		`general_error_codigos` `general_error_codigos`
+		INNER JOIN `general_log` `general_log`
+		ON `general_error_codigos`.`idgeneral_error_codigos` =
+		`general_log`.`type_error`
+		INNER JOIN `usuarios` `usuarios`
+		ON `usuarios`.`idusuarios` = `general_log`.
+		`usr_log`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Reporte de Errores en el Sistema</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='6'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='8%'>FECHA</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>HORA</COL>
+					<COL CELLCLASS='GHC' WIDTH='21%'>DESCRIPCION</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>USUARIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='55%'>TEXTO</COL>
+					<!-- <COL CELLCLASS='GHC' >TIPO</COL> -->
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>fecha</COL>
+					<COL TYPE='FIELD'>hora</COL>
+					<COL TYPE='FIELD'>Descripcion</COL>
+					<COL TYPE='FIELD'>usuario</COL>
+					<COL TYPE='FIELD'>texto</COL>
+					<!-- <COL TYPE='FIELD' >tipo</COL> -->
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='5'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

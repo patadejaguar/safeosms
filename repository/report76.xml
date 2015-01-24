@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte Individual de Llamadas</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`oficiales`.`id`,
+		`oficiales`.`nombre_completo`,
+		`oficiales`.`puesto`,
+		`oficiales`.`sucursal`,
+		`socios`.`codigo`,
+		`socios`.`nombre`,
+		`seguimiento_llamadas`.`numero_solicitud` AS `credito`,
+		`seguimiento_llamadas`.`idseguimiento_llamadas` AS `clave`,
+		`seguimiento_llamadas`.`fecha_llamada` AS `fecha`,
+		`seguimiento_llamadas`.`hora_llamada` AS `hora`,
+		`seguimiento_llamadas`.`estatus_llamada` AS `estatus`,
+		`seguimiento_llamadas`.`observaciones` AS `resultados`
+		FROM
+		`seguimiento_llamadas` `seguimiento_llamadas`
+		INNER JOIN `socios` `socios`
+		ON
+		`seguimiento_llamadas`.`numero_socio` = `socios`.`codigo`
+		INNER JOIN `oficiales` `oficiales`
+		ON `seguimiento_llamadas`.`oficial_a_cargo` = `oficiales`.`id`
+		WHERE
+		(`socios`.`codigo` =20052) AND
+		(`seguimiento_llamadas`.`numero_solicitud` =2005214)</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS="FOOTER" COLSPAN='8'>Reporte Individual de Llamadas</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS="FOOTER" WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='oficial'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('sucursal')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>OFICIAL</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('oficial')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>NOMBRE COMPLETO</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('nombre_completo')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>PUESTO</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('puesto')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="10%">CODIGO</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="20%">NOMBRE</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="8%">CREDITO</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="8%">CLAVE</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="8%">FECHA</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="8%">HORA</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="8%">ESTATUS</COL>
+					<COL CELLCLASS="GROUP_HEADER" WIDTH="30%">RESULTADOS</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">codigo</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">credito</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">clave</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">fecha</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">hora</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">estatus</COL>
+					<COL TYPE='FIELD' CELLCLASS="FIELDS">resultados</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS="GROUP_FOOTER" COLSPAN='12'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS="GROUP_FOOTER" WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

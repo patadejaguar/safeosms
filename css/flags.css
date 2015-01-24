@@ -1,0 +1,79 @@
+
+.VENCIDA,.vencido {
+	background-color: #FFA500;
+	color: Red;
+	font-weight: normal;
+}
+
+.VIGENTE,.efectuado,.vigente {
+	/*background-color: #ADD8E6;*/
+	background-color: #A1F26D;
+	color: #6600cc;
+	font-weight: normal;
+}
+.pendiente {
+	font-weight: normal;
+}
+.MOROSO,.moroso {
+	background-color: #F0E68C;
+	color: Red;
+	font-weight: normal;
+}
+
+.remanente {
+	background-color: #F0E68C;
+	color: black;
+	font-weight: normal;
+}
+
+.CASTIGADO {
+	background-color: Black;
+	color: Aqua;
+	font-weight: normal;
+}
+
+.REESTRUCTURADO {
+	background-color: #FFFFE0;
+	color: Navy;
+	font-weight: normal;
+}
+
+.DESCONOCIDO,.cancelado {
+	background-color: #E0FFFF;
+	color: Gray;
+	font-weight: normal;
+}
+.nivel1 .mny,  #tr-contable_catalogo-1 .mny,
+.nivel2 .mny,  #tr-contable_catalogo-2 .mny,
+.nivel3 .mny,  #tr-contable_catalogo-3 .mny,
+.nivel4 .mny,  #tr-contable_catalogo-4 .mny
+{
+padding-right: 3px;
+border-radius: 4px;
+border-right-style: solid;
+}
+.nivel1,  #tr-contable_catalogo-1 {
+}
+
+.nivel2, #tr-contable_catalogo-2 {
+
+}
+
+.nivel3, #tr-contable_catalogo-3 {
+
+}
+
+.nivel4, #tr-contable_catalogo-4 {
+
+}
+
+.nivel5, #tr-contable_catalogo-5 {
+
+}
+.nivel4 .mny, .nivel5 .mny, .nivel4 .mny { border-right-style: none; }
+
+
+.nivel3 .mny { border-right-width: 1px; border-right-color: #EB009E; text-decoration: underline; }
+.nivel2 .mny { border-right-width: 2px; border-right-color: #BB7300; }
+.nivel1 .mny { border-right-width: 3px; border-right-color: #0C6494;  }
+.nombrecuenta { overflow: hidden; }

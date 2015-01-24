@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Compromisos por Oficial de Credito</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`oficiales`.`id` AS 'oficial',
+		`oficiales`.`nombre_completo`,
+		`oficiales`.`puesto`,
+		`oficiales`.`sucursal`,
+
+
+		`seguimiento_compromisos`.`socio_comprometido`,
+		`socios`.`nombre`,
+
+		`seguimiento_compromisos`.`credito_comprometido`,
+		`seguimiento_compromisos`.`idseguimiento_compromisos` AS 'clave',
+		`seguimiento_compromisos`.`fecha_vencimiento`,
+		`seguimiento_compromisos`.`hora_vencimiento`,
+		`seguimiento_compromisos`.`tipo_compromiso`,
+		`seguimiento_compromisos`.`anotacion`,
+		`seguimiento_compromisos`.`estatus_compromiso`
+
+		FROM
+		`seguimiento_compromisos` `seguimiento_compromisos`
+		INNER JOIN `socios` `socios`
+		ON `seguimiento_compromisos`.`socio_comprometido` = `socios`.`codigo`
+		INNER JOIN `oficiales` `oficiales`
+		ON `seguimiento_compromisos`.`oficial_de_seguimiento` = `oficiales`.
+		`id`
+		WHERE
+		(`seguimiento_compromisos`.`socio_comprometido` =20052) AND
+		(`seguimiento_compromisos`.`credito_comprometido` = 2005214)
+		ORDER BY
+		`oficiales`.`id`,
+		`seguimiento_compromisos`.`fecha_vencimiento`,
+		`seguimiento_compromisos`.`hora_vencimiento`,
+		`seguimiento_compromisos`.`tipo_compromiso`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='13'>Reporte de Compromisos por Oficial de
+					Credito</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='13'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='oficial'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('sucursal')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>OFICIAL</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('oficial')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>NOMBRE COMPLETO</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('nombre_completo')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHR' COLSPAN='2'>PUESTO</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='4'>$this->getValue('puesto')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='30%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>CREDITO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>NUM. COMP.</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>FECHA VENCIMIENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>HORA VENCIMIENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>TIPO COMPROMISO</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>ESTATUS</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR'>socio_comprometido</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>credito_comprometido</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>clave</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_vencimiento</COL>
+					<COL TYPE='FIELD'>hora_vencimiento</COL>
+					<COL TYPE='FIELD'>tipo_compromiso</COL>
+					<COL TYPE='FIELD'>estatus_compromiso</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL />
+					<COL CELLCLASS='GHC'>Numero de Compromisos</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getRowCount()</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='13'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

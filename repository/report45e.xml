@@ -1,0 +1,207 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Creditos por Estatus</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios.nombre,
+		socios.dependencia AS 'empresa',
+		creditos_solicitud.numero_socio AS 'socio',
+		creditos_solicitud.numero_solicitud AS 'solicitud',
+		`creditos_solicitud`.`tipo_convenio` AS 'producto',
+		creditos_tipoconvenio.descripcion_tipoconvenio AS 'modalidad',
+		creditos_periocidadpagos.descripcion_periocidadpagos AS 'condiciones_de_pago',
+		getFechaMX(creditos_solicitud.fecha_ministracion) AS 'fecha_de_otorgamiento',
+		creditos_solicitud.monto_autorizado AS 'monto_original',
+		getFechaMX(creditos_solicitud.fecha_vencimiento) AS 'fecha_de_vencimiento',
+		(creditos_solicitud.tasa_interes *100) AS 'tasa_anual',
+		CONCAT(creditos_solicitud.ultimo_periodo_afectado, '/',
+		creditos_solicitud.pagos_autorizados) AS 'numero_de_pagos',
+		creditos_solicitud.periocidad_de_pago AS 'frecuencia',
+		creditos_solicitud.saldo_actual AS 'saldo_insoluto',
+		creditos_solicitud.fecha_ultimo_mvto,
+		creditos_estatus.descripcion_estatus AS
+		'estatus',
+		socios.genero, socios.tipo_ingreso,
+		creditos_solicitud.tipo_autorizacion AS 'modaut',
+		`creditos_tipo_de_pago`.`descripcion` AS `tipo_de_pago`
+
+		FROM
+		`creditos_solicitud` `creditos_solicitud`
+		INNER JOIN `creditos_tipoconvenio`
+		`creditos_tipoconvenio`
+		ON `creditos_solicitud`.`tipo_convenio` =
+		`creditos_tipoconvenio`.
+		`idcreditos_tipoconvenio`
+		INNER JOIN `creditos_estatus`
+		`creditos_estatus`
+		ON `creditos_solicitud`.`estatus_actual` =
+		`creditos_estatus`.
+		`idcreditos_estatus`
+		INNER JOIN `creditos_tipo_de_pago`
+		`creditos_tipo_de_pago`
+		ON `creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` =
+		`creditos_solicitud`.`tipo_de_pago`
+		INNER JOIN `socios` `socios`
+		ON
+		`creditos_solicitud`.`numero_socio` = `socios`.`codigo`
+		INNER JOIN
+		`creditos_periocidadpagos`
+		`creditos_periocidadpagos`
+		ON
+		`creditos_solicitud`.`periocidad_de_pago` =
+		`creditos_periocidadpagos`.`idcreditos_periocidadpagos`
+
+		WHERE
+		creditos_solicitud.saldo_actual>=0.99
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='12'>REPORTE DE CREDITOS</COL>
+
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='12'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+
+			<ROW>
+				<COL CELLCLASS='GFC' COLSPAN='2'>TOTAL CREDITOS</COL>
+				<COL TYPE='EXPRESSION' CELLCLASS='GFC'>$this->getRowCount()</COL>
+				<COL COLSPAN='5' />
+				<COL CELLCLASS='GFC' COLSPAN='2'>TOTAL SALDOS:</COL>
+				<COL TYPE='EXPRESSION' CELLCLASS='GFC' NUMBERFORMATEX='2'>$this->getSum("monto_original")</COL>
+				<COL TYPE='EXPRESSION' CELLCLASS='GFC' NUMBERFORMATEX='2'>$this->getSum("saldo_insoluto")</COL>
+			</ROW>
+
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='producto'>
+			<HEADER>
+				<!-- Actualizado el 02 de Agosto de 2008 -->
+				<!-- <ROW> <COL CELLCLASS='GHC' WIDTH='15%' >PRODUCTO</COL> <COL TYPE='EXPRESSION' 
+					TEXTCLASS='FIELDS' WIDTH='15%' COLSPAN='2'>$this->getValue('modalidad')</COL> </ROW> 
+					<ROW> <COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12' > <XHTML> <hr /> </XHTML> </COL> 
+					</ROW> -->
+
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='3'>PRODUCTO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GROUP_TITLE' COLSPAN='2'>$this->getValue('modalidad')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+
+					<COL CELLCLASS='GHC' WIDTH='7%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='12%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>EMPRESA</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>PERIOCIDAD</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>MOD DE PAGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>PAGADO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>VENCIMIENTO</COL>
+
+					<COL CELLCLASS='GHC' WIDTH='4%'>PAGOS</COL>
+					<COL CELLCLASS='GHC' WIDTH='4%'>TASA</COL>
+
+					<COL CELLCLASS='GHC' WIDTH='8%'>MONTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SALDO</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+			</HEADER>
+			<FIELDS>
+				<ROW>
+
+					<COL TYPE='FIELD'>socio</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD'>empresa</COL>
+					<COL TYPE='FIELD'>solicitud</COL>
+					<COL TYPE='FIELD'>condiciones_de_pago</COL>
+					<COL TYPE='FIELD'>tipo_de_pago</COL>
+					<COL TYPE='FIELD'>fecha_de_pago</COL>
+					<COL TYPE='FIELD'>fecha_de_vencimiento</COL>
+
+					<COL TYPE='FIELD'>numero_de_pagos</COL>
+					<COL TYPE='FIELD' NUMBERFORMATEX='0'>tasa_anual</COL>
+					<COL TYPE='FIELD' NUMBERFORMATEX='2'>monto_original</COL>
+
+					<COL TYPE='FIELD' NUMBERFORMATEX='2'>saldo_insoluto</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL />
+					<COL CELLCLASS='GFC' COLSPAN='2'>CREDITOS:</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC'>$this->getRowCount()</COL>
+					<COL COLSPAN='5' />
+					<COL CELLCLASS='GFC' COLSPAN='1'>SALDOS:</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' NUMBERFORMATEX='2'>$this->getSum("monto_original")</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' NUMBERFORMATEX='2'>$this->getSum("saldo_insoluto")</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+
+			<!--<ROW> <COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='12' > <XHTML> <hr /> </XHTML> 
+				</COL> </ROW> <ROW> <COL CELLCLASS='GFC' COLSPAN='2'>CREDITOS:</COL> <COL TYPE='EXPRESSION' 
+				CELLCLASS='GFC' >$this->getRowCount()</COL> <COL CELLCLASS='GFC' COLSPAN='2'>TOTAL 
+				SALDO:</COL> <COL TYPE='EXPRESSION' CELLCLASS='GFC' NUMBERFORMATEX='2' >$this->getSum("saldo_insoluto")</COL> 
+				</ROW> -->
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

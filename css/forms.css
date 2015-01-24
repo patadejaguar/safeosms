@@ -1,0 +1,64 @@
+/* Not Just a Grid v1.0 (c) 2011 Al Redpath / Outrageous Creations! Licenced under an MIT Licence*/
+/* ---------------------------------------------------------------------------- */
+/* vertical form styling ------------------------------------------------------ */
+/* ---------------------------------------------------------------------------- */
+.vertical_form {font: 1em "Trebuchet MS", Arial, Helvetica, sans-serif;letter-spacing:1px; display:table;}
+.vertical_form fieldset{border:1px solid #888;margin:10px 0px;padding:10px 20px 10px 20px;border-radius:10px;-moz-border-radius:10px;-webkit-border-radius: 10px;}
+.vertical_form fieldset.fieldsetbuttons {padding:10px 10px 10px 20px;}
+.vertical_form fieldset.fieldsetbuttons div {text-align:right;}
+.vertical_form legend {margin:0px;border:1px solid #888;padding:3px 6px;background:#eee url(../images/notjustagrid/misc/transoverlay-matte.png) repeat-x;border-radius:5px;-moz-border-radius:5px;-webkit-border-radius: 5px;text-transform:uppercase;	letter-spacing:2px;}
+.vertical_form label {display:block;margin:10px 0px 5px 0px;}
+
+
+.vertical_form ul {margin:0px; padding:0px;}
+.vertical_form li {list-style:none; margin:0px; padding:0px;}
+.vertical_form div.form_input_notes {font-size:.95em; margin:0px 0px 20px 10px;}
+/* ---------------------------------------------------------------------------- */
+/* Horizontal form styling ---------------------------------------------------- */
+/* ---------------------------------------------------------------------------- */
+.horizontal_form {font: 1em "Trebuchet MS", Arial, Helvetica, sans-serif;letter-spacing:1px;}
+.horizontal_form fieldset{border:1px solid #888;margin:10px 0px;padding:10px 20px 10px 20px;border-radius:10px;-moz-border-radius:10px;-webkit-border-radius: 10px;}
+.horizontal_form fieldset.fieldsetbuttons {padding:10px 10px 10px 20px;}
+.horizontal_form fieldset.fieldsetbuttons div {text-align:right;}
+.horizontal_form legend {margin:0px;border:1px solid #888;padding:3px 6px;background:#eee url(../images/notjustagrid/misc/transoverlay-matte.png) repeat-x;border-radius:5px;-moz-border-radius:5px;-webkit-border-radius: 5px;text-transform:uppercase;	letter-spacing:2px;}
+.horizontal_form label {float:left;margin:0px 5px 0px 0px; width:100px; text-align:right;}
+.horizontal_form ul {margin:0px; padding:0px;}
+.horizontal_form li {list-style:none; vertical-align:middle; margin:10px 0px;clear:left;}
+.horizontal_form div.form_input_notes {font-size:.95em; display:inline;}
+/* ---------------------------------------------------------------------------- */
+/* Input field styling -------------------------------------------------------- */
+/* ---------------------------------------------------------------------------- */
+.normalfield, .requiredfield {border: 1px solid #ccc;border-top: 1px solid #444;border-left: 1px solid #444;font: .85em "Trebuchet MS", Arial, Helvetica, sans-serif;letter-spacing:1px;padding:3px 2px 3px 2px;}
+.normalfield {background: #ffffff url(../images/notjustagrid/misc/formgreyback.gif) repeat-x;}
+.requiredfield {background: #fafad8 url(../images/notjustagrid/misc/formyellowback.gif) repeat-x top right;}
+.fielderror {border: 1px solid #ff4444;background: #fee9eb url(../images/notjustagrid/misc/formredback.gif) repeat-x top right;}
+.fieldgood {background: #e0ffc7 url(../images/notjustagrid/misc/formgreenback.gif) repeat-x;}
+.requiredfield:focus, .fielderror:focus, .normalfield:forus {border: 1px solid #444444;	-webkit-box-shadow: 0px 0px 7px rgba(0, 144, 255, .7); 	-moz-box-shadow: 0px 0px 7px rgba(0, 144, 255, .7);		box-shadow: 0px 0px 7px rgba(0, 144, 255, .7);}
+.requiredfield:focus {background: #fafad8 url(../images/notjustagrid/misc/formyellowback.gif) repeat-x top right;}
+.normalfield:focus {background: #e0ffc7 url(../images/notjustagrid/misc/formgreenback.gif) repeat-x;}
+.fielderror:focus {border: 1px solid #ff4444;background: #fee9eb url(../images/notjustagrid/misc/formredback.gif) repeat-x top right;}
+.smallfield {font:.85em;padding:2px 1px 2px 1px;}
+.largefield {font:1em}
+/* ---------------------------------------------------------------------------- */
+/* Styled Buttons ------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------- */
+.styled_button, .styled_button:visited {background: #222 url(../images/notjustagrid/misc/transoverlay-matte.png) repeat-x;font: bold .9em "Trebuchet MS", Arial, Helvetica,sans-serif;text-transform:uppercase;text-decoration: none;line-height:30px;letter-spacing:1px;color: #fff;padding: 0px 10px 0px 10px;margin:0px 3px;height:30px;border: 1px solid rgba(0,0,0,0.4);border-top: 1px solid rgba(255,255,255,0.4);;border-left: 1px solid rgba(255,255,255,0.4);border-radius:15px;-moz-border-radius:15px;-webkit-border-radius: 15px;box-shadow: 0 1px 5px rgba(0,0,0,0.7);-moz-box-shadow: 0 1px 5px rgba(0,0,0,0.7);-webkit-box-shadow: 0 1px 5px rgba(0,0,0,0.7);text-shadow: 0 -1px 1px rgba(0,0,0,0.25);position: relative;cursor: pointer;}
+a.styled_button, a.styled_button:visited {color:#fff;height:30px;line-height:30px;padding:5px 10px;}
+a.styled_button:hover, a.styled_button:active {color:#fff;white-space:nowrap;}
+.cancel_button.styled_button:after, .confirm_button.styled_button:after, .question_button.styled_button:after, .delete_button.styled_button:after, .edit_button.styled_button:after, .view_button.styled_button:after  {position:absolute;padding-top:7px;right:5px;}
+.cancel_button.styled_button, .confirm_button.styled_button, .question_button.styled_button, .delete_button.styled_button, .edit_button.styled_button, .view_button.styled_button {padding-right:25px;}
+.cancel_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-cancel.png);}
+.confirm_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-success.png);}
+.question_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-question.png);}
+.delete_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-delete.png);}
+.edit_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-edit.png);}
+.view_button.styled_button:after {content: url(../images/notjustagrid/icons/icon-view.png);}
+.green.styled_button {background-color:#afc243;}
+.red.styled_button {background-color: #e33100;}
+.blue.styled_button {background-color:#6c93b3;}
+.grey.styled_button {background-color:#ddd; color:#666;	text-shadow: 0 1px 1px rgba(255,255,255,0.8);}
+.green.styled_button:hover {background-color:#98a83a;}
+.red.styled_button:hover {background-color: #bf2900;}
+.blue.styled_button:hover {background-color:#5c7d98;}
+.grey.styled_button:hover {background-color:#ccc;color:#666; text-shadow: 0 1px 1px rgba(255,255,255,0.8);}
+@-moz-document url-prefix() {button.delete_button.styled_button:after, button.question_button.styled_button:after, button.confirm_button.styled_button:after, button.cancel_button.styled_button:after, button.edit_button.styled_button:after, button.view_button.styled_button:after  {padding-top:1px;right:15px;}}

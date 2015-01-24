@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Tipos Causas de Morosidad</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT * FROM `socios_aeconomica_dependencias`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='3' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='3'>
+					Reporte de Empresas
+				</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='3'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW></ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='3' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						CLAVE INTERNA
+					</COL>
+					<COL CELLCLASS='GHC'>
+						CLAVE DE PERSONA
+					</COL>
+					<COL CELLCLASS='GHC'>
+						NOMBRE
+					</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>idsocios_aeconomica_dependencias</COL>
+					<COL TYPE='FIELD'>clave_de_persona</COL>
+					<COL TYPE='FIELD'>descripcion_dependencia</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' COLSPAN='3'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='3'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW></ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

@@ -1,0 +1,15 @@
+/*visualize extension styles*/
+.visualize { margin: 60px 0 0 30px; padding: 4em 6em 6em;
+	background: #ccc url(../images/chartbg-vanilla.png) top repeat-x;
+	border: 1px solid #ddd; -moz-border-radius: 12px; -webkit-border-radius: 12px; border-radius: 12px; font-size: 11px; }
+.visualize canvas { border: 1px solid #aaa; margin: -1px; background: #fff; }
+.visualize-labels-x, .visualize-labels-y { top: 4em; left: 6em; z-index: 100; }
+.visualize-pie .visualize-labels { position: absolute; top: 4em; left: 6em; }
+.visualize-labels-x li span.label, .visualize-labels-y li span.label { color: #444; font-size: 1.2em; padding-right: 5px; }
+.visualize-labels-y li span.line { border-style: solid;  opacity: .7; }
+.visualize .visualize-info { border: 0; position: static;  opacity: 1; background: none; }
+.visualize .visualize-title { position: absolute; top: 1.25em; color: #333; margin-bottom: 0; left: 1.25em; font-size: 1.5em; font-weight: bold; }
+.visualize ul.visualize-key { position: absolute; bottom: .95em; background: #eee; z-index: 10; padding: .625em 0; color: #aaa; width: 100%; left: 0;  }
+.visualize ul.visualize-key li { font-size: 1.1em;  margin-left: 1.25em; padding-left: 1.1em; }
+.visualize ul.visualize-key .visualize-key-color { width: .625em; height: .625em;  margin-top: -4px; }
+.visualize ul.visualize-key .visualize-key-label { color: #333; }

@@ -1,0 +1,26 @@
+{
+	"table" : "general_menu",
+	"key" : "idgeneral_menu",
+	"action" : "translate",
+	"target" : "menu_title", 
+   "record_0":{
+      "idgeneral_menu":"2001",
+      "menu_title":"Person register",
+      "translate":"Natural Person register"
+   },
+   "record_1":{
+      "idgeneral_menu":"20002",
+      "menu_title":"Juridic Person register",
+      "translate":"Juridic Person register"
+   },
+   "record_2":{
+      "idgeneral_menu":"18551",
+      "menu_title":"json batch",
+      "translate":"JSON Language import"
+   },
+   "record_3":{
+      "idgeneral_menu":"185591",
+      "menu_title":"Logo Import",
+      "translate":"Logo Import"
+   }
+}

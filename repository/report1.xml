@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Muestra</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL> SELECT`socios_memo`.`idsocios_memo` AS `clave`,`socios_general`.`codigo`
+		AS `clave_de_persona`,`socios_general`.`nombrecompleto` AS
+		`nombre`,`socios_general`.`apellidopaterno` AS
+		`apellido_materno`,`socios_general`.`apellidomaterno` AS
+		`apellido_paterno`,`socios_memo`.`fecha_memo` AS
+		`fecha`,`socios_memo`.`tipo_memo` AS `tipo`,`socios_memo`.`texto_memo` AS
+		`texto` FROM`socios_memo` `socios_memo` INNER JOIN `socios_general`
+		`socios_general` ON `socios_memo`.`numero_socio` = `socios_general`.`codigo`                        </SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE></DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+
+	<!-- PAGINA -->
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<!-- ENCABEZADO DE PAGINA -->
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<!-- TITULO DE REPORTE -->
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='8'>Reporte de Muestra</COL>
+			</ROW>
+
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+		</HEADER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+
+	</PAGE>
+	<!-- GRUPOS DE DATOS -->
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='id'>
+			<!-- ENCABEZADO DE GRUPO -->
+			<HEADER>
+				<!-- TITULO DE LOS CAMPOS -->
+				<ROW>
+					<COL CELLCLASS='GHC'>CLAVE</COL>
+					<COL CELLCLASS='GHC'>CLAVE_DE_PERSONA</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL CELLCLASS='GHC'>APELLIDO_MATERNO</COL>
+					<COL CELLCLASS='GHC'>APELLIDO_PATERNO</COL>
+					<COL CELLCLASS='GHC'>FECHA</COL>
+					<COL CELLCLASS='GHC'>TIPO</COL>
+					<COL CELLCLASS='GHC'>TEXTO</COL>
+
+				</ROW>
+			</HEADER>
+			<!-- AREA DE VALORES DE CAMPO -->
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>clave</COL>
+					<COL TYPE='FIELD'>clave_de_persona</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>apellido_materno</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>apellido_paterno</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha</COL>
+					<COL TYPE='FIELD'>tipo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>texto</COL>
+				</ROW>
+			</FIELDS>
+			<!-- PIE DE GRUPO -->
+			<FOOTER>
+
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='8'></COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW></ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<!-- DOCUMENTO -->
+	<DOCUMENT>
+
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+
+	</DOCUMENT>
+
+</REPORT>

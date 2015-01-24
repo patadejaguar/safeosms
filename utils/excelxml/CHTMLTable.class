@@ -1,0 +1,277 @@
+<?php
+
+class CHTMLTable {
+
+   var $version     = '1.1a';
+   var $author_info = 'Sergey Ovchinnikov <sergeyvo@gmail.com>, ICQ UIN 91792005';
+
+   var $range_rows;
+   var $range_cols;
+   var $Table;
+
+
+   var $table_properties = array(
+                           'border'      => 'border',
+                           'bordercolor' => 'bordercolor',
+                           'width'       => 'width',
+                           'height'      => 'height',
+                           'cellspacing' => 'cellspacing',
+                           'cellpadding' => 'cellpadding',
+                           'style'       => 'style',
+                           'align'       => 'align',
+                           'class'       => 'class',
+                           'id'          => 'id',
+                        );
+
+   var $tr_properties = array(
+                           'width'   => 'width',
+                           'height'  => 'height',
+                           'bgcolor' => 'bgcolor',
+                           'align'   => 'align',
+                           'valign'  => 'valign',
+                           'style'   => 'style',
+                           'class'   => 'class',
+                           'id'      => 'id',
+                        );
+
+   var $td_properties = array(
+                           'width'   => 'width',
+                           'height'  => 'height',
+                           'bgcolor' => 'bgcolor',
+                           'align'   => 'align',
+                           'valign'  => 'valign',
+                           'colspan' => 'colspan',
+                           'rowspan' => 'rowspan',
+                           'style'   => 'style',
+                           'class'   => 'class',
+                           'id'      => 'id',
+                           'content'      => 'content'
+                        );
+
+#===============================================================================================
+#           CHTMLTable
+#===============================================================================================
+   function CHTMLTable() {
+
+      $this->Table = array();
+
+   }
+
+#===============================================================================================
+#           SET RANGE ROWS
+#===============================================================================================
+   function setRangeRows($range_rows) {
+
+      $this->range_rows = $range_rows;
+   }
+#===============================================================================================
+#           SET RANGE COLS
+#===============================================================================================
+   function setRangeCols($range_cols) {
+
+      $this->range_cols = $range_cols;
+   }
+#===============================================================================================
+#           SET TD PROPERTIES
+#===============================================================================================
+   function setTDProperties($array) {
+
+      foreach($array as $key=>$property) {
+
+         $this->td_properties[$key] = $property;
+
+      }
+
+   }
+#===============================================================================================
+#           SET TR PROPERTIES
+#===============================================================================================
+   function setTRProperties($array) {
+
+      foreach($array as $key=>$property) {
+
+         $this->tr_properties[$key] = $property;
+
+      }
+
+   }
+
+#===============================================================================================
+#           GET MAX KEY OF ARRAY
+#===============================================================================================
+   function getMaxKey($array) {
+
+      $keys = array_keys($array);
+      rsort($keys);
+      return $keys[0];
+   }
+#===============================================================================================
+#           GET MAX ROWS
+#===============================================================================================
+   function calculateRangeRows() {
+
+      $this->range_rows = $this->getMaxKey($this->Table['Rows']);
+      return $this->range_rows++;
+   }
+#===============================================================================================
+#           GET MAX COLS
+#===============================================================================================
+   function calculateRangeCells() {
+
+      $this->range_cols = 0;
+
+      foreach ($this->Table['Rows'] as $table) {
+                                                       
+         $max_key = $this->getMaxKey($table['Cols']);
+         if ($max_key > $this->range_cols) $this->range_cols = $max_key;
+
+      }
+
+      return $this->range_cols++;
+   }
+
+#===============================================================================================
+#           SHOW TABLE INIT
+#===============================================================================================
+   function calculateRanges() {
+
+     $this->calculateRangeRows();
+     $this->calculateRangeCells();
+   }
+#===============================================================================================
+#           SHOW TABLE
+#===============================================================================================
+   function showTable() {
+
+      if (!$this->Table['Rows'])  return false;
+
+      $this->printOpenTable();
+
+      for ($i=0; $i<$this->range_rows; $i++) {
+
+         if ($this->Table['Rows'][$i]['Cols']) {
+
+            $tr = $this->Table['Rows'][$i];
+
+            $this->printOpenTR($tr);
+
+            for ($j=0; $j<$this->range_cols; $j++) {  
+
+               $td = $this->Table['Rows'][$i]['Cols'][$j];
+
+               if ($td[$this->td_properties['colspan']]!='') $colspan[$i] = intval($td[$this->td_properties['colspan']]);
+               if ($td[$this->td_properties['rowspan']]!='') $rowspan[$j] = intval($td[$this->td_properties['rowspan']]);
+
+               if ($colspan[$i] &&  $td[$this->td_properties['rowspan']]!='') {
+
+                  $cols_rowspan[$i] = intval($td[$this->td_properties['rowspan']]);
+               }
+
+//               if (!$colspan[$i])  $cols_rowspan[$i]=0;
+
+               if ($cols_rowspan[$i]>0) $rowspan[$j] = $cols_rowspan[$i];
+
+
+               if (
+                     (!$rowspan[$j] || ($rowspan[$j] && $td[$this->td_properties['rowspan']]!=''))
+                     &&
+                     (!$colspan[$i] || ($colspan[$i] && $td[$this->td_properties['colspan']]!=''))
+               ) {
+
+                  $this->printTD($td);
+
+               }
+
+               if ($rowspan[$j]>0)  $rowspan[$j]--;
+
+               if ($colspan[$i]>0)  $colspan[$i]--;
+               if (!$colspan[$i])  $cols_rowspan[$i]=0;
+
+
+            }
+
+            echo "</TR>\n\r";
+         }
+      }
+
+      $this->printCloseTable();
+
+   }
+#===============================================================================================
+#           PRINT OPEN TABLE
+#===============================================================================================
+   function printOpenTable() {
+
+      echo "\n\r<TABLE";
+
+      foreach($this->table_properties as $key=>$property) {
+
+         if (strval($this->Table[$this->table_properties[$key]])!='') {
+
+           echo " ".$key."=\"".strval($this->Table[$this->table_properties[$key]])."\"";
+
+         }
+
+      }
+
+      echo ">\n\r";
+   }
+#===============================================================================================
+#           PRINT OPEN TABLE
+#===============================================================================================
+   function printCloseTable() {
+
+      echo "</TABLE>\n\r\n\r";
+
+   }
+
+#===============================================================================================
+#           PRINT OPEN TD
+#===============================================================================================
+   function printTD($td) {
+
+      echo "	<TD";
+
+      foreach($this->td_properties as $key=>$property) {
+
+         if (strval($td[$this->td_properties[$key]])!='')  {
+
+           echo " ".$key."=\"".strval($td[$this->td_properties[$key]])."\"";
+
+         }
+
+      }
+
+      echo ">";
+      if ($td[$this->td_properties['content']]) echo $td[$this->td_properties['content']];
+      else echo '&nbsp;';
+      echo "</TD>\n\r";
+
+   }
+#===============================================================================================
+#           PRINT OPEN TR
+#===============================================================================================
+   function printOpenTR($tr) {
+
+      echo "<TR";
+
+      foreach($this->tr_properties as $key=>$property) {
+
+         if (strval($tr[$this->tr_properties[$key]])!='') {
+
+           echo " ".$key."=\"".strval($tr[$this->tr_properties[$key]])."\"";
+
+         }
+
+      }
+
+      echo ">\n\r";
+
+   }
+#===============================================================================================
+#  / class        
+#===============================================================================================
+}
+
+
+?>

@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>LETRAS VENCIDAS. CAMPECHE</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios_cajalocal.descripcion_cajalocal AS 'Caja_local',
+		socios_general.codigo, CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ', socios_general.apellidomaterno) AS
+		'Nombre_Completo', creditos_solicitud.numero_solicitud AS 'Solicitud',
+		creditos_solicitud.fecha_ministracion AS 'Ministrado',
+		creditos_solicitud.monto_autorizado AS 'Monto_Original',
+		creditos_solicitud.fecha_vencimiento AS 'Vence_FP',
+		creditos_tipoconvenio.descricipcion_tipoconvenio AS 'Tipo_de_Convenio',
+		creditos_periocidadpagos.descripcion_periocidadpagos AS 'Forma_de_Pago',
+		operaciones_mvtos.periodo_socio AS 'Parcialidad',
+		MAX(operaciones_mvtos.fecha_afectacion) AS 'Fecha_Programada',
+		SUM(operaciones_mvtos.afectacion_real) AS 'Total_Parcialidad' FROM
+		socios_cajalocal, socios_general, creditos_solicitud, creditos_tipoconvenio,
+		creditos_periocidadpagos, operaciones_mvtos WHERE
+		socios_cajalocal.idsocios_cajalocal=socios_general.cajalocal AND
+		socios_general.codigo=creditos_solicitud.numero_socio AND
+		creditos_solicitud.tipo_convenio=creditos_tipoconvenio.idcreditos_tipoconvenio
+		AND
+		creditos_solicitud.periocidad_de_pago=creditos_periocidadpagos.idcreditos_periocidadpagos
+		AND creditos_solicitud.numero_solicitud=operaciones_mvtos.docto_afectado AND
+		creditos_solicitud.periocidad_de_pago!=360 GROUP BY socios_general.codigo,
+		creditos_solicitud.numero_solicitud, operaciones_mvtos.periodo_socio LIMIT
+		0,50</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='0' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='Solicitud'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CAJA LOCAL</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("Caja_local")</COL>
+					<COL CELLCLASS='GHC'>CODIGO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("codigo")</COL>
+					<COL CELLCLASS='GHC'>NOMBRE COMPLETO</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("Nombre_Completo")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>SOLICITUD</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("Solicitud")</COL>
+					<COL CELLCLASS='GHC'>MINISTRADO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue("Ministrado")</COL>
+					<COL CELLCLASS='GHC'>MONTO ORIGINAL</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("Monto_Original")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>VENCE</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue("Vence_FP")</COL>
+					<COL CELLCLASS='GHC'>TIPO DE CONVENIO</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("Tipo_de_Convenio")</COL>
+					<COL CELLCLASS='GHC'>FORMA DE PAGO</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("Forma_de_Pago")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='2'>PARCIALIDAD</COL>
+					<COL CELLCLASS='GHC' COLSPAN='2'>FECHA PROGRAMADA</COL>
+					<COL CELLCLASS='GHC' COLSPAN='2'>TOTAL PARCIALIDAD</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR' COLSPAN='2'>Parcialidad</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC' COLSPAN='2'>Fecha_Programada</COL>
+					<COL TYPE='FIELD' COLSPAN='2'>Total_Parcialidad</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='9'>
+					</COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

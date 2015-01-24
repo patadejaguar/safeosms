@@ -1,0 +1,280 @@
+<?php
+
+include_once 'CHTMLTable.class';
+
+class CExcelXMLHTMLTable extends CHTMLTable{
+
+   var $version     = '1.1a';
+   var $author_info = 'Sergey Ovchinnikov <sergeyvo@gmail.com>, ICQ UIN 91792005';
+
+   var $Styles;
+
+   var $active_styles;
+   var $default_styles;
+
+#===============================================================================================
+#           PRINT OPEN TABLE
+#===============================================================================================
+   function printOpenTable() {
+
+      $default = $this->default_styles;
+
+      $this->Table['border']      = $default['table_border'];
+      $this->Table['bordercolor'] = $default['table_bordercolor'];
+      $this->Table['cellspacing'] = $default['table_cellspacing'];
+      $this->Table['cellpadding'] = $default['table_cellpadding'];
+      $this->Table['style']       = $default['table_style'];
+
+      echo "\n\r<TABLE";
+
+      foreach($this->table_properties as $key=>$property) {
+
+         if (strval($this->Table[$this->table_properties[$key]])!='') {
+
+           echo " ".$key."=\"".strval($this->Table[$this->table_properties[$key]])."\"";
+
+         }
+
+      }
+
+      echo ">\n\r";
+   }
+
+#===============================================================================================
+#           PRINT CLOSE TABLE
+#===============================================================================================
+   function printCloseTable() {
+
+      echo "<TR height=\"0\">\n";
+
+      $Active  = $this->active_styles;
+      $Default = $this->default_styles;
+
+
+
+      for($j=0; $j<$this->range_cols; $j++) {  
+
+
+         if (strval($Active['column_width'])=='on') {
+
+             $width = $this->Table['ColumnProperties'][$j]['Width'];
+
+             if (strval($this->Table['ColumnProperties'][$j]['Width'])=='' && strval($Default['column_width'])!='') {
+
+                $width = $Default['column_width'];
+             }
+         }
+         elseif(strval($Default['column_width'])!='') {
+
+             $width = $Default['column_width'];
+         }
+
+
+//        $width = $this->table['ColumnProperties'][$j]['Width'];
+//        if(!$width) $width = 64;
+
+         echo "	<TD width=\"".$width."\"></TD>\n";
+// style=\"border-bottom: none;border-top: none;border-left: none;border-bottom: right;\"
+
+      }
+
+      echo "</TR>\n";
+
+      echo "</TABLE>\n\r\n\r";
+
+   }
+#===============================================================================================
+#           PRINT OPEN TR
+#===============================================================================================
+   function printOpenTR($tr) {
+
+      $Active  = $this->active_styles;
+      $Default = $this->default_styles;
+
+      if (strval($Active['row_height'])=='on') {
+
+         if (strval($tr[$this->tr_properties['height']])=='' && strval($Default['row_height'])!='') {
+
+            $tr[$this->tr_properties['height']] = $Default['row_height'];
+         }
+
+      }
+      elseif(strval($Default['row_height'])!='') {
+
+            $tr[$this->tr_properties['height']] = $Default['row_height'];
+      }
+
+      echo "<TR";
+
+      foreach($this->tr_properties as $key=>$property) {
+
+         if (strval($tr[$this->tr_properties[$key]])!='') {
+
+           echo " ".$key."=\"".strval($tr[$this->tr_properties[$key]])."\"";
+
+         }
+
+      }
+
+      echo ">\n\r";
+
+   }
+#===============================================================================================
+#           PRINT OPEN TD
+#===============================================================================================
+   function printTD($td) {
+
+      $Styles  = $this->Styles;
+      $Active  = $this->active_styles;
+      $Default = $this->default_styles;
+
+
+      echo "	<TD";
+
+      foreach($this->td_properties as $key=>$property) {
+
+         if (strval($td[$this->td_properties[$key]])!='' && $key!='content')  {
+
+           echo " ".$key."=\"".strval($td[$this->td_properties[$key]])."\"";
+
+         }
+
+      }
+
+
+      if (strval($Active['text_align'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Alignment']['Horizontal'])!='') $align = $Styles[$td['StyleID']]['Alignment']['Horizontal'];
+         elseif(strval($Default['text_align'])!='')  $align = strval($Default['text_align']);
+
+         if($td['Type']=='Number' && $Active['number_format']=='on' && !$Styles[$td['StyleID']]['Alignment']['Horizontal']) $align = 'right';
+      }
+      else {
+
+         if(strval($Default['text_align'])!='')  $align = strval($Default['text_align']);
+         if($td['Type']=='Number' && $Active['number_format']=='on') $align = 'right';
+      }
+      if ($align)   echo " align=\"".$align."\"";
+
+
+
+      if (strval($Active['text_valign'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Alignment']['Vertical'])!='') $valign = $Styles[$td['StyleID']]['Alignment']['Vertical'];
+         elseif(strval($Default['text_valign'])!='')  $valign = strval($Default['text_valign']);
+      }
+      else {
+
+        if(strval($Default['text_valign'])!='')  $valign = strval($Default['text_valign']);
+      }
+      if ($valign)   echo " valign=\"".$valign."\"";
+
+
+
+      if (strval($Active['bg_color'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Interior']['Color'])!='') $bg_color = $Styles[$td['StyleID']]['Interior']['Color'];
+         elseif(strval($Default['bg_color'])!='')  $bg_color = strval($Default['bg_color']);
+      }
+      else {
+
+         if(strval($Default['bg_color'])!='')  $bg_color = strval($Default['bg_color']);
+      }
+      if ($bg_color)   echo " bgColor=\"".$bg_color."\"";
+
+
+
+
+      $style = '';
+
+      if (strval($Active['font_size'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['Size'])!='') $font_size = $Styles[$td['StyleID']]['Font']['Size'];
+         elseif(strval($Default['font_size'])!='')  $font_size = strval($Default['font_size']);
+      } 
+      else {
+
+         if(strval($Default['font_size'])!='')  $font_size = strval($Default['font_size']);
+      }
+      if ($font_size)  $style.="font-size: ".$font_size."pt; ";
+
+
+
+      if (strval($Active['font_family'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['FontName'])!='') $font_family = $Styles[$td['StyleID']]['Font']['FontName'];
+         elseif(strval($Default['font_family'])!='')  $font_family = strval($Default['font_family']);
+      }
+      else {
+         if(strval($Default['font_family'])!='')  $font_family = strval($Default['font_family']);
+      }
+      if ($font_family)  $style.="font-family: ".$font_family."; ";
+
+
+
+
+      if (strval($Active['font_color'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['Color'])!='') $font_color = $Styles[$td['StyleID']]['Font']['Color'];
+         elseif(strval($Default['font_color'])!='')  $font_color = strval($Default['font_color']);
+      }
+      else {
+         if(strval($Default['font_color'])!='')  $font_color = strval($Default['font_color']);
+      }
+      if ($font_color)  $style.="color: ".$font_color."; ";
+
+
+
+
+      if (strval($Active['font_bold'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['Bold'])!='') $font_bold = $Styles[$td['StyleID']]['Font']['Bold'];
+         elseif(strval($Default['font_bold'])!='')  $font_bold = strval($Default['font_bold']);
+      }
+      else {
+         if(strval($Default['font_bold'])!='')  $font_bold = strval($Default['font_bold']);
+      }
+      if ($font_bold)  $style.="font-weight: bold; ";
+
+
+
+
+      if (strval($Active['font_italic'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['Italic'])!='') $font_italic = $Styles[$td['StyleID']]['Font']['Italic'];
+         elseif(strval($Default['font_italic'])!='')  $font_italic = strval($Default['font_italic']);
+      }
+      else {
+         if(strval($Default['font_italic'])!='')  $font_italic = strval($Default['font_italic']);
+      }
+      if ($font_italic)  $style.="font-style: italic; ";
+
+
+
+      if (strval($Active['font_underline'])=='on') {
+
+         if (strval($Styles[$td['StyleID']]['Font']['Underline'])!='') $font_underline = $Styles[$td['StyleID']]['Font']['Underline'];
+         elseif(strval($Default['font_underline'])!='')  $font_underline = strval($Default['font_underline']);
+      }
+      else {
+         if(strval($Default['font_underline'])!='')  $font_underline = strval($Default['font_underline']);
+      }
+      if ($font_underline)  $style.="text-decoration: underline; ";
+
+
+      if ($style)   echo " style=\"".$style."\"";
+ 
+
+      echo ">";
+      if ($td[$this->td_properties['content']]) echo $td[$this->td_properties['content']];
+      else echo '&nbsp;';
+      echo "</TD>\n\r";
+
+   }
+
+
+
+}
+
+?>
+

@@ -1,0 +1,7 @@
+JPSpan serializer for compatibility
+Additional functionality to helper class
+Inline frame ajax fallback and file upload support
+Something for Polling
+Basic debugging tools (XMLHttpRequest tester, serialized items viewer, debug console)
+Complete Documentation including basic tutorials and step by step for advanced uses
+Framework integration - either documentation or some kind of API

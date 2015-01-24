@@ -1,0 +1,9 @@
+body {
+	
+}
+
+td {
+	border: thin;
+	border-style: solid;
+	min-height: 10px;
+}

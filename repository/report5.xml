@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>COLOCACION DE CREDITOS FINAL DE PLAZO</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios_cajalocal.idsocios_cajalocal AS 'numero',
+		socios_cajalocal.descripcion_cajalocal AS 'nombre_caja_local',
+		socios_general.codigo,CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ', socios_general.apellidomaterno) AS
+		'nombre_completo', creditos_solicitud.numero_solicitud AS 'solicitud',
+		creditos_solicitud.fecha_ministracion AS 'ministracion',
+		creditos_solicitud.fecha_vencimiento AS 'vencimiento',
+		CONCAT(FORMAT((creditos_solicitud.dias_autorizados / 30.4166),0), ' Meses') AS
+		'plazo', CONCAT(FORMAT((creditos_solicitud.tasa_interes * 100), 0), ' %') AS
+		'tasa', creditos_solicitud.monto_autorizado AS 'monto_ministrado',
+		creditos_periocidadpagos.descripcion_periocidadpagos AS 'forma_de_pago',
+		operaciones_mvtos.fecha_operacion AS 'fecha_de_pago',
+		operaciones_mvtos.afectacion_real AS 'monto_pagado' FROM socios_cajalocal,
+		socios_general, creditos_solicitud, creditos_periocidadpagos,
+		operaciones_mvtos WHERE
+		socios_cajalocal.idsocios_cajalocal=socios_general.cajalocal AND
+		socios_general.codigo=creditos_solicitud.numero_socio AND
+		creditos_solicitud.periocidad_de_pago=creditos_periocidadpagos.idcreditos_periocidadpagos
+		AND creditos_solicitud.numero_solicitud=operaciones_mvtos.docto_afectado AND
+		operaciones_mvtos.tipo_operacion=351 AND
+		creditos_solicitud.tipo_autorizacion=2 ORDER BY
+		socios_cajalocal.idsocios_cajalocal</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='1' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='13' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='13' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='numero'>
+			<HEADER>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='11'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='2'>NUMERO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR' COLSPAN='2'>$this->getValue("numero")</COL>
+					<COL CELLCLASS='GHC' COLSPAN='2'>CAJA LOCAL</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='2'>$this->getValue("nombre_caja_local")</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='11'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='5%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>MINISTRACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>VENCTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='4%'>PZO</COL>
+					<COL CELLCLASS='GHC' WIDTH='4%'>TASA</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>MINISTRADO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>FORMA PAG</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>FECHA PAG</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>I.C.A.</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>codigo</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>solicitud</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>ministracion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>vencimiento</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>plazo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>tasa</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto_ministrado</COL>
+					<COL TYPE='FIELD'>forma_de_pago</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_de_pago</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto_pagado</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='11'></COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

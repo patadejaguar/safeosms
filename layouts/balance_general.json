@@ -1,0 +1,20 @@
+{
+	"titulo" : "Balance General",
+	"activo" : {
+		"seccion1" :{
+			"nombre" : "Disponibilidades",
+			"cuentas" : [11,12,13]
+		},
+		"seccion2" :{
+			"nombre" : "Cartera de Credito",
+			"cuentas" : [14,15,16]
+		}		
+
+	},
+	"pasivo" : {
+		
+	},
+	"capital" : {
+		
+	}
+}

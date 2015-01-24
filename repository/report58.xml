@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Auxiliar de Movimientos de Nomina(detallado)</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`trabajador_general`.`codigo`,
+		CONCAT(
+		`trabajador_general`.`apellido_paterno`, ' ',
+		`trabajador_general`.`apellido_materno`, ' ',
+		`trabajador_general`.`nombre_completo`) AS 'nombre_completo',
+		`trabajador_general`.`curp`,
+		`trabajador_general`.`numero_seguridad_social` AS 'nss',
+		`nominas_movimientos`.`fecha_de_mvto`,
+		`nominas_movimientos`.`concepto`,
+		`nominas_conceptos`.`descripcion`,
+		`nominas_movimientos`.`monto`,
+		`nominas_movimientos`.`observaciones`
+		FROM
+		`nominas_movimientos` `nominas_movimientos`
+		INNER JOIN `nominas_conceptos` `nominas_conceptos`
+		ON `nominas_movimientos`.`concepto` =
+		`nominas_conceptos`.`codigo`
+		INNER JOIN `trabajador_general`
+		`trabajador_general`
+		ON `nominas_movimientos`.`trabajador` =
+		`trabajador_general`.`codigo` LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Auxiliar de Movimientos de Nomina</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='codigo'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CODIGO</COL>
+					<COL CELLCLASS='GHC' COLSPAN='2'>NOMBRE COMPLETO</COL>
+					<COL CELLCLASS='GHC'>CURP</COL>
+					<COL CELLCLASS='GHC'>NSS</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getValue("codigo")</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='2'>$this->getValue("nombre_completo")</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getValue("curp")</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getValue("nss")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>FECHA</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>CONCEPTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='35%'>DESCRIPCION</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>MONTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='35%'>OBSERVACIONES</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_de_mvto</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>concepto</COL>
+					<COL TYPE='FIELD'>descripcion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto</COL>
+					<COL TYPE='FIELD'>observaciones</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL />
+					<COL />
+					<COL CELLCLASS='GHC'>TOTAL DE OPERACIONES</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='2'>$this->getSum("monto")</COL>
+					<COL />
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

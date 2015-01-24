@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Acumulado de Conceptos</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>
+		SELECT
+		`trabajador_general`.`codigo`,
+		CONCAT(`trabajador_general`.`apellido_paterno`, ' ',
+		`trabajador_general`.`apellido_materno`, ' ',
+		`trabajador_general`.`nombre_completo`) AS 'nombre',
+		`trabajador_general`.`rfc`,
+		`trabajador_general`.`curp`,
+		`trabajador_general`.`numero_seguridad_social`,
+		`trabajador_general`.`sucursal`,
+		`nominas_conceptos`.`codigo` AS 'concepto',
+		`nominas_conceptos`.`descripcion`,
+		SUM(`nominas_movimientos`.`monto`) AS `total`,
+		`nominas_conceptos`.`afectacion`
+		FROM
+		`nominas_movimientos` `nominas_movimientos`
+		INNER JOIN `trabajador_general` `trabajador_general`
+		ON
+		`nominas_movimientos`.`trabajador` = `trabajador_general`.`codigo`
+		INNER JOIN `nominas_conceptos` `nominas_conceptos`
+		ON `nominas_movimientos`.`concepto` = `nominas_conceptos`.`codigo`
+
+
+		GROUP BY
+		`trabajador_general`.`codigo`,
+		`nominas_conceptos`.`codigo`
+		ORDER BY
+		`trabajador_general`.`codigo`,
+		`nominas_conceptos`.`afectacion`,
+		`nominas_conceptos`.`codigo`
+		LIMIT 0,100
+	</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='9' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Acumulado de Conceptos</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+
+			<ROW>
+				<COL CELLCLASS='GHC'>SUMA RUBRO</COL>
+				<COL />
+				<COL />
+				<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='2'>$this->getSum('total')</COL>
+			</ROW>
+
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>
+					<XHTML>
+						<hr />
+						<table border='0' width='100%'>
+							<tr>
+								<th class='PAGER_HEADER_TH'>REG. CNBV. SNR69300601</th>
+							</tr>
+							<tr>
+								<td class='PAGE_FOOTER_TD'>
+									CALLE 61, NUMERO 50, ENTRE 14 Y 16, COLONIA CENTRO
+									<br />
+									SAN FCO. DE CAMPECHE, CAMPECHE, C.P. 24000; TEL (981)8113766
+								</td>
+							</tr>
+						</table>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+		</FOOTER>
+
+	</PAGE>
+
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='codigo'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>TRABAJADOR:</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('nombre')</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('curp')</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('codigo')</COL>
+					<COL />
+				</ROW>
+			</HEADER>
+			<FOOTER>
+
+				<ROW>
+					<COL CELLCLASS='GHC'>SUMA RUBRO</COL>
+					<COL />
+					<COL />
+					<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='2'>$this->getSum('total')</COL>
+				</ROW>
+			</FOOTER>
+
+			<!-- Segundo Grupo -->
+			<GROUP NAME='MAIN2' EXPRESSION='afectacion'>
+				<HEADER>
+					<ROW>
+						<COL CELLCLASS='GHC' WIDTH='20%'>CONCEPTO</COL>
+						<COL CELLCLASS='GHC' WIDTH='50%'>DESCRIPCION</COL>
+						<COL CELLCLASS='GHC' WIDTH='30%'>TOTAL</COL>
+					</ROW>
+				</HEADER>
+
+				<FIELDS>
+					<ROW>
+						<COL TYPE='FIELD'>concepto</COL>
+						<COL TYPE='FIELD'>descripcion</COL>
+						<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>total</COL>
+					</ROW>
+				</FIELDS>
+				<FOOTER>
+
+					<ROW>
+						<COL CELLCLASS='GHC'>SUMA RUBRO</COL>
+						<COL />
+						<COL />
+						<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='2'>$this->getSum('total')</COL>
+					</ROW>
+
+					<ROW>
+						<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+							<XHTML>
+								<hr />
+							</XHTML>
+						</COL>
+					</ROW>
+					<ROW>
+					</ROW>
+				</FOOTER>
+
+			</GROUP>
+		</GROUP>
+
+	</GROUPS>
+
+	<DOCUMENT>
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

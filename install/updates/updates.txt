@@ -1,0 +1,6 @@
+//Archivo de Listas de Configuracion
+//Formato: archivo@path
+//otra linea
+|otra
+|otra
+|otra

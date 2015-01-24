@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Cuentas de Captacion Listado General</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios.codigo, socios.nombre, captacion_cuentas.numero_cuenta,
+		captacion_cuentastipos.descripcion_cuentastipos AS 'tipo_cuenta',
+		captacion_cuentas.fecha_apertura, captacion_cuentas.tasa_otorgada,
+		captacion_cuentas.saldo_cuenta FROM captacion_cuentas, socios,
+		captacion_cuentastipos WHERE captacion_cuentas.numero_socio=socios.codigo AND
+		captacion_cuentastipos.idcaptacion_cuentastipos=captacion_cuentas.tipo_cuenta
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='7'>Cuentas de Captacion Listado General</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='7'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='5%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>NOMBRE DE LA PERSONA</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>NUM. DE CTA.</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TIPO DE CUENTA</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>FECHA APERTURA</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>TASA ACTUAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SALDO ACTUAL</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR'>codigo</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_cuenta</COL>
+					<COL TYPE='FIELD'>tipo_cuenta</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_apertura</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>tasa_otorgada</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>saldo_cuenta</COL>
+				</ROW>
+			</FIELDS>
+
+			<FOOTER>
+				<ROW>
+					<COL />
+					<COL CELLCLASS='GHC'>TOTAL MONTO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='2' NUMBERFORMATEX='2'>$this->getSum("saldo_cuenta")</COL>
+
+					<COL CELLCLASS='GHC'>CUENTAS</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='0'>$this->getRowCount()</COL>
+					<COL />
+					<COL />
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='7'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Listado de Grupos Solidarios</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>select idsocios_grupossolidarios AS 'id', nombre_gruposolidario AS
+		'nombre',
+		representante_nombrecompleto AS 'representante', vocalvigilancia_nombrecompleto AS 'vocal_vigilancia',
+		colonia_gruposolidario AS 'colonia', sucursal
+		FROM socios_grupossolidarios
+		ORDER BY sucursal, idsocios_grupossolidarios</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='1' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Listado de Grupos Solidarios</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='sucursal'>
+
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='2'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='2'>$this->getValue('sucursal')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC'>NUMERO</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL CELLCLASS='GHC'>NOMBRE DE LA REPRESENTANTE</COL>
+					<COL CELLCLASS='GHC'>NOMBRE DE LA VOCAL DE VIG.</COL>
+					<COL CELLCLASS='GHC'>COLONIA</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>id</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD'>representante</COL>
+					<COL TYPE='FIELD'>vocal_vigilancia</COL>
+					<COL TYPE='FIELD'>colonia</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='5'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

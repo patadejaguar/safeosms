@@ -1,0 +1,170 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Grupos con Movimientos</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`socios_grupossolidarios`.`idsocios_grupossolidarios`
+		AS `grupo`,
+		`socios_grupossolidarios`.`nombre_gruposolidario`
+		AS `nombre`,
+		`socios_grupossolidarios`.`representante_nombrecompleto`
+		AS `representante`,
+		`creditos_solicitud`.`numero_solicitud`
+		AS `solicitud`,
+		`creditos_solicitud`.`numero_socio`
+		AS `socio`,
+		`creditos_solicitud`.`fecha_ministracion`
+		AS `ministracion`,
+		`creditos_solicitud`.`fecha_vencimiento`
+		AS `vencimiento`,
+		`creditos_tipoconvenio`.`descripcion_tipoconvenio`
+		AS `convenio`,
+		`creditos_solicitud`.`saldo_actual`
+		AS `saldo`,
+		`operaciones_detalle`.`operacion`,
+		`operaciones_detalle`.`recibo`,
+		`operaciones_detalle`.`fecha`,
+		`operaciones_detalle`.`tipo_de_operacion`,
+		`operaciones_detalle`.`monto`,
+		`operaciones_detalle`.`detalles`
+		FROM
+		`creditos_tipoconvenio` `creditos_tipoconvenio`
+		INNER JOIN `creditos_solicitud` `creditos_solicitud`
+		ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+		= `creditos_solicitud`.`tipo_convenio`
+		INNER JOIN `socios_grupossolidarios`
+		`socios_grupossolidarios`
+		ON `creditos_solicitud`.`grupo_asociado` =
+		`socios_grupossolidarios`.
+		`idsocios_grupossolidarios`
+		INNER JOIN `operaciones_detalle` `operaciones_detalle`
+		ON `operaciones_detalle`.`documento` =
+		`creditos_solicitud`.`numero_solicitud`
+		WHERE
+		(`creditos_tipoconvenio`.`tipo_de_integracion` ='3')
+		LIMIT 0,1000</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='14' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='14'>Reporte de Grupos con Movimientos</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='14'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='14' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='GRUPO' EXPRESSION='grupo'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>GRUPO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("grupo")</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("nombre")</COL>
+					<COL CELLCLASS='GHC'>REPRESENTANTE</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue("representante")</COL>
+				</ROW>
+			</HEADER>
+			<FOOTER>
+			</FOOTER>
+
+
+			<GROUP NAME='SOLICITUD' EXPRESSION='solicitud'>
+				<HEADER>
+					<ROW>
+						<COL CELLCLASS='GHC'>SOLICITUD</COL>
+						<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("solicitud")</COL>
+						<COL CELLCLASS='GHC'>SOCIO</COL>
+						<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue("socio")</COL>
+						<COL CELLCLASS='GHC'>MINISTRACION</COL>
+						<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue("ministracion")</COL>
+					</ROW>
+					<ROW>
+						<COL CELLCLASS='GHC'>VENCIMIENTO</COL>
+						<COL TYPE='EXPRESSION' CELLCLASS='FC'>$this->getValue("vencimiento")</COL>
+						<COL CELLCLASS='GHC'>CONVENIO</COL>
+						<COL TYPE='EXPRESSION'>$this->getValue("convenio")</COL>
+						<COL CELLCLASS='GHC'>SALDO</COL>
+						<COL TYPE='EXPRESSION' CELLCLASS='FR' NUMBERFORMATEX='2'>$this->getValue("saldo")</COL>
+					</ROW>
+
+					<ROW>
+						<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='14'>
+							<XHTML>
+								<hr />
+							</XHTML>
+						</COL>
+					</ROW>
+
+				</HEADER>
+
+				<GROUP NAME='OPERACION' EXPRESSION='solicitud'>
+					<HEADER>
+						<ROW>
+							<COL CELLCLASS='GHC'>OPERACION</COL>
+							<COL CELLCLASS='GHC'>RECIBO</COL>
+							<COL CELLCLASS='GHC'>FECHA</COL>
+							<COL CELLCLASS='GHC'>TIPO</COL>
+							<COL CELLCLASS='GHC'>MONTO</COL>
+							<COL CELLCLASS='GHC'>DETALLES</COL>
+						</ROW>
+					</HEADER>
+					<FIELDS>
+						<ROW>
+
+
+							<COL TYPE='FIELD' CELLCLASS='FR'>operacion</COL>
+							<COL TYPE='FIELD' CELLCLASS='FR'>recibo</COL>
+							<COL TYPE='FIELD' CELLCLASS='FC'>fecha</COL>
+							<COL TYPE='FIELD'>tipo_de_operacion</COL>
+							<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto</COL>
+							<COL TYPE='FIELD'>detalles</COL>
+						</ROW>
+					</FIELDS>
+					<FOOTER>
+						<ROW>
+							<COL CELLCLASS='GHC' WIDTH='50%' COLSPAN='14' NUMBERFORMAT='0'>Valor</COL>
+							<COL TYPE='EXPRESSION' CELLCLASS='GHC' WIDTH='50%' COLSPAN='14'
+								NUMBERFORMAT='2'>
+							</COL>
+						</ROW>
+						<ROW>
+							<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='14'>
+								<XHTML>
+									<hr />
+								</XHTML>
+							</COL>
+						</ROW>
+						<ROW>
+						</ROW>
+					</FOOTER>
+				</GROUP>
+			</GROUP><!-- CREDITO -->
+		</GROUP><!-- GRUPO -->
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

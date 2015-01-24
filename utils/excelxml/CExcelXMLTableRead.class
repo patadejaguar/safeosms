@@ -1,0 +1,383 @@
+<?php
+
+class CExcelXMLTableRead {
+
+   var $version     = '1.1b';
+   var $author_info = 'Sergey Ovchinnikov <sergeyvo@gmail.com>, ICQ UIN 91792005';
+
+   var $location_path;  // location path to XML file
+   var $xml;            // XML doc
+
+   var $Tables;         // output Tables
+   var $Styles;         // output Styles
+
+#============================================================================
+#        READ EXCEL
+#============================================================================
+function CExcelXMLTableRead($location_path) {
+
+   $this->location_path = $location_path;
+   $this->xml = join('',file($this->location_path));
+   $this->xml = preg_replace('/xmlns="[\w\/\.:-]+"/','',$this->xml);
+   $this->xml = preg_replace('/ss:/','',$this->xml);
+   $this->xml = xmldoc($this->xml);
+
+}
+#============================================================================
+#        GetExpandedCount
+#============================================================================
+function GetExpandedCount() {
+
+   $ExpandedCount = array();   
+
+   $this->xml->xpath_init();
+   $ctx = xpath_new_context($this->xml);
+   $Worksheet = xpath_eval($ctx,'//Worksheet');
+
+   foreach($Worksheet->nodeset as $Worksheet_Node) {
+
+      $Table = $Worksheet_Node->children();
+
+      $WorksheetName = $Worksheet_Node->get_attribute('Name');
+
+      $WorksheetName = iconv("UTF-8","windows-1251",$WorksheetName);
+
+      foreach($Table as $Table_Node) {
+
+         if ($Table_Node->type==XML_ELEMENT_NODE && $Table_Node->tagname == 'Table') {
+
+           $ExpandedCount[$WorksheetName][] = $Table_Node->get_attribute('ExpandedColumnCount');
+           $ExpandedCount[$WorksheetName][] = $Table_Node->get_attribute('ExpandedRowCount');
+
+         }
+      }
+
+   }
+   return $ExpandedCount;
+}
+
+#============================================================================
+#        LOAD EXCEL TABLE
+#============================================================================
+function loadTable() {
+
+   $tables = array();   
+
+   $this->xml->xpath_init();
+   $ctx = xpath_new_context($this->xml);
+   $Worksheet = xpath_eval($ctx,'//Worksheet');
+   $count_list=0;
+
+   foreach($Worksheet->nodeset as $Worksheet_Node) {
+
+      $Table = $Worksheet_Node->children();
+
+      $WorksheetName = $Worksheet_Node->get_attribute('Name');
+
+      $WorksheetName = iconv("UTF-8","windows-1251",$WorksheetName);
+
+      $tables[$count_list]['ListName'] = $WorksheetName;   
+
+      foreach($Table as $Table_Node) {
+
+         $Row = $Table_Node->children();
+
+         if ($Table_Node->type==XML_ELEMENT_NODE && $Table_Node->tagname == 'Table') {
+
+            $tables[$count_list]['Table']['ExpandedColumnCount'] = 
+                                $Table_Node->get_attribute('ExpandedColumnCount');
+
+            $tables[$count_list]['Table']['ExpandedRowCount']    = 
+                                $Table_Node->get_attribute('ExpandedRowCount');
+
+            $tables[$count_list]['Table']['FullColumns']         = 
+                                $Table_Node->get_attribute('FullColumns');
+
+            $tables[$count_list]['Table']['FullRows']            = 
+                                $Table_Node->get_attribute('FullRows');
+
+            if ($Row) {
+
+            $array_row_index = 0;
+            $column_count    = 0;
+
+            foreach($Row as $Row_Node) {
+           
+               if ($Row_Node->type==XML_ELEMENT_NODE && $Row_Node->tagname == 'Column') {
+
+                  $Column_Index = $Row_Node->get_attribute('Index');
+                  $Column_Auto  = $Row_Node->get_attribute('AutoFitWidth');
+                  $Column_Width = $Row_Node->get_attribute('Width');
+
+                  if($Column_Index>0) $column_count = $Column_Index-1;
+
+                  $tables[$count_list]['Table']['ColumnProperties'][$column_count]['AutoFitWidth'] = $Column_Auto;
+                  $tables[$count_list]['Table']['ColumnProperties'][$column_count]['Width']        = $Column_Width;
+
+                  $column_count++; 
+
+               }
+
+               if ($Row_Node->type==XML_ELEMENT_NODE && $Row_Node->tagname == 'Row') {
+
+                  $Cell = $Row_Node->children();
+
+                  $sells=array();
+
+                  $Row_index = '';
+                  $Row_index = $Row_Node->get_attribute('Index' );
+
+                  if($Cell) {
+   
+                  $array_sell_index=0;
+
+                  foreach($Cell as $Cell_Node) {
+
+                     if ($Cell_Node->type==XML_ELEMENT_NODE && $Cell_Node->tagname == 'Cell')  {
+
+                        $Sel_index   = $Cell_Node->get_attribute('Index');
+                        $Sel_colspan = $Cell_Node->get_attribute('MergeAcross');
+                        $Sel_rowspan = $Cell_Node->get_attribute('MergeDown');
+                        $Sel_StyleID = $Cell_Node->get_attribute('StyleID');
+
+                        $Data=$Cell_Node->children();
+
+                        $cell_content="";
+
+                        if($Data) {
+
+                           foreach($Data as $Data_Node) {
+
+                              if ($Data_Node->type==XML_ELEMENT_NODE && $Data_Node->tagname == 'Data')  {  
+
+                                 $Data_Node_Content = $Data_Node->children();
+
+                                 $Data_Type = $Data_Node->get_attribute('Type');
+
+                                 $cell_content = $Data_Node_Content[0]->content;
+                                 $cell_content = iconv("UTF-8","windows-1251",$cell_content);
+
+                              }
+                           }
+                        }
+
+                        if ($Row_index) {
+
+                          $sells['Index'] = $Row_index-1; 
+    
+                        }
+   
+                        $new_row  = array();
+
+                        if ($cell_content) 
+                           $new_row = array_merge($new_row, array('Content'=>$cell_content));                      
+
+                        if ($Sel_index)
+                           $new_row = array_merge($new_row, array('Index'=>$Sel_index-1)); 
+
+                        if ($Sel_colspan)
+                           $new_row = array_merge($new_row, array('Colspan'=>$Sel_colspan+1)); 
+
+                        if ($Sel_rowspan)
+                           $new_row = array_merge($new_row, array('Rowspan'=>$Sel_rowspan+1)); 
+
+                        if ($Sel_StyleID)
+                           $new_row = array_merge($new_row, array('StyleID'=>$Sel_StyleID)); 
+
+                        if ($Data_Type)
+                           $new_row = array_merge($new_row, array('Type'=>$Data_Type)); 
+
+                        if ($Sel_index) {
+                           $array_sell_index = $Sel_index-1;
+                        }
+
+                        $sells[$array_sell_index] = $new_row;
+
+                        if ($Sel_colspan) {
+                           $array_sell_index = $array_sell_index + $Sel_colspan;
+                        }
+
+                        $array_sell_index++;
+
+                     }
+                  } // foreach
+                  } // if
+
+                  if ($Row_index) {
+                        $array_row_index = $Row_index-1;
+                  }
+
+                  $tables[$count_list]['Table']['Rows'][$array_row_index]['Height'] = $Row_Node->get_attribute('Height');
+                  $tables[$count_list]['Table']['Rows'][$array_row_index]['AutoFitHeight'] = $Row_Node->get_attribute('AutoFitHeight');
+
+                  $tables[$count_list]['Table']['Rows'][$array_row_index]['Cols'] = $sells;
+
+                  if ($Row_colspan) {
+                      $array_row_index = $array_row_index + $Row_colspan;
+                  }
+
+                  $array_row_index++;
+
+               }
+            }
+            }
+         }
+      }
+
+      $count_list++;
+   }
+
+   $this->Tables = $tables;
+
+}
+#============================================================================
+#        GET TABLES
+#============================================================================
+function getTables() {
+
+   return $this->Tables;
+}
+#============================================================================
+#        READ EXCEL STYLES
+#============================================================================
+function loadStyles(){ 
+
+   $styles = array();   
+
+   $this->xml -> xpath_init();
+   $ctx = xpath_new_context($this->xml);
+   $Styles = xpath_eval($ctx,'//Styles');
+
+   foreach($Styles->nodeset as $Styles_Node) {
+
+      $Style = $Styles_Node->children();
+
+      foreach($Style as $Style_Node) {
+
+         if ($Style_Node->type==XML_ELEMENT_NODE) {
+
+            $style_name = $Style_Node->get_attribute('ID');
+
+            $Stl = $Style_Node->children();
+
+            foreach($Stl as $Stl_Node) {
+
+               if ($Stl_Node->type==XML_ELEMENT_NODE) {
+
+                   $style_tagname = $Stl_Node->tagname;
+
+                   switch ($style_tagname) {
+
+                      case 'Font':
+                         $atribs = array('FontName', 'Bold', 'Italic', 'Underline', 'CharSet', 'Color', 'Size');
+                         $styles[$style_name][$style_tagname] = $this->addStyleArtib($atribs, $styles[$style_name][$style_tagname], $Stl_Node);
+                         break;
+
+                      case 'Alignment':
+                         $atribs = array('Horizontal', 'Vertical', 'Indent');
+                         $styles[$style_name][$style_tagname] = $this->addStyleArtib($atribs, $styles[$style_name][$style_tagname], $Stl_Node); 
+                         break;
+
+                      case 'Interior':
+                         $atribs = array('Color', 'Pattern');
+                         $styles[$style_name][$style_tagname] = $this->addStyleArtib($atribs, $styles[$style_name][$style_tagname], $Stl_Node); 
+                         break;
+
+                      case 'Borders':
+                         $styles[$style_name][$style_tagname] ='';
+                         $atribs = array('LineStyle', 'Weight');
+                         $styles[$style_name][$style_tagname] = $this->addStyleBorders('Position', $atribs, $Stl_Node, $styles[$style_name][$style_tagname]); 
+                         break;
+
+                      case 'NumberFormat':
+                         $atribs = array('Format');
+                         $styles[$style_name][$style_tagname] = $this->addStyleArtib($atribs, $styles[$style_name][$style_tagname], $Stl_Node); 
+                         break;
+
+                      case 'Protection':
+                         $atribs = array();
+                         $styles[$style_name][$style_tagname] = $this->addStyleArtib($atribs, $styles[$style_name][$style_tagname], $Stl_Node); 
+                         break;
+
+                   }                         
+               }
+            }
+         }
+      }
+   }
+
+   $this->Styles = $styles;
+
+}
+#============================================================================
+#        GET TABLES
+#============================================================================
+function getStyles() {
+
+   return $this->Styles;
+}
+
+#============================================================================
+#     ADD STYLE BORDERS
+#============================================================================
+function addStyleBorders($PosAtrib, $AtribArray, $Border_Node, $arrayStyle ){
+
+   $borders = $Border_Node->children();
+
+   if($borders) {  // if tag BORDERS a have children
+
+      foreach($borders as $borders_Node) {
+
+         if ($borders_Node->type==XML_ELEMENT_NODE) {
+
+            $border_Position  = $borders_Node->get_attribute($PosAtrib);
+
+            if ($border_Position) {
+               $AtribArrayData=array();
+               for($i=0; $i<count($AtribArray); $i++) {         
+
+                  $AtribArrayData[$i] = $borders_Node->get_attribute($AtribArray[$i]);
+                  if ($AtribArrayData[$i]) 
+                  $arrayStyle[$border_Position][$AtribArray[$i]] = $AtribArrayData[$i];
+
+               }
+            }
+         }                           
+      }
+   }
+
+   return $arrayStyle;
+}
+
+#============================================================================
+#     ADD ATRIB 
+#============================================================================
+function addStyleArtib($AtribNameAray, $array, $XMLnode) {
+
+   for ($i=0; $i<count($AtribNameAray); $i++) {
+
+     $array = $this->addStyleArtibNode($AtribNameAray[$i], $array, $XMLnode);
+
+   }
+
+   return $array;
+}
+#============================================================================
+#     ADD ATRIB NODE
+#============================================================================
+function addStyleArtibNode($AtribName, $array, $XMLnode) {
+
+   $get_atrib = $XMLnode->get_attribute($AtribName);
+
+   if ($get_atrib)  $array[$AtribName] = $get_atrib;
+
+   return $array;
+}
+
+#============================================================================
+#     /END CLASS
+#============================================================================
+
+}
+
+?>

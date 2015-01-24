@@ -1,0 +1,322 @@
+<?php
+
+include_once('CExcelXMLHTMLTable.class');
+
+class CExcelXMLTableShowHTML {
+
+   var $version     = '1.0a';
+   var $author_info = 'Sergey Ovchinnikov <sergeyvo@gmail.com>, ICQ UIN 91792005';
+
+   var $Styles;
+   var $StylesHTML;
+
+   var $Tables;
+   var $TablesHTML;
+
+   var $HTMLTable;
+
+   var $active_styles =  array (
+
+		'font_size'   => 'on',
+		'font_family' => 'on',
+		'font_color'  => 'on',
+		'font_bold'   => 'on',
+		'font_italic'    => 'on',
+		'font_underline' => 'on',
+
+		'text_align'  => 'on',
+		'text_valign' => 'on',
+
+		'bg_color'  => 'on',
+
+		'column_width' => 'on',
+		'row_height'   => 'on',
+
+//		'border_top'    => 'on',
+//		'border_right'  => 'on',
+//		'border_bottom' => 'on',
+//		'border_left'   => 'on',
+
+		'number_format' => 'on'
+
+                         );
+
+   var $default_styles =  array (
+
+		'table_border'      => 1,
+		'table_bordercolor' => "#C0C0C0",
+		'table_cellspacing' => 0,
+		'table_cellpadding' => 0,
+		'table_style'       => "border-collapse:collapse;",
+
+		'font_size'   => '10',
+		'font_family' => 'Arial Cyr', 
+		'font_color'  => '#000000',
+		'font_bold'   => '',
+		'font_italic'    => '',
+		'font_underline' => '',
+
+		'text_align'  => '',
+		'text_valign' => '',
+
+		'bg_color'  => '',
+
+		'column_width' => 64,
+		'row_height'   => 15,
+
+                         );
+
+
+#===============================================================================================
+#        CExcelXMLTableShowHTML
+#===============================================================================================
+function CExcelXMLTableShowHTML() {
+
+   $this->HTMLTable = new CExcelXMLHTMLTable();
+}
+#===============================================================================================
+#        SET ACTIVE STYLES
+#===============================================================================================
+function setActiveStyles($active_styles) {
+
+   foreach($active_styles as $key=>$property) {
+
+      $this->active_styles[$key] = $property;
+
+   }
+
+}
+#===============================================================================================
+#        SET DEFAULT STYLES
+#===============================================================================================
+function setDefaultStyles($default_styles) {
+
+   foreach($default_styles as $key=>$property) {
+
+      $this->default_styles[$key] = $property;
+
+   }
+
+}
+#===============================================================================================
+#        SET STYLES
+#===============================================================================================
+function setStyles($styles) {
+
+   $this->Styles = $styles;
+}
+#===============================================================================================
+#        SET TABLES
+#===============================================================================================
+function setTables($tables) {
+
+   $this->Tables = $tables;
+}
+#===============================================================================================
+#        GEN STYLE SHEET
+#===============================================================================================
+function genStyleSheet($styles) {
+
+   $this->Styles = $styles;
+   $active  = $this->active_styles;
+   $default = $this->default_styles;
+
+   $sHTML.= "\n\n<STYLE>\n";
+
+
+   if (strval($default['font_size'])   =='')  $default['font_size']   = $this->Styles['Default']['Font']['Size'];
+   if (strval($default['font_family']) =='')  $default['font_family'] = $this->Styles['Default']['Font']['FontName'];
+   if (strval($default['font_color'])  =='')  $default['font_color']  = $this->Styles['Default']['Font']['Color'];
+   if (strval($default['font_bold'])   =='')  $default['font_bold'] = $this->Styles['Default']['Font']['Bold'];
+
+   if (strval($default['text_align'])  =='')  $default['text_align']  = $this->Styles['Default']['Alignment']['Horizontal'];
+//   if (strval($default['text_valign']) =='')  $default['text_valign'] = $this->Styles['Default']['Alignment']['Vertical'];
+
+   if (strval($default['background']) =='')  $default['background'] = $this->Styles['Default']['Interior']['Color'];
+
+   if (strval($default['border_bottom'])=='')  $default['border_bottom'] = $this->Styles['Default']['Borders']['Bottom']['Weight'];
+   if (strval($default['border_left'])  =='')  $default['border_left']   = $this->Styles['Default']['Borders']['Left']['Weight'];
+   if (strval($default['border_right']) =='')  $default['border_right']  = $this->Styles['Default']['Borders']['Right']['Weight'];
+   if (strval($default['border_top'])   =='')  $default['border_top']    = $this->Styles['Default']['Borders']['Top']['Weight'];
+
+
+   $defHTML = $this->createStyle($default);
+
+   if ($defHTML) {
+
+      $sHTML.= "TD {\n";
+      $sHTML.= $defHTML;
+      $sHTML.= "}\n";
+   }
+
+
+   foreach($this->Styles as $style_name=>$style) {    	
+
+      if ($active['font_size']   =='on')  $st['font_size']   = $style['Font']['Size'];
+      if ($active['font_family'] =='on')  $st['font_family'] = $style['Font']['FontName'];
+      if ($active['font_color']  =='on')  $st['font_color']  = $style['Font']['Color'];
+      if ($active['font_bold'] =='on')    $st['font_bold'] = $style['Font']['Bold'];
+
+      if ($active['font_italic']  =='on')  $st['font_italic']  = $style['Font']['Italic'];
+      if ($active['font_underline'] =='on')    $st['font_underline'] = $style['Font']['Underline'];
+
+
+      if ($active['text_align']  =='on')  $st['text_align']  = $style['Alignment']['Horizontal'];
+      if ($active['text_valign'] =='on')  $st['text_valign'] = $style['Alignment']['Vertical'];
+
+      if ($active['background'] =='on')  $st['background'] = $style['Interior']['Color'];
+
+      if ($active['border_bottom']=='on')  $st['border_bottom'] = $style['Borders']['Bottom']['Weight'];
+      if ($active['border_left']  =='on')  $st['border_left']   = $style['Borders']['Left']['Weight'];
+      if ($active['border_right'] =='on')  $st['border_right']  = $style['Borders']['Right']['Weight'];
+      if ($active['border_top']   =='on')  $st['border_top']    = $style['Borders']['Top']['Weight'];
+
+      $sBody = $this->createStyle($st);
+
+      if ($sBody!='') {
+ 	
+          $sHTML.= ".".$style_name." {\n";
+          $sHTML.= $sBody;
+          $sHTML.= "}\n";
+
+      }
+
+   }
+
+   $sHTML.= "</STYLE>\n\n";
+
+   $this->StylesHTML = $sHTML;
+
+}
+
+#===============================================================================================
+#        CREATE STYLE
+#===============================================================================================
+function createStyle($style) {
+
+      $sBody='';
+
+
+      if (strval($style['font_size'])!='')
+         $sBody.= "	font-size: ".$style['font_size']."px;\n";
+
+      if (strval($style['font_family'])!='')
+         $sBody.= "	font-family: ".$style['font_family'].";\n";
+
+      if (strval($style['font_color'])!='')
+         $sBody.= "	color: ".$style['font_color'].";\n";
+
+      if (strval($style['font_bold'])=='1')
+         $sBody.= "	font-weight: bold;\n";
+
+
+      if (strval($style['font_italic'])!='')
+         $sBody.= "	font-style: italic;\n";
+
+      if (strval($style['font_underline'])!='')
+         $sBody.= "	text-decoration: underline;\n";
+
+
+
+      if (strval($style['text_align'])!='') 
+         $sBody.= "	text-align: ".$style['text_align'].";\n";
+
+      if (strval($style['text_valign'])!='')
+         $sBody.= "	vertical-align: ".$style['text_valign'].";\n";
+
+
+
+      if (strval($style['background'])!='')
+         $sBody.= "	background: ".$style['background'].";\n";
+  
+
+      if (strval($style['border_top'])!='')
+         $sBody.= "	border-top: ".$style['border_top']."pt solid windowtext;\n";
+
+      if (strval($style['border_right'])!='')
+         $sBody.= "	border-right: ".$style['border_right']."pt solid windowtext;\n";
+
+      if (strval($style['border_bottom'])!='')
+         $sBody.= "	border-bottom: ".$style['border_bottom']."pt solid windowtext;\n";
+
+      if (strval($style['border_left'])!='')
+         $sBody.= "	border-left: ".$style['border_left']."pt solid windowtext;\n";
+
+      return $sBody;
+
+}
+#===============================================================================================
+#        SHOW HTML STYLE SHEET
+#===============================================================================================
+function showHTMLStyleSheet($styles) {
+
+   $this->Styles = $styles;
+
+   $this->genStyleSheet($styles);
+   echo $this->StylesHTML;
+
+}
+
+#===============================================================================================
+#        GEN EXCEL TABLE
+#===============================================================================================
+function genExcelTable($tables) {
+
+
+
+}
+
+#===============================================================================================
+#        SHOW HTML EXCEL TABLE
+#===============================================================================================
+function showHTMLExcelTable() {
+
+//   $this->Tables = $tables;
+
+   $td_properties = array(
+                        'colspan' => 'Colspan',
+                        'rowspan' => 'Rowspan',
+//                        'class'   => 'StyleID',
+                        'content' => 'Content',
+                 );
+
+   $tr_properties = array(
+                        'height' => 'Height',
+                 );
+
+   $this->HTMLTable->setTDProperties($td_properties);
+   $this->HTMLTable->setTRProperties($tr_properties);
+
+   $this->HTMLTable->Styles = $this->Styles;
+   $this->HTMLTable->active_styles  = $this->active_styles;
+   $this->HTMLTable->default_styles = $this->default_styles;
+
+   echo "<!----------------------------------------------------------------------------------->\n";
+   echo "<!--------------------------  EXCEL TABLES ------------------------------------------>\n";
+   echo "<!----------------------------------------------------------------------------------->\n";
+   for ($i=0; $i<count($this->Tables); $i++) {
+
+      if ($this->Tables[$i]['Table']['Rows']) { 
+
+         echo "<B>".$this->Tables[$i]['ListName']."</B>";
+         $this->HTMLTable->Table = $this->Tables[$i]['Table'];
+
+         $this->HTMLTable->setRangeRows($this->Tables[$i]['Table']['ExpandedRowCount']);
+         $this->HTMLTable->setRangeCols($this->Tables[$i]['Table']['ExpandedColumnCount']);
+         $this->HTMLTable->showTable();
+         echo "<BR>\n";
+      }
+                                              
+   }
+   echo "<!----------------------------------------------------------------------------------->\n";
+   echo "<!--------------------------  /EXCEL TABLES ----------------------------------------->\n";
+   echo "<!----------------------------------------------------------------------------------->\n\n\n";
+
+}
+#===============================================================================================
+#  / class        
+#===============================================================================================
+
+}
+
+?>

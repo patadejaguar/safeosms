@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Catalogo de Convenios de Creditos(Subproductos)</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL> SELECT
+		`creditos_tipoconvenio`.`idcreditos_tipoconvenio` AS
+		`codigo`,
+		`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS
+		`descripcion`,
+		`creditos_modalidades`.`descripcion_modalidades` AS
+		`modalidad`,
+		(`creditos_tipoconvenio`.`interes_normal` * 100) AS 'tasa_normal',
+		(`creditos_tipoconvenio`.`interes_moratorio` * 100) AS 'tasa_moratoria',
+		(`creditos_tipoconvenio`.`tasa_ahorro` * 100) AS 'porcentaje_ahorro',
+		(`creditos_tipoconvenio`.`tasa_iva` * 100) AS 'porcentaje_iva'
+		FROM
+		`creditos_tipoconvenio` `creditos_tipoconvenio`
+		INNER JOIN `creditos_modalidades`
+		`creditos_modalidades`
+		ON `creditos_tipoconvenio`.`tipo_de_credito` =
+		`creditos_modalidades`.`idcreditos_modalidades` ORDER BY
+		`creditos_tipoconvenio`.`idcreditos_tipoconvenio`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='7'>Catalogo de Convenios de
+					Creditos(Subproductos)</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='7'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='35%'>DESCRIPCION</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>MODALIDAD</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TASA NORMAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TASA MORATORIA</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>PORCENTAJE AHORRO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>PORCENTAJE IVA</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>codigo</COL>
+					<COL TYPE='FIELD'>descripcion</COL>
+					<COL TYPE='FIELD'>modalidad</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='3'>tasa_normal</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='3'>tasa_moratoria</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='3'>porcentaje_ahorro</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='3'>porcentaje_iva</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='7'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='7'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

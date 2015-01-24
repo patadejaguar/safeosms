@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>REPORTE DE GRUPOS SOLIDARIOS EN CARTERA VENCIDA</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT socios_grupossolidarios.nombre_gruposolidario,
+		socios_grupossolidarios.colonia_gruposolidario AS 'colonia',
+		socios_grupossolidarios.representante_numerosocio,
+		socios_grupossolidarios.representante_nombrecompleto,
+		creditos_solicitud.numero_solicitud, creditos_solicitud.fecha_ministracion AS
+		'Ministrado', creditos_solicitud.fecha_vencimiento AS 'Vencimiento',
+		creditos_solicitud.fecha_ultimo_mvto AS 'ultima_operacion',
+		creditos_solicitud.saldo_actual, creditos_solicitud.periocidad_de_pago,
+		DATEDIFF(CURDATE(), creditos_solicitud.fecha_ultimo_mvto) AS 'dias_inactivos'
+		FROM socios_grupossolidarios, creditos_solicitud WHERE
+		socios_grupossolidarios.idsocios_grupossolidarios=creditos_solicitud.grupo_asociado
+		AND socios_grupossolidarios.idsocios_grupossolidarios!=99 AND
+		creditos_solicitud.saldo_actual>0</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='11'>REPORTE DE GRUPOS SOLIDARIOS EN
+					CARTERA VENCIDA</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='11'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='15%'>NOMBRE DEL GRUPO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>COLONIA</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOC REP</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>NOMBRE COMPLETO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>MINISTRADO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>VENCIMIENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>ULTIMO MVTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SALDO ACTUAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>PERIOCIDAD</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>DIAS INACTIVOS</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>nombre_gruposolidario</COL>
+					<COL TYPE='FIELD'>colonia</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>representante_numerosocio</COL>
+					<COL TYPE='FIELD'>representante_nombrecompleto</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_solicitud</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>ministrado</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>vencimiento</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>ultima_operacion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>saldo_actual</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>periocidad_de_pago</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>dias_inactivos</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='11'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='11'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

@@ -1,0 +1,197 @@
+.section {
+	margin: 0 0 20 0px;
+}
+
+.menu {
+	visibility: hidden;
+	z-index: 5;
+	position: absolute;
+	left: 0px;
+	top: 65px;
+	filter: alpha(opacity = 100);
+	-moz-opacity: 1;
+}
+
+.menurow {
+	border-top: #999999 1px solid;
+	border-bottom: #999999 1px solid;
+	background-color: #44637A;
+	color: #F8F9B3;
+	height: 23px;
+	width: 200px;
+}
+
+.link {
+	font-family: Tahoma, verdana, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-size: 12px;
+}
+
+.t {
+	font-family: Tahoma, verdana, arial, helvetica, sans-serif;
+	color: #ffffff;
+	font-weight: bold;
+	text-decoration: none;
+	font-size: 12px;
+	margin-left: 5px;
+	margin-top: 1px
+}
+
+.n {
+	font-family: Tahoma, verdana, arial, helvetica, sans-serif;
+	color: #ffffff;
+	text-decoration: none;
+	font-size: 12px;
+	margin-left: 5px;
+	margin-top: 1px
+}
+
+.navicon {
+	background-repeat: no-repeat;
+	background-position: 2px 4px;
+	padding-left: 14px !important;
+}
+
+#fs {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#fs :hover,#fs :focus,#fs :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#cnf {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#cnf :hover,#cnf :focus,#cnf :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#usr {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#usr :hover,#usr :focus,#usr :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#ad {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#ad :hover,#ad :focus,#ad :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#ca {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#ca :hover,#ca :focus,#ca :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#rp1 {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#rp1 :hover,#rp1 :focus,#rp1 :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#rp2 {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#rp2 :hover,#rp2 :focus,#rp2 :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#rp3 {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#rp3 :hover,#rp3 :focus,#rp3 :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#rp4 {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#rp4 :hover,#rp4 :focus,#rp4 :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#user {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#user :hover,#user :focus,#user :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#role {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#role :hover,#role :focus,#role :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#func {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#func :hover,#func :focus,#func :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#sg {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#sg :hover,#sg :focus,#sg :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#sys {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#sys :hover,#sys :focus,#sys :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#prod {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#prod :hover,#prod :focus,#prod :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#vsum {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#vsum :hover,#vsum :focus,#vsum :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#vdet {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#vdet :hover,#vdet :focus,#vdet :active {
+	background-image: url(../images/arrow.gif) !important;
+}
+
+#vnew {
+	background-image: url(../images/plus.gif) !important;
+}
+
+#vnew :hover,#vnew :focus,#vnew :active {
+	background-image: url(../images/arrow.gif) !important;
+}

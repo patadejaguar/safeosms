@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de catalogo</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`contable_catalogo`.`digitoagrupador` AS
+		`nivel`,
+		setCuentaFmt(`contable_catalogo`.`numero`) AS 'numero',
+		`contable_catalogo`.`nombre`,
+		`contable_catalogotipos`.`nombre_del_tipo` AS
+		`tipo`,
+		`contable_centrodecostos`.`nombre_centrodecostos` AS
+		`centro_de_costos`
+		FROM
+		`contable_centrodecostos` `contable_centrodecostos`
+		INNER JOIN `contable_catalogo` `contable_catalogo`
+		ON `contable_centrodecostos`.
+		`idcontable_centrodecostos` = `contable_catalogo`.
+		`centro_de_costo`
+		INNER JOIN `contable_catalogotipos`
+		`contable_catalogotipos`
+		ON `contable_catalogotipos`.
+		`idcontable_catalogotipos` = `contable_catalogo`
+		.`tipo`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Reporte de catalogo</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>NIVEL</COL>
+					<COL CELLCLASS='GHC'>NUMERO</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL CELLCLASS='GHC'>TIPO</COL>
+					<COL CELLCLASS='GHC'>CENTRO DE COSTOS</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC' WIDTH='5%'>nivel</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC' WIDTH='15%'>numero</COL>
+					<COL TYPE='FIELD' WIDTH='44%'>nombre</COL>
+					<COL TYPE='FIELD' WIDTH='18%'>tipo</COL>
+					<COL TYPE='FIELD' WIDTH='18%'>centro_de_costos</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='5'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

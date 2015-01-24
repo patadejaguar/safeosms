@@ -1,0 +1,15 @@
+#profile{background-color:#32394A;border-bottom:1px solid #242A37;font-family:Arial, Helvetica, sans-serif;height:58px;overflow:hidden;}
+.profile_info{color:#C4CCDA;font-size:14px;left:68px;position:relative;text-shadow:0 0 0 #000;top:-49px;}
+.slidemenu{-webkit-box-shadow:3px 0 5px -2px #32394A;-webkit-overflow-scrolling:touch;background-color:#262C3A;box-shadow:3px 0 5px -2px #32394A;display:none;height:100%;left:0;overflow:auto;position:absolute;top:0;width:0;z-index:2147483647;}
+.slidemenu h3{background:linear-gradient(top,rgba(67,74,94,1) 0 100%;border-bottom:solid #242A37 1px;border-top:solid #4E5567 1px;color:#8C919F;font-family:Arial, Helvetica, sans-serif;font-size:12px;margin:0;padding:4px 0 4px 10px;text-shadow:0 1px 0 #272D39;}
+.slidemenu ul{margin:0;padding:0;width:inherit;}
+.slidemenu ul li{list-style-type:none;margin:0;}
+.slidemenu ul li a:hover,.slidemenu ul li a:active{background-color:#32394A;}
+.slidemenu ul li a:link,.slidemenu ul li a:visited{border-bottom:1px #191D27 solid;border-top:1px #3E4555 solid;color:#DBE0E8;display:block;font-family:Arial, Helvetica, sans-serif;font-size:14px;padding:10px 0 10px 10px;text-decoration:none;text-shadow:0 1px 1px #212631;width:230px;}
+.slidemenu ul li img{margin-right:8px;}
+.slidemenu_btn .ui-btn-inner{border-top:0;}
+.slidemenu_btn .ui-icon{-moz-border-radius:0;-webkit-border-radius:0;border-radius:0;margin:4px 1px 2px 2px !important;width:25px;}
+.slidemenu_btn .ui-icon,.ui-icon-searchfield::after{background:none;}
+.slidemenu_btn .ui-icon-shadow{-moz-box-shadow:0 0 0 rgba(255,255,255,0);-webkit-box-shadow:0 0 0 rgba(255,255,255,0);box-shadow:0 0 0 rgba(255,255,255,0);}
+.slidemenu_btn.ui-btn-icon-notext{width:30px;}
+.ui-icon-smico{background-image:url(../images/smico.png)!important;}

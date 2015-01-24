@@ -1,0 +1,8 @@
+-- Sistema
+Se agregó el core.region.inc.php que contendrá las reglas para evaluar IDs de cada país.
+- la function getRFC (ID Fiscal) ahora con default value, evaluate value y raw value.
+- Se corrige y mejora avales.
+- Se corrige y mejora Familiares.
+
+-- Persona
+

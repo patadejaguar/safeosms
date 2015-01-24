@@ -1,0 +1,48 @@
+// *****************************************************************************
+// *  slGrid 2.0                                                               *
+// *  http://slgrid.senzalimiti.sk                                             *
+// *                                                                           *
+// *  Copyright (c) 2006 Senza Limiti s.r.o.                                   *
+// *                                                                           *
+// *  This program is free software; you can redistribute it and/or            *
+// *  modify it under the terms of the GNU General Public License              *
+// *  as published by the Free Software Foundation; either version 2           *
+// *  of the License, or (at your option) any later version.                   *
+// *                                                                           *
+// *  This program is distributed in the hope that it will be useful,          *
+// *  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+// *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+// *  GNU General Public License for more details.                             *
+// *                                                                           *
+// *  For commercial licenses please contact Senza Limiti at                   *
+// *  - http://www.senzalimiti.sk                                              *
+// *  - info(at)senzalimiti.sk                                                 *
+// *****************************************************************************
+
+ChangeLog
+
+
+2.0
+
+- Increased performance for large tables significantly (from 4 seconds on each Ajax call for a 10,000 row table to 0,2 seconds).
+- The grid is now able to fall back to GET parameters if JavaScript is disabled (VIEW mode only).
+- Added support for joins of multiple tables.
+- Changed the hover behaviour when over table headers for sorting.
+- Replaced Xajax with HTML_Ajax - you can now use Javascript in the table.
+- Rewrote the Excel export to be faster and more compatible.
+- Replaced the functions that mark columns as "email", "url" or "image" with a more flexible plugin-based system.
+- Cleaned up HTML.
+- Added "Cancel" link when editing rows.
+Backwards incompatible changes:
+- Placed all style information into external CSS styles, removed therefore all style functions.
+- Removed functions to get and set the selected row - can be readded later based on user feedback.
+
+
+2.0rc1
+- Fixed "all" plugin.
+- Added "field" as argument to plugins.
+- Fixed display of accents/umlauts with HTML_AJAX.
+
+2.05beta - Bug Fixes
+- Hacked HTML_AJAX - there seems to be an incompatiblity with PHP 4.x.
+- Fixed support for WHERE clause in SetSqlSelect().

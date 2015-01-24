@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Movimientos por fechas</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT operaciones_mvtos.sucursal, operaciones_recibos.tipo_pago AS
+		'tipo_de_pago', operaciones_mvtos.socio_afectado AS 'numero_de_socio',
+		CONCAT(socios_general.apellidopaterno, ' ', socios_general.apellidomaterno, '
+		',socios_general.nombrecompleto) AS 'nombre_completo',
+		operaciones_tipos.descripcion_operacion AS 'tipo_de_operacion',
+		operaciones_mvtos.fecha_afectacion AS 'fecha',
+		`operaciones_mvtos`.`idoperaciones_mvtos` AS `operacion`,
+		`operaciones_mvtos`.`recibo_afectado` AS `recibo`,
+		`operaciones_recibos`.`recibo_fiscal` AS `fiscal`,
+		operaciones_mvtos.docto_afectado AS 'documento',
+		operaciones_mvtos.afectacion_real AS 'monto', operaciones_mvtos.detalles AS
+		'observaciones' FROM `socios_general` `socios_general` INNER JOIN
+		`operaciones_mvtos` `operaciones_mvtos` ON `socios_general`.`codigo` =
+		`operaciones_mvtos`.`socio_afectado` INNER JOIN `operaciones_recibos`
+		`operaciones_recibos` ON `operaciones_recibos`.`idoperaciones_recibos` =
+		`operaciones_mvtos`.`recibo_afectado` INNER JOIN `operaciones_tipos`
+		`operaciones_tipos` ON `operaciones_tipos`.`idoperaciones_tipos` =
+		`operaciones_mvtos`.`tipo_operacion` WHERE
+		operaciones_mvtos.fecha_afectacion>='2008-4-1' AND operaciones_mvtos.sucursal
+		= 'matriz' AND `operaciones_mvtos`.`tipo_operacion` = 110 ORDER BY
+		`operaciones_mvtos`.`sucursal`, `operaciones_recibos`.`fecha_operacion`,
+		`operaciones_recibos`.`idoperaciones_recibos`,
+		`operaciones_mvtos`.`idoperaciones_mvtos`
+
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='12'>Reporte de Movimientos por fechas</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='12'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='12' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SUCURSAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>PAGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='16%'>OPERACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>FECHA</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'># OP.</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>RECIBO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>FISCAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>DOCUMENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>MONTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>OBSERVACIONES</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>sucursal</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>tipo_de_pago</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_de_socio</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD'>tipo_de_operacion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>operacion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>recibo</COL>
+					<COL TYPE='FIELD'>fiscal</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>documento</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto</COL>
+					<COL TYPE='FIELD'>observaciones</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='2'>TOTALES</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getRowCount()</COL>
+					<COL />
+					<COL />
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='2'>$this->getSum("monto")</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='12'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

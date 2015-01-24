@@ -1,0 +1,26 @@
+{
+	"table" : "general_menu",
+	"key" : "idgeneral_menu",
+	"action" : "translate",
+	"target" : "menu_title", 
+   "record_0":{
+      "idgeneral_menu":"1024",
+      "menu_title":"Cuenta Corriente.- carga Masiva", "translate":"Saving.- Batch Import"
+   },
+   "record_1":{
+      "idgeneral_menu":"9002",
+      "menu_title":"Alta a Cuentas Bancarias", "translate":"Add Bank Accounts"
+   },
+   "record_2":{
+      "idgeneral_menu":"1050",
+      "menu_title":"Catalogos de Tesoreria",   "Treasury Catalogs"
+   },
+   "record_3":{
+      "idgeneral_menu":"1051",
+      "menu_title":"Catalogos de Equivalencias",   "Equivalency Catalog"
+   },
+   "record_4":{
+      "idgeneral_menu":"1050",
+      "menu_title":"Catalogos de Monedas",   "Currency catalog"
+   },
+}

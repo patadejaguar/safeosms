@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Intereses Devengados</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`tmp_intereses_devengados`.`socio`,
+		`tmp_intereses_devengados`.`nombre`,
+		`tmp_intereses_devengados`.`solicitud`,
+		`tmp_intereses_devengados`.`modalidad`,
+		`tmp_intereses_devengados`.`ministracion`,
+		`tmp_intereses_devengados`.`fecha_calculo`,
+		`tmp_intereses_devengados`.`saldo_al_corte`,
+		`tmp_intereses_devengados`.`interes_devengado`,
+		`tmp_intereses_devengados`.`dias_devengados`,
+		`tmp_intereses_devengados`.`observaciones`
+		FROM
+		`tmp_intereses_devengados` `tmp_intereses_devengados`
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='10' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='10'>Reporte de Intereses Devengados</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='10'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='10' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='modalidad'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>MODALIDAD</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>MINISTRACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>FECHA CALCULO</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>SALDO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>DIAS</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>INTERES</COL>
+					<!-- <COL CELLCLASS='GHC' WIDTH='15%' >OBSERVACIONES</COL> -->
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>socio</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>solicitud</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>modalidad</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>ministracion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_calculo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>saldo_al_corte</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>dias_devengados</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>interes_devengado</COL>
+					<!-- <COL TYPE='FIELD' >observaciones</COL> -->
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='10'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL></COL>
+					<COL></COL>
+					<COL></COL>
+
+					<COL CELLCLASS='GHC' WIDTH='25%' COLSPAN='2'>Total Capital</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' WIDTH='25%' NUMBERFORMATEX='2'>$this->getSum("saldo_al_corte")</COL>
+					<COL CELLCLASS='GHC' WIDTH='25%' COLSPAN='2'>Interes Devengado</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' WIDTH='25%' NUMBERFORMATEX='2'>$this->getSum("interes_devengado")</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='10'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

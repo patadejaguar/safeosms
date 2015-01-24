@@ -1,0 +1,15 @@
+{
+	"table" : "eacp_config_bases_de_integracion_miembros",
+	"key" : "ideacp_config_bases_de_integracion_miembros",
+	"action" : "insert",
+	"target" : "", 
+	
+   "record_0":{
+      "ideacp_config_bases_de_integracion_miembros":"1",
+      "codigo_de_base":"2100",
+      "miembro":"420",
+      "afectacion":"1.0000",
+      "descripcion_de_la_relacion":"INT. DEV. NORMAL:- VIGENTES",
+      "subclasificacion":"0"
+   }
+}

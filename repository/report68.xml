@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Tasa de Captacion</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		CONCAT('% ', FORMAT((`captacion_tasas`.`tasa_efectiva` * 100), 2)) AS `tasa`,
+		`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo_de_cuenta`,
+		FORMAT(`captacion_tasas`.`monto_mayor_a`, 2) AS 'montos_mayores_a',
+		FORMAT(`captacion_tasas`.`monto_menor_a`, 2) AS 'montos_menores_a',
+		`captacion_tasas`.`dias_mayor_a`,
+		`captacion_tasas`.`dias_menor_a`
+		FROM
+		`captacion_tasas` `captacion_tasas`
+		INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos`
+		ON `captacion_tasas`.`modalidad_cuenta` = `captacion_cuentastipos`.
+		`idcaptacion_cuentastipos`
+		ORDER BY modalidad_cuenta ASC, monto_mayor_a ASC, dias_mayor_a ASC</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='6' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='6'>Reporte de Tasa de Captacion</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='6'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='6' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TASA</COL>
+					<COL CELLCLASS='GHC' WIDTH='30%'>TIPO DE CUENTA</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>MONTOS INICIAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>MONTOS FINAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>DIAS INICIAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>DIAS FINAL</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>tasa</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>tipo_de_cuenta</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>montos_mayores_a</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>montos_menores_a</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>dias_mayor_a</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>dias_menor_a</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='6'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='6'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

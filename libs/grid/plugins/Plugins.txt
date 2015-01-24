@@ -1,0 +1,117 @@
+// *****************************************************************************
+// *  slGrid 2.0                                                               *
+// *  http://slgrid.senzalimiti.sk                                             *
+// *                                                                           *
+// *  Copyright (c) 2006 Senza Limiti s.r.o.                                   *
+// *                                                                           *
+// *  This program is free software; you can redistribute it and/or            *
+// *  modify it under the terms of the GNU General Public License              *
+// *  as published by the Free Software Foundation; either version 2           *
+// *  of the License, or (at your option) any later version.                   *
+// *                                                                           *
+// *  This program is distributed in the hope that it will be useful,          *
+// *  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+// *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+// *  GNU General Public License for more details.                             *
+// *                                                                           *
+// *  For commercial licenses please contact Senza Limiti at                   *
+// *  - http://www.senzalimiti.sk                                              *
+// *  - info(at)senzalimiti.sk                                                 *
+// *****************************************************************************
+
+
+// *****************************************************************************
+// *                                                                           *
+// *     Plugin Documentation                                                  *
+// *                                                                           *
+// *****************************************************************************
+
+
+1. Introduction
+
+	slGrid uses a plugin system to define how table cell contents should be
+        displayed. For example, you can transform an email address into a 
+        a clickable mailto-link.
+        There is a special plugin that is called before a new row is added to
+  	the table when in editing mode (MODE_EDIT). This allows you to run 
+	additional filters on the user input (for example, to check for in-
+	appropriate words), or to add additional content, such as an ID field.
+
+2. Available Plugins
+	
+	By default, slGrid ships with three default plugins:
+	email	- Shows an email address as clickable link.
+	url	- Shows an URL as clickable link.
+		  Arguments:
+		  target  	- link target
+		  display	- display name (ie what is displayed instead of
+				  the link.
+	image 	- Shows a filename as image.
+		  Arguments:
+		  image_directory - directory of the images
+
+3. Setting Plugins
+	
+	To set a plugin for a column, you use this function 
+	Grid::SetPlugin($column_name, $plugin, $args = NULL);
+ 	string $column_name  - 	Name of the table column that should be modified by this
+				plugin
+	string $plugin	     - 	Name of the plugin. You need a file called like this
+				(class.$plugin.php) in the plugins directory, containing
+				a class called like this.
+	array $args	     -  Optional array with additional parameters.
+
+	Example:
+	$_SESSION["grid"]->SetPlugin("email_field", "email");
+	$_SESSION["grid"]->SetPlugin("url_field", "link", array("target" => "_blank"));
+	
+	You can set multiple plugins per column.
+
+	There is a special output plugin called "all" (as $column_name). This plugin will
+	be called for *all* columns.
+
+	To set a special plugin that is called before inserts, use a $column_name called
+	"database". Example:
+	$_SESSION["grid"]->SetPlugin("database", "add_id");
+	
+4. Creating Output Plugins
+
+	Output plugins are created by deriving a class named after the plugin from
+	the Grid_Plugin default class, and by placing it into a file named after
+	the plugin in the plugin directory.
+	Please have a look at the default plugins there for examples.
+	
+	The function Grid_Plugin::generateContent($cell, $args) is the work horse
+	that will act on the cell contents and return the modified version.
+	string $cell	- This is the contents of the table cell.
+	array $args	- Arguments that were passed in SetPlugin. Two arguments are
+			  always passed:
+			  id - 	 The value of the unique database column (set by 
+				 Grid::SetUniqueDatabaseColumn().
+			  field -The name of the table field. 
+			  mode - Either "view" (if the field is displayed normally),
+				 "edit" (if the field is being edited, ie is the value
+				 of the input text field),
+				 or "insert" (if the plugin is being called for the
+				 "add new row" fields on top of the table).
+				 In case mode is "edit", the name of the input next field
+				 is also passed as argument "name".
+
+	Whatever you return from the function will be displayed. Usually, it will make
+	most sense to modify the cell contents somehow in your generateContent() 
+	function, and then return the modified version.
+
+5. Creating Database Plugins
+
+	While database plugins (ie the plugins that are called before inserting a new
+	row into the table) share the class structure of output plugins, the function
+	generateContent accepts different parameters:
+	Grid_Plugin::generateContent($column_names, $column_values)
+	array $column_names	- Array of the column names that are going to be inserted.
+	array $column_values	- Array of the values that are going to be inserted.
+
+	The function should return an array of these two arguments. Example:
+
+		$column_names[] = "user_id";
+		$column_values[] = 1;
+		return(array($column_names, $column_values));

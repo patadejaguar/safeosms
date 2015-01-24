@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Grupos por sucursal</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`socios_cajalocal`.`sucursal`,
+		`socios_cajalocal`.`idsocios_cajalocal` AS `numero_de_caja`,
+		`socios_cajalocal`.`descripcion_cajalocal` AS `caja_local`,
+		`socios_grupossolidarios`.`idsocios_grupossolidarios` AS `numero_de_grupo`,
+		`socios_grupossolidarios`.`nombre_gruposolidario` AS
+		`nombre_del_grupo`,
+		`socios_grupossolidarios`.`representante_numerosocio` AS
+		`socio_representante`,
+		`socios_grupossolidarios`.`representante_nombrecompleto` AS
+		`nombre_representante`,
+		COUNT(`socios_general`.`codigo`) AS `integrantes`
+		FROM
+		`socios_general` `socios_general`
+		INNER JOIN `socios_cajalocal` `socios_cajalocal`
+		ON `socios_general`.`cajalocal` = `socios_cajalocal`.
+		`idsocios_cajalocal`
+		INNER JOIN `socios_grupossolidarios` `socios_grupossolidarios`
+		ON `socios_grupossolidarios`.`idsocios_grupossolidarios` =
+		`socios_general`.`grupo_solidario`
+		WHERE
+		`socios_cajalocal`.`sucursal` = 'matriz'
+		GROUP BY
+		`socios_general`.`cajalocal`,
+		`socios_general`.`grupo_solidario`
+		ORDER BY
+		`socios_general`.`cajalocal`,
+		`socios_grupossolidarios`.`idsocios_grupossolidarios`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='8'>Reporte de Grupos por sucursal</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='numero_de_caja'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('sucursal')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>NUMERO DE CAJA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('numero_de_caja')</COL>
+					<COL CELLCLASS='GHC'>CAJA LOCAL</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('caja_local')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>NUMERO DE GRUPO</COL>
+					<COL CELLCLASS='GHC'>NOMBRE DEL GRUPO</COL>
+					<COL CELLCLASS='GHC'>SOCIO REPRESENTANTE</COL>
+					<COL CELLCLASS='GHC'>NOMBRE REPRESENTANTE</COL>
+					<COL CELLCLASS='GHC'>INTEGRANTES</COL>
+				</ROW>
+
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR'>numero_de_grupo</COL>
+					<COL TYPE='FIELD'>nombre_del_grupo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>socio_representante</COL>
+					<COL TYPE='FIELD'>nombre_representante</COL>
+					<COL TYPE='FIELD'>integrantes</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='4'>SUMA DE INTEGRANTES</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='1'>$this->getSum("integrantes")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

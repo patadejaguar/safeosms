@@ -1,0 +1,171 @@
+@import("global.css");
+#grid {
+font-family: Verdana, Arial, Helvetica, Sans-serif;
+     color: #616161;
+     font-size: .85em;
+}
+
+#grid a:link {color: black; text-decoration: none;} 
+#grid a:active {color: black; text-decoration: none;}
+#grid a:hover {color: black; text-decoration: none;} 
+#grid a:visited {color: black; text-decoration: none;}
+
+#grid .grid_button
+{
+    border: gray 1px solid;
+    background-color: white;
+    color: #616161;
+}
+
+#grid .grid_input
+{
+         border: gray 1px solid;
+         background-color: white;
+         color: #616161;
+	 max-width: 95% !important;
+}
+
+
+#grid .editor_ok_button
+{
+    border: gray 1px solid;
+    background-color: white;
+    color: #616161;
+}
+
+#grid .editor_field
+{
+    border: gray 1px solid;
+    background-color: white;
+    color: #616161;
+    max-width: 95% !important;
+}
+
+#grid .grid_maindiv
+{
+	position: relative; 
+	border: 1px solid #7F9DB9; 
+	overflow: hidden; 
+	width: 100%; 
+	font-family: verdana,arial;	
+}
+
+#grid .grid_table
+{
+	background-color: white;
+	width: 100%; 
+}
+
+#grid .grid_table_header
+{
+	background-image: url('../images/grid/header.png'); 
+	height: 1.4em; 
+	color: white; 
+	font-weight: bold; 
+	font-size: 1em;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+#grid .grid_table_resize_row
+{
+	background-image: url('../images/grid/resize.gif'); 
+	width: 2px; 
+	margin: 0px;	
+}
+
+#grid .grid_table_header_row
+{
+
+	background-color: #EBEADB; 
+	font-weight: bold;
+	cursor:pointer;
+	padding-left: 5px;
+	padding-bottom: 0px;
+	position: relative; 
+	height: 1.6em; 
+	overflow: hidden; 
+	cursor:pointer;
+	border-bottom:2px solid #cbc7b8;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-right: 1px solid white;
+	margin-bottom: 0px;
+	background-image: url('../images/grid/column.png'); 
+
+}
+
+#grid .grid_table_header_row_hover
+{
+	font-weight: bold;
+	cursor:pointer;
+	padding-left: 5px;
+	padding-bottom: 0px;
+	position: relative; 
+	height: 1.6em; 
+	overflow: hidden; 
+	cursor:pointer;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-right: 1px solid white;
+	margin-bottom: 0px;
+	
+	border-bottom:2px solid #f9b119;
+	background-color: #FAF9F4;
+	background-image:  url('../images/grid/column_on.png'); 
+
+}
+
+#grid .grid_column_resize
+{
+	cursor: e-resize; 
+	width: 2px; 
+	background-color: #cbc7b8;
+	border-bottom:2px solid #cbc7b8;
+	padding-bottom: 0px;
+	margin-bottom: 0px;
+}
+
+#grid .grid_table_row_uneven
+{
+	background-color: #EBEADB; 
+}
+
+#grid .grid_footer
+{
+	background-color: #f9f9f9; 
+	height: 1.5em; 
+	color: #616161;
+}
+
+#grid .grid_table_cell
+{
+	padding-left: 2px; 
+	position: relative; 
+	border-bottom: 1px solid lightgray;
+	height: 1.6em;
+	overflow: hidden; 
+	margin: 0px;
+	font-size: 0.85em;
+}
+#grid .grid_table_cell img
+{
+    max-height: 98%;
+    max-width: 14px;
+    border-style: outset;
+    border-width: 1px;
+    padding: 1px;
+    background-color: #EEEEEE;
+}
+
+#grid .grid_table_cell img:hover
+{
+    background-color: #CCCCCC;
+}
+
+#grid .grid_table_cell .grid_input, #grid .grid_table_cell input
+{
+	 max-width: 95% !important;
+	 width: 95%;
+	 color: #2D61C2;
+}

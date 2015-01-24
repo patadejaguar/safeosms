@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Grupos en Mora</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`socios_grupossolidarios`.`nombre_gruposolidario`,
+		`socios_grupossolidarios`.`representante_nombrecompleto`,
+		`creditos_solicitud`.`numero_solicitud`,
+		`creditos_solicitud`.`numero_socio`,
+		`creditos_solicitud`.`fecha_ministracion`,
+		`creditos_solicitud`.`fecha_vencimiento`,
+		`creditos_solicitud`.`fecha_ultimo_mvto`,
+		`creditos_tipoconvenio`.`descripcion_tipoconvenio`,
+		`creditos_solicitud`.`saldo_actual`,
+		`creditos_solicitud`.`periocidad_de_pago` AS 'periocidad',
+		DATEDIFF(CURDATE(), `creditos_solicitud`.`fecha_ultimo_mvto`) AS 'dias_inactivos'
+		FROM
+		`creditos_tipoconvenio` `creditos_tipoconvenio`
+		INNER JOIN `creditos_solicitud` `creditos_solicitud`
+		ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio` =
+		`creditos_solicitud`.`tipo_convenio`
+		INNER JOIN `socios_grupossolidarios` `socios_grupossolidarios`
+		ON `socios_grupossolidarios`.`idsocios_grupossolidarios` =
+		`creditos_solicitud`.`grupo_asociado`
+		RIGHT OUTER JOIN `creditos_periocidadpagos`
+		`creditos_periocidadpagos`
+		ON `creditos_periocidadpagos`.`idcreditos_periocidadpagos` =
+		`creditos_solicitud`.`periocidad_de_pago`
+		WHERE
+		(`creditos_tipoconvenio`.`tipo_de_integracion` ='3')
+		AND (`creditos_solicitud`.`saldo_actual`)>0
+		HAVING dias_inactivos >`creditos_solicitud`.`periocidad_de_pago`
+		ORDER BY
+		`creditos_solicitud`.`fecha_ultimo_mvto` DESC /*,
+		`creditos_solicitud`.`fecha_vencimiento`,
+		`creditos_solicitud`.`fecha_ultimo_mvto`,
+		`creditos_tipoconvenio`.`tipo_de_convenio` */</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='1%%' COLSPAN='11'>Reporte de Grupos en Mora</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='11'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='14%'>NOMBRE GPO.</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>REPRESENTANTE</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='9%'>MINISTRACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='9%'>VENCIMIENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='9%'>ULTIMO MVTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>CONVENIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SALDO</COL>
+					<!-- <COL CELLCLASS='GHC' WIDTH='5%' >PERIOCIDAD</COL> -->
+					<COL CELLCLASS='GHC' WIDTH='5%'>DIAS VENCS</COL>
+					<COL CELLCLASS='GHC' WIDTH='3%'>PERS VENCS</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>nombre_gruposolidario</COL>
+					<COL TYPE='FIELD'>representante_nombrecompleto</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_solicitud</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_socio</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_ministracion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_vencimiento</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_ultimo_mvto</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>descripcion_tipoconvenio</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>saldo_actual</COL>
+					<!-- <COL TYPE='FIELD' CELLCLASS='FR' >periocidad</COL> -->
+					<COL TYPE='FIELD' CELLCLASS='FC'>dias_inactivos</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>periodos_vencidos</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='11' NUMBERFORMAT='0'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='6' NUMBERFORMAT='0'>SUMA DE
+						SALDOS</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='5' NUMBERFORMATEX='2'>$this->getSum("saldo_actual")</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

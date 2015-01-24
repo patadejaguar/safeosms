@@ -1,0 +1,150 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>MOVIMIENTOS X FECHAS SEGUN TIPO DE OPERACION</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>
+		SELECT operaciones_mvtos.socio_afectado AS 'numero_de_socio',
+		CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ',
+		socios_general.apellidomaterno) AS
+		'nombre_completo',operaciones_tipos.descripcion_operacion AS
+		'tipo_de_operacion', operaciones_mvtos.fecha_afectacion AS
+		'fecha',
+		operaciones_mvtos.docto_afectado AS 'documento',
+		operaciones_mvtos.afectacion_real AS 'monto',
+		operaciones_mvtos.saldo_actual AS
+		'saldo',
+		operaciones_mvtos.detalles
+		AS 'observaciones',
+		operaciones_mvtos.tasa_asociada,
+		operaciones_mvtos.dias_asociados FROM
+		socios_general,
+		operaciones_mvtos, operaciones_tipos WHERE
+		operaciones_mvtos.socio_afectado=socios_general.codigo AND
+		operaciones_tipos.idoperaciones_tipos=operaciones_mvtos.tipo_operacion
+		LIMIT
+		0,100
+	</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='10'>
+					MOVIMIENTOS X FECHAS SEGUN TIPO DE
+					OPERACION
+				</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='10'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW />
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='10'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='5%'>
+						NUMERO DE
+						SOCIO
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>
+						NOMBRE
+						COMPLETO
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>
+						TIPO DE
+						OPERACION
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>
+						FECHA
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>
+						DOCUMENTO
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>
+						MONTO
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>
+						SALDO
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>
+						OBSERVACIONES
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='10'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD'>numero_de_socio</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD'>tipo_de_operacion</COL>
+					<COL TYPE='FIELD'>fecha</COL>
+					<COL TYPE='FIELD'>documento</COL>
+					<COL TYPE='FIELD' NUMBERFORMATEX='2'>monto</COL>
+					<COL TYPE='FIELD' NUMBERFORMATEX='2'>saldo</COL>
+					<COL TYPE='FIELD'>observaciones</COL>
+
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GFC' WIDTH='100%' COLSPAN='10'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' WIDTH='100%' COLSPAN='5'>
+						"Valor
+						Absoluto de
+						Operaciones $".
+						$this->getSum("monto")
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' WIDTH='100%' COLSPAN='5'>
+						"Numero
+						Total de
+						Registros : " .
+						$this->getRowCount()
+					</COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW />
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

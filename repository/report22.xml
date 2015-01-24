@@ -1,0 +1,225 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>CONSULTA DE RECIBOS</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>
+		SELECT operaciones_recibos.idoperaciones_recibos,
+		operaciones_recibos.recibo_fiscal,
+		operaciones_recibostipo.descripcion_recibostipo AS
+		'tipo_de_recibo', operaciones_recibos.fecha_operacion AS
+		'fecha', operaciones_recibos.numero_socio,
+		CONCAT(socios_general.nombrecompleto, ' ',
+		socios_general.apellidopaterno, ' ',
+		socios_general.apellidomaterno) AS 'nombre_completo',
+		operaciones_recibos.docto_afectado AS 'documento',
+		operaciones_recibos.total_operacion AS 'total',
+		operaciones_recibos.tipo_pago AS 'tipo_de_pago',
+		operaciones_tipos.descripcion_operacion AS 'tipo_de_operacion',
+		operaciones_mvtosestatus.descripcion_mvtosestatus AS 'estatus',
+		operaciones_mvtos.afectacion_real AS 'monto',
+		operaciones_mvtos.fecha_afectacion AS 'fecha_de_afectacion',
+		operaciones_mvtos.fecha_vcto AS 'fecha_de_vencimiento',
+		operaciones_mvtos.periodo_socio AS
+		'periodo_del_socio',operaciones_mvtos.docto_neutralizador,
+		operaciones_mvtos.saldo_actual FROM
+		operaciones_recibos,operaciones_recibostipo, socios_general,
+		operaciones_mvtos, operaciones_tipos, operaciones_mvtosestatus
+		WHERE socios_general.codigo=operaciones_recibos.numero_socio AND
+		operaciones_mvtos.recibo_afectado=operaciones_recibos.idoperaciones_recibos
+		AND
+		operaciones_tipos.idoperaciones_tipos=operaciones_mvtos.tipo_operacion
+		AND
+		operaciones_recibostipo.idoperaciones_recibostipo=operaciones_recibos.tipo_docto
+		AND
+		operaciones_mvtosestatus.idoperaciones_mvtosestatus=operaciones_mvtos.estatus_mvto
+		LIMIT 0,100
+	</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='0' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='8'>
+					CONSULTA DE RECIBOS
+				</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW></ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='idoperaciones_recibos'>
+
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						RECIBO FISCAL
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('recibo_fiscal')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						TIPO DE RECIBO
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('tipo_de_recibo')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						FECHA
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('fecha')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						CLAVE DE PERSONA
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('numero_socio')
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						NOMBRE
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('nombre_completo')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						DOCUMENTO
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('documento')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						TOTAL
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('total')
+					</COL>
+					<COL CELLCLASS='GHC'>
+						TIPO DE PAGO
+					</COL>
+					<COL TYPE='EXPRESSION' TEXTCLASS='FIELDS'>
+						$this->getValue('tipo_de_pago')
+					</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						OBSERVACIONES
+					</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='7' TEXTCLASS='FIELDS'>
+						$this->getValue('observaciones')
+					</COL>
+
+				</ROW>
+
+
+				<ROW>
+
+					<COL CELLCLASS='GHL' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						TIPO DE OPERACION
+					</COL>
+					<COL CELLCLASS='GHC'>
+						ESTATUS
+					</COL>
+					<COL CELLCLASS='GHC'>
+						MONTO
+					</COL>
+					<COL CELLCLASS='GHC'>
+						FECHA AFECTACION
+					</COL>
+					<COL CELLCLASS='GHC'>
+						FECHA VCTO
+					</COL>
+					<COL CELLCLASS='GHC'>
+						PERIODO
+					</COL>
+					<COL CELLCLASS='GHC'>
+						DOCTO PAG
+					</COL>
+					<COL CELLCLASS='GHC'>
+						SDO ACTUAL
+					</COL>
+				</ROW>
+
+
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' WIDTH='25%'>tipo_de_operacion</COL>
+					<COL TYPE='FIELD' WIDTH='15%'>estatus</COL>
+					<COL TYPE='FIELD' WIDTH='10%' NUMBERFORMATEX='2'>monto</COL>
+					<COL TYPE='FIELD' WIDTH='10%'>fecha_de_afectacion</COL>
+					<COL TYPE='FIELD' WIDTH='10%'>fecha_de_vencimiento</COL>
+					<COL TYPE='FIELD' WIDTH='10%'>periodo_del_socio</COL>
+					<COL TYPE='FIELD' WIDTH='10%'>docto_neutralizador</COL>
+					<COL TYPE='FIELD' WIDTH='10%' NUMBERFORMATEX='2'>saldo_actual</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL></COL>
+					<COL></COL>
+					<COL></COL>
+					<COL></COL>
+
+					<COL CELLCLASS='GFC' COLSPAN='3'>
+						SUMA DE OPERACIONES
+					</COL>
+					<COL TYPE="EXPRESSION" CELLCLASS='GFC' NUMBERFORMATEX='2'>
+						$this->getSum("monto")
+					</COL>
+				</ROW>
+
+			</FOOTER>
+
+		</GROUP>
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

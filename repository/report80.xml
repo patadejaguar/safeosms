@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Bases</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`eacp_config_bases_de_integracion`.`codigo_de_base`,
+		`eacp_config_bases_de_integracion`.`descripcion`,
+		`eacp_config_bases_de_integracion`.`tipo_de_base`,
+		`eacp_config_bases_de_integracion_miembros`.
+		`ideacp_config_bases_de_integracion_miembros` AS 'consecutivo',
+		`eacp_config_bases_de_integracion_miembros`.`miembro`,
+		`eacp_config_bases_de_integracion_miembros`.`afectacion`,
+		`eacp_config_bases_de_integracion_miembros`.`descripcion_de_la_relacion`
+		FROM
+		`eacp_config_bases_de_integracion` `eacp_config_bases_de_integracion`
+		INNER JOIN `eacp_config_bases_de_integracion_miembros`
+		`eacp_config_bases_de_integracion_miembros`
+		ON `eacp_config_bases_de_integracion`.`codigo_de_base` =
+		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`
+		ORDER BY
+		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='6' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='6'>Reporte de Bases</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='6'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='6' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='codigo_de_base'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CODIGO DE BASE</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('codigo_de_base')</COL>
+					<COL CELLCLASS='GHC'>DESCRIPCION</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('descripcion')</COL>
+					<COL CELLCLASS='GHC'>TIPO</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('tipo_de_base')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='6'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>CONSECUTIVO</COL>
+					<COL CELLCLASS='GHC'>MIEMBRO</COL>
+					<COL CELLCLASS='GHC'>AFECTACION</COL>
+					<COL CELLCLASS='GHC' COLSPAN='2'>DESCRIPCION DE LA RELACION</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>consecutivo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>miembro</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>afectacion</COL>
+					<COL TYPE='FIELD' COLSPAN='2'>descripcion_de_la_relacion</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='6'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='6'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

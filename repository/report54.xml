@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Tipos de Operacion</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`operaciones_tipos`.`idoperaciones_tipos` AS
+		`codigo`,
+		`operaciones_tipos`.`descripcion_operacion` AS
+		`tipo_de_operacion`,
+		`operaciones_tipos`.`descripcion`,
+		`operaciones_recibostipo`.`descripcion_recibostipo` AS
+		`tipo_de_recibo`
+		FROM
+		`operaciones_recibostipo` `operaciones_recibostipo`
+		INNER JOIN `operaciones_tipos` `operaciones_tipos`
+		ON `operaciones_recibostipo`.
+		`idoperaciones_recibostipo` = `operaciones_tipos`.
+		`recibo_que_afecta`
+		WHERE
+		(`operaciones_tipos`.`descripcion_operacion` != 'DEPRECATED')
+		ORDER BY
+		`operaciones_tipos`.`idoperaciones_tipos`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='3' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='4' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='4'>Reporte de Tipos de Operacion</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='4'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='4' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='30%'>TIPO DE OPERACION</COL>
+					<COL CELLCLASS='GHC' WIDTH='40%'>DESCRIPCION</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>TIPO DE RECIBO</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>codigo</COL>
+					<COL TYPE='FIELD'>tipo_de_operacion</COL>
+					<COL TYPE='FIELD'>descripcion</COL>
+					<COL TYPE='FIELD'>tipo_de_recibo</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='4'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='4'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

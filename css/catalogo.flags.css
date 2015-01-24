@@ -1,0 +1,36 @@
+.listado {
+	/*font-size: 10px;
+	font-family: monospace !important;*/
+	font-size: 8pt !important;
+	font-family: 8pt "Trebuchet MS", Arial, Helvetica, sans-serif;
+}
+
+.nivel1,  #tr-contable_catalogo-1 {
+	/*font-weight: bolder;*/
+	color: blue;
+	font-weight: 300;
+}
+
+.nivel2, #tr-contable_catalogo-2 {
+	/*font-weight:bold;*/
+	color: red;
+}
+
+.nivel3,#tr-contable_catalogo-3 {
+	color: #912FA6;
+}
+
+.nivel4, #tr-contable_catalogo-4 {
+	
+}
+
+.nivel5, #tr-contable_catalogo-5 {
+	
+}
+
+.nivel6 {
+
+}
+td.key {
+	text-align: center !important;
+}

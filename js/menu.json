@@ -1,0 +1,1284 @@
+{
+	"table" : "general_menu",
+	"key" : "idgeneral_menu",
+	"action" : "translate",
+	"target" : "menu_title", 
+   "record_0":{
+      "idgeneral_menu":"1000",
+      "menu_title":"Caja",
+      "translate":"Cash"
+   },
+   "record_1":{
+      "idgeneral_menu":"5083",
+      "menu_title":"Props. Contables de Destinos de Creditos",
+      "translate":"Credit Application.- Accountaning settings"
+   },
+   "record_2":{
+      "idgeneral_menu":"1002",
+      "menu_title":"Cobros de Credito",
+      "translate": "Loan Payments"
+   },
+   "record_3":{
+      "idgeneral_menu":"3020",
+      "menu_title":"Lineas de Creditos",
+      "translate":"Credits Funds"
+   },
+   "record_4":{
+      "idgeneral_menu":"1020",
+      "menu_title":"Cuentas a la Vista",
+      "translate": "Checking Accounts"
+   },
+   "record_5":{
+      "idgeneral_menu":"1021",
+      "menu_title":"Depositos",
+      "translate":"Current Accounts Deposits"
+   },
+   "record_6":{
+      "idgeneral_menu":"1022",
+      "menu_title":"Retiros",
+      "translate": "Charges to Current Accounts"
+   },
+   "record_7":{
+      "idgeneral_menu":"11306",
+      "menu_title":"Reporte de Integracion de Bases",
+      "translate": "Report.- Base Integration"
+   },
+   "record_8":{
+      "idgeneral_menu":"11307",
+      "menu_title":"Reporte de Tipos de Partes Relacionadas",
+      "translate": "Report.- Persona Relations types"
+   },
+   "record_9":{
+      "idgeneral_menu":"1031",
+      "menu_title":"Negociacion de Inversiones",
+      "translate": "Funds Negotiations"
+   },
+   "record_10":{
+      "idgeneral_menu":"1040",
+      "menu_title":"Capital Social",
+      "translate":"Share Capital"
+   },
+   "record_11":{
+      "idgeneral_menu":"1041",
+      "menu_title":"Aportaciones al Capital Social",
+      "translate":"Share Capital contributions"
+   },
+   "record_12":{
+      "idgeneral_menu":"1074",
+      "menu_title":"Cuotas de Defuncion",
+      "translate":"Defunction Quota"
+   },
+   "record_13":{
+      "idgeneral_menu":"1060",
+      "menu_title":"Empresas",
+      "translate":"Companies"
+   },
+   "record_14":{
+      "idgeneral_menu":"1070",
+      "menu_title":"Tesoreria a Favor de Terceros",
+      "translate":"Treasury for another"
+   },
+   "record_15":{
+      "idgeneral_menu":"1071",
+      "menu_title":"Cobro de Gastos Notariales",
+      "translate":"Notary Cost"
+   },
+   "record_16":{
+      "idgeneral_menu":"1072",
+      "menu_title":"Cobro de Multas",
+      "translate":"Penalties register"
+   },
+   "record_17":{
+      "idgeneral_menu":"1073",
+      "menu_title":"Ingresos Varios",
+      "translate": "Other collections"
+   },
+   "record_18":{
+      "idgeneral_menu":"1080",
+      "menu_title":"Creditos",
+      "translate":"Loan"
+   },
+   "record_19":{
+      "idgeneral_menu":"1081",
+      "menu_title":"Ministracion de Creditos",
+      "translate":"Loan Deliveries"
+   },
+   "record_20":{
+      "idgeneral_menu":"3004",
+      "menu_title":"Generar Plan de Pagos",
+      "translate": "Planning of pays"
+   },
+   "record_21":{
+      "idgeneral_menu":"1090",
+      "menu_title":"Devoluciones Y Gastos",
+      "translate": "Refunds and expenditure"
+   },
+   "record_22":{
+      "idgeneral_menu":"1092",
+      "menu_title":"Egresos Varios",
+      "translate":"Other expenditures"
+   },
+   "record_23":{
+      "idgeneral_menu":"2000",
+      "menu_title":"Personas",
+      "translate": "Persons"
+   },
+   "record_24":{
+      "idgeneral_menu":"2001",
+      "menu_title":"Registro de Personas",
+      "translate": "Person register"
+   },
+   "record_25":{
+      "idgeneral_menu":"2002",
+      "menu_title":"Autorizar Personas",
+      "translate": "Authorization of Persons"
+   },
+   "record_26":{
+      "idgeneral_menu":"2003",
+      "menu_title":"Panel de Control de Personas",
+      "translate": "Person data manager"
+   },
+   "record_27":{
+      "idgeneral_menu":"2005",
+      "menu_title":"Agregar Historial Moral de Personas",
+      "translate": "Moral history for persons"
+   },
+   "record_28":{
+      "idgeneral_menu":"3000",
+      "menu_title":"Creditos",
+      "translate": "Loans"
+   },
+   "record_29":{
+      "idgeneral_menu":"3001",
+      "menu_title":"Solicitud de Credito",
+      "translate":"Loan register"
+   },
+   "record_30":{
+      "idgeneral_menu":"3002",
+      "menu_title":"Panel de Control de Creditos",
+      "translate":"Loan Manager data"
+   },
+   "record_31":{
+      "idgeneral_menu":"3021",
+      "menu_title":"Agregar Lineas de Credito",
+      "translate":"Add Loan funds"
+   },
+   "record_32":{
+      "idgeneral_menu":"2010",
+      "menu_title":"Operaciones con Grupos Solidarios",
+      "translate":"Groups operations"
+   },
+   "record_33":{
+      "idgeneral_menu":"2011",
+      "menu_title":"Agregar Grupos Solidarios",
+      "translate":"Add Groups"
+   },
+   "record_34":{
+      "idgeneral_menu":"2012",
+      "menu_title":"Concretar Creditos \/ Division de Montos",
+      "translate":"Manager Group loan"
+   },
+   "record_35":{
+      "idgeneral_menu":"7000",
+      "menu_title":"PLD - FT",
+      "translate":"AML - FT"
+   },
+   "record_36":{
+      "idgeneral_menu":"3010",
+      "menu_title":"Sesiones de Creditos",
+      "translate":"Loan Control sessions"
+   },
+   "record_37":{
+      "idgeneral_menu":"3011",
+      "menu_title":"Cambiar Periodo Actual",
+      "translate":"Loan Control.- Change of period"
+   },
+   "record_38":{
+      "idgeneral_menu":"3012",
+      "menu_title":"Agregar Periodos de Credito",
+      "translate":"Loan Control.- Add Periods"
+   },
+   "record_39":{
+      "idgeneral_menu":"3013",
+      "menu_title":"Cedula de Creditos en Sesion Actual",
+      "translate":"Report.- Loan in actual session"
+   },
+   "record_40":{
+      "idgeneral_menu":"3014",
+      "menu_title":"Editar Creditos en Sesion Actual",
+      "translate":"Change Loans List"
+   },
+   "record_41":{
+      "idgeneral_menu":"3015",
+      "menu_title":"Cedula de Creditos en Sesion Anterior",
+      "translate":"Report.- Loan in to back session"
+   },
+   "record_42":{
+      "idgeneral_menu":"3016",
+      "menu_title":"Creditos Autorizados",
+      "translate":"Authorize Loan"
+   },
+   "record_43":{
+      "idgeneral_menu":"6020",
+      "menu_title":"Conceptos",
+      "translate":"Concepts"
+   },
+   "record_44":{
+      "idgeneral_menu":"11020",
+      "menu_title":"Operaciones de Cierre",
+      "translate":"Close Operations"
+   },
+   "record_45":{
+      "idgeneral_menu":"11021",
+      "menu_title":"Generar Cierre del Dia",
+      "translate":"Generate End of Day"
+   },
+   "record_46":{
+      "idgeneral_menu":"3030",
+      "menu_title":"Tablas y Tipos de Creditos",
+      "translate":"Loan Types and Catalogs"
+   },
+   "record_47":{
+      "idgeneral_menu":"3031",
+      "menu_title":"Origenes del Flujo de Efvo",
+      "translate":"Cash Flow source"
+   },
+   "record_48":{
+      "idgeneral_menu":"2052",
+      "menu_title":"Registro de Empresas con Convenio",
+      "translate":"Companies register"
+   },
+   "record_49":{
+      "idgeneral_menu":"3033",
+      "menu_title":"Destino-Aplicacion de Creditos",
+      "translate":"Loan applications"
+   },
+   "record_50":{
+      "idgeneral_menu":"3034",
+      "menu_title": "Catalogo de Productos en Creditos",
+      "translate": "Loan products.- catalog"
+   },
+   "record_51":{
+      "idgeneral_menu":"3035",
+      "menu_title":"Tipo de Operacion",
+      "translate":"Operation Types"
+   },
+   "record_52":{
+      "idgeneral_menu":"2051",
+      "menu_title":"Agregar Puntos de Acceso",
+      "translate":""
+   },
+   "record_53":{
+      "idgeneral_menu":"11030",
+      "menu_title":"Operaciones Especiales",
+      "translate":"Special operations"
+   },
+   "record_54":{
+      "idgeneral_menu":"11031",
+      "menu_title":"Consultar-Eliminar Recibos en Lista",
+      "translate":"View "
+   },
+   "record_55":{
+      "idgeneral_menu":"11032",
+      "menu_title":"Panel de Control de Recibos",
+      "translate":"Receipts.- Control Panel"
+   },
+   "record_56":{
+      "idgeneral_menu":"11033",
+      "menu_title":"Editar Mvtos. de Creditos",
+      "translate":"Loans.- RAW Edit"
+   },
+   "record_57":{
+      "idgeneral_menu":"11034",
+      "menu_title":"Editar Mvtos. de Captacion",
+      "translate":"Savings accounts.- RAW Edit"
+   },
+   "record_58":{
+      "idgeneral_menu":"8000",
+      "menu_title":"Captacion",
+      "translate":""
+   },
+   "record_59":{
+      "idgeneral_menu":"8001",
+      "menu_title":"Apertura de Cuentas",
+      "translate":"Savings accounts"
+   },
+   "record_60":{
+      "idgeneral_menu":"8002",
+      "menu_title":"Panel de Control de Cuentas de Captacion",
+      "translate":"Saving accounts.- Control Panel"
+   },
+   "record_61":{
+      "idgeneral_menu":"5000",
+      "menu_title":"Contabilidad",
+      "translate":"Accounting"
+   },
+   "record_62":{
+      "idgeneral_menu":"5011",
+      "menu_title":"Captura de Cuentas de Catalogo",
+      "translate":"Accounting Catalog"
+   },
+   "record_63":{
+      "idgeneral_menu":"5021",
+      "menu_title":"Captura de Polizas",
+      "translate":"Policy capture"
+   },
+   "record_64":{
+      "idgeneral_menu":"2057",
+      "menu_title":"Carga Batch de Localidades",
+      "translate":"Locations.. Batch load."
+   },
+   "record_65":{
+      "idgeneral_menu":"7010",
+      "menu_title":"Operaciones con Garantias Reales",
+      "translate":"Escrow.- operations"
+   },
+   "record_66":{
+      "idgeneral_menu":"7011",
+      "menu_title":"Resguardo de Garantias",
+      "translate":"Escrow document safeguard"
+   },
+   "record_67":{
+      "idgeneral_menu":"7012",
+      "menu_title":"Devolucion de Garantia en Resguardo",
+      "translate":"Escrow Document returns"
+   },
+   "record_68":{
+      "idgeneral_menu":"4000",
+      "menu_title":"Seguimiento",
+      "translate":"Collection Assintance"
+   },
+   "record_69":{
+      "idgeneral_menu":"1062",
+      "menu_title":"Factura Rapida de Convenios",
+      "translate":"Rapid collections"
+   },
+   "record_70":{
+      "idgeneral_menu":"4002",
+      "menu_title":"Cargos por Seguimiento",
+      "translate":"Collection Assintance.- Charges"
+   },
+   "record_71":{
+      "idgeneral_menu":"4003",
+      "menu_title":"Descuentos a Creditos",
+      "translate":"Loans discounts"
+   },
+   "record_72":{
+      "idgeneral_menu":"4004",
+      "menu_title":"Reconvenios de Creditos",
+      "translate":"Loans resave"
+   },
+   "record_73":{
+      "idgeneral_menu":"4005",
+      "menu_title":"Agregar-Editar Compromisos",
+      "translate":"Liabilities"
+   },
+   "record_74":{
+      "idgeneral_menu":"4006",
+      "menu_title":"Calendario Compromisos",
+      "translate":"Liabilities calendar"
+   },
+   "record_75":{
+      "idgeneral_menu":"3022",
+      "menu_title":"Cancelacion de Lineas de Credito",
+      "translate":"Loans funds cancelations"
+   },
+   "record_76":{
+      "idgeneral_menu":"4010",
+      "menu_title":"Notificaciones",
+      "translate":"Collection Notifications"
+   },
+   "record_77":{
+      "idgeneral_menu":"4011",
+      "menu_title":"Notificacion de Creditos con Pago Unico",
+      "translate":"Notifications.- Unique pay"
+   },
+   "record_78":{
+      "idgeneral_menu":"4012",
+      "menu_title":"Notificacion de Creditos con Planes",
+      "translate":"Notifications.- Loand with calendar"
+   },
+   "record_79":{
+      "idgeneral_menu":"4014",
+      "menu_title":"Modificar-Trabajar Notificaciones",
+      "translate":"Add Notifications"
+   },
+   "record_80":{
+      "idgeneral_menu":"4090",
+      "menu_title":"Reportes de Seguimiento de Creditos",
+      "translate":"Collection Assistance.- Reports"
+   },
+   "record_81":{
+      "idgeneral_menu":"2020",
+      "menu_title":"Reportes de Personas",
+      "translate":"Reports of Persons"
+   },
+   "record_82":{
+      "idgeneral_menu":"2021",
+      "menu_title":"Reportes x Personas",
+      "translate":"Reports by person"
+   },
+   "record_83":{
+      "idgeneral_menu":"2031",
+      "menu_title":"Reportes Generales de Grupos",
+      "translate":"Reports of Groups"
+   },
+   "record_84":{
+      "idgeneral_menu":"2023",
+      "menu_title":"Reportes x Dependencia",
+      "translate":"Reports by Companies"
+   },
+   "record_85":{
+      "idgeneral_menu":"3070",
+      "menu_title":"Reportes de Creditos",
+      "translate":"Loans reports"
+   },
+   "record_86":{
+      "idgeneral_menu":"3072",
+      "menu_title":"Reportes x Solicitud de Credito",
+      "translate": "Loans Register"
+   },
+   "record_87":{
+      "idgeneral_menu":"3071",
+      "menu_title":"Reportes Generales de Credito",
+      "translate":"Loans reports"
+   },
+   "record_88":{
+      "idgeneral_menu":"8050",
+      "menu_title":"Reportes de Captacion",
+      "translate":"Deposits reports"
+   },
+   "record_89":{
+      "idgeneral_menu":"8051",
+      "menu_title":"Reportes x Cuentas de Deposito",
+      "translate":"Individual Saving Accounts reports"
+   },
+   "record_90":{
+      "idgeneral_menu":"8052",
+      "menu_title":"Reportes x Cuentas de Inversion",
+      "translate": "Savings Accounts.- general reports"
+   },
+   "record_91":{
+      "idgeneral_menu":"8053",
+      "menu_title":"Reportes Generales de Captacion",
+      "translate":"Saving Accounts reports"
+   },
+   "record_92":{
+      "idgeneral_menu":"2024",
+      "menu_title":"Reportes x Cajas Locales",
+      "translate":"Local center reports"
+   },
+   "record_93":{
+      "idgeneral_menu":"18301",
+      "menu_title":"Reportes x Cajero(a)s",
+      "translate":"Cashier Reports"
+   },
+   "record_94":{
+      "idgeneral_menu":"11102",
+      "menu_title":"Reportes Varios",
+      "translate":"Other reports"
+   },
+   "record_95":{
+      "idgeneral_menu":"7051",
+      "menu_title":"Reportes Acumulativos",
+      "translate":"Consolidate Reports"
+   },
+   "record_96":{
+      "idgeneral_menu":"5071",
+      "menu_title":"Catalogo de Cuentas[Reporte]",
+      "translate":"Accounting Catalog"
+   },
+   "record_97":{
+      "idgeneral_menu":"5098",
+      "menu_title":"Reportes Contables Generales",
+      "translate":"Accounting reports"
+   },
+   "record_98":{
+      "idgeneral_menu":"11000",
+      "menu_title":"Herramientas",
+      "translate":"Tools"
+   },
+   "record_99":{
+      "idgeneral_menu":"2006",
+      "menu_title":"Buscar Personas",
+      "translate":"Person search"
+   },
+   "record_100":{
+      "idgeneral_menu":"2008",
+      "menu_title":"Buscar Grupos",
+      "translate":"Groups search"
+   },
+   "record_101":{
+      "idgeneral_menu":"11002",
+      "menu_title":"Editor de Formas y Contratos",
+      "translate":"Forms editor"
+   },
+   "record_102":{
+      "idgeneral_menu":"15010",
+      "menu_title":"Creditos del Sistema",
+      "translate":"About"
+   },
+   "record_103":{
+      "idgeneral_menu":"10000",
+      "menu_title":"Seguridad",
+      "translate":"Security"
+   },
+   "record_104":{
+      "idgeneral_menu":"10001",
+      "menu_title":"Alta-Edicion de usuarios del sistema",
+      "translate":"System User editor"
+   },
+   "record_105":{
+      "idgeneral_menu":"7021",
+      "menu_title":"Editar Datos de la Empresa",
+      "translate":"Institution Data edit"
+   },
+   "record_106":{
+      "idgeneral_menu":"11010",
+      "menu_title":"Mantenimiento",
+      "translate":"Maintenance"
+   },
+   "record_107":{
+      "idgeneral_menu":"11011",
+      "menu_title":"Utilerias de la Base de Datos",
+      "translate":"Database Maintenance"
+   },
+   "record_108":{
+      "idgeneral_menu":"11013",
+      "menu_title":"Editar Estructura",
+      "translate":"Structure Editor"
+   },
+   "record_109":{
+      "idgeneral_menu":"15020",
+      "menu_title":"Salir del Sistema",
+      "translate":"Exit"
+   },
+   "record_110":{
+      "idgeneral_menu":"11014",
+      "menu_title":"Editar-Agregar Menu",
+      "translate":""
+   },
+   "record_111":{
+      "idgeneral_menu":"10023",
+      "menu_title":"Analizar Bitacoras del Servidor",
+      "translate":""
+   },
+   "record_112":{
+      "idgeneral_menu":"9002",
+      "menu_title":"Alta a Cuentas Bancarias",
+      "translate":""
+   },
+   "record_113":{
+      "idgeneral_menu":"9000",
+      "menu_title":"Bancos-Chequera",
+      "translate":"Bank control"
+   },
+   "record_114":{
+      "idgeneral_menu":"9001",
+      "menu_title":"Alta a Entidades Bancarias",
+      "translate":"Add Bank Institution"
+   },
+   "record_115":{
+      "idgeneral_menu":"5060",
+      "menu_title":"Estados Financieros",
+      "translate":"Financial Statements"
+   },
+   "record_116":{
+      "idgeneral_menu":"5050",
+      "menu_title":"Reportes de Auxiliares",
+      "translate":"Auxiliary reports"
+   },
+   "record_117":{
+      "idgeneral_menu":"5052",
+      "menu_title":"Movimientos de Auxiliares",
+      "translate":"Auxiliary operations"
+   },
+   "record_118":{
+      "idgeneral_menu":"11203",
+      "menu_title":"Editar Tipos de Recibos",
+      "translate":"Edit Receipt Types"
+   },
+   "record_119":{
+      "idgeneral_menu":"11201",
+      "menu_title":"Editar Datos de Reportes",
+      "translate":"Edit Report types"
+   },
+   "record_120":{
+      "idgeneral_menu":"11202",
+      "menu_title":"Editar Descripcion de Utilerias",
+      "translate":"Tools Description.- Editor"
+   },
+   "record_121":{
+      "idgeneral_menu":"5061",
+      "menu_title":"Estado Posicion Financera",
+      "translate":"Accounting Statement"
+   },
+   "record_122":{
+      "idgeneral_menu":"5062",
+      "menu_title":"Estado de Resultados",
+      "translate":""
+   },
+   "record_123":{
+      "idgeneral_menu":"10021",
+      "menu_title":"Reporte de Eventos de S.A.F.E.",
+      "translate":"System Events Report"
+   },
+   "record_124":{
+      "idgeneral_menu":"5070",
+      "menu_title":"Reportes del Catalogo",
+      "translate":"Acccounting Catalog reports"
+   },
+   "record_125":{
+      "idgeneral_menu":"10003",
+      "menu_title":"Editar Permisos del Sistema",
+      "translate":"System Permissions.- Edit"
+   },
+   "record_126":{
+      "idgeneral_menu":"11300",
+      "menu_title":"Reportes de Catalogos del sistema",
+      "translate":"System catalogs Reports"
+   },
+   "record_127":{
+      "idgeneral_menu":"11301",
+      "menu_title":"Reporte de Tipo de Operacion",
+      "translate":"Operation types report"
+   },
+   "record_128":{
+      "idgeneral_menu":"11309",
+      "menu_title":"Reporte de Empresas",
+      "translate":"Companies Report"
+   },
+   "record_130":{
+      "idgeneral_menu":"3003",
+      "menu_title":"Scoring de Creditos",
+      "translate":"Credit Scoring"
+   },
+   "record_131":{
+      "idgeneral_menu":"11204",
+      "menu_title":"Editar Formulas de Operaciones",
+      "translate":"Operations formula.- edit"
+   },
+   "record_132":{
+      "idgeneral_menu":"12306",
+      "menu_title":"C0451-Desagregado de Creditos por Tipo",
+      "translate":""
+   },
+   "record_133":{
+      "idgeneral_menu":"12303",
+      "menu_title":"B0417-Calc. de Cartera de Cred. y Estimacion ",
+      "translate":""
+   },
+   "record_134":{
+      "idgeneral_menu":"12301",
+      "menu_title":"A0411-Cartera por Tipo de Credito",
+      "translate":""
+   },
+   "record_135":{
+      "idgeneral_menu":"12201",
+      "menu_title":"Resultados de Titulos Valuados a Valor Razona",
+      "translate":""
+   },
+   "record_136":{
+      "idgeneral_menu":"12101",
+      "menu_title":"Catalogo Minimo de Cuentas",
+      "translate":""
+   },
+   "record_137":{
+      "idgeneral_menu":"12700",
+      "menu_title":"Serie R21",
+      "translate":""
+   },
+   "record_138":{
+      "idgeneral_menu":"12600",
+      "menu_title":"Serie R20",
+      "translate":""
+   },
+   "record_139":{
+      "idgeneral_menu":"12500",
+      "menu_title":"Serie R09",
+      "translate":""
+   },
+   "record_140":{
+      "idgeneral_menu":"12400",
+      "menu_title":"Serie R08",
+      "translate":""
+   },
+   "record_141":{
+      "idgeneral_menu":"12300",
+      "menu_title":"Serie R04",
+      "translate":""
+   },
+   "record_142":{
+      "idgeneral_menu":"12200",
+      "menu_title":"Serie R03",
+      "translate":""
+   },
+   "record_143":{
+      "idgeneral_menu":"12100",
+      "menu_title":"Serie R01",
+      "translate":""
+   },
+   "record_144":{
+      "idgeneral_menu":"12000",
+      "menu_title":"Reportes Prudenciales",
+      "translate":"Prudential Reports"
+   },
+   "record_145":{
+      "idgeneral_menu":"11205",
+      "menu_title":"Editar Formulas Generales",
+      "translate":"General formula.- Edit"
+   },
+   "record_146":{
+      "idgeneral_menu":"10022",
+      "menu_title":"Reporte de Usuarios del Sistema",
+      "translate":"System Users report"
+   },
+   "record_147":{
+      "idgeneral_menu":"11402",
+      "menu_title":"Respaldar Archivos de la Sucursal",
+      "translate":"Backup offline Information"
+   },
+   "record_148":{
+      "idgeneral_menu":"11401",
+      "menu_title":"Cargar Sucursales a la Matriz",
+      "translate":"Load Backup offline"
+   },
+   "record_149":{
+      "idgeneral_menu":"11400",
+      "menu_title":"Respaldos",
+      "translate":"Backups"
+   },
+   "record_150":{
+      "idgeneral_menu":"2025",
+      "menu_title":"Reporte de Socios en Baja",
+      "translate":"Inactive persons.- Report"
+   },
+
+   "record_152":{
+      "idgeneral_menu":"3073",
+      "menu_title":"Catalogo de Productos de Credito",
+      "translate":"Loan products catalog"
+   },
+   "record_153":{
+      "idgeneral_menu":"5012",
+      "menu_title":"Buscar en el Catalogo",
+      "translate":"Search in catalog"
+   },
+   "record_154":{
+      "idgeneral_menu":"5053",
+      "menu_title":"Auxiliar de Polizas",
+      "translate":"Ledger report"
+   },
+
+   "record_157":{
+      "idgeneral_menu":"5081",
+      "menu_title":"Centros de Costo Contables",
+      "translate":""
+   },
+   "record_159":{
+      "idgeneral_menu":"5091",
+      "menu_title":"Intereses Devengados Mensual",
+      "translate":"Interest Due monthly"
+   },
+   "record_160":{
+      "idgeneral_menu":"5090",
+      "menu_title":"Utilerias Contables",
+      "translate":"Accounting Tools"
+   },
+   "record_161":{
+      "idgeneral_menu":"2053",
+      "menu_title":"Alta a Tipos de Ingreso de Persona",
+      "translate":"Persons Type register"
+   },
+   "record_162":{
+      "idgeneral_menu":"9050",
+      "menu_title":"Reportes de Bancos",
+      "translate":"Bank reports"
+   },
+   "record_163":{
+      "idgeneral_menu":"9051",
+      "menu_title":"Reportes de Movimientos Bancarios",
+      "translate":"Bank operations report"
+   },
+   "record_164":{
+      "idgeneral_menu":"2007",
+      "menu_title":"Baja de Personas",
+      "translate":"Disable Persons"
+   },
+   "record_165":{
+      "idgeneral_menu":"5010",
+      "menu_title":"Catalogo",
+      "translate":"Catalog"
+   },
+   "record_166":{
+      "idgeneral_menu":"5020",
+      "menu_title":"Polizas",
+      "translate":"Journal Voucher"
+   },
+   "record_167":{
+      "idgeneral_menu":"6050",
+      "menu_title":"Procesos Especiales",
+      "translate":"Special operations"
+   },
+   "record_169":{
+      "idgeneral_menu":"2050",
+      "menu_title":"Tablas Y Tipos",
+      "translate":"general Types"
+   },
+   "record_170":{
+      "idgeneral_menu":"11100",
+      "menu_title":"Reportes sin Clasificar",
+      "translate":"Non Classified reports"
+   },
+   "record_171":{
+      "idgeneral_menu":"10020",
+      "menu_title":"Reportes de Seguridad",
+      "translate":"System Security Reports"
+   },
+   "record_172":{
+      "idgeneral_menu":"11200",
+      "menu_title":"Tipos y Datos de utilerias y especiales",
+      "translate":"Special utils.- Types editor"
+   },
+   "record_173":{
+      "idgeneral_menu":"5080",
+      "menu_title":"Tablas y tipos Contable",
+      "translate":"Accounting catalog of types"
+   },
+   "record_174":{
+      "idgeneral_menu":"15000",
+      "menu_title":"Soporte-Ayuda",
+      "translate":"Help-About"
+   },
+   "record_175":{
+      "idgeneral_menu":"7020",
+      "menu_title":"Configuracion del Sistema",
+      "translate":"System configuration"
+   },
+   "record_176":{
+      "idgeneral_menu":"7050",
+      "menu_title":"Reportes de la Administracion",
+      "translate":"Global Reports"
+   },
+   "record_177":{
+      "idgeneral_menu":"5093",
+      "menu_title":"Bajar Polizas al ContPaq 2004",
+      "translate":""
+   },
+   "record_178":{
+      "idgeneral_menu":"5099",
+      "menu_title":"Bajar Catalogo al ContPaq 2004",
+      "translate":""
+   },
+   "record_179":{
+      "idgeneral_menu":"2054",
+      "menu_title":"Agregar regiones de Personas",
+      "translate":"Add Persona Locales"
+   },
+   "record_180":{
+      "idgeneral_menu":"8030",
+      "menu_title":"Tipos y Datos de captacion",
+      "translate":"Saving Accounts types"
+   },
+   "record_181":{
+      "idgeneral_menu":"8031",
+      "menu_title":"Edicion  de Productos de Captacion",
+      "translate":"Saving Accounts Products editor"
+   },
+   "record_182":{
+      "idgeneral_menu":"8032",
+      "menu_title":"Alta-Edicion de Tasas de Captacion",
+      "translate":"Saving Account rates"
+   },
+   "record_183":{
+      "idgeneral_menu":"4007",
+      "menu_title":"Calificar Referencias",
+      "translate": "Relations Score"
+   },
+   "record_184":{
+      "idgeneral_menu":"5094",
+      "menu_title":"Importar Datos ContPaQ a S.A.F.E",
+      "translate":""
+   },
+   "record_185":{
+      "idgeneral_menu":"5051",
+      "menu_title":"Anexos del Catalogo",
+      "translate":"Accounting Catalog annex"
+   },
+   "record_186":{
+      "idgeneral_menu":"5063",
+      "menu_title":"Balanza de Comprobacion",
+      "translate":"Accounting ledger"
+   },
+   "record_187":{
+      "idgeneral_menu":"18000",
+      "menu_title":"Reportes",
+      "translate":"Reports"
+   },
+   "record_188":{
+      "idgeneral_menu":"11015",
+      "menu_title":"Generar Bases del Sistema",
+      "translate":"System Base generator"
+   },
+   "record_189":{
+      "idgeneral_menu":"18101",
+      "menu_title":"Reportes Generales por Sucursal",
+      "translate":"General reports for Branchs"
+   },
+   "record_190":{
+      "idgeneral_menu":"11038",
+      "menu_title":"Buscar Recibos",
+      "translate":"Receipt finder"
+   },
+   "record_191":{
+      "idgeneral_menu":"18200",
+      "menu_title":"Reportes de Operaciones",
+      "translate":"Operations Reports"
+   },
+   "record_192":{
+      "idgeneral_menu":"18201",
+      "menu_title":"Reportes Generales de Movimientos",
+      "translate":"Operations.- general reports"
+   },
+   "record_193":{
+      "idgeneral_menu":"99103",
+      "menu_title":"Reporte de Centros",
+      "translate":"Local Sections reports"
+   },
+   "record_194":{
+      "idgeneral_menu":"2055",
+      "menu_title":"Alta a Colonias",
+      "translate":"Suburb register"
+   },
+   "record_195":{
+      "idgeneral_menu":"11302",
+      "menu_title":"Reporte de Tipos de Personas",
+      "translate":"Person types report"
+   },
+   "record_196":{
+      "idgeneral_menu":"3036",
+      "menu_title":"Agregar Dias Festivos",
+      "translate":"Add Non laborable days"
+   },
+   "record_197":{
+      "idgeneral_menu":"11303",
+      "menu_title":"Reporte de Tasas de Captacion",
+      "translate":"Saving account rate report"
+   },
+   "record_198":{
+      "idgeneral_menu":"11304",
+      "menu_title":"Reporte de Destino-Aplicacion de Creditos",
+      "translate":"Catalog of Loan applications report"
+   },
+   "record_199":{
+      "idgeneral_menu":"4020",
+      "menu_title":"Operaciones con Oficiales de Credito",
+      "translate":"Credit officer operations"
+   },
+   "record_200":{
+      "idgeneral_menu":"4021",
+      "menu_title":"Asignar Oficiales de Credito",
+      "translate":"Add loans to Credit Officer"
+   },
+   "record_201":{
+      "idgeneral_menu":"4008",
+      "menu_title":"Calendario de Llamadas",
+      "translate":"Call Calendar"
+   },
+   "record_202":{
+      "idgeneral_menu":"4009",
+      "menu_title":"Agregar-Editar Llamadas",
+      "translate":"Call Actions editor"
+   },
+   "record_203":{
+      "idgeneral_menu":"11037",
+      "menu_title":"Reimprimir Recibos",
+      "translate":"print receipts"
+   },
+   "record_204":{
+      "idgeneral_menu":"1011",
+      "menu_title":"Abrir Session de Caja",
+      "translate":"Open Cashier session"
+   },
+   "record_205":{
+      "idgeneral_menu":"2014",
+      "menu_title":"Distribuir Garantia Liquida de Grupos",
+      "translate":"Collateral account distribution"
+   },
+   "record_206":{
+      "idgeneral_menu":"2030",
+      "menu_title":"Reportes de Grupos Solidarios",
+      "translate":"Groups reports"
+   },
+   "record_207":{
+      "idgeneral_menu":"18300",
+      "menu_title":"Reportes de Tesoreria",
+      "translate":"Treasury Reports"
+   },
+   "record_208":{
+      "idgeneral_menu":"5096",
+      "menu_title":"Comparar Auxiliares CompacW",
+      "translate":""
+   },
+   "record_209":{
+      "idgeneral_menu":"11305",
+      "menu_title":"Reporte de Tipos de Recibos",
+      "translate":"Receipt Types report"
+   },
+   "record_210":{
+      "idgeneral_menu":"18500",
+      "menu_title":"Reportes Individuales de Personas",
+      "translate":"Individual reports"
+   },
+   "record_211":{
+      "idgeneral_menu":"18400",
+      "menu_title":"Reportes por Oficial de Credito",
+      "translate":"Credit officer reports"
+   },
+   "record_212":{
+      "idgeneral_menu":"18410",
+      "menu_title":"Reportes de Creditos",
+      "translate":"Loan reports"
+   },
+   "record_213":{
+      "idgeneral_menu":"99159",
+      "menu_title":"Reportes de Movimientos por oficial",
+      "translate":"Operations for Credit Officer report"
+   },
+
+   "record_215":{
+      "idgeneral_menu":"4030",
+      "menu_title":"Operaciones Masivas de Credito",
+      "translate":"Credit Massive operations"
+   },
+   "record_216":{
+      "idgeneral_menu":"4031",
+      "menu_title":"Asignar Causas de la Cartera Vencida",
+      "translate":"non performing loan.- assign cause"
+   },
+   "record_217":{
+      "idgeneral_menu":"99170",
+      "menu_title":"Reporte de Tipos Causas de Morosidad",
+      "translate":"performing loan.- report of cause"
+   },
+   "record_218":{
+      "idgeneral_menu":"7022",
+      "menu_title":"Edicion de Sucursales",
+      "translate":"Branches information"
+   },
+   "record_219":{
+      "idgeneral_menu":"99173",
+      "menu_title":"Reporte de Padron SIIP-G",
+      "translate":""
+   },
+   "record_220":{
+      "idgeneral_menu":"8054",
+      "menu_title":"Reporte de Cuentas Duplicadas",
+      "translate":"Loand ID duplicated"
+   },
+   "record_221":{
+      "idgeneral_menu":"18411",
+      "menu_title":"Reporte Acumulado de Causas de Cartera x Ofic",
+      "translate":"no performing loan by credit officer"
+   },
+   "record_222":{
+      "idgeneral_menu":"2032",
+      "menu_title":"Reporte de Grupos por Sucursal",
+      "translate":"Group for branches.- report"
+   },
+   "record_223":{
+      "idgeneral_menu":"1023",
+      "menu_title":"Traspasos entre Cuentas",
+      "translate":"Account vs Account operation"
+   },
+   "record_224":{
+      "idgeneral_menu":"1030",
+      "menu_title":"Inversiones a Plazo",
+      "translate":"Investment to term"
+   },
+   "record_225":{
+      "idgeneral_menu":"10024",
+      "menu_title":"Analizar Bitacoras de S.A.F.E.",
+      "translate":"S.A.F.E. log analyzer"
+   },
+   "record_226":{
+      "idgeneral_menu":"1063",
+      "menu_title":"Orden de Cobranza",
+      "translate":"Payment order"
+   },
+   "record_227":{
+      "idgeneral_menu":"18518",
+      "menu_title":"Migracion a TCB",
+      "translate":""
+   },
+   "record_228":{
+      "idgeneral_menu":"2956",
+      "menu_title":"Carga Batch de Colonias",
+      "translate":"SEPOMEX.- Batch process"
+   },
+   "record_229":{
+      "idgeneral_menu":"18519",
+      "menu_title":"Modulo para Importar CVS CompacW",
+      "translate":""
+   },
+   "record_230":{
+      "idgeneral_menu":"18550",
+      "menu_title":"Migracion al Sistema",
+      "translate":"Migration to S.A.F.E."
+   },
+   "record_231":{
+      "idgeneral_menu":"18552",
+      "menu_title":"Carga de Inversiones",
+      "translate":"Investiment batch load"
+   },
+   "record_232":{
+      "idgeneral_menu":"18553",
+      "menu_title":"Carga de Cuentas a la Vista",
+      "translate":"Saving Account batch load"
+   },
+   "record_233":{
+      "idgeneral_menu":"18555",
+      "menu_title":"Carga de Prestamos",
+      "translate":"Loans batch load"
+   },
+   "record_234":{
+      "idgeneral_menu":"18551",
+      "menu_title":"Carga de Personas",
+      "translate":"Persons batch load"
+   },
+   "record_235":{
+      "idgeneral_menu":"1032",
+      "menu_title":"Compra-Liquidacion de Acciones",
+      "translate":"Fund Shares operations"
+   },
+   "record_236":{
+      "idgeneral_menu":"11036",
+      "menu_title":"Recibo de Captura General",
+      "translate":"General receipt"
+   },
+   "record_237":{
+      "idgeneral_menu":"5040",
+      "menu_title":"Impuestos",
+      "translate":"Taxes"
+   },
+   "record_238":{
+      "idgeneral_menu":"5041",
+      "menu_title":"Registro de Pagos del IDE",
+      "translate":"IDE Tax register"
+   },
+   "record_239":{
+      "idgeneral_menu":"11039",
+      "menu_title":"Editar Movimientos por Personas",
+      "translate":"Persons.- Movements editor"
+   },
+   "record_240":{
+      "idgeneral_menu":"3076",
+      "menu_title":"Reporte de Creditos Duplicados",
+      "translate":"Duplicate ID loans.- report"
+   },
+   "record_241":{
+      "idgeneral_menu":"5097",
+      "menu_title":"Comparacion de Saldos Externos",
+      "translate":""
+   },
+   "record_242":{
+      "idgeneral_menu":"1039",
+      "menu_title":"Depositos de Inversion",
+      "translate":"Investiments Funds deposits"
+   },
+   "record_243":{
+      "idgeneral_menu":"1038",
+      "menu_title":"Retiros de Inversion",
+      "translate":"Investiments Funds charges"
+   },
+   "record_244":{
+      "idgeneral_menu":"1061",
+      "menu_title":"Factura Rapida de ahorros",
+      "translate":"Rapid receipt for Saving Account"
+   },
+   "record_245":{
+      "idgeneral_menu":"5013",
+      "menu_title":"Guia Contabilizadora",
+      "translate":"Accounting guide"
+   },
+   "record_246":{
+      "idgeneral_menu":"1010",
+      "menu_title":"Operaciones de Tesoreria",
+      "translate":"Treasury operations"
+   },
+   "record_247":{
+      "idgeneral_menu":"10010",
+      "menu_title":"Permisos y usuarios",
+      "translate":"User and rights"
+   },
+   "record_248":{
+      "idgeneral_menu":"10016",
+      "menu_title":"Respaldar-Restaurar Permisos",
+      "translate":"Backup System permissions"
+   },
+   "record_249":{
+      "idgeneral_menu":"9003",
+      "menu_title":"Listado de Movimientos Bancarios",
+      "translate":"Bank operation ledger"
+   },
+   "record_250":{
+      "idgeneral_menu":"9004",
+      "menu_title":" Movimientos Bancarios",
+      "translate":"Bank operations"
+   },
+   "record_251":{
+      "idgeneral_menu":"15001",
+      "menu_title":"Manual(En Linea)",
+      "translate":"Online manual"
+   },
+   "record_252":{
+      "idgeneral_menu":"1012",
+      "menu_title":"Cerrar Sesion de Caja",
+      "translate":"close Session cashier"
+   },
+   "record_253":{
+      "idgeneral_menu":"18556",
+      "menu_title":"MAE.- Carga de Personas",
+      "translate":"Persons.- Load Batch process"
+   },
+   "record_254":{
+      "idgeneral_menu":"18557",
+      "menu_title":"MAE.- Carga de Referencias",
+      "translate":"Person relations.- Load Batch process"
+   },
+   "record_255":{
+      "idgeneral_menu":"18858",
+      "menu_title":"MAE.- Carga de Vivienda",
+      "translate":"Residence data.- Load Batch process"
+   },
+   "record_256":{
+      "idgeneral_menu":"18859",
+      "menu_title":"MAE.- Carga de prestamos",
+      "translate":"Loans.- Load Batch process"
+   },
+   "record_257":{
+      "idgeneral_menu":"2060",
+      "menu_title":"Empresas",
+      "translate":"Companies"
+   },
+   "record_258":{
+      "idgeneral_menu":"2061",
+      "menu_title":"Registro de Pagos",
+      "translate":"Payment register"
+   },
+   "record_259":{
+      "idgeneral_menu":"18800",
+      "menu_title":"Reportes por Empresas",
+      "translate":"Reports by companies"
+   },
+   "record_260":{
+      "idgeneral_menu":"18810",
+      "menu_title":"Reportes de Credito",
+      "translate":"Loans reports"
+   },
+   "record_261":{
+      "idgeneral_menu":"70010",
+      "menu_title":"Reportar conducta inadecuada",
+      "translate":"Report misconduct"
+   }
+}

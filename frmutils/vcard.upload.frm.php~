@@ -1,0 +1,127 @@
+<?php
+ini_set("max_execution_time", 600);
+
+
+$action 			= ( isset($_GET["o"]) )? $_GET["o"] : false ;
+$lang[""]			= "";
+
+$select				= "<option value='LN'>Nombre Completo</option>
+				  <option value='ROLE'>Cargo</option>
+				  <option value='TEL;TYPE=CELL;X-EVOLUTION-UI-SLOT=2'>Telefono Celular</option>
+				  <option value='TEL;TYPE=HOME,VOICE;X-EVOLUTION-UI-SLOT=3'>Hogar.- Telefono</option>
+				  <option value='TEL;TYPE=WORK,VOICE;X-EVOLUTION-UI-SLOT=1'>Trabajo.- Telefono</option>
+				  <option value='EMAIL;TYPE=HOME;X-EVOLUTION-UI-SLOT=1'>Hogar.- Correo Electronico</option>
+				  <option value='EMAIL;TYPE=WORK;X-EVOLUTION-UI-SLOT=2'>Trabajo.- Correo Electronico</option>
+				  <option value='ORG'>Empresa</option>
+				  <option value='NINGUNO' selected>--</option>
+				  ";
+
+if ( $action != "w" ){
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Carga de Socios</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<!-- <link href="../css/wforms.css" rel="stylesheet" type="text/css"> -->
+</head>
+<body>
+<?php
+}
+//Si la Operacion es Configurar los Datos
+if ( $action == false ){
+?>
+<form name="frmSendFiles" method="POST" action="vcard.upload.frm.php?o=u" enctype="multipart/form-data">
+<fieldset>
+	<legend>|&nbsp;&nbsp;&nbsp;&nbsp;Carga Automatica de Socios&nbsp;&nbsp;&nbsp;&nbsp;|</legend>
+	<table border='0' width='100%' align="center">
+		<tbody>
+		<tr>
+			<th colspan="6">ENVIAR ARCHIVO DE SOCIOS</th>
+		</tr>
+		<tr>
+			<td>Seleccione un Archivo:</td>
+			<td colspan="5"><input type="file" name="cFile1" size="50" /></td>
+		</tr>
+		<tr>
+			<th colspan="6"><input type="submit" value="Enviar Archivos" /></th>
+		</tr>
+		<tr>
+			<th><select name="c1"><?php echo $select; ?></select></th>
+			<th><select name="c2"><?php echo $select; ?></select></th>
+			<th><select name="c3"><?php echo $select; ?></select></th>
+			<th><select name="c4"><?php echo $select; ?></select></th>
+			<th><select name="c5"><?php echo $select; ?></select></th>
+			<th><select name="c6"><?php echo $select; ?></select></th>
+		</tr>		
+		</tbody>
+	</table>
+</fieldset>
+</form>
+</body>
+<script language="javascript">
+</script>
+</html>
+
+<?php
+
+} elseif ( $action ==  "u" ) {
+
+		$usrFiles		= array();
+		$usrFiles[0]	= $_FILES["cFile1"];
+		$msg			= "";
+		$afectable		= $_POST["csResult"];
+
+		$prePath		= "/var/www/tmp";
+		$lim			= 1; //sizeof($usrFiles) -1;
+		//Arrays de Control
+	//==================================================================================================================
+			if( isset($usrFiles[0]) ){
+				//Obtener Extension
+				$DExt 	= explode(".", substr($usrFiles[0]['name'], -6));
+				$mExt	= $DExt[1];
+
+				if($mExt == "csv"){
+					$completePath	= $prePath . $usrFiles[0]['name'];
+					if(file_exists($completePath)==true){
+						unlink($completePath);
+						echo "<p class='aviso'> SE ELIMINO EL ARCHIVO " . $usrFiles[0]['name'] . "</p>";
+					}
+					if(move_uploaded_file($usrFiles[0]['tmp_name'], $completePath )) {
+						//echo "<p class='aviso'> SE GUARDO EXITOSAMENTE EL ARCHIVO " . $usrFiles[$i]['name'] . "</p>";
+					} else {
+						//echo "<p class='aviso'> SE FALLO AL GUARDAR " . $usrFiles[$i]['name'] . "</p>";
+					}
+					//analizar el Archivo
+						$gestor = @fopen($completePath, "r");
+						$iReg 	= 0;
+
+						//inicializa el LOG del proceso
+						$aliasFil	= "";
+
+						if ($gestor) {
+							while (!feof($gestor)) {
+								$bufer			= fgets($gestor, 4096);
+								//$bufer			= stream_get_line($gestor, "\r\n");
+								if (!isset($bufer) ){
+									$msg .= "$iReg\t\tERROR\tLa Linea($iReg) no se leyo($bufer)\r\n";
+								} else {
+									$bufer				= trim($bufer);
+									$datos				= explode(",", $bufer, 21);
+									//Error Raise
+									$errRaise			= false;
+									//mostrar columnas
+								}
+							$iReg++;
+							}
+						}
+						fclose ($gestor);
+						//$xLog->setWrite($msg);
+				}	else {
+					echo "<p class='aviso'>EL TIPO DE ARCHIVO DE " . $usrFiles[0]['name'] . "(" .$mExt . ") NO SE ACEPTA</p>";
+				}
+			}
+
+}
+?>
+

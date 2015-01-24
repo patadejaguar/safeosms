@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Saldo Promedio Mensual</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`socios`.`codigo`,
+		`socios`.`nombre`,
+		`captacion_cuentas`.`numero_cuenta` AS `numero_de_cuenta`,
+		`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
+		`captacion_subproductos`.`descripcion_subproductos` AS `producto`,
+		`captacion_cuentas`.`tasa_otorgada`,
+		`captacion_cuentas`.`dias_invertidos`,
+		`captacion_cuentas`.`saldo_cuenta`,
+		`captacion_cuentas`.`sucursal`,
+		`captacion_sdpm_historico`.`ejercicio`,
+		`captacion_sdpm_historico`.`periodo`,
+		`captacion_sdpm_historico`.`fecha`,
+		`captacion_sdpm_historico`.`recibo`,
+		`captacion_sdpm_historico`.`dias`,
+		`captacion_sdpm_historico`.`tasa`,
+		`captacion_sdpm_historico`.`monto`
+		FROM
+		`captacion_cuentas` `captacion_cuentas`
+		INNER JOIN `captacion_sdpm_historico` `captacion_sdpm_historico`
+		ON `captacion_cuentas`.`numero_cuenta` = `captacion_sdpm_historico`.
+		`cuenta`
+		INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos`
+		ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.
+		`idcaptacion_cuentastipos`
+		INNER JOIN `socios` `socios`
+		ON `socios`.`codigo` = `captacion_cuentas`.`numero_socio`
+		INNER JOIN `captacion_subproductos` `captacion_subproductos`
+		ON `captacion_cuentas`.`tipo_subproducto` =
+		`captacion_subproductos`.`idcaptacion_subproductos`
+		WHERE
+		(`captacion_cuentas`.`numero_cuenta` =270110014)
+		ORDER BY
+		`socios`.`codigo`,
+		`captacion_cuentas`.`numero_cuenta`,
+		`captacion_sdpm_historico`.`fecha`,
+		`captacion_sdpm_historico`.`recibo`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='16'>Reporte de Saldo Promedio Mensual</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='16'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='16'>
+					<XHTML>
+						<hr></hr>
+						<table border='0'>
+							<tr>
+								<th class='PAGER_HEADER_TH'>
+									REG. CNBV. SNR69300601
+								</th>
+							</tr>
+							<tr>
+								<td class='PAGE_FOOTER_TD'>
+									CALLE 25 #87-A, ENTRE 16 Y 18, COL. MÉXICO, MERIDA, YUCATAN.
+								</td>
+							</tr>
+						</table>
+						<hr></hr>
+					</XHTML>
+				</COL>
+			</ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CODIGO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR' NUMBERFORMATEX=''>$this->getValue('codigo')</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL TYPE='EXPRESSION' NUMBERFORMATEX=''>$this->getValue('nombre')</COL>
+					<COL CELLCLASS='GHC'>NUMERO DE CUENTA</COL>
+					<COL TYPE='EXPRESSION' NUMBERFORMATEX=''>$this->getValue('numero_de_cuenta')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>TIPO</COL>
+					<COL TYPE='EXPRESSION' NUMBERFORMATEX=''>$this->getValue('tipo')</COL>
+					<COL CELLCLASS='GHC'>PRODUCTO</COL>
+					<COL TYPE='EXPRESSION' NUMBERFORMATEX=''>$this->getValue('producto')</COL>
+					<COL CELLCLASS='GHC'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION' NUMBERFORMATEX=''>$this->getValue('sucursal')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC'>TASA OTORGADA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR' NUMBERFORMATEX=''>$this->getValue('tasa_otorgada')</COL>
+					<COL CELLCLASS='GHC'>DIAS INVERTIDOS</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR' NUMBERFORMATEX=''>$this->getValue('dias_invertidos')</COL>
+					<COL CELLCLASS='GHC'>SALDO CUENTA</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('saldo_cuenta')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='7' NUMBERFORMATEX=''>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='14%'>EJERCICIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>PERIODO</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>FECHA</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>RECIBO</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>DIAS</COL>
+					<COL CELLCLASS='GHC' WIDTH='14%'>TASA</COL>
+					<COL CELLCLASS='GHC' WIDTH='16%'>MONTO</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FR'>ejercicio</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>periodo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha</COL>
+					<COL TYPE='FIELD'>recibo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>dias</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>tasa</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR'>monto</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' COLSPAN='16'>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='16'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

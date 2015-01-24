@@ -1,0 +1,82 @@
+<?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
+//=====================================================================================================
+	include_once("../core/go.login.inc.php");
+	include_once("../core/core.error.inc.php");
+	include_once("../core/core.html.inc.php");
+	include_once("../core/core.init.inc.php");
+	include_once("../core/core.db.inc.php");
+	$theFile			= __FILE__;
+	$permiso			= getSIPAKALPermissions($theFile);
+	if($permiso === false){	header ("location:../404.php?i=999");	}
+	$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.PERFIL TRANSACCIONAL", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+	
+$estatus 		= parametro("estado", SYS_TODAS);
+$frecuencia 	= parametro("periocidad", SYS_TODAS);
+$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS);
+$out 			= parametro("out", SYS_DEFAULT);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+
+
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+//$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xSoc		= new cSocio($persona); $xSoc->init();
+
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+$xRPT->addContent($body);
+
+$xRPT->addContent($xSoc->getFicha(true));
+
+//Bajo revision
+$xAl		= new cAml_alerts();
+$xlistas	= new cSQLListas();
+$sql		= $xlistas->getListadoDeAlertas(false, false, false, $persona, " AND `estado_en_sistema` =" . SYS_UNO);
+$xT			= new cTabla($sql);
+$xRPT->addContent( $xT->Show( "TR.Alertas pendientes de verificar" ) );
+//Descartados
+
+$sql		= $xlistas->getListadoDeAlertas(false, false, false, $persona, " AND `estado_en_sistema` =" . SYS_CERO);
+$xT			= new cTabla($sql);
+$xRPT->addContent( $xT->Show( "TR.Alertas ignoradas" ) );
+//Riesgos para reportar
+
+$sql		= $xlistas->getListadoDeRiesgosConfirmados(false, false, false, false, $persona, " AND `estado_de_envio`= " . SYS_CERO);
+$xT			= new cTabla($sql);
+$xRPT->addContent( $xT->Show( "TR.Alertas pendientes de reportar" ) );
+
+
+$sql		= $xlistas->getListadoDeRiesgosConfirmados(false, false, false, false, $persona, " AND `estado_de_envio`= " . SYS_UNO);
+$xT			= new cTabla($sql);
+$xRPT->addContent( $xT->Show( "TR.Alertas reportadas" ) );
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+?>

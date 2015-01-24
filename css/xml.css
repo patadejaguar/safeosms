@@ -1,0 +1,19 @@
+html * { font-size: 10px; font-family: sans-serif; font-stretch: condensed;}
+.FC,.FL,.FR{font-size:.85em;color:#000;}
+.GHC,.GHL,.GHR,h5{font-size:1.1em;color:#2F31A6; font-weight: bold; text-transform: uppercase;}
+H1,H2,H3,h4,h5,.FC,.GHC, .GHL {text-align: center; }
+.GHR, .FR { text-align: right; }
+H1,H2 { font-size: 1.3em; }
+H3,h4 { font-size: 1.2em; }
+H2 { color: #1F0732; }
+h5 { color: #061314; }
+.GHL { color: #7A0015; }
+
+.FC, .FL {
+		border-left-style: dashed; border-left-width: 1px;
+}
+.FR {
+		border-right-style: dashed; border-right-width: 1px;
+		border-bottom-style: dashed; border-bottom-width: 1px;
+		padding-right: 2px; 
+}

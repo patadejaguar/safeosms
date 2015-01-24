@@ -1,0 +1,113 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Corte de Recibos por Cajero</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>select operaciones_recibos.*, socios.nombre,
+		operaciones_recibostipo.descripcion_recibostipo AS 'tipo_de_recibo' from
+		operaciones_recibos, socios, operaciones_recibostipo WHERE
+		socios.codigo=operaciones_recibos.numero_socio AND
+		operaciones_recibostipo.idoperaciones_recibostipo=operaciones_recibos.tipo_docto
+		AND operaciones_recibostipo.mostrar_en_corte!='0' ORDER BY
+		operaciones_recibos.tipo_pago, operaciones_recibos.tipo_docto, socios.codigo
+		LIMIT 0,500</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='9' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='9'>CORTE DE RECIBOS POR CAJERO</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='9'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='10' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='tipo_pago'>
+			<HEADER>
+
+				<ROW>
+					<COL CELLCLASS='GHC' COLSPAN='2'>TIPO DE PAGO</COL>
+					<COL TYPE='EXPRESSION' COLSPAN='2' NUMBERFORMAT='0'>$this->getValue('tipo_pago')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='10' NUMBERFORMAT='0'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='8%'>FECHA</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>R.FISCAL</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>DOCUMENTO</COL>
+					<COL CELLCLASS='GHC' WIDTH='16%'>RECIBO</COL>
+					<COL CELLCLASS='GHC' WIDTH='5%'>SOCIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>TOTAL</COL>
+
+					<COL CELLCLASS='GHC' WIDTH='8%'>CHEQUE</COL>
+					<COL CELLCLASS='GHC' WIDTH='17%'>OBSERVACION</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>fecha_operacion</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>recibo_fiscal</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>docto_afectado</COL>
+					<COL TYPE='FIELD'>tipo_de_recibo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>numero_socio</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>total_operacion</COL>
+
+					<COL TYPE='FIELD'>cheque_afectador</COL>
+					<COL TYPE='FIELD'>observacion_recibo</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHL' COLSPAN='2'>NUM. DE RECIBOS</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='0'>$this->getRowCount()</COL>
+					<COL CELLCLASS='GHL' COLSPAN='3'>SUMA DE OPERACIONES</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHR' NUMBERFORMATEX='2'>$this->getSum("total_operacion")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='9'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

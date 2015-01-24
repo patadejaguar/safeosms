@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte de Garantias Pendiente de Entrega</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`socios`.`codigo`,
+		`socios`.`nombre`,
+		`creditos_solicitud`.`numero_solicitud`,
+		`creditos_solicitud`.`saldo_actual`,
+		`creditos_garantias`.`idcreditos_garantias`,
+		`creditos_tgarantias`.`descripcion_tgarantias`,
+		`creditos_garantias`.`fecha_resguardo`,
+		`creditos_garantias`.`monto_valuado`
+		FROM
+		`socios` `socios`
+		INNER JOIN `creditos_solicitud` `creditos_solicitud`
+		ON `socios`.`codigo` = `creditos_solicitud`.`numero_socio`
+		INNER JOIN `creditos_garantias` `creditos_garantias`
+		ON `creditos_solicitud`.`numero_solicitud` = `creditos_garantias`.
+		`solicitud_garantia`
+		INNER JOIN `creditos_tgarantias` `creditos_tgarantias`
+		ON `creditos_garantias`.`tipo_garantia` = `creditos_tgarantias`.
+		`idcreditos_tgarantias`
+		WHERE
+		(`creditos_solicitud`.`saldo_actual` =0)
+		AND
+		(`creditos_garantias`.`fecha_resguardo` ='2008-01-01')
+		AND
+		(`creditos_garantias`.`fecha_resguardo` =CURDATE())</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='8'>Reporte de Garantias Pendiente de
+					Entrega</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='8'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='8' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>CODIGO</COL>
+					<COL CELLCLASS='GHC'>NOMBRE</COL>
+					<COL CELLCLASS='GHC'>SOLICITUD</COL>
+					<COL CELLCLASS='GHC'>SALDO</COL>
+					<COL CELLCLASS='GHC'>NUM. GARANTIA</COL>
+					<COL CELLCLASS='GHC'>DESCRIPCION</COL>
+					<COL CELLCLASS='GHC'>FECHA DE RESGUARDO</COL>
+					<COL CELLCLASS='GHC'>VALOR</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC' WIDTH='5%'>codigo</COL>
+					<COL TYPE='FIELD' WIDTH='30%'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC' WIDTH='10%'>numero_solicitud</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' WIDTH='10%' NUMBERFORMATEX='2'>saldo_actual</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' WIDTH='10%'>idcreditos_garantias</COL>
+					<COL TYPE='FIELD' WIDTH='20%'>descripcion_tgarantias</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC' WIDTH='10%'>fecha_resguardo</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' WIDTH='10%' NUMBERFORMATEX='2'>monto_valuado</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='8'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='0%' NUMBERFORMATEX=''>
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>SUMAS</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>
+					</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHR' COLSPAN="2" WIDTH='0%'
+						NUMBERFORMATEX='2'>$this->getSum("monto_valuado")</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

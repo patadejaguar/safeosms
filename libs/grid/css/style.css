@@ -1,0 +1,158 @@
+#onGrid {
+font-family: Verdana, Arial, Helvetica, Sans-serif;
+     font-size: 10px;
+     color: #616161;
+}
+
+#onGrid A:link {color: black; text-decoration: none;} 
+#onGrid A:active {color: black; text-decoration: none;}
+#onGrid A:hover {color: black; text-decoration: none;} 
+#onGrid A:visited {color: black; text-decoration: none;}
+
+#onGrid .grid_button
+{
+    border: gray 1px solid;
+    BACKGROUND-COLOR: white;
+	font-size: 10px;
+    color: #616161;
+}
+
+#onGrid .grid_input
+{
+         border: gray 1px solid;
+         BACKGROUND-COLOR: white;
+         font-size: 10px;
+         color: #616161;
+}
+
+
+#onGrid .editor_ok_button
+{
+    border: gray 1px solid;
+    BACKGROUND-COLOR: white;
+	font-size: 10px;
+    color: #616161;
+}
+
+#onGrid .editor_field
+{
+    border: gray 1px solid;
+    BACKGROUND-COLOR: white;
+	font-size: 10px;
+    color: #616161;
+}
+
+#onGrid .grid_maindiv
+{
+	position: relative; 
+	border: 1px solid #7F9DB9; 
+	overflow: hidden; 
+	width: 100%; 
+	font-family: verdana,arial;	
+}
+
+#onGrid .grid_table
+{
+	background-color: white;
+	width: 100%; 
+	font-size: 10pt;
+}
+
+#onGrid .grid_table_header
+{
+	background-image: url('../images/grid/header.png'); 
+	height: 27px; 
+	color: white; 
+	font-weight: bold; 
+	font-size: 14pt;	
+}
+
+#onGrid .grid_table_resize_row
+{
+	background-image: url('../images/grid/resize.gif'); 
+	width: 2px; 
+	margin: 0px;	
+}
+
+#onGrid .grid_table_header_row
+{
+
+	background-color: #EBEADB; 
+	font-weight: bold;
+	cursor:pointer;
+	padding-left: 5px;
+	padding-bottom: 0px;
+	position: relative; 
+	height: 18px; 
+	overflow: hidden; 
+	font-size: 10px;	
+	cursor:pointer;
+	border-bottom:2px solid #cbc7b8;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-right: 1px solid white;
+	margin-bottom: 0px;
+	background-image: url('../images/grid/column.png'); 
+
+}
+
+#onGrid .grid_table_header_row_hover
+{
+	font-weight: bold;
+	cursor:pointer;
+	padding-left: 5px;
+	padding-bottom: 0px;
+	position: relative; 
+	height: 18px; 
+	overflow: hidden; 
+	font-size: 10px;	
+	cursor:pointer;
+	border-top: 1px solid white;
+	border-left: 1px solid white;
+	border-right: 1px solid white;
+	margin-bottom: 0px;
+	
+	border-bottom:2px solid #f9b119;
+	background-color: #FAF9F4;
+	background-image:  url('../images/grid/column_on.png'); 
+
+}
+
+#onGrid .grid_column_resize
+{
+	cursor: e-resize; 
+	width: 2px; 
+	background-color: #cbc7b8;
+	border-bottom:2px solid #cbc7b8;
+	padding-bottom: 0px;
+	margin-bottom: 0px;
+}
+
+#onGrid .grid_table_row_uneven
+{
+	background-color: #EBEADB; 
+}
+
+#onGrid .grid_footer
+{
+	background-color: #f9f9f9; 
+	height: 20px; 
+	color: #616161;
+}
+
+#onGrid .grid_table_cell
+{
+	padding-left: 2px; 
+	position: relative; 
+	border-bottom: 1px solid lightgray;
+	height: 17px;
+	overflow: hidden; 
+	margin: 0px; 
+	font-size: 10px;
+}
+
+
+#onGrid .grid_table_cell input
+{
+	width: 100%;
+}

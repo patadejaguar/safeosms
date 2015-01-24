@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Reporte</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`oficiales`.`sucursal`,
+		`oficiales`.`nombre_completo` AS `oficial`,
+		`socios`.`codigo`,
+		`socios`.`nombre` ,
+		`creditos_solicitud`.`numero_solicitud` AS `credito`,
+		`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `convenio`,
+		`creditos_solicitud`.`fecha_ministracion` AS `ministrado`,
+		`creditos_solicitud`.`monto_autorizado`,
+		`creditos_solicitud`.`pagos_autorizados`,
+		`creditos_estatus`.`descripcion_estatus` AS `estatus`,
+		`creditos_solicitud`.`saldo_actual`
+
+		FROM
+		`creditos_solicitud` `creditos_solicitud`
+		INNER JOIN `creditos_estatus` `creditos_estatus`
+		ON `creditos_solicitud`.`estatus_actual` = `creditos_estatus`.
+		`idcreditos_estatus`
+		INNER JOIN `oficiales` `oficiales`
+		ON `oficiales`.`id` = `creditos_solicitud`.`oficial_credito`
+		INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio`
+		ON `creditos_solicitud`.`tipo_convenio` =
+		`creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+		INNER JOIN `socios` `socios`
+		ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`
+		WHERE
+		(`creditos_solicitud`.`saldo_actual` >0)
+		AND
+		(`creditos_solicitud`.`estatus_actual` !=50)
+		ORDER BY
+		`oficiales`.`id`,
+		`socios`.`codigo`,
+		`creditos_solicitud`.`fecha_ministracion`
+
+		LIMIT 0,100</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>matriz</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='11'>Reporte de Cartera de Credito Por
+					Oficial de Credito</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='11'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='11' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='sucursal'>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='0%'>SUCURSAL</COL>
+					<COL TYPE='EXPRESSION' WIDTH='0%'>$this->getValue('sucursal')</COL>
+					<COL CELLCLASS='GHC' WIDTH='0%'>OFICIAL</COL>
+					<COL TYPE='EXPRESSION' WIDTH='0%' COLSPAN='3'>$this->getValue('oficial')</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='8%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='25%'>NOMBRE</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>CREDITO</COL>
+					<COL CELLCLASS='GHC' WIDTH='17%'>CONVENIO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>MINISTRADO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>MONTO AUTORIZADO</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>PAGOS AUTORIZADOS</COL>
+					<COL CELLCLASS='GHC' WIDTH='10%'>ESTATUS</COL>
+					<COL CELLCLASS='GHC' WIDTH='8%'>SALDO ACTUAL</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>codigo</COL>
+					<COL TYPE='FIELD'>nombre</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>credito</COL>
+					<COL TYPE='FIELD'>convenio</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>ministrado</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>monto_autorizado</COL>
+					<COL TYPE='FIELD' CELLCLASS='FC'>pagos_autorizados</COL>
+					<COL TYPE='FIELD'>estatus</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>saldo_actual</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL CELLCLASS='GHC'>Totales</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC'>$this->getRowCount()</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='2'>$this->getSum("monto_autorizado")</COL>
+					<COL CELLCLASS='GHC'>
+					</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='2'>$this->getSum("saldo_actual")</COL>
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='9'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

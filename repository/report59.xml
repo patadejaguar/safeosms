@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Acumulado de Conceptos</TITLE>
+	<BACKGROUND_COLOR>#FFFFFF</BACKGROUND_COLOR>
+	<SQL>SELECT
+		`trabajador_general`.`codigo`,
+		CONCAT(
+		`trabajador_general`.`apellido_paterno`, ' ',
+		`trabajador_general`.`apellido_materno`, ' ',
+		`trabajador_general`.`nombre_completo`) AS 'nombre_completo',
+		`trabajador_general`.`curp`,
+		`trabajador_general`.`numero_seguridad_social` AS 'nss',
+
+		`nominas_movimientos`.`concepto`,
+		`nominas_conceptos`.`descripcion`,
+		SUM(`nominas_movimientos`.`monto`) AS 'total'
+
+		FROM
+		`nominas_movimientos` `nominas_movimientos`
+		INNER JOIN `nominas_conceptos` `nominas_conceptos`
+		ON `nominas_movimientos`.`concepto` =
+		`nominas_conceptos`.`codigo`
+		INNER JOIN `trabajador_general`
+		`trabajador_general`
+		ON `nominas_movimientos`.`trabajador` =
+		`trabajador_general`.`codigo`
+		GROUP BY
+		`trabajador_general`.`codigo`,
+		`nominas_movimientos`.`concepto`
+
+		ORDER BY `nominas_movimientos`.`concepto`,
+		`trabajador_general`.`codigo`</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='2' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='5'>Acumulado de Conceptos</COL>
+			</ROW>
+			<ROW>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='5'>
+					<XHTML>
+						<hr />
+					</XHTML>
+				</COL>
+			</ROW>
+			<ROW>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='5' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION='concepto'>
+			<HEADER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='FR'>$this->getValue('concepto')</COL>
+					<COL TYPE='EXPRESSION'>$this->getValue('descripcion')</COL>
+					<COL />
+					<COL />
+					<COL />
+					<!-- <COL TYPE='EXPRESSION' CELLCLASS='FC' NUMBERFORMATEX='2' >$this->getSum('total')</COL> -->
+				</ROW>
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='10%'>CODIGO</COL>
+					<COL CELLCLASS='GHC' WIDTH='40%'>NOMBRE COMPLETO</COL>
+					<COL CELLCLASS='GHC' WIDTH='20%'>CURP</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>NSS</COL>
+					<COL CELLCLASS='GHC' WIDTH='15%'>TOTAL</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' CELLCLASS='FC'>codigo</COL>
+					<COL TYPE='FIELD'>nombre_completo</COL>
+					<COL TYPE='FIELD'>curp</COL>
+					<COL TYPE='FIELD'>nss</COL>
+					<COL TYPE='FIELD' CELLCLASS='FR' NUMBERFORMATEX='2'>total</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+
+				<ROW>
+					<COL />
+					<COL />
+					<COL CELLCLASS='GHC' COLSPAN='2'>SUMA RUBRO</COL>
+					<COL TYPE='EXPRESSION' CELLCLASS='GHC' NUMBERFORMATEX='2'>$this->getSum('total')</COL>
+				</ROW>
+
+				<ROW>
+					<COL CELLCLASS='GHC' WIDTH='100%' COLSPAN='5'>
+						<XHTML>
+							<hr />
+						</XHTML>
+					</COL>
+				</ROW>
+				<ROW>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW>
+			</ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

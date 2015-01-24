@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<!DOCTYPE REPORT SYSTEM 'PHPReport.dtd'>
+<REPORT MARGINWIDTH='2' MARGINHEIGHT='2'>
+	<TITLE>Socios Patrimonio</TITLE>
+	<BACKGROUND_COLOR>0</BACKGROUND_COLOR>
+	<SQL>
+		SELECT socios_patrimonio.idsocios_patrimonio AS 'id',
+		socios_patrimoniotipo.descripcion_patrimoniotipo AS
+		'tipo_de_patrimonio',
+		socios_patrimonio.fecha_expiracion,
+		socios_patrimonio.observaciones,
+		socios_patrimonio.descripcion,
+		socios_patrimonio.documento_presentado,
+		socios_patrimonio.monto_patrimonio AS 'valor' FROM
+		socios_patrimonio,
+		socios_patrimoniotipo WHERE
+		socios_patrimoniotipo.idsocios_patrimoniotipo=socios_patrimonio.tipo_patrimonio
+		LIMIT 0,100
+	</SQL>
+	<INTERFACE>mysql</INTERFACE>
+	<CONNECTION>localhost</CONNECTION>
+	<DATABASE>pakal</DATABASE>
+	<NO_DATA_MSG>NO EXISTEN DATOS</NO_DATA_MSG>
+	<CSS MEDIA='print'>../css/xml.css</CSS>
+	<CSS MEDIA='screen'>../css/xml.css</CSS>
+	<PAGE BORDER='0' SIZE='0' CELLSPACING='0' CELLPADDING='0'>
+		<HEADER>
+<!-- CONTENIDO DEL ENCABEZADO DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawHeader(true)</COL></ROW>
+
+			<ROW>
+				<COL CELLCLASS='GHL' COLSPAN='7'>
+					Socios Patrimonio
+				</COL>
+				<COL CELLCLASS='GHL' WIDTH='100%' COLSPAN='7'>
+					<hr />
+				</COL>
+			</ROW>
+		</HEADER>
+		<FOOTER>
+<!-- PIE DE PAGINA -->
+<ROW><COL CELLCLASS='GHC' COLSPAN='7' TYPE='RAW_EXPRESSION'>getRawFooter(true)</COL></ROW>
+		</FOOTER>
+	</PAGE>
+	<GROUPS>
+		<GROUP NAME='MAIN' EXPRESSION=''>
+			<HEADER>
+				<ROW>
+					<COL CELLCLASS='GHC'>
+						ID
+					</COL>
+					<COL CELLCLASS='GHC'>
+						TIPO DE PATRIMONIO
+					</COL>
+					<COL CELLCLASS='GHC'>
+						FECHA EXPIRACION
+					</COL>
+					<COL CELLCLASS='GHC'>
+						OBSERVACIONES
+					</COL>
+					<COL CELLCLASS='GHC'>
+						DESCRIPCION
+					</COL>
+					<COL CELLCLASS='GHC'>
+						DOCUMENTO PRESENTADO
+					</COL>
+					<COL CELLCLASS='GHC'>
+						VALOR
+					</COL>
+				</ROW>
+			</HEADER>
+			<FIELDS>
+				<ROW>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						id
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						tipo_de_patrimonio
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						fecha_expiracion
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						observaciones
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						descripcion
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						documento_presentado
+					</COL>
+					<COL TYPE='FIELD' TEXTCLASS='FIELDS'>
+						valor
+					</COL>
+				</ROW>
+			</FIELDS>
+			<FOOTER>
+				<ROW>
+					<COL TYPE='EXPRESSION' CELLCLASS='GFC' COLSPAN='7'>
+					</COL>
+				</ROW>
+			</FOOTER>
+		</GROUP>
+
+	</GROUPS>
+	<DOCUMENT>
+		<FOOTER>
+			<ROW></ROW>
+		</FOOTER>
+	</DOCUMENT>
+</REPORT>

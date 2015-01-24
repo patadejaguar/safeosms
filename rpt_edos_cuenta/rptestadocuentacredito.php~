@@ -1,0 +1,222 @@
+<?php
+/**
+ * @see Estado de Cuenta de Creditos
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package creditos
+ * @subpackage reportes
+ * @todo
+ * 		07Julio08	Formato Monedas
+ *		31-Mayo-2008.- cCredito
+ *		09Sept2008		Soporte a una Nueva Presentacion
+ */
+//=====================================================================================================
+	include_once("../libs/tologin.inc.php");
+	include_once("../libs/error.inc.php");
+	$permiso = getSIPAKALPermissions(__FILE__);
+	if($permiso === false){
+		saveError(999, $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "Acceso no permitido a :" . addslashes(__FILE__));
+		header ("location:404.php?i=999");
+	} else {
+        $_SESSION["current_file"]   = addslashes(__FILE__);
+    }
+	$iduser = $_SESSION["log_id"];
+//=====================================================================================================
+include_once "../libs/eacp_datos.inc.php";
+include_once "../libs/db_general.inc.php";
+include_once "../libs/fechas.inc.php";
+include_once "../libs/sql.inc.php";
+include_once "../libs/core-config.inc.php";
+
+$oficial = elusuario($iduser);
+
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title></title>
+</head>
+<link href="../css/reporte.css" rel="stylesheet" type="text/css">
+<body>
+<!-- -->
+<p class="bigtitle">ESTADO DE CUENTA DE CREDITOS</p>
+<?php
+echo CABEZA_PAGINA;
+$idsolicitud 			= $_GET["pb"];		//Numero de Solicitud
+$id 					= $_GET["pa"];		//Numero de Socio
+$f15 					= $_GET["f15"];
+$f14 					= $_GET["f14"];
+$f16 					= $_GET["f16"];
+$f18 					= $_GET["f18"];		//Mostrar Movimiento Especifico
+$TOperacion 			= $_GET["f19"];		//Codigo de Tipo de Operacion.- Mvto Especifico
+
+
+	if (!$f15) {
+		$f15 = "no"	;
+	}
+
+	if (!$f16) {
+		$f16 = "no"	;
+	}
+
+	$solo_este_mvto = "";
+
+	if(!$f18){
+		$f18 = "no";
+	}
+
+	if ($f18 == "yes"){
+		$solo_este_mvto = " AND operaciones_mvtos.tipo_operacion=$TOperacion ";
+	}
+
+	$filtrarme = "";
+	$solo_con_saldos = "";
+
+	if ($f14 =="yes"){
+		$filtrarme = " ";
+	} else {
+		$filtrarme = " AND operaciones_mvtos.valor_afectacion!=0 AND operaciones_tipos.es_estadistico='0' ";
+	}
+
+	if ($f16=="yes"){
+		$solo_con_saldos = " AND saldo_actual>0 ";
+	}
+
+	$sqlcred = "SELECT numero_socio, numero_solicitud,
+	saldo_actual, monto_autorizado
+	FROM creditos_solicitud
+	WHERE
+		numero_solicitud=$idsolicitud
+		$solo_con_saldos
+	ORDER BY fecha_vencimiento DESC";
+
+	if ( $idsolicitud ) {
+		$idsocio = mifila($sqlcred, "numero_socio");
+	}
+
+	//
+	if($id) {
+		$sqlcred = "SELECT numero_socio, numero_solicitud, saldo_actual,
+		monto_autorizado FROM creditos_solicitud
+		WHERE numero_socio=$id $solo_con_saldos ORDER BY fecha_vencimiento DESC";
+		$idsocio = $id;
+	}
+
+
+	$cF	= new cFicha(iDE_SOCIO, $idsocio);
+	$cF->setTableWidth();
+	$cF->show();
+	echo "<hr />";
+	$mycred = mysql_query($sqlcred, cnnGeneral());
+
+		while($rwc = mysql_fetch_array($mycred)) {
+			$solicitud	= $rwc["numero_solicitud"];
+
+			$cFC = new cFicha(iDE_CREDITO, $solicitud );
+			$cFC->setTableWidth();
+			$cFC->show();
+
+			echo "<hr />";
+			$sqlST = getSqlStored(5);
+
+			if ($f15 == "yes"){
+				$sqlmvto = $sqlST . " WHERE operaciones_mvtos.docto_afectado=$solicitud
+										$filtrarme $solo_este_mvto
+										ORDER BY operaciones_mvtos.fecha_operacion,
+										operaciones_mvtos.tipo_operacion,
+										operaciones_mvtos.fecha_afectacion,
+										operaciones_mvtos.periodo_socio";
+			} else {
+				$sqlmvto = $sqlST . " WHERE operaciones_mvtos.docto_afectado=$solicitud
+										$filtrarme $solo_este_mvto
+										ORDER BY operaciones_mvtos.fecha_operacion,
+										operaciones_mvtos.tipo_operacion,
+										operaciones_mvtos.fecha_afectacion,
+										operaciones_mvtos.periodo_socio";
+			}
+			//echo $sqlmvto;
+
+			$trs = "";
+			//$sdo = $rwc[3];
+			$cap 	= 0;
+			$ints	= 0;
+			$otros	= 0;
+			//Array
+
+			//exit($sqlmvto);
+			$rs = mysql_query($sqlmvto, cnnGeneral());
+			$i = 1;
+			while ($rw =  mysql_fetch_array($rs)){
+				$observa = substr($rw[6],0,30);
+				$sdos = 0;
+				//si es primer mvto
+
+				//si es mvto mayor
+				//} else {
+					if ($rw[7]==120){
+						if ($i == 1){
+							$sdo = $rwc[3];
+							$sdos = getFMoney($sdo);
+						}
+						$sdo = $sdo - $rw[5];
+						$sdos = getFMoney($sdo);
+						$cap = $cap + $rw[5];
+					} else {
+						//si es primer mvto
+						if ($i == 1){
+							$sdo = $rwc[3];
+							$sdos = getFMoney($sdo);
+						}
+						//mvtos subsecuentes
+						$sdos = $sdo;
+						$sdos = getFMoney($sdo);
+					}
+
+				$monto = getFMoney($rw[5]);
+				$trs = $trs . "<tr>
+					<td>" . $rw[1] . "</td>
+					<td>" . $rw[2] . "</td>
+					<td>" . $rw[3] . "</td>
+					<td>" . $rw[4] . "</td>
+					<td class='mny'>$monto</td>
+					<td class='mny'>$sdos</td>
+					<td>$observa</td>
+				</tr>";
+				$i++;
+			}
+
+			@mysql_free_result($rs);
+	//Imprime la Tabla de Mvtos
+	$cap = getFMoney($cap);
+			echo "<table width='95%'>
+				<tr>
+					<th>Fecha</th>
+					<th>Referencia</th>
+					<th>Parc.</th>
+					<th>Operacion</th>
+					<th>Capital</th>
+					<th>Intereses</th>
+					<th>Otros</th>
+					<th>Saldo</th>
+					<th>Observaciones</th>
+				</tr>
+					$trs
+					<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<th>Sumas</th>
+					<th>$cap</th>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+		</table>";
+	$trs = "";
+		}
+	@mysql_free_result($mycred);
+
+echo PIE_PAGINA;
+?>
+</body>
+</html>

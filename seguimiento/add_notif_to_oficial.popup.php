@@ -31,11 +31,18 @@ return "Se Agrego la Notificacion $numero al Socio $socio por el Credito $solici
 }
 
 $i			= $_GET["i"];	//control id
-$s			= $_GET["s"];	//socio
-$c			= $_GET["c"];	//credito
 $g			= $_GET["g"];	//Grupo
-
 $t			= $_GET["t"];	//numero de notificacion
+
+
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+
+$s			= $persona;
+$c			= $credito;
 
 $oficial 	= elusuario($iduser);
 
@@ -62,10 +69,10 @@ $jxc ->drawJavaScript(false, true);
 
 <body onload="jsInit(); showFlatCalendar()">
 <form name="frmAddEvent" method="POST" action="./">
-<input type="hidden" id="idDateValue" value="<?php echo fechasys(); ?>" />
-<input type="hidden" id="idsocio" value="<?php echo $s; ?>" />
-<input type="hidden" id="idsolicitud" value="<?php echo $c; ?>" />
-<input type="hidden" id="idgrupo" value="<?php echo $g; ?>" />
+<input type="hidden" id="idDateValue" value="<?php echo $fecha; ?>" />
+<input type="hidden" id="idsocio" value="<?php echo $persona; ?>" />
+<input type="hidden" id="idsolicitud" value="<?php echo $credito; ?>" />
+<input type="hidden" id="idgrupo" value="<?php echo $grupo; ?>" />
 <input type="hidden" id="idnumero" value="<?php echo $t; ?>" />
 <fieldset>
 	<legend>Agregar <?php echo $t; ?></legend>

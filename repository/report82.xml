@@ -7,7 +7,7 @@
 		`socios_relacionestipos`.`idsocios_relacionestipos` AS `codigo`,
 		`socios_relacionestipos`.`descripcion_relacionestipos` AS `nombre`,
 		`socios_relacionestipos`.`descripcion_larga` AS `descripcion`,
-		`socios_relacionestipos`.`puntuacion_en_credit_scoring` AS `puntaje`
+		`socios_relacionestipos`.`puntos_en_scoring` AS `puntaje`
 		FROM
 		`socios_relacionestipos` `socios_relacionestipos`</SQL>
 	<INTERFACE>mysql</INTERFACE>

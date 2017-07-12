@@ -23,24 +23,44 @@ $clave		= parametro("id", false, MQL_RAW);
 $rs			= array();
 //AND MODO_DEBUG == true
 if($tabla != false AND $clave != false ){
-	$xObj	= new cSAFETabla($tabla);
+	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
 		$rs["message"]		= "ERROR\tAl eliminar el Registro con ID $clave en la Tabla $tabla\r\n";
-		$rs["error"]				= true;
+		$rs["error"]		= true;
 	} else {
 		$obj	= $xObj->obj();
 		$key	= $obj->getKey();
-		$obj	= new cSocios_aeconomica();
-		$obj->setData( $obj->query()->initByID($clave) );
-		$data	= base64_encode( json_encode($obj->query()->getCampos()) );
-		$ql->setRawQuery("DELETE FROM $tabla WHERE $key='$clave'");
-		$rs["message"]		= "OK\tSe elimina el Registro con ID $clave en la Tabla $tabla\r\n";
-		if(MODO_DEBUG == true){	$rs["message"]	.= $ql->getMessages(); }
-		$rs["error"]				= false;
-		//guardar error
-		$xLog				= new cCoreLog();
-		$xLog->add($rs["message"] . " $data", $xLog->COMMON);
-		$xLog->guardar($xLog->OCat()->ELIMINAR_RAW);
+		switch ($tabla){
+			case TPERSONAS_DIRECCIONES:
+				$xDom	= new cPersonasVivienda();
+				$xDom->setID($clave);
+				$xDom->init();
+				if($xDom->isInit() == true){
+					$rs["error"]	= $xDom->setEliminar();
+				} else {
+					$rs["error"]	= true;
+				}
+				$rs["message"]	= $xDom->getMessages();
+				break;
+			default:
+				$obj->setData( $obj->query()->initByID($clave) );
+				$data	= base64_encode( json_encode($obj->query()->getCampos()) );
+				$ql->setRawQuery("DELETE FROM $tabla WHERE $key='$clave'");
+				$xCache				= new cCache();
+				$xCache->clean("$tabla-$clave");
+				$rs["message"]		= "OK\tSe elimina el Registro con ID $clave en la Tabla $tabla\r\n";
+				if(MODO_DEBUG == true){	$rs["message"]	.= $ql->getMessages(); }
+				$rs["error"]				= false;
+				//guardar error
+				$xLog				= new cCoreLog();
+				$xLog->add($rs["message"] . " $data", $xLog->COMMON);
+				$xLog->guardar($xLog->OCat()->ELIMINAR_RAW);				
+				break;
+		}
+
+		//$obj	= new cSocios_aeconomica();
+		
+		
 		//agregar memo
 		
 	}

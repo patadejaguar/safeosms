@@ -204,7 +204,17 @@ socios_aeconomica.puesto AS 'Puesto', creditos_solicitud.numero_solicitud AS 'So
 /**
  *  Esta Funcion Agrega el Campo de Dependencia
  */
-$sqlb19f = "SELECT socios_general.codigo, CONCAT(socios_general.apellidopaterno, ' ', socios_general.apellidomaterno, ' ',socios_general.nombrecompleto) AS 'Nombre_Completo', creditos_solicitud.numero_solicitud AS 'Solicitud', creditos_solicitud.fecha_solicitud AS 'Fecha_Solicitud', format(creditos_solicitud.monto_solicitado,2) AS 'Monto_Solicitado', creditos_modalidades.descripcion_modalidades AS 'Tipo_Credito', creditos_periocidadpagos.descripcion_periocidadpagos AS 'Periocidad', creditos_solicitud.numero_pagos AS 'Num_de_Pagos', CONCAT((creditos_solicitud.tasa_interes * 100) , ' %') AS 'Tasa_de_Interes', creditos_solicitud.fecha_vencimiento AS 'Fecha_de_Vencimiento', creditos_estatus.descripcion_estatus AS 'Estatus' , socios_aeconomica_dependencias.descripcion_dependencia AS 'dependencia' FROM socios_general, creditos_solicitud, creditos_modalidades, creditos_periocidadpagos, creditos_estatus, socios_aeconomica_dependencias WHERE creditos_solicitud.numero_socio=socios_general.codigo AND creditos_estatus.estatus_actual=creditos_solicitud.estatus_actual AND creditos_modalidades.tipo_credito=creditos_solicitud.tipo_credito AND creditos_periocidadpagos.periocidad_de_pago=creditos_solicitud.periocidad_de_pago  AND socios_aeconomica_dependencias.idsocios_aeconomica_dependencias=socios_general.dependencia ";
+$sqlb19f = "SELECT socios_general.codigo, CONCAT(socios_general.apellidopaterno, ' ', socios_general.apellidomaterno, ' ',socios_general.nombrecompleto) AS 'Nombre_Completo', 
+		creditos_solicitud.numero_solicitud AS 'Solicitud',
+		creditos_solicitud.fecha_solicitud AS 'Fecha_Solicitud', 
+		format(creditos_solicitud.monto_solicitado,2) AS 'Monto_Solicitado', 
+		creditos_modalidades.descripcion_modalidades AS 'Tipo_Credito', 
+		creditos_periocidadpagos.descripcion_periocidadpagos AS 'Periocidad', creditos_solicitud.numero_pagos AS 'Num_de_Pagos', 
+		CONCAT((creditos_solicitud.tasa_interes * 100) , ' %') AS 'Tasa_de_Interes', creditos_solicitud.fecha_vencimiento AS 'Fecha_de_Vencimiento', 
+		creditos_estatus.descripcion_estatus AS 'Estatus' , socios_aeconomica_dependencias.descripcion_dependencia AS 'dependencia' FROM socios_general, creditos_solicitud, creditos_modalidades, 
+		creditos_periocidadpagos, creditos_estatus, socios_aeconomica_dependencias 
+		WHERE creditos_solicitud.numero_socio=socios_general.codigo 
+		AND creditos_estatus.estatus_actual=creditos_solicitud.estatus_actual AND creditos_modalidades.tipo_credito=creditos_solicitud.tipo_credito AND creditos_periocidadpagos.periocidad_de_pago=creditos_solicitud.periocidad_de_pago  AND socios_aeconomica_dependencias.idsocios_aeconomica_dependencias=socios_general.dependencia ";
 /**
  * Variable que suma el monto solicitado
  */

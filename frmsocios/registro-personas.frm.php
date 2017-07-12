@@ -15,12 +15,23 @@
 $xHP					= new cHPage("TR.Registro de Personas");
 $xT						= new cTipos();
 $xLoc					= new cLocal();
+$xSel					= new cHSelect();
 $xFRM					= new cHForm("frmnuevapersona");
 $ready					= true;
-$msg					= "";
-$persona				= false;		//persona sin inicializar
+$xLog					= new cCoreLog();
+$xRuls					= new cReglaDeNegocio();
+$xTipoIng				= new cPersonasTipoDeIngreso(0);
+$xHP->setNoCache();
+
+$DomicilioSimple		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_DOM_SIMPLE);
+$userNoDNI				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DNI_INGRESO);
+$useDExtranjero			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DEXTRANJERO);
+$useDatosAccidente		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DATO_ACCIDENTE);
+$useDColegiacion		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
+$persona				= false;																//persona sin inicializar
 $agregardom				= false;
 
+$xHP->addJTableSupport();
 $xHP->init();
 
 $idfecharegistro 		= parametro("idfecharegistro", false, MQL_DATE);
@@ -33,8 +44,9 @@ $idregimenfiscal 		= parametro("idregimenfiscal", DEFAULT_REGIMEN_FISCAL, MQL_IN
 $idgenero 				= parametro("idgenero", DEFAULT_GENERO, MQL_INT);
 $idpais 				= parametro("idpaisdeorigen", EACP_CLAVE_DE_PAIS);
 $idfechanacimiento 		= parametro("idfechanacimiento", false, MQL_DATE);
-$identidadfederativa 	= parametro("identidadfederativanacimiento", EACP_CLAVE_DE_ENTIDADFED);
-$idlugardenacimiento 	= parametro("idlugardenacimiento");
+$identidadfederativanac	= parametro("identidadfederativanacimiento", EACP_CLAVE_DE_ENTIDADFED);
+$identidadfederativa 	= parametro("identidadfederativa", EACP_CLAVE_NUM_ENTIDADFED);
+$idlugardenacimiento 	= parametro("idlugardenacimiento", "");
 $idestadocivil 			= parametro("idestadocivil", DEFAULT_ESTADO_CIVIL, MQL_INT);
 $idregimenmatrimonial 	= parametro("idregimenmatrimonial", DEFAULT_REGIMEN_CONYUGAL);
 $idtipoidentificacion 	= parametro("idtipoidentificacion", DEFAULT_TIPO_IDENTIFICACION);
@@ -63,14 +75,59 @@ $representante_legal	= parametro("idsocio2", false, MQL_INT);
 $ingresos 				= parametro("idingresos", 0, MQL_FLOAT);
 $idactividad			= parametro("idactividad", FALLBACK_ACTIVIDAD_ECONOMICA);
 $nombreempresa			= parametro("idrazonsocialtrabajo", "");
-
 $espep					= parametro("espep", false, MQL_BOOL);
 $esextranjero			= parametro("esextranjero", false, MQL_BOOL);
-
 $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
+$iddireccionsimple		= parametro("iddomiciliosimple");
+$profesion				= parametro("idprofesion");
 
-	//verificar si es persona moral
-	$xFJ				= new cPersonaFiguraJuridica($idfigurajuridica);
+$xclasificacion			= parametro("idxclasificacion", 0, MQL_INT);
+$yclasificacion			= parametro("idyclasificacion", 0, MQL_INT);
+$zclasificacion			= parametro("idzclasificacion", 0, MQL_INT);
+$idregion				= parametro("idregionpersona", getRegion(), MQL_INT);
+//=== Datos de personas morales
+$idpoder				= parametro("idpodernotarial", "");
+$fechapoder				= parametro("idfechapoder", $idfechanacimiento, MQL_DATE);
+$idnotariopoder			= parametro("idnotariopoder", "");
+$idnotariapoder			= parametro("ididnotariapoder", "");
+$idfoliospoder			= parametro("idfoliospoder", "");
+
+$idnotarioconst			= parametro("idnotarioconst", "");
+$idnotariaconst			= parametro("ididnotariaconst", "");
+$idfoliosconst			= parametro("idfoliosconst", "");
+//====== Datos de Origen
+$tipoorigen				= parametro("tipoorigen",0, MQL_INT);
+$claveorigen			= parametro("claveorigen",0, MQL_INT);
+//===== Datos de Colegiacion
+$idextranjeropermiso	= parametro("idextranjeropermiso");
+$idextranjeroregistro	= parametro("idextranjeroregistro", false, MQL_DATE);
+$idextranjerovencimiento= parametro("idextranjerovencimiento", false, MQL_DATE);
+$idtipomembresia		= parametro("idtipomembresia",0, MQL_INT);
+$iddiames				= parametro("iddiames", 0, MQL_INT);
+$idtipolugarcobro		= parametro("idtipolugarcobro", 0, MQL_INT);
+$idgradoacademico		= parametro("idgradoacademico",0, MQL_INT);
+$iddatosemergencia		= parametro("iddatosemergencia");
+$idcolegiacion			= parametro("idcolegiacion", "");
+$idinterno				= parametro("idinterno", "");$idinterno	= parametro("claveinterna", $idinterno);
+$omitirAML				= false;
+//Datos de Relaciones
+$idtipoderelacion		= parametro("idtipoderelacion", 0, MQL_INT);
+$xTipoRels				= new cPersonasTiposDeRelacion($idtipoderelacion);
+if($xTipoRels->init() == true){
+	$omitirAML			= $xTipoRels->getOmitirAML();
+}
+//===================== Comandos Basicos
+$xFRM->addCerrar();
+$xFRM->addAtras();
+$xFRM->setNoAcordion();
+//===================== Corregir CURP
+if(trim($idcurp) == "" AND $idtipoidentificacion == PERSONAS_CLAVE_ID_POBLACIONAL){
+	if(trim($idnumerodocumento)!= ""){$idcurp = $idnumerodocumento;}
+}
+//
+$idlugardenacimiento	= ($identidadfederativanac != "") ? "$identidadfederativanac : $idlugardenacimiento " : "$idlugardenacimiento";
+//verificar si es persona moral
+$xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 	if($xFJ->isFisica() == false){
 		$idnombrecompleto	= $razonSocial;
 		//rfc completo
@@ -80,9 +137,11 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 	$agregardom				= (trim($calle) == "") ? false : true;
 	if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
 		$idcajalocal		= $xSuc->getCajaLocalResidente();
+	} else {
+		$idcajalocal		= parametro("idcajalocal", $xSuc->getCajaLocalResidente(), MQL_INT);
 	}
 	if(trim($idnombrecompleto . $idapellidopaterno) == ""){
-		$msg			.= "ERROR\tNo existe la persona en alta\r\n";
+		$xLog->add("ERROR\tNo existe la persona en alta\r\n");
 		$ready			= false;
 	}
 	if($ready == true){
@@ -90,6 +149,7 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 		$xCL->init();
 		$xSoc		= new cSocio(false);
 		//verificar si existe el socio
+		
 		$success	= $xSoc->add($idnombrecompleto, $idapellidopaterno, $idapellidomaterno,
 					$idrfc, $idcurp, $idcajalocal,
 					$idfechanacimiento, $idlugardenacimiento,
@@ -99,10 +159,29 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 					$gruposolidario, 
 				
 					$idobservaciones,$idtipoidentificacion, $idnumerodocumento, false, $sucursal,
-					$idtelefono, $idemail, $iddependientes, $idfecharegistro, AML_PERSONA_BAJO_RIESGO, $idclavefiel, $idpais, $idregimenfiscal
+					$idtelefono, $idemail, $iddependientes, $idfecharegistro, AML_PERSONA_BAJO_RIESGO, $idclavefiel, $idpais, $idregimenfiscal, $profesion
 		);
+		
 		//razones de no fiel ... como nota
 		if($success == true){
+			//Agregar ID Interna
+			$xSoc->setIDInterno($idinterno);
+			//Agregar Clasificaciones
+			$xSoc->setClasificacionesExtras($xclasificacion, $yclasificacion, $zclasificacion);
+			$xSoc->setRegion($idregion, true);
+			if($useDatosAccidente == true AND $useDColegiacion == false){
+				$idtipomembresia	= ($idtipomembresia <= 0) ? SYS_UNO : $idtipomembresia;
+				$idtipolugarcobro	= ($idtipolugarcobro <= 0) ? SYS_UNO : $idtipolugarcobro;
+				$iddiames			= ($iddiames <= 0) ? SYS_UNO : $iddiames;
+				$idgradoacademico	= ($idgradoacademico <= 0) ? SYS_UNO : $idgradoacademico;
+			}
+			$xSoc->setDatosColegiacion($idtipomembresia, $idtipolugarcobro, $iddiames, $idgradoacademico, $iddatosemergencia, $idcolegiacion);
+			$xSoc->setDatosExtranjero($idextranjeropermiso, $idextranjeroregistro, $idextranjerovencimiento);
+			//TODO: Actualizar Datos de proveedor
+			if($idtipodeingreso == $xTipoIng->TIPO_PROVEEDOR){
+				$xSoc->setDatosDeProveedor();
+			}
+			
 			if($descuento > 0){ $xSoc->setMontoAhorroPreferente($descuento);	}
 			if($empresa != FALLBACK_CLAVE_EMPRESA){	$xSoc->setResetEmpresa($empresa);	}
 			if(trim($idrazonnofiel)== ""){ } else { $xSoc->setRazonesDeNoFIEL($idrazonnofiel); }
@@ -134,20 +213,25 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 							$xGrupo->addIntegrante($idpersona);
 						}
 					}
-					if(MODO_DEBUG == true){ $msg .= $xGrupo->getMessages(); }
+					$xLog->add($xGrupo->getMessages(), $xLog->DEVELOPER);
 				}
 			}			
 			//Agregar Domicilio si existe
 			$persona		= $xSoc->getCodigo();
-			$xFRM->addHTML( $xSoc->getFicha() );
+			$xFRM->addHElem( $xSoc->getFicha() );
 			$lastpersona	= $xCL->getUltimoSocioRegistrado(true);
-			$xFRM->addPersonaComandos($persona);
+			
+			$xFRM->addPersonaComandos($persona, $xSoc->getOEventos()->REGISTRO);
 			$xFRM->addAvisoRegistroOK();
 			//==================================== Nuevas Relaciones
 			if($origen_relacion == false){
-				$xTbl	= new cHTabla("idtblrels");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
-				$xBtn	= new cHButton(); $xUl		= new cHUl(); $li = $xUl->getO(); $li->setT("ul"); $li->setClass("tags blue");
-				$li->add($xBtn->getBasic("TR.Guadar", "jsGuardarReferencia()", $xBtn->ic()->GUARDAR, "idguardar", false, true), "");
+				$xTDic	= new cHTablaDic();
+				$xFRM->addHElem( $xTDic->getHGuardarRelacion($persona, "jsRefreshTable", $xSoc->getEsPersonaFisica()) );
+				/*$xTbl	= new cHTabla("idtblrels");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
+				$xBtn	= new cHButton(); 
+				$xUl		= new cHUl("idtools", "ul", "tags blue");
+				$xUl->setTags("");
+				$xUl->li($xBtn->getBasic("TR.Guadar", "jsGuardarReferencia()", $xBtn->ic()->GUARDAR, "idguardar", false, true));
 				$xTbl->initRow();
 				$xTbl->addTD($xText->getDeNombreDePersona());
 				$xTbl->addTD($xHSel->getListaDeTiposDeRelaciones("", "")->get("") );
@@ -155,9 +239,9 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 				$xTbl->addTD($xChk->get("TR.es dependiente_economico", "dependiente") );
 				$xTbl->addRaw("<td class='toolbar-24'>". $xUl->get() . "</td>" );
 				$xTbl->endRow();
-				$xFRM->addHTML("<h2>" . PERSONAS_TITULO_PARTES . "</h2>");
-				$xFRM->addHTML( $xTbl->get() );
-				$xFRM->addHTML('<div id="ListaDeRelaciones"></div>');
+				$xFRM->addHElem("<h2>" . PERSONAS_TITULO_PARTES . "</h2>");
+				$xFRM->addHElem( $xTbl->get() );*/
+				$xFRM->addHElem('<div id="ListaDeRelaciones"></div>');
 			}
 		}
 		
@@ -194,8 +278,8 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 					if($xCol->existe($cpostal) == true){
 						$pais				= EACP_CLAVE_DE_PAIS;
 						$nombre_estado		= $xCol->getNombreEstado();
-						$nombremunicipio	= $xCol->getNombreMunicipio();
-						$nombrelocalidad	= $xCol->getNombreLocalidad();
+						$nombremunicipio	= ($nombremunicipio == "" OR PERSONAS_VIVIENDA_MANUAL == false) ? $xCol->getNombreMunicipio() : "";
+						$nombrelocalidad	= ($nombrelocalidad == "" OR PERSONAS_VIVIENDA_MANUAL == false) ? $xCol->getNombreLocalidad() : "";
 						if(trim($colonia) == ""){
 							$colonia		= $xCol->getNombre();
 						}
@@ -206,34 +290,60 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 						$xCol				= new cDomiciliosColonias($idcolonia); $xCol->init();
 						$colonia			= $xCol->getNombre();
 						$nombre_estado		= $xCol->getNombreEstado();
-						$nombremunicipio	= $xCol->getNombreMunicipio();
-						$nombrelocalidad	= $xCol->getNombreLocalidad();
+						$nombremunicipio	= ($nombremunicipio == "" OR PERSONAS_VIVIENDA_MANUAL == false) ? $xCol->getNombreMunicipio() : "";
+						$nombrelocalidad	= ($nombrelocalidad == "" OR PERSONAS_VIVIENDA_MANUAL == false) ? $xCol->getNombreLocalidad() : "";
 					} else {
 						$colonia 			= (trim($colonia) == "") ? $xLoc->DomicilioCodigoPostal() : $colonia;
 					}
+				}
+
+				if($identidadfederativa > 0 ){
+					$xEstado			= new cDomiciliosEntidadFederal($identidadfederativa);
+					$nombre_estado		= $xEstado->getNombre();
 				}
 				$addDom	= $xSoc->addVivienda($calle, $nexterior, $cpostal, $ninterior,
 						$referencia, $tresidencial, $tmovil,
 						$principal, $regimen, $tdomicilio, $tiempo,
 						$colonia, $tipo_acceso, "", $idlocalidad, $pais, $nombre_pais, $nombre_estado, $nombremunicipio, $nombrelocalidad);
-				if($addDom == false){ $msg	.= "ERROR\tError al agregar el domicilio \r\n"; } else {
+				if($addDom == false){ 
+					$xLog->add("ERROR\tError al agregar el domicilio \r\n"); 
+				} else {
 					$iddomicilio			= $xSoc->getIDDeVivienda();
 				}
 				
 			}
 		}
-		if(setNoMenorQueCero($ingresos) > 0 AND setNoMenorQueCero($persona) > 0){
-			$addAct			= $xSoc->addActividadEconomica($nombreempresa, $ingresos, "", DEFAULT_TIEMPO, FALLBACK_CLAVE_EMPRESA, $calle . "/" . $nexterior, $nombrelocalidad, $nombremunicipio, $nombre_estado,
+		if(setNoMenorQueCero($ingresos) > 0 AND setNoMenorQueCero($persona) > DEFAULT_SOCIO){
+			$addAct			= $xSoc->addActividadEconomica($nombreempresa, $ingresos, $profesion, DEFAULT_TIEMPO, FALLBACK_CLAVE_EMPRESA, $calle . "/" . $nexterior, $nombrelocalidad, $nombremunicipio, $nombre_estado,
 					$tmovil, 0, 0, "", $idactividad, FALLBACK_SECTOR_ECONOMICO
 					,$sucursal, "0", $cpostal, $idlocalidad
 			);
-			if($addAct == false){ $msg	.= "ERROR\tError al agregar la Actividad Economica \r\n"; }
+			if($addAct == false){ $xLog->add("ERROR\tError al agregar la Actividad Economica \r\n"); }
 		}
-		
-		if(setNoMenorQueCero($origen_relacion) > 0 AND setNoMenorQueCero($persona) > 0){
+		//========================= Origen por Originacion de Creditos
+		if($claveorigen >0){
+		$xCred	= new cCredito();
+			switch($tipoorigen){
+				case $xCred->ORIGEN_PRECLIENTE:
+					$xPreCred	= new cCreditosPreclientes($claveorigen);
+					if($xPreCred->init() == true){
+						$xPreCred->setPersona($persona);
+					}
+					$xLog->add($xPreCred->getMessages());
+					break;
+				case $xCred->ORIGEN_ARRENDAMIENTO:
+					$xOrg		= new cCreditosLeasing($claveorigen);
+					if($xOrg->init() == true){
+						$xOrg->setPersona($persona);
+					}
+					$xLog->add($xOrg->getMessages());
+					break;
+			}
+		}
+		if(setNoMenorQueCero($origen_relacion) > 0 AND setNoMenorQueCero($persona) > DEFAULT_SOCIO){
 			$documentorelacionado	= parametro("iddocumentorelacionado", 0, MQL_INT);
 			$personarelacionado		= parametro("idpersonarelacionado", 0, MQL_INT);
-			$idtipoderelacion		= parametro("idtipoderelacion", 0, MQL_INT);
+			
 			$dependiente			= parametro("dependiente", false, MQL_BOOL);
 			$idtipodeparentesco		= parametro("idtipodeparentesco", DEFAULT_TIPO_CONSANGUINIDAD, MQL_INT);
 
@@ -242,7 +352,7 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 				$xCred->init();
 				$MontoAvalado	= $xCred->getMontoAutorizado();
 				$addAval		= $xCred->addAval($persona, $MontoAvalado, $idtipoderelacion, $idtipodeparentesco, $dependiente, $idobservaciones);
-				$msg			.= $xCred->getMessages();
+				$xLog->add($xCred->getMessages(), $xLog->DEVELOPER);
 			}
 			
 			//captacion
@@ -253,40 +363,63 @@ $origen_relacion		= parametro("idorigenrelacionado", false, MQL_INT);
 					if($xPer->init() == true){
 						$addRel	= $xPer->addRelacion($persona, $idtipoderelacion, $idtipodeparentesco, $dependiente, $idobservaciones);
 					}
-					$msg	.= $xPer->getMessages();
+					$xLog->add($xPer->getMessages(), $xLog->DEVELOPER);
 				} else {
-					$msg	.= "ERROR\tError al agregar a la Relacion, no existe relacionado \r\n";
+					$xLog->add("ERROR\tError al agregar a la Relacion, no existe relacionado \r\n");
 				}
 			}
+			//ORIGEN del Credito
 		}
-		$xCat	= new cPersonasCatalogoOtrosDatos();
-		//AGREGAR PEP
-		if($espep == true AND setNoMenorQueCero($persona) > 0){
-			$xSoc->addOtrosParametros($xCat->AML_PEP_PRINCIPAL, "1");
+		if(MODULO_AML_ACTIVADO == true ){
+			$xCat	= new cPersonasCatalogoOtrosDatos();
+			//AGREGAR PEP
+			if($espep == true AND setNoMenorQueCero($persona) > DEFAULT_SOCIO){
+				$xSoc->addOtrosParametros($xCat->AML_PEP_PRINCIPAL, "1");
+			}
+			if($esextranjero == true AND setNoMenorQueCero($persona) > 0){
+				$xSoc->addOtrosParametros($xCat->PERSONAS_ES_EXTRANJERO, "1");
+				$xSoc->setUpdate(array("nacionalidad_extranjera" => "1"), true);
+				if($useDExtranjero == false){
+					//================
+					$xNot	= new cHNotif();
+					$btn	= $xNot->getNoticon("","jsGuardarExtranjero()", $xFRM->ic()->GUARDAR);
+					$xFRM->addSeccion("idivextranjeros", "TR.DATOS EXTRANJEROS", $btn);
+					$xFRM->OText("idextranjeropermiso", "", "TR.PERMISO_DE_RESIDENCIA");
+					$xFRM->ODate("idextranjeroregistro", false, "TR.EXTRANJERO_REGISTRO");
+					$xFRM->ODate("idextranjerovencimiento", false, "TR.EXTRANJERO_VENCIMIENTO");
+					$xFRM->addHElem( $xSel->getListaDeNacionalidad()->get(true));
+					//NACIONALIDAD
+					$xFRM->endSeccion();
+				}				
+			}
+			//Actualizar Nivel de Riesgo
+			if($omitirAML == false){ $xSoc->setAMLAutoActualizarNivelRiesgo(); }
+			
 		}
-		if($esextranjero == true AND setNoMenorQueCero($persona) > 0){
-			$xSoc->addOtrosParametros($xCat->PERSONAS_ES_EXTRANJERO, "1");
-		}		
 		//agregar Relacion
 
-		if(MODO_DEBUG == true){ $msg .= $xSoc->getMessages(); }
+		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);
+		
 	} else {
 		$xFRM->addCerrar();
+		$xFRM->addAvisoRegistroError();
 	}
-	$xFRM->addAviso($msg);
+	if(MODO_DEBUG == true){
+		$xFRM->addLog($xLog->getMessages());
+	} else {
+		$xFRM->addAviso($xLog->getMessages());
+	}
 	
+
 	$xFRM->addJQDates("");
 	
 	echo $xFRM->get();
 	//--------------------------------- ACTUALIZA EL ULTIMO SOCIO EN LA CAJA LOCAL
 ?>
-<link href="../css/jtable/lightcolor/orange/jtable.min.css" rel="stylesheet" type="text/css" />
-<script src="../js/jtable/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
-<script src="../js/jtable/jquery.jtable.js" type="text/javascript"></script>
-
 <script>
 var xPer	= new PersGen();
-
+var xG		= new Gen();
+var idxpersona		= "<?php echo setNoMenorQueCero($persona); ?>";
 $(document).ready(function () {
 	var idxpersona		= "<?php echo setNoMenorQueCero($persona); ?>";
 	session(ID_PERSONA, entero(idxpersona));
@@ -323,7 +456,7 @@ $(document).ready(function () {
     	
 });
 function jsGuardarReferencia(){
-	var idxpersona		= "<?php echo setNoMenorQueCero($persona); ?>";
+	
 	var idpersona			= idxpersona;
 	var idrelacionado		= $("#idpersona").val();
 	var idtipoderelacion	= $("#idtipoderelacion").val();
@@ -336,7 +469,16 @@ function jsRefreshTable(){
 	$('#ListaDeRelaciones').jtable('load');
 }
 function onCloseVentanaRelaciones(){ jsRefreshTable(); }
-
+function jsGuardarExtranjero(){
+	xG.confirmar({msg:"CONFIRMA GUARDAR LOS DATOS_EXTRANJEROS", callback: jsSiGuardarExtranjero});
+}
+function jsSiGuardarExtranjero(){
+	var idcarnet	= $("#idextranjeropermiso").val();
+	var idfechaI	= $("#idextranjeroregistro").val();
+	var idfechaF	= $("#idextranjerovencimiento").val();
+	var idnal		= $("#idnacionalidad").val();
+	xPer.addDatosExtr({persona:idxpersona, fechainicial:idfechaI, fechafinal:idfechaF,nacionalidad:idnal,documento:idcarnet});
+}
 </script>	
 <?php
 echo $xHP->fin();

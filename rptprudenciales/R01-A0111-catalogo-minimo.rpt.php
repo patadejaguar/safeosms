@@ -19,7 +19,7 @@ include_once "../libs/sql.inc.php";
 include_once "../core/core.contable.inc.php";
 include_once "../core/core.config.inc.php";
 
-$oficial = elusuario($iduser);
+$oficial 			= elusuario($iduser);
 
 $cuenta_inicial 	= $_GET["for"];
 $cuenta_final		= $_GET["to"];
@@ -56,18 +56,7 @@ switch ($tipo_cuentas){
 }
 //---------------- valuar Cuentas ----------------
 
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Movimientos de Auxiliares del Catalogo</title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body onLoad="javascript:window.print();">
-<!-- -->
-<?php
-echo getRawHeader();
+
 
 $sqlCta = "SELECT
 	`contable_catalogo`.`numero`,
@@ -92,22 +81,8 @@ ORDER BY
 	`contable_catalogo`.`numero`
 ";
 //echo $sqlCta;
-echo "<table width=\"100%\">
-<thead>
-<tr>
-
-</tr>
-	<tr>
-		<th width=\"15%\" rowspan='2'>Cuenta</th>
-		<th width=\"25%\" rowspan='2'>Numero</th>
-		<th colspan='2' width='20%'>Saldos</th>
-	</tr>
-	<tr>
-		<th>Deudor</th>
-		<th>Acreedor</th>
-	</tr>
-</thead>
-<tbody>";
+Header('Content-type: text/plain');
+echo "";
 $rs = mysql_query($sqlCta);
 while($rw = mysql_fetch_array($rs)){
 	$exoCuenta = "";
@@ -206,16 +181,7 @@ while($rw = mysql_fetch_array($rs)){
 	} // END mysql Movimientos
 
 	$saldo		= $mvtos["final"];
-$exoCuenta = "
-<tr>
-	<td>" . getCuentaFormateada($cta) . "</td>
-	<td>$nombre</td>
-	<!-- $td_inicial -->
-	<td class='mny'>" . getFMoney($mvtos["cargos_actual"]) . "</td>
-	<td class='mny'>" . getFMoney($mvtos["abonos_actual"]) . "</td>
-	$td_final
-</tr>
-";
+$exoCuenta = "" . getCuentaFormateada($cta) . "|$nombre|" . getFMoney($mvtos["cargos_actual"]) . "|" . getFMoney($mvtos["abonos_actual"]) . "\r\n";
 /**
  * @see Re refiere a la decision de imprimir o no ciertas cuentas
  * 		<option value="todas" selected>Todas
@@ -259,9 +225,4 @@ switch($incluir_cuentas){
 	echo $exoCuenta;
 } //END WHILE
 // ------------------------ Fin Tabla
-echo "</tbody>
-</table>";
-echo getRawFooter();
 ?>
-</body>
-</html>

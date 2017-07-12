@@ -12,10 +12,11 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Registro de Personas");
-$jxc 		= new TinyAjax();
-$xLoc		= new cLocal();
-$xF			= new cFecha();
+$xHP				= new cHPage("TR.Registro de Persona_FISICA");
+$jxc 				= new TinyAjax();
+$xLoc				= new cLocal();
+$xF					= new cFecha();
+$xRuls				= new cReglaDeNegocio();
 
 $jscallback			= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $tipo_de_ingreso	= parametro("idtipodeingreso", DEFAULT_TIPO_INGRESO, MQL_INT);
@@ -29,8 +30,49 @@ $persona_rel		= parametro("idpersonarelacionado", false, MQL_INT);
 $tipo_de_domicilio	= parametro("tipodomicilio", false, MQL_INT);
 $con_legal			= parametro("legal", true, MQL_BOOL);
 
+$PrimerApellido		= parametro("primerapellido");
+$SegundoApellido	= parametro("segundoapellido");
+$Nombres			= parametro("nombre");
+$IDFiscal			= parametro("idfiscal", DEFAULT_PERSONAS_RFC_GENERICO);
+$IDPoblacional		= parametro("idpoblacional");
+$NombreCompleto		= parametro("nombrecompleto");		
+$telefono			= parametro("telefono",0, MQL_INT);
+$email				= parametro("email");
+$email				= strtolower($email);
+$fecha				= parametro("fecha", fechasys(), MQL_DATE);
+
+$tipoorigen			= parametro("tipoorigen",0, MQL_INT);
+$claveorigen		= parametro("claveorigen",0, MQL_INT);
+
+if($Nombres == "" AND $NombreCompleto !== ""){
+	$xImp			= new cTiposLimpiadores();
+	$DNombre		= $xImp->cleanNombreComp($NombreCompleto);
+	$PrimerApellido	= ($PrimerApellido == "") ? $DNombre[0] : $PrimerApellido;
+	$SegundoApellido= ($SegundoApellido == "") ? $DNombre[1] : $SegundoApellido;
+	$Nombres		= $DNombre[2];
+}
+
+$SinDatosFiscales	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_FISCALES);		//regla de negocio
+$SinDatoPoblacional = $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATO_POBLACIONAL);		//regla de negocio
+$SinRegimenMat 		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_REG_MATRIMONIAL);		//regla de negocio
+$SinDatosDocto 		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_DOCTOS);		//regla de negocio
+$DomicilioSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_DOM_SIMPLE);
+$SinDetalleAcceso 	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DETALLE_ACCESO);
+$EsSimple			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_SIMPLE);
+$TratarComoSalarios	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_ASALARIADO);
+$xclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_XCLASIFICACION);
+$yclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_YCLASIFICACION);
+$zclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_ZCLASIFICACION);
+$useDExtranjero		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DEXTRANJERO);
+$useDColegiacion	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
+$userNoDNI			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DNI_INGRESO);
+$RelsSinDom			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_SIN_DOM);
+$RN_NoValidarCurp	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_NO_VALIDAR_DNI);
+$useDatosAccidente	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DATO_ACCIDENTE);
+
+//REGLA: PERSONAS_FILTRAR_CAJASLO
 //con domicilio y tipo de domicilio
-function jsaGetMunicipios($estado, $pais, $cp){
+function jsaGetMunicipios($identidadfederativa, $pais, $cp){
 	$txt	= "";
 	$text	= new cHText();
 	$xSel	= new cHSelect();
@@ -41,32 +83,33 @@ function jsaGetMunicipios($estado, $pais, $cp){
 			$xCol		= new cDomiciliosColonias();
 			$xCol->existe($cp);
 			$mun		= $xCol->getClaveDeMunicipio();
+			$txt		= $xCol->getNombreMunicipio();
 		}
 	}
-	return ($pais != EACP_CLAVE_DE_PAIS) ? $text->getDeNombreDeMunicipio("idnombremunicipio", "", "TR.Municipio") : $xSel->getListaDeMunicipios("", $estado, $mun)->get(false);
+	return ($pais != EACP_CLAVE_DE_PAIS OR PERSONAS_VIVIENDA_MANUAL == true) ? $text->getDeNombreDeMunicipio("idnombremunicipio", $txt, "TR.Municipio") : $xSel->getListaDeMunicipios("", $identidadfederativa, $mun)->get(false);
 }
-function jsaGetLocalidades($estado, $municipio, $pais, $cp){
+function jsaGetLocalidades($identidadfederativa, $municipio, $pais, $cp){
 	$xSel	= new cHSelect();
 	$text	= new cHText();
 	$txt	= "";
-	$mun	= false;
+	$v		= "";
 	if(setNoMenorQueCero($cp) > 0){
 		if($pais == EACP_CLAVE_DE_PAIS){
 			$xCol		= new cDomiciliosColonias();
-			$xCol->existe($cp);
-			$mun		= $xCol->getClaveDeMunicipio();
-			//$xCol->getNombreMunicipio();
+			if($xCol->existe($cp) == true){
+				$v		= $xCol->getNombreLocalidad();
+			}
 		}
 	}
 	if(PERSONAS_VIVIENDA_MANUAL == true ){
 		$text->setDivClass("");
-		$txt	= $text->getDeNombreDeLocalidad("idnombrelocalidad", "", "TR.Localidad");
+		$txt		= $text->getDeNombreDeLocalidad("idnombrelocalidad", $v, "TR.Localidad");
 	} else {
-		$xS 		= $xSel->getListaDeLocalidades("", $estado, $pais);
+		$xS 		= $xSel->getListaDeLocalidades("", $identidadfederativa, $pais);
 		$txt		= $xS->get(false);
 		if($xS->getCountRows() <= 0){						//Corregir si no hay registros
 			$text->setDivClass("");
-			$txt	= $text->getDeNombreDeLocalidad("idnombrelocalidad", "", "TR.Localidad");
+			$txt	= $text->getDeNombreDeLocalidad("idnombrelocalidad", $v, "TR.Localidad");
 		}
 	}
 	return $txt;
@@ -87,20 +130,24 @@ function jsaBuscarCoincidencias($nombre, $primerapellido, $segundoapellido){
 
 $jxc ->exportFunction('jsaGetMunicipios', array('identidadfederativa', 'idpais', 'idcodigopostal'), "#txtmunicipio");
 $jxc ->exportFunction('jsaGetLocalidades', array('identidadfederativa', 'idmunicipio', 'idpais', 'idcodigopostal'), "#txtlocalidad");
-$jxc ->exportFunction('jsaBuscarCoincidencias', array('idnombrecompleto', 'idapellidopaterno', 'idapellidomaterno'), "#idcoincidencias");
+$jxc ->exportFunction('jsaBuscarCoincidencias', array('idnombrecompleto', 'idapellidopaterno', 'idapellidomaterno'), "#fb_frmsolingreso");
 $jxc ->process();
+
 
 $xHP->init();
 
 $xFRM		= new cHForm("frmsolingreso", "registro-personas.frm.php");
+$xFRM->setTitle( $xHP->getTitle() );
+$xFRM->setAction("registro-personas.frm.php", true);
+
 $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xTxt2		= new cHText();
 $xDate		= new cHDate();
 $xDate2		= new cHDate(2, false, FECHA_TIPO_NACIMIENTO);
 $xSel		= new cHSelect();
-$xHNot		= new cHNotif();
 $xChk		= new cHCheckBox();
+$xFRM->setNoAcordion();
 
 if($action == SYS_NINGUNO){	$xFRM->addGuardar("jsCheck()"); }
 //=========================================== AVALES
@@ -112,18 +159,18 @@ if(setNoMenorQueCero($con_relacion) > 0){
 			$xDoc			= new cCredito($documento_rel); $xDoc->init();
 			$persona_rel	= $xDoc->getClaveDePersona();
 			$tipoRe			= PERSONAS_REL_CLASE_AVAL;
-			
 		}
 		//TODO: Iniciar cuenta de captacion
 	}
-	$tipo_de_ingreso= TIPO_INGRESO_RELACION;
-	$con_domicilio	= true;
-	$con_actividad	= true;
-	$desde_sucursal	= getSucursal();
+	$tipo_de_ingreso	= TIPO_INGRESO_RELACION;
+	$con_domicilio		= ($RelsSinDom == true) ? false : true;
+	$con_actividad		= true;
+	$desde_sucursal		= getSucursal();
 	
-	$xFRM->addHElem( $xSel->getListaDeTiposDeRelaciones("", $tipoRe)->get(true) );
-	$xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
+	$xFRM->addHElem( $xSel->getListaDeTiposDeRelaciones("", $tipoRe, false, true)->get(true) );
 	$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco()->get(true)  );
+	$xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
+	
 	$xFRM->OHidden("iddocumentorelacionado", $documento_rel, "");
 	$xFRM->OHidden("idpersonarelacionado", $persona_rel, "");
 	$xFRM->OHidden("idorigenrelacionado", $con_relacion, "");
@@ -131,7 +178,7 @@ if(setNoMenorQueCero($con_relacion) > 0){
 
 //if($con_domicilio == true){ $xFRM->addSeccion("iddatosgenerales", "TR.Datos Generales"); }
 if($tipo_de_ingreso == DEFAULT_TIPO_INGRESO){
-	$xFRM->ODate("idfecharegistro", false,"TR.fecha de registro");
+	$xFRM->ODate("idfecharegistro", $fecha,"TR.fecha de registro");
 }
 if($desde_sucursal == false){
 	$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
@@ -139,9 +186,22 @@ if($desde_sucursal == false){
 	$xFRM->OHidden("idsucursal", $desde_sucursal, "");
 }
 if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
-	$xFRM->addFootElement("<input type='hidden' name='idcajalocal' name='idcajalocal' value='" . getCajaLocal() . "' />");
+	$xFRM->OHidden("idcajalocal", getCajaLocal());
 } else {
-	$xFRM->addHElem( $xSel->getListaDeCajasLocales("", true)->get("TR.punto de acceso", true) );
+	if($tipo_de_ingreso == DEFAULT_TIPO_INGRESO){
+		//Region
+		$xSelReg	= $xSel->getListaDeRegionDePersonas("", getRegion() );
+		$xSelReg->addEvent("onblur", "jsGetListaDePuntosDeAtencion()");
+		$xFRM->addHElem( $xSelReg->get(true));
+		//Centro de atencion
+		$xSelCL		= $xSel->getListaDeCajasLocales("", false, getCajaLocal());
+		$xSelCL->setUseIDDiv();
+		$xFRM->addHElem( $xSelCL->get(true) );
+		
+	} else {
+		$xFRM->OHidden("idcajalocal", getCajaLocal());
+	}
+
 }
 
 if($tipo_de_ingreso != DEFAULT_TIPO_INGRESO){
@@ -149,65 +209,117 @@ if($tipo_de_ingreso != DEFAULT_TIPO_INGRESO){
 } else {
 	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("", PERSONAS_ES_FISICA, $tipo_de_ingreso)->get("TR.tipo de persona", true) );
 }
-//
+//Agregar Clasificaciones
+if($xclass == true){
+	$xFRM->addHElem( $xSel->getListaDePersonasXClass()->get(true));
+}
+if($yclass == true){
+	$xFRM->addHElem( $xSel->getListaDePersonasYClass()->get(true));
+}
+if($zclass == true){
+	$xFRM->addHElem( $xSel->getListaDePersonasZClass()->get(true));
+}
+//Agregar ID Interna
+$xFRM->OText_13("idinterno", "", "TR.IDINTERNO");
+//============================================== Datos Generales
+$xFRM->addSeccion("iddivgeneral", "TR.DATOS_GENERALES");
 $xFRM->OHidden("idfigurajuridica", PERSONAS_FIGURA_FISICA, "");
 //$xFRM->addHElem( $xSel->getListaDeFigurasJuridicas("", PERSONAS_ES_FISICA)->get("TR.tipo de figura juridica", true) );
 
 $xTxt2->setProperty("list", "dlBuscarPersona");
 $xTxt2->addEvent("getListaSocios(this, event)", "onkeyup");
-$xFRM->addHElem( $xTxt2->get("idnombrecompleto", "", "TR.nombre completo") );
-$xFRM->addHElem( $xTxt2->get("idapellidopaterno", "", "TR.primer apellido") );
-$xFRM->addHElem( $xTxt2->get("idapellidomaterno", "", "TR.segundo apellido") );
-
-
-
+$xFRM->addHElem( $xTxt2->get("idnombrecompleto", $Nombres, "TR.nombre completo") );
+$xFRM->addHElem( $xTxt2->get("idapellidopaterno", $PrimerApellido, "TR.primer apellido") );
+$xFRM->addHElem( $xTxt2->get("idapellidomaterno", $SegundoApellido, "TR.segundo apellido") );
 $xFRM->addHElem( $xSel->getListaDeGeneros()->get("TR.genero", true) );
-$xFRM->addHElem( $xSel->getListaDePaises("idpaisdeorigen")->get("TR.Pais de Origen", true) );
+if(MODULO_AML_ACTIVADO == true OR PERSONAS_ACEPTAR_EXTRANJEROS == true){
+	$xFRM->addHElem( $xSel->getListaDePaises("idpaisdeorigen")->get("TR.Pais de Origen", true) );
+}
 
 if($con_nacimiento == true){
 	$xFRM->ODate("idfechanacimiento", false,"TR.fecha de Nacimiento");
+	$xFRM->setValidacion("idfechanacimiento", "validacion.fechaNacimiento", "Error en Fecha");
 	$sEstados	= $xSel->getListaDeEntidadesFed("identidadfederativanacimiento");
 	$xFRM->addHElem( $sEstados->get("TR.entidad de nacimiento", true) );
-	$xFRM->addHElem( $xTxt->get("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "TR.localidad de Nacimiento") );
+	$xFRM->addHElem( $xTxt->get("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "TR.Lugar de Nacimiento") );
+	$xFRM->setValidacion("idlugardenacimiento", "jsObtenCURP");
 } else {
 	$xFRM->OHidden("identidadfederativanacimiento", $xLoc->DomicilioEstadoClaveABC(), "");
 	$xFRM->OHidden("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "");
 	$xFRM->OHidden("idfechanacimiento", "01-01-2001" , "");
 }
 
+$xFRM->OMail("idemail", $email);
+$xFRM->addHElem( $xTxt->getNumero("idtelefono", $telefono, "TR.Telefono_Principal")  );
 
-$xFRM->addHElem( $xTxt->getEmail("idemail")  );
-$xFRM->addHElem( $xTxt->getNumero("idtelefono", "", "TR.Telefono")  );
-$xFRM->OMoneda("iddependientes", 0, "TR.Dependientes_economicos");
+if($tipo_de_ingreso == TIPO_INGRESO_RELACION){
+	
+} else {
+	$xFRM->OText("idprofesion", "", "TR.titulo_personal");
+	$xFRM->OMoneda("iddependientes", 0, "TR.Dependientes_economicos");
+}
+//}
 
 
-if($con_legal == true){
+if($con_legal == true ){
+	//============== Estado civil
 	$sCivil		= $xSel->getListaDeEstadoCivil();
-	$xFRM->addHElem( $sCivil->get("TR.estado civil", true) );
-	$xFRM->addHElem( $xSel->getListaDeRegimenMatrimonio()->get(true) );
+	$xFRM->addHElem( $sCivil->get("TR.estado_civil", true) );
+	$xFRM->setValidacion("idestadocivil", "jsCheckEstadoCivil");
+	if($SinRegimenMat == false){
+		$xFRM->addHElem( $xSel->getListaDeRegimenMatrimonio()->get(true) );
+		$xFRM->setValidacion("idregimenmatrimonial", "jsCheckRegimenMat", "Debe capturar un Regimen Matrimonial Valido");
+	} else {
+		$xFRM->OHidden("idregimenmatrimonial", DEFAULT_REGIMEN_CONYUGAL);
+	}
+	
+	//======= Fiscal
+	if($SinDatosFiscales === true){ } else {
+		$xFRM->addHElem( $xSel->getListaDeRegimenesFiscales("", PERSONAS_ES_FISICA)->get("TR.Regimen_Fiscal", true) );
+		//$xFRM->setValidacion("idfigurajuridica", "jsCheckFigura");
+		$xFRM->setValidacion("idregimenfiscal", "jsCheckRegimenF", "Debe capturar un Regimen Fiscal");
+	}
+	//======= Poblacional
+	if($SinDatosDocto === true){
+		$xFRM->OHidden("idnumerodocumento", "");
+	} else {
+		$sFJ		= $xSel->getListaDeTipoDeIdentificacion();
+		$xFRM->addHElem( $sFJ->get(true) );
+		$xFRM->OText_13("idnumerodocumento","", "TR.Numero de Documento");
+		$xFRM->setValidacion("idnumerodocumento", "jsCheckDocto", "Necesita un Documento de Identificacion Valido", true);
+	}
+	//======= Fiscal	
+	if($SinDatoPoblacional == true OR $userNoDNI == true){
+		$xFRM->OHidden("idcurp", "");
+	} else {
+		$xTCURP		= new cHText();
+		$xTCURP->setDiv13();
+		$xFRM->addHElem( $xTCURP->get("idcurp", $IDPoblacional, "TR.IDENTIFICACION_POBLACIONAL") );
+		if($RN_NoValidarCurp == false){
+			$xTCURP->setProperty("required", "true");
+			$xFRM->setValidacion("idcurp", "jsTestCURP", "TR.CURP Invalido");
+		}
+	}
+	if($SinDatosFiscales === true){
+		$xFRM->OHidden("idrfc", "");
+	} else {
+		$xTRFC		= new cHText();
+		$xTRFC->setDiv13();
+		$xFRM->addHElem( $xTRFC->get("idrfc", $IDFiscal, "TR.IDENTIFICACION_FISCAL") );
+		$xFRM->setValidacion("idrfc", "jsTestRFC", "TR.RFC invalido");
+	}
 		
-	$xFRM->addHElem( $xSel->getListaDeRegimenesFiscales("", PERSONAS_ES_FISICA)->get("TR.Regimen Fiscal", true) );
-	
-	$sFJ		= $xSel->getListaDeTipoDeIdentificacion();
-	$xFRM->addHElem( $sFJ->get(true) );
-	$xFRM->OText("idnumerodocumento","", "TR.Numero de Documento");
-	
-	$xTCURP		= new cHText();
-	$xTRFC		= new cHText();
-	$xTCURP->setProperty("required", "true");
-	$xFRM->addHElem( $xTCURP->get("idcurp", "", "TR.IDENTIFICACION_POBLACIONAL") );
-	$xFRM->addHElem( $xTRFC->get("idrfc", DEFAULT_PERSONAS_RFC_GENERICO, "TR.IDENTIFICACION_FISCAL") );
-	
-	
-	if( EACP_CLAVE_DE_PAIS == "MX"){
+	if( EACP_CLAVE_DE_PAIS == "MX" ){
 		if($tipo_de_ingreso == TIPO_INGRESO_RELACION){ //sinfiel
-			$xFRM->OHidden("idclavefiel", "", "TR.Clave_FIEL");
-			$xFRM->OHidden("idrazonnofiel","NA", "TR.Razones por la cual no tiene FIEL");
+			$xFRM->OHidden("idclavefiel", "");
+			$xFRM->OHidden("idrazonnofiel","NA" );
 		} else {
-			$xFRM->OText("idclavefiel", "", "TR.Clave_FIEL");
-			$xFRM->OTextArea("idrazonnofiel","", "TR.RAZON_POR_NO CLAVE_FIEL");
+			$xFRM->OText_13("idclavefiel", "", "TR.Clave_FIEL");
+			$xFRM->OText("idrazonnofiel","", "TR.RAZON_POR_NO CLAVE_FIEL");
+			$xFRM->setValidacion("idrazonnofiel", "jsCheckFirmaElec", "Necesita un CODIGO de FIEL o Una Razon por la cual no tiene");
 		}
 	} else {
+		$xFRM->OHidden("idclavefiel", "");
 		$xFRM->OHidden("idrazonnofiel", "", "TR.Razones por la cual no tiene FIEL");
 	}
 } else {
@@ -225,159 +337,202 @@ if($con_legal == true){
 if(MODULO_AML_ACTIVADO == true){
 	$xFRM->OCheck("TR.PREGUNTA_AML_PERSONA_1", "espep");
 	$xFRM->OCheck("TR.PREGUNTA_AML_PERSONA_2", "esextranjero");
+} else {
+	if(PERSONAS_ACEPTAR_EXTRANJEROS == true){
+		//$xFRM->OCheck("TR.PREGUNTA_AML_PERSONA_2", "esextranjero");
+	}
 }
+$xFRM->endSeccion();
+//================================================
+
 if($tipo_de_ingreso == TIPO_INGRESO_RELACION){ //sinfie
 	
 } else {
-	//Nomina
-	$xFRM->OMoneda("iddescuento", 0, "TR.Descuento Deseado");
-	$xFRM->addHElem( $xSel->getListaDeEmpresas("idempresa")->get(true) );
 	
+	//============================ Extranjeros
+	
+	if($useDExtranjero == true){
+		$xFRM->addSeccion("idivextranjeros", "TR.DATOS EXTRANJEROS");
+		$xFRM->OText("idextranjeropermiso", "", "TR.PERMISO_DE_RESIDENCIA");
+		$xFRM->ODate("idextranjeroregistro", false, "TR.EXTRANJERO_REGISTRO");
+		$xFRM->ODate("idextranjerovencimiento", false, "TR.EXTRANJERO_VENCIMIENTO");
+		$xFRM->endSeccion();
+	}
+	if($useDColegiacion == true){
+		$xFRM->addSeccion("iddivcolegiacion", "TR.DATOS COLEGIACION");
+		$xFRM->addHElem( $xSel->getListaDePersonasMembresia("idtipomembresia")->get("TR.TIPO_MEMBRESIA",true));
+		$xFRM->addHElem( $xSel->getListaDeDiasDelMes("", $xF->dia())->get("TR.DIA DE PAGO", true) );
+		$xFRM->addHElem( $xSel->getListaDeTipoDeLugarDeCobro()->get(true) );
+		$xFRM->addHElem( $xSel->getListaDePersonasZClass("idgradoacademico")->get("TR.GRADO_ACADEMICO",true));
+		$xFRM->OText("idcolegiacion", "", "TR.IDCOLEGIACION");
+		$xFRM->OText("iddatosemergencia", "", "TR.DATO_EMERGENCIA");
+		$xFRM->endSeccion();
+	}
+	$xFRM->addSeccion("iddivextras", "TR.OTROS DATOS");
+	//Nomina
+	if(PERSONAS_CONTROLAR_POR_EMPRESA == false){
+		//Sin empresa
+	} else {
+		if(MODULO_CAPTACION_ACTIVADO == true){
+			$xFRM->OMoneda("iddescuento", 0, "TR.Descuento Deseado");
+		}
+		$xFRM->addHElem( $xSel->getListaDeEmpresas("idempresa")->get(true) );
+	}
+	if(PERSONAS_CONTROLAR_POR_GRUPO == true){
+		$xFRM->addGrupoBasico();
+	} else {
+		$xFRM->OHidden("idgrupo", DEFAULT_GRUPO);
+	}
+	if($useDColegiacion == false AND $useDatosAccidente == true){
+		$xFRM->OText("iddatosemergencia", "", "TR.DATO_EMERGENCIA");
+	}
 	$xFRM->addObservaciones();
 	//grupos solidarios
-	$xFRM->addGrupoBasico();
+	$xFRM->endSeccion();
 }
 $xFRM->addHTML("<datalist id=\"dlBuscarPersona\" ><option /></datalist>");
 
 /**--------------------- DOMICLIO --------------------------------------- */
 if($con_domicilio == true){
 	//$xFRM->endSeccion();
-	//$xFRM->addSeccion("iddatosgenerales", "TR.Domicilio");
+	$xFRM->addSeccion("iddivdomicilio", "TR.Domicilio y Empleo");
 	
 	$xCP	= new cHText(); $xTx3		= new cHText(); $xTxtE = new cHText(); $xChk	= new cHCheckBox(); $xTxt		= new cHText(); $xHSel	= new cHSelect();
 	$xFRM->addHElem( $xSel->getListaDeRegimenDeVivienda()->get(true) );
 	$xFRM->OHidden("idtipodevivienda", TIPO_DOMICILIO_PARTICULAR, "");
-	//$xFRM->addHElem( $xSel->getListaDeTiposDeVivienda()->get(true) );
-	
 	$xFRM->addHElem( $xSel->getListaDeTiempo()->get("TR.Tiempo_de_Residencia", true) );
 	
-	$lsPaises		= $xSel->getListaDePaises();
-	$lsPaises->addEvent("onchange", "jsSetEstadoPorPais(this)");
-	$xFRM->addHElem( $lsPaises->get(true) );
-	
+	if(MODULO_AML_ACTIVADO == true){
+		$lsPaises		= $xSel->getListaDePaises();
+		$lsPaises->addEvent("onchange", "jsSetEstadoPorPais(this)");
+		$xFRM->addHElem( $lsPaises->get(true) );
+	} else {
+		$xFRM->OHidden("idpais", EACP_CLAVE_DE_PAIS);
+	}
 	
 	$xFRM->addHElem( $xCP->getNumero("idcodigopostal", $xLoc->DomicilioCodigoPostal(), "TR.codigo_postal" ));
+	$xFRM->OButton("TR.BUSCAR COLONIA", "var xD=new DomGen();xD.getBuscarColonias()", $xFRM->ic()->BUSCAR);
+	$xFRM->setValidacion("idcodigopostal", "validacion.codigopostal", "TR.Obligatorio codigo_postal", true);
+	$xFRM->addJsInit("jsSiEsViviendaManual();");
 	
 	$sentidades		= $xSel->getListaDeEntidadesFed("", true);
 	$sentidades->addEvent("onchange", "jsaGetMunicipios");
 	$xFRM->addHElem( $sentidades->get(true) );
 	
-	$xHSel->setEnclose(false);
-	$xHSel->addOptions( array( "calle" => "Calle", "avenida" => "Avenida", "andador" => "Andador", "camino_rural"=> "Camino Rural") );
-	$xTxtE->setDivClass("");
-	$xFRM->addDivSolo($xHSel->get("idtipoacceso", "", "calle"), $xTxtE->getNormal("idnombreacceso", ""), "tx14", "tx34" );
-	
+	if($SinDetalleAcceso == true){
+		$xFRM->OText("idnombreacceso", "", "TR.Domicilio");
+		$xFRM->OHidden("idtipoacceso", "calle");
+	} else {
+		$xTxtE->setDivClass("");
+		$xFRM->addDivSolo($xSel->getListaDeTiposDeAcceso()->get(false), $xTxtE->getNormal("idnombreacceso", "", "TR.Nombre del Acceso"), "tx14", "tx34" );
+		$xFRM->setValidacion("idnombreacceso", "validacion.calle", "TR.Obligatorio nombre de Acceso", true);
+	}	
 	$xFRM->addHElem( $xTxt->getNormal("idnumeroexterior", "", "TR.Numero_Exterior") );
-	$xFRM->addHElem( $xTxt->getNormal("idnumerointerior", "", "TR.Numero_Interior") );
 	
+	$xFRM->addHElem( $xTxt->getNormal("idnumerointerior", "", "TR.Numero_Interior") );
 	$xFRM->addHElem( $xTx3->getDeNombreDeColonia("idnombrecolonia", EACP_COLONIA, "TR.Colonia" ) );
 	
 	if(PERSONAS_VIVIENDA_MANUAL == true){
 		$xFRM->addHElem($xTx3->getDeNombreDeMunicipio("idnombremunicipio", "", "TR.Municipio"));
-		$xFRM->addHElem($xTx3->getDeNombreDeLocalidad("idnombrelocalidad", "", "TR.Localidad"));	
+		$xFRM->addHElem($xTx3->getDeNombreDeLocalidad("idnombrelocalidad", "", "TR.Localidad"));
 	} else {
+		$xFRM->setValidacion("idnumeroexterior", "validacion.novacio", "TR.Obligatorio Numero_exterior", true);
 		$xFRM->addHElem("<div class='tx4' id='txtmunicipio'></div>");
 		$xFRM->addHElem("<div class='tx4' id='txtlocalidad'></div>");	
 	}
 	
-	$xFRM->addHElem( $xTxt->getNumero("idtelefono1", "", "TR.TELEFONO_FIJO") );
-	//$xFRM->addHElem( $xTxt->getNumero("idtelefono2", "", "TR.TELEFONO_MOVIL") );
-	
+	$xFRM->addHElem( $xTxt->getNumero("idtelefono1", $telefono, "TR.TELEFONO_FIJO") );
 	$xFRM->OText("idreferencias", "", "TR.Referencias");
-	//$xFRM->addHElem( $xChk->get("TR.Domicilio Principal?", "idprincipal") );
 	$xFRM->addFootElement("<input type='hidden' id='idcolonia' name='idcolonia' value='' />");
-	//$xFRM->addFootElement("<input type='hidden' id='idsocio' name='idsocio' value='$persona' />");
-	//$xFRM->endSeccion();
+	$xFRM->endSeccion();	
 }
-if($con_actividad == true){
+if($con_actividad == true AND $tipo_de_ingreso != TIPO_INGRESO_RELACION){
 	$xFRM->OText("idrazonsocialtrabajo", "", "TR.Empresa_donde_labora");
 	$xTLi	= new cHText();
-	$xTLi->addEvent("getListadoAE(this, event)", "onkeyup");
-	$xTLi->setProperty("list", "dlBuscarActividad");
-	$xFRM->addHElem($xTLi->get("idactividad", FALLBACK_ACTIVIDAD_ECONOMICA, "TR.Clave de Actividad" ));	
-	$xFRM->addHElem($xTxt->getDeMoneda("idingresos", "TR.Ingreso Mensual", 0));
-	$xFRM->addHElem("<datalist id='dlBuscarActividad'><option /></datalist>");
+	if($EsSimple == true){
+		$xFRM->addHElem( $xSel->getListaDeTiposdeActividadEconomica("idactividad", FALLBACK_ACTIVIDAD_ECONOMICA)->get(true) );
+		$xFRM->ODate("idfechaingreso", fechasys(), "TR.Fecha de Ingreso");
+		$xFRM->OMoneda("idsalario", 0, "TR.Ingreso_Mensual");
+	} else {
+		$xFRM->ODate("idfechaingreso", fechasys(), "TR.Fecha de Ingreso");
+		$xFRM->OMoneda("idsalario", 0, "TR.Ingreso Mensual");
+		$xFRM->addHElem( $xTLi->getDeActividadEconomica("idactividad", FALLBACK_ACTIVIDAD_ECONOMICA, "TR.Clave de Actividad") );
+		$xFRM->setValidacion("idactividad", "validacion.actividadeconomica", "TR.ACTIVIDAD_ECONOMICA invalido");
+	}
+	$xFRM->setValidacion("idsalario", $xFRM->VALIDARCANTIDAD, "TR.El Ingreso_Mensual debe ser mayor a 0");
 }
 
-$xFRM->addFooterBar($xHNot->get(" ", "idcoincidencias", $xHNot->NOTICE));
+$xFRM->addFooterBar(" ");
+
+$xFRM->setValidacion("idtipodeingreso", "jsCheckTipoIngreso");
+$xFRM->setValidacion("idnombrecompleto", "jsCheckNombres", "Necesita Capturar un Nombre", true);
+$xFRM->setValidacion("idapellidopaterno", "jsCheckApellido", "Necesita Capturar al menos un Apellido", true);
+$xFRM->setValidacion("idemail", "happy.email", $xFRM->l()->getMensajeByTop("GENERAL_FALTA_MAIL"));
+$xFRM->setNoAcordion();
+
+
+//=============== Datos de origen
+$xFRM->OHidden("tipoorigen", $tipoorigen);
+$xFRM->OHidden("claveorigen", $claveorigen);
+
 
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);
 ?>
 <script>
-var gn			= new Gen();
+var xG			= new Gen();
 var val			= new ValidGen();
 var errors		= 0;
 var evalFiscal	= true;
 var evalCivil	= true;
+var xGen		= new Gen();
+var xVal		= new ValidGen();
+var xP			= new PersGen();
+var mOmitirDNI	= <?php echo ($userNoDNI == true) ? "true" : "false"; ?>;
+var mIDDoctoPob	= <?php echo PERSONAS_CLAVE_ID_POBLACIONAL; ?>;
 <?php
 if($tipo_de_ingreso == TIPO_INGRESO_RELACION OR $con_legal == false ){
-echo "evalFiscal = false;\n evalCivil = false; \n"; 
-}
-if(EACP_CLAVE_DE_PAIS != "MX"){
-	echo "evalFiscal = false;\n";	
+echo "evalFiscal = false;\nevalCivil = false; \n"; 
 }
 ?>
-$(document).ready(function () {
-	$('#id-frmsolingreso').isHappy({
-	    fields: {
-		   "#idtipodeingreso" : {
-			   test: jsCheckTipoIngreso
-		   },
-	      '#idnombrecompleto': {
-			required : true,
-	        message: 'Necesita Capturar un Nombre',
-			test : jsCheckNombres
-	      },
-	      '#idapellidopaterno': {
-	        required : true,
-	        message: 'Necesita al menos un apellido',
-	        test : jsCheckApellido
-	      },
-		  "#idfigurajuridica" : {
-			test : jsCheckFigura
-		  },
-		  "#idregimenfiscal" : {
-			test : jsCheckRegimenF,
-			message: 'Debe capturar un Regimen Fiscal'
-		  },
-		  "#idestadocivil" : {
-			test : jsCheckEstadoCivil
-		  },
-		  "#idregimenmatrimonial" : {
-			test : jsCheckRegimenMat,
-			message: 'Debe capturar un Regimen Matrimonial Valido'			
-		  },
-		  "#idlugardenacimiento" : {
-			test : jsObtenCURP
-		  },
-		  "#idcurp" : {
-			test : jsTestCURP,
-			message: 'La Clave Unica de Poblacion parece no Valida'						
-		  },
-		  "#idemail" :{
-			message : "Correo electronico No Valido",
-			test : happy.email
-		  },
-		  "#idrazonnofiel" : {
-			message : "Necesita un CODIGO de FIEL o Una Razon por la cual no tiene",
-			test : jsCheckFirmaElec
-		  },
-		  "#idnumerodocumento" :{
-			required : true,
-			message : "Necesita un Documento de Identificacion",
-			test : jsCheckDocto
-		  },
-		  "#idrfc" : {
-			message : "Necesita un RFC Valido",
-			test : jsTestRFC
-		  }
-	    }
-	  });	
-});
-//test: happy.email // this can be *any* function that returns true or false
-function jsCheckDocto(){ return val.NoVacio($("#idnumerodocumento").val()); }
+
+function jsSiEsViviendaManual(){
+	if(PERSONAS_VIVIENDA_MANUAL == true){
+		setTimeout("jsaGetMunicipios()", 1000);
+		setTimeout("jsaGetLocalidades()", 1000);		
+	}
+}
+
+function jsCheckDocto(){
+	var iddocumento	= $.trim($("#idnumerodocumento").val());
+	var tipodocto	= entero($("#idtipoidentificacion").val());
+	if(mOmitirDNI == false){
+		return val.NoVacio(iddocumento);
+	} else {
+		var rs		= true;
+		var xCurp	= iddocumento;
+		if(tipodocto != mIDDoctoPob){
+			return true;
+		} else {
+			if( EACP_CLAVE_DE_PAIS == "MX"){
+				var xMx	= new Mexico();
+				rs		= xMx.jsValidarCURP( xCurp );
+			} else {
+				var xLoc= new LocalGen();
+				rs 		= xLoc.validarDNI(xCurp);
+			}
+			if(rs == true){
+				//guardar curp
+				$("#idcurp").val(xCurp);
+				//Cargar existencia
+				//si existe bloquear form
+				xP.setBuscarPorIDs({poblacional:xCurp, callback: jsValidarExistePersona});
+			}
+			return (evalFiscal == true) ? rs : true;
+		}
+	}
+}
 function jsCheckApellido(){ return val.NoVacio($("#idapellidopaterno").val()); }
 function jsCheckNombres(){	return val.NoVacio($("#idnombrecompleto").val()); }
 function jsCheckEstadoCivil(){
@@ -385,9 +540,9 @@ function jsCheckEstadoCivil(){
 	if (idestadocivil != 1 && idestadocivil != 7) {
 		//si es menor
 		$("#idregimenmatrimonial").val("NINGUNO");
-		$("#idregimenmatrimonial").css("display", "none");
+		xG.verControl("idregimenmatrimonial", false);
 	} else {
-		$("#idregimenmatrimonial").css("display", "inherit");
+		xG.verControl("idregimenmatrimonial", true);
 	}
 	return true;	
 }
@@ -422,9 +577,9 @@ function jsCheckFigura(){
 	var idfigurajuridica	= $("#idfigurajuridica").val();
 	if (idfigurajuridica == 9) {
 		//si es menor
-		$("#idregimenfiscal").css("display", "none");
+		xG.verControl("idregimenfiscal", false);
 	} else {
-		$("#idregimenfiscal").css("display", "inherit");
+		xG.verControl("idregimenfiscal", true);
 	}
 	return true;
 }
@@ -449,10 +604,9 @@ function jsCheckFirmaElec(){
 	return (evalFiscal == true) ? rs : true;
 }
 function jsCheck(){
-	if ( $(".unhappyMessage").length > 0) {
-		alert("Necesita corregir algunos datos para Guardar");
-	} else {
-		$('#id-frmsolingreso').submit();
+	$('#id-frmsolingreso').submit();
+	if(xG.happy() == true){
+		xG.spinInit();
 	}
 }
 function getListaSocios(msrc, evt) {
@@ -469,9 +623,11 @@ function getListaSocios(msrc, evt) {
 	var xUrl	= "../svc/personas.svc.php?n=" + idnombrecompleto + "&p=" + idapellidopaterno + "&m=" + idapellidomaterno;
 	if ((charCode >= 65 && charCode <= 90)) {
 		jsaBuscarCoincidencias();
-		if ( String(msrc.value).length >= 3 ) {
+		//var xPer	= new PersGen();
+		//xPer.showBuscarPersonas({ paterno : idapellidopaterno, materno : idapellidomaterno, nombre : idnombrecompleto });
+		if ( String(msrc.value).length >= 3 ){
 			$("#dlBuscarPersona").empty();
-			gn.DataList({
+			xG.DataList({
 				url : xUrl,
 				id : "dlBuscarPersona",
 				key : idKey,
@@ -502,12 +658,32 @@ function jsObtenCURP(){
 	return true;
 }
 function jsTestCURP(){
-	var rs = true;
+	var rs		= true;
+	var xCurp	= $("#idcurp").val();
 	if( EACP_CLAVE_DE_PAIS == "MX"){
 		var xMx	= new Mexico();
-		rs		= xMx.jsValidarCURP( $("#idcurp").val() );
+		rs		= xMx.jsValidarCURP( xCurp );
+	} else {
+		var xLoc= new LocalGen();
+		rs 		= xLoc.validarDNI(xCurp);
 	}
+	if(rs == true){
+		//Cargar existencia
+		if(session("curp.valida." + xCurp) == null){
+			//si existe bloquear form
+			xP.setBuscarPorIDs({poblacional:xCurp, callback: jsValidarExistePersona});
+		} else {
+			setLog("Cup Validada " + xCurp);
+		}
+	}
+
 	return (evalFiscal == true) ? rs : true;
+}
+function jsValidarExistePersona(existe){
+	if(existe == true){
+		alert("La persona existe en el Sistema");
+		xGen.activarForma();
+	}
 }
 function jsTestRFC(){
 	var rs = true;
@@ -517,31 +693,17 @@ function jsTestRFC(){
 		if (entero(idregimenfiscal) > 1) {
 			rs		= xMx.jsValidarRFC( $("#idrfc").val() );
 		}
+	} else {
+		var xLoc	= new LocalGen();
+		rs			= xLoc.validarNIF($("#idrfc").val() );
 	}
 	return (evalFiscal == true) ? rs : true;
 }
 /* ------------------------------- Domicilio -------------------------------- */
 
 var mEdoAc	= <?php echo $xLoc->DomicilioEstadoClaveNum(); ?>;
-var xGen	= new Gen();
-var xVal	= new ValidGen();
-$(document).ready(function () {
-	$('#id-frmvivienda').isHappy({
-	    fields: {
-	      '#idcodigopostal': {
-			required : true,
-	        message: 'Necesita Capturar un Codigo postal',
-			test : jsGetDatosHeredados
-	      },
-	      "#idnombreacceso" : {
-		      required : true,
-		      message : "Necesita una Nombre para la calle",
-		      test : jsCheckCalle
-	    }
-	    }
-	});	
-});
-function jsCheckCalle(){ return xVal.NoVacio($("#idnombreacceso").val()); }
+
+//========================== END-ELIMI
 function jsGetDatosHeredados(){
 	var xPais	= ($("#idpais").length > 0) ? $("#idpais").val() : 0; //EACP_CLAVE_DE_PAIS
 	if ($("#idcodigopostal").length > 0) {
@@ -569,13 +731,14 @@ function setDatosPorCodigoPostal(obj) {
 		if (flotante(mdats.estado) > 0) {
 			mEdoAc	= mdats.estado;
 			$("#identidadfederativa").val(mEdoAc);
-		
-			setTimeout("jsaGetMunicipios()", 1000);
-			setTimeout("jsaGetLocalidades()", 1000);
+			if(PERSONAS_VIVIENDA_MANUAL == false){
+				setTimeout("jsaGetMunicipios()", 1000);
+				setTimeout("jsaGetLocalidades()", 1000);
+			}
 		}
 	}
 }
-
+//========================== END-ELIMI
 function initComponents(){  }
 function jsSetEstadoPorPais(osrc){
 	var mpais	= osrc.value;
@@ -608,6 +771,17 @@ function getListadoAE(msrc, evt){
 				});	
 		}
 	}
+}
+function jsGetListaDePuntosDeAtencion(){
+	var idregion	= $("#idregionpersona").val();
+	var xUrl	= "../svc/centros-de-atencion.svc.php?region=" + idregion;
+	$("#idcajalocal").empty();
+	xGen.DataList({
+				url : xUrl,
+				id : "idcajalocal",
+				key : "idsocios_cajalocal",
+				label : "descripcion_cajalocal"
+				});	
 }
 </script>
 <?php

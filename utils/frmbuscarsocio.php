@@ -12,39 +12,50 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP	= new cHPage("TR.Buscar Personas");
+$xHP	= new cHPage("TR.Buscar Personas", HP_FORM);
 $xQL	= new MQL();
 $cT		= new cTipos();
+$xRuls	= new cReglaDeNegocio();
 $msg	= "";
+$jxc 	= new TinyAjax();
 
-$i 			= (isset($_GET["i"])) ? $_GET["i"] : false;		//CLAVE
+$persona	= (isset($_GET["i"])) ? $_GET["i"] : false;		//CLAVE
 $f 			= (isset($_GET["f"])) ? $_GET["f"] : false;		//form dependiente
-$By			= (isset($_GET["o"])) ? $_GET["o"] : "n";		//tipo de busqueda: n = nombre, c = curp, r = rfc, s = socio, nf = Nombre con FORM
+$buscarPor	= (isset($_GET["o"])) ? $_GET["o"] : PERSONAS_BUSCAR_POR;		//tipo de busqueda: n = nombre, c = curp, r = rfc, s = socio, nf = Nombre con FORM
+
+$tipo_de_ingreso	= parametro("idtipodeingreso", 0, MQL_INT); $tipo_de_ingreso	= parametro("tipodeingreso", $tipo_de_ingreso, MQL_INT); $tipo_de_ingreso	= parametro("tipoingreso", $tipo_de_ingreso, MQL_INT);
 
 $OtherEvent	= parametro("ev", "", MQL_RAW);	//Otro Evento Desatado
 $OtherEvent	= parametro("callback", "", MQL_RAW);
 $control	= parametro("control", "idsocio", MQL_RAW);
 
 $tiny 		= (isset($_GET["tinybox"])) ? true : false;
+$BuscarConID= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);		//regla de negocio
 /*if($OtherEvent != ""){
 	$OtherEvent	= ($tiny == true) ? "window.parent.$OtherEvent;" : "opener.$OtherEvent;";
 }*/
 //si existe la forma y no existe condicionante
-if($cT->cInt($i) > DEFAULT_SOCIO ){ $By	= "s"; }
-$By		= ( $f != false ) ? "nc" : $By;
-$i		= ($By == "nc" AND $cT->cInt($i) > 0) ? "" : $i;
+if($persona > DEFAULT_SOCIO ){
+	$buscarPor	= "s";
+}
+$buscarPor	= ( $f != false ) ? "nc" : $buscarPor;
+$persona	= ($buscarPor == "nc" AND $cT->cInt($persona) > 0) ? "" : $persona;
+/*
+ * id) IDInterna
+ **/
 $arrLst	= array (
 		"n"  => 0,
 		"nc" => 1,
 		"s"  => 2,
 		"c"  => 3,
 		"r"  => 4,
-		"e" => 5 //por empresa
+		"e" => 5,
+		"idi" => 6
 		);
 	//ESCRIBA_EL_TEXTO_A_BUSCAR
 function fmt_string($string){
 	if(strlen(trim($string)) > 4) {
-		$string = substr($string, 0, 4);
+		$string = substr(trim($string), 0, 4);
 	} else {
 		$string = trim($string);
 	}
@@ -52,85 +63,130 @@ function fmt_string($string){
 }
 function jsaGetListadoDeEmpresas(){
 	$gssql= "SELECT * FROM socios_aeconomica_dependencias";
-	$cDE = new cSelect("id-texto_buscado", "id-texto_buscado", $gssql);
+	$cDE = new cSelect("idtextobusqueda", "idtextobusqueda", $gssql);
 	$cDE->addEvent("onchange", "jsShowSocios");
+	$cDE->setLabel("TR.NOMBRE EMPRESA");
 	$cDE->setEsSql();
-	$cDE->setOptionSelect(99);
-	return $cDE->show();
+	$cDE->setOptionSelect(DEFAULT_EMPRESA);
+	return $cDE->get("", false);
 }
 function jsaGetListadoDeProductos(){
-	$gssql= "SELECT * FROM creditos_tipoconvenio";
-	$cDE = new cSelect("id-texto_buscado", "id-texto_buscado", $gssql);
+	
+	$gssql= "SELECT * FROM creditos_tipoconvenio ORDER BY `descripcion_tipoconvenio`";
+	$cDE = new cSelect("idtextobusqueda", "idtextobusqueda", $gssql);
 	$cDE->addEvent("onchange", "jsShowSocios");
+	$cDE->setLabel("TR.NOMBRE DEL PRODUCTO");
 	$cDE->setEsSql();
-	$cDE->setOptionSelect(99);
-	return $cDE->show();
+	
+	$cDE->setOptionSelect(DEFAULT_TIPO_CONVENIO);
+	return $cDE->get("", false);
 }
-function jsShowSocios($texto, $tipo_de_busqueda){
+function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0){
 	$strTbls			= "";
 	$ByForm				= false;
 	$MostrarGars		= true;
 	$MostrarPartes		= true;
 	$sqlL				= new cSQLListas();
-	$WSoc				= " `socios_general`.`codigo` != " . DEFAULT_SOCIO . "";
+	$xFil				= new cTiposLimpiadores();
+	$xUser				= new cSystemUser();
+	$WSoc				= "";
 	$WPrel				= "";
+	$extras				= "";
 	$xIc				= new cHImg();
-
+	$xT					= new cTipos();
+	$todos				= $xT->cBool($todos);
+	$w1					= ($todos == true) ? "" : " (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
+	if($tipoingreso > 0){
+		$w1				= " (tipoingreso=$tipoingreso) ";
+	}
 	if ( $tipo_de_busqueda == "nc" ){
 		$ByForm			= true;
 	}
-	if ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0") ) {
-		$sqllike = $sqlL->getListadoDeSocios(" tipoingreso != " . TIPO_INGRESO_SDN);
+	if(OPERACION_LIBERAR_SUCURSALES == false AND $xUser->getEsCorporativo() == false){
+		$w1				.= " AND `socios_general`.`sucursal`='" . $xUser->getSucursal() . "' ";
+		
+	}
+	//if(OPERACION_LIBERAR_SUCURSALES == false){
+		$extras			= ", `socios_general`.`sucursal` ";
+	//}
+	$buscar				= ( ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0")) AND ($idinterno =="") ) ? false : true;
+	if ($buscar == false) {
+		$sqllike = $sqlL->getListadoDeSocios($w1, "0,50", $extras);
 		$table_s = new cTabla($sqllike);
 		$table_s->setEventKey("setSocio");
-		$table_s->setRowCSS("codigo", "center");
-		$table_s->addEspTool("\$xS=new cSocio(_REPLACE_ID_,true);\$D=\$xS->getTotalColocacionActual();PHP::(\$D[SYS_NUMERO]>0) ? \"<div class='noticon'><i class='fa fa-credit-card fa-lg'></i><span class='noticount'>\" . \$D[SYS_NUMERO] . \"</span></div>\":\"\";");
-		$strTbls .= $table_s->Show("TR.ULTIMOS REGISTROS");
+		//$table_s->setRowCSS("codigo", "center");
+		$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCreds();");
+		$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+		
+		$strTbls .= $table_s->Show();
 	} else {
 		$texto 		= trim($texto);
 		$texto		= strtoupper($texto);
-		$completo	= explode(" ", $texto);
-
-		$str		= fmt_string($completo[0]);
-
-		$marked		= false;
-		switch ( $tipo_de_busqueda ){
-			//CURP
-			case "c":
-				$str		= trim( substr( $completo[0], 0, 7) );
-				$WSoc		= " (curp LIKE '$str%') ";
-			break;
-		//NUMERO DE SOCIO
-			case "s":
-				$str		= trim( substr( $completo[0], 0, 6) );
-				$WSoc		= " (codigo LIKE '$str%') ";
-			break;
-		//NUMERO DEempresa
-			case "e":
-				$WSoc		= " (dependencia = $texto) ";
-			break;
-			//DEAFULT:
-			default:
+		//$unico		= (substr(trim($texto), -1) == *)
+		if($idinterno == ""){
+			$marked		= false;
+			switch ( $tipo_de_busqueda ){
+				//CURP
+				case "c":
+					$str		= $xFil->cleanTextoBuscado($texto, 7);
+					$WSoc		= " AND (curp LIKE '$str%') ";
+				break;
+			//IDInterno
+				case "idi":
+					$str		= $xFil->cleanTextoBuscado($texto);
+					$WSoc		= " AND (`idinterna` LIKE '%$str%') ";
+				break;
+			//NUMERO DE SOCIO
+				case "s":
+					$str		= $xFil->cleanTextoBuscado($texto);
+					$WSoc		= " AND (codigo LIKE '%$str%') ";
+				break;
+			//NUMERO DEempresa
+				case "e":
+					$WSoc		= " AND (dependencia = $texto) ";
+				break;
+				//DEAFULT:
+				default:
+					$items		= explode(" ", $texto,3);
+					//setLog($texto);
+					if(substr_count($texto, '*') == 1 AND  substr(trim($texto), -1) == "*"){
+						$items	= array(0 => $xFil->cleanTextoBuscado($texto));
+						//setLog($texto);
+					}
+					$nitems		= count($items);				
 				//balam gon lui
-			if ( isset($completo[1]) ){
-				$str		= fmt_string($completo[1]);
-				$WSoc		.= ($str != "*") ? " AND (apellidomaterno LIKE '$str%') " : "";
+				if($nitems == 3){
+					$b1			= $xFil->cleanTextoBuscado($items[0]);
+					$b2			= $xFil->cleanTextoBuscado($items[1]);
+					$b3			= $xFil->cleanTextoBuscado($items[2]);
+					$WSoc		.= ($b1 != "") ? " AND (REPLACE(`apellidopaterno`, ' ', '-') LIKE '%$b1%') " : "";
+					$WSoc		.= ($b2 != "") ? " AND (REPLACE(`apellidomaterno`, ' ', '-') LIKE '%$b2%') " : "";
+					$WSoc		.= ($b3 != "") ? " AND (REPLACE(`nombrecompleto`, ' ', '-') LIKE '%$b3%') " : "";
+					
+				} else if ($nitems == 2){
+					$b1			= $xFil->cleanTextoBuscado($items[0]);
+					$b2			= $xFil->cleanTextoBuscado($items[1]);
+					$WSoc		.= ($b1 != "") ? " AND (REPLACE(`apellidopaterno`, ' ', '-') LIKE '%$b1%') " : "";
+					$WSoc		.= ($b2 != "") ? " AND (REPLACE(`apellidomaterno`, ' ', '-') LIKE '%$b2%') " : "";
+					
+				} else {
+					$b1			= $xFil->cleanTextoBuscado($items[0]);
+					$WSoc		.= " AND ((REPLACE(`apellidopaterno`, ' ', '-') LIKE '%$b1%') OR (REPLACE(`nombrecompleto`, ' ', '-') LIKE '%$b1%') )";
+				}
+	
+			
+				break;
 			}
-			if ( isset($completo[2]) ){
-				$str		= fmt_string($completo[2]);
-				$WSoc		.= ($str != "*") ? " AND (nombrecompleto LIKE '$str%') " : "";
-			}
-			if(isset($completo[0]) ){
-				$str		= fmt_string($completo[0]);
-				$WSoc		.= " AND ((apellidopaterno LIKE '$str%') OR (nombrecompleto LIKE '%$str%') )";
-			}			
-			break;
+		} else {
+			$str		= $xFil->cleanTextoBuscado($idinterno);
+			$WSoc		.= " AND (`idinterna` LIKE '%$str%') ";
 		}
-			if($tipo_de_busqueda == "pp"){
+			if($tipo_de_busqueda == "pp"){ //por credito
 				$sqllike	= "SELECT
-					`creditos_solicitud`.`numero_solicitud`        AS `credito`,
+					
 					`socios`.`codigo`,
 					`socios`.`nombre`,
+					`creditos_solicitud`.`numero_solicitud`        AS `credito`,
 					`creditos_solicitud`.`pagos_autorizados`       AS `pagos`,
 					(`creditos_solicitud`.`ultimo_periodo_afectado`+1) AS `periodo`,
 					`creditos_solicitud`.`saldo_actual`            AS `saldo`,
@@ -144,30 +200,35 @@ function jsShowSocios($texto, $tipo_de_busqueda){
 					AND
 					(`creditos_solicitud`.`tipo_convenio` =$texto) ORDER BY	`socios`.`nombre` ";
 				$table_s = new cTabla($sqllike);
-				$table_s->setEventKey("jsGoRecibo");
+				$table_s->setEventKey("setSocio");
 				$table_s->setRowCSS("credito", "center");
-				$table_s->setKeyField("credito");
+				$table_s->setKeyField("codigo");
 				$table_s->setWithMetaData();
 				$strTbls .= $table_s->Show("TR.CREDITOS");
 			} else {
-				$sqllike = $sqlL->getListadoDeSocios($WSoc . " AND tipoingreso != " . TIPO_INGRESO_SDN);
+				if($todos == true){$WSoc = " `socios_general`.`codigo` >0 $WSoc ";}
+				$sqllike = $sqlL->getListadoDeSocios($w1 . $WSoc, "0,100", $extras);
 				$table_s = new cTabla($sqllike);
 				$table_s->setEventKey("setSocio");
-				$table_s->setRowCSS("codigo", "center");
-				$table_s->addEspTool( $xIc->get24("settings.png", "onclick='jsToPanel(_REPLACE_ID_)'") );
-				//$table_s->addSubQuery("SELECT CONCAT(`creditos_solicitud`.`numero_solicitud`, '|', `creditos_solicitud`.`numero_pagos`, '|',`creditos_solicitud`.`periocidad_de_pago`,'|',`creditos_solicitud`.`saldo_actual` ) FROM creditos_solicitud WHERE numero_socio = _REPLACE_ID_", 1);
-				$table_s->addEspTool("\$xS=new cSocio(_REPLACE_ID_,true);\$D=\$xS->getTotalColocacionActual();PHP::(\$D[SYS_NUMERO]>0) ? \"<div class='noticon'><i class='fa fa-credit-card fa-lg'></i><span class='noticount'>\" . \$D[SYS_NUMERO] . \"</span></div>\":\"\";");
-				$strTbls .= $table_s->Show("TR.PERSONAS QUE COINCIDEN CON LA BUSQUEDA");
+				
+				
+				$table_s->OButton("TR.PANEL", 'jsToPanel(_REPLACE_ID_)', $table_s->ODicIcons()->CONTROL );
+				$table_s->OButton("TR.Relacion", "jsGetRelaciones(" . HP_REPLACE_ID . ")", "fa-group");
+				//Codigo inicial PHP:: Asignar valor
+				$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCreds();");
+				$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+				$strTbls .= $table_s->Show();
 			}
+			//setLog($sqllike);
 		}
 	return $strTbls;
 }
 function jsaSetSocioEnSession($socio){	getPersonaEnSession($socio); }
 
-$jxc = new TinyAjax();
-$jxc ->exportFunction('jsShowSocios', array("id-texto_buscado", "id-TipoDeBusqueda"), "#dResults");
-$jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#valorBusqueda");
-$jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#valorBusqueda");
+
+$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso"), "#divresultado");
+$jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#idbusqueda");
+$jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaSetSocioEnSession', array("idsocio"));
 $jxc ->process();
 
@@ -175,67 +236,66 @@ $xHP->init("initComponents()");
 
 
 $xFRM		= new cHForm("elform", "frmbuscarsocio.php");
+//$xFRM->setTitle($xHP->getTitle());
+$xFRM->setNoAcordion();
+$xHSel		= new cHSelect();
+$xTxt		= new cHText();
+$xTxt2		= new cHText();
+$xChk		= new cHCheckBox();
+$xChk->setDivClass("");
+$xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
+$xFRM->addToolbar($xChk->get("TR.Todos", "idtodo"));
+$xTxt->addEvent("jsGetPersonasByKey(this)", "onkeyup");$xTxt2->addEvent("jsGetPersonasByKey2(this)", "onkeyup");
+$xTxt->setDivClass("");
+$xHSel->addOptions(array(
+		"n" => "Nombre/Iniciales(Paterno Materno Nombre)",
+		"nc"=>$xFRM->getT("TR.Nombre desde un Formulario"),
+		"e"=>$xFRM->getT("TR.POR EMPRESA"),
+		"idi"=>$xFRM->getT("TR.IDINTERNO"),
+		"s"=>$xFRM->getT("TR.CLAVE_DE_PERSONA"),
+		"c"=>$xFRM->getT("TR.IDENTIFICACION_POBLACIONAL"),
+		"r"=>$xFRM->getT("TR.IDENTIFICACION_FISCAL"),
+		"pp"=>$xFRM->getT("TR.POR PRODUCTO CREDITO")
+));
+$xHSel->setDivClass("");
+$xHSel->addEvent("jsMostrarOpciones()", "onchange");
+$xFRM->OHidden("idsocio", $persona);
+$xFRM->addSeccion("idopciones", "TR.BUSCAR PERSONAS");
+if($BuscarConID == true){
+$xTxt2->setDivClass("");
+	$lbl	= $xTxt2->getLabel("TR.IDINTERNO");
+	$xFRM->addDivMedio($lbl, $xTxt2->getNormal("idinterna", "", ""), "tx12", "tx12");
+	$xFRM->addDivMedio($xHSel->get("idtipobusqueda", "", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, ""), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));
+} else {
+	$xFRM->OHidden("idinterna", "");
+	$xFRM->addDivMedio($xHSel->get("idtipobusqueda", "Buscar por :", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, "TR.Texto de busqueda"), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));
+}
+$xFRM->endSeccion();
 
+$xFRM->addSeccion("idlistabusqueda", "TR.Resultado");
+$xFRM->addHTML("<div id='divresultado'></div>");
+$xFRM->endSeccion();
 
-//$xFRM->addJsBasico();
-//$xFRM->addCreditBasico();
+//Tipo de Ingreso falso
 
-//$xFRM->addSubmit();
+$xFRM->OHidden("tipodeingreso", $tipo_de_ingreso);
 
+echo $xFRM->get();
 
-//echo $xFRM->get();
+$jxc ->drawJavaScript(false, true);
 ?>
-<!-- FORMULARIO BASICO -->
-<fieldset>
-	<legend>Buscar una Persona</legend>
-
-<form name='elform' action='frmbuscarsocio.php' method='post'>
-	<table>
-		<tr>
-			<th>Buscar Por:</th>
-			<th><select name='TipoDeBusqueda' id='id-TipoDeBusqueda' onchange='jsMostrarOpciones()'>
-				<option value="n">Nombre/Iniciales(Paterno Materno Nombre)</option>
-				<option value="nc">Nombre desde un Formulario</option>
-				<option value="s">Clave de Persona</option>
-				<option value="c">CURP</option>
-				<option value="r">RFC</option>
-				<option value="e">POR EMPRESA</option>
-				<option value="pp">POR PRODUCTO</option>
-			</select></th>
-			<td id="valorBusqueda"><input name='texto_buscado' id='id-texto_buscado' type='text'
-				   value='<?php echo $i; ?>' size="50" maxlength="100"
-				   onchange='jsShowSocios()' onkeyup='jsGetPersonasByKey(this)' /></td>
-		</tr>
-		<tr>
-			<td />
-			<td />
-			<th>
-				<a class='button' name='btsend' onClick='jsShowSocios();'>BUSCAR</a>
-			</th>
-		</tr>
-	</table>
-	<?php
-
-	//$xLo		= new cLocal();
-	//$arrBusq	= array("AP" => "balam",  "N" => "luis");
-	//$model		= array("AP" => "ApellidoPaterno", "AM" => "ApellidoMaterno", "N" => "SuNombre");
-	//var_dump($xLo->getListadoDePersonasBuscadas($arrBusq, $model));
-	?>
-<input type="hidden" id="idsocio">
-</form>
-	<div id="dResults"></div>
-</fieldset>
-</body>
-<?php $jxc ->drawJavaScript(false, true); ?>
 <script >
-var mFecha			= "<?php echo fechasys(); ?>";
-var xG				= new Gen();
-var idsoc			= "<?php echo $control; ?>";
+var mFecha	= "<?php echo fechasys(); ?>";
+var xG		= new Gen();
+var xP		= new PersGen();
+var idsoc	= "<?php echo $control; ?>";
 function jsGetPersonasByKey(msrc){
 	var mstr	= new String( msrc.value );
-	if (mstr.length > 4) {
-		jsShowSocios();
-	}
+	if (mstr.length >= 4){ jsShowSocios(); }  /*Busqueda por TXT*/
+}
+function jsGetPersonasByKey2(msrc){
+	var mstr	= new String( msrc.value );
+	if (mstr.length >= 2) { jsShowSocios();	} /*Busqueda por ID*/
 }
 function setSocio(id){
 	var msrc	= null;	
@@ -254,8 +314,12 @@ function setSocio(id){
 			oid.value	= id;
 			oid.focus();
 			oid.select();
+			session(ID_PERSONA, id);
 			if(typeof msrc.jsSetNombreSocio != "undefined"){ msrc.jsSetNombreSocio(); }
 			xG.close();		
+		} else {
+			//ir al panel de control
+			xP.goToPanel(id, false);
 		}
 	<?php
 	}
@@ -287,22 +351,20 @@ function setSocio(id){
 	}
 }
 function initComponents(){
-	document.getElementById("id-TipoDeBusqueda").options[<?php echo $arrLst[$By]; ?>].selected = true;
-	resizeMainWindow();
+	//document.getElementById("idtipobusqueda").options[<?php echo $arrLst[$buscarPor]; ?>].selected = true;
+	
 	jsShowSocios();
+	$("#idtextobusqueda").focus();
+	$("#idtextobusqueda").select();
 }
-function resizeMainWindow(){
-	var mWidth	= 800;
-	var mHeight	= 800;
-	window.resizeTo(mWidth, mHeight);
-}
+function jsShowSocios(){ jsaShowSocios(); }
 function jsMostrarOpciones() {
-	if ($("#id-TipoDeBusqueda").val() == "e") {
+	if ($("#idtipobusqueda").val() == "e") {
 		jsaGetListadoDeEmpresas();
-	} else if ($("#id-TipoDeBusqueda").val() == "pp") {
+	} else if ($("#idtipobusqueda").val() == "pp") {
 		jsaGetListadoDeProductos();
 	} else {
-		$("#valorBusqueda").html("<input name='texto_buscado' id='id-texto_buscado' type='text' value='<?php echo $i; ?>' size='50' maxlength='100' onchange='jsShowSocios()' />");
+		$("#idbusqueda").html("<label for='idtextobusqueda'>Texto de Busqueda</label><input name='idtextobusqueda' id='idtextobusqueda' type='text' value='<?php echo $persona; ?>' onkeyup='jsGetPersonasByKey(this)' />");
 	}
 }
 function jsGoRecibo(id) {
@@ -318,6 +380,10 @@ function jsGoRecibo(id) {
 function jsToPanel(idpersona){
 	var xP	= new PersGen();
 	xP.goToPanel(idpersona);
+}
+function jsGetRelaciones(idpersona){
+	var xG	= new Gen();
+	xG.w({ url : "../frmsocios/socios.relaciones.sigma.frm.php?persona=" + idpersona});
 }
 </script>
 </html>

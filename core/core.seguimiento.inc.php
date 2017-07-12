@@ -16,8 +16,8 @@ include_once("core.fechas.inc.php");
 include_once("core.riesgo.inc.php");
 include_once("core.common.inc.php");
 include_once("core.html.inc.php");
-
-
+include_once("core.seguimiento.utils.inc.php");
+@include_once("../libs/wathsapp/whatsprot.class.php");
 
 //=====================================================================================================
 function setNotificacionesDiariasCreditos360($fecha_operacion = false){
@@ -87,12 +87,12 @@ $msg	= "====================== GENERAR_NOTIFICACIONES_POR_CREDITOS_NO_360 \r\n";
 }
 /**
  * Genera Llamadas por Creditos Morosos y Vencidos fon vencimiento a FINAL DE PLAZO
- *
+ * @deprecated @since 2015.07.01
  * @param date $fecha_operacion
  * @return string Mensaje del Log
  */
 function setLlamadasDiariasCreditos360($fecha_operacion){
-	//TODO: Terminar esta canija funcion
+	//Terminar esta canija funcion
 	$msg	= "====================== GENERAR_LLAMADAS_POR_CREDITOS_360 \r\n";
 	$msg	.= "====================== SE OMITEN \r\n";
 	return $msg;
@@ -382,7 +382,7 @@ $sql = "SELECT socios.codigo, socios.nombre,
 function setNuevaNotificacion($socio, $solicitud, $grupo = 99, $numero,
 							$fecha, $hora, $observaciones = "",
 							$oficial = false, $tipo_de_credito = "planes"){
-	$arrProc = array(0 => "primera_notificacion",
+	/*$arrProc = array(0 => "primera_notificacion",
 					1 => "segunda_notificacion",
 					2 => "tercera_notificacion",
 					3 => "requerimiento_extrajudicial",
@@ -397,21 +397,21 @@ function setNuevaNotificacion($socio, $solicitud, $grupo = 99, $numero,
 	$sucursal	= getSucursal();
 	$eacp		= EACP_CLAVE;
 
-	$vencimiento	= sumardias($fecha, DIAS_A_ESPERAR_POR_NOTIFICACION);
+	
 	//'pendiente','efectuado','comprometido','cancelado','vencido'
 	$sqliNot = "INSERT INTO seguimiento_notificaciones(socio_notificado, numero_solicitud, numero_notificacion,
-	fecha_notificacion, oficial_de_seguimiento, fecha_vencimiento, procedimiento_proximo,
+	fecha_notificacion, oficial_de_seguimiento, procedimiento_proximo,
 	capital, interes, moratorio, otros_cargos, total,
 	observaciones, estatus_notificacion, domicilio_completo, tipo_credito,
 	sucursal, eacp, grupo_relacionado)
     VALUES($socio, $solicitud, $numero,
-    '$fecha', $oficial, '$vencimiento', '" . $arrProc[$numero] . "',
+    '$fecha', $oficial, '" . $arrProc[$numero] . "',
     0, 0, 0, 0, 0,
     '$observaciones', 'pendiente', '$Dom', '$tipo_de_credito',
     '$sucursal', '$eacp', $grupo)";
 
     $x		= my_query($sqliNot);
-    return $x["stat"];
+    return $x["stat"];*/
 }
 function setLlamadasDiariasPorMora ($fecha_operacion, $recibo = 0){
 $sucursal		= getSucursal();
@@ -455,202 +455,164 @@ WHERE
 	return $msg;
 }
 
-class cLlamada{
-	private $mIncludeVencidas	= false;
-	private $mIncludeEfectuadas	= false;
-	private $mIncludeCanceladas	= false;
+class cLlamadas{
 	private $mOficialDeCredito	= false;
-	private $mLimitRecords		= 20;
-
-	function __construct(){
-
+	private $mClave				= false;
+	private $mObj				= null;
+	private $mAsInit			= false;
+	private $mMessages			= "";
+	private $mObservaciones		= "";
+	private $mEstado			= "pendiente";
+	
+	function __construct($clave = false){ 
+		$this->mClave	= setNoMenorQueCero($clave);
+		$this->mEstado	= SEGUIMIENTO_ESTADO_PENDIENTE;
 	}
-	function setLimitRecords($records = 12){
-		$this->mLimitRecords		= $records;
+	function init(){
+		$sql	= "SELECT * FROM `seguimiento_llamadas` WHERE `idseguimiento_llamadas`=" . $this->mClave . " LIMIT 0,1";
+		$xQL	= new MQL();
+		$data	= $xQL->getDataRow($sql);
+		$this->mObj	= new cSeguimiento_llamadas();
+		$this->mObj->setData($data);
+		$this->mObservaciones	= $this->mObj->observaciones()->v();
+		$this->mEstado			= $this->mObj->estatus_llamada()->v();
+		
+		return $this->mAsInit;
 	}
-	function setIncludeVencidas($Include = true){
-		$this->mIncludeVencidas		= $Include;
+	function getObservaciones(){ return $this->mObservaciones; }
+	function getEstado(){return $this->mEstado;}
+	function setEstado($estado = "", $observaciones = ""){
+		$rs		= false;
+		if($estado == ""){
+			
+		} else {
+			$estado		= strtolower($estado);
+			$this->getObj()->estatus_llamada($estado);
+			$this->getObj()->observaciones(setCadenaVal($observaciones));
+			$rs 		= $this->getObj()->query()->update()->save($this->mClave);
+		}
+		return $rs;
 	}
-	function setIncludeCanceladas($Include = true ){
-		$this->mIncludeCanceladas	= $Include;
+	function getObj(){
+		if($this->mObj == null){ $this->init(); }
+		return $this->mObj;
 	}
-	function setIncludeEfectuadas($Include = true ){
-		$this->mIncludeEfectuadas	= $Include;
+	function add($credito, $fecha = false, $hora = false, $estado = false, $observaciones = "", $oficial = false, $telefono1 = false, $telefono2 = false, $datos_de_credito = false){
+		//$persona = false, $grupo = false,  $monto = false,
+		$xRul		= new cReglasDePais();
+		$xF			= new cFecha();
+		$xCred		= new cCredito($credito);
+		$rs			= false;
+		$estado		= ($estado == false) ? SEGUIMIENTO_ESTADO_PENDIENTE : $estado;
+		$oficial	= setNoMenorQueCero($oficial);
+		$oficial	= ($oficial <= 0) ? getUsuarioActual() : $oficial;
+		$telefono1	= $xRul->getTelMovil($telefono1);
+		$telefono2	= $xRul->getTelMovil($telefono2);
+		
+		if($xCred->init($datos_de_credito) == true){
+			$monto	= $xCred->getSaldoVencido();
+			$grupo	= $xCred->getClaveDeGrupo();
+			$persona= $xCred->getClaveDePersona();
+			$estado	= ($estado == false) ? SEGUIMIENTO_ESTADO_PENDIENTE : $estado;
+			$oficial= ($oficial <= 0) ? $xCred->getClaveDeOficialDeCredito() : $oficial;
+			//$grupo	= ($grupo <= 0) ? DEFAULT_GRUPO : $grupo;
+			$hora	= ($hora == false) ? "14:00" : $hora;
+			
+			$fecha	= $xF->getFechaISO($fecha);
+			$xCall	= new cSeguimiento_llamadas();
+			$xCall->deuda_total($monto);
+			$xCall->eacp(EACP_CLAVE);
+			$xCall->estatus_llamada($estado);
+			$xCall->fecha_llamada($fecha);
+			$xCall->grupo_relacionado($grupo);
+			$xCall->hora_llamada($hora);
+			$xCall->numero_socio($persona);
+			$xCall->numero_solicitud($credito);
+			$xCall->telefono_dos($telefono1);
+			$xCall->telefono_uno($telefono2);
+			$xCall->sucursal($xCred->getSucursal());
+			$xCall->oficial_a_cargo( $oficial );
+			$xCall->observaciones($observaciones);
+			$xCall->idseguimiento_llamadas($xCall->query()->getLastID());
+			$rs		= $xCall->query()->insert()->save();
+		}
+		
+		return  ($rs == false) ? false : true;
 	}
-	function setCancelarLlamadasAnteriores($fecha = false){
-		if ($fecha == false){
-			$fecha = fechasys();
-		}
-		$xFecha = new cFecha(0, $fecha);
-		$fecha	= $xFecha->setRestarDias(DIAS_DE_INTERVALO_POR_LLAMADAS, $fecha);
-			//cancelar llamadas Anteriores
-		$sqlCA 		= "UPDATE seguimiento_llamadas
-	    				SET estatus_llamada='cancelado'
-	    				WHERE
-							(estatus_llamada='pendiente')
-							AND (fecha_llamada < '$fecha') ";
-		my_query($sqlCA);
-	}
-	function getLlamadas($fecha_inicial = false, $fecha_final = false, $De = 0 ){
-		if ( $this->mOficialDeCredito	== false ){
-			$this->mOficialDeCredito = $_SESSION["log_id"];
-		}
-		if ( $fecha_inicial == false ){
-			$fecha_inicial 		= fechasys();
-		}
-		if ( $fecha_final == false ){
-			$fecha_final		= $fecha_inicial;
-		}
-
-		$oficial_de_credito		= $this->mOficialDeCredito;
-		$ImgP					= vIMG_PATH;
-
-		$ByNoVenc				= " AND (`seguimiento_llamadas`.`estatus_llamada` !='vencido')";
-		$ByNoCanc				= " AND (`seguimiento_llamadas`.`estatus_llamada` !='cancelado')";
-		$ByNoEfec				= " AND (`seguimiento_llamadas`.`estatus_llamada` !='efectuado')";
-		$ByOficial				= " AND (`seguimiento_llamadas`.`oficial_a_cargo` = $oficial_de_credito) ";
-		$ByFecha				= " ( (`seguimiento_llamadas`.`fecha_llamada` >= '$fecha_inicial' )
-									AND
-									(`seguimiento_llamadas`.`fecha_llamada` <= '$fecha_final' ) ) ";
-
-		if ( MODO_DEBUG == true) {
-			$ByOficial			= "";
-		}
-
-		if ( $this->mIncludeVencidas == true ){
-			$ByNoVenc			= "";
-		}
-		if ( $this->mIncludeCanceladas == true ){
-			$ByNoCanc			= "";
-		}
-		if ( $this->mIncludeEfectuadas == true ){
-			$ByNoEfec			= "";
-		}
-
-		$sql = "SELECT
-		`socios`.`codigo`,
-		`socios`.`nombre`,
-		`seguimiento_llamadas`.`idseguimiento_llamadas` AS `control`,
-		`seguimiento_llamadas`.`numero_solicitud`,
-		`seguimiento_llamadas`.`telefono_uno`,
-		`seguimiento_llamadas`.`telefono_dos`,
-		`seguimiento_llamadas`.`fecha_llamada`,
-		`seguimiento_llamadas`.`hora_llamada`,
-		`seguimiento_llamadas`.`observaciones`,
-		`seguimiento_llamadas`.`estatus_llamada`,
-		`seguimiento_llamadas`.`oficial_a_cargo`,
-		`seguimiento_llamadas`.`grupo_relacionado`,
-		`seguimiento_llamadas`.`deuda_total`,
-		`seguimiento_llamadas`.`observaciones`
-	FROM
-		`socios` `socios`
-			INNER JOIN `seguimiento_llamadas` `seguimiento_llamadas`
-			ON `socios`.`codigo` = `seguimiento_llamadas`.`numero_socio`
-	WHERE
-
-		$ByFecha
-		$ByOficial
-		$ByNoCanc
-		$ByNoEfec
-		$ByNoVenc
-	ORDER BY
-		`socios`.`codigo`,
-		`seguimiento_llamadas`.`fecha_llamada`,
-		`seguimiento_llamadas`.`hora_llamada`,
-		`seguimiento_llamadas`.`idseguimiento_llamadas`
-	LIMIT $De," . $this->mLimitRecords;
-
-				$td		= "";
-				$rs = mysql_query($sql, cnnGeneral());
-
-				while($rw = mysql_fetch_array($rs)){
-					$control	= $rw["control"];
-					$socio		= $rw["codigo"];
-					$nombre		= htmlentities($rw["nombre"]);
-					$credito	= $rw["numero_solicitud"];
-					$estatus	= $rw["estatus_llamada"];
-					$grupo		= $rw["grupo_relacionado"];
-					$hora		= $rw["hora_llamada"];
-					$tel1		= $rw["telefono_uno"];
-					$tel2		= $rw["telefono_dos"];
-
-					$select		= "	<select id='ids-$control' name='s-$control' onchange=\"jsSetAction($control)\">
-										<optgroup label='Acciones'>
-											<option value='set-none' selected='true'>Seleccione una Operacion...</option>
-											<option value='set-cumplido'>Marcar como Efectuada</option>
-											<option value='set-cancelado'>Marcar como Cancelada</option>
-											<option value='set-notes'>Agregar Resultados de la Llamada</option>
-											<option value='set-vivienda'>Actualizar Datos de Vivienda</option>
-										</optgroup>
-										<optgroup label='Herramientas'>
-											<option value='set-edit'>Editar Informacion de la LLamada</option>
-											<option value='add-compromiso'>Agregar Compromiso</option>
-											<option value='add-llamada'>Agregar Llamada</option>
-											<option value='add-memo'>Agregar Memo</option>
-											<option value='add-notif-1'>Agregar Notificacion 1a</option>
-											<option value='add-notif-2'>Agregar Notificacion 2a</option>
-											<option value='add-notif-3'>Agregar Notificacion 3a</option>
-											<option value='add-notif-e'>Agregar Notificacion Extrajudicial</option>
-										</optgroup>
-										<optgroup label='Informacion'>
-											<option value='info-moral'>Obtener Informacion Moral</option>
-
-											<option value='info-llamadas'>Obtener Reporte de llamadas</option>
-											<option value='info-compromisos'>Obtener Reporte de Compromisos</option>
-											<option value='info-notificaciones'>Obtener Reporte de Notificaciones</option>
-											<option value='info-creditos'>Obtener Estado de Cuenta de Creditos</option>
-										</optgroup>
-									</select>";
-					switch ($estatus){
-						case "vencido":
-							$select		= "";
-							break;
-						case "efectuado":
-							$select		= $rw["observaciones"];
-							break;
-						case "cancelado":
-							$select		= $rw["observaciones"];
-							break;
-						default:
-							break;
-					}
-					$td .= "	<tr id=\"tr-$control\">
-								<td  class=\"$estatus\" >$socio<input type='hidden' id='socio-$control' value='$socio' /><br />
-									$credito<input type='hidden' id='credito-$control' value='$credito' />
-									<!-- $control -->
-									<input type='hidden' id='grupo-$control' value='$grupo' /></td>
-								<td  class=\"$estatus\">$nombre<br />
-									<a>" . $tel1 . " &nbsp;&nbsp;|&nbsp;&nbsp; " . $tel2 . "</a></td>
-								<td class=\"$estatus\">$hora</td>
-								<td id=\"td-$control\"  class=\"$estatus\" >
-									$select
-								</td>
-
-							</tr>";
-				}
-
-				return "<table width='100%' id='tbl-id'>
-					<tbody>
-						<tr>
-							<th width=\"10%\">
-								Socio<br />
-								Credito
-							</th>
-							<th width=\"50%\">
-								Nombre<br />
-								Telefono Fijo &nbsp;&nbsp;|&nbsp;&nbsp; Telefono Movil
-							</th>
-							<th>Hora</th>
-							<th width=\"30%\">
-								Herramientas
-							</th>
-						</tr>
-						$td
-					</tbody>
-					</table>";
-	}
+	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
 }
 
+class cSeguimientoNotificaciones {
+	private $mPersona		= false;
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mAsInit		= false;
+	private $mOPersona		= null;
+	private $mOOficial		= null;
+	private $mOficial		= false;
+	private $mCredito		= false;
+	private $mEstado		= "";
+	private $mNota			= "";
+	private $mTipo			= "";
+	private $mFecha			= "";
+	private $mHora			= "";
+	
+	public $CANAL_PERSONAL	= "personal";
+	public $CANAL_SMS		= "sms";
+	public $CANAL_MAIL		= "email";
+	
+	function __construct(){
+		
+	}
+	function add($credito, $fecha, $hora, $total, $notas = "", $oficial = false,$canal ="personal", $formato = false, $capital = 0, $interes = 0, $moratorio = 0, $otros=0, $impuestos = 0 ){
+		$oficial	= setNoMenorQueCero($oficial);
+		$formato	= setNoMenorQueCero($formato);
+		$formato	= ($formato<=0) ? 10 : $formato;//Recordatorio de Pago
+		$oficial	= ($oficial <= 0 ) ? getUsuarioActual() : $oficial;
+		$ready		= false;
+		$xCred		= new cCredito($credito);
+		$persona=DEFAULT_SOCIO;
+		$grupo	= DEFAULT_GRUPO;
+		if($xCred->init() == true){
+			$ready		= true;
+			$persona	= $xCred->getClaveDePersona();
+			$grupo		= $xCred->getClaveDeGrupo();
+		}
+		$xSeg	= new cSeguimiento_notificaciones();
+		$xSeg->canal_de_envio($canal);
+		$xSeg->capital($capital);
+		$xSeg->eacp(EACP_CLAVE);
+		$xSeg->estatus_notificacion(SEGUIMIENTO_ESTADO_PENDIENTE);
+		$xSeg->fecha_notificacion($fecha);
+		$xSeg->formato($formato);
+		$xSeg->grupo_relacionado();
+		$xSeg->hora($hora);
+		$xSeg->interes($interes);
+		$xSeg->impuestos($impuestos);
+		$xSeg->moratorio($moratorio);
+		$xSeg->numero_notificacion(0);
+		$xSeg->numero_solicitud($credito);
+		$xSeg->observaciones($notas);
+		$xSeg->oficial_de_seguimiento($oficial);
+		$xSeg->otros_cargos($otros);
+		$xSeg->socio_notificado($persona);
+		$xSeg->sucursal(getSucursal());
+		$xSeg->total($total);
+		$xSeg->usuario(getUsuarioActual());
+		$id		= $xSeg->query()->getLastID();
+		$xSeg->idseguimiento_notificaciones( $id );
+		if($ready == true){
+			$ready	= $xSeg->query()->insert()->save(); 
+			if($ready !== false){
+				$this->mClave	= $id;
+			}
+		}
+		return ($ready !== false) ? true : false;
+	}
+	function enviar(){
+		//si es SMS, EMAIL
+	}
+}
 
 class cAlertasDelSistema {
 	private $mFecha		= "";
@@ -663,10 +625,17 @@ class cAlertasDelSistema {
 	private $mContrato		= null;
 	private $mTipoCont		= null;
 	private $mArrVars		= array();
+	private $mDestPers		= array();
 
 	function __construct($fecha = false){
 		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
-
+	}
+	function addPersonasDestinatarios($arr){
+		if(is_array($arr)){
+			$this->mDestPers		= array_merge($this->mDestPers, $arr);
+		} else {
+			$this->mDestPers[$arr]	= $arr;
+		}
 	}
 	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
 	function getDay($fecha, $periocidad, $variable){
@@ -709,7 +678,13 @@ class cAlertasDelSistema {
 				break;
 		}
 	}
-
+	/**
+	 * 
+	 * @param int $id Clave de Aviso
+	 * @param array $arrVars
+	 * @param array $data Datos SQL del Aviso
+	 * @param mixed $fecha Fecha de Ejecución que se compara con la fecha de la tarea
+	 */
 	function setProcesarProgramacion($id, $arrVars = false, $data = false, $fecha = false ){
 		$xF					= new cFecha();
 		$xT					= new cTipos();
@@ -804,6 +779,10 @@ class cAlertasDelSistema {
 					case "PERSONAS":
 						if(isset($DS[1])){
 							$personas		= explode(",", $DS[1]);
+							//Agregar personas opcionales
+							if(count($this->mDestPers) > 0 ){
+								$personas	= array_merge($personas, $this->mDestPers);
+							}
 							foreach ($personas AS $ofc => $ofkey){
 								$xSoc		= new cSocio($ofkey); $xSoc->init();
 								$mail		= $xSoc->getCorreoElectronico();
@@ -873,14 +852,14 @@ class cAlertasDelSistema {
 				$xSysUser		= new cSystemUser();
 				$xSysUser->init();
 				$url		= $url . $smail . "&ctx=" . $xSysUser->getCTX();	
-				if(MODO_DEBUG == true){  setLog($url); }
+				//if(MODO_DEBUG == true){  setLog($url); }
 				$xHO->navigate($url);
 			}
 		} else {
 			$this->mMessages	.= "OK\tNo e envia el reporte\r\n";
 		}	
 		
-		setLog($this->mMessages);
+		//setLog($this->mMessages);
 		$this->mObProgAv	= $mOb;
 		//return $this->mObProgAv;
 	}
@@ -964,6 +943,16 @@ class cNotificaciones {
 	private $mOriginalM	= "";
 
 	private $mCanal		= "";
+	private $mTitleFrom	= "S.A.F.E. OSMS Alertas";
+	public $MEDIO_MAIL	= "email";
+	public $MEDIO_SMS	= "sms";
+	
+	private $mMailSrv		= "";
+	private $mMailSrvTLS	= false;
+	private $mMailSrvPort	= "";
+	private $mMailSrvUsr	= "";
+	private $mMailSrvPwd	= "";
+	private $mMailToName	= "SAFE-OSMS";
 	//private $mOnMail	= true;
 	//private $mOnSMS		= false;
 	//private $mOnLocal	= false;
@@ -976,13 +965,32 @@ class cNotificaciones {
 	function  __construct(){
 		$this->mSMS_pwd		= SMS_PWD;
 		$this->mSMS_usr		= SMS_USR;
+		
+		$this->mMailSrv		= ADMIN_MAIL_SMTP_SERVER;
+		$this->mMailSrvTLS	= ADMIN_MAIL_SMTP_TLS;
+		$this->mMailSrvPort	= ADMIN_MAIL_SMTP_PORT;
+		$this->mMailSrvUsr	= ADMIN_MAIL;
+		$this->mMailSrvPwd	= ADMIN_MAIL_PWD;
+		
 	}
 	function setCanal($canal){ $this->mCanal	= $canal; }
+	function setMailSettings($server = "", $port = "", $tls = null,  $usr = "", $pwd = "", $from="", $toName=""){
+		$port				= setNoMenorQueCero($port);
+		$this->mMailSrv		= ($server == "") ? $this->mMailSrv : $server;
+		$this->mMailSrvTLS	= ($tls === null) ? $this->mMailSrvTLS : $tls;
+		$this->mMailSrvPort	= ($port <= 0) ? $this->mMailSrvPort : $port;
+		$this->mMailSrvUsr	= ($usr == "") ? $this->mMailSrvUsr : $usr;
+		$this->mMailSrvPwd	= ($pwd == "") ? $this->mMailSrvPwd : $pwd;
+		$this->mMailToName	= ($toName == "") ? $this->mMailToName : $toName;
+		$this->mTitleFrom	= ($from == "") ? $this->mTitleFrom : $from;
+		
+	}
 	function setTitulo($txt){ $this->mTitulo = $txt; }
 	function send($mensaje, $email = false, $telefono = false, $usuario = false, $mensaje_corto = "", $canal = false){
 		$msg			= "";
 		$mensaje		= $this->cleanString($mensaje);
 		$mensaje_corto	= $this->cleanString($mensaje_corto);
+		$xReg			= new cReglasDePais();
 		$mensaje_corto	= ($mensaje_corto == "") ? substr($mensaje, 0, $this->mSMS_limit) : substr($mensaje_corto, 0, $this->mSMS_limit);
 		if($email == false){
 				
@@ -992,7 +1000,8 @@ class cNotificaciones {
 		if($telefono == false){
 				
 		} else {
-			$telefono	= "52" . $telefono;
+			
+			//$telefono	= $xReg->getTelMovil($telefono);
 			$msg		.= $this->sendSMS($telefono, $mensaje_corto);
 		}
 		if($usuario == false){
@@ -1016,11 +1025,13 @@ class cNotificaciones {
 		$pwd				= $this->mSMS_pwd;
 		$user				= $this->mSMS_usr;
 		$res				= "";
+		$xReg				= new cReglasDePais();
+		$telefono			= $xReg->getTelMovil($telefono);
 		/*	$url = 'http://bulksms.vsms.net/eapi/submission/send_sms/2/2.0';
 	$msisdn = '44123123123';
 	$data = 'username=your_username&password=your_password&message='.urlencode('Testing SMS').'&msisdn='.urlencode($msisdn);*/
-		if(trim($pwd) == "" OR trim($user) == ""){
-			$res			.= "ERROR\tError con las credenciales\r\n";		
+		if(trim($pwd) == "" OR trim($user) == "" OR $telefono == null){
+			$res			.= "ERROR\tError con las credenciales ($user) o telefono $telefono\r\n";		
 		} else {
 			$optional_headers 	= 'Content-type:application/x-www-form-urlencoded';
 			$data 				= "username=" . $user . "&password=" . $pwd . "&message=".urlencode($mensaje).'&msisdn='.urlencode($telefono);
@@ -1044,7 +1055,7 @@ class cNotificaciones {
 				
 			}
 		}
-		if(MODO_DEBUG == true){setLog($res);}
+		//if(MODO_DEBUG == true){setLog($res);}
 		return $res;
 	}
 	function sendMail($subject = "", $body = "", $to = "", $arrFile = false){
@@ -1062,30 +1073,31 @@ class cNotificaciones {
 			// 2 = client and server messages
 			$mail->SMTPDebug  = 0;
 			$mail->Timeout    = 10;
-			if(MODO_DEBUG == true){ /*$mail->SMTPDebug  = 2;*/	}
+
+			//if(MODO_DEBUG == true){ $mail->SMTPDebug  = 2;	}
 			
 			//Ask for HTML-friendly debug output
-			$mail->Debugoutput = 'html';
+			$mail->Debugoutput = 'echo'; //html
 			//Set the hostname of the mail server
-			$mail->Host       = ADMIN_MAIL_SMTP_SERVER;
+			$mail->Host       = $this->mMailSrv;
 			//Set the SMTP port number - 587 for authenticated TLS, a.k.a. RFC4409 SMTP submission
-			$mail->Port       = ADMIN_MAIL_SMTP_PORT;
+			$mail->Port       = $this->mMailSrvPort;
 			//Set the encryption system to use - ssl (deprecated) or tls
-			if(ADMIN_MAIL_SMTP_TLS != ""){
-				$mail->SMTPSecure = ADMIN_MAIL_SMTP_TLS;//'tls';
+			if($this->mMailSrvTLS == true OR $this->mMailSrvTLS == "tls" OR $this->mMailSrvPort == 587){
+				$mail->SMTPSecure = 'tls';//$this->mMailSrvTLS;//
 			}
 			//Whether to use SMTP authentication
 			$mail->SMTPAuth   = true;
 			//Username to use for SMTP authentication - use full email address for gmail
-			$mail->Username   = ADMIN_MAIL;//EACP_MAIL;
+			$mail->Username   = $this->mMailSrvUsr;//EACP_MAIL;
 			//Password to use for SMTP authentication
-			$mail->Password   = ADMIN_MAIL_PWD;
+			$mail->Password   = $this->mMailSrvPwd;
 			//Set who the message is to be sent from
-			$mail->SetFrom(ADMIN_MAIL, 'S.A.F.E. OSMS System Alert');
+			$mail->SetFrom($this->mMailSrvUsr, $this->mTitleFrom);
 			//Set an alternative reply-to address
 			//$mail->AddReplyTo('replyto@example.com','First Last');
 			//Set who the message is to be sent to
-			$mail->AddAddress($to, 'SAFE-OSMS');
+			$mail->AddAddress($to, $this->mMailToName);
 			//Set the subject line
 			$mail->Subject = $subject;
 			//Read an HTML message body from an external file, convert referenced images to embedded, convert HTML into a basic plain-text alternative body
@@ -1120,9 +1132,9 @@ class cNotificaciones {
 				$omsg	.= "OK\tMensaje Enviado a $to con exito.\r\n";
 			}
 		} else {
-			$omsg	.= "ERROR\tInvalid email $to\r\n";
+			$omsg	.= "ERROR\tCorreo Invalido $to\r\n";
 		}
-		if(MODO_DEBUG == true){ setLog($omsg); }
+		//if(MODO_DEBUG == true){ setLog($omsg); }
 		return $omsg;
 	}
 	function sendCloudMessage($mensaje){
@@ -1180,23 +1192,191 @@ class cNotificaciones {
 }
 
 
-class cSeguimiento {
+class cSeguimientoCompromisos {
 	private $mPersona		= false;
-	function __construct($persona = false){
-		$this->mPersona	= $persona;
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mAsInit		= false;
+	private $mOPersona		= null;
+	private $mOOficial		= null;
+	private $mOficial		= false;
+	private $mCredito		= false;
+	private $mLugar			= false;
+	private $mMonto			= 0;
+	private $mEstado		= "";
+	private $mNota			= "";
+	private $mTipo			= ""; 
+	private $mFecha			= "";
+	private $mHora			= "";
+	function __construct($clave = false, $persona = false){
+		$this->mPersona	= setNoMenorQueCero($persona);
+		$this->mClave	= setNoMenorQueCero($clave);
+		$this->mEstado	= SEGUIMIENTO_ESTADO_PENDIENTE;
 	}
-	function addCompromiso($credito , $tipo, $notas, $fecha = false, $usuario = false){
-		$socios	= $this->mPersona;
-		
-		$sqlIC = "INSERT INTO seguimiento_compromisos(socio_comprometido, oficial_de_seguimiento, fecha_vencimiento, hora_vencimiento, 
-		tipo_compromiso, anotacion, credito_comprometido, estatus_compromiso, sucursal, eacp)
-		VALUES($socio, $iduser, '$fecha', '$hora', '$tipo', '$anotacion', $credito, '$estatus', '$sucursal', '$eacp')";
-		
-		$ms		= my_query($sqlIC);		
+	function init(){
+		$ql				= new MQL();
+		$this->mObj		= new cSeguimiento_compromisos();
+		$data			= $ql->getDataRow("SELECT * FROM `seguimiento_compromisos` WHERE `idseguimiento_compromisos`=" . $this->mClave . " LIMIT 0,1");
+		if(isset($data["idseguimiento_compromisos"])){
+			$this->mObj->setData($data);
+			$this->mAsInit	= true;
+			$this->mPersona	= $this->mObj->socio_comprometido()->v(); 
+			$this->mOficial	= $this->mObj->oficial_de_seguimiento()->v();
+			$this->mCredito	= $this->mObj->credito_comprometido()->v();
+			$this->mNota	= $this->mObj->anotacion()->v();
+			$this->mEstado	= $this->mObj->estatus_compromiso()->v();
+			$this->mTipo	= $this->mObj->tipo_compromiso()->v();
+			$this->mFecha	= $this->mObj->fecha_vencimiento()->v();
+			$this->mHora	= $this->mObj->hora_vencimiento()->v();
+			$this->mLugar	= $this->mObj->lugar_de_compromiso()->v();
+			$this->mMonto	= $this->mObj->monto_comprometido()->v();
+			//setLog("Persona ". $this->mPersona);
+		}
+		return $this->mAsInit;
 	}
-	function addLlamada(){
+	function addCompromiso($credito , $tipo, $notas, $fecha = false, $usuario = false, $hora = "", $persona = false, $monto = 0){
+		$persona	= setNoMenorQueCero($persona);
+		$xF			= new cFecha();
+		$fecha		= $xF->getFechaISO($fecha);
+		$usuario	= setNoMenorQueCero($usuario);
+		$usuario	= ($usuario < 0) ? getUsuarioActual() : $usuario;
+		$sucursal	= getSucursal();
+		$monto		= setNoMenorQueCero($monto);
+		$eacp		= EACP_CLAVE;
+		if($persona <= 0 AND $credito > DEFAULT_CREDITO){
+			$xCred	= new cCredito($credito);
+			if($xCred->init() == true){
+				$persona	= $xCred->getClaveDePersona();
+			}
+		}
+		$estatus	= SEGUIMIENTO_ESTADO_PENDIENTE;
+		$sqlIC 		= "INSERT INTO seguimiento_compromisos(socio_comprometido, oficial_de_seguimiento, fecha_vencimiento, hora_vencimiento, 
+		tipo_compromiso, anotacion, credito_comprometido, estatus_compromiso, sucursal, eacp, monto_comprometido)
+		VALUES($persona, $usuario, '$fecha', '$hora', '$tipo', '$notas', $credito, '$estatus', '$sucursal', '$eacp', $monto)";
+		$ql				= new MQL();
+		$rs				= $ql->setRawQuery($sqlIC);
+		$this->mClave	= $ql->getLastInsertID();
+		return ($rs == false) ? false : true;		
+	}
+	function getOPersona(){
+		if($this->mOPersona == null){
+			$xSoc		= new cSocio($this->mPersona);
+			if($xSoc->init() == true){ $this->mOPersona	= $xSoc; }
+			$xSoc		= null;
+		}
+		return $this->mOPersona;
+	}
+	function getOOficial(){
+		if($this->mOOficial == null){
+			$xOf	= new cOficial($this->mOficial);
+			if($xOf->init() == true){
+				$this->mOOficial	= $xOf;
+			}
+		}
+		return $this->mOOficial;
+	}
+	function getClaveDePersona(){ return $this->mPersona; }
+	function getClaveDeCredito(){ return $this->mCredito; }
+	function getNota(){ return $this->mNota; }
+	function getFecha(){ return $this->mFecha; }
+	function getHora(){ return $this->mHora; }
+	function getOficial(){ return $this->mOficial; }
+	function getEstadoActual(){ return$this->mEstado; }
+	function getClave(){ return $this->mClave; }
+	function obj(){ return $this->mObj; }
+	function getMonto(){ return $this->mMonto; }
+	function getFicha($fieldset = true, $extend = false){
+		$xT		= new cHTabla();
+		$xL		= new cLang();
+		$xF		= new cFecha();
+		$xLug	= new cSeguimiento_lugar_de_compromiso();
+		$xLug->setData( $xLug->query()->initByID($this->mLugar) );
+		$title	= $xL->getT("TR." . $this->mTipo);
+		$title	= "$title - " . $xL->getT("TR." . $this->mEstado);
+		$xT->addRaw("<tr>
+				<th class='izq'>" . $xL->getT("TR.CLAVE_DE_PERSONA") . "</th><td>" . $this->mPersona . "</td>
+				<th class='izq'>" . $xL->getT("TR.CLAVE_DE_CREDITO") . "</th><td>" . $this->mCredito . "</td>
+				<th class='izq'>" . $xL->getT("TR.TIPO") . "</th><td class='" . $this->mEstado . "'>" .$xL->getT("TR." . $this->mTipo) . "</td>
+				</tr>");
+		$xT->addRaw("<tr>
+				<th class='izq'>" . $xL->getT("TR.Fecha") . "</th><td>" . $xF->getFechaDDMM($this->mFecha) . "</td>
+				<th class='izq'>" . $xL->getT("TR.Hora") . "</th><td>" . $this->mHora . "</td>
+				<th class='izq'>" . $xL->getT("TR.Lugar") . "</th><td>" . $xLug->descripcion_del_lugar()->v() . "</td>
+				</tr>");
 		
+		$OPersona	= $this->getOPersona();
+		if($OPersona !== null){
+			$xT->addRaw("<tr>");
+			$xT->addRaw("<th class='izq'>" . $xL->getT("TR.NOMBRE") . "</th><td colspan='3'>" . $OPersona->getNombreCompleto() . "</td>");
+			$xT->addRaw("<th class='izq'>" . $xL->getT("TR.MONTO") . "</th><td class='mny'>" . $this->getMonto() . "</td>");
+			$xT->addRaw("</tr>");
+		}
+		$OOficial	= $this->getOOficial();
+		$xT->addRaw("<tr>");
+		if($OOficial != null){
+			$xT->addRaw("<th class='izq'>" . $xL->getT("TR.OFICIAL") . "</th><td colspan='3'>" . $OOficial->getNombreCompleto() . "</td>");
+		}
+		$xT->addRaw("<th class='izq'>" . $xL->getT("TR.ESTATUS") . "</th><td class='" . $this->mEstado . "'>" .$xL->getT("TR." . $this->mEstado) . "</td>");
+		$xT->addRaw("</tr>");
+		$xT->addRaw("<tr><th class='izq'>" . $xL->getT("TR.NOTAS") . "</th><td colspan='5'>" . $this->getNota() . "</td></tr>");
+
+			return "<fieldset><legend>$title</legend>" . $xT->get() . "</fieldset>";
+	}		
+}
+class cSeguimientoWathsApp {
+	private $mObj	= null;
+	function __construct(){
+		$this->mObj = new WhatsProt(SEGUIMIENTO_WATHSAPP_NUMERO, SEGUIMIENTO_WATHSAPP_USER, EACP_NAME, MODO_DEBUG);
 	}
 	
+	function setRequerirRegistro(){
+		$this->mObj->codeRequest('sms');
+	}
+	function setConfirmarRegistro($clave){
+		$this->mObj->codeRegister($clave);
+		//Guardar en la configuracion
+		$xConf	= new cConfiguration();
+		$xConf->set("wathsapp_password_de_usuario", $clave);
+	}
+	function sendMessage($telefono, $txt){
+		$this->mObj->connect();
+		//$this->mObj->eventManager()->bind("onPresence", "onPresenceReceived");
+		$this->mObj->loginWithPassword(SEGUIMIENTO_WATHSAPP_PWD);
+		//$this->mObj->
+		$w->sendMessage($telefono, $txt);
+		//$w->sendMessage($target, "Sent from WhatsApi at " . date('H:i'));
+		while($w->pollMessage());		
+	}
+}
+
+
+
+
+
+//This function only needed to show how eventmanager works.
+function onGetProfilePicture($from, $target, $type, $data)
+{
+	if ($type == "preview") {
+		$filename = "preview_" . $target . ".jpg";
+	} else {
+		$filename = $target . ".jpg";
+	}
+	$filename = WhatsProt::PICTURES_FOLDER."/" . $filename;
+	$fp = @fopen($filename, "w");
+	if ($fp) {
+		fwrite($fp, $data);
+		fclose($fp);
+	}
+
+	echo "- Profile picture saved in /".WhatsProt::PICTURES_FOLDER."\n";
+}
+
+function onPresenceReceived($username, $from, $type)
+{
+	$dFrom = str_replace(array("@s.whatsapp.net","@g.us"), "", $from);
+	if($type == "available")
+		echo "<$dFrom is online>\n\n";
+		else
+			echo "<$dFrom is offline>\n\n";
 }
 ?>

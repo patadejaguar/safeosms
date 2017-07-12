@@ -1,21 +1,26 @@
 <?php
 /**
+ *  @see        Formulario avanzado de seguimiento_llamadas
+ *  @since    2008-05-10 23:32
+ *  @author    PHP Form Wizard V 0.75 - Balam Gonzalez Luis (2007)
+ **/
+/**
  * @author Balam Gonzalez Luis Humberto
  * @version 0.0.01
  * @package
  */
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.Llamadas", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -24,78 +29,76 @@ $xF			= new cFecha();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 
-$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE); 
-$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
-$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
-$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$fecha				= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);
+$persona			= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito			= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta				= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback			= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
+$idfecha			= parametro("idfecha", false, MQL_DATE);
+$idhora				= parametro("idhora");
+$idmonto			= parametro("idmonto", 0, MQL_FLOAT);
+$idtelefono1		= parametro("idtelefono1");
+$idtelefono2		= parametro("idtelefono2");
+$idoficial			= parametro("idoficial", 0, MQL_INT);
+$idobservaciones	= parametro("idobservaciones");
 
+//$idestado			= parametro("idestadodellamada");
 $xHP->init();
 
 
-$xFRM	= new cHForm("frmseguimiento_llamadas", "llamadas.frm.php");
+$xFRM		= new cHForm("frm", "llamadas.frm.php?action=" . MQL_ADD);
+$xFRM->setTitle($xHP->getTitle());
+$xSel		= new cHSelect();
+$xDat		= new cHDate();
+$msg		= "";
 if($credito > DEFAULT_CREDITO){
-	
-	$xCred		= new cCredito($credito);
-	$xCred->init();
-	$xFRM->addHTML($xCred->getFicha(true, "", false, true) );
-	/* -----------------  -----------------------*/
-	$clave		= parametro("idseguimiento_llamadas", null, MQL_INT);
-	$xTabla		= new cSeguimiento_llamadas();
-	if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
-	$xTabla->setData($_REQUEST);
-	$clave		= parametro("id", null, MQL_INT);
-	$xSel		= new cHSelect();
-	if($clave == null){
-		$step		= MQL_ADD;
-		$clave		= $xTabla->query()->getLastID() + 1;
-		$xTabla->idseguimiento_llamadas($clave);
-	} else {
-		$step		= MQL_MOD;
-		if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$persona	= $xCred->getClaveDePersona();
+		$idoficial	= $xCred->getClaveDeOficialDeCredito();
+		$xFRM->addHElem($xCred->getFichaMini());
 	}
-	$xFRM->setAction("llamadas.frm.php?action=$step");
-	
-	if($step == MQL_MOD){ $xFRM->addGuardar(); } else { $xFRM->addSubmit(); }
-	$clave 		= parametro($xTabla->getKey(), null, MQL_INT);
-	
-	if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
-		$xTabla->setData( $xTabla->query()->initByID($clave));
-		$xTabla->setData($_REQUEST);	
-	
-		if($action == MQL_ADD){
-			$xTabla->query()->insert()->save();
-		} else {
-			$xTabla->query()->update()->save($clave);
-		}
-		$xFRM->addAvisoRegistroOK();
-	}
-	
-	
-	$xFRM->OMoneda("deuda_total", $xTabla->deuda_total()->v(), "TR.total");
-	$xFRM->OText("telefono_uno", $xTabla->telefono_uno()->v(), "TR.telefono 1");
-	$xFRM->OText("telefono_dos", $xTabla->telefono_dos()->v(), "TR.telefono 2");
-	$xFRM->OText("fecha_llamada", $xTabla->fecha_llamada()->v(), "TR.fecha");
-	$xFRM->OText("hora_llamada", $xTabla->hora_llamada()->v(), "TR.hora");
-	$xFRM->OTextArea("observaciones", $xTabla->observaciones()->v(), "TR.observaciones");
-	$xFRM->OSelect("estatus_llamada", $xTabla->estatus_llamada()->v() , "TR.estatus llamada", array("efectuado"=>"EFECTUADO", "cancelado"=>"CANCELADO", "pendiente"=>"PENDIENTE", "vencido"=>"VENCIDO"));
-	
-	$xFRM->OMoneda("grupo_relacionado", $xTabla->grupo_relacionado()->v(), "TR.grupo relacionado");
-	
-	$xFRM->OHidden("idseguimiento_llamadas", $xTabla->idseguimiento_llamadas()->v(), "TR.idseguimiento llamadas");
-	$xFRM->OHidden("numero_socio", $xTabla->numero_socio()->v(), "TR.numero socio");
-	$xFRM->OHidden("numero_solicitud", $xTabla->numero_solicitud()->v(), "TR.numero solicitud");
-	$xFRM->OHidden("oficial_a_cargo", $xTabla->oficial_a_cargo()->v(), "TR.oficial a cargo");
-	$xFRM->OHidden("sucursal", $xTabla->sucursal()->v(), "TR.sucursal");
-	$xFRM->OHidden("eacp", $xTabla->eacp()->v(), "TR.eacp");
-} else {
-	$xFRM->addCreditBasico();
-	$xFRM->addSubmit();
-	
 }
-echo $xFRM->get();
+//=== Aqui vamos a insertar
+if($action == MQL_ADD AND $credito > DEFAULT_CREDITO){
+	$xCall	= new cLlamadas();
+	$rs		= $xCall->add($credito, $idfecha, $idhora, false, $idobservaciones, $idoficial, $idtelefono1, $idtelefono2);
+	if($rs == true){
+		$xFRM->addAvisoRegistroOK();
+	} else {
+		$xFRM->addAvisoRegistroError();
+	}
+}
+if($persona > DEFAULT_SOCIO AND $credito > DEFAULT_CREDITO){
+	$xFRM->OHidden("credito",$credito);
+	$xFRM->OHidden("persona",$persona);	
+} else {
+	//$xFRM->addJsBasico();
+	$xFRM->addCreditBasico();	
+}
+if($idtelefono1 == ""){
+	$xPer		= new cSocio($persona);
+	if($xPer->init() == true){
+		$idtelefono1	= $xPer->getTelefonoPrincipal();
+	}
+}
 
+$xFRM->ODate("idfecha", $idfecha, "TR.Fecha");
+$xFRM->addHElem( $xSel->getListaDeHoras("", $idhora)->get(true) );
+//$xFRM->addHElem( $xSel->getListaDeEstadoDeLlamada("", $idestado)->get(true) );
+if($persona > DEFAULT_SOCIO AND $credito > DEFAULT_CREDITO){
+	$xFRM->addHElem( $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono1", $idtelefono1)->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono2", $idtelefono2)->get(true) );
+} else {
+	$xFRM->OText("idtelefono1", $idtelefono1, "TR.Telefono 1");
+	$xFRM->OText("idtelefono2", $idtelefono2, "TR.Telefono 2");
+}
+$xFRM->addHElem( $xSel->getListaDeOficiales("", "", $idoficial)->get(true) );
+$xFRM->addObservaciones();
+$xFRM->addGuardar();
+
+echo $xFRM->get();
 
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();

@@ -79,6 +79,7 @@ $jxc ->exportFunction('jsaGetNumeroBeneficiarios', array('idsocio'), "#idmsgs");
 $jxc ->process();
 $xHP->init();
 $xFRM		= new cHForm("frmfondo", "frmfondodefuncion.php");
+$xFRM->setTitle($xHP->getTitle());
 $msg		= "";
 
 if ( setNoMenorQueCero($monto) > 0  ){
@@ -116,20 +117,16 @@ if ( setNoMenorQueCero($monto) > 0  ){
 	$xFRM->addHTML( $xRec->getJsPrint(true) );
 	$xFRM->OButton("TR. Imprimir recibo", "jsImprimirRecibo()", "imprimir", "idrec-dep");
 	$xFRM->addCerrar();
-	if (MODO_DEBUG == true){
-		$msg		.= $xRec->getMessages();
-		$xFL		= new cFileLog(false, true);
-		$xFL->setWrite($msg);
-		$xFL->setClose();
-		$xFRM->addToolbar( $xFL->getLinkDownload("TR.Archivo de sucesos", ""));
-	}	
+	
+	$xFRM->addLog($msg);
+	
 } else {
 	$xFRM->addJsBasico();
 	$xFRM->addPersonaBasico();
 	$xFRM->addCobroBasico();
 	$xFRM->ODate("idfechadepago", "", "TR.Fecha de Pago");
-	$xFRM->OMoneda("idmonto", 0, "TR.Cuota", true);
-	$xFRM->addCerrar();
+	$xFRM->OMoneda2("idmonto", 0, "TR.Cuota", true);
+	
 	$xFRM->addGuardar();
 }
 echo $xFRM->get();

@@ -33,7 +33,6 @@ include_once("../core/core.common.inc.php");
 include_once("../core/core.html.inc.php");
 require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
 
-$oficial = elusuario($iduser);
 ?>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">

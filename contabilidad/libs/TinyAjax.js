@@ -252,7 +252,7 @@ XMLHttpRequestI = function() {
 		return false;
 	}
 	this.open=function(method,url){
-		//TODO: POST methods
+		//
 		this.i=++kXHR_instances; // id number of this request
 		this.url=url;
 		var iframe = document.createElement('iframe');

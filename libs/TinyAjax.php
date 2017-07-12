@@ -83,7 +83,7 @@ class TinyAjax
 		//if(strpos($agent, "MSIE")) {
 		//	$this->setIFrame();
 		//}
-
+			$this->mDrawLoading	= 1; //Luis Balam
 	}
 
 

@@ -37,18 +37,20 @@ $parser				= (!isset($_GET["s"]) ) ? false : $_GET["s"];
     //Obtiene la llave del
 //if ($key == MY_KEY) {
 	$messages		= "";
-	$fechaop		= parametro("f", fechasys());
-
+	$fechaop		= parametro("f", fechasys(), MQL_DATE);
+	$xF				= new cFecha(0, $fechaop);
+	$fechaop		= $xF->getFechaISO($fechaop);
+	getEnCierre(true);
 /**
  * Generar el Archivo HTMl del LOG
  * eventos-del-cierre + fecha_de_cierre + .html
  *
  */
-
-	$aliasFil	= getSucursal() . "-eventos-al-cierre-de-riesgos-del-dia-$fechaop";
-	$xLog		= new cFileLog($aliasFil);
-	$idrecibo	= DEFAULT_RECIBO;
-	$xL			= new cSQLListas();
+$aliasFil	= getSucursal() . "-eventos-al-cierre-de-riesgos-del-dia-$fechaop";
+$xLog		= new cFileLog($aliasFil);
+$idrecibo	= DEFAULT_RECIBO;
+$xL			= new cSQLListas();
+$xRuls		= new cReglaDeNegocio();
 	//$xRec		= new cReciboDeOperacion(12);
 	//$xRec->setGenerarPoliza();
 	//$xRec->setForceUpdateSaldos();
@@ -64,16 +66,27 @@ $messages 		.= "=========================		RECIBO: $idrecibo				   =============
 $messages 		.= "=======================================================================================\r\n";
 
 if (MODULO_AML_ACTIVADO == true){
-	$mql		= new MQL();
+	$NoValRisk 	= $xRuls->getValorPorRegla($xRuls->reglas()->AML_CIERRE_NV_RIESGO);		//regla de negocio
+	$xQL		= new MQL();
 	//crear arbol de relaciones
 	$xUtils	= new cPersonas_utils();
 	$xUtils->setCrearArbolRelaciones();
-		
+	//Actualizar Nivel de Riesgo
+	$xUAml		= new cUtileriasParaAML();
+	if($NoValRisk == false){
+		$messages	.= $xUAml->setActualizarNivelDeRiesgo(true);
+	}
 	//Validar perfiles transaccionales
 	//Validar Documentos
 	//TODO: Agregar cierre de riesgos
+	//=========== Vencer Documentos
+	$xQL->setRawQuery("UPDATE `personas_documentacion`,`personas_documentacion_tipos`
+		SET `personas_documentacion`.`estatus`=0,`personas_documentacion`.`estado_en_sistema`=0 , `personas_documentacion`.`vencimiento`= NOW()
+		WHERE `personas_documentacion`.`estatus`=1 AND `personas_documentacion`.`tipo_de_documento`=`personas_documentacion_tipos`.`clave_de_control`
+		AND getFechaByInt((`personas_documentacion`.`fecha_de_carga`+(`personas_documentacion_tipos`.`vigencia_dias`*84600)) )<= NOW()");
+	
 	//checar documentos de todos los socios
-	$OSoc		= new cSocios_general();
+	/*$OSoc		= new cSocios_general();
 	$rs			= $OSoc->query()->select()->exec();
 	foreach ($rs as $data){
 		$OSoc->setData($data);
@@ -83,16 +96,12 @@ if (MODULO_AML_ACTIVADO == true){
 		$xAml->setVerificarDocumentosCompletos($fechaop);
 		$xAml->setVerificarDocumentosVencidos($fechaop);
 		$messages		.= $xAml->getMessages(OUT_TXT);	
-		
-		/*$xAml	= new cAML();
-		$xAml->setForceAlerts(true);
-		$xAml->sendAlerts(getUsuarioActual(), $PersonaDeDestino, $TipoDeAlerta);*/
 		//envio de informes
 		//TODO: Agregar envio de informes
 		//checar perfil transaccional mensual
-	}
+	}*/
 	//verificar operaciones de 6 meses excedidas de maximo permitido
-	$sql2 = "SELECT
+	/*$sql2 = "SELECT
 	`operaciones_recibos`.`fecha_operacion`              AS `fecha`,
 	`operaciones_recibos`.`numero_socio`                 AS `persona`,
 	COUNT(`operaciones_recibos`.`idoperaciones_recibos`) AS `operaciones`,
@@ -108,11 +117,11 @@ if (MODULO_AML_ACTIVADO == true){
 		$xAml			= new cAMLPersonas($rw1["persona"]);
 		$xF				= new cFecha();
 		$fecha_inicial	= $xF->setRestarMeses(6, $fechaop);
-		$obj			= $xAml->getOAcumuladoDeOperaciones($fecha_inicial, $fechaop);
+		//$obj			= $xAml->getOAcumuladoDeOperaciones($fecha_inicial, $fechaop);
 		
-	}
+	}*/
 	//Relaciones Recursivas
-	
+	$rs1				= null;
 	//$xUtils				= new cAMLUtils();
 	$xCML				= new cAML();
 	
@@ -122,11 +131,11 @@ if (MODULO_AML_ACTIVADO == true){
 
 $xLog->setWrite($messages);
 $xLog->setClose();
-if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre de Riesgos"); }
+	if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre de Riesgos"); }
 	if ($parser != false){ 
 		header("Location: ./cierre_de_sistema.frm.php?s=true&k=" . $key . "&f=$fechaop");
 	}
-	
+	getEnCierre(false);
 //}
 
 ?>

@@ -12,110 +12,136 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xP		= new cHPage("TR.Calendario de Compromisos", HP_FORM);
-$xQL	= new cSQLListas();
-
-$xP->init();
-
-$oficial = elusuario($iduser);
-/**
-Valores Pasados por GET numero_de_socio|numero_de_credito|fecha
-*/
-$xParams		= parametro("p");
-$defValues		= "0|0|" . fechasys();
-if($xParams == ""){	$defValues	= $xParams; }
-//require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
-//$jxc = new TinyAjax();
-//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-//$jxc ->process();
-
-//$jxc ->drawJavaScript(false, true);
+$xHP			= new cHPage("TR.Compromisos", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
 
 /**
  * Obtiene Parametros a traves de un explode
  */
-$DVals	= explode("|", $defValues);
-
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-
-$xP->init();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$monto		= parametro("idmonto",0, MQL_FLOAT);
+$xHP->init();
 
 $xFRM		= new cHForm("frmCompromisos", "frm_agregar_compromisos.php?action=" . MQL_ADD );
-
+$xSel		= new cHSelect();
 $msg		= "";
+$anotacion	= "";
+$hora		= "";
+$compromiso	="promesa_de_pago";
+$fecha		= $xF->get();
+$oficial	= getUsuarioActual();
 
-$xFRM->addJsBasico();
-$xFRM->addCreditBasico();
+if($credito > DEFAULT_CREDITO){
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$persona	= $xCred->getClaveDePersona();
+		$xFRM->addHElem($xCred->getFichaMini());
+	}
+}
+$xFRM->setTitle($xHP->getTitle());
+if($clave > 0){
+	$xSeg			= new cSeguimientoCompromisos($clave);
+	if($xSeg->init() == true){
+		$xFRM->setAction("frm_agregar_compromisos.php?id=$clave&action=" . MQL_MOD);
+		$credito	= $xSeg->getClaveDeCredito();
+		$persona	= $xSeg->getClaveDePersona();
+		if ($action == SYS_NINGUNO){ $xFRM->addHElem( $xSeg->getFicha() ); }
+		$anotacion	= $xSeg->getNota();
+		$fecha		= $xSeg->getFecha();
+		$hora		= $xSeg->getHora();
+		$oficial	= $xSeg->getOficial();
+		$monto		= $xSeg->getMonto();
+	}
+}
+if ($action == SYS_NINGUNO){
+	if($persona > DEFAULT_SOCIO AND $credito > DEFAULT_CREDITO){
+		$xFRM->OHidden("credito",$credito);
+		$xFRM->OHidden("persona",$persona);
+	} else {
+		$xFRM->addCreditBasico();
+	}
+	if($clave > 0){
+		$xFRM->addActualizar();
+	} else {
+		$xFRM->addGuardar();
+		if($credito > DEFAULT_CREDITO){
+			//cargar datos de Deuda
+			$xInt			= new cCreditosMontos($xCred->getNumeroDeCredito());
+			$xInt->getOCredito($xCred->getDatosInArray());
+			$xInt->setActualizarPorLetras();
+			$capital		= $xInt->getCapitalPendiente();
+			$interes		= $xInt->getInteresNormalPendiente();
+			$moratorio		= $xInt->getInteresMoratorioPendiente();
+			$otros			= $xInt->getOtros();
+			$impuestos		= $xInt->getIVAPendiente();
+			$monto			= $capital + $interes + $moratorio + $otros + $impuestos;		
+		}
+	}
+	$xFRM->addHElem($xSel->getListaDeOficiales("idoficial", "", $oficial)->get(true) );
+	$xFRM->addHElem($xSel->getListaDeTiposDeCompromisos("", $compromiso)->get(true));
+	$xFRM->addFecha($fecha);
+	$xFRM->addHElem($xSel->getListaDeHoras("idhora", $hora) ->get(true) );
+	$xFRM->addMonto($monto);
+	$xFRM->setValidacion("idmonto", "jsValidarMonto", "TR.En PROMESA_DE_PAGO se requiere monto", true);
+	$xFRM->OTextArea("idnotas", $anotacion, "TR.Notas");
 
-$xFRM->addSubmit();
-
-$arr	= array(
-		
-		"promesa_de_pago" => "Promesa de Pago",
-		"promesa_de_revision" => "Promesa de Revision(Cita)",
-		"promesa_de_reestructuracion" => "Promesa de Reestructuracion",
-		"promesa_de_renovacion" => "Promesa de Renovacion"
-);
-$xHSel	= new cHSelect();
-$xHSel->addOptions($arr);
-
-$xFRM->addHElem( $xHSel->get("idtipocompromiso", "TR.Tipo de Compromiso", "promesa_de_pago") );
-$xHF	= new cHDate();
-
-$cH 	= new cFecha();
-$xFRM->addHElem( $xHF->get("TR.Fecha") );
-$xFRM->addHElem( $cH->getHours(true, "TR.Horario", "idhora") );
-
-
-$xFRM->OTextArea("idnotas", "", "TR.Notas");
-
-
-
-
-
-
-if ($action == MQL_ADD){
+} else {
+	
 	//Insertar Nuevo Registro
 	$socio			= $persona;
 	$solicitud		= $credito;
-	$oficial		= $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"];
-	$fecha			= $cH->getFechaISO($_POST["idfecha-0"] );
-	$hora			= $_POST["idhora"];
-	$compromiso		= $_POST["idtipocompromiso"];
-	$anotacion		= $_POST["idnotas"];
-
-	//Valores Pre-establecidos
-	$eacp			= EACP_CLAVE;
-	$sucursal		= getSucursal();
-	$estatus		= "pendiente";
-	//$xSeg			= new cSe
-	$sqlIC = "INSERT INTO seguimiento_compromisos(socio_comprometido, oficial_de_seguimiento, fecha_vencimiento, hora_vencimiento, tipo_compromiso, anotacion, credito_comprometido, estatus_compromiso, sucursal, eacp)
-    			VALUES($socio, $iduser, '$fecha', '$hora', '$compromiso', '$anotacion', $solicitud, '$estatus', '$sucursal', '$eacp')";
-	$ms		= my_query($sqlIC);
-	if($ms["stat"]!=false){
-		$xFRM->addAviso("Se Agrego un compromiso para el socio num $socio por el Credito $solicitud el dia $fecha");
+	$oficial		= parametro("idoficial", getUsuarioActual(), MQL_INT);
+	$fecha			= parametro("idfechaactual", false, MQL_DATE);
+	$fecha			= $xF->getFechaISO($fecha);
+	$hora			= parametro("idhora");
+	$compromiso		= parametro("idtipodecompromiso", "", MQL_RAW);
+	$anotacion		= parametro("idnotas");
+	$rs				= false;
+	if($action == MQL_ADD){
+		$xSeg		= new cSeguimientoCompromisos(false);
+		$rs 		= $xSeg->addCompromiso($credito, $compromiso, $anotacion, $fecha, $oficial, $hora, $persona, $monto);
+		$clave		= $xSeg->getClave();
+	} else {
+		$xSeg		= new cSeguimientoCompromisos($clave);
+		if($xSeg->init() == true){
+			$obj	= $xSeg->obj();
+			$obj->anotacion($anotacion);
+			$obj->fecha_vencimiento($fecha);
+			$obj->oficial_de_seguimiento($oficial);
+			$obj->hora_vencimiento($hora);
+			$obj->monto_comprometido($monto);
+			$rs		= $obj->query()->update()->save($clave);
+		}		
 	}
-}
-//Imprimir la Tabla de compromisos para hoy
-	$sql			= $xQL->getListadoDeCompromisosSimple("", "", getUsuarioActual());
-//echo $sqlTComp;
+	$xSeg->init();
+	$xFRM->addHElem( $xSeg->getFicha() );
+	$xFRM->addCerrar();
+	$xFRM->addAtras();
+	$xFRM->setResultado($rs);
+//} else if ($action == MQL_MOD){
+	//actualizar Nuevo Registro
 
-	$cTbl = new cTabla($sql);
-	$cTbl->setWidth();
-	$cTbl->setKeyField("idseguimiento_compromisos");
-	$cTbl->addTool(1);
-	$cTbl->addTool(2);
+}
 	
-	$xFRM->addHTML( $cTbl->Show() );
-	
-	
-	echo $xFRM->get();
-	
-	echo $cTbl->getJSActions(true);
-	
-	echo $xP->fin();
+echo $xFRM->get();
+?>
+<script>
+function jsValidarMonto(v){
+	var mTipo	= $("#idtipodecompromiso").val();
+	var res		= true;
+	if(mTipo == "promesa_de_pago" && flotante(v) <= 0){ 
+		res = false;
+	}
+	return res;
+}
+</script>
+<?php
+$xHP->fin();
 ?>

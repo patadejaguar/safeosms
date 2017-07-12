@@ -10,7 +10,7 @@ require_once "HTML/AJAX/Serializer/Error.php";
 require_once "HTML/AJAX/Serializer/XML.php";
 require_once "HTML/AJAX/Serializer/PHP.php";
 require_once 'HTML/AJAX/Debug.php';
-ini_set("display_errors", "0");
+//ini_set("display_errors", "0");
 
 /**
  * OO AJAX Implementation for PHP
@@ -186,10 +186,10 @@ class HTML_AJAX {
 
         $index = strtolower($exportedName);
         $this->_exportedInstances[$index] = array();
-        $this->_exportedInstances[$index]['className'] = $className;
-        $this->_exportedInstances[$index]['exportedName'] = $exportedName;
-        $this->_exportedInstances[$index]['instance'] =& $instance;
-        $this->_exportedInstances[$index]['exportedMethods'] = $exportedMethods;
+        $this->_exportedInstances[$index]['className'] 			= $className;
+        $this->_exportedInstances[$index]['exportedName'] 		= $exportedName;
+        $this->_exportedInstances[$index]['instance'] 			= $instance;
+        $this->_exportedInstances[$index]['exportedMethods'] 	= $exportedMethods;
     }
 
     /**
@@ -602,16 +602,16 @@ class HTML_AJAX {
     function _errorHandler($errno, $errstr, $errfile, $errline)
     {
         if ($errno & error_reporting()) {
-            $e = new stdClass();
-            $e->errNo   = $errno;
-            $e->errStr  = $errstr;
-            $e->errFile = $errfile;
-            $e->errLine = $errline;
+            $e 				= new stdClass();
+            $e->errNo   	= $errno;
+            $e->errStr  	= $errstr;
+            $e->errFile 	= $errfile;
+            $e->errLine 	= $errline;
             $this->serializer = 'Error';
             $this->_sendResponse($e);
             if ($this->debugEnabled) {
             	//TODO: Cambiar =& por =
-                $this->debug =& new HTML_AJAX_Debug($errstr, $errline, $errno, $errfile);
+                $this->debug = new HTML_AJAX_Debug($errstr, $errline, $errno, $errfile);
                 if ($this->debugSession) {
                     $this->debug->sessionError();
                 }

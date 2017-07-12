@@ -1,0 +1,187 @@
+Sistema de Administración Financiera y Estadística. SAFE Open Source Microfinance System.
+
+Version 	: 2016.11.04
+Codename 	: MahoroAndo
+Date		: 2016-11-04
+
+-------------------------------------------
+				Release Anterior
+-------------------------------------------
+Fecha: Septiembre/2016.
+Versión: 2016.09.14
+Tipo de versiones: Año.Mes.Revisión.
+
+-------------------------------------------
+				Sistema
+-------------------------------------------
+
+- Se agrega el Archivo de Eliminados.
+- Se agrega la Tabla de Mensajes del Sistema.
+- Se corrigen errores menores.
+
+- Se mejora la presentación de Alertas gráficas.
+- Se mejora la Cache de javascript.
+- Se mejora la carga de catálogos varios.
+- Se mejora el Control Moneda (2a generación).
+- Se Agrega el Control Tasa.
+- Se agrega el Control Si/No.
+- 32 Nuevos Items de Language.
+- Se mejora el cierre del día.
+
+-------------------------------------------
+				Base de Datos
+-------------------------------------------
+- Nuevos índices a tabla de Operaciones.
+- Nuevos índices a la Tabla de cajas / tesorería.
+- Nuevo índice a la Tabla de recibos.
+- se elimina el registro de Udis.
+- Se Elimina el registro de Dolares.
+- Nuevo indice para datos extras de personas.
+- Se agrega w_creditos_mvtos_hoy. pagos del día.
+- Se agrega la Vista vw_creditos_recs_periodo. Suma de operaciones en el día.
+- Se agrega la Función getHash emulando la función PASSWORD nativa.
+- Se agrega la Función proc_recs_datos_bancarios para mejorar el reporte de Ingresos.
+- Se mejora el Store Procedure sp_correcciones.
+- Más de 150 cambios en la Base de Datos en Octubre de 2016.
+
+-------------------------------------------
+				Seguridad
+-------------------------------------------
+
+- Se Migran las contraseñas de MD5  a Double SHA1.
+- Se Usa Encriptación AES 256 en lugar de MD5.
+- Se agregan Roles de Solo Lectura (Originadores).
+- Se agregan nuevos códigos de error.
+- Se agrega la Opción de Paǵina de Inicio por Nivel de Usuario.
+- Se agrega la Opción de Página de Tareas por Nivel de Usuario.
+- Se mejora los permisos del Sistema.
+- Se mejora la edición de usuarios (Activar, desactivar, suspender).
+- Se mejora la edición de permisos del Sistema.
+- se mejora las preferencias por Usuario.
+- Se mejora los eventos del Usuario.
+
+
+-------------------------------------------
+				Personas
+-------------------------------------------
+- Se agrega el propietario del registro en el panel de personas.
+- Se agregan permisos para eliminar/editar Vivienda.
+- Se agregan permisos para eliminar/editar Actividades.
+- Se agregan permisos para eliminar/editar Referencias.
+- Se Agrega a perdonas Morales los datos del notario, poderes y escritura.
+- Se mejora la validacion de Campos en Formas de registros.
+- Se agrega la forma simplificada de personas en Otros Ingresos.
+- Se agregan vencimientos en documentos.
+- se mejora la validación de Documentos.
+- Se agrega la pestaña de Otros ingresos en el panel de Personas.
+- Se agrega la pestaña de recibos en el panel de personas.
+- Se mejora la consulta en PEPs/Listas negras.
+
+
+-------------------------------------------
+				Empresas
+-------------------------------------------
+- Se agrega el panel de empresas, separando la parte de personas.
+- Se Agrega la posibilidad de Re-imprimir Recibos de cobro en las Listas de Nomina.
+- Se Mejora el catalogo de Empresas.
+- Se Agrega la tasa Preferente en Empresas.
+- se agrega la posibilidad de Cancelar y Archivar Notas.
+- Se agrega la posibilidad de Determinar Tipo de Notas por defecto.
+- Se agrega la posibilidad de la relación Persona -> Empresas varias.
+
+
+-------------------------------------------
+				Personas Vivienda
+-------------------------------------------
+- Buscador de Colonias.
+
+-------------------------------------------
+				Personas Actividades
+-------------------------------------------
+- Se agrega la posibilidad de extender el detalle de la Actividad económica.
+
+-------------------------------------------
+				Creditos
+-------------------------------------------
+
+- Se agregan los Notarios.
+- Se mejora los Montos de crédito.
+- Se cambia el nombrado de creditos, con la posibilidad de que una persona tenga hasta 999 créditos.
+- Se mejora el Plan de pagos y cálculo de Cuota en el método francés.
+- Se agrega el soporte de descuento, valor futuro o valor Residual al Plan de Pagos.
+- Se agrega la opción de No ajuste Final al Plan de Pagos.
+- Se habilitó al consulta de estados de cuenta vía Web.
+- Se agregaron las pre-solicitudes.
+- Se Habilitó las Pre-solicitudes vía Online.
+
+
+
+-------------------------------------------
+				AML
+-------------------------------------------
+
+- Inicio de reescritura de la Matriz de Riesgo.
+- Se agregan los registro de Consulta en Listas Negras/PEP para falsos/positivos.
+- Se modifican el Reporte de Alertas Dictaminadas.
+- Se Modifica el Reporte de Alertas Descartadas.
+- Se Agrega el Reporte de Alertas.
+- Se agregas filtro por tipo y clase de alerta.
+- Se agregar a todos los reportes de AML la capacidad de exportarse a Excel.
+- Se Agregan los Filtros por Fechas en reportes.
+- Se mejora el Registro de Perfiles Extra de Riesgo AML.
+- Se mejora la obtención del Perfil Transaccional.
+- Se mejora la rapidez del Análisis transaccional.
+- Se Agrega la posibilidad de cancelar Alertas recursivamente.
+- Se agrega la Posibilidad de Enviar a Listas negras a algunas persona con solo un click.
+
+
+
+-------------------------------------------
+				Operaciones
+-------------------------------------------
+- Se mejora la edición de Operaciones.
+- Se cambia el catalogo de Membresias a Caja.
+- Se mejora el catalogo de Monedas.
+- Se mejora el catalogo de Instrumentos Financieros.
+- Se agrega CETES como Valores.
+- Se Agrega TIIE como valores.
+- Se universaliza los valores de Instrumentos Financieros, como cotización  diaria.
+- se mejora el recibo de cobro, validación de eliminados.
+
+
+-------------------------------------------
+				Leasing
+-------------------------------------------
+- Vehiculos
+- Vehiculos sectores
+- Vehiculos usos.
+- Vehículos Tenencia.
+- Vehículos
+- Originadores de Leasing.
+- Sub-usuarios de Leasing.
+- Tasas de leasing.
+- Paquetes GPs de leasing.
+- Costeo GPS.
+- Costeo de Cuotas.
+- Cotizador de Créditos.
+- Valor Residual.
+- Escenarios de Leasing.
+- Tipo de RAC
+
+
+-------------------------------------------
+				Originación
+-------------------------------------------
+- Originacion por leasing.
+- Cambios para Iniciar Originacion por Grupos.
+
+
+
+-------------------------------------------
+				Captacion
+-------------------------------------------
+- Se mejora el Alta de tasas de captacion.
+- Se mejora el registro de Cuentas de captación.
+- Se mejora el Registro de Productos de Captación.
+
+

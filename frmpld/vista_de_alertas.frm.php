@@ -15,14 +15,14 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.lista de Alertas", HP_FORM);
+$xHP		= new cHPage("TR.Operaciones con Alertas", HP_FORM);
 $xF			= new cFecha();
 $xlistas	= new cSQLListas();
 
 $jxc 		= new TinyAjax();
 
 
-function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas){
+function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas, $byfechas){
 	$tipo			= ($tipo == SYS_TODAS) ? false : $tipo;
 	$xT				= new cTipos();
 	$xF				= new cFecha();
@@ -35,19 +35,34 @@ function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas){
 	$ByEstado		.= (setNoMenorQueCero($tipo) <= 0 ) ? "" : "  AND (`aml_risk_catalog`.`tipo_de_riesgo` =$tipo) ";
 	$fecha_inicial	= $xF->getFechaISO($fecha_inicial);
 	$fecha_final	= $xF->getFechaISO($fecha_final);
-	$sql			= $xlistas->getListadoDeAlertas(false, false, false, false, $ByEstado);
+	if($byfechas == 1){
+		$sql		= $xlistas->getListadoDeAlertas(false, $fecha_inicial, $fecha_final, false, $ByEstado);
+	} else {
+		$sql		= $xlistas->getListadoDeAlertas(false, false, false, false, $ByEstado);
+	}
 	$xT				= new cTabla($sql);
 	$xT->setWithMetaData();
 	
-	$xT->OButton("TR.Dictaminar", "jsModificarEstatus(_REPLACE_ID_)", $xT->ODicIcons()->REPORTE );
-	$xT->OButton("TR.Panel", "jsToPanel(_REPLACE_ID_)", $xT->ODicIcons()->EJECUTAR );
+	//$xT->OButton("TR.Dictaminar", "jsModificarEstatus(_REPLACE_ID_)", $xT->ODicIcons()->REPORTE );
+	//$xT->OButton("TR.Panel", "jsToPanel(_REPLACE_ID_)", $xT->ODicIcons()->EJECUTAR );
 	
+	
+	$xT->setEventKey("jsGetPanelDeAlertas");
 	$xT->setKeyField( $xAl->getKey() );
 	$xT->setKeyTable( $xAl->get() );
+	
+	
+	if(getSePuedeMostrar(iDE_AML, MQL_MOD)== true){
+		$xT->addEditar();
+	}
+	if(getSePuedeMostrar(iDE_AML, MQL_DEL)== true){
+		$xT->addEliminar();
+	}
+	$xT->setPagination(100);
 	return $xT->Show();
 }
 
-$jxc->exportFunction('jsaGetListadoDeAvisos', array('idtipoderiesgoaml', 'idfecha-1', 'idfecha-2', 'idactivas'), "#lstalertas");
+$jxc->exportFunction('jsaGetListadoDeAvisos', array('idtipoderiesgoaml', 'idfecha-1', 'idfecha-2', 'idactivas', 'idporfecha'), "#lstalertas");
 
 $jxc->process();
 
@@ -58,6 +73,7 @@ $jsb		= new jsBasicForm("");
 
 
 $xFRM		= new cHForm("frm_alertas", "./");
+$xFRM->setNoAcordion();
 $xBtn		= new cHButton();		
 $xTxt		= new cHText();
 $xDate		= new cHDate();
@@ -67,50 +83,55 @@ $jsb->setNameForm( $xFRM->getName() );
 $selcat		= $xSel->getListaDeTipoDeRiesgoEnAML();
 $selcat->addEvent("onblur", "jsGetListadoAvisos()");
 $selcat->addEvent("onchange", "jsGetListadoAvisos()");
-
 $selcat->addEspOption(SYS_TODAS);
 $selcat->setOptionSelect(SYS_TODAS);
-$xFRM->OHidden("idfecha-1", "", "");
-$xFRM->OHidden("idfecha-2", "", "");
-//$xFRM->addHElem( $xDate->get( $xFRM->lang("fecha inicial"), $xF->getDiaInicial(), 1 ));
-//$xFRM->addHElem( $xDate->get( $xFRM->lang("fecha final"), $xF->getDiaFinal(), 2 ));
 
+$xFRM->addSeccion("iddivtools", $xHP->getTitle());
 $xFRM->addHElem( $selcat->get(true) );
-$xFRM->addSubmit("", "jsGetListadoAvisos()");
+$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->CARGAR);
+$xFRM->addCerrar();
 
 $xFRM->OCheck("TR.Mostrar Inactivas", "idactivas");
 
-//$xFRM->addCreditBasico();
+$xFRM->ODate("idfecha-1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
+$xFRM->ODate("idfecha-2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
+$xFRM->OSiNo("TR.FILTRAR POR FECHA", "idporfecha");
+
+
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddivalertas", "TR.LISTA DE ALERTAS");
 $xFRM->addHTML("<div id='lstalertas'></div>");
 
 $xFRM->addAviso("", "idmsg");
 echo $xFRM->get();
 
-echo $xHP->setBodyEnd();
+
 $jsb->show();
 $jxc ->drawJavaScript(false, true);
 ?>
 <!-- HTML content -->
 <script>
 var xG		= new Gen();
+var xAml	= new AmlGen();
 function jsGetListadoAvisos(){
 	jsaGetListadoDeAvisos();
 }
-function jsModificarEstatus(id){
-	xG.w({ url : "estatus_de_alerta.frm.php?codigo=" +id , w: 800, h: 600, tiny : true, callback: jsGetListadoAvisos  });
-}
+/*function jsModificarEstatus(id){
+	xG.w({ url : "estatus_de_alerta.frm.php?codigo=" +id , w: 800, h: 800, tiny : true, callback: jsGetListadoAvisos  });
+}*/
 function jsCancelarAccion(){	$(window).qtip("hide");    }
 function jsGuardarDescarto(){
 	jsaDescartarRiesgo();
 	jsCancelarAccion();
 	jsaGetListadoDeAvisos();
 }
-function jsToPanel(id){
+function jsGetPanelDeAlertas(id){	xAml.getPanelDeAlerta(id); }
+/*function jsToPanel(id){
 	var obj		= processMetaData("#tr-aml_alerts-" + id);
 	var xPer	= new PersGen();
-	xPer.goToPanel(obj.persona_de_origen, true);
-}
+	xPer.goToPanel(obj.persona_de_origen, false);
+}*/
 </script>
 <?php
-$xHP->end();
+$xHP->fin();
 ?>

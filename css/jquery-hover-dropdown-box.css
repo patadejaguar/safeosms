@@ -1,0 +1,236 @@
+/**
+ * jquery-hover-dropdown-box - Stylesheet
+ * You can convert .less file to .css file, by using "lessc" (http://lesscss.org/).
+ **/
+.hover_dropdown_box {
+  position: absolute;
+  display: block;
+  background-color: #fefefe;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #c8c8c8;
+  border-left: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+  font-size: 13px;
+  font-weight: normal;
+  box-shadow: 0px 1px 10px 1px rgba(50, 50, 50, 0.1);
+  -moz-box-shadow: 0px 1px 10px 1px rgba(50, 50, 50, 0.1);
+  -webkit-box-shadow: 0px 1px 10px 1px rgba(50, 50, 50, 0.1);
+  -o-box-shadow: 0px 1px 10px 1px rgba(50, 50, 50, 0.1);
+  -ms-box-shadow: 0px 1px 10px 1px rgba(50, 50, 50, 0.1);
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+}
+.hover_dropdown_box h3 {
+  display: table-cell;
+  width: inherit;
+  padding: 4px 0 4px 0;
+  margin: 0 0 0 0;
+  background-color: #767676;
+  color: #ffffff;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: 13px;
+  border-top-left-radius: 2px;
+  -webkit-border-top-left-radius: 2px;
+  -moz-border-radius-topleft: 2px;
+  border-top-right-radius: 2px;
+  -webkit-border-top-right-radius: 2px;
+  -moz-border-radius-topright: 2px;
+}
+.hover_dropdown_box ul {
+  height: 180px;
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+  overflow: auto;
+}
+.hover_dropdown_box ul li:after {
+  content: "";
+  clear: both;
+}
+.hover_dropdown_box ul::-webkit-scrollbar {
+  overflow: hidden;
+  width: 6px;
+  background: #fafafa;
+}
+.hover_dropdown_box ul::-webkit-scrollbar:horizontal {
+  height: 1px;
+}
+.hover_dropdown_box ul::-webkit-scrollbar-button {
+  display: none;
+}
+.hover_dropdown_box ul::-webkit-scrollbar-piece {
+  background: #eee;
+}
+.hover_dropdown_box ul::-webkit-scrollbar-piece:start {
+  background: #eee;
+}
+.hover_dropdown_box ul::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  -moz-border-radius: 1px;
+  -o-border-radius: 1px;
+  -ms-border-radius: 1px;
+}
+.hover_dropdown_box ul::-webkit-scrollbar-corner {
+  background: #333;
+}
+.hover_dropdown_box .hover_dropdown_box_item {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  margin: 5px 0px 5px 0px;
+  overflow: hidden;
+  color: #101010;
+  cursor: pointer;
+  list-style-type: none;
+  background-color: #ffffff;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_color_tag {
+  display: block;
+  position: relative;
+  float: left;
+  height: inherit;
+  width: 5%;
+  top: 0px;
+  left: 0px;
+  user-select: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_label {
+  display: table-cell;
+  position: absolute;
+  height: 1em;
+  width: 100%;
+  margin-left: 15%;
+  vertical-align: middle;
+  line-height: 2.5em;
+  user-select: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_checkbox {
+  display: table-cell;
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  top: 1px;
+  right: 5px;
+  vertical-align: middle;
+  border: 2px solid #e0e0e0;
+  border-radius: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.hover_dropdown_box .hover_dropdown_box_item .checkbox_checked:after {
+  /*
+				Solution:
+				http://webitect.net/design/webdesign/creating-fancy-bullet-points-with-pure-css3/
+				Thankyou.
+			*/
+
+  display: table-cell;
+  position: absolute;
+  left: 10px;
+  height: 18px;
+  content: "\00a0";
+  border: solid #303030;
+  border-width: 0 2px 2px 0;
+  vertical-align: middle;
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_textbox {
+  position: absolute;
+  display: table-cell;
+  height: auto;
+  width: 60%;
+  margin-left: 20%;
+  top: 0px;
+  bottom: 0px;
+  vertical-align: middle;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_input_action {
+  display: table-cell;
+  position: absolute;
+  width: 1em;
+  top: 0px;
+  bottom: 0px;
+  vertical-align: middle;
+  line-height: 2.5em;
+  color: #71a7c2;
+  user-select: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_input_action.input_action_left {
+  margin-left: 0px;
+  left: 10%;
+}
+.hover_dropdown_box .hover_dropdown_box_item .hover_dropdown_box_item_input_action.input_action_right {
+  right: 5%;
+  margin-left: 5%;
+}
+.hover_dropdown_box .hover_dropdown_box_item:hover {
+  box-shadow: 0px 0px 0px 1px rgba(150, 150, 150, 0.2);
+  -moz-box-shadow: 0px 0px 0px 1px rgba(150, 150, 150, 0.2);
+  -webkit-box-shadow: 0px 0px 0px 1px rgba(150, 150, 150, 0.2);
+  -o-box-shadow: 0px 0px 0px 1px rgba(150, 150, 150, 0.2);
+  -ms-box-shadow: 0px 0px 0px 1px rgba(150, 150, 150, 0.2);
+  transition: all 0.1s linear;
+}
+.hover_dropdown_box .hover_dropdown_box_item.hover_dropdown_box_footer {
+  display: block;
+  position: absolute;
+  color: #71a7c2;
+  bottom: -1px;
+  padding-top: 3px;
+  padding-bottom: 1px;
+  border-top: 1px solid #eeeeee;
+}
+.hover_dropdown_box .hover_dropdown_box_item.hover_dropdown_box_footer .hover_dropdown_box_item_textbox {
+  margin-top: 3px;
+}
+.hover_dropdown_box .hover_dropdown_box_item.hover_dropdown_box_footer .hover_dropdown_box_item_input_action {
+  top: 2px;
+}
+.hover_dropdown_box_with_footer > ul {
+  height: 150px !important;
+}
+.hover_dropdown_box.hover_dropdown_box_inline {
+  position: relative !important;
+}
+.hover_dropdown_box.hover_dropdown_box_hover {
+  position: absolute !important;
+  transition: opacity 0.3s linear;
+  z-index: 10000;
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  -o-opacity: 1;
+  -ms-opacity: 1;
+}
+.hover_dropdown_box.hover_dropdown_box_hide {
+  opacity: 0 !important;
+  -webkit-opacity: 0 !important;
+  -moz-opacity: 0 !important;
+  -o-opacity: 0 !important;
+  -ms-opacity: 0 !important;
+}

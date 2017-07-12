@@ -21,11 +21,13 @@
 			$sRst = $oProc->run();
 			unset($oProc);
 			
-			if(is_null($this->getOutput()))
+			if(is_null($this->getOutput())){
 				print $sRst;
+			}
 				
-			if($this->isCleaning())	
+			if($this->isCleaning())	{
 				unlink($sXML);	
+			}
 		}
 	}
 ?>

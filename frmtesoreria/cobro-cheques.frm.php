@@ -11,7 +11,7 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
 //=====================================================================================================
-$xP			= new cHPage("Cobranza.- Cheques Internos", HP_FORM);
+$xHP				= new cHPage("Cobranza .- Cheques Internos", HP_FORM);
 $xJS			= new jsBasicForm("frmCobrosEnCheque");
 //=========================== AJAX
 $jxc 			= new TinyAjax();
@@ -35,18 +35,17 @@ if( $recibo != false ){
 	$DRec			= $xRec->getDatosInArray();
 	$MontoOperacion		= $DRec["total_operacion"];
 	//=========================== HTML
-	echo $xP->getHeader();
+	echo $xHP->getHeader();
 	/*echo $xJS->setIncludeJQuery();*/
 	$jxc ->drawJavaScript(false, true);
-	echo $xP->setBodyinit();
+	echo $xHP->setBodyinit();
 	
-	$xFrm	= new cHForm("frmCobrosEnCheque", "cobro-cheques.frm.php");
+	?> <style> #idavisopago, #idimporte, #iMontoRecibido, #iNumeroCheque2, #iNumeroCheque1, #iMontoCheque2, #iMontoCheque1 { font-size : 1.3em !important; } </style> <?php
+	$xFRM		= new cHForm("frmCobrosEnCheque", "cobro-cheques.frm.php");
+	$xFRM->setTitle($xHP->getTitle());
 	//agrega en un hidden el idrecibo
-
-	
-	$xTxt	= new cHText("id");
-	//$xTxt->setIncludeLabel(false);
-	
+	$xHNot		= new cHNotif();
+	$xTxt		= new cHText("id");
 	$xTxt2	= new cHText("id");
 	
 	
@@ -55,24 +54,25 @@ if( $recibo != false ){
 	$xSel2->addEspOption(SYS_NINGUNO);
 	$xSel2->setOptionSelect(SYS_NINGUNO);
 	
-	$xFrm->addHElem( "<div class='title'>IMPORTE : $MontoOperacion</div>");
+	//$xFRM->addHElem( "<div class='title'>IMPORTE : $MontoOperacion</div>");
+	$xFRM->addHElem( $xHNot->get($xHP->lang("importe") . " : " . getFMoney($MontoOperacion) . AML_CLAVE_MONEDA_LOCAL, "idimporte") );
 	$xTxt->addEvent("jsActualizarPago", "onkeyup");
 	//$xTxt->setDropProperty("disabled");
 
-	$xFrm->addHElem(
+	$xFRM->addHElem(
 		array( $xSel1->get("Cheque 1.- Banco"),
 		      $xTxt2->get("iNumeroCheque1", "", "Cheque 1.- Numero"),
 		      $xTxt->getDeMoneda("iMontoCheque1", "Cheque 1.- Monto", 0)
 		));
-	$xFrm->addHElem("<div class='title'>TOTAL : <mark id='idtotal'>0</mark></div>");
+	$xFRM->addHElem("<div class='title'>TOTAL : <mark id='idtotal'>0</mark></div>");
 	
-	$xFrm->addHTML("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
-	$xFrm->addHTML("<input type='hidden' id='iDiferencia' name='iDiferencia' value='0' />");
-	$xFrm->addHTML("<input type='hidden' id='iTotal' name='iTotal' value='$MontoOperacion' />");
-	$xFrm->addHTML("<div id='avisos'></div>");
+	$xFRM->addHTML("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
+	$xFRM->addHTML("<input type='hidden' id='iDiferencia' name='iDiferencia' value='0' />");
+	$xFRM->addHTML("<input type='hidden' id='iTotal' name='iTotal' value='$MontoOperacion' />");
+	$xFRM->addHTML("<div id='avisos'></div>");
 		
-	echo $xFrm->get();
-	echo $xP->setBodyEnd();
+	echo $xFRM->get();
+	echo $xHP->setBodyEnd();
 	//=========================== HTML
 	?>
 <script>
@@ -123,6 +123,6 @@ function jsActualizarPago(){
 }
 </script>
 	<?php
-	$xP->end();
+	$xHP->end();
 }
 ?>

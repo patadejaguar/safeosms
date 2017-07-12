@@ -26,9 +26,10 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);
 
 //remote values
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $msgs			= ( isset($_GET[SYS_MSG]) ) ? isset($_GET[SYS_MSG]) : "RELLENE LOS DATOS SOLICITADO Y GUARDELO";
 $dMonto			= ( isset($_GET["mn"]) ) ? isset($_GET["mn"]) : 0;
-$dSocio			= ( isset($_GET["s"]) ) ? isset($_GET["s"]) : DEFAULT_SOCIO;
+$dSocio			= $persona;
 $dCon			= ( isset($_GET["c"]) ) ? isset($_GET["c"]) : "";
 
 

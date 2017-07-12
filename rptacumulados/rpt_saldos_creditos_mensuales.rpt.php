@@ -31,12 +31,12 @@ $si_es_por_fecha 		= "";
 
 $graficos		= parametro("graficos", false, MQL_BOOL);
 
-$BySuc					= ($sucursal == SYS_TODAS) ? "": " AND `creditos_solicitud`.`sucursal`= '$sucursal'";
+$BySuc			= ($sucursal == SYS_TODAS) ? "": " AND `creditos_solicitud`.`sucursal`= '$sucursal'";
 
 $si_es_por_fecha = " AND fecha_ministracion>='$FechaInicial' AND fecha_ministracion<='$FechaFinal' ";
 $xF->set($FechaFinal);
 $ejercicio		= $xF->anno();
-my_query("SET @ejercicio:=$ejercicio;");
+
 
 $sql = "
 SELECT
@@ -63,8 +63,72 @@ FROM
 	GROUP BY
 		
 		`creditos_saldo_mensuales`.`tipo_convenio`
+		ORDER BY `creditos_tipoconvenio`.`descripcion_tipoconvenio`
 		 ";
+//Por modalidad
+/*
+$sql = "
+SELECT
 	
+	`creditos_modalidades`.`descripcion_modalidades` ,
+		
+	COUNT(`creditos_saldo_mensuales`.`numero_solicitud`) AS `creditos`,
+	SUM(`creditos_saldo_mensuales`.`enero`)      AS `enero`,
+	SUM(`creditos_saldo_mensuales`.`febrero`)    AS `febrero`,
+	SUM(`creditos_saldo_mensuales`.`marzo`)      AS `marzo`,
+	SUM(`creditos_saldo_mensuales`.`abril`)      AS `abril`,
+	SUM(`creditos_saldo_mensuales`.`mayo`)       AS `mayo`,
+	SUM(`creditos_saldo_mensuales`.`junio`)      AS `junio`,
+	SUM(`creditos_saldo_mensuales`.`julio`)      AS `julio`,
+	SUM(`creditos_saldo_mensuales`.`agosto`)     AS `agosto`,
+	SUM(`creditos_saldo_mensuales`.`septiembre`) AS `septiembre`,
+	SUM(`creditos_saldo_mensuales`.`octubre`)    AS `octubre`,
+	SUM(`creditos_saldo_mensuales`.`noviembre`)  AS `noviembre`,
+	SUM(`creditos_saldo_mensuales`.`diciembre`)  AS `diciembre`
+
+FROM
+	`creditos_tipoconvenio` `creditos_tipoconvenio` 
+		INNER JOIN `creditos_modalidades` `creditos_modalidades` 
+		ON `creditos_tipoconvenio`.`tipo_de_credito` = `creditos_modalidades`.
+		`idcreditos_modalidades` 
+			INNER JOIN `creditos_saldo_mensuales` `creditos_saldo_mensuales` 
+			ON `creditos_saldo_mensuales`.`tipo_convenio` = 
+			`creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
+		
+	GROUP BY
+			`creditos_tipoconvenio`.`tipo_de_credito`
+		 ";*/
+//=============== Por sucursal
+/*$sql = "
+SELECT
+
+	`socios_general`.`sucursal`	,
+
+	COUNT(`creditos_saldo_mensuales`.`numero_solicitud`) AS `creditos`,
+	SUM(`creditos_saldo_mensuales`.`enero`)      AS `enero`,
+	SUM(`creditos_saldo_mensuales`.`febrero`)    AS `febrero`,
+	SUM(`creditos_saldo_mensuales`.`marzo`)      AS `marzo`,
+	SUM(`creditos_saldo_mensuales`.`abril`)      AS `abril`,
+	SUM(`creditos_saldo_mensuales`.`mayo`)       AS `mayo`,
+	SUM(`creditos_saldo_mensuales`.`junio`)      AS `junio`,
+	SUM(`creditos_saldo_mensuales`.`julio`)      AS `julio`,
+	SUM(`creditos_saldo_mensuales`.`agosto`)     AS `agosto`,
+	SUM(`creditos_saldo_mensuales`.`septiembre`) AS `septiembre`,
+	SUM(`creditos_saldo_mensuales`.`octubre`)    AS `octubre`,
+	SUM(`creditos_saldo_mensuales`.`noviembre`)  AS `noviembre`,
+	SUM(`creditos_saldo_mensuales`.`diciembre`)  AS `diciembre`
+
+FROM
+	`socios_general` `socios_general` 
+		INNER JOIN `creditos_saldo_mensuales` `creditos_saldo_mensuales` 
+		ON `socios_general`.`codigo` = `creditos_saldo_mensuales`.`numero_socio` 
+
+	GROUP BY
+		`socios_general`.`sucursal`
+		 ";
+*/
+
+
 $xT		= new cTabla($sql);
 $xT->setFootSum(array(
 	1 => "creditos",
@@ -77,13 +141,15 @@ $xT->setFootSum(array(
 	8 => "julio",
 	9 => "agosto",
 	10 => "septiembre",
-	11 => "octubre", 12 => "noviembre", 13 => "diciembre"
+	11 => "octubre", 
+	12 => "noviembre",
+	13 => "diciembre"
 ));
 $xRPT->setOut($out);
 $xRPT->addContent( $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal) );
 
 $xRPT->setSQL($sql);
-
+$xT->setFechaCorte($FechaFinal);
 $xT->setTipoSalida($out);
 $xRPT->addContent( $xT->Show() );
 //$xRPT->addContent("<script>setTimeout('mychart',1500);  function mychart() { $('#sqltable').visualize({type: 'bar', width: '450px'}).appendTo('body'); }</script>");

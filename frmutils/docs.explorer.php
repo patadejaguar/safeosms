@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.REPORTE DE ", HP_FORM);
+$xHP		= new cHPage("TR.LISTA DE ARCHIVO ", HP_FORM);
 $mql		= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -29,7 +29,10 @@ $xHP->init();
 //echo $xForm->get();
 // establecer una conexión básica
 $xFTP			= new cDocumentos();
-
+if($xFTP->FTPConnect() == false){
+	header("location:../404.php?i=4060");
+	exit;
+}
 $contents 		= $xFTP->FTPListFiles();
 //$xFTP->FTPMakeDir("PRUEBAS");
 
@@ -39,7 +42,6 @@ $xDiv			= new cHDiv("tx12");
 
 $msg			= "";
 $fils			= 0;
-
 foreach ($contents as $archivos){
 	$xFil		= new cDocumentos($archivos);
 	$icon		= "desconocido";
@@ -47,8 +49,7 @@ foreach ($contents as $archivos){
 	if ($xFil->isImagen() == true){ $icon	= "imagen";	}
 	//$xFRM->OButton($archivos, "");
 	if($icon != "desconocido"){
-		$xFRM->addDivSolo( $xFil->getEmbed($archivos), $xBTN->getBasic("", "setFile('$archivos')", $icon, "id$fils"), "tx34", "tx14" );
-		//$xFRM->addHElem(  );
+		$xFRM->addDivSolo( $xFil->getEmbed($archivos, false, $fils), $xBTN->getBasic("", "setFile('$archivos')", $icon, "id$fils"), "tx34", "tx14" );
 	}
 	$fils++;
 }
@@ -57,9 +58,13 @@ $xFRM->addCerrar();
 echo $xFRM->get();
 ?>
 <script>
+var msrc	= null;
+var xG		= new Gen();
+if (window.parent){ msrc = window.parent; }
+if (opener){ msrc = opener; }
 function setFile(mfil){
-	if(opener){
-		<?php echo "opener.$jscallback(mfil); window.close();";?>
+	if(msrc != null){
+		<?php echo "msrc.$jscallback(mfil); xG.close();";?>
 	}
 }
 </script>

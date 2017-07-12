@@ -35,11 +35,9 @@ include 'HTML/AJAX/Server.php';
 include_once './ajax/functions.php';
 
 
-$gridajax =& new gridajax();
+$gridajax 	= new gridajax();
 
-$server = new HTML_AJAX_Server();
+$server 	= new HTML_AJAX_Server();
 $server->registerClass($gridajax);
-
-
 $server->handleRequest();
 ?>

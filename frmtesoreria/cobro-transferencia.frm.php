@@ -48,9 +48,13 @@ if( setNoMenorQueCero($recibo) >0 ){
     $xTxt->addEvent("jsActualizarPago", "onkeyup");
     $xFRM->addHElem( $xHSel->getListaDeCuentasBancarias("iBancos", true)->get( "TR.Cuenta Bancaria de Deposito", true) );
     $xFRM->addHElem( $xHNot->get($xHP->lang("importe") . " : " . getFMoney($MontoOperacion), "idimporte") );
-    
-    $xFRM->addHElem( $xHSel->getListaDeTipoDePerfilTransaccional("", SYS_SALIDAS)->get(true) );
-    $xFRM->addHElem( $xHSel->getListadoDeBancos()->get("TR.Banco de Origen", true) );
+    if(MODULO_AML_ACTIVADO == true){
+    	$xFRM->addHElem( $xHSel->getListaDeTipoDePerfilTransaccional("", SYS_SALIDAS)->get(true) );
+    	$xFRM->addHElem( $xHSel->getListaDeBancos()->get("TR.Banco de Origen", true) );
+    } else {
+    	$xFRM->OHidden("idtipodeperfil", AML_OPERACIONES_PAGOS_EFVO);
+    	$xFRM->OHidden("idcodigodebanco", FALLBACK_CLAVE_DE_BANCO);
+    }
     
     //TODO: Agregar cuenta de origen ultimo 4 digitos
     $xFRM->addHElem( $xDat->get("TR.Fecha de Deposito", $xRec->getFechaDeRecibo()) ); 

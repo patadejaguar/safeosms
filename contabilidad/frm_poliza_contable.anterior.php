@@ -13,7 +13,7 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP				= new cHPage("TR.Poliza Contable", HP_FORM);
-$oficial 	= elusuario($iduser);
+
 
 //$xHT		= new cHButton("");
 

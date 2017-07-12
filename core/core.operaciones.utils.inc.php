@@ -40,7 +40,7 @@ class cUtileriasParaOperaciones{
 			$fecha_operacion	= $rw["fecha_operacion"];
 			$mvtos				= $rw["mvtos"];
 			$cadena				= "Documento de Ajuste por $mvtos Movimientos Huerfanos";
-			$recibo 			= setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, $fecha_operacion, 1, 10, $cadena, DEFAULT_CHEQUE, DEFAULT_TIPO_PAGO, DEFAULT_RECIBO_FISCAL, DEFAULT_GRUPO);
+			$recibo 			= setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, $fecha_operacion, 1, 10, $cadena, DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA, DEFAULT_RECIBO_FISCAL, DEFAULT_GRUPO);
 			$sqlU				= "UPDATE operaciones_mvtos SET recibo_afectado=$recibo WHERE 
 																			(SELECT COUNT(idoperaciones_recibos) FROM operaciones_recibos 
 																			WHERE idoperaciones_recibos = operaciones_mvtos.recibo_afectado) = 0 
@@ -136,8 +136,10 @@ class cUtileriasParaOperaciones{
 				COUNT(idoperaciones_recibos) AS 'repetidos' FROM operaciones_recibos
 				GROUP BY idoperaciones_recibos
 				HAVING repetidos>1 ";
-		$rs = mysql_query($sql, cnnGeneral());
-		while($rw = mysql_fetch_array($rs)){
+		$xQL	= new MQL();
+		$rs 	= $xQL->getRecordset($sql);// mysql_query($sql, cnnGeneral());
+		while($rw = $rs->fetch_Assoc()){
+		//while($rw = mysql_fetch_array($rs)){
 			$SQLoD	= "SELECT idoperaciones_recibos, numero_socio, fecha_operacion FROM operaciones_recibos
 					WHERE idoperaciones_recibos =  " . $rw["idoperaciones_recibos"] . "
 					ORDER BY fecha_operacion ASC

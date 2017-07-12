@@ -19,7 +19,7 @@ $xHP			= new cHPage("TR.Mandato", HP_REPORT);
 $idsolicitud 	= parametro("i", DEFAULT_CREDITO, MQL_INT); $idsolicitud = parametro("credito", $idsolicitud, MQL_INT); $idsolicitud = parametro("solicitud", $idsolicitud, MQL_INT);
 $formato		= parametro("forma", 3, MQL_INT);
 $oficial 		= elusuario($iduser);
-
+$xHP->addCSS("../css/contrato.css.php");
 //ini_set("display_errors", "on");
 $xHP->init();
 ?>

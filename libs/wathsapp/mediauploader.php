@@ -5,6 +5,7 @@
  */
 class WhatsMediaUploader
 {
+
     protected static function sendData($host, $POST, $HEAD, $filepath, $mediafile, $TAIL)
     {
         $sock = fsockopen("ssl://" . $host, 443);
@@ -13,9 +14,9 @@ class WhatsMediaUploader
         fwrite($sock, $HEAD);
 
         //write file data
-        $buf = 1024;
+        $buf       = 1024;
         $totalread = 0;
-        $fp = fopen($filepath, "r");
+        $fp        = fopen($filepath, "r");
         while ($totalread < $mediafile['filesize']) {
             $buff = fread($fp, $buf);
             fwrite($sock, $buff, $buf);
@@ -37,7 +38,7 @@ class WhatsMediaUploader
         list($header, $body) = preg_split("/\R\R/", $data, 2);
 
         $json = json_decode($body);
-        if (!is_null($json)) {
+        if ( ! is_null($json)) {
             return $json;
         }
         return false;
@@ -46,9 +47,9 @@ class WhatsMediaUploader
     public static function pushFile($uploadResponseNode, $messageContainer, $mediafile, $selfJID)
     {
         //get vars
-        $url = $uploadResponseNode->getChild("media")->getAttribute("url");
+        $url      = $uploadResponseNode->getChild("media")->getAttribute("url");
         $filepath = $messageContainer["filePath"];
-        $to = $messageContainer["to"];
+        $to       = $messageContainer["to"];
         return self::getPostString($filepath, $url, $mediafile, $to, $selfJID);
     }
 
@@ -57,11 +58,11 @@ class WhatsMediaUploader
         $host = parse_url($url, PHP_URL_HOST);
 
         //filename to md5 digest
-        $cryptoname = md5($filepath) . "." . $mediafile['fileextension'];
-        $boundary = "zzXXzzYYzzXXzzQQ";
+        $cryptoname    = md5($filepath) . "." . $mediafile['fileextension'];
+        $boundary      = "zzXXzzYYzzXXzzQQ";
         $contentlength = 0;
 
-        if(is_array($to)) {
+        if (is_array($to)) {
             $to = implode(',', $to);
         }
 
@@ -91,5 +92,3 @@ class WhatsMediaUploader
     }
 
 }
-
-?>

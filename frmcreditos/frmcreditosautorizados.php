@@ -24,40 +24,79 @@
 
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
+$xHP			= new cHPage("TR.MODULO DE AUTORIZACION", HP_FORM);
+$xRuls			= new cReglaDeNegocio();
+$xF				= new cFecha();
+$SinTasa		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_AUTORIZACION_SIN_TASA);		//regla de negocio
+$SinLugarPag	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_AUTORIZACION_SIN_LUGAR);		//regla de negocio Sin lugar de pago
+$SinTipoDisp	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_AUTORIZACION_SIN_DISP);		//regla de negocio Sin Tipo Dispersion
+$PuedeTasaCero	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PUEDEN_TASA_CERO);
+$SinTipoAut		= false;
 
-$xHP		= new cHPage("TR.MODULO DE AUTORIZACION", HP_FORM);
-$oficial 	= elusuario($iduser);
-$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
-$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
-$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$txt		= "";
-$xFRM		= new cHForm("frmcreditoautorizado", "frmcreditosautorizados.php?action=2", "frmcreditoautorizado");
-$xSel		= new cHSelect();
-$xTxt		= new cHText();
-$xTxt2		= new cHText();
-$xBtn		= new cHButton();
-$msg		= "";
-$jsInit		= "";
-$remoto		= false;
 
-if( setNoMenorQueCero($credito) > DEFAULT_CREDITO AND $action == SYS_NINGUNO){
+$oficial 		= elusuario($iduser);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+
+$xFRM			= new cHForm("frmcreditoautorizado", "frmcreditosautorizados.php?action=2", "frmcreditoautorizado");
+$xSel			= new cHSelect();
+$xTxt			= new cHText();
+$xTxt2			= new cHText();
+$xBtn			= new cHButton();
+$xLog			= new cCoreLog();
+$jxc			= new TinyAjax();
+$msg			= "";
+$jsInit			= "";
+$txt			= "";
+$remoto			= false;
+$xCred			= null;
+
+
+$pagos_autorizados		= 0;
+$monto_autorizado		= 0;
+$TipoDeAutorizacion		= FALLBACK_CREDITOS_TIPO_AUTORIZACION;
+$NivelDeRiesgo			= FALLBACK_CREDITOS_RIESGO;
+$TipoDePeriocidad		= DEFAULT_PERIOCIDAD_PAGO;
+$TipoDePago				= FALLBACK_CREDITOS_TIPO_PAGO;
+$TasaDeInteres	        = 0;
+$fecha_de_ministracion	= $xF->get();
+$fecha_de_autorizacion	= $xF->get();
+$TipoDeDispersion		= FALLBACK_CREDITOS_TIPO_DESEMBOLSO;
+$TipoDeLugarDeCobro		= FALLBACK_CREDITOS_LUGAR_DE_PAGO;
+$cedula_grupal			= 0;
+
+if( setNoMenorQueCero($credito) > DEFAULT_CREDITO){
 	$xCred	= new cCredito($credito);
 	$xCred->init();
+	
+	if($xCred->getEsValido() == false){
+		$xHP->goToPageError(20011);
+	}
+		
 	$persona	= $xCred->getClaveDePersona();
 	$jsInit		= "jsInit()";
 	getPersonaEnSession($persona);
 	$remoto			= true;
+	
+	$pagos_autorizados		= $xCred->getPagosSolicitados();
+	$monto_autorizado		= $xCred->getMontoSolicitado();
+	$TipoDeAutorizacion		= $xCred->getTipoDeAutorizacion();
+	$NivelDeRiesgo			= $xCred->getNiVelDeRiesgo();
+	$TipoDePeriocidad		= $xCred->getPeriocidadDePago();
+	$TipoDePago				= $xCred->getTipoDePago();
+	$TasaDeInteres	        = $xCred->getTasaDeInteres();
+	$fecha_de_ministracion	= $xCred->getFechaDeMinistracion();
+	$fecha_de_autorizacion	= $xCred->getFechaDeAutorizacion();	
 }
-
 $xFRM->addDataTag("role", "autorizacion");
 
 function jsaGetDatos($solicitud){
 	if( $solicitud!=0 and $solicitud!='' ){
 		$xCred			= new cCreditos_solicitud();
-		
 		$xCred->setData($xCred->query()->getRow("numero_solicitud=$solicitud"));
-		
+		$OCred			= new cCredito($solicitud); $OCred->init();		
 		$pagos			= $xCred->numero_pagos()->v();
 		$monto			= $xCred->monto_solicitado()->v();
 		$periocidad		= $xCred->periocidad_de_pago()->v();
@@ -78,7 +117,16 @@ function jsaGetDatos($solicitud){
 			
 			$tab -> add(TabSetvalue::getBehavior('idautorizacion', $xCred->docto_autorizacion()->v() ));
 
-			$tab -> add(TabSetvalue::getBehavior('idtipodeautorizacion', $xCred->tipo_autorizacion()->v() ));
+			//$tab -> add(TabSetvalue::getBehavior('idtipodeautorizacion', $xCred->tipo_autorizacion()->v() ));
+			
+			$tab -> add(TabSetvalue::getBehavior('idtipodispersion', $xCred->tipo_de_dispersion()->v() ));
+			$tab -> add(TabSetvalue::getBehavior('idtipolugarcobro', $xCred->tipo_de_lugar_de_pago()->v() ));
+			
+			if($OCred->getEsValido() == false){
+				$tab -> add(TabSetvalue::getBehavior('idvalido', "0" ));
+			} else {
+				$tab -> add(TabSetvalue::getBehavior('idvalido', "1" ));
+			}
 			return $tab -> getString();
 	}
 }
@@ -149,7 +197,7 @@ function getListadoDeGrupoParaGuardar($solicitud, $socio){
 
 						$fecha		= fechasys();
 						$oficial 	= elusuario($_SESSION["SN_b80bb7740288fda1f201890375a60c8f"]);
-		 		$xRec	= setNuevorecibo($presidenta, $solicitud, $fecha, 1, 40, "CREDITO_DE_GRUPO_ELABORADO_POR_$oficial", DEFAULT_CHEQUE, DEFAULT_TIPO_PAGO,
+		 		$xRec	= setNuevorecibo($presidenta, $solicitud, $fecha, 1, 40, "CREDITO_DE_GRUPO_ELABORADO_POR_$oficial", DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA,
 		 								DEFAULT_RECIBO_FISCAL, $grupo );
 		 		$body .= "<p class='aviso'>Se Crea el Recibo # $xRec para Trabajar</p>";
 				if ( isset($_SESSION["recibo_en_proceso"]) ){
@@ -166,54 +214,66 @@ function getListadoDeGrupoParaGuardar($solicitud, $socio){
 		$body	.= $avisos;
 		return $body;
 }
-function jsaSetSaveRechazados($solicitud, $texto){	$xCred		= new cCredito($solicitud); 	$xCred->init(); 	$xCred->setRazonRechazo($texto); }
+function jsaSetSaveRechazados($solicitud, $texto, $fecha){	$xCred		= new cCredito($solicitud); 	$xCred->init(); 	$xCred->setRazonRechazo($texto, "", $fecha); }
 
-$jxc = new TinyAjax();
+
 $jxc ->exportFunction('jsaGetDatos', array('idsolicitud'));
-$jxc ->exportFunction('jsaSetSaveRechazados', array('idsolicitud', 'txtRazones'));
+$jxc ->exportFunction('jsaSetSaveRechazados', array('idsolicitud', 'txtRazones', 'idfecha1'));
 $jxc ->exportFunction('getListadoDeGrupoParaGuardar', array('idsolicitud', "idsocio"), "#informacion");
 $jxc ->process();
 
 $xHP->init($jsInit);
+$xFRM->setTitle($xHP->getTitle());
 
 
 if  ( $action == SYS_DOS ){
 	//$cTipo	= new cTipos();
 	/* ----------------------------------------- MUEVE EL CREDITO AUTORIZADO y FILTRA ------------------------ */
-	$xF								= new cFecha();
-	$idsolicitud					= $credito;
+	$xF							= new cFecha();
+	$idsolicitud				= $credito;
 	if (setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO){
 		echo("<p class='aviso'>C&Oacute;DIGO DE SOLICITUD INCORRECTA</p>");
 	} else {
-		$idpagos 				= $_POST["idpagos"];
-		$idmonto 				= $_POST["idmonto"];
-		$idautorizacion 		= $_POST["idautorizacion"];
+		$xCred 					= new cCredito($idsolicitud);
+		$xCred->init();
+		if($xCred->getEsValido() == false){
+			$xHP->goToPageError(20011);
+		}
+		
+		$idpagos 				= parametro("idpagos", $xCred->getPagosSolicitados(), MQL_INT);
+		$idmonto 				= parametro("idmonto", $xCred->getMontoSolicitado(), MQL_FLOAT);
+		$idautorizacion 		= parametro("idautorizacion");
 		$sdoactual 				= 0;					//Saldo Actual es igual a Cero, hasta la ministracion se cambia
-		$idnivelderiesgo		= $_POST["idnivelderiesgo"];
-		$periocidad				= $_POST["idperiocidad"];
-		$idtipodepago		    = $_POST["idtipodepago"];
+		$idnivelderiesgo		= parametro("idnivelderiesgo", $xCred->getNiVelDeRiesgo(), MQL_INT);
+		$periocidad				= parametro("idperiocidad", $xCred->getPeriocidadDePago(), MQL_INT);
+		$idtipodepago		    = parametro("idtipodepago", $xCred->getTipoDePago(), MQL_INT);
 	
-		$TipoDeAutorizacion	    = $_POST["idtipodeautorizacion"];
-		$TasaDeInteres	        = $_POST["idtasa"];
+		$TipoDeAutorizacion	    = parametro("idtipodeautorizacion", $xCred->getTipoDeAutorizacion(), MQL_INT);
+		$TasaDeInteres	        = parametro("idtasa", 0, MQL_FLOAT);
 		$avisos					= "";
-		$fecha1					= parametro("idfecha1", false);
-		$fecha2					= parametro("idfecha2", false);
-	
-		$TasaDeInteres			= ($TasaDeInteres/100);
-		$xCred = new cCredito($idsolicitud);
-		$xCred->initCredito();
+		$fecha1					= parametro("idfecha1", $xCred->getFechaDeAutorizacion(), MQL_DATE);
+		$fecha2					= parametro("idfecha2", $xCred->getFechaDeMinistracion(), MQL_DATE);
+		$TipoDeDispersion		= parametro("idtipodispersion", $xCred->getTipoDeDispersion(), MQL_INT);
+		$TipoDeLugarDeCobro		= parametro("idtipolugarcobro", $xCred->getTipoDeLugarDeCobro(), MQL_INT);
+		
+		if($PuedeTasaCero == true){
+			
+		} else {
+			$TasaDeInteres		= ($TasaDeInteres <=0) ? ($xCred->getTasaDeInteres()*100) : $TasaDeInteres;
+		}
+		if($TasaDeInteres > 1){	$TasaDeInteres = ($TasaDeInteres/100); }
+				
 	
 		/* verifica si el credito ya ha sido autorizado */
 		$ds_sol 				= $xCred->getDatosDeCredito();
 	
-		$estatus				= $ds_sol["estatus_actual"];
-		$tasaot					= $TasaDeInteres; //$ds_sol["tasa_interes"];
-		$gpoasoc				= $ds_sol["grupo_asociado"];
-		$tipodeconv				= $ds_sol["tipo_convenio"];
-		$montosolicitado		= $ds_sol["monto_solicitado"];
-		$socio					= $ds_sol["numero_socio"];
-		$fechavcto				= $ds_sol["fecha_vencimiento"];
-		$diasaut				= $ds_sol["plazo_en_dias"];
+		$estatus				= $xCred->getEstadoActual();
+		$gpoasoc				= $xCred->getClaveDeGrupo();
+		$tipodeconv				= $xCred->getClaveDeProducto();
+		$montosolicitado		= $xCred->getMontoSolicitado();
+		$socio					= $xCred->getClaveDePersona();
+		$fechavcto				= $xCred->getFechaDeVencimiento();
+		$diasaut				= $xCred->getDiasSolicitados();
 	
 		$sucess					= true;
 	
@@ -237,23 +297,28 @@ if  ( $action == SYS_DOS ){
 		/* OBTIENE EL PERIODO EN QUE SE DEBIO AUTORIZAR */
 	
 		$periodo                        = $ds_sol["periodo_solicitudes"];;
-		$fechaaut 						= $xF->getFechaISO($fecha1);// $_POST["elanno0"] . "-" . $_POST["elmes0"] . "-" . $_POST["eldia0"];
-		$fecha_ministracion_propuesta 	= $xF->getFechaISO($fecha2);//$_POST["elanno1"] . "-" . $_POST["elmes1"] . "-" . $_POST["eldia1"];
+		$fechaaut 						= $xF->getFechaISO($fecha1);
+		$fecha_ministracion_propuesta 	= $xF->getFechaISO($fecha2);
 		$fechaultmvto 					= $fechaaut;				//Fecha de Ultimo Movimiento = Fecha de Autorizacion;
 		if($idmonto <= TOLERANCIA_SALDOS){
 			//Cambiar a 0 de saldo autorizado y 50 de estatus
 			$xCred->setCancelado($idautorizacion, $fechaaut);
 			$sucess				= false;
 		}
+		//Actualiza a Clientes
+		$xSoc	= new cSocio($xCred->getClaveDePersona());
+		if($xSoc->init() == true){
+			$xSoc->setEsCliente();
+		}
 		/*------------------------------ Obtiene datos mediante sentencias dinamicas */
 	
 	
-		$estatusactual 					= 98;
+		$estatusactual 					= CREDITO_ESTADO_AUTORIZADO;
 	
 		/* Determina si el Pago es en una sola Ministracion, genera el IDAD */
 	
 		if ($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) {
-			$intdev 		= ($idmonto * $tasaot) / EACP_DIAS_INTERES;	// Interes Diario para Pagos Fijos
+			$intdev 		= ($idmonto * $TasaDeInteres) / EACP_DIAS_INTERES;	// Interes Diario para Pagos Fijos
 			$idpagos 		= 1;
 			$fechavcto		= $ds_sol["fecha_vencimiento"];
 			$diasaut		= restarfechas($fechavcto, $fecha_ministracion_propuesta);
@@ -262,7 +327,7 @@ if  ( $action == SYS_DOS ){
 			$xFRM->addCreditoComandos($idsolicitud);
 			
 		} else {
-			$intdev 		=  ($idmonto * $tasaot) / EACP_DIAS_INTERES;	// Interes Diario a Cero para otros Casos
+			$intdev 		=  ($idmonto * $TasaDeInteres) / EACP_DIAS_INTERES;	// Interes Diario a Cero para otros Casos
 			$fechavcto		=  sumardias($fecha_ministracion_propuesta, $diasaut);
 			$msg			.= "WARN\tLa Fecha de Vencimiento es actualizada al " . getFechaLarga($fechavcto) . "; los dias autorizados son de $diasaut\r\n";
 			$msg			.= "WARN\tPARA OBTENER LOS DEMAS DOCUMENTOS DEBE GENERAR EL PLAN DE PAGOS\r\n";
@@ -270,99 +335,133 @@ if  ( $action == SYS_DOS ){
 	
 		/* ------------------------------ sentencia update -------------------------- */
 		if($sucess	== true){
-			$xCred->setAutorizado($idmonto, $idpagos, $periocidad, $TipoDeAutorizacion, $fechaaut, $idautorizacion,
+			$sucess	= $xCred->setAutorizado($idmonto, $idpagos, $periocidad, $TipoDeAutorizacion, $fechaaut, $idautorizacion,
 					$idtipodepago, $fecha_ministracion_propuesta, $idnivelderiesgo, $diasaut, $fechavcto,
-					$estatusactual, $sdoactual, $intdev, $fechaultmvto, $TasaDeInteres);
-			/* si es Credito de Grupos solidarios, Actualiza los Mvtos de Otorgacion */
-			if( $OConv->getEsProductoDeGrupos() == true) {
-				$sqlusolc = "UPDATE operaciones_mvtos	SET estatus_mvto = 10	WHERE
-				grupo_asociado=$gpoasoc	AND (tipo_operacion=112) AND (estatus_mvto=40)";
-				my_query($sqlusolc);
-			}
-			//Eliminar Plan de Pagos
-			$plan 	= setNoMenorQueCero($xCred->getNumeroDePlanDePagos());
-			if($plan > 0){
-				$xPlan	= new cPlanDePagos($plan);
-				$xPlan->setEliminar();
-				$msg	.= $xPlan->getMessages();
+					$estatusactual, $sdoactual, $intdev, $fechaultmvto, $TasaDeInteres, $TipoDeLugarDeCobro, $TipoDeDispersion);
+			if($sucess == true){
+				/* si es Credito de Grupos solidarios, Actualiza los Mvtos de Otorgacion */
+				if( $OConv->getEsProductoDeGrupos() == true) {
+					$sqlusolc = "UPDATE operaciones_mvtos	SET estatus_mvto = 10 WHERE grupo_asociado=$gpoasoc	AND (tipo_operacion=112) AND (estatus_mvto=40)";
+					$xQL	= new MQL();
+					$xQL->setRawQuery($sqlusolc);
+				}
+				//Eliminar Plan de Pagos
+				$plan 	= setNoMenorQueCero($xCred->getNumeroDePlanDePagos());
+				if($plan > 0){
+					$xPlan	= new cPlanDePagos($plan);
+					$xPlan->setEliminar();
+					$msg	.= $xPlan->getMessages();
+				}
+				$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", $xFRM->ic()->CALCULAR);
 			}
 		}
+		$msg		.= $xCred->getMessages();
 		//------------------------------- IMPRIME UNA PEQUE%A DESCRIPCION DE LA SOLICITUD -----------------------
 		$xCred->init();
 		$xFRM->addHTML( $xCred->getFichaDeSocio(true) );
 		$xFRM->addHTML( $xCred->getFicha(true) );
 	
-	
-		//$urlsend 				= "elUrl='" . $OConv->getPathPagare($idsolicitud) . "';";
-		$cedula_grupal 	       			= 0;
-		//$urctr 					= "esUrl='" . $xCred->getPathDelContrato() . "';";
-		if ($OConv->getEsProductoDeGrupos() == true) {
-			//Si la cedula Grupal existe y el Tipo de Integracion el GRUPO
-			if ( isset( $_SESSION["recibo_en_proceso"] ) ){ $cedula_grupal	= $_SESSION["recibo_en_proceso"]; }
-			$xFRM->addToolbar( $xBtn->getBasic("TR.IMPRIMIR CEDULA GRUPAL DE AUTORIZACION", "jsPrintCedulaGrupal())", "personas", "print-cedulagrupo", false ) );
+		if($sucess == true){
+			//$urlsend 				= "elUrl='" . $OConv->getPathPagare($idsolicitud) . "';";
+			$cedula_grupal 	       			= 0;
+			//$urctr 					= "esUrl='" . $xCred->getPathDelContrato() . "';";
+			if ($OConv->getEsProductoDeGrupos() == true) {
+				//Si la cedula Grupal existe y el Tipo de Integracion el GRUPO
+				if ( isset( $_SESSION["recibo_en_proceso"] ) ){ $cedula_grupal	= $_SESSION["recibo_en_proceso"]; }
+				$xFRM->addToolbar( $xBtn->getBasic("TR.IMPRIMIR CEDULA GRUPAL DE AUTORIZACION", "jsPrintCedulaGrupal())", "personas", "print-cedulagrupo", false ) );
+			}
+			$xFRM->addAvisoRegistroOK();
+		} else {
+			$xFRM->addAvisoRegistroError();
 		}
 		//$xFRM->addToolbar( $xBtn->getBasic("TR.IMPRIMIR CEDULA DE AUTORIZACION", "printcedula()", "documento", "print-cedula", false ) );
-		$xFRM->addToolbar( $xBtn->getSalir("", true) );// $xBtn->getIrAlInicio(true) );
-	
+		$xFRM->addCerrar();
+		
 		$msg			.= "WARN\tLos Datos de Fecha de vencimiento, Dias Autorizados\r\n";
 		$msg			.= "WARN\tInteres Diario, Monto de la Parcialidad, etc. Varian cuando se elabore el PLAN DE PAGOS (Cuando son PAGOS PERIODICOS)\r\n";
 		$msg			.= "WARN\tNo es recomendable que se Impriman los Documentos a esta Altura del Proceso\r\n";
 		$xFRM->addAviso($msg);
-		$xFRM->addAvisoRegistroOK();
+		
 	}	
 } else {
 ?>
-<div class="inv" id="divrazones">
-	<form class="formoid-default" style="background-color:#FFFFFF;font-size:14px;font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;color:#666666;width:30em" title="frmRechazados" method="post">
-		<div class="element-text" ><h2 class="title">Rechazados</h2></div>
-		<div class="element-textarea" ><label class="title">Razones de Rechazo</label><textarea name="txtRazones" id="txtRazones" cols="20" rows="5" ></textarea></div>
-		<div class="element-submit" >
-			<input type="button" onclick="jsSetSaveRechazados()" value="Guardar"/>
-			<input type="button" onclick="jsCancelRechazados()" value="Cancelar"/>
-		</div>
-	</form>
-</div>
-<?php
-
-
-
-
-$xTxt->addEvent("getListadoDeGrupoParaGuardar()", "onblur");
-$xTxt2->addEvent("jsEvaluateMonto()", "onchange");
-
-$msg		= "";
-$xTA		= $xSel->getListaDeTipoDeAutorizacion();
-$xTA->addEvent("onfocus", "jsaGetDatos()");
-//$xTA->addEvent("onchange", "jsaGetDatos()");
-//si existe credito y persona
-if( $remoto	== true  ){
-	$xFRM->addHElem("<input type='hidden' id='idsocio' name='idsocio' value='$persona' /> <input type='hidden' id='idsolicitud' name='idsolicitud' value='$credito' /> ");
-} else {
-	$xFRM->addCreditBasico($credito, $persona);
-}
-
-$xFRM->addHElem( $xTA->get(true) );
-
-
-$xFRM->addHElem( $xSel->getListaDeTipoDeRiesgoEnCreds()->get(true) );
-
-$xFRM->addHElem( $xTxt->getDeMoneda("idpagos", "TR.Pagos Autorizados") );
-
-$xFRM->addHElem( $xTxt2->getDeMoneda("idmonto", "TR.Monto Autorizado") );
-$xFRM->addHElem( $xTxt2->getDeMoneda("idtasa", "TR.Tasa Autorizada") );
-//$xFRM->OText("idpagos", "", "TR.Pagos Autorizados");
-
-$xFRM->addHElem( $xSel->getListaDePeriocidadDePago()->get(true) );
-$xFRM->addHElem( $xSel->getListaDeTipoDePago()->get(true) );
-
-$xFRM->ODate("idfecha1", false, "TR.Fecha de Autorizacion");
-$xFRM->ODate("idfecha2", false, "TR.Fecha de Ministracion");
-
-$xFRM->OTextArea("idautorizacion", "", "TR.Docto de Autorizacion");
-//$xFRM->addSubmit();
-$xFRM->addGuardar("jsGuardarAutorizacion()");
-
-$xFRM->addHTML('<form name="frmOthersProcess"><div id="informacion"></div></form>');
+	<div class="inv" id="divrazones">
+		<form class="formoid-default" style="background-color:#FFFFFF;font-size:14px;font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;color:#666666;width:30em" title="frmRechazados" method="post">
+			<div class="element-text" ><h2 class="title">Rechazados</h2></div>
+			<div class="element-textarea" ><label class="title">Razones de Rechazo</label><textarea name="txtRazones" id="txtRazones" cols="20" rows="5" ></textarea></div>
+			<div class="element-submit" >
+				<input type="button" onclick="jsSetSaveRechazados()" value="Guardar"/>
+				<input type="button" onclick="jsCancelRechazados()" value="Cancelar"/>
+			</div>
+		</form>
+	</div>
+	<?php
+	$msg		= "";
+	$xTA		= $xSel->getListaDeTipoDeAutorizacion("", $TipoDeAutorizacion);
+	$xTA->addEvent("onfocus", "jsaGetDatos()");
+	//$xTA->addEvent("onchange", "jsaGetDatos()");
+	//si existe credito y persona
+	if( $remoto	== true  ){
+		$xFRM->addHElem( $xCred->getFicha(true, "", false, true) );
+		$xFRM->addHElem("<input type='hidden' id='idsocio' name='idsocio' value='$persona' /> <input type='hidden' id='idsolicitud' name='idsolicitud' value='$credito' /> ");
+		$xCOrg				= new cCreditosDatosDeOrigen();
+		
+		switch($xCred->getTipoDeOrigen()){
+			case $xCOrg->ORIGEN_RENOVACION:
+				$SinTipoAut	= true;
+				break;
+			
+		}
+		
+	} else {
+		$xFRM->addCreditBasico($credito, $persona);
+	}
+//================================ Item de Validacion
+	//$xFRM->OHidden("idvalido", 1);
+	$xFRM->OHidden("idvalido", 0);
+	if($SinTipoAut == false){
+		$xFRM->addHElem( $xTA->get(true) );
+	} else {
+		$xFRM->OHidden("idtipodeautorizacion", $TipoDeAutorizacion);
+	}
+	
+	$xFRM->addHElem( $xSel->getListaDeTipoDeRiesgoEnCreds("", $NivelDeRiesgo)->get(true) );
+	
+	$xFRM->OMoneda("idpagos",  $pagos_autorizados, "TR.Pagos Autorizados" );
+	$xFRM->OMoneda("idmonto", $monto_autorizado, "TR.Monto Autorizado");
+	$xFRM->setValidacion("idmonto", "jsEvaluateMonto");
+	if($SinTasa == true){
+		$xFRM->OHidden("idtasa", $TasaDeInteres);
+	} else {
+		$xFRM->OMoneda("idtasa", $TasaDeInteres, "TR.Tasa Autorizada");
+	}
+	
+	$xFRM->addHElem( $xSel->getListaDePeriocidadDePago("", $TipoDePeriocidad)->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeTipoDePago("", $TipoDePago)->get(true) );
+//=============== Tipo y lugart de cobro
+	if($SinLugarPag == true){
+		$xFRM->OHidden("idtipolugarcobro", $TipoDeLugarDeCobro);
+	} else {
+		$xFRM->addHElem( $xSel->getListaDeTipoDeLugarDeCobro("", $TipoDeLugarDeCobro)->get(true) );
+	}
+	if($SinTipoDisp == true){
+		$xFRM->OHidden("idtipodispersion", $TipoDeDispersion);
+	} else {
+		$xFRM->addHElem( $xSel->getListaDeTipoDeDispersionCreditos("", $TipoDeDispersion)->get(true) );
+	}
+	
+	$xFRM->ODate("idfecha1", $fecha_de_autorizacion, "TR.Fecha de Autorizacion");
+	$xFRM->ODate("idfecha2", $fecha_de_ministracion, "TR.Fecha de Ministracion");
+	
+	$xFRM->OTextArea("idautorizacion", "", "TR.Documento de Autorizacion");
+	$xFRM->setValidacion("idautorizacion", "jsGetValidacion");
+	$xFRM->addGuardar("jsGuardarAutorizacion()");
+	$xFRM->OButton("TR.Validacion", "jsGetFormaValidacion", $xFRM->ic()->CHECAR);
+	
+	//$xFRM->OButton("TR.RECHAZAR", "jsSetCancelado()", $xFRM->ic()->CERRAR);
+	
+	
+	$xFRM->addHTML('<form name="frmOthersProcess"><div id="informacion"></div></form>');
 	//2011-02-01
 	$idsolicitud					= 0;
 	$urlsend						= "";
@@ -371,29 +470,43 @@ $xFRM->addHTML('<form name="frmOthersProcess"><div id="informacion"></div></form
 
 
 }
-$xJs	= new jsBasicForm("frmcreditoautorizado");
-$xJs->setEstatusDeCreditos(CREDITO_ESTADO_SOLICITADO);
+
 //$xJs->setLoadDefaults(false);
 echo $xFRM->get();
-if($remoto == false){
-	echo $xJs->get();
-}
+
 $jxc ->drawJavaScript(false, true);
 
 ?>
 </body>
 <script  >
-var jsrCreditosCommon			= "../js/creditos.common.js.php";
-var divLiteral				= "<?php echo STD_LITERAL_DIVISOR; ?>";
+var jsrCreditosCommon	= "../js/creditos.common.js.php";
+var divLiteral			= "<?php echo STD_LITERAL_DIVISOR; ?>";
+var mFormaValidada		= false;
+var xG					= new Gen();
+var xC					= new CredGen();
 function jsInit(){ autoEjecutar = false; jsaGetDatos(); $("#idtipodeautorizacion").focus();  }
+function jsGetValidacion(){ getListadoDeGrupoParaGuardar(); mFormaValidada = true; return true;}
 function jsGuardarAutorizacion(){
-	if(flotante($("#idmonto").val()) <= 0){
-		jsEvaluateMonto();	
+	if($("#idvalido").val() == 0){
+		xG.alerta({ msg : "El Credito contiene Datos Faltantes" });
+		
 	} else {
-		if($("#idesautorizado").length > 0){
-			$("#frmcreditoautorizado").submit();
+		if(mFormaValidada == false){
+			jsGetValidacion();
+		}
+	
+		var subf			= function(){
+				if($("#idesautorizado").length > 0){
+					$("#frmcreditoautorizado").submit();
+				} else {
+					xG.alerta({ msg : "Forma no validada" });
+				}		
+			}	
+		
+		if(flotante($("#idmonto").val()) <= 0){
+			jsEvaluateMonto();	
 		} else {
-			alert("Forma no validada");
+			xG.spin({ callback : subf });
 		}
 	}
 }
@@ -464,6 +577,7 @@ function jsEvaluateMonto(){
 		getModalTip("#frmcreditoautorizado", $("#divrazones"), "");
 		$("#txtRazones").focus();
 	}
+	return true;
 }
 function jsSetSaveRechazados() {
 	jsaSetSaveRechazados();
@@ -473,6 +587,15 @@ function jsSetSaveRechazados() {
 }
 function jsCancelRechazados(){
 	$("#frmcreditoautorizado").qtip("hide");
+}
+function jsSetCancelado(){
+	$("#idmonto").val(0);
+	$("#idmonto").trigger("blur");
+	var jsda = function(){ $("#txtRazones").focus(); }
+	xG.spin({time:1000,callback:jsda});
+}
+function jsGetFormaValidacion(){
+	xC.getFormaValidacion($("#idsolicitud").val());
 }
 </script>
 </html>

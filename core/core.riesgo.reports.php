@@ -156,7 +156,7 @@ class cReporteBuroDeCredito_tipo {
 		
 		$this->mInfoLinea[40]		= AML_CLAVE_MONEDA_LOCAL; //TODO: mejorar
 		$this->mInfoLinea[41]		= $xCred->getPagosAutorizados();
-		if($xCred->getTipoEnSistema() == CREDITO_PRODUCTO_NOMINA ){ //TODO: Parchar con el de TADEO
+		if($xCred->getTipoEnSistema() == SYS_PRODUCTO_NOMINA ){ //TODO: Parchar con el de TADEO
 			$this->mInfoLinea[42]	= "P";
 		} else {
 			$this->mInfoLinea[42]	= $this->mEquivFrecPagos[ $xCred->getPeriocidadDePago() ];
@@ -188,7 +188,7 @@ class cReporteBuroDeCredito_tipo {
 		$this->mInfoLinea[58]		= ""; //Numero de cuenta anterior en caso de cartera tranferida
 		$this->mInfoLinea[59]		= ($xCred->getFechaDePrimerAtraso() == null) ? "" : $this->getDate( $xCred->getFechaDePrimerAtraso() ); //TODO: Fecha de Primera atraso
 		$this->mInfoLinea[60]		= $this->getMonto( $xCred->getSaldoActual($fecha) ); //Saldo Insoluto del Principal
-		$this->mInfoLinea[61]		= $this->getMonto( $xCred->getMontoUltimoPago() );// $xCred->getMontoDeParcialidad();//0; //TODO: Monto de Ultimo pago
+		$this->mInfoLinea[61]		= $this->getMonto( $xCred->getMontoUltimoPago() );// $xCred->getMontoDeParcialidad();//0; //Monto de Ultimo pago
 		if(MODO_DEBUG == true){
 			$this->mMessages			.= $xCred->getMessages(OUT_TXT);
 		}
@@ -277,15 +277,8 @@ class cReporteCirculoDeCredito_tipo {
 		$xT		= new cTipos();
 		$xFI	= new cFileImporter();
 		$arrR	= array(",", "-", ".", "|");
-		//$txt	= $xFI->cleanString($txt, $arrR);
-		//$xT->setToUTF8();
-		//$txt	= iconv('UTF-8', 'UTF-8//IGNORE', $txt);
-		//$txt	= "$txt-" . mb_detect_encoding($txt, 'ASCII,UTF-8,ISO-8859-1');
+		$xT->setForceMayus();
 		$txt	= $xT->cChar($txt);
-		//setLog($txt);
-		//$txt	= html_entity_decode($txt);
-		//$txt = mb_convert_encoding($txt, 'UTF-8', mb_detect_encoding($txt, 'ASCII,UTF-8,ISO-8859-1'));
-		$txt	= strtoupper($txt);
 		if($serializar != false){
 			$txt	= $xT->cSerial($serializar, $txt);
 		}
@@ -296,12 +289,20 @@ class cReporteCirculoDeCredito_tipo {
 	}
 	function getDate($fecha){
 		$xF		= new cFecha();
-		return ($this->mOut == OUT_CSV) ? date("Ymd", $xF->getInt($fecha)) : "" . date("Ymd", $xF->getInt($fecha));
+		$dd		= "";
+		if($fecha === ""){
+			$dd	= "";
+		} else {
+			$dd	= ($this->mOut == OUT_CSV) ? date("Ymd", $xF->getInt($fecha)) : "" . date("Ymd", $xF->getInt($fecha));
+		}
+		return $dd;
 	}
 	function getPurgueDomicilio($domicilio){
 		$domicilio		= $this->getText($domicilio);
 		$domicilio		= str_replace("CALLE", "", $domicilio);
 		$domicilio		= str_replace("C.", "", $domicilio);
+		$domicilio		= str_replace("#", " ", $domicilio);
+		$domicilio		= trim($domicilio);
 		return $domicilio;
 	}
 	function getClaveDeOtorgante(){ return ENTIDAD_CLAVE_SIC; 	}
@@ -432,6 +433,8 @@ class cReportes_Layout {
 	public $OPERACIONES_RELEVANTES	= "pld.relevantes.json";
 	public $OPERACIONES_INUSUALES	= "pld.inusuales.json";
 	public $OPERACIONES_INTERNAS	= "pld.preocupantes.json";
+	
+	public $REPORTE_VINTAGE			= "reporte-vintage.json";
 		
 	function __construct($esquema = ""){ $this->mEsquema	= $esquema;	}
 	function read(){

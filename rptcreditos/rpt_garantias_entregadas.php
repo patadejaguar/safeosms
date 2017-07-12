@@ -66,7 +66,7 @@ $input = $_GET["out"];
 
 
 
-	$setSql .= "SELECT creditos_garantias.socio_garantia AS 'socio',  socios.nombre,
+	$setSql = "SELECT creditos_garantias.socio_garantia AS 'socio',  socios.nombre,
 	creditos_garantias.solicitud_garantia AS 'solicitud', creditos_garantias.idcreditos_garantias AS 'codigo_control',
 	creditos_tgarantias.descripcion_tgarantias AS 'tipo_de_gtia', creditos_garantias.fecha_resguardo,
 	creditos_garantias.monto_valuado AS 'valor' FROM socios, creditos_garantias, creditos_tgarantias

@@ -10,9 +10,10 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-	$xHP				= new cHPage("REPORTE DE CREDITOS POR RANGO DE MORA", HP_REPORT);
+	$xHP				= new cHPage("TR.CREDITOS POR RANGO DE MORA", HP_REPORT);
 	$xF					= new cFecha();
 	$xLi				= new cSQLListas();
+	$xQL				= new MQL();
 //=====================================================================================================
 /**
  * Filtrar si Existe Caja Local
@@ -41,44 +42,31 @@ $es_por_frecuencia 		= $xLi->OFiltro()->CreditosPorFrecuencia($frecuencia);
 $es_por_convenio 		= $xLi->OFiltro()->CreditosPorProducto($convenio);
 $es_por_estatus 		= $xLi->OFiltro()->CreditosPorEstado($estatus);
 /* ***************************************************************************** */
-if($out == OUT_EXCEL){
-	
-} else {
-	echo $xHP->getHeader();
-	echo $xHP->setBodyinit("initComponents();");
-	echo getRawHeader();
-	$xRpt		= new cReportes();
-	echo $xRpt->getEncabezado($xHP->getTitle() );
+$senders				= getEmails($_REQUEST);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+
+
+$init			= 4;
+$arrCSumas		= array(3 => "saldo");
+$rsrango		= $xQL->getDataRecord("SELECT * FROM `creditos_nievelesdereserva` WHERE `tipo_de_credito` = 1");
+$casewhen		= "";
+foreach ($rsrango as $rw){
+	$li			= $rw["limite_inferior"];
+	$ls			= $rw["limite_superior"];
+	$casewhen	.= ($casewhen == "") ? "(CASE WHEN ( (dias_morosos >=$li AND dias_morosos <=$ls)) THEN (saldo) ELSE 0 END) AS 'moroso_" . $ls . "_dias'" : ",(CASE WHEN ( (dias_morosos >=$li AND dias_morosos <=$ls)) THEN (saldo) ELSE 0 END) AS 'moroso_" . $ls . "_dias'";
+	$init++;
+	$arrCSumas[$init]	= "moroso_" . $ls . "_dias";
 }
+
 
 $sql	= "SELECT
 	`socios`.`codigo`,
 	`socios`.`nombre`,
 	`creditos_solicitud`.`numero_solicitud`,
 	saldo,
-	dias_morosos,
-	dias_vencidos,
-		
-	(CASE WHEN ( (dias_vencidos + dias_morosos) <=0) THEN ( saldo ) ELSE 0 END) AS 'sin_mora',
-	 
-	(CASE WHEN ( (dias_morosos >=1 AND dias_morosos <=7)) THEN (saldo) ELSE 0 END) AS 'moroso_7_dias',
-	(CASE WHEN ( (dias_morosos >=8 AND dias_morosos <=15)) THEN (saldo) ELSE 0 END) AS 'moroso_15_dias',
-	(CASE WHEN ( (dias_morosos >=16 AND dias_morosos <=30)) THEN (saldo) ELSE 0 END) AS 'moroso_30_dias',
-	(CASE WHEN ( (dias_morosos >=31 AND dias_morosos <=60)) THEN (saldo) ELSE 0 END) AS 'moroso_60_dias',
-	(CASE WHEN ( (dias_morosos >=61 AND dias_morosos <=90)) THEN (saldo) ELSE 0 END) AS 'moroso_90_dias',
-	(CASE WHEN ( (dias_morosos >=91 AND dias_morosos <=120)) THEN (saldo) ELSE 0 END) AS 'moroso_120_dias',
-	(CASE WHEN ( (dias_morosos >=121 AND dias_morosos <=180)) THEN (saldo) ELSE 0 END) AS 'moroso_180_dias',
-	(CASE WHEN ( (dias_morosos >=181)) THEN (saldo) ELSE 0 END) AS 'moroso_mayor',
-	 
-	(CASE WHEN ( (dias_vencidos >=1 AND dias_vencidos <=7)) THEN (saldo) ELSE 0 END) AS 'vencido_7_dias',
-	(CASE WHEN ( (dias_vencidos >=8 AND dias_vencidos <=15)) THEN (saldo) ELSE 0 END) AS 'vencido_15_dias',
-	(CASE WHEN ( (dias_vencidos >=16 AND dias_vencidos <=30)) THEN (saldo) ELSE 0 END) AS 'vencido_30_dias',
-	(CASE WHEN ( (dias_vencidos >=31 AND dias_vencidos <=60)) THEN (saldo) ELSE 0 END) AS 'vencido_60_dias',
-	(CASE WHEN ( (dias_vencidos >=61 AND dias_vencidos <=90)) THEN (saldo) ELSE 0 END) AS 'vencido_90_dias',
-	(CASE WHEN ( (dias_vencidos >=91 AND dias_vencidos <=120)) THEN (saldo) ELSE 0 END) AS 'vencido_120_dias',
-	(CASE WHEN ( (dias_vencidos >=121 AND dias_vencidos <=180)) THEN (saldo) ELSE 0 END) AS 'vencido_180_dias',
-	(CASE WHEN ( (dias_vencidos >=181)) THEN (saldo) ELSE 0 END) AS 'vencido_mayor'
-	 
+	dias_morosos AS 'dias_en_mora',
+	$casewhen
 	 FROM
 	`creditos_solicitud` `creditos_solicitud` 
 		INNER JOIN `dias_en_mora` `dias_en_mora` 
@@ -97,54 +85,44 @@ $sql	= "SELECT
 		$ByEmpresa
 		/*Disable castigados*/
 		AND `creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . "
-	 ORDER BY dias_morosos DESC
+	 ORDER BY dias_morosos DESC, `socios`.`nombre`
 	";
-//exit( $sql );
-if($out == OUT_EXCEL){
-	$xls	= new cHExcel();
-	$xls->convertTable($sql, "REPORTE DE CREDITOS POR RANGO DE MORA");
-} else {
+
 	$xTBL	= new cTabla($sql);
+	
 	//$xTBL->setEventKey("jsGoEstadoDeCuentaDeCreditosPorPersona");
 	$xTBL->setKeyField("numero_solicitud");
-	$xTBL->setTdClassByType();
-	$init		= 6;
-	$arrCSumas	= array( 
-			3 => "saldo", 
-			$init => "sin_mora",
-			($init+1) => "moroso_7_dias",
-			($init+2) => "moroso_15_dias",
-			($init+3) => "moroso_30_dias",
-			($init+4) => "moroso_60_dias",
-			($init+5) => "moroso_90_dias",
-			($init+6) => "moroso_120_dias",
-			($init+7) => "moroso_180_dias",
-			($init+8) => "moroso_mayor",
-			
-			($init+9)=> "vencido_7_dias",
-			($init+10) => "vencido_15_dias",
-			($init+11) => "vencido_30_dias",
-			($init+12) => "vencido_60_dias",
-			($init+13) => "vencido_90_dias",
-			($init+14) => "vencido_120_dias",
-			($init+15) => "vencido_180_dias",
-			($init+16) => "vencido_mayor"
-						
-			);
+	$xTBL->setTipoSalida($out);
+	$xTBL->setUsarNullPorCero();
 	$xTBL->setFootSum($arrCSumas);
-	echo $xTBL->Show();
-	echo getRawFooter();
-	echo $xHP->setBodyEnd();
-	?>
-	<script>
-	<?php
-	
-	?>
-	function initComponents(){
-		window.print();
-	}
-	</script>
-	<?php
-	$xHP->end();
-}
+	$xTBL->setFechaCorte($FechaFinal);
+
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($xHP->getTitle());
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+//$xT		= new cTabla($sql, 2);
+//$xT->setTipoSalida($out);
+
+$xTBL->setTipoSalida($out);
+$body		= $xRPT->getEncabezado($xHP->getTitle());
+$xRPT->setBodyMail($body);
+$xRPT->addContent($body);
+$xRPT->addContent( $xTBL->Show(  ) );
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+//$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 ?>

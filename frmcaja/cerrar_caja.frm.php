@@ -24,6 +24,8 @@ function jsaCerrarCaja($oficial, $pwd, $caja){
 	$xBtn		= new cHButton();
 	$xCaja		= new cCaja($caja);
 	$cUsr		= new cSystemUser($oficial, false);
+	$pwd 		= $cUsr->getHash($pwd, false);
+	
 	$sucess		= $cUsr->getCompareData("contrasenna", $pwd);
 	$msg		= "";
 	
@@ -58,11 +60,12 @@ $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("s
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$fecha		= parametro("fecha", false, MQL_RAW);
 
 $xHP->setIncludeJQueryUI();
 $xHP->init();
 
-$xFRM		= new cHForm("frmabrir", "abrir_caja.frm.php?action=1", "frmabrir");
+$xFRM		= new cHForm("frmcerrar", "cerrar_caja.frm.php?action=1", "frmcerrar");
 $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xDate		= new cHDate();
@@ -75,21 +78,24 @@ $xFRM->OButton("TR.Cerrar Caja", "jsCerrarCaja()", "bloquear", "cmdlock");
 $xFRM->OButton("TR.Guardar Arqueo", "jsRegistrarArqueo()", "guardar", "cmdcerrar");
 $xFRM->OButton("TR.Eliminar Arqueo", "jsEliminarArqueo()", $xFRM->ic()->ELIMINAR, "cmddel");
 $xFRM->addToolbar("<span id='cajacerrada'></span>");
-
-$lsCajas	= $xSel->getListaDeCajasAbiertas();
+ 
+$lsCajas	= $xSel->getListaDeCajasAbiertas("", "", $fecha);
 $lsCajas->addEvent("onchange", "jsDatosDeCaja()");
 $lsCajas->addEvent("onblur", "jsDatosDeCaja()");
 $xFRM->addHElem( $lsCajas->get(true) );
 
 $xTxt->addEvent("jsDatosDeCaja()", "onfocus");
+$xTxt->setDiv13();
 
-$xFRM->addHElem( $xTxt->getNormal("oficial", "", "TR.Jefe_de_caja") );
+$xFRM->addHElem( $xTxt->getNormal("oficial", "", "TR.JEFE_DE_CAJA") );
 $xFRM->addHElem( $txtP->getPassword("password", "TR.Password", "") );
 
 $xTxM		= new cHText();
 $xDiv		= new cHDiv("txm");
 $xTab		= new cHTabs();
 $xTxM->addEvent("jsActualizarMonedas", "onchange");
+//$xTxM->setDiv13();
+
 $xDiv->addHElem("<h3>" . $xFRM->lang("Valores") . "<id id='totalmonedas'></i></h3>");
 $xDiv->addHElem( $xTxM->getDeMoneda("mone-10-cents", "TR.Monedas de 10 centimos", 0) );
 $xDiv->addHElem( $xTxM->getDeMoneda("mone-20-cents", "TR.Monedas de 20 centimos", 0) );
@@ -103,6 +109,7 @@ $xDiv->addHElem( $xTxM->getDeMoneda("bille-50", "TR.Billetes de 50", 0) );
 $xDiv->addHElem( $xTxM->getDeMoneda("bille-100", "TR.Billetes de 100", 0) );
 $xDiv->addHElem( $xTxM->getDeMoneda("bille-200", "TR.Billetes de 200", 0) );
 $xDiv->addHElem( $xTxM->getDeMoneda("bille-500", "TR.Billetes de 500", 0) );
+$xDiv->addHElem( $xTxM->getDeMoneda("bille-1000", "TR.Billetes de 1000", 0) );
 
 $xDiv->addHElem("<h3>" . $xFRM->lang("Documentos") . "<id id='totaldocumentos'></i></h3>");
 $xHT	= new cHTabla();
@@ -164,22 +171,30 @@ $xFRM->OHidden("idsumadoctos", 0, "");
 $xFRM->addHTML( $xTab->get()  );
 
 $xFRM->addAviso($msg);
-//$xFRM->addSubmit();
+$xFRM->addJsInit("jsDatosDeCaja()");
 
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
 ?>
 <script >
 var xg			= new Gen();
+var xG			= new Gen();
 var sumaArq		= 0;
 var ordenCbza	= {};
 var sumaVals	= 0;
 var sumaDocts	= 0;
 
 function jsDatosDeCaja(){ jsaGetResumenDeCaja(); }
-function jsEliminarArqueo(){
-	var sicon	= confirm("Desea Eliminar el Arqueo para esta caja?.");
-	if(sicon){ jsaEliminarArqueo(); 	jsDatosDeCaja(); }	
+function jsEliminarArqueo(){ xG.confirmar({msg:"Desea Eliminar el Arqueo para esta caja?.", callback:jsEliminarCajaConfirmado}); }
+function jsEliminarCajaConfirmado(){
+	//xG.spinInit();
+	jsaEliminarArqueo();
+	var mf = function(){
+		$('#frmcerrar').trigger("reset");
+		jsDatosDeCaja();
+		//xG.spinEnd();
+	}
+	setTimeout(mf,2000);
 }
 function jsRegistrarArqueo(){
 	if($("#idsumacobros").length >0 ){
@@ -200,10 +215,11 @@ function jsRegistrarArqueo(){
 	setTimeout("jsGuardarArqueo()", 2000);
 }
 function jsCerrarCaja(){
-	var valoresops	= 0;
+	var valoresops		= 0;
 	var valorescobro	= 0;
 	var success			= true;
-
+	var mf 				= function(){ xG.spinEnd(); }
+	var mWait			= 5500;
 	if( $('#idsumaoperaciones').length > 0){
 		valorescobro	= redondear($("#idsumacobros").val(),2);
 		valoresops		= redondear($("#idsumaoperaciones").val(),2);
@@ -222,14 +238,14 @@ function jsCerrarCaja(){
 	if(success == true){
 		var sip	= confirm("CONFIRMA CERRAR LA CAJA CON VALORES DE " + valorescobro + "?");
 		if(sip){
+			xg.disTime("#cmdlock", mWait);
+			setTimeout(mf,mWait);
 			jsaCerrarCaja();
-			tip("#ultool", IMG_LOADING, 5500);
-			xg.disTime("#cmdlock", 5500);
 		}
 	}
 }
 function jsActualizarMonedas(){
-	var $inputs = $('#frmabrir :input');
+	var $inputs = $('#frmcerrar :input');
 	var mSum	=  0;
     $inputs.each(function() {
         if ( String(this.name).indexOf("mone") !== -1||String(this.name).indexOf("bille") !== -1  ){
@@ -246,7 +262,7 @@ function jsActualizarMonedas(){
     jsActualizarTotal();
 }
 function jsActualizarDoctos(){
-	var $inputs = $('#frmabrir :input');
+	var $inputs = $('#frmcerrar :input');
 	var mSum	=  0;
     $inputs.each(function() {
         if ( String(this.name).indexOf("idmontodoc") !== -1){
@@ -279,25 +295,27 @@ function jsGuardarArqueo(){
 	var mCaja	= $("#idcaja").val();
 	var cnt		= 1;
 	var siz		= Object.keys(ordenCbza).length;
+	//xG.spinInit();
   	for (var mObj in ordenCbza) {
 		var itms	= ordenCbza[mObj];
 	
 	    var url	= "../svc/envioarqueo.svc.php?caja=" + mCaja + "&valor=" + itms.valor + "&numero=" + itms.numero + "&notas=" + itms.notas + "&documento=" + itms.documento;
-	    if(flotante(itms.valor) > 0){
+	    
+	    if(flotante(itms.valor) > 0 && flotante(itms.numero) > 0){
 		    xg.pajax({
 			url : url, result : "json",
 				callback : function(data){
 					try { data = JSON.parse(data); } catch (e){ }
 					if (typeof data != "undefined"){
 						$("#idmsgs").html(data.message);
-						//alert(data.arqueado);
 						if(cnt >= siz){
-							$('#frmabrir').trigger("reset");
+							$('#frmcerrar').trigger("reset");
+							//xG.spinEnd();
 							jsDatosDeCaja();
 						}
 						cnt++;
 					} else {
-						alert("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+						xG.alerta({msg:"ERROR AL GUARDAR EL ARQUEO"})
 					}
 				}
 			});

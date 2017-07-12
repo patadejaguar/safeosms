@@ -39,6 +39,7 @@ include_once("../core/core.captacion.inc.php");
 	$messages			= "";
 	$fechaop			= parametro("f", fechasys());
 	$xF					= new cFecha(0, $fechaop);
+	getEnCierre(true);
 	//INICIAR
 	if(MODULO_CAPTACION_ACTIVADO == true){
 		$aliasFil			= getSucursal() . "-eventos-al-cierre-de-captacion-del-dia-$fechaop";
@@ -50,7 +51,7 @@ include_once("../core/core.captacion.inc.php");
 		$xRec				= new cReciboDeOperacion(12, false);
 		//$xRec->setGenerarPoliza();
 		$xRec->setForceUpdateSaldos();
-		$idrecibo			=  $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CUENTA_CORRIENTE, $fechaop, 1, 12, "CIERRE_DE_CAPTACION_$fechaop", "", TESORERIA_COBRO_NINGUNO, "", DEFAULT_GRUPO);
+		$idrecibo			=  $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CUENTA_CORRIENTE, $fechaop, 1, RECIBOS_TIPO_CIERRE, "CIERRE_DE_CAPTACION_$fechaop", "", TESORERIA_COBRO_NINGUNO, "", DEFAULT_GRUPO);
 		$xRec->setNumeroDeRecibo($idrecibo);
 	
 		$messages 			.= "=======================================================================================\r\n";
@@ -61,6 +62,11 @@ include_once("../core/core.captacion.inc.php");
 		$messages 			.= "=========================		RECIBO: $idrecibo				   ====================\r\n";
 		$messages 			.= "=======================================================================================\r\n";
 		$xUCapt					= new cUtileriasParaCaptacion();
+		
+		$messages 			.= "=========================		Actualizando Saldos de Captacion 	====================\r\n";
+		
+		$messages			.= $xUCapt->setActualizarSaldos(CAPTACION_TIPO_PLAZO);
+		$messages			.= $xUCapt->setActualizarSaldos(CAPTACION_TIPO_VISTA);
 		
 		$messages 			.= "=========================		Purgando Dias Minimo de Inversion 	====================\r\n";
 		
@@ -87,7 +93,7 @@ include_once("../core/core.captacion.inc.php");
 	if ($parser == true){
 		header("Location: ./cierre_de_seguimiento.frm.php?s=true&k=" . $key . "&f=$fechaop");
 	}
-
+	getEnCierre(false);
 /*} else{
 	setLog("La llave Original $key no correponde a la variable" . MY_KEY);
 }*/

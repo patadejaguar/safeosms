@@ -17,63 +17,97 @@ $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("s
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$credito 	= parametro("docto", $credito, MQL_INT);
 
+$tipomemo 	= parametro("idtipodememo",DEFAULT_TIPO_MEMO, MQL_INT); $tipomemo 	= parametro("tipo",$tipomemo, MQL_INT);
 $predef		= parametro("d");
+$txtmemo 	= parametro("idmemo");
+$lista		= parametro("lista", false, MQL_BOOL);
+
 $div		= STD_LITERAL_DIVISOR;
-$defval		= "$persona" . $div . "$credito" . $div . "1" . $div . "99" . $div . "ANOTE_AQUI_SU_TEXTO";
-if ( $predef == "" ){
-	$defval		= $predef;
-}
-$D			= explode($div, $defval);
-$mem		= (isset($D[4])) ? $D[4] : "";
 
 $xHP->init();
 
-//jsbasic("frmhistorial", "", ".");
-
-
+if($clave > 0){
+	//$x
+}
 
 $xHP->init();
 
 $xFRM		= new cHForm("frmhistorial", "./frmhistorialdesocios.php?action=" . MQL_ADD);
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->setNoAcordion();
 $xSel		= new cHSelect();
 $xChk		= new cHCheckBox();
 $msg		= "";
-
-$xFRM->addJsBasico();
-$xFRM->addCreditBasico();
-$xFRM->addSubmit();
-
-$xFRM->addHElem( $xSel->getListaDeTiposDeMemoPersonas()->get(true) );
-$xFRM->addHElem( $xChk->get("TR.Notificar", "idnotificar") );
-$xFRM->OTextArea("idmemo", $mem, "TR.Texto del memo");
-
-
-
-
-
-
-
-
-	if($persona > DEFAULT_SOCIO){
+//$xW			= new cSeguimientoWathsApp();
+//$xW->setRequerirRegistro();
+//$xW->setConfirmarRegistro("977446");
+if($persona > DEFAULT_SOCIO and $action == MQL_ADD){
 	$idgrupo 		= parametro("idgrupo", DEFAULT_GRUPO, MQL_INT);
-	$txtmemo 		= parametro("idmemo");
-	$tipomemo 		= parametro("idtipodememo");
 	$notificar		= parametro("idnotificar", false, MQL_BOOL);
-
 	$fechamemo 		= fechasys();
-		if(trim($txtmemo) != ""){
-			$xSoc		= new cSocio($persona);
-			$xSoc->init();
+	if(trim($txtmemo) != ""){
+		$xSoc		= new cSocio($persona);
+		if($xSoc->init() == true){
 			$xSoc->addMemo($tipomemo, $txtmemo, $credito, $fechamemo, $notificar, $notificar);
-			$xFRM->addAviso("EL REGISTRO SE HA HECHO SATISFACTORIAMENTE");
-			if(MODO_DEBUG == true){
-				$xFRM->addLog($xSoc->getMessages());
-			}
+			$xFRM->addAvisoRegistroOK();
+			//$xFRM->addLog($xSoc->getMessages());
+			$xFRM->addCerrar("", 5);
+		} else {
+			$xFRM->addAvisoRegistroError($xSoc->getMessages());
 		}
 	}
-	//.-
-	echo $xFRM->get();	
+}
+if($credito > DEFAULT_CREDITO){
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$persona	= $xCred->getClaveDePersona();
+		$xFRM->addHElem($xCred->getFichaMini());
+	}
+}
+if($credito > DEFAULT_CREDITO AND $persona > 0){
+	$xFRM->OHidden("credito", $credito);
+	$xFRM->OHidden("persona", $persona);
+} else {
+	$xFRM->addJsBasico();
+	$xFRM->addCreditBasico($credito, $persona);
+}	
+
+$xFRM->addSubmit();
+if($tipomemo > 0){
+	$xFRM->OHidden("idtipodememo", $tipomemo);
+	$xFRM->setNoAcordion();
+	
+	$xTipoM	= new cPersonasTiposMemos($tipomemo);
+	
+	$xTipoM->init();
+	$xFRM->addSeccion("idtit", $xTipoM->getNombre());
+	$xFRM->endSeccion();
+	$xFRM->OHidden("idnotificar", "false");
+} else {
+	$xFRM->addHElem( $xSel->getListaDeTiposDeMemoPersonas("", $tipomemo)->get(true) );
+	$xFRM->OCheck("TR.Notificar", "idnotificar");
+}
+
+
+$xFRM->OTextArea("idmemo", $txtmemo, "TR.Texto del memo");
+
+//$xFRM->addHElem( $xChk->get("TR.Notificar", "idnotificar") );
+if($lista == true){
+	$xFRM->addSeccion("idnot", "TR.NOTAS ANTERIORES");
+	$xLi	= new cSQLListas();
+	$sql	= $xLi->getListadoDeNotas(false, $credito, $xTipoM->NOTA_COBRANZA);
+	
+	$xT		= new cTabla($sql);
+	$xT->setOmitidos("tipo");
+	$xT->setOmitidos("usuario");
+	$xFRM->addHElem($xT->Show());
+	$xFRM->endSeccion();
+}
+//.-
+echo $xFRM->get();	
 ?>
 
 </body>

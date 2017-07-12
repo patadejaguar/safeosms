@@ -35,7 +35,7 @@ $xChk		= new cHCheckBox();
 $msg		= "";
 if($action == SYS_NINGUNO ){
 	$xFRM->OFile("idarchivo");
-	$xFRM->addHElem( $xChk->get("TR.Afectar Base de Datos", "idaplicar") );
+	$xFRM->addHElem( $xChk->get("TR.Afectar Base_de_Datos", "idaplicar") );
 	$xFRM->OText("idmascara", $esqueleto, "TR.Mascara");
 } else {
 	//

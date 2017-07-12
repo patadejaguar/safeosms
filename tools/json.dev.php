@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.VISOR JSON", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -23,7 +23,7 @@ $xF			= new cFecha();
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
-$xHP->setIncludeJQueryUI();
+//$xHP->setIncludeJQueryUI();
 $xHP->init();
 
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
@@ -39,7 +39,7 @@ $rs			= array();
 $soloValores= array();
 //AND MODO_DEBUG == true
 if($tabla != false AND $clave != false ){
-	$xObj	= new cSAFETabla($tabla);
+	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
 		$rs["message"]		= "ERROR\t para la Tabla $tabla y clave $clave\r\n";
 		$rs["error"]		= true;
@@ -55,6 +55,8 @@ if($tabla != false AND $clave != false ){
 	}
 }
 
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
 
 $todo		= json_encode($rs);
 $jsVals		= json_encode($soloValores);

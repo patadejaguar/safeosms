@@ -51,11 +51,12 @@ $xRPT->setSQL($sql);
 //============ Reporte
 $xT				= new cTabla($sql, 2);
 $xT->setTipoSalida($out);
-
+$xT->setFootSum(array(2=>"ahorro"));
 
 $body		= $xRPT->getEncabezado($nombre_empresa. "<br/>". $xHP->getTitle());
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
+
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
 $xRPT->addContent( $xT->Show( ) );

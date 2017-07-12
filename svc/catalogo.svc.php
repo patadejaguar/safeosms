@@ -24,7 +24,7 @@ if($idcuenta >  0){
 	$ByCuenta	= " AND (`contable_catalogo`.`numero` LIKE '" . $xCta->CUENTARAW . "%') ";
 }
 if($ncuenta != ""){
-	$ByNombre	= " OR (`contable_catalogo`.`nombre` LIKE '%$ncuenta%') ";
+	$ByNombre	= ($ByCuenta == "") ? " AND (`contable_catalogo`.`nombre` LIKE '%$ncuenta%') " : " OR (`contable_catalogo`.`nombre` LIKE '%$ncuenta%') ";
 }
 //cuenta por numero, cuenta por nombre
 $sql		= "SELECT
@@ -33,7 +33,7 @@ $sql		= "SELECT
 FROM
 	`contable_catalogo`
 WHERE (`contable_catalogo`.`numero` > 0 ) $ByCuenta $ByNombre LIMIT 0,50 ";
-
+setLog($sql);
 header('Content-type: application/json');
 if($idcuenta > 0 OR $ncuenta != ""){
 	$xSVC       = new MQLService("LIST", $sql);

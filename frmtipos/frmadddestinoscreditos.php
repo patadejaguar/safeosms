@@ -1,4 +1,9 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package
+ */
 //=====================================================================================================
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
@@ -10,61 +15,65 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
-
-$oficial = elusuario($iduser);
-
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<title>Agregar Destino/Aplicaci&oacute;n de Creditos</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<link href="<?php echo CSS_GENERAL_FILE; ?>" rel="stylesheet" type="text/css">
-</head>
-<body>
-<hr></hr>
-	<p class="frmTitle"><script> document.write(document.title); </script></p>
-<hr></hr>
-
-<form name="frmadddestinos" method="post" action="frmadddestinoscreditos.php">
-	<table border='0'  >
-		<tr>
-			<th>Identificador</th><td><input type='text' name='id' value='0'></td>
-			<th>Descripcion</th><td><input type='text' name='descripcion' value='0' size="50"></td>
-		</tr>
-	</table>
-	<input type="submit" value="Enviar">
-</form>
-<?php 
-$description = $_POST["descripcion"];
-$id = $_POST["id"];
-$sqlp = "SELECT idcreditos_destinos AS 'Identificador', descripcion_destinos AS 'Descripcion' FROM creditos_destinos";
-	if ($description) {
-		$sql = "INSERT INTO creditos_destinos(idcreditos_destinos, descripcion_destinos, destino_credito) VALUES ($id, '$description', $id)";
-		my_query($sql);
-		echo "<p class='aviso'>EL REGISTRO SE EFECTUO CORRECTAMENTE</p><hr></hr>";
-	}
-	$mtbl = new cTabla($sqlp);
-	$mtbl->addTool(1);
-	$mtbl->addTool(2);
-	echo $mtbl->Show();
+$xHP		= new cHPage("TR.DESTINO_DE_CREDITO", HP_GRID);
+$xF			= new cFecha();
+$xL			= new cLang();
+$xTabla		= new cCreditos_destinos();
 	
+$xHP->setNoDefaultCSS();
+echo $xHP->getHeader(true);
+//HTML Object END
+echo '<body onmouseup="SetMouseDown(false);" >';
+//Define your grid
+	$_SESSION["grid"]->SetDatabaseConnection(MY_DB_IN, USR_DB, PWD_DB);
+	//Propiedades del GRID
+	$mGridTitulo		= $xHP->getTitle();
+	$mGridKeyField		= $xTabla->getKey();	//Nombre del Campo Unico
+	$mGridKeyEdit		= true;					//Es editable el Campo
+	$mGridTable			= $xTabla->get();	//Nombre de la tabla
+	$mGridSQL			= $xTabla->query()->getListaDeCampos();//  "*"; //$xTabla->query()->getCampos();
+	$mGridWhere			= "";
+	$mGridSQL			= "idcreditos_destinos,descripcion_destinos,destino_credito,tasa_de_iva";
+	
+	$mGridProp			= array(
+	"idcreditos_destinos" 				=> "TR.Clave,true,20",
+	"descripcion_destinos" 				=> "TR.NOMBRE,true,250",
+	"destino_credito" 					=> "TR.CLAVE,true,20",
+	"capital_vencido_renovado" 			=> "TR.CAPITAL_REN_VENC,true,20",
+	"capital_vencido_reestructurado" 	=> "TR.CAPITAL_REEST_VENC,true,20",
+	"capital_vencido_normal" 			=> "TR.CAPITAL_VENC_NORMAL,true,20",
+	"capital_vigente_renovado" 			=> "TR.CAPITAL_REN_VIG,true,20",
+	"capital_vigente_reestructurado"	=> "TR.CAPITAL_REEST_VIG,true,20",
+	"capital_vigente_normal" 			=> "TR.CAPITAL_VIG_NORMAL,true,120",
+			
+	"interes_cobrado" 					=> "TR.INTERES_NORMAL_COBRADO,true,120",
+	"moratorio_cobrado" 				=> "TR.INTERES_MORA_COBRADO,true,120",
+	"interes_vencido_renovado" 			=> "TR.INTERES_RENOVADO_VENC,true,120",
+	"interes_vencido_reestructurado"	=> "TR.INTERES_REEST_VENC,true,120",
+	"interes_vencido_normal" 			=> "TR.INTERES_VENCIDO,true,120",
+	"interes_vigente_renovado" 			=> "TR.INTERES_RENOVADO,true,120",
+	"interes_vigente_reestructurado" 	=> "TR.INTERES_REEST,true,120",
+	"interes_vigente_normal" 			=> "TR.INTERES_VIGENTE,true,20",
+			
+	"tasa_de_iva" 						=> "TR.IMPUESTO_AL_CONSUMO,true,25",
+						);
+	//===========================================================================================================
+	
+	$_SESSION["grid"]->SetSqlSelect($mGridSQL, $mGridTable, $mGridWhere);
+	$_SESSION["grid"]->SetUniqueDatabaseColumn($mGridKeyField, $mGridKeyEdit);
+	$_SESSION["grid"]->SetTitleName($mGridTitulo);
+	$_SESSION["grid"]->SetEditModeAdd(true);
+	//$_SESSION["grid"]->SetEditModeDelete(false);
+	//===========================================================================================================					
+		foreach ($mGridProp as $key => $value) {
+			$mVals		= explode(",", $value, 3);
+			if ( isset($mVals[0]) ){ $_SESSION["grid"]->SetDatabaseColumnName($key, $xL->getT($mVals[0]));	}
+			if ( isset($mVals[1]) ) { $_SESSION["grid"]->SetDatabaseColumnEditable($key, $mVals[1]); }
+			if ( isset($mVals[2]) ) { $_SESSION["grid"]->SetDatabaseColumnWidth($key, $mVals[2]); }	
+		}
+	//===========================================================================================================
+	$_SESSION["grid"]->SetMaxRowsEachPage(25);
+	$_SESSION["grid"]->PrintGrid(MODE_EDIT);
+
+echo $xHP->fin();
 ?>
-</body>
-<script  >
-	function actualizame(id) {
-	url = "../utils/frm8db7028bdcdf054882ab54f644a9d36b.php?t=creditos_destinos&f=idcreditos_destinos=" + id;
-			myurl = window.open(url);
-			myurl.focus();
-
-	}
-	function eliminame(id) {
-		var sURL = "../utils/frm9d23d795f8170f495de9a2c3b251a4cd.php?t=creditos_destinos&f=idcreditos_destinos=" + id;
-	delme = window.open( sURL, "window", "width=300,height=300,scrollbars=yes,dependent");
-	delme.focus();
-
-	}
-
-</script>
-</html>

@@ -23,15 +23,16 @@
 //=====================================================================================================
 $xHP			= new cHPage("TR.Estado de Cuenta de Depositos plazo_fijo", HP_REPORT);
 $xQl			= new MQL();
+$xF				= new cFecha();
 
-$cuenta					= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT); $cuenta = parametro("docto", $cuenta, MQL_INT);
-$idcuenta 				= $cuenta; //parametro("docto", false, MQL_INT);
-$AppByFechas			= parametro("v73", false, MQL_BOOL);		//Boolean por fechas
-$fecha_inicial 			= $_GET["on"];
-$fecha_final 			= $_GET["off"];
-$out 					= parametro("out", SYS_DEFAULT);
-$es_por_fechas 			= "";
-$xHT					= new cHTabla();
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT); $cuenta = parametro("docto", $cuenta, MQL_INT);
+$idcuenta 		= $cuenta; //parametro("docto", false, MQL_INT);
+$AppByFechas	= parametro("v73", false, MQL_BOOL);		//Boolean por fechas
+$out 			= parametro("out", SYS_DEFAULT);
+$es_por_fechas 	= "";
+$xHT			= new cHTabla();
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 
 //ini_set("display_errors", "on");
 
@@ -49,16 +50,20 @@ $xRPT->addContent( $xCuenta->getFicha(true, "", true) );
 
 //Datos de la Cuenta
 $sqlMvtos = "SELECT
+	`operaciones_tipos`.`descripcion_operacion` AS `descripcion`,
 			`operaciones_mvtos`.*,
 				(`operaciones_mvtos`.`afectacion_real` *
 				`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'monto',
 				`eacp_config_bases_de_integracion_miembros`.`afectacion`
-			FROM
-			`operaciones_mvtos` `operaciones_mvtos`
-				INNER JOIN `eacp_config_bases_de_integracion_miembros`
-				`eacp_config_bases_de_integracion_miembros`
-				ON `operaciones_mvtos`.`tipo_operacion` =
-				`eacp_config_bases_de_integracion_miembros`.`miembro`
+FROM
+	`eacp_config_bases_de_integracion_miembros` 
+	`eacp_config_bases_de_integracion_miembros` 
+		INNER JOIN `operaciones_mvtos` `operaciones_mvtos` 
+		ON `eacp_config_bases_de_integracion_miembros`.`miembro` = 
+		`operaciones_mvtos`.`tipo_operacion` 
+			INNER JOIN `operaciones_tipos` `operaciones_tipos` 
+			ON `operaciones_mvtos`.`tipo_operacion` = `operaciones_tipos`.
+			`idoperaciones_tipos`
 			WHERE
 			(`operaciones_mvtos`.`docto_afectado` =" . $cuenta .") AND
 			(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 3200)
@@ -87,7 +92,7 @@ $sqlMvtos = "SELECT
 	
 	foreach ($rsmvto as $ryx) {
 			$tr		= "";
-			$tipoop 	= eltipo("operaciones_tipos", $ryx["tipo_operacion"]);
+			$tipoop 	= $ryx["descripcion"];
 			$fecha		= $ryx["fecha_afectacion"];
 			
 			$sdo_al_corte	+= $ryx["monto"];
@@ -122,7 +127,7 @@ $sqlMvtos = "SELECT
 			</tr>";
 			//Si Aplica por Fechas
 			if ( $AppByFechas == 1  ){
-				if ( ( strtotime($fecha) < strtotime($fecha_inicial) ) OR ( strtotime($fecha) > strtotime($fecha_final) ) ){
+				if ( $xF->getInt($fecha) > $xF->getInt($FechaFinal) OR $xF->getInt($fecha) < $xF->getInt($FechaInicial)  ){
 					$tr	= "";
 				}
 			}

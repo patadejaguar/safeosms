@@ -11,7 +11,7 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 
-	$xHP		= new cHPage("Reporte de Creditos", HP_RPTXML );
+	$xHP		= new cHPage("TR.Creditos Pagados", HP_REPORT );
 	$xF			= new cFecha();
 //=====================================================================================================
 /**
@@ -49,70 +49,107 @@ $es_por_convenio 		= ($convenio != SYS_TODAS) ? " AND creditos_solicitud.tipo_co
 
 $mx 					= (isset($_GET["mx"])) ? true : false;
 if($mx == true){
-	$fechaInicial		= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal			= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
+	$FechaInicial		= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
+	$FechaFinal			= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
 } else {
-	$fechaInicial		= (isset($_GET["on"])) ? $_GET["on"] : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal			= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
+	$FechaInicial		= (isset($_GET["on"])) ? $_GET["on"] : FECHA_INICIO_OPERACIONES_SISTEMA;
+	$FechaFinal			= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
 }
-$ByFecha				= " AND (`creditos_solicitud`.`fecha_ultimo_mvto` >='$fechaInicial' AND `creditos_solicitud`.`fecha_ultimo_mvto` <='$fechaFinal') ";
+$ByFecha				= " AND (`creditos_solicitud`.`fecha_ultimo_capital` >='$FechaInicial' AND `creditos_solicitud`.`fecha_ultimo_capital` <='$FechaFinal') ";
 /* ******************************************************************************/
 $OperadorFecha			= ($out == OUT_EXCEL) ?  " " : "getFechaMX";
+$senders		= getEmails($_REQUEST);
+$FEmp					= (PERSONAS_CONTROLAR_POR_EMPRESA == true) ? "socios.alias_dependencia AS 'empresa'," : "";
+$sql = "SELECT 
 
-$setSql = "SELECT 
-
-		socios.nombre,	socios.alias_dependencia AS 'empresa',
-		creditos_solicitud.numero_socio AS 'socio',
-	socios.genero, socios.tipo_ingreso AS 'tipo_de_ingreso',
+	creditos_solicitud.numero_socio AS 'socio',
+	socios.nombre,	
+	$FEmp
+	
 	
 	creditos_solicitud.numero_solicitud AS 'solicitud',
-	`creditos_solicitud`.`tipo_convenio` AS 'producto',
-	creditos_tipoconvenio.descripcion_tipoconvenio AS 'modalidad',
-	creditos_periocidadpagos.descripcion_periocidadpagos AS 'condiciones_de_pago', 
-	$OperadorFecha(creditos_solicitud.fecha_ultimo_mvto) AS 'fecha_de_pago',
-	creditos_solicitud.monto_autorizado AS 'monto_original', 
-	$OperadorFecha(creditos_solicitud.fecha_vencimiento) AS 'fecha_de_vencimiento',
-	(creditos_solicitud.tasa_interes * 100) AS 'tasa_anual',
-	CONCAT(creditos_solicitud.ultimo_periodo_afectado, '/', creditos_solicitud.pagos_autorizados) AS 'numero_de_pagos',
-	creditos_solicitud.periocidad_de_pago AS 'frecuencia', 
-	creditos_solicitud.saldo_actual AS 'saldo_insoluto',
-	creditos_solicitud.fecha_ultimo_mvto AS 'fecha_de_ultimo_pago', 
-	creditos_estatus.descripcion_estatus AS 'estatus',
-	creditos_solicitud.tipo_autorizacion AS 'modalidad_de_autorizacion',
-	`creditos_tipo_de_pago`.`descripcion` AS `tipo_de_pago`
+	
+	creditos_tipoconvenio.descripcion_tipoconvenio 				AS `producto`,
+	
+	creditos_periocidadpagos.descripcion_periocidadpagos 		AS `periocidad_de_pago`, 
+	$OperadorFecha(creditos_solicitud.fecha_ultimo_capital) 	AS `fecha_de_pago`,
 
+	(`creditos_solicitud`.`tasa_interes` * 100)					AS `tasa_anual`,
+	`creditos_solicitud`.`pagos_autorizados` 						AS `numero_de_pagos`,
+	`creditos_solicitud`.`ultimo_periodo_afectado`				AS `ultima_parcialidad`,
+	
+	`creditos_solicitud`.`monto_autorizado` 					AS `monto_original`,
+	`creditos_solicitud`.`recibo_ultimo_capital`				AS `recibo`,
+
+	
+	$OperadorFecha(`operaciones_recibos`.`fecha_de_registro`) 	AS `fecha_de_captura`,
+	`operaciones_recibos`.`tipo_pago`							AS `tipo_de_pago` 
+	
 FROM
 	`creditos_solicitud` `creditos_solicitud` 
-		INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` 
-		ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
-		`idcreditos_tipoconvenio` 
-			INNER JOIN `creditos_estatus` `creditos_estatus` 
-			ON `creditos_solicitud`.`estatus_actual` = `creditos_estatus`.
-			`idcreditos_estatus` 
-				INNER JOIN `creditos_tipo_de_pago` `creditos_tipo_de_pago` 
-				ON `creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` = 
-				`creditos_solicitud`.`tipo_de_pago` 
-					INNER JOIN `socios` `socios` 
-					ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo` 
-						INNER JOIN `creditos_periocidadpagos` 
-						`creditos_periocidadpagos` 
-						ON `creditos_solicitud`.`periocidad_de_pago` = 
-						`creditos_periocidadpagos`.`idcreditos_periocidadpagos`
+		INNER JOIN `socios` `socios` 
+		ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo` 
+			INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` 
+			ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
+			`idcreditos_tipoconvenio` 
+				INNER JOIN `operaciones_recibos` `operaciones_recibos` 
+				ON `creditos_solicitud`.`recibo_ultimo_capital` = 
+				`operaciones_recibos`.`idoperaciones_recibos` 
+					INNER JOIN `creditos_periocidadpagos` 
+					`creditos_periocidadpagos` 
+					ON `creditos_solicitud`.`periocidad_de_pago` = 
+					`creditos_periocidadpagos`.`idcreditos_periocidadpagos` 
+						INNER JOIN `creditos_estatus` `creditos_estatus` 
+						ON `creditos_solicitud`.`estatus_actual` = 
+						`creditos_estatus`.`idcreditos_estatus`
 
 	WHERE 
-	(creditos_solicitud.numero_solicitud != 0) 
-	AND 
 	(`creditos_solicitud`.`saldo_actual` <= " . TOLERANCIA_SALDOS . ")
+	AND `creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_AUTORIZADO . " 
+	AND `creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_AUTORIZADO . " 
+	AND `creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO ." 
 	$BySaldo
 	$es_por_estatus
 	$es_por_frecuencia
 	$es_por_convenio
 	$ByEmpresa
 	$ByFecha
-	ORDER BY `creditos_solicitud`.`tipo_convenio`, socios.nombre ";
+	ORDER BY creditos_solicitud.fecha_ultimo_mvto, socios.nombre ";
+
+//setLog($sql);
+
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($xHP->getTitle());
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
+
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 
 	//echo $setSql; exit();
-if ($out!= OUT_EXCEL) {
+/*if ($out!= OUT_EXCEL) {
 
 	$oRpt = new PHPReportMaker();
 	$oRpt->setDatabase(MY_DB_IN);
@@ -127,5 +164,5 @@ if ($out!= OUT_EXCEL) {
 } else {
 	$xHP	= new cHExcel();
 	$xHP->convertTable($setSql);
-}
+}*/
 ?>

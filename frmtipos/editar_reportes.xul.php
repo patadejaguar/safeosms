@@ -1,320 +1,98 @@
 <?php
 /**
-*  @see        Formulario avanzado de general_reports
-*  @since    2010-05-20 11:31:38
-*  @author    PHP Form XUL Wizard V 0.1.10 - Balam Gonzalez Luis (2008)
-**/
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
 //=====================================================================================================
-//=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");
 	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
+	include_once("../core/core.db.inc.php");
+	$theFile			= __FILE__;
+	$permiso			= getSIPAKALPermissions($theFile);
+	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-    $iduser = $_SESSION["log_id"];
 //=====================================================================================================
+$xHP		= new cHPage("TR.REPORTES", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-include_once("../core/entidad.datos.php");
-include_once("../core/core.deprecated.inc.php");
-include_once("../core/core.fechas.inc.php");
-include_once("../core/core.config.inc.php");
-$pUSRNivel = $_SESSION["SN_d567c9b2d95fbc0a51e94d665abe9da3"];
-$oficial = elusuario($iduser); 
-/* Tiny Ajax Includes */
-require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
-$jxc = new TinyAjax();
-//Valores de Control por default
-$FActual    = date("Y-m-d");
-$retrieveKey        = $_GET["x"];
-
-$rw = explode("^", "0^");
-//Genera Valores por el GET KEY recibido
-if(isset($retrieveKey)){
-    if(is_string($retrieveKey )){
-        $retrieveKey = "'$retrieveKey'";
-    }
-    $sqlEXP = "SELECT idreport, descripcion_reports, aplica, idgeneral_reports, explicacion
-                FROM general_reports
-                WHERE =$retrieveKey";
-    $rw = obten_filas($sqlEXP);
-}
-function xul_update_record($jx_idreport, $jx_descripcion_reports, $jx_aplica, $jx_idgeneral_reports, $jx_explicacion){
-$msg = "";
-        settype($jx_idreport, "integer");     
-        settype($jx_descripcion_reports, "string");     
-        settype($jx_aplica, "string");     
-        settype($jx_idgeneral_reports, "string");     
-        settype($jx_explicacion, "string");     
-
-    $strSQL_Update    = "UPDATE general_reports SET
-                        idreport=$jx_idreport, descripcion_reports='$jx_descripcion_reports', aplica='$jx_aplica', idgeneral_reports='$jx_idgeneral_reports', explicacion='$jx_explicacion'
-                          WHERE =";
-
-      $action = my_query($strSQL_Update);
-
-    if($action["stat"] == false){
-        $msg = "Se Fallo al Actualizar el Registro";
-    } else {
-        $msg = "El Registro se Actualizo Exitosamente";
-    }
-    return $msg;
-}
-
-function xul_delete_record(){
-$msg = "";
-    $strSQL_Delete    = "DELETE FROM general_reports
-                        WHERE =";
-    $action = my_query($strSQL_Delete);
-    if($action["stat"] == false){
-        $msg = "Se Fallo al Eliminar el Registro";
-    } else {
-        $msg = "El Registro se Elimino Exitosamente";
-    }
-    return $msg;
-}
-function xul_add_record($jx_idreport, $jx_descripcion_reports, $jx_aplica, $jx_idgeneral_reports, $jx_explicacion){
-$msg = "";
-        settype($jx_idreport, "integer");     
-        settype($jx_descripcion_reports, "string");     
-        settype($jx_aplica, "string");     
-        settype($jx_idgeneral_reports, "string");     
-        settype($jx_explicacion, "string");     
-
-    $strSQL_Insert = "INSERT INTO general_reports(idreport, descripcion_reports, aplica, idgeneral_reports, explicacion)
-                        VALUES ($jx_idreport, '$jx_descripcion_reports', '$jx_aplica', '$jx_idgeneral_reports', '$jx_explicacion')";
-    $action = my_query($strSQL_Insert);
-    if($action["stat"] == false){
-        $msg = "Se Fallo al Agregar el Registro";
-    } else {
-        $msg = "El Registro se Agrego Exitosamente";
-    }
-    return $msg;
-}
-function xul_get_record(){
-    $strSQL_Select = "SELECT * FROM general_reports
-                        WHERE =";
-    $tab    = new TinyAjaxBehavior();
-    $rw    = obten_filas($strSQL_Select);
-        $tab->add(TabSetValue::getBehavior("id-idreport", $rw["idreport"])); 
-             $tab->add(TabSetValue::getBehavior("id-descripcion_reports", $rw["descripcion_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-aplica", $rw["aplica"])); 
-             $tab->add(TabSetValue::getBehavior("id-idgeneral_reports", $rw["idgeneral_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-explicacion", $rw["explicacion"])); 
-     
-    return $tab->getString();
-}
-function xul_next_record($mark){
-    $strSQL_Select = "SELECT * FROM general_reports
-                          LIMIT $mark, 1";
-    $tab    = new TinyAjaxBehavior();
-    $rw    = obten_filas($strSQL_Select);
-    $mark++;
-        $tab->add(TabSetValue::getBehavior("id-idreport", $rw["idreport"])); 
-             $tab->add(TabSetValue::getBehavior("id-descripcion_reports", $rw["descripcion_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-aplica", $rw["aplica"])); 
-             $tab->add(TabSetValue::getBehavior("id-idgeneral_reports", $rw["idgeneral_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-explicacion", $rw["explicacion"])); 
-     
-            $tab->add(TabSetValue::getBehavior("id-markRecord", $mark )); 
-    
-
-    return $tab->getString();
-}
-function xul_back_record($mark){
-    if($mark < 0){
-        $mark = 0;
-    }
-    $strSQL_Select = "SELECT * FROM general_reports
-                          LIMIT $mark, 1";
-    $tab    = new TinyAjaxBehavior();
-    $rw    = obten_filas($strSQL_Select);
-    $mark--;
-        $tab->add(TabSetValue::getBehavior("id-idreport", $rw["idreport"])); 
-             $tab->add(TabSetValue::getBehavior("id-descripcion_reports", $rw["descripcion_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-aplica", $rw["aplica"])); 
-             $tab->add(TabSetValue::getBehavior("id-idgeneral_reports", $rw["idgeneral_reports"])); 
-             $tab->add(TabSetValue::getBehavior("id-explicacion", $rw["explicacion"])); 
-     
-            $tab->add(TabSetValue::getBehavior("id-markRecord", $mark )); 
-    
-
-    return $tab->getString();
-}
-
-$jxc ->exportFunction('xul_update_record', array('id-idreport', 'id-descripcion_reports', 'id-aplica', 'id-idgeneral_reports', 'id-explicacion'), "#id-messages");
-$jxc ->exportFunction('xul_delete_record', array('id-'), "#id-messages");
-$jxc ->exportFunction('xul_add_record', array('id-idreport', 'id-descripcion_reports', 'id-aplica', 'id-idgeneral_reports', 'id-explicacion'), "#id-messages");
-$jxc ->exportFunction('xul_get_record', array('id-'));
-$jxc ->exportFunction('xul_next_record', array('id-markRecord'));
-$jxc ->exportFunction('xul_back_record', array('id-markRecord'));
-$jxc ->process();
-
-header("Content-type: application/vnd.mozilla.xul+xml");
-//header("Content-type: text/plain");
+$observaciones= parametro("idobservaciones");
+$xHP->addJTableSupport();
+$xHP->init();
 
 
-echo "<?xml version=\"1.0\"?>
-<?xml-stylesheet href=\"chrome://global/skin/\" type=\"text/css\"?>
-<!-- <?xml-stylesheet href=\"../css/xul.css\" type=\"text/css\"?> -->";
+
+$xFRM	= new cHForm("frmreports", "reportes-datos.frm.php?action=$action");
+
+$xFRM->setTitle($xHP->getTitle());
+$xSel		= new cHSelect();
+$xFRM->addCerrar();
+
+
+
+/* ===========		GRID JS		============*/
+
+$xHG	= new cHGrid("iddivrpts",$xHP->getTitle());
+
+$xHG->setSQL("SELECT * FROM `general_reports` ORDER BY `general_reports`.`aplica`,
+         `general_reports`.`order_index`,
+         `general_reports`.`descripcion_reports` LIMIT 0,100");
+$xHG->addList();
+//$xHG->col("idgeneral_reports", "TR.IDGENERAL REPORTS", "10%");
+$xHG->addKey("idreport");
+
+$xHG->col("descripcion_reports", "TR.NOMBRE", "60%");
+$xHG->col("aplica", "TR.CLASIFICACION", "20%");
+$xHG->col("order_index", "TR.ORDEN", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idreport +')", "edit.png");
+$xHG->OButton("TR.PERMISOS", "jsPermisos('+ data.record.idreport +')", "lock.png");
+
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idreport +')", "delete.png");
+$xFRM->addHElem("<div id='iddivrpts'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+echo $xFRM->get();
 ?>
-<window
-    id="index-main-window"
-    title=""
-     
-     
-    sizemode="maximized"
-    onload="xul_local_disable(true);"
-    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-
-    <vbox flex="2" id="vbToolbar"  maxheight="32px" height="32px">
-
-    <toolbox>
-        <toolbar id="cmd-toolbar">
-            <toolbarbutton label="Agregar" image="../images/common/icon-new.png" oncommand="xul_local_new_record();" />
-            <toolbarbutton label="Editar" image="../images/common/icon-edit.png" oncommand="xul_local_edit_record();" />
-            <toolbarbutton label="Eliminar" image="../images/common/icon-delete.png" oncommand="xul_local_delete_record();" />
-            <toolbarbutton label="Guardar" image="../images/common/icon-save.png" oncommand="xul_local_save_record();" />
-            <toolbarbutton label="Buscar" image="../images/common/icon-find.png" oncommand="xul_find_record();" />
-          <!-- </toolbar>
-        <toolbar id="nav-toolbar"> -->
-            <!--  <toolbarbutton label="Primero" image="../images/common/icon-first.png" oncommand="xul_first_record();" /> -->
-            <toolbarbutton label="Anterior" image="../images/common/icon-previous.png" oncommand="xul_local_back();" />
-            <toolbarbutton label="Siguiente" image="../images/common/icon-next.png" oncommand="xul_local_next();" />
-            <!--  <toolbarbutton label="Ultimo" image="../images/common/icon-last.png" oncommand="xul_last_record();" />-->
-        </toolbar>
-
-    </toolbox>
-
-
-    </vbox>
-
-    <vbox flex="2" id="vbForm" maxheight="832px">
-        <textbox id="id-markRecord" value="0" hidden="true" />
-
-        <grid flex="1">
-            <columns>
-                <column flex="1" />
-                <column flex="1" />
-                <column flex="1" />
-                <column flex="1" />
-            </columns>
-            <rows>
-
-                <row>
- 
-                    <label value="Codigo" control="id-idreport" />
-                    <textbox id="id-idreport" value="<?php echo $rw[0]; ?>"  size="1" maxlength="1" />
-                    <label value="Nombre" control="id-descripcion_reports" />
-                    <textbox id="id-descripcion_reports" value="<?php echo $rw[1]; ?>"  size="20" maxlength="20" />
-                </row>
- 
-                <row>
- 
-                    <label value="Aplicacion" control="id-aplica" />
-                    <textbox id="id-aplica" value="<?php echo $rw[2]; ?>"  size="3" maxlength="3" />
-                    <label value="Archivo" control="id-idgeneral_reports" />
-                    <textbox id="id-idgeneral_reports" value="<?php echo $rw[3]; ?>"  size="10" maxlength="10" />
-                </row>
- 
-                <row>
- 
-                    <label value="Descripcion" control="id-explicacion" />
-                    <textbox id="id-explicacion" value="<?php echo $rw[4]; ?>"  size="0" maxlength="0" />
-                </row>
- 
-            </rows>
-        </grid>
-    </vbox>
-    <popup id="id-popup-messages" >
-    <label id="id-messages" />
-    </popup>
-    <!-- <script src="../js/prototype.js"/> -->
-    <?php
-    $jxc ->drawJavaScript(false, true);
-    ?>
 <script>
-    c_idreport = document.getElementById("id-idreport");
-    c_descripcion_reports = document.getElementById("id-descripcion_reports");
-    c_aplica = document.getElementById("id-aplica");
-    c_idgeneral_reports = document.getElementById("id-idgeneral_reports");
-    c_explicacion = document.getElementById("id-explicacion");
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../frmtipos/reportes-datos.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivrpts});
+}
+function jsAdd(){
+	xG.w({url:"../frmtipos/reportes-datos.new.frm.php?", tiny:true, callback: jsLGiddivrpts});
+}
+function jsDel(id){
+	xG.rmRecord({tabla:"general_reports", id:id, callback:jsLGiddivrpts});
+}
 
-    var isEdit = false;
-    function xul_local_save_record(){
-        x = confirm("Confirme que desea ACTUALIZAR el Registro Actual");
-        if(x == true){
-            if(isEdit==false){
-                xul_add_record();
-                xul_local_disable(true);
-            } else {
-                xul_update_record();
-                xul_local_disable(true);
-            }
-            isEdit = false;
-            document.getElementById("id-popup-messages").showPopup();
-        }
-    }
-    function xul_find_record(){
-        var xVal = prompt("Clave del Registro\r\nque desea buscar:   ", 0);
-        document.getElementById("id-").value = xVal;
-        xul_get_record();
-    }
-    function xul_local_edit_record(){
-        isEdit = true;
-        xul_get_record();
-        xul_local_disable(false);
-    }
-    function xul_local_new_record(){
-        xul_local_clear();
-        isEdit = false;
-    }
-    function xul_local_delete_record(){
-        x = confirm("Confirme que desea eliminar el Registro Actual");
-        if(x == true){
-            xul_delete_record();
-            xul_local_clear();
-            xul_local_next();
-        }
-    }
-    function xul_local_clear(){
-        xul_local_disable(false);
-                c_idreport.value = "<?php echo $rw[0]; ?>";    
-                c_descripcion_reports.value = "<?php echo $rw[1]; ?>";    
-                c_aplica.value = "<?php echo $rw[2]; ?>";    
-                c_idgeneral_reports.value = "<?php echo $rw[3]; ?>";    
-                c_explicacion.value = "<?php echo $rw[4]; ?>";    
+function jsPermisos(id){
+	xG.w({url:"../frmsecurity/permisos.frm.php?idreporte=" + id, tab: true});
+}
 
-    }
-    function xul_local_disable(jstat){
-        if ( jstat == true ){
-                c_idreport.setAttribute("disabled", jstat);    
-                c_descripcion_reports.setAttribute("disabled", jstat);    
-                c_aplica.setAttribute("disabled", jstat);    
-                c_idgeneral_reports.setAttribute("disabled", jstat);    
-                c_explicacion.setAttribute("disabled", jstat);    
 
-        } else {
-                c_idreport.removeAttribute("disabled");    
-                c_descripcion_reports.removeAttribute("disabled");    
-                c_aplica.removeAttribute("disabled");    
-                c_idgeneral_reports.removeAttribute("disabled");    
-                c_explicacion.removeAttribute("disabled");    
-
-        }
-    }
-    function xul_local_next(){
-        xul_next_record();
-        xul_local_disable(true);
-        isEdit = false;
-    }
-    function xul_local_back(){
-        xul_back_record();
-        xul_local_disable(true);
-        isEdit = false;
-    }
 </script>
-</window>
+<?php
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+?>

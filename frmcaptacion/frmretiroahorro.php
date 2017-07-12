@@ -49,7 +49,7 @@ $jxc ->exportFunction('jssetUltimoCheque', array('idcuenta_cheques', 'idtipo_pag
 $jxc ->exportFunction('jsaGetDatosCuenta', array("idcuenta", "idsocio") );
 
 $jxc ->process();
-echo $xHP->getHeader(true);
+
 
 
 $xFRM		= new cHForm("frmretirovista", "frmretiroahorro.php?action=next");
@@ -59,8 +59,8 @@ $xDate		= new cHDate();
 
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
-
-$xHP->setBodyinit();
+$xFRM->addDataTag("role", iDE_CVISTA);
+$xHP->init();
 if($com == SYS_NINGUNO){
 	
 	
@@ -74,9 +74,9 @@ if($com == SYS_NINGUNO){
 	$xFRM->addFootElement("<input type='hidden' name='cMaxRet' id='idMaxRet' value='0'  />");
 	$xFRM->addFootElement("<input type='hidden' name='sdoanterior' id='idSaldoAnterior' value='0' />");
 	
-	$xFRM->addSubmit();
+	$xFRM->addEnviar();
 	
-	$xFRM->addJsBasico(iDE_CAPTACION, iDE_CVISTA);
+	//$xFRM->addJsBasico(iDE_CAPTACION, iDE_CVISTA);
 
 $jxc ->drawJavaScript(false, true);
 
@@ -98,7 +98,7 @@ $jxc ->drawJavaScript(false, true);
 	$cuenta_cheques 	= parametro("cuenta_cheques", DEFAULT_CUENTA_BANCARIA);
 	$foliofiscal 		= parametro("foliofiscal", DEFAULT_RECIBO_FISCAL);
 	
-	$xFRM->addToolbar( $xBtn->getIrAlInicio(true) );	
+	$xFRM->addCerrar();	
 
 	
 		$xCta				= new cCuentaALaVista($iddocto, $idsocio);
@@ -123,8 +123,10 @@ $jxc ->drawJavaScript(false, true);
 			$xSoc		= new cSocio($xCta->getClaveDePersona());	$xSoc->init();
 			$xFRM->addHTML( $xSoc->getFicha());
 			$xFRM->addHTML( $xCta->getFicha(true) );
-			$xFRM->addHTML( $xCta->getORec()->getFicha(true)  );
-			$xFRM->addHTML($xCta->getORec()->getJsPrint(true) );
+			if($xCta->getORec() != null){
+				$xFRM->addHTML( $xCta->getORec()->getFicha(true)  );
+				$xFRM->addHTML($xCta->getORec()->getJsPrint(true) );
+			}
 			// *****************************************************************************
 			$xFRM->addPrintRecibo();
 			$xFRM->addAvisoRegistroOK();

@@ -101,7 +101,7 @@ $msg					= "";
 	$smf 	.= "tipo_operacion, afectacion_real, afectacion_cobranza, afectacion_contable, ";
 	$smf 	.= "valor_afectacion, fecha_vcto, estatus_mvto, codigo_eacp, periodo_socio, ";
 	$smf 	.= "periodo_contable, periodo_cobranza, periodo_seguimiento, periodo_mensual, periodo_semanal, periodo_anual, saldo_anterior, saldo_actual, detalles, idusuario, afectacion_estadistica, ";
-	$smf 	.= "docto_neutralizador, cadena_heredada, tasa_asociada, dias_asociados, grupo_asociado";
+	$smf 	.= "docto_neutralizador, tasa_asociada, dias_asociados, grupo_asociado";
 	// "idusuario, codigo_eacp, socio_afectado, docto_afectado, recibo_afectado, fecha_operacion, ";
 	// --------------------------------------------- AGREGA EL RECIBO  GRABA EL FOLIO
 		my_query($sqlrec);		// GRABA EL RECIBO

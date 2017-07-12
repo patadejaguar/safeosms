@@ -17,7 +17,7 @@ $xHP->init();
 
 $xSel		= new cHSelect();
 $xHRPT		= new cPanelDeReportesContables(true, false);
-//$xHRPT->addCuentaFinal();
+$xHRPT->OFRM()->setTitle($xHP->getTitle());
 $xHRPT->addMoneda();
 //$xHRPT->addTipoDeCuentas();
 //$xHRPT->addNivelesDeCuentas();

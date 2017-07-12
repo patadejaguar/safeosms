@@ -12,14 +12,9 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xP		= new cHPage("TR.Calendario de Compromisos", HP_FORM);
-
-
-$oficial = elusuario($iduser);
-
-
-
-$jxc = new TinyAjax();
+$xP			= new cHPage("TR.Calendario de Compromisos", HP_FORM);
+$oficial 	= elusuario($iduser);
+$jxc 		= new TinyAjax();
 
 function n_week($ignium){
 if (!$ignium){
@@ -305,15 +300,17 @@ function show_week(id){
 	s_week();
 }
 function editar_compromiso(Id){
-	var pfcred = "../seguimiento/frm_agregar_compromisos.php?i=" + Id;
+	var pfcred = "../seguimiento/frm_agregar_compromisos.php?clave=" + Id;
 	document.getElementById("calendario_por_semana").innerHTML = "" +
 	"<iframe src=\"" + pfcred + "\" name=\"FECompromiso\" " +
 	" title=\"Editar Compromisos\" width=\"100%\" height=\"600px\" frameborder=0 scrolling=\"auto\" " +
 	" style=\"margin-left: 0px; margin-right: 0px; margin-top: 5px; margin-bottom: 0px;\"></iframe>";
 
 }
-function show_compromiso(Id){
-	jsrsExecute(jsrsSeguimiento, ret_mostrar_un_x, 'getCompromisosById', Id);
+function show_compromiso(id){
+	//jsrsExecute(jsrsSeguimiento, ret_mostrar_un_x, 'getCompromisosById', Id);
+	var xSeg	= new SegGen();
+	xSeg.getDetalleDeCompromiso({ clave : id });
 }
 function mostrar_un_dia(vFecha){
 	jsrsExecute(jsrsSeguimiento, ret_mostrar_un_x, 'getCompromisosDia', vFecha);
@@ -324,17 +321,17 @@ function ret_mostrar_un_x(sHTML){
 }
 function rptLlamadas(isd){
 	//reporte de llamadas
-			var mURI 		= "../rptseguimiento/llamadas_individuales.rpt.php?o=" + isd;
+			var mURI 		= "../rptseguimiento/llamadas_individuales.rpt.php?persona=" + isd;
 			jsGenericWindow(mURI);
 }
 function rptCompromisos(isd){
-	var xWin	= "../rptseguimiento/rptcompromisos.php?o=" + isd;
+	var xWin	= "../rptseguimiento/rptcompromisos.php?persona=" + isd;
 	//Reporte de Compromisos
 	jsGenericWindow(xWin);
 }
 function rptNotificaciones(isd){
 	//Reporte de Notificaciones
-			var mURI 		= "../rptseguimiento/notificaciones_individuales.rpt.php?o=" + isd;
+			var mURI 		= "../rptseguimiento/notificaciones_individuales.rpt.php?persona=" + isd;
 			jsGenericWindow(mURI);
 }
 function addLlamadas(isd){

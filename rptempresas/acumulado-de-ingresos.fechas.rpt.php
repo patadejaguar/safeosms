@@ -8,92 +8,74 @@
  * @subpackage reports
  */
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("ACUMULADO DE INGRESOS POR FECHAS", HP_REPORT);
-$xHP->setIncludes();
-	
-$oficial = elusuario($iduser);
-
-/**
- */
-$xF				= new cFecha();
-$estatus 		= (isset($_GET["estado"]) ) ? $_GET["estado"] : "todas";
-$frecuencia 		= (isset($_GET["periocidad"]) ) ? $_GET["periocidad"] : "todas";
-$convenio 		= (isset($_GET["convenio"]) ) ? $_GET["convenio"] : "todas";
-$empresa		= (isset($_GET["empresa"]) ) ? $_GET["empresa"] : "todas";
-$input 			= (isset($_GET["out"])) ? $_GET["out"] : "default";
-$fechaInicial		= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-$fechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
-
-//$xHP->setNoDefaultCSS();
-
-//$xHP->addCSS( CSS_REPORT_FILE );
-
-echo $xHP->getHeader();
-
-echo $xHP->setBodyinit("initComponents();");
-
-echo getRawHeader();
-?>
-<!-- -->
-<table >
-	<thead>
-		<tr>
-			<th colspan="3" class='title'><?php echo $xHP->getTitle(); ?></th>
-		</tr>
-<!-- DATOS GENERALES DEL REPORTE  -->
-		<tr>
-			<td width="50%">&nbsp;</td>
-			<td width="20%">Fecha de Elaboracion:</td>
-			<td width="30%"><?php echo fecha_larga(); ?></td>
-		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>Preparado por:</td>
-			<td><?php echo $oficial; ?></td>
-		</tr>
-		<tr>
-			<td>Fechas</td>
-			<td><?php echo $xF->getFechaCorta($fechaInicial); ?></td>
-			<td><?php echo $xF->getFechaCorta($fechaFinal); ?></td>
-		</tr>
-
-	</thead>
-</table>
-<?php
+$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
 
-	$xD		= new cFecha();
-	$sql		= new cSQLListas();
-	$xT		= new cTabla($sql->getBasesPorFechasPorDependencia($fechaInicial, $fechaFinal, 2002));
-	$xT->setKeyField($sql->getClave());
-	$xT->setTdClassByType();
-	//$xT->setPrepareChart();
-	
-	$xT->setFootSum(array(1 => "monto"));
-	echo $xT->Show();//"Reporte de Ingresos Mensuales por Empresas", true, "tingresos");
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
+
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false, MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+setLog("$FechaInicial");
+
+$sql			= $xL->getBasesPorFechasPorDependencia($FechaInicial, $FechaFinal, 2002);
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql);
+$xT->setTipoSalida($out);
+$xT->setKeyField($xL->getClave());
+$xT->setTdClassByType();
+//$xT->setPrepareChart();
+
+$xT->setFootSum(array(1 => "monto"));
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
 
 
-echo getRawFooter();
-echo $xHP->setBodyEnd();
-?>
-<script>
-<?php
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 
-?>
-function initComponents(){
-	window.print();
-}
-</script>
-<?php
-$xHP->end(); 
 ?>

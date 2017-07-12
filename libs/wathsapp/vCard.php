@@ -6,6 +6,7 @@
  */
 class vCard
 {
+
     // An array of this vcard's contact data.
     protected $data;
     // Filename for download file naming.
@@ -23,44 +24,44 @@ class vCard
     public function __construct()
     {
         $this->data = array(
-            'display_name' => null,
-            'first_name' => null,
-            'last_name' => null,
-            'additional_name' => null,
-            'name_prefix' => null,
-            'name_suffix' => null,
-            'nickname' => null,
-            'title' => null,
-            'role' => null,
-            'department' => null,
-            'company' => null,
-            'work_po_box' => null,
+            'display_name'          => null,
+            'first_name'            => null,
+            'last_name'             => null,
+            'additional_name'       => null,
+            'name_prefix'           => null,
+            'name_suffix'           => null,
+            'nickname'              => null,
+            'title'                 => null,
+            'role'                  => null,
+            'department'            => null,
+            'company'               => null,
+            'work_po_box'           => null,
             'work_extended_address' => null,
-            'work_address' => null,
-            'work_city' => null,
-            'work_state' => null,
-            'work_postal_code' => null,
-            'work_country' => null,
-            'home_po_box' => null,
+            'work_address'          => null,
+            'work_city'             => null,
+            'work_state'            => null,
+            'work_postal_code'      => null,
+            'work_country'          => null,
+            'home_po_box'           => null,
             'home_extended_address' => null,
-            'home_address' => null,
-            'home_city' => null,
-            'home_state' => null,
-            'home_postal_code' => null,
-            'home_country' => null,
-            'office_tel' => null,
-            'home_tel' => null,
-            'cell_tel' => null,
-            'fax_tel' => null,
-            'pager_tel' => null,
-            'email1' => null,
-            'email2' => null,
-            'url' => null,
-            'photo' => null,
-            'birthday' => null,
-            'timezone' => null,
-            'sort_string' => null,
-            'note' => null,
+            'home_address'          => null,
+            'home_city'             => null,
+            'home_state'            => null,
+            'home_postal_code'      => null,
+            'home_country'          => null,
+            'office_tel'            => null,
+            'home_tel'              => null,
+            'cell_tel'              => null,
+            'fax_tel'               => null,
+            'pager_tel'             => null,
+            'email1'                => null,
+            'email2'                => null,
+            'url'                   => null,
+            'photo'                 => null,
+            'birthday'              => null,
+            'timezone'              => null,
+            'sort_string'           => null,
+            'note'                  => null,
         );
 
         return true;
@@ -71,7 +72,7 @@ class vCard
      *
      * @param string $key
      *   Name of the property.
-     * @param mixed $value
+     * @param mixed  $value
      *   Value to set.
      *
      * @return vCard
@@ -99,22 +100,22 @@ class vCard
      */
     function build()
     {
-        if (!$this->class) {
+        if ( ! $this->class) {
             $this->class = 'PUBLIC';
         }
-        if (!$this->data['display_name']) {
+        if ( ! $this->data['display_name']) {
             $this->data['display_name'] = $this->data['first_name'] . ' ' . $this->data['last_name'];
         }
-        if (!$this->data['sort_string']) {
+        if ( ! $this->data['sort_string']) {
             $this->data['sort_string'] = $this->data['last_name'];
         }
-        if (!$this->data['sort_string']) {
+        if ( ! $this->data['sort_string']) {
             $this->data['sort_string'] = $this->data['company'];
         }
-        if (!$this->data['timezone']) {
+        if ( ! $this->data['timezone']) {
             $this->data['timezone'] = date("O");
         }
-        if (!$this->revisionDate) {
+        if ( ! $this->revisionDate) {
             $this->revisionDate = date('Y-m-d H:i:s');
         }
 
@@ -125,11 +126,11 @@ class vCard
         $this->card .= "REV:" . $this->revisionDate . "\r\n";
         $this->card .= "FN:" . $this->data['display_name'] . "\r\n";
         $this->card .= "N:"
-                . $this->data['last_name'] . ";"
-                . $this->data['first_name'] . ";"
-                . $this->data['additional_name'] . ";"
-                . $this->data['name_prefix'] . ";"
-                . $this->data['name_suffix'] . "\r\n";
+            . $this->data['last_name'] . ";"
+            . $this->data['first_name'] . ";"
+            . $this->data['additional_name'] . ";"
+            . $this->data['name_prefix'] . ";"
+            . $this->data['name_suffix'] . "\r\n";
         if ($this->data['nickname']) {
             $this->card .= "NICKNAME:" . $this->data['nickname'] . "\r\n";
         }
@@ -146,24 +147,24 @@ class vCard
 
         if ($this->data['work_po_box'] || $this->data['work_extended_address'] || $this->data['work_address'] || $this->data['work_city'] || $this->data['work_state'] || $this->data['work_postal_code'] || $this->data['work_country']) {
             $this->card .= "ADR;type=WORK:"
-                    . $this->data['work_po_box'] . ";"
-                    . $this->data['work_extended_address'] . ";"
-                    . $this->data['work_address'] . ";"
-                    . $this->data['work_city'] . ";"
-                    . $this->data['work_state'] . ";"
-                    . $this->data['work_postal_code'] . ";"
-                    . $this->data['work_country'] . "\r\n";
+                . $this->data['work_po_box'] . ";"
+                . $this->data['work_extended_address'] . ";"
+                . $this->data['work_address'] . ";"
+                . $this->data['work_city'] . ";"
+                . $this->data['work_state'] . ";"
+                . $this->data['work_postal_code'] . ";"
+                . $this->data['work_country'] . "\r\n";
         }
 
         if ($this->data['home_po_box'] || $this->data['home_extended_address'] || $this->data['home_address'] || $this->data['home_city'] || $this->data['home_state'] || $this->data['home_postal_code'] || $this->data['home_country']) {
             $this->card .= "ADR;type=HOME:"
-                    . $this->data['home_po_box'] . ";"
-                    . $this->data['home_extended_address'] . ";"
-                    . $this->data['home_address'] . ";"
-                    . $this->data['home_city'] . ";"
-                    . $this->data['home_state'] . ";"
-                    . $this->data['home_postal_code'] . ";"
-                    . $this->data['home_country'] . "\r\n";
+                . $this->data['home_po_box'] . ";"
+                . $this->data['home_extended_address'] . ";"
+                . $this->data['home_address'] . ";"
+                . $this->data['home_city'] . ";"
+                . $this->data['home_state'] . ";"
+                . $this->data['home_postal_code'] . ";"
+                . $this->data['home_country'] . "\r\n";
         }
         if ($this->data['email1']) {
             $this->card .= "EMAIL;type=INTERNET,pref:" . $this->data['email1'] . "\r\n";
@@ -198,8 +199,7 @@ class vCard
         if ($this->data['note']) {
             $this->card .= "NOTE:" . $this->data['note'] . "\r\n";
         }
-        if($this->data['photo'])
-        {
+        if ($this->data['photo']) {
             $this->card .= $this->generatePhotoData();
         }
         $this->card .= "TZ:" . $this->data['timezone'] . "\r\n";
@@ -209,16 +209,13 @@ class vCard
     protected function generatePhotoData()
     {
         $photo = $this->data['photo'];
-        $data = "PHOTO;";
+        $data  = "PHOTO;";
 
         //detect type
-        if(substr($photo, 0, 4) == 'http')
-        {
+        if (substr($photo, 0, 4) == 'http') {
             //url
             $data .= 'URL:' . $photo;
-        }
-        else
-        {
+        } else {
             //path
             $bindata = file_get_contents($photo);
             $bindata = base64_encode($bindata);
@@ -233,11 +230,11 @@ class vCard
      */
     function download()
     {
-        if (!$this->card) {
+        if ( ! $this->card) {
             $this->build();
         }
 
-        if (!$this->filename) {
+        if ( ! $this->filename) {
             $this->filename = $this->data['display_name'];
         }
 
@@ -256,7 +253,7 @@ class vCard
      */
     function show()
     {
-        if (!$this->card) {
+        if ( ! $this->card) {
             $this->build();
         }
 

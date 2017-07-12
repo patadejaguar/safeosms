@@ -22,42 +22,37 @@ $xF			= new cFecha();
 $jxc 		= new TinyAjax();
 
 function jsaGetLetras($idcredito, $idfecha){
-	$xCred		= new cCredito($idcredito); $xCred->init();
-	//$xPlas	= $xCred->getPlanDePago();
-	$xF			= new cFecha();
-	$idfecha	= $xF->getFechaISO($idfecha);
-	$xQL		= new MQL();
-	//$xQL->setRawQuery("SET @fecha_de_corte:='$idfecha';");
-	my_query("SET @fecha_de_corte:='$idfecha';");
-	$sql		= "SELECT
-	`letras`.`socio_afectado` AS `persona`,
-	`letras`.`docto_afectado` AS `credito`,
-	`letras`.`periodo_socio`  AS `parcialidad`,
-	`letras`.`fecha_de_pago`,
-
-	`letras`.`capital`,
-	`letras`.`interes`,
-	`letras`.`iva`,
-	`letras`.`ahorro`,
-	`letras`.`otros`,
-	`letras`.`letra`,	
+	$xCred		= new cCredito($idcredito); 
+	$xLi		= new cSQLListas();
+	$cnt		= "";
+	$xCred->init();
+	$sql		= $xLi->getListadoDeLetrasPendientes($idcredito, $xCred->getTasaIVAOtros(), $xCred->getPagosSinCapital());
+	//$xCred->getProximaParcialidad();
 	
-	(`creditos_solicitud`.`tasa_moratorio`*100) AS `tasa_de_mora`,
-	(`creditos_solicitud`.`tasa_interes`*100)   AS `tasa_de_interes` ,
-	DATEDIFF(getFechaDeCorte(), fecha_de_pago) AS 'dias',
-	 ((letras.capital * DATEDIFF(getFechaDeCorte(), fecha_de_pago) * (`creditos_solicitud`.`tasa_moratorio` + `creditos_solicitud`.`tasa_interes`))/getDivisorDeInteres()) AS 'mora'
-	FROM
-		`creditos_solicitud` `creditos_solicitud` 
-			INNER JOIN `letras` `letras` 
-			ON `creditos_solicitud`.`numero_solicitud` = `letras`.`docto_afectado`
-	
-	 WHERE capital >0 AND docto_afectado=$idcredito AND fecha_de_pago <= getFechaDeCorte()";
-	$xT		= new cTabla($sql);
+	$xT			= new cTabla($sql);
+	$xT->setFechaCorte($idfecha);
 	$xT->setFootSum(array(
 		4 => "capital", 5 => "interes", 6 => "iva", 7 => "ahorro",
-			8 => "otros", 9 => "letra", 13 => "mora"
+			8 => "otros", 9 => "total", 13 => "mora",  14 => "iva_moratorio"
 	));
-	return $xT->Show(); 
+	$cnt		= $xT->Show();
+	
+	if($xCred->getPenasPorCobrar() >0){
+		/*$xTb	= new cHTabla();
+		$xTb->initRow();
+		$xTb->addTH("TR.OTROS CARGOS");
+		$xTb->addTH("TR.MONTO");
+		$xTb->endRow();
+		
+		$xTb->initRow();
+		$xTb->addTD("PENAS");
+		$xTb->addTD($xCred->getPenasPorCobrar());
+		$xTb->endRow();
+				
+		$cnt 	.= $xTb->get();*/
+		
+	}
+	return $cnt; 
 }
 
 $jxc ->exportFunction('jsaGetLetras', array('idcredito', 'idfechadecalculo'), "#idlistado");
@@ -70,14 +65,13 @@ $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = par
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
 $xHP->init();
+?> <style> #idavisopago, #idimporte, #iMontoRecibido { font-size : 1.3em !important; } </style><?php
 
 $xFRM		= new cHForm("frm", "./");
-
 $msg		= "";
 $xFRM->OButton("TR.Obtener", "jsaGetLetras()", $xFRM->ic()->CARGAR);
+$xFRM->OButton("TR.Reporte", "var xg = new CredGen(); xg.getReporteLetrasEnMora($credito, document.getElementById('idfechadecalculo').value)", $xFRM->ic()->CARGAR);
 $xFRM->OHidden("idcredito", $credito);
-//$xFRM->addJsBasico();
-//$xFRM->addCreditBasico();
 $xFRM->ODate("idfechadecalculo", false, "TR.Fecha de Calculo");
 $xFRM->addHElem("<div id='idlistado'></div>");
 //$xFRM->addSubmit();

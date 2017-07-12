@@ -62,8 +62,9 @@ while (WIN32_SERVICE_CONTROL_STOP != win32_get_last_control_message()) {
  */
 
 class cSystemTask{
-	private $mSystemCommands = array();
-	private $mBackupFile	= "";
+	private $mSystemCommands 	= array();
+	private $mBackupFile		= "";
+	private $mMessages			= "";
 	function __construct(){
 
 	//Crea el Nombre del Backup File
@@ -80,23 +81,39 @@ class cSystemTask{
 	}
 	function setBackupDB_WithMail(){
 		$msg		= "";
-		$fecha		= date("Y-m-d");
-		$lns		= exec($this->mSystemCommands["respaldar_la_base_de_datos"]);
-		//Enviar el Mail SAFE-OSMS Respaldo de la Base de Datos
-		$subject	= "SAFE-OSMS Respaldo de la Base de Datos $fecha";
-		$body		= "<h3>S.A.F.E. OSMS</h3><h4>Demonio CRON</h4><p>Se Anexa repaldo de la Fecha $fecha</p><hr /><h5>SysAdmin</h5>";
-		$file		= array( "path"  => $this->setBackupDB(), "mime" => "multipart/x-gzip");
-
-		$msg		.= $this->sendMailToAdminWithFile($subject, $body, $file);
+		$xConf		= new cSAFEConfiguracion();
+		if($xConf->SISTEMA_RESPALDO_POR_MAIL == true){
+			$fecha		= date("Y-m-d");
+			$lns		= exec($this->mSystemCommands["respaldar_la_base_de_datos"]);
+			//Enviar el Mail SAFE-OSMS Respaldo de la Base de Datos
+			$subject	= "SAFE-OSMS Respaldo de la Base de Datos $fecha";
+			$body		= "<h3>S.A.F.E. OSMS</h3><h4>Demonio CRON</h4><p>Se Anexa repaldo de la Fecha $fecha</p><hr /><h5>SysAdmin</h5>";
+			$file		= array( "path"  => $this->setBackupDB(), "mime" => "multipart/x-gzip");
+			$enviar		= true;
+			if(is_file($this->mBackupFile)){
+				$size	= filesize($this->mBackupFile);
+				if($size > getMemoriaLibre()){
+					$this->mMessages	.= "ERROR\tEl Archivo " . $this->mBackupFile . " es muy grande ($size)  para la Memoria (" . getMemoriaLibre() . ")\r\n";
+				} else {
+					$enviar	= true;
+				}
+			} else {
+				$enviar	= false;
+				$this->mMessages	.= "ERROR\tEl Archivo " . $this->mBackupFile . " No existe\r\n";
+			}
+			if($enviar == true){
+				$msg		.= $this->sendMailToAdminWithFile($subject, $body, $file);
+			}
+		}
 		return $msg;
 	}
 	function setBackupDB(){
 		$msg		= "";
 		$fecha		= date("Y-m-d");
 		$lns		= exec($this->mSystemCommands["respaldar_la_base_de_datos"]);
-		
 		return $this->mBackupFile;
 	}
+	function getMessages(){return $this->mMessages;}
 	function setBackupTable($table){
 		$file		= PATH_BACKUPS .  MY_DB_IN . "_$table_" . date("Y-m-d") . ".sql.gz";
 		$ce			= exec("mysqldump --opt -h " . WORK_HOST . " -u " . USR_DB ." --password=" . PWD_DB . " " . MY_DB_IN . " $table| gzip > $file");
@@ -117,9 +134,9 @@ class cSystemTask{
 	 *
 	 */
 	function sendMailToAdminWithFile($subject = "", $body = "", $arrFile = false){
-		
+		//TODO: Migrar a enviar mail
 			$omsg	= "";
-
+		if (filter_var(ADMIN_MAIL, FILTER_VALIDATE_EMAIL)) {
 			//Create a new PHPMailer instance
 			$mail = new PHPMailer();
 			//Tell PHPMailer to use SMTP
@@ -176,12 +193,48 @@ class cSystemTask{
 			} else {
 				$omsg	.= "Mensaje Enviado con exito.";
 			}
-		
-			return $omsg;
+		} else {
+			$omsg		= "ERROR\tCorreo Electronico Invalido\r\n";
+		}
+		return $omsg;
 	}
 	function sendMail($subject = "", $body = "", $to = "", $arrFile = false){
 		$xNot		= new cNotificaciones();
 		return $xNot->sendMail($subject, $body, $to, $arrFile);
+	}
+	
+	function setProcesarTareas(){
+		//CRON del Sistema
+		//Enviar Notificaciones por SMS
+		$xQL	= new MQL();
+		$rsNot	= $xQL->getDataRecord("SELECT * FROM `seguimiento_notificaciones` WHERE `estatus_notificacion`='pendiente' AND `fecha_notificacion` <=CURRENT_DATE()  AND `hora`<=CURRENT_TIME() AND (`canal_de_envio`='sms' OR `canal_de_envio`='email') ");
+		$xSeg	= new cSeguimiento_notificaciones();
+		$xNot	= new cNotificaciones();
+		$xFMT	= new cFormato();
+		$xLog	= new cCoreLog();
+		foreach ($rsNot as $datos){
+			//enviar
+			$xSeg->setData($datos);
+			$xFMT->init( $xSeg->formato()->v());
+			$xFMT->setNotificacionDeCobro($xSeg->idseguimiento_notificaciones()->v());
+			$xFMT->setProcesarVars();
+			$body	= $xFMT->get();
+			$xSoc	= $xFMT->getOPersonas();
+			$xLog->add("WARN\tEnviar " . $xSeg->canal_de_envio()->v() ."\r\n");
+			if($xSeg->canal_de_envio()->v() == $xNot->MEDIO_SMS){
+				$xNot->sendSMS($xSoc->getTelefonoPrincipal(), $body);
+				$xNot->setCanal(iDE_SOCIO . "-" . $xSeg->socio_notificado()->v());
+				$xNot->sendCloudMessage($body);
+			} else {
+				//enviar mail
+				$xNot->sendMail($xFMT->getTitulo(), $body, $xSoc->getCorreoElectronico());
+			}
+			//actualizar
+			$xSeg->estatus_notificacion(SEGUIMIENTO_ESTADO_EFECTUADO);
+			$xSeg->query()->update()->save($xSeg->idseguimiento_notificaciones()->v());
+		}
+		$xLog->add($xNot->getMessages(), $xLog->DEVELOPER);
+		$this->mMessages	.= $xLog->getMessages();
 	}
 }
 
@@ -1351,38 +1404,106 @@ class cRegressionLineal {
 }
 class cMath {
 	function irr ($investment, $flow) {
-	    for ($n = 0; $n < 100; $n += 0.00001) {
-		$pv = 0;
-		$it = count($flow);
-		for ($i = 0; $i < $it; $i++) {
-		    $pv = $pv + ($flow[$i] / pow(1 + $n, $i + 1));
-		    //echo "$pv + $flow[$i] / pow(1 + $n, $i + 1);<br />";
+		$n		= 0;
+		$it 	= count($flow);
+		if($it >= 1){
+		    for ($n = 0; $n < 100; $n += 0.00001) {
+				$pv = 0;
+				//corrige el flow
+				if(!isset($flow[0])){ $flow[0]	= $investment + 0.01; }
+				
+				for ($i = 0; $i < $it; $i++) {
+					$vv		= $flow[$i];
+					if($vv>0){
+				    	$pv = $pv + ($flow[$i] / pow(1 + $n, $i + 1));
+					}
+				}
+				if ($pv <= $investment) {
+				    return $n;
+				}
+		    }
+		} else {
+			return 0;
 		}
-		if ($pv <= $investment) {
-		    return $n;
-		}
-	    }
 	}
-	function cat($capital, $flujo, $periodos){
-		$tir        = $this->irr($capital, $flujo);
-		$tri        = pow((1 + $tir), $periodos) - 1;
-		$tri        = round(($tri * 100), 1);
+	function cat($capital, $flujo, $periodos, $periodosMaximo){
+		
+		$tri		= 0;
+		if($capital > 0){
+			$tir     = $this->irr($capital, $flujo);
+			$tri	= pow((1 + $tir), $periodosMaximo) - 1;
+			$tri	= round(($tri * 100), 1);
+		}
 		return $tri;
+	}
+	/**
+	 * Obtiene un pago presumido aproximado.- Método Francés.
+	 * @param float $TasaAnual	Tasa Anualizada en Valor real (30% = 0.30, 60% = 0.60). Esta Tasa Debe Incluir IVA, por ejemplo para el 60% sería 0.6+(0.6*.16) = (0.696) 
+	 * @param integer $NumeroDePagos Numero de pagos Totales del Credito
+	 * @param float $Capital	Base de Cálculo
+	 * @param integer $Frecuencia Frecuencia o Periodicidad de Pago (15 Quincenal, 30 Mensual, etc)
+	 * @param int $prec Numero de precisón de cálculo
+	 * @return number
+	 */
+	function getPagoPresumido($TasaAnual,$NumeroDePagos,$Capital,$Frecuencia = 30, $prec=2){
+		$arrEq		= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$EquiFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
+		if ($TasaAnual !=0 AND $EquiFreq >0) {
+			$semilla 		= 1/(1+$TasaAnual/$EquiFreq);
+			$PagoPresumido 	=  $Capital * (1 - $semilla) / $semilla / (1 - pow($semilla,$NumeroDePagos)) ;
+		} else {
+			$PagoPresumido 	= $Capital / $NumeroDePagos;
+		}
+		return round($PagoPresumido, $prec);
+	}
+	function getValorPresente($TasaAnual,$NumeroDePagos,$Capital,$Frecuencia = 30,$prec=2){
+		$arrEq		= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$EquiFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
+		if ($TasaAnual !=0 AND $EquiFreq >0) {
+			$tem	=  pow((1+$TasaAnual), (1/$EquiFreq) ) -1;
+			$PV		= $Capital / pow((1+$tem), $NumeroDePagos);
+		} else {
+			$PV = $Capital / $NumeroDePagos;
+		}
+		return round($PV, $prec);
+	}
+	function getPagoLease($TasaAnual,$NumeroPagos,$Capital, $Frecuencia, $Residual = 0.00, $Tipo = 0){
+		$arrEq	= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$EqFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
+		$Tasa	= ($TasaAnual / $EqFreq);
+		
+		$P = (- $Capital * pow(1+$Tasa,$NumeroPagos) + $Residual) /	((1 + $Tasa * $Tipo)*((pow((1 + $Tasa),$NumeroPagos) - 1) / $Tasa));
+
+		return $P * (-1);
+		/*double MKCalcPayment(int NumPay, double IntRate, double NPV, double FV,
+                     BOOL bStart)
+{
+    IntRate /= 1200.00;
+		    double P = (- NPV * pow(1+IntRate,NumPay) + FV) /
+               ((1 + IntRate * bStart)*((pow((1 + IntRate),NumPay) - 1) /
+				               IntRate));
+    return P * (-1); // Just convert it into a positive value.
+		}*/
 	}
 }
 
 class cFileImporter {
 	private $mFecha		= "";
-	private $mMessages	= "";
-	private $mData		= array();
+	private $mMessages		= "";
+	private $mData			= array();
 	private $mDelimiter	= ",";
-	private $mType		= "csv";
+	private $mType			= "csv";
 	private $mLimitCampos	= 12;
 	private $mPriLineaCol	= true;
 	private $mDataRow		= false;
 	private $mForceUTF		= false;
+	private $mForceClean	= false;
+	private $mArrClean		= array();
 	private $mExo			= "";
-	
+	private $mProbarMB		= false;
+	public $TIPO_CSV		= "csv";
+	public $TIPO_XML		= "xml";
+	private $mCompletePath	= "";
 	function __construct(){  }
 	
 	function processFile($file){
@@ -1394,14 +1515,15 @@ class cFileImporter {
 		
 			if($mExt == $this->mType){
 				$completePath	= PATH_TMP . $file['name'];
-				if(file_exists($completePath)==true){
+				if(file_exists($completePath) == true){
 					unlink($completePath);
 					$this->mMessages	.= "WARN\tSE ELIMINO EL ARCHIVO " . $file['name'] . "\r\n";
 				}
 				if(move_uploaded_file($file['tmp_name'], $completePath )) {
 					$this->mMessages	.= "OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $file['name'] . "\r\n";
 				} else {
-					$this->mMessages	.= "ERROR\tSE FALLO AL GUARDAR (" . $file['name'] . ")\r\n";
+					$this->mMessages	.= "ERROR\tSE FALLO AL GUARDAR (" . $file['name'] . ") de " . $file['tmp_name'] . " a $completePath\r\n";
+					$this->mMessages	.= $this->getMsgError($file['error']);
 					$sucess				= false;
 				}
 			}	else {
@@ -1437,7 +1559,8 @@ class cFileImporter {
 						} else {
 							//delimitar por X  echo 
 							//$del			= substr_count($this->mExo, "|");
-							$dex			= explode("|", $this->mExo);
+							//$dex			= explode("|", $this->mExo);
+							$dex			= explode($this->mDelimiter, $this->mExo);
 							$init			= 0;
 							foreach ($dex as $snipts){
 								$tlen		= strlen($snipts) + 1;
@@ -1460,39 +1583,55 @@ class cFileImporter {
 	function getData(){ return $this->mData; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put);	}
 	function setPrimeraLinea(){  }
-	function setDataRow($data){ return $this->mDataRow	= $data; }
+	function setProbarMB($probar = true){ $this->mProbarMB = $probar; }
+	function setDataRow($data){ $this->mDataRow	= $data; return $data; }
 	function getFlotante($indice, $fallback = 0 ){	return $this->getV($indice, $fallback, MQL_FLOAT); }
 	function getEntero($indice, $fallback = 0 ){	return $this->getV($indice, $fallback, MQL_INT); }
 	function getFecha($indice, $fallback = false ){	return $this->getV($indice, $fallback, MQL_DATE); }
+	function getBool($indice, $fallback = false ){	return $this->getV($indice, $fallback, MQL_BOOL); }
 	function getV($indice, $fallback = null, $tipo = MQL_STRING, $equiv = false){
+		//Migrar a cCoreImport
 		$valor		= null;
 		$row		= $this->mDataRow;
+		$xT			= new cTipos();
+		$xT->setForceEncode();
 		//CORREGIR ID
 		$indice		= $indice - 1;
-		if(is_array($equiv)){
-			$vtmp	= strtoupper($row[$indice]);
-			if(isset($equiv[ $vtmp ])){
-				$row[$indice]	= $equiv[ $vtmp ]; //cambiar indice por equivalente
-			} else {
-				$row[$indice]	= $fallback;
-				$this->mMessages	.= "ERROR\tNo hay equivalente para " . $vtmp . " del Indice $indice  \r\n";
-			}
-		}
-		if($this->mForceUTF == true){
-			if(isset($row[$indice])){
-				if(iconv('UTF-8', 'UTF-8//IGNORE', $row[$indice])){
-					$row[$indice]	= iconv('UTF-8', 'UTF-8//IGNORE', $row[$indice]);
-				} else {
-					$row[$indice]	= iconv(mb_detect_encoding($row[$indice]), 'UTF-8//IGNORE', $row[$indice]);
-				}
-				//if($this->mForceUTF == true){ $cadena	= iconv('UTF-8', 'UTF-8//IGNORE', $cadena); }
-				//$dato	= iconv(mb_detect_encoding($dato), 'UTF-8//IGNORE', $dato);				
-			}
-		}
 		if(isset($row[$indice])){
-			//$row[$indice]	= str_replace("/", -)
+			if(is_array($equiv)){
+				$vtmp	= strtoupper($row[$indice]);
+				if(isset($equiv[ $vtmp ])){
+					$row[$indice]	= $equiv[ $vtmp ]; //cambiar indice por equivalente
+				} else {
+					$row[$indice]	= $fallback;
+					$this->mMessages	.= "ERROR\tNo hay equivalente para " . $vtmp . " del Indice $indice  \r\n";
+				}
+			}
+			if($tipo == MQL_STRING ){
+				if($this->mForceClean == true){
+					$row[$indice]	= $this->cleanString($row[$indice], $this->mArrClean);
+				}
+				//$row[$indice] 	= $xT->setNoAcentos($row[$indice]);
+				if($this->mForceUTF == true){
+					if($this->mProbarMB == false){
+						//
+						if(iconv('UTF-8', 'UTF-8//IGNORE', $row[$indice])){
+							$row[$indice]	= iconv('UTF-8', 'UTF-8//IGNORE', $row[$indice]);
+						} else {
+							$row[$indice]	= iconv(mb_detect_encoding($row[$indice]), 'UTF-8//IGNORE', $row[$indice]);
+						}
+					} else {
+						$row[$indice] 	= $xT->setNoAcentos($row[$indice]);
+					}
+					//if($this->mForceUTF == true){ $cadena	= iconv('UTF-8', 'UTF-8//IGNORE', $cadena); }
+					//$dato	= iconv(mb_detect_encoding($dato), 'UTF-8//IGNORE', $dato);				
+				}
+			}
+			return parametro($indice, $fallback, $tipo, $row);
+		} else {
+			return $fallback;
 		}
-		return parametro($indice, $fallback, $tipo, $row);
+		
 	}
 	function setToUTF8(){	$this->mForceUTF		= true;	}
 	function cleanCalle($valor = ""){
@@ -1517,6 +1656,64 @@ class cFileImporter {
 		$cadena 		= preg_replace($cleanArr, ' ', $cadena); //dob
 		return trim($cadena);
 	}
+	function setArrClean($arr){ $this->mArrClean = $arr; }
+	function setForceClean($force = true){ $this->mForceClean =$force; }
+	function getMsgError($error){
+		$message = 'Error uploading file';
+		switch( $error ) {
+			case UPLOAD_ERR_OK:
+				$message = false;;
+				break;
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE:
+				$message .= ' - file too large (limit of '. ini_get("upload_max_filesize") . ' bytes).';
+				break;
+			case UPLOAD_ERR_PARTIAL:
+				$message .= ' - file upload was not completed.';
+				break;
+			case UPLOAD_ERR_NO_FILE:
+				$message .= ' - zero-length file uploaded.';
+				break;
+			default:
+				$message .= ' - internal error #'. $error;
+				break;
+		}
+		return $message;
+	}
+	function setSaveFile($file = false){
+		$sucess	= true;
+		if( isset($file) AND $file != false ){
+			//Obtener Extension
+			$DExt 	= explode(".", substr($file['name'], -6));
+			$mExt	= $DExt[1];
+		
+			if($mExt == $this->mType){
+				$completePath	= PATH_TMP . $file['name'];
+				if(file_exists($completePath) == true){
+					unlink($completePath);
+					$this->mMessages	.= "WARN\tSE ELIMINO EL ARCHIVO " . $file['name'] . "\r\n";
+				}
+				if(move_uploaded_file($file['tmp_name'], $completePath )) {
+					$this->mMessages	.= "OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $file['name'] . "\r\n";
+				} else {
+					$this->mMessages	.= "ERROR\tSE FALLO AL GUARDAR (" . $file['name'] . ") de " . $file['tmp_name'] . " a $completePath\r\n";
+					$this->mMessages	.= $this->getMsgError($file['error']);
+					$sucess				= false;
+				}
+			}	else {
+				$this->mMessages		.= "ERROR\tEL TIPO DE ARCHIVO DE " . $file['name'] . "(" .$mExt . ") NO SE ACEPTA\r\n";
+				$sucess					= false;
+			}
+		} else {
+			$this->mMessages		.= "ERROR\tEL ARCHIVO NO ES VALIDO $file\r\n";
+			$sucess					= false;
+		}
+		if($sucess == true){
+			$this->mCompletePath	= $completePath;
+		}
+		return $sucess;
+	}
+	function getCompletePath(){ return $this->mCompletePath; }
 }
 //Eimina datos no validos
 class cTiposLimpiadores {
@@ -1534,7 +1731,99 @@ class cTiposLimpiadores {
 		$cadenas	= $this->cleanString($cadenas, array("/DESCONOCIDO_MIGRADO/","/EMPLEADO_MIGRADO/", "/empleado_migrado/", "/NA/", "/POR_REGISTRAR/", "/DESCONOCIDO/"));
 		if($cadenas == "" AND $PorDefecto != ""){ $cadenas	= $PorDefecto;	}
 		return $cadenas;
-	}		
+	}
+	function cleanCalle($valor = ""){
+		$valor		= strtoupper($valor);
+		$arr		= array("AVENIDA", "CALLE", "CALE ", "CALLLE", "AVE.", "AVE ", "C.", "C ", "NUM.", "NUM ", "NO ", "NOM.", "SIN NUMERO", "SN", "S/N", "SIN NIM", "LOTE ", "#", "NO.", "NUMERO");
+		$valor		= str_replace($arr, " ", $valor);
+		return 		trim(preg_replace('!\s+!', ' ', $valor));
+	}
+	function cleanColonia($valor = ""){
+		$valor		= strtoupper($valor);
+		$arr		= array("COLONIA", "COL.", "COL");
+		$valor		= str_replace($arr, " ", $valor);
+		return 		trim(preg_replace('!\s+!', ' ', $valor));
+	}	
+	function cleanTextoBuscado($txt, $limite = 0){
+		$limite	= setNoMenorQueCero($limite);
+		
+		$txt	= trim(preg_replace('!\s+!', ' ', $txt));
+		if($limite >0){
+			$txt	= substr($txt, 0, $limite);
+		}
+		$txt 	= str_replace(" ", "-", $txt); 
+		$txt 	= str_replace("*", "", $txt);
+		
+		return $txt;
+	}
+	function cleanNombreComp($n, $reverse = false){
+		
+		$n		= $this->cleanString($n);
+		
+		$n		= str_replace(" DEL ", " DEL_", $n);
+		$n		= str_replace(" DE LA ", " DE_LA_", $n);
+		$n		= str_replace(" Y ", " Y_", $n);
+		$n		= str_replace(" DE ", " DE_", $n);
+		
+
+		
+		$dev	= array();
+		$nn		= array();
+		$nom	= "";
+		if($reverse == true){
+			$d		= explode(" ", $n, 3);
+			$dev[0]	= $d[0];
+			$dev[1]	= isset($d[1]) ? $d[1] : "";
+			$dev[2]	= isset($d[2]) ? $d[2] : "";
+			
+			$dev[0]	= str_replace("_", " ", $dev[0]);
+			$dev[1]	= str_replace("_", " ", $dev[1]);
+			$dev[2]	= str_replace("_", " ", $dev[2]);
+			
+		} else {
+			$d		= explode(" ", $n, 8);
+			$cnt	= count($d)-1;
+			for($i = 0; $i <= $cnt; $i++){
+				$ix				= $cnt - $i;
+				if($ix == $cnt){
+					$dev[1]		= $d[$ix];
+				} else if($ix == ($cnt-1)){
+					$dev[0]		= $d[$ix];
+				} else {
+					$nn[$ix]	= $d[$ix];
+				}			
+			}
+			ksort($nn);
+			$nom	= implode(" ", $nn);
+			$dev[2]	= str_replace("_", " ", $nom);
+			$dev[1]	= str_replace("_", " ", $dev[1]);
+			$dev[0]	= str_replace("_", " ", $dev[0]);
+		}
+		return $dev;
+	}
+	function cleanApellidos($n){
+	
+		$n		= $this->cleanString($n);
+	
+		$n		= str_replace(" DEL ", "_DEL_", $n);
+		$n		= str_replace(" DE LA ", "_DE_LA_", $n);
+		$n		= str_replace(" Y ", "_Y_", $n);
+		$n		= str_replace(" DE ", "_DE_", $n);
+		
+		
+		$d		= explode(" ", $n, 2);
+		$cnt	= count($d)-1;
+	
+		$dev	= array();
+		
+		$dev[0]	= $d[0];		
+		$dev[1]	= (isset($d[1])) ? $d[1] : "-";
+
+		$dev[0]	= str_replace("_", " ", $dev[0]);
+		$dev[1]	= str_replace("_", " ", $dev[1]);
+	
+		return $dev;
+	}
 }
 
 class cDocumentos {
@@ -1546,10 +1835,14 @@ class cDocumentos {
 	private $mCnnFTP		= null;
 	private $mPersona		= false;
 	private $mMessages		= "";
+	public $EXT_PDF			= "PDF";
+	private $mReady			= false;
+	private $mIdxFileL		= "ftp-list-files-";
+	private $mPrePath		= "";
 	
 	function __construct($nombre = ""){ $this->mNombreArchivo = $nombre; $this->getTipo();	}
 	function getTipo($documento = false){
-		$documento			= ($documento == false) ? $this->mNombreArchivo : $documento;
+		$documento	= ($documento == false) ? $this->mNombreArchivo : $documento;
 		$ext		= strtoupper(substr($documento, -3));
 		
 		switch ($ext){
@@ -1569,24 +1862,83 @@ class cDocumentos {
 	function isImagen(){ return $this->mEsImagen; }
 	function isDocto(){ return $this->mEsDocto; }
 	function getNombreArchivo(){ return $this->mNombreArchivo; }
-	function getEmbed($documento = false, $persona = false){
+	function getExt(){ return $this->mExt; }
+	
+	function getEmbed($documento = false, $persona = false, $conteo = 0){
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
-		$documento			= ($documento == false) ? $this->mNombreArchivo : $documento;
-		$mfile				= $this->FTPGetFile($documento, $persona);
-		
-		
-		
-		$d64				= base64_encode($mfile);
-		//<img alt="Embedded Image" src="data:image/png;base64,
-		$rs					= "";
-		$ext				= $this->getTipo($documento);
-		if($ext == "PDF"){
-			$rs				= "<embed src=\"data:application/pdf;base64,$d64\" width=\"600\" height=\"500\" alt=\"pdf\" pluginspage=\"http://www.adobe.com/products/acrobat/readstep2.html\" />";
+		$documento		= ($documento == false) ? $this->mNombreArchivo : $documento;
+		$mfile			= $this->FTPGetFile($documento, $persona);
+		$rs				= "";
+		$ext			= $this->getTipo($documento);		
+		if($conteo > 4){
+			$rs			= ($ext == $this->EXT_PDF) ? "<a class='button'><i class='fa fa-file-pdf-o fa-2x'></i>" . $documento . "</a>"  : "<a class='button'><i class='fa fa-file-image-o fa-2x'></i>" . $documento . "</a>";
 		} else {
-			$ext			= strtolower($ext);
-			$rs				= "<embed src=\"data:image/$ext;base64,$d64\" width=\"600\" height=\"500\" alt=\"photo\" />";
+			$d64		= base64_encode($mfile);
+			if($ext == $this->EXT_PDF){
+				//$rs		= "<embed src=\"data:application/pdf;base64,$d64\" width=\"80%\" height=\"500\" alt=\"pdf\" type=\"application/pdf\" ></embed>";
+				$rs		= "<object type=\"application/pdf\" data=\"data:application/pdf;base64,$d64\" width=\"90%\" height=\"500px\"></object>";
+			} else {
+				$ext	= strtolower($ext);
+				$rs		= "<img src=\"data:image/$ext;base64,$d64\" width=\"90%\" height=\"500px\" />";
+			}
 		}
 		return $rs;
+	}
+	function getEmbedByName($archivo = "", $prePath="", $conteo = 0){
+		if($this->mCnnFTP == null){ $this->FTPConnect(); }
+		$archivo		= ($archivo == "") ? $this->mNombreArchivo : $archivo;
+		$mfile			= $this->FTPGetFile2($archivo, $prePath);
+		$rs				= "";
+		$ext			= $this->getTipo($archivo);
+		$narchivo		= ($prePath == "") ? "../tmp/$archivo" : "../tmp/$prePath-$archivo";
+		if($conteo > 4){
+			$rs			= ($ext == $this->EXT_PDF) ? "<a class='button'><i class='fa fa-file-pdf-o fa-2x'></i>" . $archivo . "</a>"  : "<a class='button'><i class='fa fa-file-image-o fa-2x'></i>" . $archivo . "</a>";
+		} else {
+			//$d64		= base64_encode($mfile);
+			if($ext == $this->EXT_PDF){
+				//$rs		= "<embed src=\"data:application/pdf;base64,$d64\" width=\"80%\" height=\"500\" alt=\"pdf\" type=\"application/pdf\" ></embed>";
+				$rs		= "<object type=\"application/pdf\" data=\"$narchivo\" width=\"90%\" height=\"500px\"></object>";
+			} else {
+				$ext	= strtolower($ext);
+				$rs		= "<img src=\"$narchivo\" width=\"90%\" height=\"500px\" />";
+			}
+		}
+		return $rs;
+	}
+	function FTPDeleteFile($archivo = "", $prePath = ""){
+		if($this->mCnnFTP == null){ $this->FTPConnect(); }
+
+		$mark			= ($prePath == "") ? "" : "$prePath-";
+		$ruta_local		= PATH_HTDOCS . "/tmp/$mark" . $archivo;
+		$ruta_ftp		= ($prePath == "") ? "./" . $archivo : "./$prePath/" . $archivo;
+		$this->mPrePath	= ($prePath == "") ? $this->mPrePath : $prePath;
+
+		if(is_file($ruta_local)){
+			@unlink($ruta_local);
+		}
+		ftp_delete($this->mCnnFTP, $ruta_ftp);
+		$this->setCleanCache();
+	}
+	function FTPGetFile2($archivo = "", $prePath = ""){
+		if($this->mCnnFTP == null){ $this->FTPConnect(); }
+		$archivo			= ($archivo == "") ? $this->mNombreArchivo : $archivo;
+	
+		if($prePath !== ""){ ftp_chdir($this->mCnnFTP, $prePath);	}
+		$mark				= ($prePath == "") ? "" : "$prePath-";
+		$ruta_completa		= PATH_HTDOCS . "/tmp/$mark" . $archivo;
+		//TODO: 01/01/2015 Modificar 2014Nov19 mejorar en cache.- validar mejoras
+		if(is_file($ruta_completa)){
+				
+		} else {
+			$flocal 			= fopen( $ruta_completa, 'w');
+			if (ftp_fget($this->mCnnFTP, $flocal, $archivo, FTP_BINARY, 0)) {
+				//setLog( "Se ha escrito satisfactoriamente sobre $flocal");
+			} else {
+				setLog( "Ha habido un problema durante la descarga de $archivo en $flocal");
+			}
+		}
+		//$data 				= file_get_contents($ruta_completa);
+		return $ruta_completa;
 	}
 	function FTPGetFile($documento = false, $persona = false){
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
@@ -1612,14 +1964,33 @@ class cDocumentos {
 	function FTPConnect(){
 		$conn_id 		= ftp_connect(SYS_FTP_SERVER);
 		// iniciar sesión con nombre de usuario y contraseña
-		$login_result 	= ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD);
-		$this->mCnnFTP	= $conn_id;
+		if($conn_id){
+			$login_result 	= ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD);
+			$this->mCnnFTP	= $conn_id;
+			$this->mReady	= true;
+		}
 		return $conn_id;		
 	}
-	function FTPListFiles(){
-		if($this->mCnnFTP == null){ $this->FTPConnect(); }
-		//Obtener los archivos contenidos en el directorio actual
-		$contents 		= ftp_nlist($this->mCnnFTP, ".");
+	function FTPListFiles($dir = ""){
+		$xCache			= new cCache();
+		$this->mPrePath	= $dir;
+		$mPath			= ($dir == "") ? "." : "./$dir/";
+		
+		$contents		= $xCache->get($this->mIdxFileL . $this->mPrePath);
+
+		
+		if(!is_array($contents)){		
+			if($this->mCnnFTP == null){ $this->FTPConnect(); }
+			//Obtener los archivos contenidos en el directorio actual
+			$cnt 		= ($this->mReady == true) ? ftp_nlist($this->mCnnFTP, $mPath) : array();
+			$contents	= array();
+			foreach ($cnt as $idx => $nn){
+				$nn		= str_replace($mPath, "", $nn);
+				$contents[$nn]	= $nn;
+			}
+			$cnt		= null;
+			$xCache->set($this->mIdxFileL . $this->mPrePath, $contents);
+		}
 		return $contents;		
 	}
 	function FTPMakeDir($nombre){
@@ -1637,55 +2008,93 @@ class cDocumentos {
 		}
 		if(!ftp_rename($this->mCnnFTP, "../$documento", "./$documento")){
 			$ready			= false;
+			//setError("../$documento", "./$documento");
+		}
+		if($ready == true){
+			//Limpiar Cache
+			$this->setCleanCache();
 		}
 		return $ready;
+		
 	}
-	function FTPUpload($documento){
+	function FTPUpload($documento, $newName="", $prePath = ""){
 		$sucess			= true;
 		$completePath	= "";
+		$xLog			= new cCoreLog();
+		
 		if( is_array($documento) ){
 			//Obtener Extension
 			$DExt 	= explode(".", substr($documento['name'], -6));
 			$mExt	= (isset($DExt[1])) ? $DExt[1] : "";
-		
+			
 			if( ($mExt == "pdf") OR ($mExt == "png") OR ($mExt == "jpg")){
 				$this->mNombreArchivo		= $documento['name'];
-				$completePath	= PATH_TMP . $documento['name'];
+				$completePath				= PATH_TMP . $documento['name'];
 				if(file_exists($completePath)==true){
 					unlink($completePath);
-					$this->mMessages	.= "WARN\tSE ELIMINO EL ARCHIVO " . $this->mNombreArchivo . "\r\n";
+					$xLog->add("WARN\tSE ELIMINO EL ARCHIVO " . $this->mNombreArchivo . "\r\n", $xLog->DEVELOPER);
 				}
 				if(move_uploaded_file($documento['tmp_name'], $completePath )) {
-					$this->mMessages	.= "OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $this->mNombreArchivo . "\r\n";
+					$xLog->add("OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $this->mNombreArchivo . "\r\n", $xLog->DEVELOPER);
 				} else {
-					$this->mMessages	.= "ERROR\tSE FALLO AL GUARDAR (" . $this->mNombreArchivo . ")\r\n";
+					$xLog->add("ERROR\tSE FALLO AL GUARDAR (" . $this->mNombreArchivo . ")\r\n", $xLog->DEVELOPER);
 					$sucess				= false;
 				}
 			}	else {
-				$this->mMessages		.= "ERROR\tEL TIPO DE ARCHIVO DE " .$this->mNombreArchivo . "(" .$mExt . ") NO SE ACEPTA\r\n";
+				$xLog->add("ERROR\tEL TIPO DE ARCHIVO DE " .$this->mNombreArchivo . "(" .$mExt . ") NO ES VALIDO\r\n");
 				$sucess					= false;
 			}
 		} else {
-			$this->mMessages		.= "ERROR\tEL ARCHIVO NO ES VALIDO " . $this->mNombreArchivo . "\r\n";
+			$xLog->add("ERROR\tEL ARCHIVO NO ES VALIDO $documento\r\n");
 			$sucess					= false;
 		}
 		if($sucess == true){
 			if($this->mCnnFTP == null){ $this->FTPConnect(); }
-			if (ftp_put($this->mCnnFTP, $this->mNombreArchivo, $completePath, FTP_BINARY)) {
+			if($this->mReady == true){
+				$this->mNombreArchivo	= ($newName == "" ) ? $this->cleanNombreArchivo($this->mNombreArchivo) : $this->cleanNombreArchivo($newName) . "." . $mExt;
+				
+				if($prePath !== ""){ //Cambia el directorio si existe pre-path
+					$this->mPrePath		= $prePath;
+					$this->FTPChangeDir($prePath);
+				}
+				
+				if (ftp_put($this->mCnnFTP, $this->mNombreArchivo, $completePath, FTP_BINARY)) {
+					$xLog->add("OK\tSe ha enviado al servidor FTP el Archivo " . $this->mNombreArchivo . "\r\n", $xLog->DEVELOPER);
+				} else {
+					$xLog->add("ERROR\tNo se pudo enviar al servidor FTP el archivo " . $this->mNombreArchivo . "\r\n");
+					$sucess				= false;
+				}
 			} else {
-				$this->mMessages	.= "ERROR\tNo se pudo enviar el archivo " . $this->mNombreArchivo . "\r\n";
-				$sucess				= false;
+				$xLog->add("ERROR\tNo se encuentra al servidor FTP\r\n");
+				$sucess				= false;	
 			}
-		}	
+			//Limpiar Cache
+			$this->setCleanCache();
+		}
+		$this->mMessages			.= $xLog->getMessages();
+		//setError($this->mMessages);
 		return $sucess;
 	}
-	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $documento = false, $fecha = false){
-		
+	function cleanNombreArchivo($f){
+		$f	= str_replace(":", "_", $f);
+		$f	= str_replace("-", "_", $f);
+		$f	= str_replace(" ", "_", $f);
+		$f	= setCadenaVal($f);
+		$f	= strtolower($f);
+		return $f;
+	}
+	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $fichero = "", $fecha = false, $Vencimiento = false){
+		$persona	= setNoMenorQueCero($persona);
+		$contrato	= setNoMenorQueCero($contrato);
 		$xF			= new cFecha();
-		$fecha		= ($fecha == false) ? fechasys() : $fecha;
-		$documento	= ($documento	== false) ?$this->mNombreArchivo : $documento;
-		$persona	= ($persona == false) ? $this->mPersona : $persona;
-		$contrato	= ($contrato == false) ? DEFAULT_CREDITO : $contrato;
+		$fecha		= $xF->getFechaISO( $fecha );
+		$Vencimiento= $xF->getFechaISO($Vencimiento);
+		$fichero	= trim($fichero);
+		$fichero	= ($fichero == "") ? $this->mNombreArchivo : $fichero;
+		$persona	= ($persona <= DEFAULT_SOCIO) ? $this->mPersona : $persona;
+		
+		$contrato	= ($contrato <= DEFAULT_CREDITO) ? DEFAULT_CREDITO : $contrato;
+		//setLog($fecha);
 		$fecha		= $xF->getInt($fecha);
 		$user		= getUsuarioActual();
 		$suc		= getSucursal();
@@ -1693,18 +2102,67 @@ class cDocumentos {
 		$sql 		= "INSERT INTO personas_documentacion(
 			clave_de_persona, tipo_de_documento, fecha_de_carga, observaciones, archivo_de_documento, valor_de_comprobacion, 
 			estado_en_sistema, fecha_de_verificacion, oficial_que_verifico, 
-			resultado_de_la_verificacion, notas, version_de_documento, numero_de_pagina, usuario, sucursal, entidad, documento_relacionado)
-		VALUES($persona, $tipo, $fecha, '$observaciones', '$documento', '',
-		 1, 0, 0, 0, '', '', $pagina, $user, '$suc', '$ent', $contrato)";
-			$rs		= my_query($sql);
-		if($rs[SYS_ESTADO] == false){
-			$this->mMessages		.= "ERROR\t \r\n";
+			resultado_de_la_verificacion, notas, version_de_documento, numero_de_pagina, usuario, sucursal, entidad, documento_relacionado, vencimiento)
+		VALUES($persona, $tipo, $fecha, '$observaciones', '$fichero', '',
+		 1, 0, 0, 0, '', '', '$pagina', $user, '$suc', '$ent', $contrato, '$Vencimiento')";
+		$xQL		= new MQL();
+			$rs		= $xQL->setRawQuery($sql);
+		if($rs === false){
+			$this->mMessages		.= "ERROR\tEl Documento de la Persona $persona no se Guardo \r\n";
 		} else {
-			$this->mMessages		.= "OK\t \r\n";
+			$this->mMessages		.= "OK\tDocumento de Persona $persona Guardado\r\n";
 		}
-		return $rs[SYS_ESTADO];
+		return $rs;
 	}
-	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function getFileExists($file, $prePath = ""){
+		$ext		= $this->getTipo($file);
+		$file		= str_replace(".$ext", "", $file);
+		$aFiles		= $this->FTPListFiles($prePath);
+		$existe		= false;
+		//setError("$file.jpg");
+		//print_r($aFiles);
+
+		if (in_array("$file.jpg", $aFiles)) {
+			$this->mExt	= "jpg";
+			$existe = true;
+		}
+		if (in_array("$file.png", $aFiles)) {
+			$existe = true;
+			$this->mExt	= "png";
+		}
+		if (in_array("$file.pdf", $aFiles)) {
+			$existe = true;
+			$this->mExt	= "pdf";
+		}
+		return $existe;
+	}
+	private function setCleanCache(){
+		$xCache	= new cCache();
+		$xCache->clean($this->mIdxFileL);
+		$xCache->clean($this->mIdxFileL . $this->mPrePath);
+	}
+	private function FTPChangeDir($dir){
+		$res	= true;
+		if(!ftp_chdir($this->mCnnFTP, $dir)){
+			$this->FTPMakeDir($dir);
+			if(!ftp_chdir($this->mCnnFTP, $dir)){
+				$res = false;
+			}
+		}
+		return $res;
+	}
+	function getPathPorTipo($tipo){
+		$prepath	= "";
+		
+		switch ($tipo){
+			case 281: //Originación por Arrendamiento
+				$prepath	= "originacion";
+				break;
+		}
+		
+		return $prepath;
+	}
 }
 
 
@@ -1735,147 +2193,217 @@ class cSistemaEquivalencias {
 	
 }
 
-//================================================================ JSON
-
-if (!defined('JSON_UNESCAPED_SLASHES'))
-	define('JSON_UNESCAPED_SLASHES', 64);
-if (!defined('JSON_PRETTY_PRINT'))
-	define('JSON_PRETTY_PRINT', 128);
-if (!defined('JSON_UNESCAPED_UNICODE'))
-	define('JSON_UNESCAPED_UNICODE', 256);
-
-function _json_encode($data, $options = 448)
-{
-	if (version_compare(PHP_VERSION, '5.4', '>='))
-	{
-		return json_encode($data, $options);
+class cReglasDeValidacion  {
+	function  __construct(){
+		
 	}
-
-	return _json_format(json_encode($data), $options);
-}
-
-function _pretty_print_json($json)
-{
-	return _json_format($json, JSON_PRETTY_PRINT);
-}
-
-function _json_format($json, $options = 448)
-{
-	$prettyPrint = (bool) ($options & JSON_PRETTY_PRINT);
-	$unescapeUnicode = (bool) ($options & JSON_UNESCAPED_UNICODE);
-	$unescapeSlashes = (bool) ($options & JSON_UNESCAPED_SLASHES);
-
-	if (!$prettyPrint && !$unescapeUnicode && !$unescapeSlashes)
-	{
-		return $json;
-	}
-
-	$result = '';
-	$pos = 0;
-	$strLen = strlen($json);
-	$indentStr = ' ';
-	$newLine = "\n";
-	$outOfQuotes = true;
-	$buffer = '';
-	$noescape = true;
-
-	for ($i = 0; $i < $strLen; $i++)
-	{
-	// Grab the next character in the string
-		$char = substr($json, $i, 1);
-
-		// Are we inside a quoted string?
-		if ('"' === $char && $noescape)
-		{
-		$outOfQuotes = !$outOfQuotes;
-	}
-
-		if (!$outOfQuotes)
-		{
-		$buffer .= $char;
-		$noescape = '\\' === $char ? !$noescape : true;
-			continue;
+	function empresa($empresa = false){
+		$empresa	= setNoMenorQueCero($empresa);
+		$ok			= true;
+		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+			if($empresa <= DEFAULT_SOCIO OR $empresa == DEFAULT_EMPRESA OR $empresa == FALLBACK_CLAVE_EMPRESA){
+				$ok	= false;			
+			}
 		}
-			elseif ('' !== $buffer)
-			{
-					if ($unescapeSlashes)
-					{
-					$buffer = str_replace('\\/', '/', $buffer);
+		return $ok;
 	}
+	function cuenta($clave = false){
+		$clave	= setNoMenorQueCero($clave);
+		$ready	= true;
+		if($clave <= FALLBACK_CLAVE_DE_DOCTO OR $clave == DEFAULT_CUENTA_CORRIENTE){ $ready = false; }
+		return $ready;
+	}
+	function credito(){
+		
+	}
+}
 
-					if ($unescapeUnicode && function_exists('mb_convert_encoding'))
-						{
-							// http://stackoverflow.com/questions/2934563/how-to-decode-unicode-escape-sequences-like-u00ed-to-proper-utf-8-encoded-cha
-									$buffer = preg_replace_callback('/\\\\u([0-9a-f]{4})/i',
-								function ($match)
-								{
-								return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
-							}, $buffer);
-							}
+class cCoreImport {
+	private $mForceUTF		= false;
+	private $mForceClean	= false;
+	private $mNombreI		= "";
+	private $mPrimerAp		= "";
+	private $mSegundoAp		= "";
+	private $mAcceso		= "";
+	private $mNumeroExt		= "";
+	private $mColonia		= "";
+	private $mMunicipio		= "";
+	private $mEntidadFed	= "";
+	
+	
+	private $mCodigoPostal	= 0;
+	private $mArrGenero	= array(
+						"HOMBRE" 	=> 1,"MUJER" 	=> 2,
+						"NINGUNO" 	=> 99,"" => 99,
+						"MASCULINO" => 1,"MASCULINA" => 1,
+						"FEMENINO"	=> 2,"FEMENINA"	=> 2,
+						"H" 	=> 1,"M" 	=> 2
+						);
+	private $mArrFiguraJ	= array("PERSONA FISICA" 	=> 1,"PERSONA MORAL" 	=> 2,"FISICA" 	=> 1,"MORAL" 	=> 2,"NATURAL" 	=> 1,"JURIDICA" 	=> 2,""	=> 1,"NINGUNO"	=> 99, "F" => 1, "M"=> 2);
+	private $mArrEstadoC	= array("CASADO" 	=> 1,"CASADA" 	=> 1,"SOLTERO" 	=> 2,"SOLTERA" 	=> 2,"NINGUNO" 	=> 99,"" 		=> 99,"DIVORCIADO" 	=> 3,"DIVORCIADA" 	=> 3,"UNION LIBRE" 	=> 4,"VIUDO" 	=> 6,"VIUDA" 	=> 6);
+	private $mArrRegMat		= array("" => "NINGUNO","MANCOMUNADO" => "SOCIEDAD_CONYUGAL","SEPARADOS" => "BIENES_SEPARADOS");
+	private $mRegVivienda	= array("PROPIA" =>1, "RENTADA"=>2, "NA"=>99, "NINGUNO" => 99);
+	
+	
+	function __construct(){
+		
+	}
+	function getGenero($v){ return $this->getV($v, DEFAULT_GENERO, MQL_INT, $this->mArrGenero);	}
+	function setNombreCompleto($n, $inverso = false){
+		$xLimp	= new cTiposLimpiadores();
+		$DD		= $xLimp->cleanNombreComp($n, $inverso);
+		$this->mNombreI		= $DD[2];
+		$this->mPrimerAp	= $DD[0];
+		$this->mSegundoAp	= $DD[1];
+	}
+	function setDireccionCompleta($n){
+		$xLimp	= new cTiposLimpiadores();
+		$n			= strtoupper($n);
+		$n			= $xLimp->cleanString($n);
+		//$arr		= array("AVENIDA", "CALLE", "CALE ", "CALLLE", "AVE.", "AVE ", "C.", "C ", "NUM.", "NUM ", "NO ", "NOM.", "SIN NUMERO", "SN", "S/N", "SIN NIM", "LOTE ", "#", "NO.");
+		$arr		= array("NUM.", "NUM ", "NO ", "NOM.", "SIN NUMERO", "LOTE ", "#", "NO.", "NUMERO");
+		$n			= str_replace($arr, ",", $n);
+		$n			= trim(preg_replace('!\s+!', ' ', $n)); //quitar doble espacios
+		//Calle Nombre Numero 46, Colonia 20 Noviembre, San Juan, Guanajuato, C.P. 24026
+		$arrCP		= array("C.P.", "CP", "CODIGO POSTAL", "ZP");
+		$DD			= explode(",", $n);
+		$items		= count($DD);
+		$indexCP	= null;
+		foreach ($DD as $idx => $cnt){
+			//Buscar Codigo Postal
+			foreach ($arrCP as $idxb => $bbusq){
+				if(strpos($cnt, $bbusq) !== false){
+					$indexCP	= $idx;
+					$cnt		= str_replace($arrCP, "", $cnt);
+					$this->mCodigoPostal	= setNoMenorQueCero($cnt);
+				}
+			}
+			
+		}
+		$this->mAcceso		= isset($DD[0]) ? $xLimp->cleanCalle($DD[0]) : "";
+		$this->mNumeroExt	= isset($DD[1]) ? $DD[1] : "SN";
+		$this->mColonia		= isset($DD[2]) ? $xLimp->cleanColonia($DD[2]) : "";
+		$this->mMunicipio	= isset($DD[3]) ? $DD[3] : "";
+		$this->mEntidadFed	= isset($DD[4]) ? $DD[4] : "";
+		//$DD		= $xLimp->cleanNombreComp($n);
+		return $n;
+	}
+	function getCalle(){ return $this->mAcceso; }
+	function getNumeroExt(){ return $this->mNumeroExt; }
+	function getMunicipio(){ return $this->mMunicipio; }
+	function getEntidadFed(){ return $this->mEntidadFed; }
+	function getCodigoPostal(){ return $this->mCodigoPostal; }
+	function getColonia(){ return $this->mColonia; }
+	function getPrimerAp(){ return $this->mPrimerAp; }
+	function getSegundoAp(){ return $this->mSegundoAp; }
+	function getNombre(){ return $this->mNombreI; } 
+	function getEstadoCivil($v){ return $this->getV($v, DEFAULT_ESTADO_CIVIL, MQL_INT, $this->mArrEstadoC);}
+	private function getV($valor, $fallback = null, $tipo = MQL_STRING, $equiv = false){
+		$ret	= "";
+		$xT		= new cTipos();
+		if(is_array($equiv)){
+			$ret	= (isset($equiv[$valor])) ? $equiv[$valor] : "";
+		}
+		switch ($tipo){
+			case MQL_INT:
+				$ret	= setNoMenorQueCero($ret);
+				$ret	= ($ret <= 0 AND $fallback !== null) ? $fallback : $ret;
+				break;
+			case MQL_DATE:
+				$xF		= new cFecha();
+				$ret	= $xF->getFechaISO($ret);
+				break;
+			case MQL_BOOL:
+				$ret	= $xT->cBool($ret);
+				break;
+			case MQL_FLOAT:
+				$ret	= setNoMenorQueCero($ret);
+				$ret	= ($ret <= 0 AND $fallback !== null) ? $fallback : $ret;
+				break;
+			default:
+				$ret	= setCadenaVal($ret);
+				$ret	= ($ret == "" AND $fallback !== null) ? $fallback : $ret;
+				break;
+		}
+		return $ret;
+	}
+	function getRFC($v){
+		$xR	= new cReglasDePais();
+		return $xR->getValidIDFiscal($v);
+		//return $this->getV($v, DEFAULT_PERSONAS_RFC_GENERICO, MQL_STRING);
+	}
+	function setOcupacion($n){
+		
+		$arr		= array("PREOFESOR", "PROFESOR (A)", "PROFESORA", "PROFESSOR");
+		$n			= str_replace($arr, "PROFESOR(A)", $n);
+		$arr		= array("LICENCIADA (O)", "LICENCIADO (A)", "BACHELOR", "BACHELOS", "LIC.", "LICENCIADA", "LICENCIADO");
+		$n			= str_replace($arr, "LICENCIAD(O/A)", $n);
+		$arr		= array("TECNICO (A)", "TECNICA (O)", "TECNICOS", "TECNICA", "TECNICO" );
+		$n			= str_replace($arr, "TECNIC(O/A)", $n);
+		$arr		= array("INGENIERA", "INGENIERO (A)", "INGENIERO" );
+		$n			= str_replace($arr, "INGENIER(O/A)", $n);
+		
+		$arr		= array(" OF ");
+		$n			= str_replace($arr, " DE ", $n);
 
-            $result .= $buffer . $char;
-            $buffer = '';
-            continue;
-            }
-            	elseif(false !== strpos(" \t\r\n", $char))
-            	{
-            	continue;
-            }
+		$arr		= array("ARTES");
+		$n			= str_replace($arr, "ARTES", $n);		
 
-            if (':' === $char)
+		$arr		= array("UNIVERSITARIOS","UNIVERCITARIO", "UNIVERSITARIA", "UNIVERSITARIO (A)", "UNIVERSITARIO");
+		$n			= str_replace($arr, "UNIVERSITARI(O/A)", $n);		
+		//
+		$arr		= array("PEDAGIGIA", "PEDAG.");
+		$n			= str_replace($arr, "PEDAGOGIA", $n);
+		$arr		= array("ADMON.");
+		$n			= str_replace($arr, "ADMINISTRACION", $n);
+		
+		$arr		= array("HISTORUA");
+		$n			= str_replace($arr, "HISTORIA", $n);
+				
+		$arr		= array("EDUC.", "EDUCACCION");
+		$n			= str_replace($arr, "EDUCACION", $n);		
+		
+		
+		$n			= trim(preg_replace('!\s+!', ' ', $n)); //quitar doble espacios
+		
+		return $n;
+	}
+}
+
+//================================================================ JSON
+function Memory_Usage($decimals = 2)
+{
+    $result = 0;
+
+    if (function_exists('memory_get_usage'))
+    {
+        $result = memory_get_usage() / 1024;
+    }
+
+    else
+    {
+        if (function_exists('exec'))
+        {
+            $output = array();
+
+            if (substr(strtoupper(PHP_OS), 0, 3) == 'WIN')
             {
-            // Add a space after the : character
-            $char .= ' ';
-	}
-	elseif (('}' === $char || ']' === $char))
-	{
-	$pos--;
-	$prevChar = substr($json, $i - 1, 1);
+                exec('tasklist /FI "PID eq ' . getmypid() . '" /FO LIST', $output);
 
-	if ('{' !== $prevChar && '[' !== $prevChar)
-									{
-									// If this character is the end of an element,
-									// output a new line and indent the next line
-										$result .= $newLine;
-										for ($j = 0; $j < $pos; $j++)
-										{
-										$result .= $indentStr;
-										}
-										}
-										else
-										{
-										// Collapse empty {} and []
-										$result = rtrim($result) . "\n\n" . $indentStr;
-										}
-										}
+                $result = preg_replace('/[\D]/', '', $output[5]);
+            }
 
-										$result .= $char;
+            else
+            {
+                exec('ps -eo%mem,rss,pid | grep ' . getmypid(), $output);
 
-										// If the last character was the beginning of an element,
-										// output a new line and indent the next line
-										if (',' === $char || '{' === $char || '[' === $char)
-											{
-											$result .= $newLine;
+                $output = explode('  ', $output[0]);
 
-											if ('{' === $char || '[' === $char)
-											{
-											$pos++;
-	}
+                $result = $output[1];
+            }
+        }
+    }
 
-	for ($j = 0; $j < $pos; $j++)
-	{
-	$result .= $indentStr;
-	}
-	}
-	}
-	// If buffer not empty after formating we have an unclosed quote
-	if (strlen($buffer) > 0)
-	{
-	//json is incorrectly formatted
-	$result = false;
-								}
-
-								return $result;
-								}
-								
+    return number_format(intval($result) / 1024, $decimals, '.', '');
+}								
 ?>

@@ -30,7 +30,7 @@ $xFRM		= new cHForm("frmcargamasiva", "vista.carga-masiva.frm.php?action=" . MQL
 $msg		= "";
 $xSel		= new cHSelect();
 $xChk		= new cHCheckBox();
-
+$xFRM->setTitle($xHP->getTitle());
 $xFRM->setEnc("multipart/form-data");
 
 if($action == SYS_NINGUNO){
@@ -43,6 +43,23 @@ if($action == SYS_NINGUNO){
 	//if( MODO_MIGRACION == true ){
 		$xFRM->addHElem( $xChk->get("TR.Omitir AML", "idaml") );
 	//}
+	
+	$xUL	= new cHUl();
+	$xUL->li("01.- PERSONA|02.- IDFISCAL|03.- IDPOBLACIONAL|04.- NOMBRE|05.- APELLIDO1|06.- APELLIDO2|07.- IDCUENTA|08.- DEPOSITO|09.- NOTAS|10.- RETIRO");
+	$xUL->li("Columna 01.- Persona .- Numero de Persona");
+	$xUL->li("Columna 02.- IDFICAL.- RFC/VAT/RTN Registro Fiscal [*]");
+	$xUL->li("Columna 03.- IDPOBLACIONAL.- DNI/CURP/Carnet [*]");
+	$xUL->li("Columna 04.- Nombre Completo [*]");
+	$xUL->li("Columna 05.- Primer Apellido [*]");
+	$xUL->li("Columna 06.- Segundo Apellido [*]");
+	$xUL->li("Columna 07.- Numero de Cuenta");
+	$xUL->li("Columna 08.- Deposito.- Monto del Deposito");
+	$xUL->li("Columna 09.- Notas.- Observaciones de la Carga");
+	$xUL->li("Columna 10.- Retiro.- Monto del Retiro");
+	$xUL->li("[*] Requerido si es Nuevo");
+	
+	
+	$xFRM->addHTML($xUL->get());
 	
 	$xFRM->addSubmit("TR.Probar");
 	$xFRM->OButton("TR.Guardar", "setEnviarDocto()", "ejecutar");
@@ -71,6 +88,8 @@ if($action == SYS_NINGUNO){
 		public $OBSERVACIONES		= 9;
 		public $RETIRO				= 10;
 	}
+	//purgar
+	
 	//Cedula de Identidad
 	$tmp	= new cTmp();
 	$xFi->setCharDelimiter("|");
@@ -82,6 +101,7 @@ if($action == SYS_NINGUNO){
 		$data				= $xFi->getData();
 		$conteo				= 1;
 		$msg				.= "";
+		$totalImp			= 0;
 		foreach ($data as $rows){
 			
 			if($conteo > 1){ //Omitir primera columna
@@ -104,7 +124,8 @@ if($action == SYS_NINGUNO){
 				
 				$xSoc		= new cSocio($persona);
 				//buscar por RFC/CURP
-				if($persona == false){
+				$persona	= setNoMenorQueCero($persona);
+				if($persona <= DEFAULT_SOCIO){
 					if($xSoc->initByIDLegal($rfc) == false){
 						if($xSoc->initByIDLegal($curp) == false){
 							$sucess	= false;
@@ -154,7 +175,9 @@ if($action == SYS_NINGUNO){
 						$xSoc->add($nombre, $apellido1, $apellido2, $rfc, $curp);
 						if($xSoc->init() == true){
 							$persona	= $xSoc->getCodigo();
+							$xSoc->setEsCliente();
 							$sucess		= true;
+							$msg	.= "OK\t$persona\tLa persona $persona ha sido Agregada\r\n";
 						}
 						
 				}
@@ -206,20 +229,25 @@ if($action == SYS_NINGUNO){
 							*/
 					}
 					if($retiro > 0){ $xCta->setRetiro($retiro); }
-					if($deposito > 0){ $xCta->setDeposito($deposito); }
+					if($deposito > 0){ 
+						$recibo		= $xCta->setDeposito($deposito);
+						if($recibo > 0){ 
+							$totalImp += $deposito;
+						} else {
+							$msg	.= "ERROR\tNo se guardo el Deposito $deposito\r\n";
+						}
+					}
 					$msg		.= $xCta->getMessages();
 				}
 			}
 			$conteo++;
 		}
-		$xFRM->addAviso($msg);
+		$msg	.= "=====\tTOTAL: $totalImp\r\n";
+		//$xFRM->addAviso($msg);
 		$xFRM->addSubmit();
 	}
 	if(MODO_DEBUG == true){
-		$xF	= new cFileLog();
-		$xF->setWrite($msg);
-		$xF->setClose();
-		$xFRM->addToolbar( $xF->getLinkDownload("TR.Archivo de eventos", "") );
+		$xFRM->addLog($msg);
 	}
 }
 /*$xFRM->addJsBasico();

@@ -12,15 +12,16 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-	$xHP		= new cHPage("", HP_FORM);
+	$xHP		= new cHPage("TR.REPORTES DE CAPTACION", HP_FORM);
 	$xQL		= new MQL();
 	$xLi		= new cSQLListas();
 	$xF			= new cFecha();
-	$xSel	= new cHSelect();
+	$xSel		= new cHSelect();
 	
 	$xHP->init();
 	
 	$xPanel		= new cPanelDeReportes(iDE_CAPTACION, "general_captacion");
+	$xPanel->setTitle($xHP->getTitle());
 	//$xPanel->OFRM()->addCuentaCaptacionBasico(true, CAPTACION_TIPO_VISTA);
 	//$xPanel->addListReports();
 	$xPanel->setConOperacion(false);

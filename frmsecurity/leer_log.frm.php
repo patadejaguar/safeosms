@@ -13,7 +13,7 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP			= new cHPage("TR.Log reader");
-$oficial = elusuario($iduser);
+
 function jsaGetLog($txt){
 	$xHT		= new cHObject();
 	$log_file	= "grep error_log /etc/php.ini";

@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Registro de Personas");
+$xHP		= new cHPage("TR.Registro de GRUPO_SOLIDARIO");
 $jxc 		= new TinyAjax();
 $xLoc		= new cLocal();
 
@@ -21,6 +21,8 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 
 $xFRM		= new cHForm("frmsolingreso", "registro-personas.frm.php");
+$xFRM->setTitle( $xHP->getTitle() );
+$xFRM->setNoAcordion();
 $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xTxt2		= new cHText();
@@ -36,9 +38,10 @@ $xFRM->addSeccion("iddatosgenerales", "TR.Datos generales");
 $xFRM->ODate("idfecharegistro", false,"TR.fecha de registro");
 $xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
 if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
-	$xFRM->addFootElement("<input type='hidden' name='idcajalocal' name='idcajalocal' value='" . getCajaLocal() . "' />");
+	$xFRM->OHidden("idcajalocal", getCajaLocal());
 } else {
-	$xFRM->addHElem( $xSel->getListaDeCajasLocales("", true)->get("TR.punto de acceso", true) );
+	$xFRM->addHElem( $xSel->getListaDeCajasLocales("", false, getCajaLocal())->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeRegionDePersonas("", getRegion() )->get(true));
 }
 
 $xFRM->OHidden("idtipodeingreso", TIPO_INGRESO_GRUPO, "");
@@ -98,14 +101,14 @@ if( EACP_CLAVE_DE_PAIS == "MX"){
 
 }
 $xFRM->endSeccion(); $xFRM->addSeccion("idintegrantes", "TR.Integrantes");
-$xFRM->addPersonaBasico("2", false, false, "", "TR.Representante de Grupo");
-$xFRM->addPersonaBasico("3", false, false, "", "TR.Vocal de Grupo");
-$xFRM->addPersonaBasico("4", false, false, "", "TR.Integrante de grupo");
-$xFRM->addPersonaBasico("5", false, false, "", "TR.Integrante de grupo");
-$xFRM->addPersonaBasico("6", false, false, "", "TR.Integrante de grupo");
-$xFRM->addPersonaBasico("7", false, false, "", "TR.Integrante de grupo");
-$xFRM->addPersonaBasico("8", false, false, "", "TR.Integrante de grupo");
-$xFRM->addPersonaBasico("9", false, false, "", "TR.Integrante de grupo");
+$xFRM->addPersonaBasico("2", false, false, "", "TR.Representante_de_Grupo");
+$xFRM->addPersonaBasico("3", false, false, "", "TR.Vocal_de_Grupo");
+$xFRM->addPersonaBasico("4", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("5", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("6", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("7", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("8", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("9", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
 
 //$xFRM->OMoneda("iddescuento", 0, "TR.Descuento Deseado");
 

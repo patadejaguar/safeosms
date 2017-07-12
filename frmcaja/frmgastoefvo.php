@@ -1,4 +1,117 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
+//=====================================================================================================
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.GASTOS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc = new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$idtotal		= parametro("idtotal", 0, MQL_FLOAT);
+$observaciones	= parametro("idobservaciones");
+
+
+$ctipo_pago			= parametro("ctipo_pago", SYS_NINGUNO, MQL_RAW);
+$cheque				= parametro("cheque");
+$foliofiscal		= parametro("foliofiscal");
+
+$xHP->init();
+$jsSum		= "0";
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+$sql		= "SELECT  * FROM `operaciones_tipos` WHERE `recibo_que_afecta`=98";
+$rs			= $xQL->getDataRecord($sql);
+$xMovs		= new cOperaciones_tipos();
+$xTxt		= new cHText();
+$xTxt->setDivClass("txmon");
+$xTxt->addEvent("jsUpdateSumas()", "onchange");
+$xFRM->setNoAcordion();
+
+//$xFRM->addJsBasico();
+if($action == SYS_NINGUNO){
+
+	$xFRM->addPersonaBasico();
+	$xFRM->addFecha();
+	$xFRM->addPagoBasico();
+	$xFRM->addObservaciones();
+	$xFRM->addEnviar();
+	$xFRM->addSeccion("didivca", "TR.Conceptos");
+	$idtotal	= 0;
+	
+	foreach ($rs as $rw){
+		$xMovs->setData($rw);
+		$idtipo		= $xMovs->idoperaciones_tipos()->v();
+		$xFRM->addDivSolo( $xTxt->getDeMoneda("idm-$idtipo", $xMovs->descripcion_operacion()->v(), 0) );
+		$jsSum		.= ($jsSum == "") ? "flotante(\$('#idm-$idtipo').val())" :"+flotante(\$('#idm-$idtipo').val())";
+		//
+	}
+	$xFRM->addDivSolo( $xTxt->getDeMoneda("idtotal", "TR.TOTAL", $idtotal) );
+	$xFRM->endSeccion();
+	
+	$xFRM->setAction("frmgastoefvo.php?action=" . MQL_ADD);
+} else {
+	if($idtotal >0){
+		$xRec	= new cReciboDeOperacion(RECIBOS_TIPO_OEGRESOS, false);
+		$xRec->setNuevoRecibo($persona, DEFAULT_CREDITO, $fecha, SYS_CERO, RECIBOS_TIPO_OEGRESOS, $observaciones, $cheque, $ctipo_pago, $foliofiscal);
+		foreach ($rs as $rw){
+			$xMovs->setData($rw);
+			$idtipo		= $xMovs->idoperaciones_tipos()->v();			
+			$monto		= parametro("idm-$idtipo",0, MQL_FLOAT);
+			if($monto > 0){
+				$xRec->setNuevoMvto($fecha, $monto, $idtipo, SYS_CERO, "");
+			}
+		}
+		$xRec->setFinalizarRecibo(true);
+		$xFRM->addHTML($xRec->getJsPrint(true));
+		$xFRM->addImprimir();
+		$xFRM->addCerrar();
+		$xFRM->addAvisoRegistroOK($xRec->getMessages());
+	} else {
+		$xFRM->addAvisoRegistroError();
+		$xFRM->addAtras();
+	}
+}
+echo $xFRM->get();
+?>
+<script>
+function jsUpdateSumas(){
+	var mTotal = <?php echo $jsSum ?>;
+	$("#idtotal").val(mTotal);
+}
+</script>
+<?php
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+
+exit;
 //=====================================================================================================
 //=====>	INICIO_H
 	include_once("../core/go.login.inc.php");

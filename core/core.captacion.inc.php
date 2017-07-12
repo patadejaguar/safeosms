@@ -88,13 +88,13 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 
 				$socio		= $this->mSocioTitular;
 
-				$CRecibo = new cReciboDeOperacion(4, true);
+				$CRecibo = new cReciboDeOperacion(RECIBOS_TIPO_RETIRO_VISTA, true);
 				//Agregar recibo si no hay
 				if ( setNoMenorQueCero($recibo) == 0 ){
 					$recibo = $CRecibo->setNuevoRecibo($socio, $this->mNumeroCuenta,
-											$this->mFechaOperacion, $this->mPeriodoCuenta, 4,
+											$this->mFechaOperacion, $this->mPeriodoCuenta, RECIBOS_TIPO_RETIRO_VISTA,
 											$observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo );
-					if ( setNoMenorQueCero( $recibo ) == 0 ){
+					if ( setNoMenorQueCero( $recibo ) <= 0 ){
 						$this->mMessages	.= "SUCESS\tSe Agrego Exitosamente el Recibo [$recibo] de la Cuenta " . $this->mNumeroCuenta . " \r\n";
 						$this->mReciboDeOperacion	= $recibo;
 						$this->mSucess		= true;
@@ -133,10 +133,20 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 		}
 		return  $recibo;
 	}
-	function setDeposito($monto, $cheque = "NA",
+	function setDeposito($monto, $cheque = "",
 						$tipo_de_pago = TESORERIA_COBRO_CHEQUE, $recibo_fiscal = DEFAULT_RECIBO_FISCAL,
 						$observaciones = "", $grupo = DEFAULT_GRUPO,
-						$fecha = false, $recibo = false){
+						$fecha = false, $recibo = false, $empresa = false, $cuenta_bancaria = false, $periodo = false){
+		$grupo				= setNoMenorQueCero($grupo);
+		$grupo				= ($grupo <= 0) ? DEFAULT_GRUPO : $grupo;
+		$empresa			= setNoMenorQueCero($empresa);
+		$cuenta_bancaria	= setNoMenorQueCero($cuenta_bancaria);
+		$ready				= false;
+		$periodo			= setNoMenorQueCero($periodo);
+		$recibo				= setNoMenorQueCero($recibo);
+		if($periodo > 0){
+			$this->mPeriodoCuenta	= $periodo;
+		}
 		if ($monto > 0 ){
 			if ( setNoMenorQueCero($this->mPeriodoCuenta) == 0 ){ $this->mPeriodoCuenta	= 1; }
 			if ( setNoMenorQueCero($this->mSocioTitular) <= DEFAULT_SOCIO){	$this->init();	}			
@@ -151,12 +161,8 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 				}
 				$fecha					= setFechaValida($fecha);
 				$this->mFechaOperacion	= $fecha;
-
-				$socio		= $this->mSocioTitular;
-
-				$CRecibo = new cReciboDeOperacion(4, true);
-				//Set a Mvto Contable
-
+				$socio					= $this->mSocioTitular;
+				$CRecibo 				= new cReciboDeOperacion(RECIBOS_TIPO_DEPOSITO_VISTA, true, $recibo);
 				if (setNoMenorQueCero($recibo) > 0 ){
 					$CRecibo->setNumeroDeRecibo($recibo);
 					if( $CRecibo->init() == true){
@@ -171,16 +177,16 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 				//Agregar recibo si no hay
 				if ( setNoMenorQueCero($recibo) == 0 ){
 					$recibo = $CRecibo->setNuevoRecibo($socio, $this->mNumeroCuenta,
-											$this->mFechaOperacion, $this->mPeriodoCuenta, 3,
-											$observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo );
+											$this->mFechaOperacion, $this->mPeriodoCuenta, RECIBOS_TIPO_DEPOSITO_VISTA,
+											$observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo, $cuenta_bancaria, false, 0, $empresa );
 					//Checar si se agrego el recibo
-					if ($recibo != false ){
-						$this->mMessages	.= "OK\tSe Agrego Exitosamente el Recibo $recibo de la Cuenta " . $this->mNumeroCuenta . " \r\n";
+					if ( setNoMenorQueCero($recibo)  > 0 ){
+						$this->mMessages			.= "OK\tSe Agrego Exitosamente el Recibo $recibo de la Cuenta " . $this->mNumeroCuenta . " \r\n";
 						$this->mReciboDeOperacion	= $recibo;
-						$this->mSucess		= true;
+						$this->mSucess				= true;
 					} else {
-						$this->mMessages	.= "ERROR\tSe Fallo al Agregar el Recibo $recibo de la Cuenta " . $this->mNumeroCuenta . " \r\n";
-						$this->mSucess		= false;
+						$this->mMessages			.= "ERROR\tSe Fallo al Agregar el Recibo $recibo de la Cuenta " . $this->mNumeroCuenta . " \r\n";
+						$this->mSucess				= false;
 					}
 				}
 				$this->mReciboDeOperacion	= $recibo;
@@ -189,7 +195,10 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 				//Agregar el Movimiento
 					$CRecibo->setNuevoMvto($fecha, $monto, $this->mOperacionDeposito, $this->mPeriodoCuenta, $observaciones, 1, TM_ABONO, $socio,  $this->mNumeroCuenta);
 					$CRecibo->setFinalizarRecibo(true);
-					$CRecibo->setFinalizarTesoreria();
+					$CRecibo->setFinalizarTesoreria(array(
+											"cuenta" => $cuenta_bancaria,
+											"cheque" => $cheque
+									));	
 					$this->mNuevoSaldo	= $this->mSaldoAnterior + $monto;
 
 					$this->mMessages	.= $CRecibo->getMessages();
@@ -197,11 +206,13 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 					$this->mMessages	.= "OK\tSaldo Nuevo por " . $this->mNuevoSaldo .  "(" . $this->mSaldoAnterior . "|$monto) \r\n";
 					//Actualizar la Cuenta
 					$this->setUpdateSaldo();
+					//Agregar SDPM
+					$this->addSDPM();
 				} else {
 					$this->mMessages	.= "ERROR\tNo Existe Recibo con el cual trabajar($recibo) \r\n";
 				}
 				$this->mMessages	.= $CRecibo->getMessages();
-				$this->addSDPM();
+				
 		}
 		return  $recibo;
 	}
@@ -255,7 +266,8 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 	    							VALUES( $ejer, $peri, " . $this->mNumeroCuenta . ", '$fecha', $diastrans, $nuevatasa, $sdpd, $idrecibo, $socio, '$sucursal')";
 					$this->mMessages	.= $this->mNumeroCuenta . "\tADD_SDPM\tAgregando SDPM por $sdpd, $diastrans dias y recibo $idrecibo \r\n";					
 				}
-				$xs	= my_query($sqlUSPM);
+				$xQL	= new MQL();
+				$xs	= $xQL->setRawQuery($sqlUSPM);
 
 
 		} else {
@@ -269,6 +281,7 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 			$fecha			= $this->mFechaOperacion;
 			$fechaAnterior	= $this->mFechaUltimaOp;
 			$dias_del_mes	= date("t", strtotime($fecha) );
+			$xQL			= new MQL();
 			//Valores iniciados a cero
 			$diastrans		= 0;
 
@@ -282,23 +295,23 @@ class cCuentaALaVista extends cCuentaDeCaptacion {
 				$this->mMessages	.= "ERROR\tError al Procesar el Numero de Dias Transcurridos\r\n";
 			}
 
-			$sqlucta = "UPDATE captacion_cuentas SET tasa_otorgada=$nuevatasa, fecha_afectacion='$fecha', ";
-			$sqlucta .= "saldo_cuenta=" . $this->mNuevoSaldo . ", dias_invertidos=$diastrans
+			$sqlucta 	= "UPDATE captacion_cuentas SET tasa_otorgada=$nuevatasa, fecha_afectacion='$fecha', ";
+			$sqlucta	.= "saldo_cuenta=" . $this->mNuevoSaldo . ", dias_invertidos=$diastrans
 				WHERE numero_cuenta=" . $this->mNumeroCuenta . "";
 
 			if ( $this->mNotUpdateSaldo == false ){
-				$x = my_query($sqlucta);
+				$x 	= $xQL->setRawQuery($sqlucta);
 			} else {
-				$x["stat"]		= false;
+				$x	= false;
 			}
-			$estat 				= $x["stat"];
+			$estat 					= $x["stat"];
 			if ($estat != false){
 				$this->mMessages	.= "SUCESS\tSe Actualizo el Saldo de la Cuenta " . $this->mNumeroCuenta . ", Sdo. Ant.(" . $this->mSaldoAnterior . "); Sdo Nuevo(" . $this->mNuevoSaldo . ") Tasa $nuevatasa\r\n";
 			} else {
-				$this->mMessages	.= "ERROR\tNo se Actualizo la Cuenta(" . $x["info"] . ") Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "; Tasa $nuevatasa\r\n";
+				$this->mMessages	.= "ERROR\tNo se Actualizo la Cuenta(" . $this->mNumeroCuenta . ") Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "; Tasa $nuevatasa\r\n";
 			}
 		} else {
-			$this->mMessages	.= "ERROR\tNo se Actualizo la Cuenta, Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "\r\n";
+			$this->mMessages		.= "ERROR\tNo se Actualizo la Cuenta, Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "\r\n";
 		}
 		return $estat;
 	}
@@ -531,8 +544,8 @@ class cCuentaInversionPlazoFijo  extends cCuentaDeCaptacion {
 			$this->mFechaVencimiento			= $xF->getDiaHabil($this->mFechaVencimiento);
 			$diasCalculados						= $xF->setRestarFechas($this->mFechaVencimiento, $fecha);
 			if ( $diasCalculados > $this->mDiasInvertidos ){
+				$this->mMessages				.= "WARN\tSe Actualizan los Dias de Inversion a $diasCalculados del Original " . $this->mDiasInvertidos . "\r\n";
 				$this->mDiasInvertidos			= $diasCalculados;
-				$this->mMessages				.= "WARN\tSe Actualizan los Dias de Inversion a $diasCalculados\r\n";
 			}
 			$socio		= $this->mSocioTitular;
 			//Inicializar el Recibo
@@ -582,7 +595,7 @@ class cCuentaInversionPlazoFijo  extends cCuentaDeCaptacion {
 				$this->mMessages	.= "ERROR\tNo Existe Recibo con el cual trabajar($recibo) \r\n";
 			}
 			$this->mMessages	.= $CRecibo->getMessages();
-
+			setLog($this->mMessages);
 		return  $recibo;
 		}
 
@@ -679,7 +692,6 @@ class cCuentaInversionPlazoFijo  extends cCuentaDeCaptacion {
 /**
  * Clase de manejo madre de Cuentas de Captacion
  * @author Balam gonzalez Luis Humberto
- *
  */
 class cCuentaDeCaptacion {
 	protected $mNumeroCuenta			= 0;
@@ -702,6 +714,7 @@ class cCuentaDeCaptacion {
 	protected $mDestinoDelInteres		= "";
 	protected $mNombreMancomunados		= "";
 	protected $mInit					= false;
+	protected $mTasaGat					= 0;
 
 	protected $mSucess					= false;
 	protected $mMessages				= "";
@@ -723,19 +736,20 @@ class cCuentaDeCaptacion {
 	protected $mModificadorTasa			= "";
 	protected $mORec					= null; 
 	protected $mOTipoCuenta				= null; 
+	protected $mFechaDeApertura			= false;
+	protected $mOProducto				= null;
+	private $mTable						= "captacion_cuentas";
+	
 	function __construct($numero_de_cuenta, $socio = 0, $dias_invertidos = 0, $tasa = false, $fecha = false){
-		$xT								= new cTipos();
 		
-		$this->mNumeroCuenta 			= $xT->cInt($numero_de_cuenta);
+		$this->mNumeroCuenta 			= setNoMenorQueCero($numero_de_cuenta);
 		$xF								= new cFecha();
-		$socio							= $xT->cInt($socio);
-			if ($socio != 0 ){
-				$this->mSocioTitular	= $socio;
-			}
-			$this->mFechaOperacion		= ( $fecha == false ) ? fechasys() : $fecha;
-			$tasa						= ( $tasa == false ) ? 0 : $tasa;
+		$socio							= setNoMenorQueCero($socio);
+		$this->mSocioTitular			= ($socio > DEFAULT_SOCIO ) ? $socio : setNoMenorQueCero($this->mSocioTitular);			
+		$this->mFechaOperacion		= ( $fecha == false ) ? fechasys() : $fecha;
+		$tasa						= ( $tasa == false ) ? 0 : $tasa;
 
-		if ( isset($numero_de_cuenta) ){
+		if ($this->mNumeroCuenta > 0 ){
 			$this->init();
 
 			//Datos para Operar
@@ -754,7 +768,7 @@ class cCuentaDeCaptacion {
 			$this->mFechaVencimiento	= ( !isset($this->mFechaVencimiento) OR $this->mFechaVencimiento == false ) ? fechasys() : $this->mFechaVencimiento;
 	}
 	function init($ArrayInicial =  false, $force = false){
-		$xDTb		= new cSAFETabla(TCAPTACION_CUENTAS);
+		$xDTb		= new cSQLTabla(TCAPTACION_CUENTAS);
 		//Datos de la cuenta
 		$SqlCta =  $xDTb->getQueryInicial() . "
 				WHERE
@@ -787,7 +801,9 @@ class cCuentaDeCaptacion {
 				$this->mDestinoDelInteres			= $DC["destino_del_interes"];
 				$this->mReciboDeReinversion			= $DC["recibo_de_inversion"];
 				$this->mNombreMancomunados			= $DC["nombre_mancomunado1"];
-				 $this->mNombreMancomunados			.= (trim($DC["nombre_mancomunado2"]) == "") ? "" : " & " . $DC["nombre_mancomunado2"];
+				$this->mFechaDeApertura				= $DC["fecha_apertura"];
+				$this->mTasaGat						= $DC["tasa_gat"];
+				$this->mNombreMancomunados			.= (trim($DC["nombre_mancomunado2"]) == "") ? "" : " & " . $DC["nombre_mancomunado2"];
 				$this->mMessages					.= "WARN\tD.FVENC\tLa fecha de Vencimiento es " . $this->mFechaVencimiento . "\r\n";
 				
 				//Inicia el Nuevo Saldo como el Anterior
@@ -810,10 +826,13 @@ class cCuentaDeCaptacion {
 	}
 	function getClaveDePersona(){ return $this->mSocioTitular; }
 	function getNumeroDeCuenta(){ return $this->mNumeroCuenta; }
-	function initCuentaByCodigo($ArrayInicial = false){
-		return $this->init($ArrayInicial);
-	}
-	function set($numero_de_cuenta){ $this->mNumeroCuenta	= $numero_de_cuenta; }
+	function getClaveDeCuenta(){ return $this->mNumeroCuenta; }
+	function getFechaDeApertura(){return $this->mFechaDeApertura; }
+	/**
+	 * @deprecated @since 2015.03.01
+	 */
+	function initCuentaByCodigo($ArrayInicial = false){ return $this->init($ArrayInicial);	}
+	function set($numero_de_cuenta, $init = false){ $this->mNumeroCuenta	= $numero_de_cuenta; if($init == true){$this->init(false, true);} }
 	/**
 	 * Actualiza el Numero de Recibo de Operacion, en los casos que se eftuan operaciones
 	 * @param integer $recibo Numero de Recibo de Operacion
@@ -851,10 +870,7 @@ class cCuentaDeCaptacion {
 					$monto			= $this->mIDExRetener;
 				}
 
-			if ( !isset($this->mSocioTitular) OR ($this->mSocioTitular == 1)){
-				$this->initCuentaByCodigo();
-			}
-
+			if ( setNoMenorQueCero($this->mSocioTitular)<= DEFAULT_SOCIO ){ $this->init(); }
 			if ($fecha == false ){
 				$fecha = $this->mFechaOperacion;
 			}
@@ -932,32 +948,20 @@ class cCuentaDeCaptacion {
 		}
 		return $this->mDatosCuentaByArray;
 	}
-	/**
-	 * Retorna la información de una Cuenta de Captación
-	 * @return	array	Datos de la Cuenta en un array
-	 * @deprecated	1.9.41 rev 33
-	 */
-	function getDatosCuentaByArray(){
-		return $this->getDatosInArray();
-	}
-
+	/** 
+	 * @deprecated  @since	1.9.41 rev 33
+	 **/
+	function getDatosCuentaByArray(){ return $this->getDatosInArray(); }
 	/**
 	 * Funcion que Actualiza la Cuenta de Captacion segun un array tipo Campo=>valor
 	 *
 	 */
 	function setUpdate($aParam){
-		$WithSocio = "";
-		/**
-		*	Marcar Segunda condicion
-		*/
-		if ( $this->mSocioTitular != false )	{
-
-			$WithSocio	= "	AND
-							(`captacion_cuentas`.`numero_socio` =" . $this->mSocioTitular . ")  ";
-
-		}
+		$WithSocio 	= "";
+		//if ( setNoMenorQueCero($this->mSocioTitular) > DEFAULT_SOCIO ){	$WithSocio	= "	AND (`captacion_cuentas`.`numero_socio` =" . $this->mSocioTitular . ")  ";	}
 		$sqlBody	= "";
-		//TODO: Duplicar en las demas clases
+		$xQL		= new MQL();
+		//TODO: 2015-03-11 Validar Funcion
 		if ( is_array($aParam) AND count($aParam) >=1 ){
 			$BodyUpdate = "";
 			foreach ($aParam as $key => $value) {
@@ -975,9 +979,7 @@ class cCuentaDeCaptacion {
 							    WHERE
 						(`captacion_cuentas`.`numero_cuenta` =" . $this->mNumeroCuenta . ")
 						$WithSocio";
-			$x = my_query($sqlBody);
-
-			return $x["stat"];
+			return ($xQL->setRawQuery($sqlBody) == false) ? false : true;
 		} else {
 			return false;
 		}
@@ -1158,7 +1160,6 @@ class cCuentaDeCaptacion {
 		$this->mMessages 		.= "MAX_RETIRABLE\tA la fecha $fecha, El saldo por Esta Cuenta es " . $this->mNuevoSaldo . " \r\n";
 		$saldo					= $this->mSaldoAnterior;
 		$saldo					= ( $DTCap["saldo"] - $saldo ) + $this->mNuevoSaldo ;
-
 		$maximo_retirable		= 0;
 		//obtener los maximos retirables por credito
 		//2011-1-30 cambio de monto_autorizado a saldo_actual
@@ -1201,7 +1202,7 @@ class cCuentaDeCaptacion {
 							`creditos_solicitud`.`numero_socio` ";
 		$comprometido_por_garantia	= 0;
 
-		$comprometido_por_creditos	= setNoMenorQueCero( $d["monto"] );
+		$comprometido_por_creditos	= (isset($d["monto"])) ? csetNoMenorQueCero( $d["monto"] ) : 0;
 		$comprometido_por_ide		= 0;			//Terminar el saldo de IDE retirable
 		$this->mMessages 			.= "MAX_RETIRABLE\tA la fecha $fecha, Lo Comprometido por Creditos es de $comprometido_por_creditos \r\n";
 		$this->mMessages 			.= "MAX_RETIRABLE\tA la fecha $fecha, Lo Comprometido por IDE es de $comprometido_por_ide\r\n";
@@ -1239,134 +1240,121 @@ class cCuentaDeCaptacion {
 	 * @param $DiasInvertidos
 	 * @param $tasa
 	 * @param $CuentaDeIntereses
-	 * @return unknown_type
+	 * @return integer
 	 */
 	function setNuevaCuenta($origen, $subproducto, $socio,
 							$observaciones = "", $credito = 1,
 							$mancomunado1 = "", $mancomunado2 = "",
-							$grupo = 99, $fecha_alta = false,
-							$tipo_de_cuenta = 20, $tipo_de_titulo = 99, $DiasInvertidos = false,
-							$tasa = false, $CuentaDeIntereses	= false, $FechaVencimiento = false
+							$grupo = false, $fecha_de_alta = false,
+							$tipo_de_cuenta = CAPTACION_TIPO_VISTA, $tipo_de_titulo = 99, $DiasInvertidos = false,
+							$tasa = false, $CuentaDeInteres	= false, $FechaVencimiento = false
 							){
 
 
-		$xT		= new cTipos(0);
-
-		if ( $this->mNumeroCuenta == false ){
-			//Asigna una cuenta por estructura
-				$cuenta 		= $xT->cSerial(2, $subproducto) . $xT->cSerial(DIGITOS_DE_CLAVE_DE_SOCIO, $socio) . "01";
-				$sqlNCta 		= "SELECT COUNT(numero_cuenta) AS 'cuentas'
-									FROM captacion_cuentas
-									WHERE numero_socio=$socio";
-				$datos 			= obten_filas($sqlNCta);
-
-				if ( isset($datos["cuentas"]) OR $datos["cuentas"] > 0) {
-					$cuenta = $xT->cSerial(2, $subproducto) . $xT->cSerial(DIGITOS_DE_CLAVE_DE_SOCIO, $socio) . ($datos["cuentas"] + 1);
-					$this->mMessages 		.= "WARN\tSe Presume al Numero de cuenta $cuenta por que el socio tiene  " . $datos["cuentas"] . " cuentas\r\n";
-				}
-				$this->mNumeroCuenta = $cuenta;
-				unset($datos);
+		$xT				= new cTipos(0);
+		$xF				= new cFecha();
+		$xLog			= new cCoreLog();
+		$socio			= setNoMenorQueCero($socio);
+		$ready			= true;
+		$tipo_de_cuenta	= setNoMenorQueCero($tipo_de_cuenta);
+		$tipo_de_titulo	= setNoMenorQueCero($tipo_de_titulo);
+		$credito		= setNoMenorQueCero($credito);
+		$grupo			= setNoMenorQueCero($grupo);
+		$DiasInvertidos	= setNoMenorQueCero($DiasInvertidos);
+		$tasa			= setNoMenorQueCero($tasa, 4);
+		$CuentaDeInteres= setNoMenorQueCero($CuentaDeInteres);
+		$estado			= 10;
+		//Corrige el numero de persona
+		if($socio <= DEFAULT_SOCIO AND $this->mSocioTitular > DEFAULT_SOCIO ){
+			$xLog->add("WARN\tCAMBIO Persona $socio a  " . $this->mSocioTitular . "\r\n", $xLog->DEVELOPER);
+			$socio		= $this->mSocioTitular;
 		}
-				$idsolicitud 	= $credito;
-				$idgrupo 		= $grupo;
-				$observacion	= $observaciones;
-				$xF				= new cFecha();
-					if ( $DiasInvertidos == false ){
-						$DiasInvertidos		= $this->mDiasInvertidos;
-					}
-					$fechaalta	= ($fecha_alta == false) ? $this->mFechaOperacion : $fecha_alta;
+		$xSoc				= new cSocio($socio);
+		if($xSoc->init() == true){
+			//$cuenta			= $xSoc->getIDNuevoDocto($tipo_de_cuenta, $subproducto);
+			$cuenta			= $xSoc->getIDNuevoDocto(iDE_CAPTACION);
+			$CuentaDeInteres= $xSoc->getCuentaDeCaptacionPrimaria(CAPTACION_TIPO_VISTA, CAPTACION_PRODUCTO_INTERESES);
+			if($grupo == DEFAULT_GRUPO OR $grupo == 0){ $grupo = $xSoc->getClaveDeGrupo(); }
+		} else {
+			$xLog->add("ERROR\tAl cargar la Persona $socio\r\n", $xLog->DEVELOPER);
+			$ready			= false; //el socio existe
+		}
+		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);
+		//corrige la Cuenta de Intereses
+		$CuentaDeInteres	= ($CuentaDeInteres <= 0) ? DEFAULT_CUENTA_CORRIENTE : $CuentaDeInteres;
 
-					if ( $tasa == false){
-						$tasa				= $this->mTasaInteres;
-					} else {
-						$this->mTasaInteres	= $tasa;
-					}
-					if ( ($this->mSocioTitular != 0) AND (isset($this->mSocioTitular))  AND ($this->mSocioTitular != false) ){
-						$idsocio		= $this->mSocioTitular;
-					} else {
-						if (  isset($socio) && ($socio != false) ){
-							$idsocio 				= $socio;
-							$this->mSocioTitular 	= $socio;
-						}
-					}
-					if ( $CuentaDeIntereses	== false ){
-						$CuentaDeIntereses	= CTA_GLOBAL_CORRIENTE;
-					}
-					$FechaVencimiento	= ($FechaVencimiento == false) ? $xF->setSumarDias($DiasInvertidos, $fechaalta) : $FechaVencimiento;
-
-					$origencuenta 		= $origen;
-					$tipotitulo			= $tipo_de_titulo;
-					$lacuenta 			= $this->mNumeroCuenta;
-					$sucursal			= getSucursal();
-					$fechabaja 			= "2029-12-31";
-
-					$estatus 			= 10;
-					$man1 				= $mancomunado1;
-					$man2 				= $mancomunado2;
-
-					$subpdto 			= $subproducto;
-					$sqlPdto 			= "SELECT * FROM captacion_subproductos	WHERE idcaptacion_subproductos=$subpdto";
-					$dPdto 				=  obten_filas($sqlPdto);
-
-					$tipocuenta 		= $dPdto["tipo_de_cuenta"];
-					$contrato			= $dPdto["nombre_del_contrato"];
-
-					$iduser				= $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"];
-					$eacp				= EACP_CLAVE;
-	//verifica si existe la Cuenta
-					$cuentas_existentes = $this->setContarCuenta();
-	//
-					if ( $cuentas_existentes > 0 ) {
-						//sumar otro folio
-						$lacuenta++;
-						$this->mNumeroCuenta	= $lacuenta;
-							$cuentas_existentes	= $this->setContarCuenta();
-							if ( $cuentas_existentes > 0 ) {
-								 $lacuenta++;
-								 $this->mNumeroCuenta	= $lacuenta;
-							}
-					}
-	// Si es Inversion la Cuenta Estara Inactiva
-					if ($tipocuenta == 20) {
-						$estatus = 20;
-					}
-			$sqlNR	= "INSERT INTO captacion_cuentas(
-						numero_cuenta, numero_socio, numero_grupo, numero_solicitud, tipo_cuenta,
-						fecha_apertura, fecha_afectacion, fecha_baja, estatus_cuenta, saldo_cuenta,
-						eacp, idusuario, inversion_fecha_vcto, inversion_periodo, tasa_otorgada, dias_invertidos, observacion_cuenta, origen_cuenta,
-						tipo_titulo, tipo_subproducto, nombre_mancomunado1, nombre_mancomunado2, minimo_mancomunantes, saldo_conciliado, fecha_conciliada,
-						sucursal, ultimo_sdpm, oficial_de_captacion,
-						cuenta_de_intereses)
-    					VALUES(
-						$lacuenta, $idsocio, $idgrupo, $idsolicitud, $tipocuenta,
-					'$fechaalta', '$fechaalta', '$fechabaja', $estatus, 0,
-					'$eacp', $iduser,
-					'$FechaVencimiento', 1, $tasa, $DiasInvertidos, '$observacion', $origencuenta,
-					$tipotitulo, $subpdto, '$man1', '$man2', 0, 0, '$fechaalta',
-					'$sucursal', 0, $iduser,
-					$CuentaDeIntereses)";
-			$r = my_query($sqlNR);
-			if ( $r["stat"] == true) {
-				$this->mMessages 		.= "OK\tSe Agrego Existosamente la Cuenta $lacuenta del subproducto $subpdto \r\n";
-				$this->mSucess 				= true;
-				$this->mSocioTitular		= $idsocio;
-				$this->mGrupoAsociado		= $grupo;
-				$this->mCreditoAsoc			= $idsolicitud;
-				$this->mNumeroCuenta		= $lacuenta;
-				$this->mDiasInvertidos		= $DiasInvertidos;
-				$this->mFechaVencimiento	= $FechaVencimiento;
-			} else {
-				$this->mMessages 		.= "ERROR\tal Agregar la Cuenta $lacuenta del subproducto $subpdto\r\n";
-				if ( MODO_DEBUG == true){
-					$this->mMessages	.= $r["info"];
-				}
-				$this->mSucess 			= false;
+		$fecha_de_alta			= $xF->getFechaISO($fecha_de_alta);
+		$FechaVencimiento		= $xF->getFechaISO($FechaVencimiento);
+		if($tipo_de_cuenta == CAPTACION_TIPO_PLAZO){
+			$DiasInvertidos		=  ($DiasInvertidos <=0 ) ? $this->mDiasInvertidos : $DiasInvertidos;
+			$tasa				= ($tasa <= 0) ? $this->mTasaInteres : $tasa;
+			$FechaVencimiento	= ($xF->getInt($FechaVencimiento) <= $xF->getInt($fecha_de_alta) ) ? $xF->setSumarDias($DiasInvertidos, $fecha_de_alta) : $FechaVencimiento;
+			$estado				= 20;
+			$xLog->add("WARN\tInversion Dias $DiasInvertidos Tasa $tasa Vencimiento $FechaVencimiento\r\n", $xLog->DEVELOPER);
+			if($xF->setRestarFechas($FechaVencimiento, $fecha_de_alta) != $DiasInvertidos){
+				$DiasInvertidos	= $xF->setRestarFechas($FechaVencimiento, $fecha_de_alta);
+				$xLog->add("WARN\tCAMBIO Inversion Dias $DiasInvertidos ($FechaVencimiento, $fecha_de_alta)\r\n", $xLog->DEVELOPER);
 			}
-
-
-			return $this->mNumeroCuenta;
+		} else {
+			$xLog->add("WARN\tVista $socio Producto $tipo_de_cuenta sub-producto $subproducto Origen $origen\r\n", $xLog->DEVELOPER);
+		}
+		
+		$xCta		= new cCaptacion_cuentas();
+		$xCta->cuenta_de_intereses($CuentaDeInteres);
+		$xCta->dias_invertidos($DiasInvertidos);
+		$xCta->eacp(EACP_CLAVE);
+		$xCta->estatus_cuenta($estado);
+		$xCta->fecha_afectacion($fecha_de_alta);
+		$xCta->fecha_apertura($fecha_de_alta);
+		$xCta->fecha_baja($xF->getFechaMaximaOperativa());
+		$xCta->fecha_conciliada($fecha_de_alta);
+		$xCta->idusuario(getUsuarioActual());
+		$xCta->inversion_fecha_vcto($FechaVencimiento);
+		$xCta->inversion_periodo(0);
+		$xCta->minimo_mancomunantes(0);
+		$xCta->nombre_mancomunado1($mancomunado1);
+		$xCta->nombre_mancomunado2($mancomunado2);
+		$xCta->numero_cuenta($cuenta);
+		$xCta->numero_grupo($grupo);
+		$xCta->numero_socio($socio);
+		$xCta->numero_solicitud($credito);
+		$xCta->observacion_cuenta($observaciones);
+		$xCta->oficial_de_captacion(getUsuarioActual());
+		$xCta->origen_cuenta($origen);
+		$xCta->saldo_conciliado(0);
+		$xCta->saldo_cuenta(0);
+		$xCta->sucursal(getSucursal());
+		$xCta->tasa_otorgada($tasa);
+		$xCta->tipo_cuenta($tipo_de_cuenta);
+		$xCta->tipo_titulo($tipo_de_titulo);
+		$xCta->tipo_subproducto($subproducto);
+		$xCta->ultimo_sdpm(0);
+		if($ready == true){ 
+			$rs 	= $xCta->query()->insert()->save();
+			$ready 	= ($rs == false) ? false : true;
+		}
+		//Asignar valores cargados
+		if ( $ready == true) {
+			$xLog->add("OK\tSe Agrego Existosamente la Cuenta $cuenta del subproducto $subproducto \r\n");
+			$this->mSucess 				= true;
+			$this->mSocioTitular		= $socio;
+			$this->mGrupoAsociado		= $grupo;
+			$this->mCreditoAsoc			= $credito;
+			$this->mNumeroCuenta		= $cuenta;
+			$this->mDiasInvertidos		= $DiasInvertidos;
+			$this->mFechaVencimiento	= $FechaVencimiento;
+			$this->mTasaInteres			= $tasa;
+			$this->mFechaOperacion		= $fecha_de_alta;
+			$this->init();	
+		} else {
+			$xLog->add("ERROR\tError al agregar la Cuenta $cuenta del subproducto $subproducto\r\n");
+			$this->mSucess 				= false;
+		}
+		//setLog($xLog->getMessages());
+		$this->mMessages				.= $xLog->getMessages();
+		return $this->mNumeroCuenta;
 	}
-
+	function getTasaGAT(){ return $this->mTasaGat; }
 	function getFicha($fieldset = false, $trTool = "", $extendido = false){
 			$Dcta	= $this->getDatosInArray();
 			$xF					= new cFecha();
@@ -1389,7 +1377,8 @@ class cCuentaDeCaptacion {
 				$xSoc->init();
 				$nombrepersona	= $xSoc->getNombreCompleto();
 				$thead			.= "<tr><th  class='izq'>" . $xL->getT("TR.nombre completo") .  "</th>" ;
-				$thead			.= "<td colspan='3'>$nombrepersona</td><tr>";
+				$thead			.= "<td>" . $this->mSocioTitular . "</td>";
+				$thead			.= "<td colspan='2'>$nombrepersona</td><tr>";
 			}
 			//eOperations		= false;
 			if(trim($mancomunantes) == ""){
@@ -1490,41 +1479,10 @@ class cCuentaDeCaptacion {
 		return $this->mSubProducto;
 	}
 	function setUpdateSaldoByMvtos(){
-		$EquivBase	= array(
-					10	=> 3100,
-					20	=> 3200
-					);
-		$cuenta		= $this->mNumeroCuenta;
-		$ready		= $this->mCuentaIniciada;
-		$ready		= (isset($EquivBase[ $this->mTipoDeCuenta ])) ? true : false;
-		if($ready == true){
-		$sql		= "SELECT
-				`operaciones_mvtos`.`docto_afectado` AS 'documento',
-				COUNT(`operaciones_mvtos`.`idoperaciones_mvtos`) AS 'operaciones',
-				SUM(`operaciones_mvtos`.`afectacion_real` *
-				`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'saldo'
-			FROM
-			`operaciones_mvtos` `operaciones_mvtos`
-				INNER JOIN `eacp_config_bases_de_integracion_miembros`
-				`eacp_config_bases_de_integracion_miembros`
-				ON `operaciones_mvtos`.`tipo_operacion` =
-				`eacp_config_bases_de_integracion_miembros`.`miembro`
-			WHERE
-			(`operaciones_mvtos`.`docto_afectado` =$cuenta) AND
-			(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = " . $EquivBase[ $this->mTipoDeCuenta ] . ")
-			GROUP BY
-			`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
-			`operaciones_mvtos`.`docto_afectado`
-			ORDER BY
-				`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
-				`operaciones_mvtos`.`fecha_afectacion`,
-				`eacp_config_bases_de_integracion_miembros`.`afectacion`";
-		$DT			= obten_filas($sql);
-		$saldo		= ( isset($DT["saldo"]) ) ? $DT["saldo"] : 0 ;
-		my_query("UPDATE captacion_cuentas SET saldo_cuenta = $saldo WHERE numero_cuenta = $cuenta");
-		} else {
-			$this->mMessages	.= "ERROR\tLa cuenta $cuenta no se Inicio o no existe la base";
-		}
+		$xCaptU		= new cUtileriasParaCaptacion();
+		$msg		= $xCaptU->setActualizarSaldos($this->mTipoDeCuenta, $this->mNumeroCuenta);
+		$ready		= true;
+		
 		return $ready;
 	}
 	/**
@@ -1656,6 +1614,8 @@ class cCuentaDeCaptacion {
 		$DiasEstimados	= ( $Dias == 0 ) ? $this->mDiasInvertidos : $Dias;
 		$tasa			= obtentasa($BaseDeCalculo, $this->mTipoDeCuenta, $DiasEstimados, $this->mSubProducto);
 		//A_LA_VISTA_MONTO_MINIMO
+		
+		
 		//algoritmo de tasa incremental
 		eval( $this->mModificadorTasa );
 		return $tasa;
@@ -1734,20 +1694,33 @@ class cCuentaDeCaptacion {
 		return $EsOperable;
 	}	
 	function getORec(){ return $this->mORec; }
-	function getURLRecibo(){
-		
-	}
-	function isTipoVista(){
-		$ret	= false;
-		if($this->mTipoDeCuenta == CAPTACION_TIPO_VISTA){ $ret = true; }
-		return $ret;
-	}
+	function getURLRecibo(){	}
+	function isTipoVista(){ return ($this->mTipoDeCuenta == CAPTACION_TIPO_VISTA) ? true : false; }
 	function getSaldoActual(){ return $this->mSaldoActual; }
 	function getTasaActual(){ return $this->mTasaInteres; }
 	function getDiasDeCuenta(){ return $this->mDiasInvertidos; }
 	function getNombreMancomunados(){ return $this->mNombreMancomunados; }
 	function getFechaDeVencimiento(){ return $this->mFechaVencimiento; }
-	
+	function getSuccess(){ return $this->mSucess; }
+	function setCuandoSeActualiza($OnCierre = false){
+		
+		$this->setUpdateSaldoByMvtos();
+		//Reestructurar SDPM
+		if($OnCierre == false){
+			$xUC				= new cUtileriasParaCaptacion();
+			$this->mMessages	.= $xUC->setRegenerarSDPM($this->getFechaDeApertura(), fechasys(), false, false, $this->getClaveDeCuenta());
+		}
+		//Limpiar Cache
+		$xCache			= new cCache();
+		$xCache->clean($this->mTable . "-" . $this->getClaveDeCuenta());
+	}
+	function OProducto(){
+		if($this->mOProducto == null){
+			$this->mOProducto	= new cCaptacionProducto($this->mSubProducto);
+			$this->mOProducto->init();
+		}
+		return $this->mOProducto;
+	}
 }
 
 
@@ -1776,25 +1749,52 @@ class cTipoDeCuentaDeCaptacion {
 	function getNombre(){ return $this->mNombre; }
 }
 class cCaptacionProducto {
-	private $mClave	= null;
-	private $mObj	= null;
-	private $mClase	= null;
+	private $mClave			= null;
+	private $mObj			= null;
+	private $mClase			= null;
 	private $mDestinoInt	= null;
+	
+	private $mFModInteres	= "";
+	private $mFModTasa		= "";
+	private $mInit			= false;
+	private $mTipoDePdto	= 0;
+	
 	function __construct($clave = false){
 		$this->mClave	= $clave;
 		$this->mDestinoInt	= CAPTACION_DESTINO_CTA_INTERES;
+		
 		if( setNoMenorQueCero($this->mClave) > 0 ){
 			$this->init();
 		}
 	}
 	function init(){
-		$this->mObj		= new cCaptacion_subproductos();
-		$this->mObj->setData( $this->mObj->query()->initByID($this->mClave) );
-		$this->mClase	= $this->mObj->tipo_de_cuenta()->v();
-		$this->mDestinoInt	= strtoupper($this->mObj->destino_del_interes()->v());
+		$xCache				= new cCache();
+		$idc				= "captacion_subproductos-" . $this->mClave;
+		$data				= $xCache->get($idc);
+		$this->mObj			= new cCaptacion_subproductos();
+		if(!is_array($data)){
+			$data			= $this->mObj->query()->initByID($this->mClave);
+		}
+		if(isset($data["idcaptacion_subproductos"])){
+			$this->mObj->setData( $data );
+			$this->mClase		= $this->mObj->tipo_de_cuenta()->v();
+			$this->mDestinoInt	= strtoupper($this->mObj->destino_del_interes()->v());
+			$this->mFModInteres	= $this->mObj->algoritmo_modificador_del_interes()->v(OUT_TXT);
+			$this->mFModTasa	= $this->mObj->algoritmo_de_tasa_incremental()->v(OUT_TXT);
+			$this->mTipoDePdto	= $this->mObj->tipo_de_cuenta()->v();
+			$this->mInit		= true;
+			$xCache->set($idc, $data, $xCache->EXPIRA_MEDHORA);
+		}
+		return $this->mInit;
 	}
 	function getClase(){ return $this->mClase; }
-	function getDestinoInteres(){ return $this->mDestinoInt; } 
+	function getDestinoInteres(){ return $this->mDestinoInt; }
+	function getFModificardorTasa(){
+		
+	}
+	function getFModificardorInteres(){
+		
+	}
 	function getListaDeDias($events = false){
 		$selDias	= "";
 		$xLn		= new cLang();
@@ -1832,6 +1832,15 @@ class cCaptacionProducto {
 		}
 		return $selDias;
 	}	
+	function getAMLRiesgoAsoc(){
+		$riesgo	=1;
+		$xRP	= new cAMLRiesgoProducto();
+		if($xRP->initByTipoAndProd(iDE_CAPTACION, $this->mClave) == true){
+			$riesgo	= $xRP->getNivelDeRiesgo();
+		}
+		return $riesgo;
+	}
+
 }
 class cInformacionProductoCaptacion {
 	private $mCodigo			= 99;

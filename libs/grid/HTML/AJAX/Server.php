@@ -156,7 +156,7 @@ class HTML_AJAX_Server
     function HTML_AJAX_Server($serverUrl = false) 
     {
     	//TODO: Cambiar =& por =
-        $this->ajax =& new HTML_AJAX();
+        $this->ajax = new HTML_AJAX();
 
         // parameters for HTML::AJAX
         $parameters = array('stub', 'client');

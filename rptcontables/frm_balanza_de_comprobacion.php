@@ -12,11 +12,12 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Balanza de Comprobacion", HP_FORM);
+$xHP		= new cHPage("TR.Balanza_de_Comprobacion", HP_FORM);
 $xHP->init();
 
 $xSel		= new cHSelect();
 $xHRPT		= new cPanelDeReportesContables();
+$xHRPT->OFRM()->setTitle($xHP->getTitle());
 $xHRPT->addCuentaFinal();
 $xHRPT->addMoneda();
 $xHRPT->addTipoDeCuentas();

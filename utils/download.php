@@ -45,6 +45,12 @@ switch ($type)
     case 'xml':
         $content_type = 'text/xml';
         break;
+    case 'xlsx':
+        $content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        	break;
+     case 'xls':
+     	$content_type = 'application/vnd.ms-excel';
+        break;        	
     case 'pdf':
         $content_type = 'application/pdf';
         break;

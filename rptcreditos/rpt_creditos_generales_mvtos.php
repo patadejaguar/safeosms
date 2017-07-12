@@ -31,8 +31,8 @@ $query		= new MQL();
 $estatus 				= (isset($_GET["f2"])) ? $_GET["f2"] : SYS_TODAS;
 $frecuencia 			= (isset($_GET["f1"])) ? $_GET["f1"] : SYS_TODAS;
 $convenio 				= (isset($_GET["f3"])) ? $_GET["f3"] : SYS_TODAS;
-$fecha_inicial			= (isset($_GET["on"])) ? $_GET["on"] : EACP_FECHA_DE_CONSTITUCION;
-$fecha_final			= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
+//$fecha_inicial			= (isset($_GET["on"])) ? $_GET["on"] : EACP_FECHA_DE_CONSTITUCION;
+//$fecha_final			= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
 $tipo_operacion			= parametro("f711", SYS_TODAS, MQL_INT);
 $tipo_operacion			= parametro("operacion", $tipo_operacion, MQL_INT);
 $estatus 				= (isset($_GET["estado"])) ? $_GET["estado"] : $estatus;
@@ -41,6 +41,10 @@ $frecuencia 			= (isset($_GET["frecuencia"])) ? $_GET["frecuencia"] : $frecuenci
 $convenio 				= (isset($_GET["convenio"])) ? $_GET["convenio"] : $convenio;
 $tipo_autorizacion		= (isset($_GET["tipoautorizacion"])) ? $_GET["tipoautorizacion"] : SYS_TODAS;
 $senders				= getEmails($_REQUEST);
+
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+
 $es_por_estatus 		= "";
 //$si_es_por_fecha
 $es_por_frecuencia 		= "";
@@ -103,23 +107,23 @@ $setSql = "SELECT socios.nombre, creditos_solicitud.numero_socio AS 'socio',
 	
 	WHERE creditos_solicitud.saldo_actual>=0.99
 	AND
-	(`creditos_solicitud`.`fecha_ultimo_mvto`>='$fecha_inicial')
+	(`creditos_solicitud`.`fecha_ultimo_mvto`>='$FechaInicial')
 	$ByAutorizacion
 	$es_por_estatus
 	$es_por_frecuencia
 	$es_por_convenio
 	$es_por_operacion
 	AND
-	(`operaciones_no_estadisticas`.`fecha` >='$fecha_inicial')
+	(`operaciones_no_estadisticas`.`fecha` >='$FechaInicial')
 	AND
-	(`operaciones_no_estadisticas`.`fecha` <='$fecha_final')
+	(`operaciones_no_estadisticas`.`fecha` <='$FechaFinal')
 	
 	ORDER BY creditos_solicitud.tipo_autorizacion DESC,
 				creditos_solicitud.fecha_ministracion, 
 			creditos_estatus.orden_clasificacion ASC, 
 			creditos_solicitud.numero_socio, creditos_solicitud.numero_solicitud,
 			`operaciones_no_estadisticas`.fecha";
-	exit($setSql);
+	//exit($setSql);
 	
 	
 	
@@ -127,8 +131,8 @@ $setSql = "SELECT socios.nombre, creditos_solicitud.numero_socio AS 'socio',
 	$TR_parent			= "";
 	$TR_child			= "";
 			//echo $setSql;	
-	$rs 			= $query->getDataRecord($setSql);// getRecordset($setSql);
-	$rows			= $query->getNumberOfRows();// mysql_num_rows($rs);
+	$rs 				= $query->getDataRecord($setSql);// getRecordset($setSql);
+	$rows				= $query->getNumberOfRows();// mysql_num_rows($rs);
 	$counter	= 0;
 		
 		//while($rw = mysql_fetch_array($rs)){
@@ -260,7 +264,7 @@ $xT		= new cTabla($sql, 2);
 $xT->setTipoSalida($out);
 
 
-$body		= $xRPT->getEncabezado($xHP->getTitle(), $fecha_inicial, $fecha_final);
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 
 $xRPT->addContent($body);

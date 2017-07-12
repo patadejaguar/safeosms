@@ -43,7 +43,7 @@ $recibo			= isset($_GET["r"]) ? $_GET["r"] : false;
 if( $recibo != false ){
 	$xRec			= new cReciboDeOperacion(false, false, $recibo); $xRec->init();
 	$DRec			= $xRec->getDatosInArray();
-	$MontoOperacion	= $DRec["total_operacion"];
+	$MontoOperacion	=  $xRec->getTotal();// $DRec["total_operacion"];
 	//=========================== HTML
 	echo $xHP->getHeader();
 	//echo $xJS->setIncludeJQuery();
@@ -53,11 +53,13 @@ if( $recibo != false ){
 	
 	?> <style> #idavisopago, #idimporte, #iMontoRecibido { font-size : 1.3em !important; } </style> <?php
 	
-	$xFRM	= new cHForm("frmCobrosEnEfectivo", "cobro-efectivo.frm.php");
+	$xFRM		= new cHForm("frmCobrosEnEfectivo", "cobro-efectivo.frm.php");
+	$xFRM->setTitle($xHP->getTitle());
+	
 	$xFRM->addGuardar("jsActualizarPago()");
 	//agrega en un hidden el idrecibo
-	$xHNot	= new cHNotif();
-	$xTxt	= new cHText("id");
+	$xHNot		= new cHNotif();
+	$xTxt		= new cHText("id");
 	$xTxt->addEvent("this.select()", "onfocus");
 	$xTxt->addEvent("jsActualizarPago()", "onblur");
 	$xTxt->addEvent("jsSetEvalMonto(event, this)", "onkeyup");
@@ -66,11 +68,13 @@ if( $recibo != false ){
 	$xFRM->addHElem( $xHNot->get($xHP->lang("importe") . " : " . getFMoney($MontoOperacion) . AML_CLAVE_MONEDA_LOCAL, "idimporte") );
 	
 	$xFRM->OHidden("iMontoOperacion", $MontoOperacion, "");
-
-	$SMoneda		= $xHSel->getListaDeMonedas("idcodigodemoneda");
-	$SMoneda->addEvent("onblur", "jsGetEquivalenciasA");
-	$xFRM->addHElem( $SMoneda->get($xHP->lang("Moneda"), true ) );
-	
+	if(MODULO_AML_ACTIVADO == false){
+		$xFRM->OHidden("idcodigodemoneda", AML_CLAVE_MONEDA_LOCAL);
+	} else {
+		$SMoneda		= $xHSel->getListaDeMonedas("idcodigodemoneda");
+		$SMoneda->addEvent("onblur", "jsGetEquivalencias");
+		$xFRM->addHElem( $SMoneda->get($xHP->lang("Moneda"), true ) );
+	}
 	$xFRM->addHElem( $xTxt->getDeMoneda("iMontoRecibido", "TR.Monto recibido", $MontoOperacion) );	
 	
 	$xFRM->addHElem( $xHNot->get($xHP->lang("Cambio") . " : <mark id='idtotal'>0</mark>" . AML_CLAVE_MONEDA_LOCAL, "idavisopago", $xHNot->WARNING) );
@@ -85,7 +89,7 @@ if( $recibo != false ){
 	$xFRM->addFootElement("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
 	
 	echo $xFRM->get();
-	echo $xHP->setBodyEnd();
+
 	//=========================== HTML
 	?>
 	<script>
@@ -95,20 +99,19 @@ if( $recibo != false ){
 	function initComponents(){
 		setTimeout("setFocal()", 500);
 	}
-	function jsGetEquivalenciasA(){
-		var mMoneda 	= $("#idcodigodemoneda").val();
-		xG.equivalencia({ moneda : mMoneda, monto : $("#montonormal").val(), callback : jsEnValorOriginal });		
-	}
 	function jsEnValorOriginal(obj){
-		var mval	= redondear( flotante($("#montonormal").val()) / flotante(obj.cotizacion) );
+		var mval			= redondear( flotante($("#montonormal").val()) / flotante(obj.cotizacion) );
 		$("#iMontoRecibido").val( mval );
 		$("#idequivalente").html( obj.cotizacion );
 	}
 	function jsActualizarPago(){
-		var mRemanente	=  redondear( flotante($("#montonormal").val()) - flotante($("#iMontoOperacion").val()) );
+		var mMontoN		= flotante($("#montonormal").val());
+		var mMontoO		= flotante($("#iMontoOperacion").val());
+		
+		var mRemanente	= redondear( mMontoN - mMontoO );
 		
 		if ( mRemanente  < 0) {
-			alert("El Monto recibido\nNo debe ser menor\nAl Monto de la Operacion");
+			alert("El Monto recibido "  + mMontoN +  "\nNo debe ser menor\nAl Monto de la Operacion");
 			$("#iMontoCambio").val( 0 );
 			onCobro		= false;
 			setTimeout("setFocal()", 500);
@@ -130,18 +133,28 @@ if( $recibo != false ){
 		}
 	}
 	function setFocal(){ $("#idcodigodemoneda").focus(); }
-	function jsSetEvalMonto(evt, obj){ xG.isNumberKey({ evt : evt, callback : 'jsGetEquivalencias()'});  }
+	function jsSetEvalMonto(evt, obj){ 
+		xG.isNumberKey({ evt : evt, callback : 'jsGetEquivalencias()'});
+	}
 	function setValorOriginal(obj){ //monto, letras valor contizacion
 		$("#montonormal").val(obj.equivalencia);
 		$("#avisos").html(obj.letras);
-		//txt				= "Por : " +  obj.letras;
+		$("#idequivalente").html( obj.cotizacion );
+		var mMontoN		= flotante($("#montonormal").val());
+		var mMontoO		= flotante($("#iMontoOperacion").val());
+		var mRemanente	= redondear( mMontoN - mMontoO );
+		$("#idtotal").html( getFMoney(mRemanente) );		
 	}
 	function jsGetEquivalencias(){
 		var mMoneda 	= $("#idcodigodemoneda").val();
-		xG.equivalencia({ moneda : mMoneda, monto : $("#iMontoRecibido").val(), callback : setValorOriginal });
+		var mMontoR		= $("#iMontoRecibido").val();
+		
+		if(mMoneda != AML_CLAVE_MONEDA_LOCAL){
+			xG.equivalencia({ moneda : mMoneda, monto : mMontoR, callback : setValorOriginal });
+		}			
 	}
 	</script>
 	<?php
-	$xHP->end();
+	$xHP->fin();
 }
 ?>

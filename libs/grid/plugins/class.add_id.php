@@ -17,8 +17,8 @@ class add_id_Plugin extends Grid_Plugin
 	function generateContent($column_names, $column_values)
 	{
 		
-		$column_names[] = "user_id";
-		$column_values[] = 1;
+		$column_names[] 	= "user_id";
+		$column_values[] 	= 1;
 		return(array($column_names, $column_values));
 	}
 }

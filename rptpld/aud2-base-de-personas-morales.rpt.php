@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xHP		= new cHPage("TR.REPORTE DE PLD PERSONAS MORALES", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -42,7 +42,7 @@ $archivo		= "";
 $xRPT			= new cReportes($titulo);
 $xRPT->setFile($archivo);
 $xRPT->setOut($out);
-$xRPT->setSQL($sql);
+
 $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
 //$xT		= new cTabla($sql, 2);
@@ -63,8 +63,10 @@ $DPaises		= $xCats->initPorTabla(TCATALOGOS_PAISES);
 $DRiesgo		= $xCats->initPorTabla(TCATALOGOS_GRADO_RIESGO);
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
-$sql		= $xL->getInicialDePersonas() . " WHERE (`personalidad_juridica` = 2 OR `personalidad_juridica` = 5)";
+$sql		= $xL->getInicialDePersonas() . " WHERE `fechaalta`<='$FechaFinal' AND (`personalidad_juridica` = 2 OR `personalidad_juridica` = 5)";
 $rs			= $query->getDataRecord($sql);
+
+$xRPT->setSQL($sql);
 $xTa		= new cHTabla();
 $xDSoc		= new cSocios_general();
 $xF			= new cFecha();
@@ -102,7 +104,7 @@ foreach ($rs as $rows){
 	$codigo_de_socio	= $xDSoc->codigo()->v();
 	$xSoc				= new cSocio($codigo_de_socio);
 	$xSoc->init($rows);
-	$xSoc->getOEstats()->initDatosDeCredito();
+	$xSoc->getOEstats()->initDatosDeCredito(true);
 	$saldoCred	= setNoMenorQueCero($xSoc->getCreditosComprometidos());
 	
 	if($saldoCred > 0){

@@ -58,10 +58,10 @@ $output					= parametro("out", SYS_DEFAULT);
 	//Verifica el FORZADO de el Cuadre de Saldos
 
 	// datos de la cuenta
-	$tipocuenta 		= eltipo("captacion_cuentastipos", $rwc[4]);
-	$tasa 			= $rwc[14] * 100;
+	$tipocuenta 	= $xCuenta->getOTipoDeCuenta()->getNombre();// eltipo("captacion_cuentastipos", $rwc[4]);
+	$tasa 			= $xCuenta->getTasaActual() * 100;
 	$saldo			= $rwc["saldo_cuenta"];
-	$sdoact 		= number_format($rwc[9], 2, '.', ',');
+	$sdoact 		= number_format($xCuenta->getSaldoActual(), 2, '.', ',');
 	$depositos 		= 0;
 	$retiros 		= 0;
 	$sdo_i 			= 0;
@@ -86,16 +86,21 @@ $output					= parametro("out", SYS_DEFAULT);
 
 	//DAtOS DE LA CUENTA
 	$sqlMvtos = "SELECT
+			`operaciones_tipos`.`descripcion_operacion` AS `descripcion`,
 			`operaciones_mvtos`.*,
 				(`operaciones_mvtos`.`afectacion_real` *
 				`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'monto',
 				`eacp_config_bases_de_integracion_miembros`.`afectacion`
-			FROM
-			`operaciones_mvtos` `operaciones_mvtos`
-				INNER JOIN `eacp_config_bases_de_integracion_miembros`
-				`eacp_config_bases_de_integracion_miembros`
-				ON `operaciones_mvtos`.`tipo_operacion` =
-				`eacp_config_bases_de_integracion_miembros`.`miembro`
+			
+FROM
+	`eacp_config_bases_de_integracion_miembros` 
+	`eacp_config_bases_de_integracion_miembros` 
+		INNER JOIN `operaciones_mvtos` `operaciones_mvtos` 
+		ON `eacp_config_bases_de_integracion_miembros`.`miembro` = 
+		`operaciones_mvtos`.`tipo_operacion` 
+			INNER JOIN `operaciones_tipos` `operaciones_tipos` 
+			ON `operaciones_mvtos`.`tipo_operacion` = `operaciones_tipos`.
+			`idoperaciones_tipos`
 			WHERE
 			(`operaciones_mvtos`.`docto_afectado` =" . $idcuenta .") AND
 			(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 3100)
@@ -123,7 +128,7 @@ $output					= parametro("out", SYS_DEFAULT);
 
 		foreach ($rsmvto as $ryx) {
 			$tr			= "";
-			$tipoop 	= eltipo("operaciones_tipos", $ryx["tipo_operacion"]);
+			$tipoop 	= $ryx["descripcion"];
 			$fecha		= $ryx["fecha_afectacion"];
 			
 			$sdo_al_corte	+= $ryx["monto"];

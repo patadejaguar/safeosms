@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP					= new cHPage("TR.Balanza de comprobacion", HP_REPORT);
+$xHP					= new cHPage("TR.Balanza_de_comprobacion", HP_REPORT);
 $xF						= new cFecha();
 $QL						= new MQL();
 
@@ -211,6 +211,7 @@ WHERE
 				break;
 			}
 		} // END mysql Movimientos
+		$rsmX		= null;
 //========================================================================================
 $MActuales			= false;
 foreach ($rs as $rw ){
@@ -316,6 +317,7 @@ foreach ($rs as $rw ){
 	}
 	$xRPT->addContent( $exoCuenta );
 } //END WHILE
+$rs			= null;
 // ------------------------ Fin Tabla
 $xRPT->addContent("</tbody><tfoot>	<tr>
 		<th colspan='2'>SUMAS</th>

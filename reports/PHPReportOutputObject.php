@@ -22,7 +22,7 @@
 		***************************************************************************/
 		function PHPReportOutputObject(){
 			$this->_sInput		= null;
-			$this->_sOutput	= null;
+			$this->_sOutput		= null;
 			$this->_bClean		= true;
 			$this->_bJump		= true;
 			$this->_bBody		= true;

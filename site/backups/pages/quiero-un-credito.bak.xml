@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item><pubDate>Tue, 07 Feb 2017 15:47:03 -0600</pubDate><title><![CDATA[Quiero un Crédito]]></title><url><![CDATA[quiero-un-credito]]></url><meta><![CDATA[]]></meta><metad><![CDATA[]]></metad><menu><![CDATA[Quiero un Crédito]]></menu><menuOrder><![CDATA[2]]></menuOrder><menuStatus><![CDATA[Y]]></menuStatus><template><![CDATA[template.php]]></template><parent><![CDATA[]]></parent><content><![CDATA[
+&lt;div class=&quot;col-two&quot;&gt;
+	&lt;form class=&quot;formoid-flat-blue&quot; method=&quot;post&quot; style=&quot;background-color: #FFFFFF; font-size: 14px; font-family: &#039;Lato&#039;, sans-serif; color: #666666; max-width: 100%; min-width: 150px&quot;&gt;
+	&lt;div class=&quot;title&quot;&gt;
+		&lt;h2&gt;Capture su Información&lt;/h2&gt;
+	&lt;/div&gt;
+
+
+	&lt;div class=&quot;element-separator&quot;&gt;
+		&lt;hr /&gt;
+		&lt;h3 class=&quot;section-break-title&quot;&gt;Datos del Crédito&lt;/h3&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-select&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;&lt;span&gt; &lt;select id=&quot;idplazo&quot; name=&quot;idplazo&quot;&gt;&lt;option value=&quot;7-26&quot;&gt;Semanal / 6 Meses&lt;/option&gt;&lt;option value=&quot;7-52&quot;&gt;Semanal / 12 Meses&lt;/option&gt;&lt;option value=&quot;15-12&quot;&gt;Quincenal / 6 Meses&lt;/option&gt;&lt;option value=&quot;15-24&quot;&gt;Quincenal / 1 Año&lt;/option&gt;&lt;option value=&quot;30-12&quot;&gt;Mensual /1 Año&lt;/option&gt; &lt;/select&gt; &lt;i&gt;&lt;/i&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-select&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt;&lt;/label&gt;
+			&lt;span&gt; &lt;select id=&quot;idtasa&quot; name=&quot;idtasa&quot;&gt;&lt;option value=&quot;0.6&quot;&gt;Nomina&lt;/option&gt;&lt;option value=&quot;0.24&quot;&gt;Vivienda&lt;/option&gt;
+			&lt;option value=&quot;0.3&quot;&gt;Empresarial&lt;/option&gt;
+			&lt;/select&gt; &lt;i&gt;&lt;/i&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+	
+	&lt;div class=&quot;element-input&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;
+				&lt;label class=&quot;title&quot;&gt;Monto&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt;&lt;/label&gt;
+				&lt;input type=&quot;range&quot; id=&quot;idmonto&quot; name=&quot;idmonto&quot; min=&quot;1000&quot; value=&quot;10000&quot; max=&quot;50000&quot; step=&quot;1000&quot; data-orientation=&quot;vertical&quot;&gt;
+				&lt;output name=&quot;amount&quot; for=&quot;idmonto&quot;&gt;0&lt;/output&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+	&lt;div class=&quot;submit&quot;&gt;&lt;input onclick=&quot;jsSendData(); return false&quot; type=&quot;submit&quot; value=&quot;Calcular&quot; /&gt;&lt;/div&gt;
+	&lt;/form&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+$(document).ready(function(){
+	$(&#039;#idmonto&#039;).rangeslider();
+	console.log(&quot;nada&quot;);
+});
+		
+		
+var mSite = &quot;http://localhost/svc/pc.svc.php?cmd=cotizacion&amp;&quot;;
+
+function jsSendData(){
+	var idnombre	= $(&quot;#idnombre&quot;).val();	
+	var idcondicion	= $(&quot;#idplazo&quot;).val();
+	var idmonto		= $(&quot;#idmonto&quot;).val();
+	var idtasa		= $(&quot;#idtasa&quot;).val();
+	
+	var mUrl		= mSite + &quot;&amp;idcondiciones=&quot; + idcondicion + &quot;&amp;idmonto=&quot; + idmonto + &quot;&amp;tasa=&quot; + idtasa;
+			
+		$.getJSON( mUrl, function( data ) {
+			alert(data.message);
+		});
+}
+&lt;/script&gt;&lt;!-- Stop Formoid form--&gt;
+
+&lt;!-- SERVICIOS --&gt;
+]]></content><private><![CDATA[]]></private><author><![CDATA[root]]></author></item>

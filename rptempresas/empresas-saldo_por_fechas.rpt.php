@@ -41,9 +41,9 @@ $BySucursal				= $xLi->OFiltro()->CreditosPorSucursal($sucursal);
 
 $xF->set($fechaFinal);
 $ejercicio		= $xF->anno();
-my_query("SET @ejercicio:=$ejercicio;");
+//my_query("SET @ejercicio:=$ejercicio;");
 
-$sql					= "
+/*$sql					= "
 SELECT
 	`socios`.`iddependencia`,
 	`socios`.`dependencia`,
@@ -56,13 +56,55 @@ FROM
 		ON `socios`.`codigo` = `creditos_saldos_por_ejercicio`.`numero_socio` 
 	GROUP BY
 		`socios`.`iddependencia`
-";
+";*/
+$sql		= "SELECT
+	`socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias` AS `empresa`,
+	`socios_aeconomica_dependencias`.`descripcion_dependencia` AS `descripcion`,
+	COUNT(`creditos_saldo_mensuales`.`numero_solicitud`) AS `creditos`,
+	SUM(`creditos_saldo_mensuales`.`enero`)      AS `enero`,
+	SUM(`creditos_saldo_mensuales`.`febrero`)    AS `febrero`,
+	SUM(`creditos_saldo_mensuales`.`marzo`)      AS `marzo`,
+	SUM(`creditos_saldo_mensuales`.`abril`)      AS `abril`,
+	SUM(`creditos_saldo_mensuales`.`mayo`)       AS `mayo`,
+	SUM(`creditos_saldo_mensuales`.`junio`)      AS `junio`,
+	SUM(`creditos_saldo_mensuales`.`julio`)      AS `julio`,
+	SUM(`creditos_saldo_mensuales`.`agosto`)     AS `agosto`,
+	SUM(`creditos_saldo_mensuales`.`septiembre`) AS `septiembre`,
+	SUM(`creditos_saldo_mensuales`.`octubre`)    AS `octubre`,
+	SUM(`creditos_saldo_mensuales`.`noviembre`)  AS `noviembre`,
+	SUM(`creditos_saldo_mensuales`.`diciembre`)  AS `diciembre` 
+FROM
+	`creditos_solicitud` `creditos_solicitud` 
+		INNER JOIN `creditos_saldo_mensuales` `creditos_saldo_mensuales` 
+		ON `creditos_solicitud`.`numero_solicitud` = `creditos_saldo_mensuales`.
+		`numero_solicitud` 
+			INNER JOIN `socios_aeconomica_dependencias` 
+			`socios_aeconomica_dependencias` 
+			ON `creditos_solicitud`.`persona_asociada` = 
+			`socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias`
+		GROUP BY
+			`creditos_solicitud`.`persona_asociada`		
+			";
+
 //$sql				= "CALL sp_saldos_al_cierre('$fechaFinal')";
-//exit($sql);
+
 $xTbl					= new cTabla($sql);
+//$xTbl->setFechaCorte($fechaFinal);
+
 $xTbl->setFootSum(array(
-		2 => "creditos",
-		3 => "saldo"
+	2 => "creditos",
+	3 => "enero",
+	4 => "febrero",
+	5 => "marzo",
+	6 => "abril",
+	7 => "mayo",
+	8 => "junio",
+	9 => "julio",
+	10 => "agosto",
+	11 => "septiembre",
+	12 => "octubre", 
+	13 => "noviembre",
+	14 => "diciembre"
 		));
 /*$xTbl->setFootSum(array(
 	3 => "monto_autorizado",

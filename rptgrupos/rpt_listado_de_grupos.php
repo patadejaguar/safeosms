@@ -1,61 +1,60 @@
 <?php
 //=====================================================================================================
 //=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+$theFile					= __FILE__;
+$permiso					= getSIPAKALPermissions($theFile);
+if($permiso === false){		header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../core/core.fechas.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.config.inc.php";
-include_once "../reports/PHPReportMaker.php";
+$xHP			= new cHPage("TR.TR.Estado_de_cuenta de Grupo ", HP_REPORT);
+$xL				= new cSQLListas();
+$xF				= new cFecha();
+$query			= new MQL();
+
+$estatus 		= parametro("estado", SYS_TODAS);
+$frecuencia 	= parametro("periocidad", SYS_TODAS);
+$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$grupo			= parametro("id", $grupo, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW);
+$out 			= parametro("out", SYS_DEFAULT);
+
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
 
 
-$oficial 		= elusuario($iduser);
-//=====================================================================================================
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$f3 			= $_GET["f3"];
-$input 			= $_GET["out"];
-	if (!$input) {
-		$input = "default";
-	}
-
-
-
-  	$setSql = " select idsocios_grupossolidarios AS 'id',
+$sql			= " select idsocios_grupossolidarios AS 'id',
 	nombre_gruposolidario AS 'nombre',
 	representante_nombrecompleto AS 'representante',
 	vocalvigilancia_nombrecompleto AS 'vocal_vigilancia', colonia_gruposolidario AS 'colonia', sucursal
 	FROM socios_grupossolidarios
 	ORDER BY sucursal, idsocios_grupossolidarios";
+$titulo			= "";
+$archivo		= "";
 
-if ($input!=OUT_EXCEL) {
-//echo $setSql;
-		$oRpt = new PHPReportMaker();
-	$oRpt->setDatabase(MY_DB_IN);
-	$oRpt->setUser(RPT_USR_DB);
-	$oRpt->setPassword(RPT_PWD_DB);
-	$oRpt->setSQL($setSql);
-	$oRpt->setXML("../repository/report34.xml");
-	$oOut = $oRpt->createOutputPlugin($input);
-	$oRpt->setOutputPlugin($oOut);
-	$oRpt->run();		//	*/
-} else {
-  $filename = "export_from_" . date("YmdHi") . "_to_uid-" .  $iduser . ".xls";
-	header("Content-type: application/x-msdownload");
-	header("Content-Disposition: attachment; filename=$filename");
-	header("Pragma: no-cache");
-	header("Expires: 0");
-	sqltabla($setSql, "", "fieldnames");
-}
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+$xRPT->setProcessSQL();
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>

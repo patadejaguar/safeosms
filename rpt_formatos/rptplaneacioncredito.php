@@ -56,7 +56,7 @@ echo getRawHeader();
 	//
 
 	//$rsrain 	= mysql_query($sqlrain);
-	$xRec			= new cReciboDeOperacion($tipo_docto, $idplan);
+	$xRec			= new cReciboDeOperacion($tipo_docto, false, $idplan);
 	$xRec->setNumeroDeRecibo($idplan, true, $rs_find_plan);
 	$rsr			= $xRec->getDatosReciboInArray();
 	//while ($rsr = mysql_fetch_array($rsrain)) {

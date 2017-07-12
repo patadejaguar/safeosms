@@ -17,44 +17,65 @@ $xHP				= new cHPage("TR.Corte de caja", HP_REPORT);
 $xF					= new cFecha();
 $xSQL				= new cSQLListas();
 //=====================================================================================================
-$fecha_inicial 		= (isset($_GET["on"])) ? $_GET["on"] : fechasys();
-$fecha_final 		= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
-$cajero 			= (isset($_GET["f3"])) ? $_GET["f3"] : getUsuarioActual() ;						// Numero de Cajero
-$cajero				= parametro("cajero", $cajero, MQL_RAW);
 
+$cajero 			= parametro("f3", getUsuarioActual(), MQL_INT); $cajero = parametro("cajero", $cajero, MQL_INT); $cajero = parametro("usuarios", $cajero, MQL_INT);
 $out				= parametro("out", OUT_HTML, MQL_RAW);
 $mails				= getEmails($_REQUEST);
-
-$ByCajero			= "";
+$empresa			= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$FechaInicial		= parametro("fechaMX", $xF->getFechaMinimaOperativa(), MQL_DATE);
+$FechaInicial		= parametro("on", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal			= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$TipoDePago			= parametro("tipodepago", SYS_TODAS, MQL_RAW); $TipoDePago	= parametro("formadepago", $TipoDePago, MQL_RAW);
 $ByAll				= "";
 
-$xCaja				= new cCaja();
-$xCaja->initByFechaUsuario($fecha_final, $cajero);
 
-if( isset($_REQUEST["fechaMX"]) ){
-	$fecha_inicial		= $xF->getFechaISO($_REQUEST["fechaMX"]);
-	$fecha_final		= $xF->getFechaISO($_REQUEST["fechaMX"]);
+
+$ByEmpresa			= $xSQL->OFiltro()->RecibosPorPersonaAsociada( $empresa);
+$ByCajero			= $xSQL->OFiltro()->RecibosPorCajero($cajero);
+//if(MODO_DEBUG == true){	$ByCajero		= ""; }
+$ByFecha			= $xSQL->OFiltro()->RecibosPorFecha($FechaInicial, $FechaFinal);
+$ByTipoDePago		= $xSQL->OFiltro()->RecibosPorTipoDePago($TipoDePago);
+
+$titulo				= $xHP->getTitle();
+
+if ( $ByEmpresa ){
+	$xEmp			= new cEmpresas($empresa); $xEmp->init();
+	$titulo			= $titulo . " / " . $xEmp->getNombreCorto();
 }
+if($ByCajero != ""){
+	$xCaj			= new cSystemUser($cajero);
+	if($xCaj->init() == true){
+		$titulo			= $titulo . " / " . $xCaj->getNombreCompleto();
+	}
+}
+if($ByTipoDePago != ""){
+	$xTipoP			= new cTesoreriaTiposDePagoCobro($TipoDePago);
+	if($xTipoP->init() == true){
+		$titulo			= $titulo . " / " . $xTipoP->getNombre();
+	}
+}
+
+$xCaja				= new cCaja();
+$xCaja->initByFechaUsuario($FechaFinal, $cajero);
+
 
 
 if(count($mails) <= 0){
 	if(MODULO_CAJA_ACTIVADO == true){
-		if( $xF->getInt($fecha_final) > $xF->getInt(fechasys()) ){ if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){ 	$xHP->goToPageError(70102);	}	}
+		if( $xF->getInt($FechaFinal) > $xF->getInt(fechasys()) ){ if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){ 	$xHP->goToPageError(70102);	}	}
 	}
 }
 
 $xUsr				= new cSystemUser($cajero); $xUsr->init();
 $nombre				= $xUsr->getNombreCompleto();
 
-$ByDependencia		= ( isset($_GET["dependencia"]) AND $_GET["dependencia"] != SYS_TODAS  ) ? " AND `socios`.`iddependencia`=" . $_GET["dependencia"] : "";
-
 $xRPT				= new cReportes();
-$title				= $xHP->getTitle();
 
-$xRPT->setTitle($title);
+
+$xRPT->setTitle($titulo);
 $xRPT->setOut($out);
 $xRPT->setSenders($mails);
-$bheader			= $xRPT->getHInicial($xHP->getTitle(), $fecha_inicial, $fecha_final, $nombre);
+$bheader			= $xRPT->getHInicial($titulo, $FechaInicial, $FechaFinal, $nombre);
 
 $xRPT->addContent( $bheader );
 $xRPT->setBodyMail($bheader);
@@ -62,6 +83,7 @@ $xRPT->setResponse();
 $xRPT->addContent($xCaja->getResumenDeCaja() );
 
 //setlog( $xCaja->getMessages() );
+//No enviar si no hay operaciones
 if(count($mails) > 0){
 	if ( $xCaja->getSumaDeRecibos() <= 0){
 		$xRPT->setSenders(array());		//no enviar

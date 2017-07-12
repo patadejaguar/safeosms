@@ -1,6 +1,6 @@
 <?php
 	include("PHPReportsUtil.php");
-	@include_once("../core/core.config.inc.php");
+	include_once("../core/core.config.inc.php");
 	/******************************************************************************
 	*                                                                             *
 	*	PHPReportMaker                                                             *
@@ -69,21 +69,21 @@
 			$this->sSQL					= null;		
 			$this->_oParm				= Array();		
 			$this->sDatabase			= null;
-			$this->sCodeOut			= null;	
+			$this->sCodeOut				= null;	
 			$this->sOut					= null;		
 			$this->bDebug				= false;
-			$this->_sNoDataMsg		= "";
-			$this->_sNoDataFunc		= "";
-			$this->_sOutputPlugin	= "default";
-			$this->_oOutputPlugin	= null;
-			$this->_sSaveTo			= null;
+			$this->_sNoDataMsg			= "";
+			$this->_sNoDataFunc			= "";
+			$this->_sOutputPlugin		= "default";
+			$this->_oOutputPlugin		= null;
+			$this->_sSaveTo				= null;
 			$this->_aEnv				= Array();
-			$this->_sClassName		= "PHPReport";
+			$this->_sClassName			= "PHPReport";
 			$this->_iPageSize			= 0;
 			$this->_aBench				= Array();
 			$this->_sLang				= "default";
 			$this->_bBody				= true;
-			$this->_bDeleteXML		= false;
+			$this->_bDeleteXML			= false;
 			$this->_oError				= new PHPReportsErrorTr();
 			$this->_oInput				= Array();
 
@@ -108,10 +108,10 @@
 		*																										*
 		******************************************************************************/
 		function createFromTemplate($sTitle="NO DEFINED TITLE",$sFile=null,$oParms=null,$oDocument=null,$oGroups=null){
-			$sPath	= getPHPReportsFilePath();
-			$oError	= new PHPReportsErrorTr();
+			$sPath		= getPHPReportsFilePath();
+			$oError		= new PHPReportsErrorTr();
 			$sIf		= $this->getDatabaseInterface();
-			$sFile	= $sFile ? $sFile : realpath($sPath."/template.xml");
+			$sFile		= $sFile ? $sFile : realpath($sPath."/template.xml");
 
 			// if the file does not exist
 			if(!file_exists($sFile))

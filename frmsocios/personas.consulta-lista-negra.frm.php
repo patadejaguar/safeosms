@@ -15,12 +15,11 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CONSULTA LISTA_NEGRA", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
-
-//$jxc = new TinyAjax();
+//$jxc 		= new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 
@@ -33,16 +32,27 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frm", "personas.consulta-lista-negra.frm.php?action=" . MQL_ADD);
+$xFRM->setTitle($xHP->getTitle());
 
 //$xSoc		= new cSocio($persona);
 //if( $xSoc->init()== true){
 	$xAml	= new cAMLPersonas($persona);
 	$xAml->init();
-	$ln		= $xAml->getBuscarEnListaNegra();
-	//$xFRM->addHElem("<a href=\"" . $xAml->getReporteConsultaListaNegra() . "\">CDescargar</a>" );
-	$xFRM->OButton("TR.Descargar Consulta", "jsGetConsulta()", $xFRM->ic()->DESCARGAR);
+	if($action == MQL_ADD){
+		$ln	= $xAml->getBuscarEnListaNegra();
+		$xFRM->OButton("TR.Descargar Consulta", "jsGetConsulta()", $xFRM->ic()->DESCARGAR);
+		$xFRM->addCerrar();
+	} else {
+		$xFRM->addEnviar("TR.NUEVA CONSULTA");
+	}
+	$xFRM->OHidden("persona", $persona);
+		
 	$xFRM->addAviso( $xAml->getMessages() );
+	
+	$xT		= new cTabla($xLi->getListadoDePersonasConsultasL($persona, $xAml->TIPO_BLOQ));
+	$xT->OButton("TR.Dictaminar", "var xA=new AmlGen();xA.setDictamenConsulta(" . HP_REPLACE_ID. ")", $xFRM->ic()->VALIDAR);
+	$xFRM->addHElem($xT->Show());
 //}
 
 $msg			= "";

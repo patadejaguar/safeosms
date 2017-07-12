@@ -104,6 +104,7 @@
 
                 if (error) {
                     errorTarget.addClass(fieldErrorClass).after(errorEl);
+                    
                     return false;
                 } else {
                     temp = errorEl.get(0);

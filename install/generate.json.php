@@ -16,16 +16,17 @@ if($permiso === false){	header ("location:../404.php?i=999");	}
 $_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP		= new cHPage("", HP_FORM);
-
+//UPDATE general_menu SET `menu_description`=`menu_title` WHERE menu_parent=9999
 $sql		= "SELECT
 	`general_menu`.`idgeneral_menu`,
 	/*`general_menu`.`menu_parent`,*/
-	`general_menu`.`menu_title`,
-	'' AS 'translate'
+	`general_menu`.`menu_description` AS `menu_title`,  
+	`general_menu`.`menu_title` AS 'translate'
 FROM
 	`general_menu` `general_menu` 
 WHERE
-	(`general_menu`.`menu_title` !='') ";
+	(`general_menu`.`menu_parent` !=9999)
+ORDER BY `general_menu`.`menu_parent`,`general_menu`.`menu_description` ";
 
 
 //$OB				= new MQL();

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>- Formoid javascript form</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="blurBg-false" style="background-color: #EBEBEB">
+
+
+
+	<!-- Start Formoid form-->
+	<div class='col-two'>
+	<form class="formoid-flat-blue"
+		style="background-color: #FFFFFF; font-size: 14px; font-family: 'Lato', sans-serif; color: #666666; max-width: 100%; min-width: 150px"
+		method="post">
+		<div class="title">
+			<h2>Capture su Informaci&oacute;n</h2>
+		</div>
+		<!-- <div class="element-input">
+			<label class="title">Capture su telefono</label>
+			<input class="large" type="text" id="idtelefono" />
+		</div> -->
+		<div class="element-input">
+			<label class="title">Su clave de Credito</label>
+			<input class="large" type="text" id="idcredito" />
+		</div>		
+		
+		<div class="element-email">
+			<label class="title">Su Correo electronico</label>
+			<input class="large" type="email" id="idmail" value="" />
+		</div>
+		
+		<div class="submit">
+			<input type="submit" value="Obtener Estado de Cuenta" onclick="jsSendData(); return false" />
+		</div>
+	</form>
+	</div>
+	<div class='col-two'>
+		<div class="title">
+			<h1>Instrucciones</h1>
+		</div>
+		
+		<h3>Capture su clave de Cr&eacute;dito</h3>
+		<p>Capture su <em>Clave de Cr&eacute;dito</em>, si no tiene esa informaci&oacute puede acudir a las Oficinas de recursos Humanos de su Empresa o en las Oficinas de la Financiera</p>
+		<p>Por ser un datos Personal, solo se otorga al Titular o Co-Titulares de la Cuenta</p>
+		<h3>Capture su Correo Electr&oacute;nico</h3>
+		<P>Capture su <em>Correo Electr&oacute;nico</em>, este debe ser igual al registrado en el Sistema de la Financiera, si no lo recuerda pregunte en las Oficinas de la Financiera</P>
+		<p>En caso de que el Correo Electr&oacute;nico no sea igual, el env&iacute;o ser&aacute; rechazado</p>
+		<h3>Dudas a : <a href="mailto:software@grupopadio.com.mx">Contacto</a></h3>
+		<h3><a href="privacidad.html">Declaraci&oacute;n de Privacidad</a></h3>
+	</div>	
+	
+	<link href="./formoid1/formoid-flat-blue.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="./formoid1/jquery.min.js"></script>
+	<script>
+		var mSite = "http://localhost/svc/pc.svc.php?cmd=consulta&";
+		function jsSendData(){
+			var idcredito 	= $("#idcredito").val();
+			var idmail 		= $("#idmail").val();
+			var mUrl		= mSite + "credito=" + idcredito + "&email=" + idmail;
+			$.getJSON( mUrl, function( data ) {
+				alert(data.message);	
+			});	
+		}
+	</script>
+	<!-- Stop Formoid form-->
+
+
+	<!-- Start Formoid form-->
+	<div class='col-two'>
+	<form class="formoid-flat-blue"
+		style="background-color: #FFFFFF; font-size: 14px; font-family: 'Lato', sans-serif; color: #666666; max-width: 100%; min-width: 150px"
+		method="post">
+
+		<div class="title">
+			<h2>Capture su Informaci&oacute;n</h2>
+		</div>
+
+		<div class="element-separator">
+			<hr />
+			<h3 class="section-break-title">Datos de Contacto</h3>
+		</div>
+
+		<div class="element-name">
+			<span class="nameFirst">
+				<input name="name[first]" placeholder="Nombre Completo" size="18" type="text" id="idnombre" />
+				<span class="icon-place"></span></span><span class="nameLast">
+				<input name="name[last]" placeholder="Apellidos" size="14" type="text" id="idapellidos" />
+				<span class="icon-place"></span>
+			</span>
+		</div>
+
+		<div class="element-phone">
+			<label class="title">
+				<span class="required">*</span>
+			</label>
+
+			<div class="item-cont">
+				<input class="large" maxlength="24" name="phone"
+					pattern="[+]?[\.\s\-\(\)\*\#0-9]{3,}" id="idtelefono"
+					placeholder="Numero Telefónico" required="required" type="tel"
+					value="" />
+				<span class="icon-place"></span>
+			</div>
+		</div>
+
+		<div class="element-email">
+			<div class="item-cont">
+				<input class="large" name="email" id="idmail" placeholder="Dirección de correo electrónico" type="email" value="" />
+				<span class="icon-place"></span>
+			</div>
+		</div>
+
+		<div class="element-separator">
+			<hr />
+			<h3 class="section-break-title">Datos del Cr&eacute;dito</h3>
+		</div>
+
+		<div class="element-select">
+			<div class="item-cont">
+				<div class="large">
+					<span>
+						<select name="select" id="idplazo">
+							<option value="7-26">Semanal / 6 Meses</option>
+							<option value="7-52">Semanal / 12 Meses</option>
+							<option value="15-12">Quincenal / 6 Meses</option>
+							<option value="15-24">Quincenal / 1 Año</option>
+							<option value="30-12">Mensual /1 Año</option>
+						</select>
+						<i></i>
+						<span class="icon-place"></span>
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="element-input">
+			<div class="item-cont">
+				<input class="large" name="input" id="idmonto"
+					placeholder="Monto del Cr&eacute;dito Solicitado" type="text" /><span class="icon-place"></span>
+			</div>
+		</div>
+
+		<div class="submit">
+			<input type="submit" value="Quiero que me contacten" onclick="jsSendData(); return false" />
+		</div>
+	</form>
+	</div>
+	<div class='col-two'>
+		<div class="title">
+			<h1>Instrucciones</h1>
+		</div>
+		<h3>Datos de Contacto</h3>
+		<p>Capture su <em>Nombre Completo</em> por Ejemplo: <code>Juan Jos&eacute;</code> </p>
+		<p>Capture sus <em>Apellidos</em> por Ejemplo: <code>Gomez Gomez</code> </p>
+		<p>Capture su <em>Tel&eacute;fono</em> con Lada que nos servir&aacute; para contactarlo, por Ejemplo: <code>999-90 00 00</code></p>
+		<p>Capture su <em>Correo Electr&oacute;nico</em> completo por donde podremos contactarlo, por Ejemplo: <code>jhon@doe.com.mx</code></p>
+		
+		<h3>Datos del Cr&eacute;dito</h3>
+		<p>Elija el <em>Plazo</em> por el cu&aacute;l desea su Cr&eacute;dito, por Ejemplo : <code>Semanal / 6 Meses</code></p>
+		<p>Elija el <em>Monto</em> por el cu&aacute;l desea su Cr&eacute;dito, Por Ejemplo : <code>10000</code>(Diez Mil)</p>
+		
+		<h3>Dudas a : <a href="mailto:software@grupopadio.com.mx">Contacto</a></h3>
+		<h3><a href="privacidad.html">Declaraci&oacute;n de Privacidad</a></h3>
+	</div>
+
+	<link href="./formoid1/formoid-flat-blue.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="./formoid1/jquery.min.js"></script>
+	<script>
+		var mSite = "http://localhost/svc/pc.svc.php?cmd=precredito&";
+		function jsSendData(){
+			var idnombre	= $("#idnombre").val();
+			var idapellidos	= $("#idapellidos").val();
+			var idcondicion	= $("#idplazo").val();
+			var idmonto		= $("#idmonto").val();
+			var idmail		= $("#idmail").val();
+			var idtelefono	= $("#idtelefono").val();
+			
+			var mUrl		= mSite + "idnombre=" + idnombre + "&idapellidos=" + idapellidos + "&idcondiciones=" + idcondicion + "&idmonto=" + idmonto + "&idemail=" + idmail + "&idtelefono=" + idtelefono;
+			
+			$.getJSON( mUrl, function( data ) {
+				alert(data.message);
+			});
+		}
+	</script>	
+	<!-- Stop Formoid form-->
+
+</body>
+</html>

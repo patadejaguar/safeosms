@@ -102,7 +102,7 @@ $setSql 		= " SELECT
 				`operaciones_mvtos`.`idoperaciones_mvtos` ";
 	//exit($setSql);
 $xRPT		= new cReportes("TR.Reporte de operaciones - $tipo");
-$output		= ($output == SYS_DEFAULT) ? OUT_RXML : $output;
+$output		= ($output == SYS_DEFAULT) ? OUT_HTML : $output;
 $xRPT->setOut($output);
 $xRPT->setSenders($senders);
 

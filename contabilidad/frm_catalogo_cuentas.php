@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP				= new cHPage("TR.Alta del Catalogo_contable");
+$xHP				= new cHPage("TR.Registro de Catalogo_contable");
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -64,7 +64,7 @@ function jsaHeredarDatos($idcuenta){
 		}
 		$xLog->add( $xSup->getMessages(), $xLog->DEVELOPER);
 	}
-	$tab -> add(TabSetvalue::getBehavior('idcuenta', $cuenta));
+	$tab -> add(TabSetvalue::getBehavior('idcuentacontable', $cuenta));
 	$tab -> add(TabSetvalue::getBehavior('idnombrecuenta', $nombre));
 	$tab -> add(TabSetvalue::getBehavior('idtipodecuentacontable', $tipo));
 	$tab -> add(TabSetvalue::getBehavior('idcentrodecosto', $centro));
@@ -72,8 +72,9 @@ function jsaHeredarDatos($idcuenta){
 	$tab -> add(TabSetvalue::getBehavior('idnombresuperior', $nombresupe));
 	$tab -> add(TabSetvalue::getBehavior('idoperacion', $operar));
 	$tab -> add(TabSetvalue::getBehavior('idequivalencia', $equivale));
-	
-	$tab -> add(TabSetvalue::getBehavior('idmsg3', $xLog->getMessages() ));
+	if(MODO_DEBUG == true){
+		$tab -> add(TabSetvalue::getBehavior('idmsg3', $xLog->getMessages() ));
+	}
 	
 	return $tab -> getString();	
 }
@@ -99,8 +100,8 @@ function jsaGuardarDatos($idcuenta, $nombre, $tipo, $centro, $equivalencia, $ope
 	}
 	return $xLog->getMessages(OUT_HTML);
 }
-$jxc ->exportFunction('jsaHeredarDatos', array('idcuenta'));
-$jxc ->exportFunction('jsaGuardarDatos', array('idcuenta', 'idnombrecuenta','idtipodecuentacontable', 'idcentrodecosto', 'idequivalencia', 'idoperacion'), "#idmsgs");
+$jxc ->exportFunction('jsaHeredarDatos', array('idcuentacontable'));
+$jxc ->exportFunction('jsaGuardarDatos', array('idcuentacontable', 'idnombrecuenta','idtipodecuentacontable', 'idcentrodecosto', 'idequivalencia', 'idoperacion'), "#idmsgs");
 
 $jxc ->process();
 
@@ -113,18 +114,23 @@ $xTxt		= new cHText(); $xTxt->setDivClass("");
 $xTxt->addEvent("jsaHeredarDatos()", "onblur");
 $xTxt2		= new cHText(); $xTxt2->setDivClass("");
 $msg		= "";
+$xFRM->setTitle($xHP->getTitle());
+
 $xFRM->addGuardar("jsaGuardarDatos()");
 $xFRM->OButton("TR.Panel", "jsGoPanel()", $xFRM->ic()->EJECUTAR);
-$xFRM->addDivSolo($xTxt->getDeCuentaContable("idcuenta", "", false), $xTxt2->getNormal("idnombrecuenta", "", "TR.Nombre de la Cuenta"), "tx14", "tx34" );
+$xFRM->addDivSolo($xTxt->getDeCuentaContable("idcuentacontable", "", false), $xTxt2->getNormal("idnombrecuenta", "", "TR.Nombre de la Cuenta"), "tx14", "tx34" );
 $xFRM->addDivSolo("<input type='text' id='idcuentasuperior' disabled='true' />", "<input type='text' id='idnombresuperior' disabled='true' />", "tx14", "tx34" );
-$xFRM->OText("idequivalencia", "", "TR.Equivalencia");
+
 //$xFRM->addHElem( $xSel->getListaDeNivelesDeCuentasContables()->get(true) );
 $xFRM->addHElem( $xSel->getListaDeTiposDeCuentasContables()->get(true) );
 $xFRM->addHElem( $xSel->getListaDeTiposDeCentrosDeCosto()->get(true) );
 
-$xFRM->OHidden("idoperacion", "0", "TR.operacion");	//0 = nuevo, 1 = Actualizar
+$xFRM->OText("idequivalencia", "", "TR.Equivalente");
 
-$xFRM->OTextArea("idmsg3", "", "TR.Texto");
+$xFRM->OHidden("idoperacion", "0", "TR.operacion");	//0 = nuevo, 1 = Actualizar
+if(MODO_DEBUG == true){
+	$xFRM->OTextArea("idmsg3", "", "TR.Texto");
+}
 $xFRM->addAviso(" ");
 echo $xFRM->get();
 
@@ -132,7 +138,7 @@ $jxc ->drawJavaScript(false, true);
 ?>
 <script>
 function jsGoPanel(){
-	var idcuenta	= $("#idcuenta").val();
+	var idcuenta	= $("#idcuentacontable").val();
 	var xC 			= new ContGen(); xC.goToPanel(idcuenta);
 }
 </script>

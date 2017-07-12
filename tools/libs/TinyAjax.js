@@ -263,7 +263,7 @@ XMLHttpRequestI = function() {
 		document.body.appendChild(iframe);
 	}
 	this.send=function(postdata){
-		//TODO: use the postdata
+		// use the postdata
 		var el=document.getElementById('kXHR_iframe_'+this.i);
 		el.src=this.url;
 		kXHR_objs[this.i]=this;

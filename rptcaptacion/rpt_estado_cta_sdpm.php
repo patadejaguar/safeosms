@@ -1,45 +1,56 @@
 <?php
 /**
- * @author 		Balam Gonzalez Luis
- * @version 	07/04/2008 1.0
- * @since 		2007-04-07
- * @package 	captacion
- *  		Modificaciones
- * 		-07/04/2008 Primera Version
+ * Reporte de Estado de Cuenta en SDPM
  *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
  */
-
 //=====================================================================================================
-//=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");
 	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
+	include_once("../core/core.db.inc.php");
+	$theFile			= __FILE__;
+	$permiso			= getSIPAKALPermissions($theFile);
+	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Estado de Cuenta de Depositos a la Vista", HP_RPTXML);
-$xQL		= new MQL();
+$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xL			= new cSQLListas();
 $xF			= new cFecha();
+$xQL		= new MQL();
+$xFil		= new cSQLFiltros();
 
-$oficial = elusuario($iduser);
-//=====================================================================================================
+	
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT); $frecuencia 	= parametro("frecuencia", $frecuencia, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT); $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
 
-$idcuenta				= parametro("f100", false, MQL_INT);
-$idcuenta 				= parametro("cuenta", $idcuenta, MQL_INT);
-$AppByFechas			= parametro("f73");		//Boolean por fechas
-$fecha_inicial 			= parametro("on", EACP_FECHA_DE_CONSTITUCION, MQL_DATE);
-$fecha_final 			= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE);
-$output					= parametro("out", SYS_DEFAULT);
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Individual
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
 
+$ByFechas		= $xFil-> CaptacionSaldosPorFechas($FechaInicial, $FechaFinal);
 
-
-	$setSql = "SELECT
-	`socios`.`codigo`,
+$sql			= "SELECT
+	/*`socios`.`codigo`,
 	`socios`.`nombre`,
 	`captacion_cuentas`.`numero_cuenta`                 AS `numero_de_cuenta`,
 	`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
@@ -47,7 +58,7 @@ $output					= parametro("out", SYS_DEFAULT);
 	`captacion_cuentas`.`tasa_otorgada`,
 	`captacion_cuentas`.`dias_invertidos`,
 	`captacion_cuentas`.`saldo_cuenta`,
-	`captacion_cuentas`.`sucursal`,
+	`captacion_cuentas`.`sucursal`,*/
 	`captacion_sdpm_historico`.`ejercicio`,
 	`captacion_sdpm_historico`.`periodo`,
 	`captacion_sdpm_historico`.`fecha`,
@@ -69,11 +80,8 @@ FROM
 					ON `captacion_cuentas`.`tipo_subproducto` =
 					`captacion_subproductos`.`idcaptacion_subproductos`
 WHERE
-	(`captacion_cuentas`.`numero_cuenta` =$idcuenta)
-	AND
-	(`captacion_sdpm_historico`.`fecha`>='$fecha_inicial')
-	AND
-	(`captacion_sdpm_historico`.`fecha`<='$fecha_final')
+	(`captacion_cuentas`.`numero_cuenta` =$cuenta)
+	$ByFechas
 ORDER BY
 	`socios`.`codigo`,
 	`captacion_cuentas`.`numero_cuenta`,
@@ -81,33 +89,42 @@ ORDER BY
 	`captacion_sdpm_historico`.`periodo` ASC,	
 	`captacion_sdpm_historico`.`fecha` ASC";
 
-//exit($setSql);
+$sql			= $xL->getListadoDeSDPMCaptacion($cuenta);
 
-if ($output!=OUT_EXCEL) {
+$titulo			= "";
+$archivo		= "";
 
-	$oRpt = new PHPReportMaker();
-	$oRpt->setDatabase(MY_DB_IN);
-	$oRpt->setUser(RPT_USR_DB);
-	$oRpt->setPassword(RPT_PWD_DB);
-	$oRpt->setSQL($setSql);
-	$oRpt->setXML("../repository/report70.xml");
-	$oOut = $oRpt->createOutputPlugin($output);
-	$oRpt->setOutputPlugin($oOut);
-	$oRpt->run();		//	*/
-} else {
-	$filename = $_SERVER['SCRIPT_NAME'];
-	$filename = str_replace(".php", "", $filename);
-	$filename = str_replace("rpt", "", $filename);
-	$filename = str_replace("-", "", 	$filename);
-  	$filename = "$filename-" . date("YmdHi") . "-from-" .  $iduser . ".xls";
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
 
-  	header("Content-type: application/x-msdownload");
-	header("Content-Disposition: attachment; filename=$filename");
-	header("Pragma: no-cache");
-	header("Expires: 0");
 
-	$cTbl = new cTabla($setSql);
-	$cTbl->setWidth();
-	$cTbl->Show("", false);
+$xCta		= new cCuentaDeCaptacion($cuenta);
+if($xCta->init() == true){
+	$xRPT->addContent( $xCta->getFicha(false, "", true) );
 }
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+
+
+$xRPT->setOmitir("numero_de_socio");
+$xRPT->setOmitir("cuenta");
+$xRPT->setFormato("monto", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("fecha", $xRPT->FMT_FECHA);
+$xRPT->addCampoSuma("monto");
+$xRPT->addCampoContar("clave");
+
+$xRPT->setProcessSQL();
+//============ Agregar HTML
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>

@@ -24,7 +24,7 @@ function list_system_locales(){
     system('locale -a');
     $str = ob_get_contents();
     ob_end_clean();
-    return split("\\n", trim($str));
+    return explode("\\n", trim($str));
 }
 
 $locale = "es_MX.iso-8859-1";
@@ -44,7 +44,7 @@ $clave		= $xColonia->getClavePorNombre("Ampliacion josefa ortiz de dom");
 $xColonia->init();
 
 $lng			= new cLang();
-
+/*
 $xFRM->addHElem( $lng->getT( "TR.La Clave Buscada es ") . $clave . "<br />");
 $xFRM->addHElem( $lng->getT( "TR.El Codigo Postal Buscado es ") . $xColonia->getCodigoPostal() . "<br />");
 $xFRM->addHElem( $lng->getT( "TR.EL Nombre de la Colonia es ") . $xColonia->getNombre() . "<br />");
@@ -90,12 +90,18 @@ $xFRM->addHElem( "<p>EL Tipo de Asentamiento es ". $xColonia->getTipoDeAsentamie
 $xFRM->addHElem( "<hr />");
 $xFRM->addHElem( "<hr />");
 //$xSoc->setInitDatosDeCredito();
-$xFRM->addAviso("Total de creditos activo " . $xSoc->getTotalCreditosActivos());
-$xFRM->addAviso("Total de Saldo de Creditos  " . $xSoc->getTotalCreditosSaldo());
+$xFRM->addAviso("Total de creditos activo " . $xSoc->getOEstats()->getTotalCreditosActivos());
+$xFRM->addAviso("Total de Saldo de Creditos  " . $xSoc->getOEstats()->getTotalCreditosSaldo());
 //$xFRM->addHElem( "La $miFecha, Dias del Mes", $xF->getDiasDelMes() ));
 //iniciando Domicilio de persona
+*/
+$xMvto			= new cMovimientoDeOperacion();
 
-$xFRM->addHElem( "<hr />");
+$xMvto->setNeutralizarBatch(50000, 201002901, OPERACION_CLAVE_PLAN_DESGLOSE, 9);
+
+
+/*$xFRM->addHElem( "<hr />");
+
 $DDOM			= $xSoc->getODomicilio();
 if($DDOM == null){
 	
@@ -134,12 +140,16 @@ $rs	= $query->exec();
 foreach ($rs as $rows){
 	$xC->setData($rows);
 	echo $xC->nombrecompleto()->v();
-}*/
+}
+*/
+/*
+$xFRM->addHElem( "<hr />");
+$xFRM->addAviso( "memoria " . getMemoriaLibre(). "");
 $xFRM->addHElem( "<hr />");
 $xUS		= new cSystemUser(TASK_USR, false);
 $xUS->init(); 
 $xFRM->addHElem("<p class='aviso'>USER SYSTEM: " . $xUS->getNombreCompleto() . "</p>");
-
+*/
 
 echo $xFRM->get();
 

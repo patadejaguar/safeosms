@@ -1,6 +1,50 @@
 <?php
 //=====================================================================================================
 //=====>	INICIO_H
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+$theFile					= __FILE__;
+$permiso					= getSIPAKALPermissions($theFile);
+if($permiso === false){		header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//<=====	FIN_H
+$iduser = $_SESSION["log_id"];
+//=====================================================================================================
+$xHP		= new cHPage("TR.Reportes de GRUPOS_SOLIDARIOS");
+$xHP->init();
+$xSel		= new cHSelect();
+$xT			= new cHText();
+$xRPT		= new cPanelDeReportes(iDE_GRUPO, "grupos", false);
+$xRPT->setTitle($xHP->getTitle());
+
+
+$xRPT->addjsVars("idgrupo", "grupo");
+
+//$xRPT->OFRM()->addDivSolo($lbl, $xSelEmp->get(false), "tx14", "tx34");
+$xRPT->OFRM()->addDivSolo($xT->getDeGrupo("idgrupo", DEFAULT_GRUPO));
+$xRPT->addListReports();
+//$xRPT->addCreditosProductos();
+//$xRPT->addCreditosPeriocidadDePago();
+//$xRPT->addTipoDePago();
+$xRPT->setConSucursal(true);
+
+$xRPT->setConOperacion(false);
+$xRPT->setConCajero(false);
+$xRPT->setConRecibos(false);
+
+
+
+echo $xRPT->get();
+
+echo $xRPT->getJs(true);
+
+$xHP->fin();
+exit;
+
+//=====================================================================================================
+//=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");

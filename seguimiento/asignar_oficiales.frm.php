@@ -20,13 +20,11 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $jxc 		= new TinyAjax();
-$jsCampo	=  (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "oficial_seguimiento" : "oficial_credito";
+$jsCampo	= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "oficial_seguimiento" : "oficial_credito";
 
 function jsaGetCreditos($convenio, $estatus, $periocidad, $oficial){
 	$xLi		= new cSQLListas();
-	$ByOficial		= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "	AND	(`creditos_solicitud`.`oficial_seguimiento` != $oficial) " : "	AND	(`creditos_solicitud`.`oficial_credito` != $oficial) ";
-
-	//saveError( 22, $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "$oficial Ingreso al Modulo de Asignacion de Oficiales");
+	$ByOficial		= "";//(CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "	AND	(`creditos_solicitud`.`oficial_seguimiento` != $oficial) " : "	AND	(`creditos_solicitud`.`oficial_credito` != $oficial) ";
 	$sqlCred		= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? $xLi->getListadoDeCreditosConOficialSeguimiento(false, $estatus, $periocidad, $convenio, $ByOficial) : $xLi->getListadoDeCreditosConOficial(false, $estatus, $periocidad, $convenio, $ByOficial);
 
 	$xTbl = new cTabla($sqlCred, 2);
@@ -35,8 +33,6 @@ function jsaGetCreditos($convenio, $estatus, $periocidad, $oficial){
 	$xTbl->addEspTool($xChk->get("", "chk" . STD_LITERAL_DIVISOR . "_REPLACE_ID_") );
 	$xTbl->setWidth();
 	return $xTbl->Show();
-	//return $sqlCred;
-
 }
 $jxc ->exportFunction('jsaGetCreditos', array('idproducto', 'idestado', 'idperiocidad', 'idoficial'), "#id-listado-de-creditos");
 $jxc ->process();
@@ -46,20 +42,34 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frmAsignarOficiales", "./");
-$xSel		= new cHSelect();
-$msg		= "";
+$xFRM			= new cHForm("frmAsignarOficiales", "./");
+$xFRM->setNoAcordion();
+$xFRM->setTitle($xHP->getTitle());
+$xSel			= new cHSelect();
+$msg			= "";
+$xFRM->addSeccion("idopt", "TR.Opciones");
+$xFRM->addHElem($xSel->getListaDeProductosDeCredito()->get(true) );
+$xSEstat		= $xSel->getListaDeEstadosDeCredito();
+$xSEstat->addEspOption(SYS_TODAS, SYS_TODAS);
+$xSEstat->setOptionSelect(SYS_TODAS);
+$xFRM->addHElem( $xSEstat->get(true) );
+$xSPer			= $xSel->getListaDePeriocidadDePago();
+$xSPer->addEspOption(SYS_TODAS, SYS_TODAS);
+$xSPer->setOptionSelect(SYS_TODAS);
+$xFRM->addHElem( $xSPer->get(true));
 
-$xFRM->addHElem( $xSel->getListaDeProductosDeCredito()->get(true) );
-$xFRM->addHElem( $xSel->getListaDeEstadosDeCredito()->get(true) );
-$xFRM->addHElem( $xSel->getListaDeOficiales()->get(true) );
-$xFRM->addHElem( $xSel->getListaDePeriocidadDePago()->get(true));
+$xFRM->endSeccion();
+$xFRM->addSeccion("idofi", "TR.AGREGAR A");
+$xFRM->addHElem($xSel->getListaDeOficiales("", SYS_USER_ESTADO_ACTIVO)->get(true) );
+$xFRM->endSeccion();
+$xFRM->addSeccion("idlista", "TR.LISTA DE CREDITOS");
 $xFRM->addHTML("<div id='id-listado-de-creditos'></div>");
+$xFRM->endSeccion();
+
 $xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR);
 $xFRM->OButton("TR.Guardar", "jsSetOficial()", $xFRM->ic()->GUARDAR);
-//$xFRM->addJsBasico();
-//$xFRM->addCreditBasico();
-//$xFRM->addSubmit();
+$xFRM->OButton("TR.Cargar Archivo", "jsCargarArchivo()", $xFRM->ic()->EXPORTAR);
+
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
 ?>
@@ -95,6 +105,7 @@ function jsMarkAll(){
 		}
 	}
 }
+function jsCargarArchivo(){	xGen.w({ url : "../frmseguimiento/creditos_oficiales.upload.frm.php?", tiny : true, w: 800 }); }
 </script>
 <?php
 $xHP->fin();

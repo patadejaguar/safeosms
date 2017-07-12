@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item><pubDate>Wed, 27 Jul 2016 11:02:41 -0500</pubDate><title><![CDATA[Calcula tu Crédito]]></title><url><![CDATA[calcula-tu-credito]]></url><meta><![CDATA[]]></meta><metad><![CDATA[]]></metad><menu><![CDATA[Calcula tu Crédito]]></menu><menuOrder><![CDATA[2]]></menuOrder><menuStatus><![CDATA[Y]]></menuStatus><template><![CDATA[template.php]]></template><parent><![CDATA[]]></parent><content><![CDATA[&lt;!-- Start Formoid form--&gt;
+&lt;form class=&quot;formoid-solid-orange&quot; method=&quot;post&quot; style=&quot;background-color:#FFFFFF;font-size:14px;font-family:&#039;Roboto&#039;,Arial,Helvetica,sans-serif;color:#34495E;max-width:480px;min-width:150px&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;
+	&lt;h2&gt;Monto a Pagar:&lt;span id=&quot;idletra&quot;&gt;&lt;/span&gt;&lt;/h2&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;element-number&quot;&gt;
+	&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idmonto&quot; max=&quot;100&quot; min=&quot;0&quot; name=&quot;idmonto&quot; placeholder=&quot;Monto&quot; type=&quot;text&quot; value=&quot;&quot; /&gt;&lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;element-number&quot;&gt;
+	&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idpagos&quot; max=&quot;100&quot; min=&quot;0&quot; name=&quot;idpagos&quot; placeholder=&quot;Numero de Pagos&quot; type=&quot;text&quot; value=&quot;&quot; /&gt;&lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;element-select&quot;&gt;
+	&lt;div class=&quot;item-cont&quot;&gt;
+		&lt;div class=&quot;large&quot;&gt;&lt;span&gt;&lt;select id=&quot;idfrecuencia&quot; name=&quot;idfrecuencia&quot;&gt;&lt;option value=&quot;7&quot;&gt;Semanal&lt;/option&gt;&lt;option value=&quot;15&quot;&gt;Quincenal&lt;/option&gt;&lt;option value=&quot;30&quot;&gt;Mensual&lt;/option&gt;&lt;/select&gt;&lt;i&gt;&lt;/i&gt;&lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;
+	&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;element-number&quot;&gt;
+	&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idtasa&quot; max=&quot;100&quot; min=&quot;0&quot; name=&quot;idtasa&quot; placeholder=&quot;Tasa&quot; type=&quot;text&quot; value=&quot;&quot; /&gt;&lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;element-checkbox&quot;&gt;&lt;label class=&quot;title&quot;&gt;Opciones&lt;/label&gt;
+
+	&lt;div class=&quot;column column1&quot;&gt;&lt;label&gt;&lt;input id=&quot;idsiniva&quot; name=&quot;checkbox[]&quot; type=&quot;checkbox&quot; /&gt; &lt;span&gt;Sin IVA&lt;/span&gt;&lt;/label&gt;&lt;label&gt;&lt;input id=&quot;idconredondeo&quot; name=&quot;checkbox[]&quot; type=&quot;checkbox&quot; /&gt; &lt;span&gt;Redondeo&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;
+	&lt;span class=&quot;clearfix&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+
+&lt;div class=&quot;button&quot;&gt;&lt;button onclick=&quot;jsCalcular()&quot; type=&quot;button&quot;&gt;Calcular&lt;/button&gt;&lt;/div&gt;
+&lt;/form&gt;
+&lt;!-- Stop Formoid form--&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;./formoid1/formoid-solid-orange.js&quot;&gt;&lt;/script&gt;&lt;!-- Stop Formoid form--&gt;&lt;script src=&quot;/js/jscrypt/aes.js&quot;&gt;&lt;/script&gt;&lt;script src=&quot;//sistema.gupopadio.com/js/jscrypt/md5.js&quot;&gt;&lt;/script&gt;&lt;script src=&quot;//sistema.gupopadio.com/js/services.js.php&quot;&gt;&lt;/script&gt;&lt;!-- Start Formoid form--&gt;
+&lt;link href=&quot;./formoid1/formoid-solid-orange.css&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot; /&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;./formoid1/jquery.min.js&quot;&gt;&lt;/script&gt;&lt;script&gt;
+function jsCalcular(){
+	var idsiniva		= $(&#039;#idsiniva&#039;).prop(&#039;checked&#039;);
+	var idconredondeo	= $(&#039;#idconredondeo&#039;).prop(&#039;checked&#039;);
+	var idmonto		= $(&quot;#idmonto&quot;).val();
+	var idpagos		= $(&quot;#idpagos&quot;).val();
+	var idtasa		= $(&quot;#idtasa&quot;).val();
+	var idfrecuencia	= $(&quot;#idfrecuencia&quot;).val();
+	var urlm		= &quot;http://localhost/svc/cotizador.plan.svc.php?monto=&quot; + idmonto + &quot;&amp;pagos=&quot; + idpagos + &quot;&amp;siniva=&quot; + idsiniva + &quot;&amp;redondeo=&quot; + idconredondeo + &quot;&amp;frecuencia=&quot; +  idfrecuencia;
+   $.ajax(urlm, {
+      success: function(data) {
+	//alert(data.monto);
+         //$(&#039;#main&#039;).html($(data).find(&#039;#main *&#039;));
+         //$(&#039;#notification-bar&#039;).text(&#039;The page has been successfully loaded&#039;);
+	$(&quot;#idletra&quot;).html(data.monto);
+      },
+      error: function() {
+         //$(&#039;#notification-bar&#039;).text(&#039;An error occurred&#039;);
+      }
+   });	
+}
+&lt;/script&gt;]]></content><private><![CDATA[]]></private><author><![CDATA[root]]></author></item>

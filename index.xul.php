@@ -10,7 +10,7 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 	if($permiso === false){		header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+
 //=====================================================================================================
 
 $xHP						= new cHPage(EACP_NAME . "{" . getSucursal() . "} - S.A.F.E. V " . $version. "", HP_FORM, "", ".");
@@ -18,6 +18,12 @@ $fecha_de_sesion			= parametro("f", fechasys());
 $MenuParent					= parametro("m", 0, MQL_INT);
 $isMobile 					= $xHP->isMobile();
 $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
+
+
+$xUser						= new cSystemUser(getUsuarioActual());
+$xUser->init();
+$xUser->getUserRules();
+$TasksPage					= $xUser->getTasksPage();
 
 
 /**
@@ -69,12 +75,13 @@ if(MODO_DEBUG == true){
 		setLog($xCierre->getMessages(), 300);
 		header("location:utils/frmcierredeldia.php"); exit();
 	}
-	
+	//if(CREDITO_CONTROLAR_POR_PERIODOS == true){
 	$xPerCred		= new cPeriodoDeCredito();
-	if($xPerCred->checkPeriodoVigente($fecha_de_sesion) == false ){
-		setLog($xPerCred->getMessages(), 300);
-		header("location:frmcreditos/cambiarperiodo.frm.php?a=1");
-	}
+		if($xPerCred->checkPeriodoVigente($fecha_de_sesion) == false ){
+			setLog($xPerCred->getMessages(), 300);
+			header("location:frmcreditos/cambiarperiodo.frm.php?a=1");
+		}
+	//}
 }
 
 		
@@ -109,9 +116,10 @@ echo $xHP->getHeader();
 		right: 0;
 		top: 0;
 		position:fixed !important;
-		display:block; text-shadow:0 -1px 1px #222;line-height:1.4em;color:#f7f7f7; width:2em;
+		display:block; text-shadow:0 -1px 1px #222;line-height:1.4em;color:#ffffff; width:3em; background-color:#000821;text-align:center;font-size:1.2em;border-radius:0 0 0 5px;
 	}
-	#content {  }
+	#wprincipal{ width: 100%; max-width: 100%;
+	}
 </style>
 <body  onload="jsInitComponents();">
 <?php
@@ -123,16 +131,16 @@ $menu		= "";
 
 if($isMobile == false ){
 	echo "<div id='header'>" . $xMenu->getAll() . "</div>";
-	echo "<div id='content'><iframe id=\"idFPrincipal\" src=\"./utils/frm_calendar_tasks.php\" width='100%' height=\"1000px\" ></iframe></div>
+	echo "<div id='wprincipal'><iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100px\" ></iframe></div>
 	<div id=\"banner\">$adsense $menu</div>";
 } else {
 $xMenu->setID("navigator");
 
 $menu	= '<div class="jPanelmenu"><nav style="display: none" id="navmenu">' . $xMenu->getAll() . '</nav>
 		<input type="hidden" id="id-KeyEditable"/></div>';
-	echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-2x\"></i></a>";
-	echo "<div id='content'>
-	<iframe id=\"idFPrincipal\" src=\"./utils/frm_calendar_tasks.php\" width='100%' height=\"100%\" ></iframe>
+	echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
+	echo "<div id='wprincipal'>
+	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100%\" ></iframe>
 	</div>
 	<div id=\"banner\">$adsense $menu</div>";
 
@@ -141,12 +149,12 @@ $menu	= '<div class="jPanelmenu"><nav style="display: none" id="navmenu">' . $xM
 $jxc ->drawJavaScript(false, true);
 ?>
 <script>
-var xG 	= new Gen();
-<?php
-if( $isMobile == false){
-	echo "
-	$(document).ready(function(){
-	    $(\"#jMenu\").jMenu({
+var xG 		= new Gen();
+var smenu	= 42;
+var mmob	= <?php echo ($isMobile == false) ? 'false': 'true'; ?>;
+$(document).ready(function(){
+	if(mmob == false){
+	    $("#jMenu").jMenu({
 	      ulWidth : '200px',
 	      effects : {
 	        effectSpeedOpen : 200,
@@ -162,20 +170,22 @@ if( $isMobile == false){
 	      paddingLeft: 1,
 	      openClick : true
 	    });
-	  });
-	";	
-} else {
-echo "
-	$(document).ready(function(){
-		$(\"#content\").css(\"height\", xG.alto());
-	  });
-	";	
+
+	} else {
+		smenu	= 8;
+		$("#wprincipal").css("height", xG.alto());
+		jsGetMenu();
+	}
+});
+function setInFrame(sURI){
+	if(typeof jPanelMenu != "undefined"){
+		jPanelMenu.close();
+	}
+	if( $("#jMenu").length >0){
+		$("#jMenu").trigger('mouseout');
+	}	
+	xG.QFrame({ url : sURI, id : 'idFPrincipal' });
 }
-if(MODO_DEBUG == true){
-	//echo "var xG = new Gen(); window.setInterval(xG.getLog, 2000); ";
-}
-?>
-function setInFrame(sURI){	xG.QFrame({ url : sURI, id : 'idFPrincipal' }); }
 function jsGetMenuChilds(id){
 	var mParent	= $("#" + id).attr("data-key");
 	$("#id-KeyEditable").val(mParent);
@@ -190,14 +200,9 @@ function jsGetMenu(tr){
 		animated: false
 	});
 	jPanelMenu.on();
-	if(tr == true){
-		jPanelMenu.trigger(tr);
-	}
+	if(tr == true){jPanelMenu.trigger(tr);}
 }
-function jsGetParent(parentID){
-	window.location = "./index.xul.php?m=" + parentID;
-}
-
+function jsGetParent(parentID){	window.location = "./index.xul.php?m=" + parentID;}
 function getNewTiny(mFile){
 	if(mFile){
 		var xG	= new Gen();
@@ -212,10 +217,7 @@ function getNewWindow(mFile){
 		xG.w({url: mFile});
 	}
 	<?php
-		if($isMobile == false ){
-			//echo "setTimeout(function(){\$.jMenu._closeAll();},opts.TimeBeforeClosing);";
-		}	
-		if(MODO_DEBUG != true){
+		if(MODO_DEBUG == false){
 			echo "if( window.console ) { window.console.log( '' ) }";
 		}
 	?>
@@ -234,11 +236,14 @@ function jsGetMoneyInBox(){
 function jsEndSession(){}
 function jsInitComponents(){
 	jsGetMoneyChanges();
+	var mAlto	= xG.alto()-smenu - 5;
+	$("#idFPrincipal").attr("height", mAlto);
 	if($('#id-KeyEditable').length >0){
-		setTimeout("jsGetMenu()", 1000);
+		//setTimeout("jsGetMenu()", 500);
 	}
 }
+
 </script>
 <?php 
-$xHP->end();
+$xHP->fin();
 ?>

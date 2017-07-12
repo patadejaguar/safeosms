@@ -37,8 +37,10 @@ $parser				= (!isset($_GET["s"]) ) ? false : $_GET["s"];
     //Obtiene la llave del
 //if ($key == MY_KEY) {
 	$messages		= "";
-	$fechaop		= parametro("f", fechasys());
-
+	$fechaop		= parametro("f", false, MQL_DATE);
+	$xF				= new cFecha(0, $fechaop);
+	$fechaop		= $xF->getFechaISO($fechaop);
+	getEnCierre(true);
 /**
  * Generar el Archivo HTMl del LOG
  * eventos-del-cierre + fecha_de_cierre + .html
@@ -46,11 +48,9 @@ $parser				= (!isset($_GET["s"]) ) ? false : $_GET["s"];
  */
 
 	$aliasFil	= getSucursal() . "-eventos-al-cierre-de-contabilidad-del-dia-$fechaop";
-
 	$xLog		= new cFileLog($aliasFil);
-
 	$idrecibo	= DEFAULT_RECIBO;
-
+	
 	//$xRec		= new cReciboDeOperacion(12);
 	//$xRec->setGenerarPoliza();
 	//$xRec->setForceUpdateSaldos();
@@ -67,21 +67,25 @@ if (MODULO_CONTABILIDAD_ACTIVADO == true){
 	$xCUtils		= new cUtileriasParaContabilidad();
 	$xCUtils->setGenerarPolizasAlCierre($fechaop);
 	$messages		.= $xCUtils->getMessages();
+	//Si es Fin de annio
+	if($xF->getInt($fechaop) == $xF->getInt($xF->getFechaFinAnnio() )){
+		//Generar Saldo al del proximo periodo
+		$ejercicio	= $xF->anno() + 1;
+		$xUCont		= new cUtileriasParaContabilidad();
+		$messages	.= $xUCont->setGenerarSaldosDelEjercicio($ejercicio);		
+	}
 } else {
 	$messages		.= "=========================\tNO ACTIVADO\t====================\r\n";
 }
 
-//TODO: Si es Anual generar Saldos al Cierre
-
-
 $xLog->setWrite($messages);
 $xLog->setClose();
 if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre de Contabilidad"); }
-	if ($parser != false){
-		//TODO: Agregar cierre de riesgos 
-		header("Location: ./cierre_de_riesgos.frm.php?s=true&k=" . $key . "&f=$fechaop");
-	}
-	
+
+if ($parser != false){
+	header("Location: ./cierre_de_riesgos.frm.php?s=true&k=" . $key . "&f=$fechaop");
+}
+getEnCierre(false);
 //}
 
 ?>

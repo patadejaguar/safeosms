@@ -34,7 +34,7 @@
 	
 	$sql = $xL->getListadoDeCuentasDeCapt(false, false, $producto, $subproducto);
 	
-//exit($sql);
+//setLog($sql);
 
 	$titulo			= "";
 	$archivo		= "reporte-de-captacion-del-$FechaInicial-al-$FechaFinal";
@@ -44,27 +44,21 @@
 	$xRPT->setOut($out);
 	$xRPT->setSQL($sql);
 	$xRPT->setTitle($xHP->getTitle());
+	
 	//============ Reporte
-	$xT		= new cTabla($sql, 2);
-	$xT->setTipoSalida($out);
+
 	
 	$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 	$xRPT->setBodyMail($body);
 	
 	$xRPT->addContent($body);
 	
-	$xT->setFootSum(array(
-		5 => "saldo"
-	));
-	
-	//$xT->setEventKey("jsGoPanel");
-	//$xT->setKeyField("creditos_solicitud");
-	$xRPT->addContent( $xT->Show(  ) );
-	//============ Agregar HTML
-	//$xRPT->addContent( $xHP->init($jsEvent) );
-	//$xRPT->addContent( $xHP->end() );
-	
-	
+	$xRPT->addCampoSuma("saldo");
+	$xRPT->addCampoContar("codigo");
+	if(PERSONAS_CONTROLAR_POR_GRUPO == false){
+		$xRPT->setOmitir("grupo");
+	}
+	$xRPT->setProcessSQL();
 	$xRPT->setResponse();
 	$xRPT->setSenders($senders);
 	echo $xRPT->render(true);

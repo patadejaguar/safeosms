@@ -36,6 +36,15 @@ $fechaFinal		= $xF->getFechaISO($fechaFinal);
 $fechaInicial	= $xF->getFechaISO($fechaInicial);
 
 $idnomina		= parametro("nomina", 0, MQL_INT);
+if($idnomina >0 AND $empresa <= 0){
+	$xPer	= new cEmpresasCobranzaPeriodos($idnomina);
+	if($xPer->init() == true){
+		$empresa	= $xPer->getClaveDeEmpresa();
+		$fechaInicial	= $xPer->getFechaInicial();
+		$fechaFinal		= $xPer->getFechaFinal();
+		$periocidad		= $xPer->getFrecuencia();
+	}
+}
 
 //$xHP->addJsFile("../js/jquery/jquery.js");
 //$xHP->addJsFile("../js/general.js");
@@ -65,7 +74,7 @@ $xRPT->setOut($out);
     $base_contrato	= contrato(401, "texto_del_contrato");
      $Dep			= new cEmpresas($empresa); $Dep->init();
      
-     $nempresa		= $Dep->getNombre();
+     $nempresa		= $Dep->getNombre() . " - " . $Dep->getNombreCorto()  ;
      $TCobros		= 0;
 
     $rs						= getRecordset($sql);

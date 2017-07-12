@@ -29,17 +29,17 @@ $xHTxt	= new cHText("");
 //====================================================================================================
 $xFRM->addHElem( "<p class='aviso'>Pruebas de la Clase Creditos</p>" );
 
-$xCred			= new cCredito($credito_de_pruebas);
-$xCred->init();
+//$xCred			= new cCredito($credito_de_pruebas);
+//$xCred->init();
 
-$xFRM->addHElem( $xCred->getFicha(true, "", true, true) );
-$xFRM->addCreditoComandos($credito_de_pruebas);
+//$xFRM->addHElem( $xCred->getFicha(true, "", true, true) );
+//$xFRM->addCreditoComandos($credito_de_pruebas);
 
 //$xFRM->addHElem($xCred->setDetermineDatosDeEstatus(fechasys(), true));
-$xUtils->setEstatusDeCreditos(false, fechasys(), false, true, false);
+//
 //$xFRM->addAviso($xCred->getMessages(), "id2", false, "warning");
 //$xFRM->addAviso(, "id2", false, "warning");
-$xFRM->addLog($xUtils->getMessages());
+//$xFRM->addLog($xUtils->getMessages());
 /*$xFRM->addHElem( "<p class='aviso'>Vencimiento : " . $xCred->setDetermineDatosDeEstatus(false, true) . "</p>" );
 
 $xFRM->addHElem( "<p class='aviso'>fecha de ultimo pago de CAPITAL : " . $xCred->getFechaUltimoMvtoCapital() . "</p>" );
@@ -58,8 +58,38 @@ $xFRM->addHElem( "<p class='aviso'>Saldo Vencido : " . $xCred->getSaldoVencido()
 $xPlan->initByCredito($xCred->getNumeroDeCredito());
 $xPlan->calcular();
 $xFRM->addAviso( $xPlan->getMessages() );*/
+/*$sql	= "SELECT * FROM creditos_solicitud LIMIT 0,100";
+$xQL	= new MQL();
+$xTCred	= new cCreditos_solicitud();
+$rs		= $xQL->getRecordset($sql);
 
-$xUtils		= new cUtileriasParaCreditos();
+while($rw = $rs->fetch_assoc()){
+	$xTCred->setData($rw);
+	echo "<code>" . $xTCred->numero_solicitud()->v() . "</code> <p />";
+}*/
+
+$fechaop		= fechasys();
+$xF				= new cFecha();
+
+
+$xCUtils		= new cUtileriasParaCreditos();
+//$xCUtils->setEstatusDeCreditos(false, fechasys(), false, true, false, true);
+if(getEnCierre() == false){
+	$xFRM->addAviso("ES FALSO");
+}
+
+if(getEnCierre(true) == true){
+	$xFRM->addAviso("ES VERDADERO");
+}
+
+if(getEnCierre(false) == false){
+	$xFRM->addAviso("ES FALSO");
+}
+getEnCierre(true);
+if(getEnCierre() == true){
+	$xFRM->addAviso("ES VERDADERO");
+}
+//$xCUtils->setReestructurarSDPM_Planes(true, false, false, $fechaop, $xF->getDiaInicial(), true);
 //$xFRM->addFooterBar(  );
 //$xFRM->addLog($xUtils->setCambiarPersonaDeCredito($credito_de_pruebas, "1901549"));
 

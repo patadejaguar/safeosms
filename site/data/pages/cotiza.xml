@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item><pubDate>Tue, 07 Feb 2017 17:36:27 -0600</pubDate><title><![CDATA[Cotiza]]></title><url><![CDATA[cotiza]]></url><meta><![CDATA[]]></meta><metad><![CDATA[]]></metad><menu><![CDATA[Cotiza]]></menu><menuOrder><![CDATA[18]]></menuOrder><menuStatus><![CDATA[Y]]></menuStatus><template><![CDATA[template.php]]></template><parent><![CDATA[]]></parent><content><![CDATA[
+
+  &lt;style&gt;
+  #custom-handle {
+    width: 4em;
+    height: 1.6em;
+    top: 50%;
+    margin-top: -.8em;
+    text-align: center;
+    line-height: 1.6em;
+  }
+  &lt;/style&gt;
+&lt;div class=&quot;col-two&quot;&gt;
+	&lt;form class=&quot;formoid-flat-blue&quot; method=&quot;post&quot; style=&quot;background-color: #FFFFFF; font-size: 14px; font-family: &#039;Lato&#039;, sans-serif; color: #666666; max-width: 100%; min-width: 150px&quot;&gt;
+	&lt;div class=&quot;title&quot;&gt;
+		&lt;h2&gt;Capture su Información&lt;/h2&gt;
+	&lt;/div&gt;
+
+
+	&lt;div class=&quot;element-separator&quot;&gt;
+		&lt;hr /&gt;
+		&lt;h3 class=&quot;section-break-title&quot;&gt;Datos del Crédito&lt;/h3&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-select&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;Periodicidad y Plazo&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt;&lt;/label&gt;
+			&lt;div class=&quot;large&quot;&gt;&lt;span&gt; &lt;select id=&quot;idplazo&quot; name=&quot;idplazo&quot;&gt;&lt;option value=&quot;7-26&quot;&gt;Semanal / 6 Meses&lt;/option&gt;&lt;option value=&quot;7-52&quot;&gt;Semanal / 12 Meses&lt;/option&gt;&lt;option value=&quot;15-12&quot;&gt;Quincenal / 6 Meses&lt;/option&gt;&lt;option value=&quot;15-24&quot;&gt;Quincenal / 1 Año&lt;/option&gt;&lt;option value=&quot;30-12&quot;&gt;Mensual /1 Año&lt;/option&gt; &lt;/select&gt; &lt;i&gt;&lt;/i&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-select&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;Producto&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt;&lt;/label&gt;
+			&lt;span&gt; &lt;select id=&quot;idtasa&quot; name=&quot;idtasa&quot;&gt;&lt;option value=&quot;60&quot;&gt;Nomina&lt;/option&gt;&lt;option value=&quot;24&quot;&gt;Vivienda&lt;/option&gt;
+			&lt;option value=&quot;30&quot;&gt;Empresarial&lt;/option&gt;
+			&lt;/select&gt; &lt;i&gt;&lt;/i&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+	
+	&lt;div class=&quot;element-input&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;
+				
+				
+				&lt;label class=&quot;title&quot;&gt;Monto&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt;&lt;/label&gt;
+				
+				&lt;div id=&quot;slider&quot;&gt;
+				  &lt;div id=&quot;custom-handle&quot; class=&quot;ui-slider-handle&quot;&gt;&lt;/div&gt;
+				&lt;/div&gt;
+				
+
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+	&lt;div class=&quot;submit&quot;&gt;&lt;input onclick=&quot;jsSendData(); return false&quot; type=&quot;submit&quot; value=&quot;Calcular&quot; /&gt;&lt;/div&gt;
+	&lt;input type=&quot;hidden&quot; id=&quot;idmonto&quot; name=&quot;idmonto&quot; value=&quot;0&quot; /&gt;
+
+
+
+	&lt;/form&gt;
+&lt;div id=&quot;dialog&quot; title=&quot;Monto del Pago&quot;&gt;
+&lt;p id=&quot;lblmonto&quot;&gt;&lt;/p&gt;
+&lt;/div&gt;	
+&lt;/div&gt;
+
+
+
+
+&lt;script&gt;
+$(document).ready(function(){
+	
+});
+
+Number.prototype.formatMoney = function(c, d, t){
+	var n = this; c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? &quot;,&quot; : d, t = t == undefined ? &quot;.&quot; : t, s = n &lt; 0 ? &quot;-&quot; : &quot;&quot;, i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + &quot;&quot;, j = (j = i.length) &gt; 3 ? j % 3 : 0;
+	return s + (j ? i.substr(0, j) + t : &quot;&quot;) + i.substr(j).replace(/(\\d{3})(?=\\d)/g, &quot;$1&quot; + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : &quot;&quot;);
+};
+
+
+
+
+		
+var mSite = &quot;http://localhost/svc/pc.svc.php?cmd=cotizacion&amp;&quot;;
+
+function jsSendData(){
+	var idnombre	= $(&quot;#idnombre&quot;).val();	
+	var idcondicion	= $(&quot;#idplazo&quot;).val();
+	var idmonto		= $(&quot;#idmonto&quot;).val();
+	var idtasa		= $(&quot;#idtasa&quot;).val();
+	
+	var mUrl		= mSite + &quot;&amp;idcondiciones=&quot; + idcondicion + &quot;&amp;idmonto=&quot; + idmonto + &quot;&amp;tasa=&quot; + idtasa;
+			
+		$.getJSON( mUrl, function( data ) {
+			var v	= new Number(data.monto);
+    	  	v		= v.formatMoney(2, &quot;.&quot;, &quot;,&quot;);
+			$(&quot;#lblmonto&quot;).text(&quot;Su pago es de $ &quot; + v);
+			$( &quot;#dialog&quot; ).dialog();
+		});
+}
+
+$( function() {
+    var handle = $( &quot;#custom-handle&quot; );
+    $( &quot;#slider&quot; ).slider({
+    	
+        value:10000,
+        min: 0,
+        max: 50000,
+        step: 500,
+        
+      create: function() {
+		var v	= new Number($( this ).slider( &quot;value&quot; ));
+		$(&quot;#idmonto&quot;).val(v);
+		v		= v.formatMoney(0, &quot;.&quot;, &quot;,&quot;);
+        handle.text( v );
+      },
+      slide: function( event, ui ) {
+    	  var v	= new Number(ui.value);
+    	  $(&quot;#idmonto&quot;).val(v);
+    	  v		= v.formatMoney(0, &quot;.&quot;, &quot;,&quot;);  
+        handle.text(v);
+      }
+    });
+});
+  
+&lt;/script&gt;&lt;!-- Stop Formoid form--&gt;
+
+&lt;!-- SERVICIOS --&gt;
+
+
+]]></content><private><![CDATA[]]></private><author><![CDATA[root]]></author></item>

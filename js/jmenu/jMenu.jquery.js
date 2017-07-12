@@ -120,6 +120,7 @@
         },
 
         _closeList: function(el) {
+            
             switch(opts.effects.effectTypeClose) {
                 case 'slide':
                     el.stop(true,true).delay(opts.TimeBeforeClosing).slideUp(opts.effects.effectSpeedClose, opts.effects.effectClose);
@@ -130,6 +131,7 @@
                 default:
                     el.delay(opts.TimeBeforeClosing).hide();
             }
+            
         },
 
         _animateText: function(el) {

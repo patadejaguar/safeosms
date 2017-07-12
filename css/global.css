@@ -1,5 +1,5 @@
 html {
-	font-size: 14px;
+	font-size: 13px;
 }
 @media
 only screen and (-webkit-min-device-pixel-ratio: 2),
@@ -10,13 +10,12 @@ only screen and ( min-resolution: 2dppx) {
 			font-size: 16px;
 		}	
 }
-
 body {
 	background-attachment: fixed;
-	color: black;
+	/*color: #000000;*/
 	font-family: sans-serif;
 	font-stretch: condensed;
-	font-weight: bolder;
+	/*font-weight: bolder;*/
 	margin: 1px 1px;
 	text-align: justify;
 	background: #63bad8 url(../images/bg.jpg) 50% 0px repeat-x;

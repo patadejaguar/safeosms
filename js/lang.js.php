@@ -17,9 +17,8 @@ include_once("../core/entidad.datos.php");
 include_once("../core/core.config.inc.php");
 include_once("../core/core.lang.inc.php");
 
-
+//header($_SERVER['SERVER_PROTOCOL'].' 304 Not Modified');
 header("Content-type:text/javascript");
-
 $xLng		= new cLang();
 echo "var jsonWords = " . json_encode( $xLng->getWords() ) . ";";
 ?>

@@ -37,10 +37,10 @@ $xF			= new cFecha();
 	$mGridWhere			= "";
 
 	$mGridProp			= array(
-	"denominacion" => "Denominacion,true,11",
-	"nombre" => "Nombre,true,45",
-	"valor_contra_uno" => "Valor contra uno,true,25",
-	"tipo_de_valor" => "Tipo de valor,true,20"
+	"denominacion" => "Denominacion,true,80",
+	"nombre" => "Nombre,true,300",
+	"valor_contra_uno" => "Valor contra uno,true,120",
+	"tipo_de_valor" => "Tipo de valor,true,120"
 						);
 	//===========================================================================================================
 	

@@ -151,6 +151,7 @@
             </div>
           </li>
         </ul>
+        <!-- Componentes Básicos -->
         <ul class="nav nav-list accordion-group">
           <li class="nav-header"><i class="icon-plus icon-white"></i> CSS {{basic}}.
             <div class="pull-right popover-info"><i class="icon-question-sign "></i>
@@ -193,6 +194,7 @@
                 
               </div>
             </div>
+            
             <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important">
             <i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label"><i class="icon-move"></i>{{move}}</span>
              <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button>
@@ -266,7 +268,8 @@
                 </ul>
               </div>
             </div>
-            <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
+            <div class="box box-element ui-draggable"> 
+            <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
             <i class="icon-move"></i>{{move}}</span> <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button> 
             <a class="btn btn-mini" href="#" rel="unstyled">{{no_style}}</a> <a class="btn btn-mini" href="#" rel="inline">{{insert}}</a> </span>
               <div class="preview">Lista Ordenada</div>
@@ -306,6 +309,7 @@
                 
               </div>
             </div>
+            
             <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> 
             <span class="drag label"><i class="icon-move"></i>{{move}}</span> 
             <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button> <span class="btn-group"> 
@@ -364,7 +368,9 @@
                 </table>
               </div>
             </div>
-            <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
+            
+            <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important">
+            <i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
             <i class="icon-move"></i>{{move}}</span> <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button> 
             <a class="btn btn-mini" href="#" rel="form-inline">{{insert}}</a> </span>
               <div class="preview">Formulario</div>
@@ -383,6 +389,7 @@
 				</form>
               </div>
             </div>
+            
             <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> 
             <span class="drag label"><i class="icon-move"></i>{{move}}</span> 
             <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button>
@@ -397,6 +404,7 @@
                 </form>
               </div>
             </div>
+            <!-- init form -->
             <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
             <i class="icon-move"></i>{{move}}</span> <span class="configuration"> </span>
               <span class="configuration"><button type="button" class="btn btn-mini" data-target="#editorModal" role="button" data-toggle="modal">{{edit}}</button></span>
@@ -419,9 +427,7 @@
                   </div>
                   <div class="control-group">
                     <div class="controls">
-                      <label class="checkbox" contenteditable="true">
-                        <input type="checkbox">
-                        Recordar</label>
+                      <label class="checkbox" contenteditable="true"><input type="checkbox">Recordar</label>
                       <button type="submit" class="btn" contenteditable="true">Registrarse</button>
                     </div>
                   </div>
@@ -429,8 +435,12 @@
                 </form>
               </div>
             </div>
-            <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> 
-            <span class="drag label"><i class="icon-move"></i>{{move}}</span> <span class="configuration"> <span class="btn-group">
+            <!-- end form -->
+            <!-- Init button -->
+            <div class="box box-element ui-draggable"> 
+            <a href="#close" class="remove label label-important"><i class="icon-remove icon-white"></i>{{delete}}</a> 
+            <span class="drag label"><i class="icon-move"></i>{{move}}</span> <span class="configuration">
+            <span class="btn-group">
             <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#">{{style}}<span class="caret"></span></a>
               
               <ul class="dropdown-menu">
@@ -442,11 +452,12 @@
                 <li class=""><a href="#" rel="btn-warning">{{warning}}</a></li>
                 <li class=""><a href="#" rel="btn-danger">{{danger}}</a></li>
                 <li class=""><a href="#" rel="btn-inverse">{{inverse}}</a></li>
-                <li class=""><a href="#" rel="btn-link">链接</a></li>
+                <li class=""><a href="#" rel="btn-link">{{link}}</a></li>
                 
               </ul>
               
-              </span> <span class="btn-group"> <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#">{{size}} <span class="caret"></span></a>
+              </span> 
+              <span class="btn-group"> <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#">{{size}} <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 <li class=""><a href="#" rel="btn-large">{{large}}</a></li>
                 <li class="active"><a href="#" rel="">{{normal}}</a></li>
@@ -457,28 +468,38 @@
               <a class="btn btn-mini" href="#" rel="btn-block">{{extend}}</a> 
               <a class="btn btn-mini" href="#" rel="disabled">{{disable}}</a> </span>
               <div class="preview">{{button}}</div>
+              
               <div class="view">
-                <button class="btn" type="button" contenteditable="true">{{button}}</button>
+                <button class="btn" type="button" contenteditable="true">
+                	<i class="icon-move"></i>{{button}}</button>
               </div>
+              
             </div>
+            <!-- end button -->
+            
+      
+            
+            <!-- init Imagen -->
             <div class="box box-element ui-draggable"> <a href="#close" class="remove label label-important">
             <i class="icon-remove icon-white"></i>{{delete}}</a> <span class="drag label">
             <i class="icon-move"></i>{{move}}</span> <span class="configuration"> <span class="btn-group"> 
             <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#">{{style}}<span class="caret"></span></a>
               <ul class="dropdown-menu">
                 <li class="active"><a href="#" rel="">{{by_default}}</a></li>
-                <li class=""><a href="#" rel="img-rounded">圆角</a></li>
-                <li class=""><a href="#" rel="img-circle">圆圈</a></li>
-                <li class=""><a href="#" rel="img-polaroid">相框</a></li>
+                <li class=""><a href="#" rel="img-rounded">{{rounded}}</a></li>
+                <li class=""><a href="#" rel="img-circle">{{circle}}</a></li>
+                <li class=""><a href="#" rel="img-polaroid">{{with_frame}}</a></li>
               </ul>
               </span> </span>
               <div class="preview">Imagen</div>
               <div class="view"> <img alt="140x140" src="img/a.jpg"> </div>
             </div>
+            <!-- end Imagen -->
           </li>
         </ul>
+        <!-- Grupos -->
         <ul class="nav nav-list accordion-group">
-          <li class="nav-header"><i class="icon-plus icon-white"></i> Grupos
+          <li class="nav-header"><i class="icon-plus icon-white"></i> {{groups}}
             <div class="pull-right popover-info"><i class="icon-question-sign "></i>
               <div class="popover fade right">
                 <div class="arrow"></div>
@@ -510,6 +531,7 @@
                 <div class="btn-group">
                   <button class="btn" contenteditable="true">Action</button>
                   <button data-toggle="dropdown" class="btn dropdown-toggle"><span class="caret"></span></button>
+                  
                   <ul class="dropdown-menu" contenteditable="true">
                     <li><a href="#">操作</a></li>
                     <li><a href="#">设置栏目</a></li>
@@ -523,6 +545,7 @@
                       </ul>
                     </li>
                   </ul>
+                  
                 </div>
               </div>
             </div>
@@ -671,27 +694,34 @@
                   <li class="span4">
                     <div class="thumbnail"> <img alt="300x200" src="img/people.jpg">
                       <div class="caption" contenteditable="true">
+                      
+                      
                         <h3>冯诺尔曼结构</h3>
                         <p>也称普林斯顿结构，是一种将程序指令存储器和数据存储器合并在一起的存储器结构。程序指令存储地址和数据存储地址指向同一个存储器的不同物理位置。</p>
                         <p><a class="btn btn-primary" href="#">浏览</a> <a class="btn" href="#">分享</a></p>
                       </div>
+                      
                     </div>
                   </li>
                   <li class="span4">
                     <div class="thumbnail"> <img alt="300x200" src="img/city.jpg">
                       <div class="caption" contenteditable="true">
+                      
                         <h3>哈佛结构</h3>
                         <p>哈佛结构是一种将程序指令存储和数据存储分开的存储器结构，它的主要特点是将程序和数据存储在不同的存储空间{{normal}}，进行独立编址。</p>
                         <p><a class="btn btn-primary" href="#">浏览</a> <a class="btn" href="#">分享</a></p>
                       </div>
+                      
                     </div>
                   </li>
                   <li class="span4">
                     <div class="thumbnail"> <img alt="300x200" src="img/sports.jpg">
                       <div class="caption" contenteditable="true">
+                      
                         <h3>改进型哈佛结构</h3>
                         <p>改进型的哈佛结构具有一条独立的地址总线和一条独立的数据总线，两条总线由程序存储器和数据存储器分时复用，使结构更Compacto。</p>
                         <p><a class="btn btn-primary" href="#">浏览</a> <a class="btn" href="#">分享</a></p>
+                        
                       </div>
                     </div>
                   </li>
@@ -720,14 +750,16 @@
                 <div class="media"> <a href="#" class="pull-left"> <img src="img/a_002.jpg" class="media-object"> </a>
                   <div class="media-body" contenteditable="true">
                     <h4 class="media-heading">{{insert}} {{notice}} {{title}}</h4>
-                   请尽量使用HTML5兼容的视频格式和视频代码实现视频播放, 以达到更好的体验效果. </div>
+                   {{msg_2}} </div>
                 </div>
               </div>
             </div>
           </li>
         </ul>
+        
+        <!-- Init componentes Dynamicos -->
         <ul class="nav nav-list accordion-group">
-          <li class="nav-header"><i class="icon-plus icon-white"></i> {{dynamic_components}} <span class="label label-important">NEW!</span>
+          <li class="nav-header"><i class="icon-plus icon-white"></i> {{dynamic_components}} <span class="label label-important"></span>
             <div class="pull-right popover-info"><i class="icon-question-sign "></i>
               <div class="popover fade right">
                 <div class="arrow"></div>
@@ -770,8 +802,8 @@
                       <div class="nav-collapse collapse navbar-responsive-collapse">
                         <ul class="nav" contenteditable="true">
                           <li class="active"><a href="#">主页</a></li>
-                          <li><a href="#">链接</a></li>
-                          <li><a href="#">链接</a></li>
+                          <li><a href="#">{{link}}</a></li>
+                          <li><a href="#">{{link}}</a></li>
                           <li class="dropdown"> <a data-toggle="dropdown" class="dropdown-toggle" href="#">Men&uacute; Desplegable <b class="caret"></b></a>
                             <ul class="dropdown-menu">
                               <li><a href="#">Men&uacute; Desplegable1</a></li>
@@ -779,13 +811,13 @@
                               <li><a href="#">其他</a></li>
                               <li class="divider"></li>
                               <li class="nav-header">标签</li>
-                              <li><a href="#">链接1</a></li>
-                              <li><a href="#">链接2</a></li>
+                              <li><a href="#">{{link}}1</a></li>
+                              <li><a href="#">{{link}}2</a></li>
                             </ul>
                           </li>
                         </ul>
                         <ul class="nav pull-right" contenteditable="true">
-                          <li><a href="#">右边链接</a></li>
+                          <li><a href="#">右边{{link}}</a></li>
                           <li class="divider-vertical"></li>
                           <li class="dropdown"> <a data-toggle="dropdown" class="dropdown-toggle" href="#">下拉菜单 <b class="caret"></b></a>
                             <ul class="dropdown-menu">
@@ -793,7 +825,7 @@
                               <li><a href="#">下拉导航2</a></li>
                               <li><a href="#">其他</a></li>
                               <li class="divider"></li>
-                              <li><a href="#">链接3</a></li>
+                              <li><a href="#">{{link}}3</a></li>
                             </ul>
                           </li>
                         </ul>
@@ -902,12 +934,15 @@
             </div>
           </li>
         </ul>
+        <!-- 
         <ul class="nav nav-list accordion-group">
           <li class="nav-header"><i class="icon-plus icon-white"></i> {{res_13}} </li>
           <li style="display: none;" class="boxes mute" id="elmComm">
             <div class="preview">{{res_12}}</div>
           </li>
         </ul>
+        
+        -->
       </div>
     </div>
     <!--/span-->

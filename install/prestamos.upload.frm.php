@@ -168,6 +168,9 @@ echo '<form name="frmConvs" method="POST" action="prestamos.upload.frm.php?o=s">
 										} else {
 											$msg .= "$iReg\t$socio\t$credito\tEL Credito no se pudo agregar\r\n";
 										}
+											
+										
+										
 										$msg		.= $xCred->getMessages("txt");
 									}
 								}

@@ -560,28 +560,28 @@ class HTML_AJAX_JSON
                                 break;
         
                             case ($ord_chrs_c & 0xE0) == 0xC0:
-                                // characters U-00000080 - U-000007FF, mask 110XXXXX
+                                // characters U-00000080 - U-000007FF, mask 110
                                 //see http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
                                 $utf8 .= substr($chrs, $c, 2);
                                 ++$c;
                                 break;
     
                             case ($ord_chrs_c & 0xF0) == 0xE0:
-                                // characters U-00000800 - U-0000FFFF, mask 1110XXXX
+                                // characters U-00000800 - U-0000FFFF, mask 1110
                                 // see http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
                                 $utf8 .= substr($chrs, $c, 3);
                                 $c += 2;
                                 break;
     
                             case ($ord_chrs_c & 0xF8) == 0xF0:
-                                // characters U-00010000 - U-001FFFFF, mask 11110XXX
+                                // characters U-00010000 - U-001FFFFF, mask 11110
                                 // see http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
                                 $utf8 .= substr($chrs, $c, 4);
                                 $c += 3;
                                 break;
     
                             case ($ord_chrs_c & 0xFC) == 0xF8:
-                                // characters U-00200000 - U-03FFFFFF, mask 111110XX
+                                // characters U-00200000 - U-03FFFFFF, mask 111110
                                 // see http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
                                 $utf8 .= substr($chrs, $c, 5);
                                 $c += 4;

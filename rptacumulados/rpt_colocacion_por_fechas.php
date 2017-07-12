@@ -1,72 +1,94 @@
 <?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-//window.print()
-$xHP				= new cHPage("TR.Reporte de Credito", HP_REPORT);
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.COLOCACION ACUMULADA", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$xQL		= new MQL();
+$xFil		= new cSQLFiltros();
+$xRuls		= new cReglaDeNegocio();
+
+$UseRecFechaR	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_RPT_USE_FECHAREAL);
+
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT); $frecuencia 	= parametro("frecuencia", $frecuencia, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT); $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
+$omitirceros	= parametro("nocero", false ,MQL_BOOL);
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Individual
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
 
 
-$fecha_inicial 		= parametro("on", fechasys());
-$fecha_final 		= parametro("off", fechasys());
-$si_es_por_fecha 	= "";
-$outG 				= (isset($_GET["outg"])) ? $_GET["outg"] : false;
-$outG				= ($outG == "no") ? false : true;
 
+$BySuc			= $xFil->OperacionesPorSucursal($sucursal);
 
-
-
-$sucursal				= parametro("s", SYS_TODAS, MQL_RAW);
-$sucursal				= parametro("sucursal", $sucursal, MQL_RAW);
-
-
-$BySuc				= ""; //;
-if($sucursal != SYS_TODAS){ $BySuc = " AND creditos.`sucursal` = '$sucursal' "; }
-if($fecha_inicial && $fecha_final){ $si_es_por_fecha = " AND operaciones_mvtos.fecha_operacion>='$fecha_inicial' AND operaciones_mvtos.fecha_operacion<='$fecha_final' "; }
-
-
-
-$senders				= getEmails($_REQUEST);
-$tipo_operacion			= parametro("f711", SYS_TODAS, MQL_INT);
-$tipo_operacion			= parametro("operacion", $tipo_operacion, MQL_INT);
-$out 					= parametro("out", SYS_DEFAULT);
-
-$def_type = 110;
-
-	$sql = "SELECT creditos.convenio AS 'tipo', 
-			COUNT(operaciones_mvtos.idoperaciones_mvtos) AS 'numero',
-
+$ByFecha		= ($UseRecFechaR == true) ? $xFil->RecibosPorFechaDeRegistro($FechaInicial, $FechaFinal) : $xFil->CreditosPorFechaDeMinistracion($FechaInicial, $FechaFinal);
+$BySaldo		= ($omitirceros == true) ? $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">=") : "";
+$sql			= "SELECT
+	
+	`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `producto`,
+	COUNT(`operaciones_mvtos`.`docto_afectado`)        AS `creditos`,
+	
+	
+	SUM(IF(`operaciones_recibos`.`tipo_pago` ='" . TESORERIA_PAGO_NINGUNO . "', `operaciones_mvtos`.`afectacion_real`,0))         AS `reestructuras`,
+	AVG(`operaciones_mvtos`.`afectacion_real`)         AS `promedio`,
 			
-			SUM(operaciones_mvtos.afectacion_real) AS 'monto',
-
-			/*SUM(creditos.monto_autorizado) AS 'monto_original',*/
-			(SUM(operaciones_mvtos.afectacion_real) - SUM(creditos.saldo_actual)) AS 'cobros',
-			SUM(creditos.saldo_actual) AS 'saldo_de_credito'
-			 
+	SUM(`operaciones_mvtos`.`afectacion_real`)         AS `monto`
+	
 FROM
-	`operaciones_mvtos` `operaciones_mvtos` 
-		INNER JOIN `operaciones_recibos` `operaciones_recibos` 
-		ON `operaciones_mvtos`.`recibo_afectado` = `operaciones_recibos`.
-		`idoperaciones_recibos` 
-			INNER JOIN `creditos` `creditos` 
-			ON `operaciones_mvtos`.`docto_afectado` = `creditos`.`solicitud` 
+	`creditos_solicitud` `creditos_solicitud` 
+		INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` 
+		ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
+		`idcreditos_tipoconvenio` 
+			INNER JOIN `operaciones_mvtos` `operaciones_mvtos` 
+			ON `operaciones_mvtos`.`docto_afectado` = `creditos_solicitud`.
+			`numero_solicitud` 
+				INNER JOIN `operaciones_recibos` `operaciones_recibos` 
+				ON `operaciones_mvtos`.`recibo_afectado` = `operaciones_recibos`
+				.`idoperaciones_recibos` 
 WHERE
-	(`operaciones_recibos`.`tipo_pago` !='" . TESORERIA_COBRO_NINGUNO . "')
-	AND (operaciones_mvtos.tipo_operacion=$def_type)
+	(`operaciones_mvtos`.`tipo_operacion` = " . OPERACION_CLAVE_MINISTRACION . ") 
+	$ByFecha
 	$BySuc
-	$si_es_por_fecha
-GROUP BY creditos.convenio";
+	$BySaldo
+GROUP BY
+	`creditos_solicitud`.`tipo_convenio`,
+	`operaciones_mvtos`.`tipo_operacion`
+ORDER BY `monto` DESC
+";
 
-	
-	
-	$xHP->setTitle("TR.Reporte de Colocacion");
+
 	$titulo			= $xHP->getTitle();
 	$archivo		= "$titulo.pdf";
 	
@@ -76,32 +98,26 @@ GROUP BY creditos.convenio";
 	$xRPT->setSQL($sql);
 	$xRPT->setTitle($xHP->getTitle());
 	//============ Reporte
-	$xT		= new cTabla($sql, 2);
+	$xT		= new cTabla($sql, 0);
 	$xT->setTipoSalida($out);
-
-	$xT->setFootSum(array(
-			1 => "numero",
-			2 => "monto",
-			
-			3 => "cobros",
-			4 => "saldo_de_credito",
-	));	
+	//$xT->setPrepareChart(true, $xT->CHART_PIE);
 	
-	$body		= $xRPT->getEncabezado($xHP->getTitle(), $fecha_inicial, $fecha_final);
+	$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 	$xRPT->setBodyMail($body);
+	
+	
 	$xRPT->addContent($body);
-	$xRPT->addContent("<h1>" . $sucursal . "</h1>");
-	//$xT->setEventKey("jsGoPanel");
-	//$xT->setKeyField("creditos_solicitud");
-	$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
-	//============ Agregar HTML
-	//$xRPT->addContent( $xHP->init($jsEvent) );
-	//$xRPT->addContent( $xHP->end() );
-	//$xRPT->addContent("<table>$TR_parent</table>");
+	$xRPT->addContent("<div id='idivchart'></div>");
+	$xCh	= new cChart("idivchart");
+	$xCh->addDataset($sql, "monto", "producto");
+	$xT->setFootSum(array(1 => "creditos", 4=> "monto", 3=>"reestructuras", 2=>"promedio"));
+	$xCh->setFuncConvert("enmiles");
+	$xCh->setAlto("400");
+	$xCh->setProcess();
+	$xRPT->addJsCode($xCh->getJs());
+	$xRPT->addContent( $xT->Show("", true, "idtbl"  ) );
 	
 	$xRPT->setResponse();
 	$xRPT->setSenders($senders);
-	echo $xRPT->render(true);
-	
-	
+	echo $xRPT->render(true);	
 ?>

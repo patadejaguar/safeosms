@@ -62,7 +62,8 @@ function jsaGetCobranza($empresa, $periocidad, $variacion, $periodo, $fechaInici
     $fechaInicial	= $xF->getFechaISO($fechaInicial);
      
     $xEmp			= new cEmpresas($empresa);
-    $xPer			= $xEmp->getOPeriodo($periocidad, $periodo);
+    $periodoReal	= $periodo + $variacion;
+    $xPer			= $xEmp->getOPeriodo($periocidad, $periodoReal, false, $fechaInicial);
     $DDias			= $xEmp->getFechaDeAviso();
 	if($xPer->getCobrados() > 0){
 		$content	= $xNot->get("ERROR\tLa nomina tiene cobros " . $xPer->getCobrados() . " ACTIVOS ", "iderror", $xNot->ERROR);
@@ -103,16 +104,16 @@ function jsaGetDatosDelEnvio($idEmpresa, $periocidad, $variacion, $periodo){
 	return $tab -> getString();
 }
 
-function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion){
+function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion, $fechaInicial){
 	$xEmp		= new cEmpresas($idEmpresa);
-	$xF			= new cFecha();
+	$xF			= new cFecha(0, $fechaInicial);
 	$periodo	= ($periocidad == CREDITO_TIPO_PERIOCIDAD_SEMANAL) ? $xF->semana() : $xF->quincena();
 	$dias		= 24*60;
 	$observaciones	= "";
 	$xEmp->init();
 	$fecha		= strtotime(fechasys()) + (($variacion * $periocidad) * $dias);
 	$ctrl		= "<label for=\"idperiodo\">Periodo $periodo</label><input type=\"number\" id=\"idperiodo\" onchange=\"jsInitPeriodo()\" onblur=\"jsInitPeriodo()\" />";
-	$xF			= new cFecha(0);
+	//$xF			= new cFecha(0);
 	//$observaciones	.= " -- $periodo";
 	$xEmp		= new cEmpresas($idEmpresa); $xEmp->init();
 	$periodo	= ( intval($xEmp->getPeriodo()) < 1 ) ? $periodo : intval($xEmp->getPeriodo());
@@ -122,9 +123,35 @@ function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion){
 	switch($periocidad){
 	    case CREDITO_TIPO_PERIOCIDAD_SEMANAL:
 			$xSel	= $xF->getSelectSemanas("idperiodo", $periodo);
+			if($xF->mes($fechaInicial) == 12){
+				//setLog("DICIEMBRE");
+				$anno	= $xF->anno()+1;
+				$xSel->setDelOption(1);
+				$xSel->setDelOption(2);
+				$xSel->setDelOption(3);
+				$xSel->setDelOption(4);
+				$arrOpt	= array(
+						"1" => "SEMANA  1.- $anno",
+						"2" => "SEMANA  2.- $anno",
+						"3" => "SEMANA  3.- $anno",
+						"4" => "SEMANA  4.- $anno"
+				);
+				$xSel->addOptions($arrOpt);
+			}
 		break;
 	    case CREDITO_TIPO_PERIOCIDAD_QUINCENAL:
 			$xSel	= $xF->getSelectQuincenas("idperiodo", $periodo);
+			if($xF->mes($fechaInicial) == 12){
+				//setLog("DICIEMBRE");
+				$anno	= $xF->anno()+1;
+				$xSel->setDelOption(1);
+				$xSel->setDelOption(2);
+				$arrOpt	= array(
+						"1" => "QUINCENA  1.- $anno",
+						"2" => "QUINCENA  2.- $anno",
+				);
+				$xSel->addOptions($arrOpt);
+			}			
 		break;
 	    /*case CREDITO_TIPO_PERIOCIDAD_CATORCENAL:
 		$xSel	= $xF->getSelectQuincenas("idperiodo", $periodo);
@@ -144,17 +171,26 @@ function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion){
 	}
 	return $ctrl;
 }
+function jsaGetContarPeriodo($idEmpresa, $periocidad, $periodo, $variacion, $fechaInicial){
+	$periodo	= $periodo + $variacion;
+	$xPer		= new cEmpresasCobranzaPeriodos();
+	$msg		= "";
+	if($xPer->initByDatos($idEmpresa, $periocidad, $periodo, $fechaInicial) == true){
+		$msg	= "Este periodo $periodo de la Empresa $idEmpresa con la Frecuencia $periocidad existe en el Sistema!";
+	}
+	return $msg;
+}
+
 function jsaSetNominaCerrada($empresa, $periocidad, $variacion, $periodo, $monto,  $observaciones, $fechaInicial, $fechaFinal, $fechaCobro){
 	$xF			= new cFecha();
     $xEmp		= new cEmpresas($empresa); $xEmp->init();
-    //$periodo	= $periodo + $variacion;
+    $periodo	= $periodo + $variacion;
     $xEmp->setPeriodo($periodo);
     $xEmp->setClearPeriodo(true);
     $fechaInicial	= setFechaValida($fechaInicial);
     $fechaFinal		= setFechaValida($fechaFinal);
     $fechaCobro		= setFechaValida($fechaCobro);
-    
-    $idx		= $xEmp->addOperacion($monto, $periodo, $periocidad, fechasys(), SYS_UNO, false, $observaciones, $fechaInicial, $fechaFinal, $fechaCobro);
+    $idx			= $xEmp->addOperacion($monto, $periodo, $periocidad, fechasys(), SYS_UNO, false, $observaciones, $fechaInicial, $fechaFinal, $fechaCobro);
 
     return $idx;
 }
@@ -169,12 +205,13 @@ function jsaSetCambiarFechaMinistracion($credito, $dia, $mes, $anno){
 
 $jxc ->exportFunction('jsaInitEmpresa', 		array("idcodigodeempresas"));
 $jxc ->exportFunction('jsaInitPeriodo', 		array("idcodigodeempresas", "idperiocidad", "idperiodo"));
-$jxc ->exportFunction('jsaGetDatosEmpresa', 	array("idcodigodeempresas", "idperiocidad", "idvariacion"), "#divperiodo");
+$jxc ->exportFunction('jsaGetDatosEmpresa', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idfecha-10"), "#divperiodo");
 $jxc ->exportFunction('jsaGetCobranza', 		array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idfecha-10", "idfecha-11"), "#reports");
 $jxc ->exportFunction('jsaGetCobranzaFutura', array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idfecha-10", "idfecha-11"), "#cbzafutura");
 $jxc ->exportFunction('jsaGetEmailsEmpresa', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo"));
 $jxc ->exportFunction('jsaGetDatosDelEnvio', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo"));
 $jxc ->exportFunction('jsaSetNominaCerrada', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idsuma", "idobservaciones", "idfecha-10", "idfecha-11", "idfecha-12"), "#idnomina");
+$jxc ->exportFunction('jsaGetContarPeriodo', 	array("idcodigodeempresas", "idperiocidad", "idperiodo", "idvariacion", "idfecha-10"), "#idmsg");
 
 $jxc ->process();
 
@@ -187,14 +224,20 @@ $xFRM		= new cHForm("frmcbza", "", "idsumacbza");
 $xBtnN		= new cHButton();
 $xSel		= new cHSelect();
 $xBTN4		= new cHButton();
+$xFRM->setTitle($xHP->getTitle());
 
 $xFRM->OButton("TR.Obtener Listado", "jsGetCobranza()", "refrescar", "idgetcbza") ;
 $xFRM->addToolbar( $xBTN4->getBasic("TR.Finalizar Nomina", "jsFinalizarNomina()", "finalizar", "idcierrereporte", false) );
 $xFRM->OButton("TR.Enviar Listado", "getObtenListado()", "lista", "idlistado") ;
 $xFRM->OButton("TR.estado_de_cuenta", "jsPrintEstadoCuenta()", "reporte", "idedo") ;
-$xFRM->addToolbar( $xBTN4->getBasic("TR.Ver Listado", "getReporteEnPantalla()", "reporte", "idverreporte", false) );
-$xFRM->addToolbar( $xBTN4->getBasic("TR.Imprimir Recibos", "getRecibo()", "imprimir", "idverreporte", false) );
-$xFRM->addToolbar( $xBTN4->getBasic("TR.Ver en Excel", "getReporteEnExcel()", "excel", "idverreportexls", false) );
+
+$xFRM->OButton("TR.Ver Listado", "getReporteEnPantalla()", "reporte", "idverreporte");
+$xFRM->OButton("TR.Imprimir Recibos", "getRecibo()", "imprimir", "idverreporte");
+$xFRM->OButton("TR.Ver en Excel", "getReporteEnExcel()", $xFRM->ic()->EXCEL, "idverreportexls");
+$xFRM->OButton("TR.Ver en PDF", "getReporteEnPDF()", $xFRM->ic()->PDF, "idverreportepdf");
+//$xFRM->OButton();
+
+
 
 $xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
 $xSemp	= $xSel->getListaDeEmpresas("", true);
@@ -264,6 +307,7 @@ echo $xFRM->get();
 <script>
 var vId				= "";
 var xg				= new Gen();
+var xG				= new Gen();
 var tipoPago		= null;//"transferencia";
 var banco			= null;//"99";
 var fdeposit		= null;//"2014-01-01";
@@ -283,7 +327,13 @@ function jsSetCobranza(){ getModalTip(idFortips2, $("#itesofe"), "Datos del Pago
 function jsCargarDatosIniciales(){	currNomina = 0; jsaInitEmpresa(); setTimeout("jsaGetDatosEmpresa()",500);	}
 function jsCancelLockPeriodo(){ $(idFortips).qtip("hide"); }
 function setOcultar(id) {    $("#options-" + id).parent().css("display", "none"); }
-function jsGetCobranza(){    $("#idobservaciones").focus();    tip(idFortips, "Carga completa!", 4500); jsResetCbza(); jsaGetDatosDelEnvio();  setTimeout("jsGetCobranzaStep2()",1500); }
+function jsGetCobranza(){    
+	$("#idobservaciones").focus();   
+	xg.spin({ time : 5000 });
+	jsResetCbza(); jsaGetDatosDelEnvio();  
+	setTimeout("jsGetCobranzaStep2()",1500);
+	jsaGetContarPeriodo();
+}
 function jsGetCobranzaStep2(){ jsaGetCobranza(); jsaGetCobranzaFutura(); /*establecer Numero y monto original*/ setTimeout("setEstablacerSumasIniciales()",2000); }
 function getEstadoDeCuenta(idcredito) {  var url = "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + idcredito ;    xg.w({ url : url, w : 800, h : 600 }); }
 function getObtenListado(){    jsaGetEmailsEmpresa();    xg.tipModal({	element : "#divperiodo",	title : "Obtener recibos",	msg : $("#irecibos")	}); }
@@ -292,11 +342,10 @@ function jsGetCobranzaDay(){ getCorteDeRecibos(); }
 function desvincular(credito){ $("#idcredito").val(credito); $("#options-" + credito).parent().css("display", "none");	xg.w({	url : "../frmcreditos/nominas.desvincular.frm.php?credito=" + credito,	w : 600, h: 400, tiny : true, callback: jsGetCobranza }); }
 function jsActualizarMinistracion(credito){ $("#idcredito").val(credito); var vId		= "#pk-" + credito; getModalTip(vId, $("#frmac"), "Actualizar Fecha de Ministracion"); }
 function setEstablacerSumasIniciales(){ if ( $("#sum-monto").length > 0 ) { sumaOriginal	= 0; numOriginal		= 0; } }
-function getReporteEnPantalla(){	getReporte(""); }
+function getReporteEnPantalla(){ getReporte(""); }
 function getReporteEnExcel(){ getReporte("&out=xls"); }
-function getPlanDePagos(credito){ xg.w({	url : "../rpt_formatos/rptplandepagos.php?credito=" + credito,	w : 800, h: 600, tiny : false }); }
-
-
+function getReporteEnPDF(){ getReporte("&out=pdf"); }
+function getPlanDePagos(credito){ xG.w({	url : "../rpt_formatos/rptplandepagos.php?credito=" + credito,	w : 800, h: 600, tiny : false }); }
 
 function jsResetCbza() {
     idsumacbza.val(0);
@@ -320,7 +369,10 @@ function jsFinalizarNomina() {
     if(monto > 0 && isCont == true){
     	currNomina = 0;
     	var sip		= confirm("Desea establecer como monto " + monto + " definitivo para Cobrar?\nOperaciones Generadas:\nAgregar Operacion a la Empresa.\nRegistrar el Periodo como Activo.");
-    	if (sip == true) {	jsaSetNominaCerrada(); tip(idFortips, "Finalizando Envio de Nomina!", 5600); setTimeout("jsToGuardarRecibos()", 4500); }
+    	if (sip == true) {	
+        	jsaSetNominaCerrada(); 
+    		setTimeout("jsToGuardarRecibos()", 4500); 
+    	}
     }
 }
 function jsSetAlimentarEnvio(obj, id) {	
@@ -328,35 +380,66 @@ function jsSetAlimentarEnvio(obj, id) {
 	var notas 	= $("#notas-" + id).val();	
 	var letra	= $("#periodo-"  + id).val();	
 	var monto	= $("#monto-"  + id).val();
-	
+
+    var idr		= $("#idcodigodeempresas").val();
+    var freq	= entero($("#idperiocidad").val());
+    var vari	= entero($("#idvariacion").val());
+    var periodo	= entero($("#idperiodo").val());
+    periodo		= periodo+vari;
+    
 	if (obj.checked == true) {	
 		$("#periodo-" + id).prop("disabled", true);
 		$("#monto-" + id).prop("disabled", true);
 		$("#notas-" + id).prop("disabled", true);
 		ordenCbza[id]	= { credito : credito, letra : letra, monto : monto, notas : notas };
-		xCred.getCompareLetra({ credito : credito, periodo : letra, monto : monto });
+		//Validar si es correcto el monto de las letras
+		xCred.getCompareLetra({ credito : credito, periodo : letra, monto : monto, callback : setReverseCheck });
+		//Validar que existe en otra nomina
+		xCred.getCheckLetraEnvioAnt({credito : credito, letra : letra, periodo:periodo, empresa:idr, frecuencia: freq , callback : setReverseCheck2});
 		$("#idsuma").val( redondear( flotante($("#idsuma").val()) + flotante(monto)) );
 		$("#idconteo").val( redondear($("#idconteo").val()) +  redondear(letra));
 	} else {
 		$("#periodo-" + id).prop("disabled", false);
 		$("#monto-" + id).prop("disabled", false);
-		$("#notas-" + id).prop("disabled", false);		
+		$("#notas-" + id).prop("disabled", false);
 		delete ordenCbza[id];
 		$("#idsuma").val( redondear(flotante($("#idsuma").val()) - flotante(monto)) );
 		$("#idconteo").val( redondear($("#idconteo").val()) -  redondear(letra));		
 	}
 	xg.letras({ id : "idenletras", monto : $("#idsuma").val()	});
 }
+function setReverseCheck2(iserr, idcredito){
+	if(iserr == true){
+		
+		//$("#chk" + idcredito).attr('checked', false);
+		//var idx 	= document.getElementById("chk" + idcredito);
+		//delete ordenCbza["tr-creditos_solicitud-" +  idcredito];
+		//jsSetAlimentarEnvio(idx, idcredito)
+		$("#options-" + idcredito).parent().addClass("tr-error");
+	}
+}
+function setReverseCheck(iserr, idcredito){
+	if(iserr == true){
+		
+		$("#chk" + idcredito).attr('checked', false);
+		var idx 	= document.getElementById("chk" + idcredito);
+		delete ordenCbza["tr-creditos_solicitud-" +  idcredito];
+		jsSetAlimentarEnvio(idx, idcredito)		
+	}
+}
 function jsToGuardarRecibos(){
     var idr		= $("#idcodigodeempresas").val();
     var per		= $("#idperiocidad").val();
-    var vari	= $("#idvariacion").val();
+    var vari	= entero($("#idvariacion").val());
     var obs 	= $("#idobservaciones").val();
-    var periodo	= $("#idperiodo").val();
+    var periodo	= entero($("#idperiodo").val());
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
 	var iF3		= $("#idfecha-12").val();
 	var idnom	= entero($("#idnomina").val());
+	//Corrige el numero de periodo
+	periodo		= periodo+vari;
+	var spinner	= null;
 	
 	if(idnom <= 0){
 		alert("La NOMINA (" + idnom + ") no es Valida... espere unos segundos!");
@@ -365,14 +448,14 @@ function jsToGuardarRecibos(){
 	} else {
 		var cnt		= 1;
 		var siz		= Object.keys(ordenCbza).length;
+		var spinner = $(document.body).spin("modal");
 
-		tip(idFortips2, "Procesando Credito.. ", 10000);
-		
 	  for (var mObj in ordenCbza) {
 		var itms		= ordenCbza[mObj];
 		var strCred	= "&credito=" + itms.credito + "&letra=" + itms.letra + "&monto=" + itms.monto + "&notas=" + itms.notas + "&nomina=" + idnom;
 		
 	    var url	= "../svc/envionomina.svc.php?empresa=" + idr + "&periocidad=" + per + "&variacion=" + vari + "&observaciones=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2  + "&to=" + iF3 + strCred;
+	    
 	    if(entero(itms.credito) > 0){
 	    //console.log(itms.credito);
 		    xg.pajax({
@@ -380,12 +463,17 @@ function jsToGuardarRecibos(){
 				callback : function(data){
 					try { data = JSON.parse(data); } catch (e){ }
 					if (typeof data != "undefined"){
-						$("#idmsgs").html(data.message);
-						markItem(data.credito);
-						//console.log(data.credito);
+						if(data.error == true){
+							xG.alerta({msg: data.message});
+						} else {
+							$("#idmsgs").html(data.message);
+							markItem(data.credito);							
+						}
+
+						
 						if(cnt >= siz){
-							$(idFortips2).qtip("hide");
-							alert("carga terminada");
+							$(document.body).spin("modal").stop();		//spin
+							alert("Nomina Finalizada");
 							currNomina = $("#idnomina").val();
 							$("#idnomina").val('');
 							getReporte();
@@ -405,14 +493,16 @@ function jsToGuardarRecibos(){
 function markItem(id){ $("#tr-" + id).removeClass(); $("#tr-" + id).addClass("tr-pagar"); }
 
 function getReporte( strOtros ){
+	strOtros 	= (typeof strOtros == "undefined") ? "" : strOtros;
     var idr		= $("#idcodigodeempresas").val();
     var per		= $("#idperiocidad").val();
-    var vari	= $("#idvariacion").val();
+    var vari	= entero($("#idvariacion").val());
     var obs 	= $("#idobservaciones").val();
-    var periodo	= $("#idperiodo").val();
+    var periodo	= entero($("#idperiodo").val());
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
-    var idnom	= currNomina; //entero($("#idnomina").val());
+    var periodo	= periodo+vari;
+    var idnom	= currNomina;
     var url		= "../rptcreditos/orden_de_cobranza.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2 + "&nomina=" + idnom + "" + strOtros;
     xg.w({ url : url, w : 800, h : 600 });
 }
@@ -420,9 +510,9 @@ function getReporte( strOtros ){
 function getReporteEnMail(){
     var idr		= $("#idcodigodeempresas").val();
     var per		= $("#idperiocidad").val();
-    var vari	= $("#idvariacion").val();
+    var vari	= entero($("#idvariacion").val());
     var obs 	= $("#idobservaciones").val();
-    var periodo	= $("#idperiodo").val();
+    var periodo	= entero($("#idperiodo").val());
     var mail	= $("#idmail1").val();
     
     var mail2	= $("#idmail2").val();
@@ -432,7 +522,8 @@ function getReporteEnMail(){
 
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val(); 
-    var idnom	= currNomina;// entero($("#idnomina").val()); 
+    var idnom	= currNomina; 
+    var periodo	= periodo+vari;
     
     var url	= "../rptcreditos/orden_de_cobranza.rpt.php?out=email&r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&email1=" + mail + "&email2=" + mail2 + "&email3=" + mail3 + "&email4=" + mail4+ "&email5=" + mail5 + "&on=" + iF1 + "&off=" + iF2 + "&nomina=" + idnom;
 
@@ -462,27 +553,29 @@ function jsSetCambiarFechaMinistracion() {
 function editarPlanDePagos(credito) {  var sURL = '../frmcreditos/plan_de_pagos.edicion.frm.php?credito=' + credito;    xg.w({ url : sURL, w : 800, h : 600 });    $("#options-" + credito).parent().addClass("tr-plan"); }
 function jsPrintEstadoCuenta(){
 	var idemp	= $("#idcodigodeempresas").val();
-	var idper	= $("#idperiodo").val();
+	var periodo	= entero($("#idperiodo").val());
 	var perio	= $("#idperiocidad").val();
-	xg.w({ url : "../rptempresas/empresas.movimientos.rpt.php?empresa=" + idemp + "&periodo=" + idper + "&periocidad=" + perio });
+	var vari	= entero($("#idvariacion").val());
+	var periodo	= periodo+vari;
+	xg.w({ url : "../rptempresas/empresas.movimientos.rpt.php?empresa=" + idemp + "&periodo=" + periodo + "&periocidad=" + perio });
 }
 
 function getRecibo(){
     var idr		= $("#idcodigodeempresas").val();
     var per		= $("#idperiocidad").val();
-    var vari	= $("#idvariacion").val();
+    var vari	= entero($("#idvariacion").val());
+    var periodo	= entero($("#idperiodo").val());
     var obs 	= $("#idobservaciones").val();
-    var peri	= $("#idperiodo").val();
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
-    var idnom	= currNomina; //entero($("#idnomina").val());
-    var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + peri + "&on=" + iF1 + "&off=" + iF2  + "&nomina=" + idnom;
+    var periodo	= periodo+vari;
+    var idnom	= currNomina;
+    var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2  + "&nomina=" + idnom;
     xg.w({ url : url, w : 800, h : 600 });
 }
 function generarPlanDePagos(credito) {
-    var sURL = '../frmcreditos/frmcreditosplandepagos.php?r=1&c=' + credito;
+    var sURL = '../frmcreditos/frmcreditosplandepagos.php?r=1&credito=' + credito;
     xg.w({ url : sURL, w : 800, h : 600 });
-    //$("#options-" + credito).css("background-color", "rgb(18, 52, 86)");
     $("#options-" + credito).parent().addClass("tr-plan");
 }
 function getCorteDeRecibos(){
@@ -490,7 +583,7 @@ function getCorteDeRecibos(){
     $("#octl").html('<a onclick="getCorteDeRecibos()"><img src="../images/cash_stack_add.png" />Obtener Corte<mark id="saldocorte"></mark></a>');
     var iddep		= $("#idcodigodeempresas").val();
     var ff			= $("#idfecha-0").val();
-    var url			= "../rpttesoreria/rpt_caja_corte_sobre_recibos.php?dependencia=" + iddep + "&fechaMX=" + ff ;
+    var url			= "../rpttesoreria/rpt_caja_corte_sobre_recibos.php?dependencia=" + iddep + "&on=" + ff + "&off=" + ff;
     xg.w({ url : url, w : 800, h : 600 });
     $(idFortips2).qtip("hide");
 }
@@ -515,6 +608,11 @@ function jsGetRecibosByCredito(credito) {
 			}
 		}
 		});
+}
+function jsEditarEnvioPorCredito(credito) {
+    var sURL = '../frmempresas/envios.credito.edit.frm.php?credito=' + credito;
+    xg.w({ url : sURL, blank:true });
+    $("#options-" + credito).parent().addClass("tr-plan");
 }
 //window.setInterval("jsaGetMontoCobranza()", 5000);
 </script>

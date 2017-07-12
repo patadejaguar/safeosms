@@ -135,7 +135,7 @@ if($operation == "s"){
 		//step two: Folios al Maximo
 		$msg		.= setFoliosAlMaximo();
 		//Tablas
-		$xTabla		= new cSAFETabla();
+		$xTabla		= new cSQLTabla();
 //==================================================================================================================
 //==================================================================================================================
 		//Respaldo SOCIOS
@@ -254,7 +254,7 @@ if($operation == "s"){
 					(fecha_operacion, fecha_afectacion, @var3, socio_afectado, docto_afectado, tipo_operacion, afectacion_real,
 					afectacion_cobranza, afectacion_contable, valor_afectacion, fecha_vcto, estatus_mvto, codigo_eacp, periodo_socio,
 					periodo_contable, periodo_cobranza, periodo_seguimiento, periodo_mensual, periodo_semanal, periodo_anual, saldo_anterior,
-					saldo_actual, detalles, idusuario, afectacion_estadistica, docto_neutralizador, cadena_heredada, tasa_asociada,
+					saldo_actual, detalles, idusuario, afectacion_estadistica, docto_neutralizador, tasa_asociada,
  					dias_asociados, grupo_asociado, sucursal)
  					SET recibo_afectado	= getReciboByMorphedAnterior(@var3) ";
 		

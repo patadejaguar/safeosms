@@ -17,32 +17,37 @@ $xHP				= new cHPage("TR.Cierre del dia");
 $eacp				= EACP_CLAVE;
 $observaciones 		= parametro("idobservaciones");
 $fecha				= parametro("idfecha-0", false, MQL_RAW);	// fecha de Trabajo
-
+$forzar				= parametro("idforzar", false, MQL_BOOL);
 $xF					= new cFecha();
 $fecha				= $xF->getFechaISO($fecha);
 $action 			= parametro("action", SYS_NINGUNO);
 $msg				= "";
 $xCierre			= new cCierreDelDia($fecha);
-
+$xCierre->setForzar($forzar);
 setFoliosAlMaximo();
+
 
 $msg		= "EL CIERRE SE EFECTUARA UNA VEZ POR DIA, SI EL CIERRE YA ESTA HECHO NO SE ADMITIRAN MAS OPERACIONES.\r\nTENGA CUIDADO. EL EQUIPO SE APAGARA DESPUES DEL CIERRE.\r\nEL PROCESO TARDARA UNOS MINUTOS\r\n";
 $msg		.= "FECHA DE CIERRE $fecha .LA FECHA DE INICIO EN EL SISTEMA ES " . FECHA_INICIO_OPERACIONES_SISTEMA. "\r\n";
 
 $jxc = new TinyAjax();
 function jsaGetListadoCierres($fecha){
+	$xT			= new cTipos();
 	$xLi		= new cSQLListas();	
 	$xF			= new cFecha();
 	$fecha		= $xF->getFechaISO($fecha);
+
 	
 	$sqlList	= $xLi->getListadoDeRecibos(12, "", "", $fecha);
+	
 	$xTab		= new cTabla($sqlList);
 	$xTab->OButton("TR.Reporte", "var xR = new RecGen(); xR.reporte(" . HP_REPLACE_ID . ")", $xTab->ODicIcons()->REPORTE);
 	$xTab->OButton("TR.Panel", "var xR = new RecGen(); xR.panel(" . HP_REPLACE_ID . ")", $xTab->ODicIcons()->CONTROL);
 	$xBtn		= new cHButton();
-	$xSel		= new cHSelect();
-	$xCA		= $xSel->getListaDeCajasAbiertas();
-	$T2			= new cTabla($xCA->getSQL() . " AND `tesoreria_cajas`.`fecha_inicio` = '$fecha' ");
+	
+	$sql		=  $xLi->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA, $fecha);
+	
+	$T2			= new cTabla($sql);
 	$T2->addEspTool($xBtn->getBasic("", "jsToCerrarCorte('$fecha')", "bloquear", "idcerrar", true));
 	
 	
@@ -67,13 +72,24 @@ if($action == SYS_UNO){
 		$msg	.= $xCierre->getMessages();
 	} else {
 		$status		= $xCierre->check5Cierres($fecha, true);
-		if($status[SYS_ESTADO] == false AND MODO_DEBUG == false){
+		if($status[SYS_ESTADO] == false ){
 			$msg	.= $xCierre->getMessages();
 		} else {
 			header("Location: ../frmutils/cierre_de_colocacion.frm.php?k=" . MY_KEY . "&s=true&f=" . $fecha);
 			exit;
 		}
 	}
+	$fecha 		= $xCierre->getFechaUltima();
+} else {
+	if($xCierre->checkCierre($fecha) == true ){
+		$msg	.= $xCierre->getMessages();
+	} else {
+		$status		= $xCierre->check5Cierres($fecha, true);
+		if($status[SYS_ESTADO] == false ){
+			$msg	.= $xCierre->getMessages();
+		}
+	}
+	$fecha 		= $xCierre->getFechaUltima();
 }
 
 
@@ -86,17 +102,39 @@ if($action == SYS_UNO){
 	$xDate		= new cHDate();
 	$xSel		= new cHSelect();	
 	
-	$xFRM->addSubmit("TR.Cerrar Dia", "jsChecarAbiertas()");
-	$xFRM->OButton("TR.Salir", "var xG = new Gen(); xG.salir();", "salir");
+	
+	$xFRM->OButton("TR.Cerrar Dia", "jsChecarAbiertas()", $xFRM->ic()->EJECUTAR);
+	
+	$xFRM->OButton("TR.Salir del Sistema", "var xG = new Gen(); xG.salir();", "salir");
+	$xFRM->addCerrar();
 	$xFRM->addJsBasico();
 	
 
 	$xDate->addEvents(" onchange='jsGetListaDeCierres()' ");
 	$xFRM->addHElem( $xDate->get("TR.Fecha de corte", $fecha) );
 	
-	$xFRM->addHElem( $xTxt->getNumero("periodo_actual", EACP_PER_SOLICITUDES, "TR.Periodo Actual de Creditos") );
+	$xFRM->addHElem( $xTxt->getNumero("periodo_actual", EACP_PER_SOLICITUDES, "TR.CREDITOS_PERIODOS") );
 	
 	$xFRM->addObservaciones();
+	if(MODO_DEBUG == true){
+		$xFRM->OCheck("TR.FORZAR", "idforzar");
+		$xFRM->OButton("TR.Colocacion", "jsCierreDeColocacion()", $xFRM->ic()->DINERO);
+		if(MODULO_CAPTACION_ACTIVADO == true){
+			$xFRM->OButton("TR.Captacion", "jsCierreDeCaptacion()", $xFRM->ic()->AHORRO);
+		}
+		if(MODULO_CONTABILIDAD_ACTIVADO == true){
+			$xFRM->OButton("TR.Contabilidad", "jsCierreDeContabilidad()", $xFRM->ic()->CONTABLE);
+		}
+		if(MODULO_SEGUIMIENTO_ACTIVADO == true){
+			$xFRM->OButton("TR.Seguimiento", "jsCierreDeSeguimiento()", $xFRM->ic()->COBROS);
+		}
+		if(MODULO_AML_ACTIVADO == true){
+			$xFRM->OButton("TR.Riesgos", "jsCierreDeRiesgos()", $xFRM->ic()->RIESGO);
+		}
+		$xFRM->OButton("TR.Sistema", "jsCierreDeSistema()", $xFRM->ic()->SALUD);
+	} else {
+		$xFRM->OHidden("idforzar", "false");
+	}
 	$xFRM->addHTML("<div id='listados'></div>");
 	
 	$xFRM->addAviso($msg);
@@ -104,17 +142,44 @@ if($action == SYS_UNO){
 	echo $xFRM->get();
 ?>
 <script>
-	function jsToCerrarCorte(f){ var xT = new TesGen(); xT.goCerrarCaja(f);  }
-	function jsGetListaDeCierres() {   jsaGetListadoCierres();  }
+var kk 	= "<?php echo MY_KEY; ?>"
+var xG	= new Gen();
+function jsToCerrarCorte(f){ var xT = new TesGen(); xT.goCerrarCaja(f);  }
+function jsGetListaDeCierres() {   jsaGetListadoCierres();  }
 	
-	function jsChecarAbiertas(){
-		var itms	= $("#idabiertas").val();
-		if(entero(itms) > 0){
-			alert("EXISTEN CAJAS ABIERTAS!!");
-		} else {	
-			frmcierre.submit();
-		}
+function jsChecarAbiertas(){
+	var idomitir	= $('#idforzar').prop('checked');
+	var itms		= $("#idabiertas").val();
+	if(entero(itms) > 0 && idomitir == false){
+		alert("EXISTEN CAJAS ABIERTAS!!");
+	} else {	
+		frmcierre.submit();
 	}
+}
+function jsCierreDeColocacion(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_colocacion.frm.php?f=" + idfecha + "&k=" + kk});
+}
+function jsCierreDeCaptacion(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_captacion.frm.php?f=" + idfecha + "&k=" + kk});
+}
+function jsCierreDeContabilidad(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_contabilidad.frm.php?f=" + idfecha + "&k=" + kk});
+}
+function jsCierreDeSeguimiento(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_seguimiento.frm.php?f=" + idfecha + "&k=" + kk});
+}
+function jsCierreDeRiesgos(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_riesgos.frm.php?f=" + idfecha + "&k=" + kk});
+}
+function jsCierreDeSistema(){
+	var idfecha	= $("#idfecha-0").val();
+	xG.w({url:"../frmutils/cierre_de_sistema.frm.php?f=" + idfecha + "&k=" + kk});
+}
 </script>
 <?php
 $jxc ->drawJavaScript(false, true); 

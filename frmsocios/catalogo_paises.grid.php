@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CATALOGO PAIS", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -30,38 +30,58 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
-
+$xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
-
+$xFRM	= new cHForm("frmpaises", "catalogo_paises.frm.php?action=$action");
+$xFRM->setTitle($xHP->getTitle());
 $msg		= "";
-//$xFRM->addJsBasico();
-//$xFRM->addCreditBasico();
-//$xFRM->addSubmit();
-
+$xFRM->addCerrar();
 
 /* ===========		GRID JS		============*/
 
-$xHG	= new cHGrid("personas_domicilios_paises");
-$sqlpersonas_domicilios_paises	= base64_encode("SELECT * FROM personas_domicilios_paises LIMIT 0,100");
+$xHG	= new cHGrid("iddivpaises",$xHP->getTitle());
 
-$xHG->setListAction("../svc/datos.svc.php?out=jtable&q=$sqlpersonas_domicilios_paises");
-$xHG->addKey("clave_de_control", "TR.Clave");
-$xHG->addElement("nombre_oficial", "TR.nombre", "10%");
-$xHG->addElement("es_paraiso_fiscal", "TR.es paraiso_fiscal", "10%");
-$xHG->addElement("es_considerado_riesgo", "TR.Nivel_de_riesgo", "10%");
-$xHG->addElement("clave_numerica", "TR.Numero", "10%");
-$xHG->addElement("clave_alfanumerica", "TR.clave_alfabetica", "10%");
+$xHG->setSQL("SELECT   `personas_domicilios_paises`.`clave_de_control`,
+         `personas_domicilios_paises`.`clave_numerica`,
+         `personas_domicilios_paises`.`clave_alfanumerica`,		
+         `personas_domicilios_paises`.`nombre_oficial`,
+         getBooleanMX( `personas_domicilios_paises`.`es_paraiso_fiscal` ) AS `es_paraiso_fiscal`,
+         `entidad_niveles_de_riesgo`.`nombre_del_nivel` AS `nivel_riesgo`,
+         `personas_domicilios_paises`.`gentilicio`
+FROM     `personas_domicilios_paises` 
+INNER JOIN `entidad_niveles_de_riesgo`  ON `personas_domicilios_paises`.`es_considerado_riesgo` = `entidad_niveles_de_riesgo`.`clave_de_nivel` LIMIT 0,50 ");
+$xHG->addList();
+$xHG->addKey("clave_de_control");
 
-$xFRM->addHTML( $xHG->getDiv() );
+$xHG->col("clave_numerica", "TR.NUMERO", "10%");
+$xHG->col("clave_alfanumerica", "TR.CLAVE", "10%");
 
+$xHG->col("nombre_oficial", "TR.NOMBRE", "10%");
+$xHG->col("es_paraiso_fiscal", "TR.PARAISOFISCAL", "10%");
+$xHG->col("nivel_riesgo", "TR.NIVEL_DE_RIESGO", "10%");
 
+//$xHG->col("gentilicio", "TR.GENTILICIO", "10%");
+
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit(\''+ data.record.clave_de_control +'\')", "edit.png");
+
+$xFRM->addHElem("<div id='iddivpaises'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
+?>
+<script>
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../frmsocios/catalogo_paises.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivpaises,w:640});
+}
+function jsAdd(){
+	xG.w({url:"../frmsocios/catalogo_paises.new.frm.php?", tiny:true, callback: jsLGiddivpaises});
+}
 
-//$jxc ->drawJavaScript(false, true);
+</script>
+<?php
+	
 
-echo $xHG->getJsHeaders();
-echo $xHG->getJs(true, true);
 $xHP->fin();
 ?>

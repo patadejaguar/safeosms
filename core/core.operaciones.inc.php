@@ -25,7 +25,7 @@ include_once("core.db.dic.php");
 
 //=====================================================================================================
 class cReciboDeOperacion{
-	private $mCodigoDeRecibo 		= false;
+	private $mCodigoDeRecibo 		= 0;
 	private $mTipoDeRecibo			= false;
 
 	private $mSumaDeRecibo			= 0;
@@ -72,29 +72,46 @@ class cReciboDeOperacion{
 	private $mReciboFiscal			= ""; 
 	private $mOTesoreria			= null; 
 	private $mOCaja					= null;
-	private $mOBanco				= null;
-	private $mPeridoActivo			= null;			//Parcialidad o periodo del recibo
+	private $mOCuentaBancaria		= null;
+	private $mPeriodoActivo			= null;			//Parcialidad o periodo del recibo
 	private $mOPersona				= null;
 	private $mOUsuario				= null;			//Usuario
 	private $mOTipoRecibo			= null;
 	private $mTipoOrigenAML			= 0;
 	private $mClavePersonAsoc		= false;
-	private $mOFactura				= null; 
+	private $mOFactura				= null;
+	private $mFechaDeCaptura		= false;
+	private $mForceCeros			= false;
+	private $mSucursal				= "";
+	private $mIDCache				= "";
+	private $mSaldoHistorico		= 0;
+	private $mAfectaEnCaja			= false;
+	
 	function __construct($tipo = false, $solo_por_docto	= false, $recibo = false){
 		if ($tipo == false){
 			$tipo				= FALLBACK_TIPO_DE_RECIBO;
 		}
 		$this->mTipoDeRecibo	= $tipo;
-		if ( setNoMenorQueCero($recibo) > 0 ){
+		$recibo					= setNoMenorQueCero($recibo);
+		if ( $recibo > 0 ){
 			$this->mCodigoDeRecibo			= $recibo;
 			$this->setNumeroDeRecibo($this->mCodigoDeRecibo, true);
+			$this->setIDcache($recibo);
 		}
 		$this->mFechaDeVcto					= fechasys();
 		$this->mUnicoDocto					= $solo_por_docto;
 		$this->mMoneda						= AML_CLAVE_MONEDA_LOCAL;
 		$this->mClavePersonAsoc				= DEFAULT_SOCIO;
+		$this->mSucursal					= getSucursal();
 	}
-	function setSocio($socio){			$this->mSocio   = $socio; }
+	function setSocio($socio){ $this->mSocio   = $socio; }
+	function setIDcache($clave){ if($clave>0){ $this->mIDCache = TOPERACIONES_RECIBOS . "-" . $clave; } }
+	function setCleanCache(){ 
+		$xCache = new cCache();
+		if($this->mIDCache != ""){
+			$xCache->clean($this->mIDCache);
+		}
+	}
 	function setDocumento($docto){ 			$this->mDocto   = $docto; }
 	function setGenerarPoliza($By = true){ 		$this->mSetGenerarPoliza	= $By;	}
 	function setForceUpdateSaldos($force = true){ 	$this->mForceUpdateSaldos	= $force; }
@@ -118,6 +135,7 @@ class cReciboDeOperacion{
 	 */
 	function initRecibo($arrInicial = false){ return $this->init($arrInicial);	}
 	function getFechaDeRecibo(){ return $this->mFechaDeOperacion; }
+	function getFechaDeCaptura(){ return $this->mFechaDeCaptura; }
 	function getTipoDeRecibo(){ return $this->mTipoDeRecibo; }
 	function getTipoDePago(){ return  $this->mTipoDePago; }
 	function getNumeroDeCheque(){ return $this->mNumeroCheque; }
@@ -132,32 +150,36 @@ class cReciboDeOperacion{
 	function init($arrInicial = false){
 			$DR			= array();
 			$recibo		= $this->mCodigoDeRecibo;
+			$xCache		= new cCache();
 			if($arrInicial != false AND is_array($arrInicial)){
 				$DR		= $arrInicial;
 			} else {
-				$xLi	= new cSQLListas();
-				
-				$DR		= obten_filas($xLi->getInicialDeRecibos($this->mCodigoDeRecibo, $this->mSocio));
+				$DR		= $xCache->get($this->mIDCache);
+				if(!is_array($DR)){
+					$xLi	= new cSQLListas();
+					$DR		= obten_filas($xLi->getInicialDeRecibos($this->mCodigoDeRecibo, $this->mSocio));
+				}
 			}
 			$ORec							= new cOperaciones_recibos();
-			$ORec->setData($DR);
+			
 			if( isset($DR["tipo_docto"])){
+				$ORec->setData($DR);
 				$this->mTipoDeRecibo		= $DR["tipo_docto"];
-				$this->mTipoDePago		= $DR["tipo_pago"];
+				$this->mTipoDePago			= $DR["tipo_pago"];
 				$this->mGrupoAsociado		= $DR["grupo_asociado"];
-				$this->mSocio			= $DR["numero_socio"];
-				$this->mDocto			= $DR["docto_afectado"];
+				$this->mSocio				= $DR["numero_socio"];
+				$this->mDocto				= $DR["docto_afectado"];
 				$this->mNumeroCheque		= $DR["cheque_afectador"];
 				$this->mFechaDeOperacion	= $DR["fecha_operacion"];
 				$this->mObservaciones		= $DR["observacion_recibo"];
 				$this->mPathToFormato		= $DR["path_formato"];
 				$this->mTipoDescripcion		= $DR["descripcion_recibostipo"];
-				$this->mAplicadoA		= $DR["origen"];
+				$this->mAplicadoA			= $DR["origen"];
 				$this->mReciboFiscal		= $DR["recibo_fiscal"];
-				$this->mTotalRecibo		= $DR["total_operacion"];
+				$this->mTotalRecibo			= $DR["total_operacion"];
 				
 				$this->mPathToFormato		= $DR["path_formato"];
-				$this->mOrigen			= $DR["origen"];
+				$this->mOrigen				= $DR["origen"];
 				$this->mIndiceOrigen		= $DR["indice_origen"];
 					
 				$this->mDatosByArray		= $DR;
@@ -167,49 +189,81 @@ class cReciboDeOperacion{
 				$this->mUnidadesOriginales	=  strtoupper( $ORec->unidades_en_moneda()->v() );
 				$this->mTipoOrigenAML		= $ORec->origen_aml()->v();
 				$this->mClavePersonAsoc		= $ORec->persona_asociada()->v();
+				$this->mPeriodoActivo		= $ORec->periodo_de_documento()->v();
+				$this->mFechaDeCaptura		= $ORec->fecha_de_registro()->v();
+				$this->mSucursal			= $ORec->sucursal()->v();
+				$this->mCuentaBancaria		= $ORec->cuenta_bancaria()->v();
+				$this->mSaldoHistorico		= $ORec->montohist()->v();
+				$this->setIDcache($ORec->idoperaciones_recibos()->v());
+				$xCache->set($this->mIDCache, $DR);
 				unset($DR);
-				$this->mReciboIniciado				= true;
+				$this->mReciboIniciado		= true;
 			} else {
 				$this->mMessages			.= "ERROR\tRecibo no encontrado # $recibo\r\n";
 			}
 			return $this->mReciboIniciado;
 	}
 	function setGrupoAsociado($grupo){ $this->mGrupoAsociado	= $grupo; }
+	function setForzarCeros($forzar = true){ $this->mForceCeros = $forzar; }
 	/**
-	 * Agrega un Recibo Nuevo
-	 * @param integer	$socio
-	 * @param integer	$documento
-	 * @param date		$fecha_operacion
-	 * @param integer	$parcialidad
-	 * @param integer	$tipo_docto
-	 * @param string	$cadena
-	 * @param string	$cheque_afectador
-	 * @param string	$tipo_pago
-	 * @param string	$recibo_fiscal
-	 * @param integer	$grupo_asoc
-	 * @param integer	$cuenta_bancaria
+	 * @param integer $socio
+	 * @param integer $documento
+	 * @param string $fecha
+	 * @param integer $parcialidad
+	 * @param integer $Tipo
+	 * @param string $cadena
+	 * @param string $cheque_afectador
+	 * @param string $TipoPago
+	 * @param string $recibo_fiscal
+	 * @param integer $grupo
+	 * @param integer $cuenta_bancaria
+	 * @param float $moneda
+	 * @param number $unidades
+	 * @param integer $persona_asociada
+	 * @param integer $periodo
+	 * @return integer
 	 */
-	function setNuevoRecibo($socio, $documento, $fecha_operacion, $parcialidad,
-						$tipo_docto = false, $cadena = "", $cheque_afectador = "NA",
-						$tipo_pago = "ninguno", $recibo_fiscal = "NA", $grupo_asoc = DEFAULT_GRUPO,
-						$cuenta_bancaria = false, $moneda = false, $unidades_originales = 0, $persona_asociada = false){
-		$ql					= new MQL();					
-		$tipo_docto 		=	( setNoMenorQueCero($tipo_docto) <= 0) ? $this->mTipoDeRecibo : $tipo_docto;
+	function setNuevoRecibo($socio, $documento, $fecha, $parcialidad,
+						$Tipo = false, $cadena = "", $cheque_afectador = "NA",
+						$TipoPago = "", $recibo_fiscal = "", $grupo = false,
+						$cuenta_bancaria = false, $moneda = "", $unidades = 0, $persona_asociada = false, $periodo = false){
+		$ql					= new MQL();
+		$xF					= new cFecha();
 		//----------------------------------DATOS DEL RECIBO------------------------
+		$Tipo				= setNoMenorQueCero($Tipo);
+		$Tipo				= ($Tipo<= 0) ? $this->mTipoDeRecibo : $Tipo;
+		$TipoPago			= trim(strtolower($TipoPago));
+		$TipoPago			= ($TipoPago == "") ? SYS_NINGUNO : $TipoPago;
+		$fecha				= $xF->getFechaISO($fecha);
 		$total_operacion 	= 0;					// Total Operacion
 		$observaciones 		= $cadena;
 		$indice_origen 		= 99;					// Indice de Origen
-		$sucursal			= getSucursal();
-		$eacp				= EACP_CLAVE;
-		$moneda				= ($moneda == false) ? $this->mMoneda : $moneda;
-		$unidades_originales= ($unidades_originales == 0) ? $this->mUnidadesOriginales : $unidades_originales;
+		$grupo				= setNoMenorQueCero($grupo);
+		$grupo				= ($grupo <= 0) ? DEFAULT_GRUPO : $grupo;
+		$moneda				= setCadenaVal($moneda);
+		$moneda				= ($moneda == "") ? $this->mMoneda : $moneda;
+		$unidades			= setNoMenorQueCero($unidades);
+		$unidades			= ($unidades == 0) ? $this->mUnidadesOriginales : $unidades;
 		$persona_asociada	= ($persona_asociada == false) ? $this->mClavePersonAsoc : $persona_asociada;
 		$persona_asociada	= setNoMenorQueCero($persona_asociada);
+		$periodo			= setNoMenorQueCero($periodo);
+		$parcialidad		= setNoMenorQueCero($parcialidad);
+		$periodo			= ($periodo <= 0 AND $parcialidad >0) ? $parcialidad : $periodo;
 		//si es pago o ministracion
-		if($tipo_docto == RECIBOS_TIPO_PAGO_CREDITO AND $persona_asociada <= DEFAULT_SOCIO){
+		if($Tipo == RECIBOS_TIPO_PAGO_CREDITO AND $persona_asociada <= DEFAULT_SOCIO){
 			$xCred			= new cCredito($documento);
 			if($xCred->init() == true){
-				$persona_asociada	= $xCred->getClaveDeEmpresa();
+				$persona_asociada		= $xCred->getClaveDeEmpresa();
+			}
+		}
+		if($persona_asociada <= DEFAULT_SOCIO ){
+			if($socio <= DEFAULT_SOCIO){
+				$persona_asociada	= DEFAULT_EMPRESA;
+			} else {
+				$xSoc		= new cSocio($socio);
+				if($xSoc->init() == true){
+					$persona_asociada	 = $xSoc->getClaveDeEmpresa();
+				}
 			}
 		}
 		//
@@ -223,7 +277,7 @@ class cReciboDeOperacion{
 
 		if ( !isset($socio) ){	$socio	= $this->mSocio; }
 		$iduser 			= getUsuarioActual();
-		$xDTab				= new cSAFETabla(TOPERACIONES_RECIBOS);
+		//$xDTab				= new cSQLTabla(TOPERACIONES_RECIBOS);
 	//----------------------------------------------------------------------------- clave_de_moneda, unidades_en_moneda
 		$xRec				= new cOperaciones_recibos();
 		$xRec->archivo_fisico("");
@@ -231,10 +285,10 @@ class cReciboDeOperacion{
 		$xRec->cheque_afectador($cheque_afectador);
 		$xRec->clave_de_moneda($moneda);
 		$xRec->docto_afectado($documento);
-		$xRec->eacp($eacp);
+		$xRec->eacp(EACP_CLAVE);
 		$xRec->fecha_de_registro(fechasys());
-		$xRec->fecha_operacion($fecha_operacion);
-		$xRec->grupo_asociado($grupo_asoc);
+		$xRec->fecha_operacion($fecha);
+		$xRec->grupo_asociado($grupo);
 		$xRec->idoperaciones_recibos($idrecibo);
 		$xRec->idusuario($iduser);
 		$xRec->indice_origen($indice_origen);
@@ -243,19 +297,23 @@ class cReciboDeOperacion{
 		$xRec->origen_aml(0);
 		$xRec->persona_asociada($persona_asociada);	//empresa
 		$xRec->recibo_fiscal($recibo_fiscal);
-		$xRec->sucursal($sucursal);
-		$xRec->tipo_docto($tipo_docto);
+		$xRec->sucursal(getSucursal());
+		$xRec->tipo_docto($Tipo);
 		$xRec->total_operacion($total_operacion);
-		$xRec->unidades_en_moneda($unidades_originales);
-		$xRec->tipo_pago($tipo_pago);
+		$xRec->unidades_en_moneda($unidades);
+		$xRec->tipo_pago($TipoPago);
+		$xRec->periodo_de_documento($periodo);
+		$xRec->cuenta_bancaria($cuenta_bancaria);
 		
 		if ($this->mAfectar == true){
 			$xsr = $xRec->query()->insert()->save();// my_query($sql_i_rec);
-			if ( $xsr != false){
+			if ( $xsr !== false){
 				$this->mMessages	.= "OK\tSe agrego exitosamente el Recibo : $idrecibo : del Documento $documento\r\n";
 				$this->mCodigoDeRecibo	= $idrecibo;
 				$this->setNumeroDeRecibo($idrecibo);
-				$this->init();
+				if($this->init() == false){
+					$this->mMessages	.= "ERROR\tEl Recibo : $idrecibo : del Documento $documento No inicia\r\n";
+				}
 			} else {
 				$this->mMessages	.= "ERROR\tError al Agregar el Recibo $idrecibo del Documento $documento \r\n";
 				$idrecibo			= false;
@@ -263,110 +321,117 @@ class cReciboDeOperacion{
 		} else {
 			$this->mMessages	.= "WARN\tNo se agrega el Recibo por que es NO AFECTABLE \r\n";
 		}
-
+		
 		return $idrecibo;
 	}
 	function setCuentaBancaria($cuenta){ $this->mCuentaBancaria = $cuenta; }
 	function getPersonaAsociada(){ return $this->mClavePersonAsoc; }
+	function addMovimiento($tipo, $monto, $periodo =1, $observaciones = "", $afectacion =1,$persona = false, $documento = false, $fecha = false, $SaldoInicial = 0, $SaldoFinal=0){
+		$xF			= new cFecha();
+		$fecha		= $xF->getFechaISO($fecha);
+		$persona	= setNoMenorQueCero($persona);
+		$persona	= ($persona <= DEFAULT_SOCIO) ? $this->mSocio : $persona;
+		$documento	= ($documento <= 0) ? $this->mDocto : $documento;
+		$documento	= setNoMenorQueCero($documento);
+		$xFols		= new cFolios();
+		//$folio	= $xFols->getClaveDeOperaciones();
+		//$xOp		= new cOperaciones_mvtos();
+		//$xOp->afectacion_cobranza($monto);
+		return $this->setNuevoMvto($fecha, $monto, $tipo, $periodo, $observaciones, $afectacion, false,$persona, $documento, $fecha, $fecha, $SaldoInicial, $SaldoFinal);
+	}
 	/**
 	 * @return integer Numero de Operacion
 	 **/
 	function setNuevoMvto($fecha_operacion, $monto, $tipo_operacion, $periodo_de_socio, $observaciones, $signo_afectacion = 1, $mvto_contable = false,
 						  $socio = false, $documento = false, $fecha_afectacion = false, $fecha_vencimiento = false, $saldo_anterior = false, $saldo_nuevo = false){
 		$sucess		= false;
+		$socio		= setNoMenorQueCero($socio);
+		$documento	= setNoMenorQueCero($documento);
+		$xFols		= new cFolios();
+		$xLog		= new cCoreLog();
+		$xQL		= new MQL();
+		$viable		= true;
+		
 		//inicializa el recibo
-		if ( !isset($this->mCodigoDeRecibo) OR $this->mCodigoDeRecibo == false ){
-				//
-		}
+		if ( setNoMenorQueCero($this->mCodigoDeRecibo) <= 0 ){ $viable = false; }
 		//Si no hay valores, obtenerlos del recibo
-		if ($documento == false OR !isset($documento) ){
-			$documento	= $this->mDocto;
-		}
-		if ( $socio == false OR !isset($socio) ){
-			$socio		= $this->mSocio;
-		}
+		if ( $documento <= 0 ){	$documento	= $this->mDocto; }
+		if ( $socio <=0 ){	$socio		= $this->mSocio; }
+		
 		//Verificar la Cuenta Bancaria
-		if ( $this->mCuentaBancaria == false ){
-			$this->mCuentaBancaria = DEFAULT_CUENTA_BANCARIA;
-		}
+		if ( setNoMenorQueCero($this->mCuentaBancaria) <= 0 ){	$this->mCuentaBancaria = DEFAULT_CUENTA_BANCARIA;	}
 		$recibo			= $this->mCodigoDeRecibo;
 		$fecha_afectacion	= ($fecha_afectacion == false) ? $fecha_operacion : $fecha_afectacion;
 		// --------------------------------------- VALOR SQL DEL MVTO.-------------------------------------------------------
-			// VALORES FIJOS
-		$smf	= "idusuario, codigo_eacp, socio_afectado, docto_afectado, recibo_afectado, fecha_operacion, ";
-			// PERIODOS
-		$smf	.= "periodo_contable, periodo_cobranza, periodo_seguimiento, ";
-		$smf	.= "periodo_anual, periodo_mensual, periodo_semanal, ";
-			// AFECTACIONES
-		$smf	.= "afectacion_cobranza, afectacion_contable, afectacion_estadistica, ";
-		$smf	.= "afectacion_real, valor_afectacion, ";
-			// FECHAS Y TIPOS
-		$smf	.= "idoperaciones_mvtos, tipo_operacion, estatus_mvto, periodo_socio, ";
-		$smf	.= "fecha_afectacion, fecha_vcto, ";
-			// SALDOS
-		$smf	.= "saldo_anterior, saldo_actual, detalles, sucursal, tasa_asociada, dias_asociados, grupo_asociado";
-
+		$monto				= setNoMenorQueCero($monto,2);
 		//
-		$iduser 		= $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"];
-		$eacp 			= EACP_CLAVE;
+		$iduser 			= getUsuarioActual();
+		$eacp 				= '';//EACP_CLAVE;
 										// PERIODOS
-		$percont 		= EACP_PER_CONTABLE;										// Periodo Contable
-		$percbza 		= EACP_PER_COBRANZA;										// Periodo Cobranza.
-		$perseg 		= EACP_PER_SEGUIMIENTO;										// Period de Seguimiento.
-		$permens 		= date("m", strtotime($fecha_operacion) );					// Periodo mes
-		$persem 		= date("N", strtotime($fecha_operacion) );					// Periodo de dias en la semana.
-		$peranual 		= date("Y", strtotime($fecha_operacion) );					// A�o Natural.
 
-		$persoc 		= $periodo_de_socio;												// periodo del Socio.
+		$periodo_de_socio	= setNoMenorQueCero($periodo_de_socio);						// periodo del Socio.
 		$estatus_mvto 		= $this->mDefMvtoStatus;
-
 		$fecha_vcto 		= ($fecha_vencimiento == false) ? $this->mFechaDeVcto : $fecha_vencimiento;
 		$saldo_anterior		= ($saldo_anterior === false ) ? 0 : $saldo_anterior;
 		$saldo_nuevo		= ($saldo_nuevo === false ) ? $monto : $saldo_nuevo;
 		$sucursal 		= getSucursal();
-		$afect_cbza		= $monto;
-		$afect_seg		= $monto;
-		$afect_cont		= $monto;
-		$afect_esta		= $monto;
-		$idoperacion 		= folios(2);
+		$idoperacion 	= 0;
 		$tasa			= 0;
 		$dias			= 0;
 		$grupo			= $this->mGrupoAsociado;
-		$viable			= true;
+		$observaciones	= substr($observaciones, 0, 40); //40 Max obervaciones
 		$xT				= new cTipos(0);
 		if ($this->mGrupoAsociado == false ){
 			$grupo		= DEFAULT_GRUPO;
 		}
-		$smv = "$iduser, '$eacp', $socio, $documento, $recibo, '$fecha_operacion',
-				$percont, $percbza, $perseg, $peranual, $permens, $persem,
-				$afect_cbza, $afect_cont, $afect_esta,
-				$monto, $signo_afectacion,
-				$idoperacion, $tipo_operacion, $estatus_mvto, $persoc,
-				'$fecha_afectacion', '$fecha_vcto',
-				$saldo_anterior, $saldo_nuevo, '$observaciones', '$sucursal', $tasa, $dias, $grupo
-				";
+
 		$arrD	= array( $socio, $documento, $recibo );
 		$viable	= $xT->getEvalNotNull($arrD);
+		if($monto === 0){
+			$viable		= false;
+			if($this->mForceCeros == true){
+				$viable	= true;
+				$monto	= setNoMenorQueCero($monto);
+			}
+		}
 		if ( $viable == false ){
-			$this->mMessages	.= "ERROR\tVARS\tError al Evaluar alguno de estos Valores Socio $socio, Documento $documento, Recibo $recibo\r\n";
-			$this->mMessages	.= $xT->getMessages();
+			$xLog->add("ERROR\tVARS\tError al Evaluar alguno de estos Valores Socio $socio, Documento $documento, Recibo $recibo Monto $monto\r\n");
+			$xLog->add($xT->getMessages(), $xLog->DEVELOPER);
 		}
-		$SQl_comp = "INSERT INTO operaciones_mvtos($smf) VALUES ($smv)
-						ON DUPLICATE KEY UPDATE idoperaciones_mvtos = " . folios(2) . "
-					";
-		if($monto !=0 AND isset($monto) AND $this->mAfectar == true AND $viable == true){
-				$exec = my_query($SQl_comp);
+		$idoperacion			= 0;
+		if($this->mAfectar == true AND $viable == true){
+			//Ejecutar Query
+			$SQLM				= "INSERT INTO `operaciones_mvtos`
+							(`idusuario`, `codigo_eacp`,
+							`socio_afectado`, `docto_afectado`, `recibo_afectado`, `grupo_asociado`, `fecha_operacion`,`fecha_afectacion`, `fecha_vcto`,
+							 `periodo_socio`,`saldo_anterior`,`saldo_actual`,
+							`afectacion_real`,`afectacion_estadistica`, `valor_afectacion`, 
+							`tipo_operacion`, `estatus_mvto`,  `detalles`,`sucursal`, `tasa_asociada`,`dias_asociados`) 
+							VALUES ($iduser, '$eacp', 
+							$socio, $documento, $recibo, $grupo, '$fecha_operacion', '$fecha_afectacion', '$fecha_vcto',
+							$periodo_de_socio, $saldo_anterior, $saldo_nuevo,
+							$monto, $monto, $signo_afectacion,
+							$tipo_operacion, $estatus_mvto, '$observaciones', '$sucursal', $tasa, $dias)";
+			
+				
+			//end Query
+			
+			$exec = $xQL->setRawQuery($SQLM);
 
-				if ( $exec["stat"] == false ){
-					$sucess	= false;
-					$this->mMessages	.= "ERROR\t$recibo\tSe Fallo al Agregar la Operacion($tipo_operacion) por $monto con Numero $idoperacion\r\n";
-				} else {
-					$sucess	= true;
-					$this->mMessages	.= "SUCESS\t$recibo\tSe agrego Exitosamente la Operacion($tipo_operacion) por $monto con Numero $idoperacion \r\n";
-				}
+			if ( $exec == false ){
+				$sucess	= false;
+				$xLog->add("ERROR\t$recibo\tSe Fallo al Agregar la Operacion($tipo_operacion) por $monto con Numero $idoperacion\r\n");
+				setLog("ERROR\t$recibo\tSe Fallo al Agregar la Operacion($tipo_operacion) por $monto \r\n");
+			} else {
+				$sucess	= true;
+				$idoperacion	= $xQL->getLastInsertID();
+				$xLog->add("OK\t$recibo\tSe agrego Exitosamente la Operacion($tipo_operacion) por $monto con Numero $idoperacion \r\n", $xLog->DEVELOPER);
+			}
+			$exec		= null;
 		} else {
-			$this->TxtLog	.= "WARNING\tSe simula Agregar el Mvto $idoperacion del tipo $tipo_operacion por un monto de $monto \r\n";
+			$xLog->add("WARN\tSe simula Agregar el Mvto $idoperacion del tipo $tipo_operacion por un monto de $monto \r\n", $xLog->DEVELOPER);
 		}
+		$this->mMessages		.= $xLog->getMessages();
 		//Sumar al Recibo el Monto
 		$this->mSumaDeRecibo	+= $monto;
 		$this->mNumeroDeMvtos++;
@@ -415,6 +480,10 @@ class cReciboDeOperacion{
 	 * @param boolean $UpdateSaldo Marca si Actualiza el Saldo del Credito
 	 */
 	function setFinalizarRecibo($UpdateSaldo = false, $tesoreria_cargada = false){
+		$this->mMoneda		= strtoupper($this->mMoneda);
+		$xLog				= new cCoreLog();
+		$xAv				= new cAML();
+		$xQL				= new MQL();
 		//generar Poliza a demanda
 		$finalizado				= true;
 		//tranferencia.egresos cheque
@@ -422,6 +491,7 @@ class cReciboDeOperacion{
 		/**
 		 * Modificacion de la condicion de socio por afectar al recibo en SI?
 		 */
+		$this->mPeriodoActivo;
 		if ($UpdateSaldo == true){
 			if ( ($this->mSumaDeRecibo == 0) OR ($this->mForceUpdateSaldos == true) OR ( !isset($this->mSumaDeRecibo) ) OR ( $this->mSumaDeRecibo == false ) OR ( $this->mSumaDeRecibo == '' ) ){
 				$sqlSUM = "SELECT
@@ -438,151 +508,217 @@ class cReciboDeOperacion{
 								`operaciones_mvtos`.`recibo_afectado` ";
 				$TDRec					= obten_filas($sqlSUM);
 
-				$this->mSumaDeRecibo 	= $TDRec["monto"];
-				$this->mNumeroDeMvtos	= $TDRec["numero"];
-				$this->mMessages		.= "SUCESSACT\tMonto Actualizado a " . $this->mSumaDeRecibo . " y # Operaciones " . $this->mNumeroDeMvtos . "\r\n";
+				$this->mSumaDeRecibo 	= (!isset($TDRec["monto"])) ? 0 : $TDRec["monto"];
+				$this->mNumeroDeMvtos	= (!isset($TDRec["numero"])) ? 0 : $TDRec["numero"];
+				$this->mMessages		.= "OK\tMonto Actualizado a " . $this->mSumaDeRecibo . " y # Operaciones " . $this->mNumeroDeMvtos . "\r\n";
 			}
-			 if (!isset($this->mSumaDeRecibo) ){
-			   $this->mSumaDeRecibo = 0;
+			if($this->getAfectacionEnCaja() !== 0){
+				$this->mSumaDeRecibo	= $this->mSumaDeRecibo * $this->getAfectacionEnCaja();
 			}
-			$sql = "UPDATE operaciones_recibos SET total_operacion=" . $this->mSumaDeRecibo . "
-    				WHERE	idoperaciones_recibos= " . $this->mCodigoDeRecibo . "	";
-			$xRs = my_query($sql);
+			
+			$sql = "UPDATE operaciones_recibos SET total_operacion=" . $this->mSumaDeRecibo . "	WHERE	idoperaciones_recibos= " . $this->mCodigoDeRecibo . "	";
+			$xRs = $xQL->setRawQuery($sql);
 		}
-		
-		if ($this->mSetGenerarPoliza == true){
-			//PolizaPorRecibo($this->mCodigoDeRecibo, GENERAR_POLIZAS_AL_CIERRE);
-		}
+
 		$this->mTotalRecibo	= $this->mSumaDeRecibo;
-		
+		$this->setCleanCache();
 		//-- AML
 		if(MODULO_AML_ACTIVADO == true AND $this->isPagable() == true AND $tesoreria_cargada == true){
 			$xAml		= new cAMLPersonas($this->mSocio);
+			$xMat		= new cAMLMatrizDeRiesgo();
+			$xAmlO		= new cAMLOperaciones();
+			$NivelRiesgo= 0;
+			$Factores	= 0;
 			$xAml->init();
 			$xAml->setForceAlerts();
-			$xAmlO		= new cAMLOperaciones();
+			
 			
 			$this->init();
+			//Revisa una persona si es M}Vigilada
 			if($xAml->getEsPersonaVigilada() == true){
+				$xTipoPago			= new cTesoreriaTiposDePagoCobro($this->mTipoDePago);
 				$tipo_de_pago_aml	= $this->mTipoDePago;
-				if(setNoMenorQueCero($this->mTipoOrigenAML) > 0){
-					$xRisK				= new cPersonas_perfil_transaccional_tipos(); $xRisK->query()->initByID($this->mTipoOrigenAML);
-					$tipo_de_pago_aml	= strtolower( $xRisK->tipo_de_exhibicion()->v(OUT_TXT));
-					$this->mMessages	.= "WARN\tCambiar el perfil de pago de " . $this->mTipoDePago . " a $tipo_de_pago_aml \r\n";
+				$res				= false;
+				if($xTipoPago->init() == true){
+					//Actualizar Origen AML
+					$this->mTipoOrigenAML	= $xTipoPago->getTipoEnAML();
+					if($this->mTipoOrigenAML>0){
+						$res		= $xAmlO->analizarOperacion($this->mSocio, 0, $this->mMoneda, $tipo_de_pago_aml, 	$this->getFechaDeRecibo(), $this->getCodigoDeRecibo(), $this->mTipoOrigenAML);
+					}
 				}
-				$res				= $xAmlO->analizarOperacion($this->mSocio, 0, $this->mMoneda, $tipo_de_pago_aml, 	$this->getFechaDeRecibo(), $this->getCodigoDeRecibo(), $this->mTipoOrigenAML);
 				
 				if($res == false ){
-					$this->mMessages	.= "OK\tAML Normal \r\n";
-					if(MODO_DEBUG == true){ $this->mMessages	.= $xAmlO->getMessages(OUT_TXT); }
+					$xLog->add("OK\tAML Normal por Tipo de Pago $tipo_de_pago_aml y en AML " . $this->mTipoOrigenAML . "\r\n", $xLog->DEVELOPER);
+					$xLog->add($xAmlO->getMessages(OUT_TXT), $xLog->DEVELOPER);
 				} else {
 					//REPORTAR
 					$xAv			= new cAML();
 					if($xAmlO->getTipoDeReporte() == AML_REPORTE_INMEDIATO){
 						$xAv->setForceRegistroRiesgo();
-						$this->mMessages	.= "WARN\tAML de Aviso Inmediato\r\n";
+						$xLog->add("WARN\tAML de Aviso Inmediato por Tipo de Pago $tipo_de_pago_aml y en AML " . $this->mTipoOrigenAML . "\r\n", $xLog->DEVELOPER);
 					}
-					$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $xAmlO->getTipoDeAlerta(), $xAmlO->getMessageAlert(), 
-							$this->mCodigoDeRecibo, $this->mFechaDeOperacion);
+					$xAv->sendAlerts($this->mSocio, getOficialAML(), $xAmlO->getTipoDeAlerta(), $xAmlO->getMessageAlert(), $this->mCodigoDeRecibo, $this->mFechaDeOperacion);
 				}
-				$this->mMessages	.=  $xAmlO->getMessages(OUT_TXT);
-				//validar perfil transaccional
-				 $xAml->setVerificarPerfilTransaccional(); 
+				//Riesgo de Operación Implicita
+				
+				$xLog->add($xAmlO->getMessages(OUT_TXT), $xLog->DEVELOPER);
 			}
 			//Validar si es person riesgosa
 			
-			$xSoc	= $xAml->getOPersona();
-			if($xSoc->getEsPersonaSDN() == true){
-				//REPORTAR operaciones con alto riesgo
-				$idriesgo			= AML_ID_OPERACIONES_PERSONAS_ALTO_RIESGO; //operaciones con criminales
-				$xRiesgo			= new cAml_risk_catalog();
-				$xRiesgo->setData( $xRiesgo->query()->initByID($idriesgo) );
-				
-				$xAv			= new cAML();
+			$xSoc					= $xAml->getOPersona();
+			$EstadoReportado		= false;
+			//Operaciones con Personas Bloqueadas
+			if($xSoc->getEsPersonaSDN() == true ){ //AND $xAml->getEsPersonaVigilada() == true
+				$xMat->initByTopico($xMat->O_PERSONA_BLOQUEADO);
+				$idriesgo			= $xMat->getTipoRiesgo();
+				$xLog->add("REPORTE\tOperaciones con persona ALTAMENTE RIESGOSA en el Recibo de Operacion : " . $this->mCodigoDeRecibo);
+				$xAv				= new cAML();
 				$xAv->setForceRegistroRiesgo();
-				$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $idriesgo, "ERROR\tOperaciones con persona ALTAMENTE RIESGOSA Recibo " . $this->mCodigoDeRecibo, 
-						$this->mCodigoDeRecibo, $this->getFechaDeRecibo());
-				$this->mMessages	.= $xAv->getMessages(OUT_TXT);				
+				$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+				$xLog->add($xAv->getMessages(OUT_TXT), $xLog->DEVELOPER);
+				$EstadoReportado	= true;
+				$NivelRiesgo		+= $xMat->getNivelRiesgo();
+				$Factores++;
+			}
+			//REPORTAR operaciones con PEPs
+			if( $xSoc->getEsPersonaPoliticamenteExpuesta() == true AND $xAml->getEsPersonaVigilada() == true ){
+				$xMat->initByTopico($xMat->O_PERSONA_PEPS);
+				$idriesgo			= $xMat->getTipoRiesgo();
+				$xLog->add("REPORTE\tOperaciones con PEPS Recibo de Operacion : " . $this->mCodigoDeRecibo);
+				$xAv			= new cAML();
+				$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+				$xLog->add($xAv->getMessages(OUT_TXT), $xLog->DEVELOPER);
+				$EstadoReportado	= true;
+				$NivelRiesgo		+= $xMat->getNivelRiesgo();
+				$Factores++;
+			}
+			//Reportar Operaciones con Persona de Alto Riesgo, si es vigilada y si no ha sido verificado antes
+			if($xSoc->getEsPersonaRiesgosa() == true AND $xAml->getEsPersonaVigilada() == true AND $EstadoReportado == false ){
+				$xMat->initByTopico($xMat->O_PERSONA_ALTORIESGO);
+				$idriesgo			= $xMat->getTipoRiesgo();
+				$xLog->add("REPORTE\tOperaciones con Personas de Alto Riesgo en el Recibo de Operacion : " . $this->mCodigoDeRecibo);
+				$xAv			= new cAML();
+				$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+				$xLog->add($xAv->getMessages(OUT_TXT), $xLog->DEVELOPER);
+				$NivelRiesgo		+= $xMat->getNivelRiesgo();
+				$Factores++;
 			}
 			
-			if( $xSoc->getEsPersonaPoliticamenteExpuesta() == true ){
-				//REPORTAR operaciones con PEPs
-				$idriesgo			= AML_ID_OPERACIONES_PERSONAS_PEP; //operaciones con criminales
-				$xRiesgo			= new cAml_risk_catalog();
-				$xRiesgo->setData( $xRiesgo->query()->initByID($idriesgo) );
-				
-				$xAv			= new cAML();
-				$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $idriesgo, "ERROR\tOperaciones con PEPS Recibo " . $this->mCodigoDeRecibo,
-						$this->mCodigoDeRecibo, $this->getFechaDeRecibo());
-				$this->mMessages	.= $xAv->getMessages(OUT_TXT);			
-			}
-			if($xSoc->getEsPersonaRiesgosa() == true ){
-				//REPORTAR operaciones con PEPs
-				$idriesgo			= 101005; //operaciones con criminales
-				$xRiesgo			= new cAml_risk_catalog();
-				$xRiesgo->setData( $xRiesgo->query()->initByID($idriesgo) );
-			
-				$xAv			= new cAML();
-				$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $idriesgo, "ERROR\tOperaciones con Personas de Alto Riesgo.- Recibo " . $this->mCodigoDeRecibo,
-						$this->mCodigoDeRecibo, $this->getFechaDeRecibo());
-				$this->mMessages	.= $xAv->getMessages(OUT_TXT);
-			}
-			//Operaciones de una exhibicion 500 y USD
+			//Operaciones de una exhibicion 500 y en Moneda Extranjera
 			if($this->mMoneda != AML_CLAVE_MONEDA_LOCAL){
-				$idriesgo			= AML_CLAVE_RIESGO_OPS_INDIVIDUALES;
-				$xRiesgo			= new cAml_risk_catalog();
-				$xMon				= new cMonedas($this->mMoneda);
+				$xRisk			= new cAMLCatalogoDeRiesgos(AML_CLAVE_RIESGO_OPS_INDIVIDUALES);
 				
-				$xRiesgo->setData( $xRiesgo->query()->initByID($idriesgo) );
-				$unidades			= $xMon->getEnDolares($this->getUnidadesOriginales());
-				if( $unidades >= $xRiesgo->unidades_ponderadas()->v() ){
-					$xAv			= new cAML();
-					$xAv->setForceRegistroRiesgo();
-					$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $idriesgo, "Operaciones($unidades) excedidas de 500 USD en el recibo " . $this->mCodigoDeRecibo . " Moneda " . $this->mMoneda,
-						$this->mCodigoDeRecibo, $this->getFechaDeRecibo());
-					$this->mMessages	.= $xAv->getMessages(OUT_TXT);
+				if($xRisk->init() == true){
+					$xMon		= new cMonedas($this->mMoneda);
+					$unidades	= $xMon->getEnDolares($this->getUnidadesOriginales());
+					if($unidades >= $xRisk->getUnidadesPonderadas()){
+						$xLog->add("REPORTE\tOperaciones($unidades) excedidas de 500 USD en el recibo " . $this->mCodigoDeRecibo . " Moneda " . $this->mMoneda);
+						$idriesgo		= $xRisk->getClave();
+						$xAv			= new cAML();
+						$xAv->setForceRegistroRiesgo();
+						$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+						$xLog->add($xAv->getMessages(OUT_TXT), $xLog->DEVELOPER);
+						$NivelRiesgo		+= $xMat->getNivelRiesgo();
+						$Factores++;
+						
+					} else {
+						$xLog->add("OK\tLimites(500USD) sin exceder en la Moneda " . $this->mMoneda . " por $unidades \r\n", $xLog->DEVELOPER);
+					}
 				} else {
-					$this->mMessages	.= "OK\tNo hay modificacion para la Moneda " . $this->mMoneda . " por $unidades \r\n";
+					$xLog->add("OK\tNo hay Riesgo(500USD) Iniciado para la" . $this->mMoneda . " por $unidades \r\n", $xLog->DEVELOPER);
 				}
 			}
 			// Agregar Relevantes por 10000USD
 			if($this->isEfectivo() == true){
-				$idriesgo			= AML_CLAVE_RIESGO_OPS_RELEVANTES;
-				$xRiesgo			= new cAml_risk_catalog();
-				$xMon				= new cMonedas($this->mMoneda);
-				$mmonto				= ($this->mMoneda == AML_CLAVE_MONEDA_LOCAL) ? $this->getTotal() : $this->getUnidadesOriginales();
-				$xRiesgo->setData( $xRiesgo->query()->initByID($idriesgo) );
-				$unidades			= $xMon->getEnDolares($mmonto);
-
-				if( $unidades >= $xRiesgo->unidades_ponderadas()->v() ){
-					$xAv			= new cAML();
-					$xAv->setForceRegistroRiesgo();
-					$xAv->sendAlerts($this->mSocio, AML_OFICIAL_DE_CUMPLIMIENTO, $idriesgo, "Operaciones Relevantes por $unidades USD en el recibo " . $this->mCodigoDeRecibo . " Moneda " . $this->mMoneda,
-						$this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+				$xRisk			= new cAMLCatalogoDeRiesgos(AML_CLAVE_RIESGO_OPS_RELEVANTES);
+				if($xRisk->init() == true){
+					$xMon		= new cMonedas($this->mMoneda);
+					$mmonto		= ($this->mMoneda == AML_CLAVE_MONEDA_LOCAL) ? $this->getTotal() : $this->getUnidadesOriginales();
+					$unidades	= $xMon->getEnDolares($mmonto);
+					$idriesgo	= $xRisk->getClave();
 					
-					$this->mMessages	.= $xAv->getMessages(OUT_TXT);
+					if($unidades >= $xRisk->getUnidadesPonderadas()){
+						$xLog->add("REPORTE\tOperaciones Relevantes por $unidades USD en el recibo " . $this->mCodigoDeRecibo . " Moneda " . $this->mMoneda);
+						$xAv->setForceRegistroRiesgo();
+						$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+						$xLog->add($xAv->getMessages(OUT_TXT), $xLog->DEVELOPER);
+						$NivelRiesgo		+= $xMat->getNivelRiesgo();
+						
+						$Factores++;
+					} else {
+						$xLog->add("OK\tLimites(Relevantes) sin exceder en la Moneda " . $this->mMoneda . " por $unidades \r\n", $xLog->DEVELOPER);
+					}
 				} else {
-					$this->mMessages	.= "OK\tNo hay modificacion para la Moneda " . $this->mMoneda . " por $unidades \r\n";
-					
+					$xLog->add("OK\tNo hay Riesgo(Relevantes) Iniciado para la" . $this->mMoneda . " por $unidades \r\n", $xLog->DEVELOPER);
 				}
 			}
-			if($xAml->getEsPersonaVigilada() == true){
+				
+			
+			if($xAml->getEsPersonaOmitida() == true){
+				$xLog->add("OK\tLa Persona esta en Lista de Omitidos", $xLog->DEVELOPER);
+			} else {
 				//Operaciones Internas Preocupantes por Usuario
 				$xAml->setAnalizarTransaccionalidadPorNucleo($this->mCodigoDeRecibo, $this->mFechaDeOperacion, $this->mUsuario, true);
+				$xAml->setVerificarPerfilTransaccional(false, true);
+				//Analizar Riesgo de Producto
+
+					
+				$xTipoRec	= new cTipoDeRecibo($this->getTipoDeRecibo());
+				if($xTipoRec->init() == true){
+					if($xTipoRec->getEsDeCaptacion()){
+						$xCapt	= new cCuentaDeCaptacion($this->getCodigoDeDocumento());
+						if($xCapt->init() == true){
+							$NivelRiesgo	= $xCapt->OProducto()->getAMLRiesgoAsoc();
+							$Factores++;
+						}
+					}
+					if($xTipoRec->getEsDeCredito()){
+						$xCred	= new cCredito($this->getCodigoDeDocumento());
+						if($xCred->init() == true){
+							$NivelRiesgo	= $xCred->getOProductoDeCredito()->getAMLRiesgoAsoc();
+							$Factores++;
+						}
+					}
+				}
 			}
-			$this->mMessages	.=  $xAml->getMessages(OUT_TXT);
-			
+			if($NivelRiesgo>0){
+				$xMRisk		= new cRiesgos();
+				$riesgo		= $xMRisk->getNivelarR(($NivelRiesgo/$Factores));
+				if($riesgo >= SYS_RIESGO_MEDIO){
+					if($xMat->initByTopico($xMat->O_RIESGO_PDTO) == true){
+						$idriesgo	= $xMat->getTipoRiesgo();
+						$xLog->add("REPORTE\tLa operacion en el Recibo ". $this->mCodigoDeRecibo . " se Reportar por Riesgo Medio o Mayor");
+						$xAv->setForceRegistroRiesgo();
+						$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
+					}
+				}
+			}
+			//Agregar Nivel de Riesgo de Producto
+			$xLog->add($xAml->getMessages(OUT_TXT), $xLog->DEVELOPER);
 		}
+		$this->mMessages		.= $xLog->getMessages();
 		return $finalizado;
 	}
 	/**
 	 * Revierte las Afectaciones del Recibo
 	 */
 	function setRevertir($ForzarEliminar = false){
+		$xQL			= new MQL();
+		$xLog			= new cCoreLog();
+		if($this->getTipoDeRecibo() == RECIBOS_TIPO_PLAN_DE_PAGO){
+			$xLog->add("WARN\tEliminar Plan de Pagos con Codigo " . $this->mCodigoDeRecibo ."\r\n");
+			$xLog->add("WARN\tEliminando Operaciones del Recibo " . $this->mCodigoDeRecibo ."\r\n", $xLog->DEVELOPER);
+			$sqlDM 			= "DELETE FROM `operaciones_mvtos` WHERE `recibo_afectado` =" . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDM);
+			$xLog->add("WARN\tEliminando El Recibo " . $this->mCodigoDeRecibo ."\r\n", $xLog->DEVELOPER);
+			$sqlDR 			= "DELETE FROM operaciones_recibos WHERE idoperaciones_recibos =" . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDR);
+			$sucess			= true;
+			$xLog->guardar($xLog->OCat()->RECIBO_ELIMINADO, $this->getCodigoDeSocio());
+		} else {
 			$sucess			= true;
 			$arrValuesRev	= array("-1" => "1", "1" => "-1", "0" => "0");
-			$xQL			= new MQL();
-			$xLog			= new cCoreLog();
+			
+			
+			$periodo		= $this->getPeriodo();
 			$sqlM 			= "SELECT
 						`operaciones_mvtos`.*,
 						`operaciones_tipos`.*,
@@ -594,14 +730,24 @@ class cReciboDeOperacion{
 							`idoperaciones_tipos`
 					WHERE
 						(`operaciones_mvtos`.`recibo_afectado` =" . $this->mCodigoDeRecibo . ")";
-			$xLog->add("======================== REVERSION DE RECIBO[" . $this->mCodigoDeRecibo . "] \r\n");
-			$original			= "";
-			$rs 			= $xQL->getDataRecord($sqlM); //getRecordset($sqlM);
+			$xLog->add("WARN\tReversion del Recibo " . $this->mCodigoDeRecibo . "] - Persona : " . $this->getCodigoDeSocio() . " - Documento: " . $this->getCodigoDeDocumento() . " \r\n");
+			$original		= "";
+			$rs 			= $xQL->getDataRecord($sqlM); 	//getRecordset($sqlM);
+			$items			= $xQL->getNumberOfRows();
+			$tocarplan		= false;						//Reconstruir Letra de Pago
+			$docto			= $this->getCodigoDeDocumento();
+			$OPT_CALCULAR_INTERES	= false;
+			$PAGOS_SIN_CAPITAL		= false;// variable
+			//XXX: Revisar procesos de reversion
 			if( $this->init() == true){
-				$original	= "====[". base64_encode( json_encode($this->getDatosInArray()) ) . "]====";
-			
+				$original	= json_encode($this->getDatosInArray());
+				$original	= "====[". base64_encode( $original ) . "]====";
+				setArchivarRegistro($original, iDE_RECIBO);
+				$contar		= 0;
+				$DoctoTrabajo			= 0;
 				if($rs){
-					foreach ($rs as $rw){ //$rw = mysql_fetch_array($rs)){
+					foreach ($rs as $rw){
+						$msg			= "";
 						$codigo			= $rw["idoperaciones_mvtos"];
 						$docto			= $rw["docto_afectado"];
 						$socio			= $rw["socio_afectado"];
@@ -610,46 +756,64 @@ class cReciboDeOperacion{
 						$monto			= $rw["afectacion_real"];
 						$afectacion		= $rw["valor_afectacion"];
 						$recibo			= $rw["recibo_afectado"];
+						$parcialidad	= $rw["periodo_socio"];
+						$parcialidad	= ($parcialidad <=0 ) ? $periodo : $parcialidad;
 						$colocacion		= array();
 						$captacion		= array();
-						//selecciona un comportamiento segun el Origen del Recibo
-						switch ($this->mAplicadoA){
-							case "colocacion":
-								//cargar datos del credito
-	                               $Credito          = new cCredito($docto, $socio);
-	                               $Credito->init();
-	                               $colocacion     = $Credito->getDatosDeCredito();
-	
-									break;
-								case "captacion":
-									//cargar datos de la cuenta
-	                                $Cuenta           = new cCuentaALaVista($docto);
-	                                $Cuenta->init();
-	                                $captacion      = $Cuenta->getDatosInArray();
-	
-									break;
-								case "mixto":
-									//cargar datos de la cuenta y del credito
-	                                $Credito          = new cCredito($docto, $socio);
-	                                $Credito->init();
-	                                $colocacion     = $Credito->getDatosDeCredito();
-	                                $Cuenta           = new cCuentaALaVista($docto);
-	                                $Cuenta->init();
-	                                $captacion      = $Cuenta->getDatosInArray();
-	                                $this->mMessages	.= "WARN\tEL Recibo es Mixto, se carga tanto Captacion como Colocacion\r\n";
-									break;
-								default:
-	                                $this->mMessages	.= "WARN\tEL Recibo es " . $this->mAplicadoA . ", NO SE CARGA CODIGO\r\n";
-									break;
+						$contar++;
+						if($DoctoTrabajo!== $docto ){
+							//selecciona un comportamiento segun el Origen del Recibo
+							//$PAGOS_SIN_CAPITAL
+							
+							switch ($this->mAplicadoA){
+								case "colocacion":
+									//cargar datos del credito
+		                               $Credito        = new cCredito($docto, $socio);
+		                               $Credito->init();
+		                               $colocacion     = $Credito->getDatosDeCredito();
+		                               if($Credito->isAFinalDePlazo() == false){
+		                               		$Credito->getNumeroDePlanDePagos();
+		                               }
+		                               $PAGOS_SIN_CAPITAL	= $Credito->getPagosSinCapital();
+										break;
+									case "captacion":
+										//cargar datos de la cuenta
+		                                $Cuenta        		= new cCuentaALaVista($docto);
+		                                $Cuenta->init();
+		                                $captacion      	= $Cuenta->getDatosInArray();
+		
+										break;
+									case "mixto":
+										//cargar datos de la cuenta y del credito
+		                                $Credito       		= new cCredito($docto, $socio);
+		                                $Credito->init();
+		                                if($Credito->isAFinalDePlazo() == false){
+		                                	$Credito->getNumeroDePlanDePagos();
+		                                }
+		                                $PAGOS_SIN_CAPITAL	= $Credito->getPagosSinCapital();
+		                                
+		                                $colocacion			= $Credito->getDatosDeCredito();
+		                                $Cuenta				= new cCuentaALaVista($docto);
+		                                if($Cuenta->init() == false){
+		                                	//$Cuenta			= new cCuentaALaVista($Credito->getNu);
+		                                }
+		                                $captacion      = $Cuenta->getDatosInArray();
+		                                $xLog->add("WARN\tEL Recibo es Mixto, se carga tanto Captacion como Colocacion\r\n");
+										break;
+									default:
+		                                $xLog->add("WARN\tEL Recibo es " . $this->mAplicadoA . ", NO SE CARGA CODIGO\r\n");
+										break;
 							}
+						}
+						
+						
 							eval( $CodeRevertir );
-	
+							
 	
 								if($preservar_mvto=='1' AND $ForzarEliminar == false){
 									$SQL_DM = "UPDATE operaciones_mvtos
 											SET afectacion_estadistica=afectacion_real,
-											afectacion_real = 0, afectacion_contable=0,
-											afectacion_cobranza=0, valor_afectacion=0,
+											afectacion_real = 0, valor_afectacion=0,
 											estatus_mvto = 99,
 											docto_neutralizador = " . $this->mCodigoDeRecibo  .",
 											recibo_afectado	= " . DEFAULT_RECIBO . "
@@ -661,27 +825,49 @@ class cReciboDeOperacion{
 											WHERE idoperaciones_mvtos = $codigo";
 									$xLog->add("Eliminado el Movimiento $codigo\r\n", $xLog->DEVELOPER);
 								}
-								my_query($SQL_DM);
-						//Actualizar Saldos
-						if(isset($Cuenta)){ $Cuenta->setUpdateSaldoByMvtos(); }
-						if(isset($Credito)){ $xUtil		= new cUtileriasParaCreditos();$xUtil->setCuadrarCreditosByMvtos($docto); }
+								$xQL->setRawQuery($SQL_DM);
+						$DoctoTrabajo	= $docto;
+						if($contar >= $items){
+							//Actualizar Saldos
+							if(isset($Cuenta)){ $Cuenta->setCuandoSeActualiza(); }
+							if(isset($Credito)){ 
+								$Credito->setCuandoSeActualiza();
+								$xLog->add($Credito->getMessages(), $xLog->DEVELOPER);
+							}
+						}
+						$xLog->add($msg, $xLog->DEVELOPER);
+						
 					}
 				}
 				//Elimnar Prepoliza
 				$xLog->add("WARN\tEliminando Prepolizas\r\n", $xLog->DEVELOPER);
-				$sqlDP 				= "DELETE FROM contable_polizas_proforma	WHERE numero_de_recibo = " . $this->mCodigoDeRecibo . ""; my_query($sqlDP);
+				$sqlDP 				= "DELETE FROM contable_polizas_proforma	WHERE numero_de_recibo = " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDP);
 				//Eliminar Recibo
-				$sqlDR 				= "DELETE FROM operaciones_recibos WHERE idoperaciones_recibos =" . $this->mCodigoDeRecibo . ""; my_query($sqlDR);
+				$xLog->add("WARN\tEliminando El Recibo" . $this->mCodigoDeRecibo ."\r\n", $xLog->DEVELOPER);
+				$sqlDR 				= "DELETE FROM operaciones_recibos WHERE idoperaciones_recibos =" . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDR);
 				//Agregar Tesoreria y Bancos
 				$xLog->add("WARN\tEliminando Operaciones de Caja\r\n", $xLog->DEVELOPER);
-				$DelTesoreria		= "DELETE FROM `tesoreria_cajas_movimientos` WHERE `recibo`= " . $this->mCodigoDeRecibo . ""; my_query($DelTesoreria);
+				$DelTesoreria		= "DELETE FROM `tesoreria_cajas_movimientos` WHERE `recibo`= " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($DelTesoreria);
 				$xLog->add("WARN\tEliminando Operaciones de Bancos\r\n", $xLog->DEVELOPER);
-				$DelBancos			= "DELETE FROM `bancos_operaciones` WHERE `recibo_relacionado` = " . $this->mCodigoDeRecibo . ""; my_query($DelBancos);
+				$DelBancos			= "DELETE FROM `bancos_operaciones` WHERE `recibo_relacionado` = " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($DelBancos);
+				//Neutraliza Pagos en los envio de cobranza
+				$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `recibo`= 0, `estado`=1, `tiempocobro`=0 WHERE `recibo`=" . $this->mCodigoDeRecibo);
+				
+				if($this->mAplicadoA == "colocacion" OR $this->mAplicadoA == "mixto" AND $this->isPagable() == true){
+					if(!isset($Credito)){
+						$Credito	= new cCredito($docto);
+					}
+					if($Credito->init() == true){
+						if($Credito->getEsAfectable() == true){
+							$Credito->setReestructurarIntereses(false, false, true);
+						}
+					}
+				}
 			}
 			
 			$xCE	= new cErrorCodes();
 			//setLog($this->mMessages .  json_encode($this->getDatosInArray()), $xCE->RECIBO_ELIMINADO);
-			$xLog->guardar($xLog->OCat()->RECIBO_ELIMINADO);
+			$xLog->guardar($xLog->OCat()->RECIBO_ELIMINADO, $this->getCodigoDeSocio());
 			$this->mMessages	.= $xLog->getMessages();
 			if($this->isPagable() == true){
 				//agregar Aviso.
@@ -692,7 +878,8 @@ class cReciboDeOperacion{
 				));
 				$xRuls->setExecuteActions( $xRuls->reglas()->RN_DATOS_AL_ELIMINAR_RECIBO );
 			}
-			return $sucess;
+		}
+		return $sucess;
 	}	
 	function getCodigoDeRecibo(){ return $this->mCodigoDeRecibo;	}
 	/**
@@ -701,9 +888,7 @@ class cReciboDeOperacion{
 	 */
 	function getDatosInArray(){ return $this->mDatosByArray; }
 	/**
-	 * Retorna un Array por los datos del Recibo
 	 * @deprecated 1.9.42
-	 * @return array
 	 */	
 	function getDatosReciboInArray(){ return $this->mDatosByArray;	}
 	function getURI_Formato(){ return $this->mPathToFormato . $this->mCodigoDeRecibo; }
@@ -718,13 +903,15 @@ class cReciboDeOperacion{
 			$this->init();
 			$xLg			= new cLang();
 			$personaAsoc	= $this->getPersonaAsociada();
+			$xRuls			= new cReglaDeNegocio();
+			$sinImpreso		= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_SIN_VERSIONIMP);
 			//$fichaEmpresa	= "";
-			
+			$xF		= new cFecha(0);
 		if($this->mReciboIniciado == false){
 			$exoFicha =  "<div class='error'>" . $xLg->get(MSG_NO_DATA) .  "</div>";
 		} else {
 			$xLg		= new cLang();
-			$tool 	= $trTool;
+			$tool 	= "";
 			if($extend == true){
 				$xUsr	= new cSystemUser($this->getCodigoDeUsuario());
 				$xUsr->init();
@@ -738,7 +925,7 @@ class cReciboDeOperacion{
 				$tool	.= "<td>" . $this->getCodigoDeDocumento() . "</td>" ;
 								
 				$tool	.= "<tr><th class='izq'>" . $xLg->getT("TR.Elabora") . "</th>";
-				$tool	.= "<td>" . $xUsr->getNombreCompleto() . "</td>" ;
+				$tool	.= "<td>" . $xUsr->getNombreCompleto(). "-" . $xF->getFechaDDMM($this->mFechaDeCaptura) . "</td>" ;
 				
 				if($this->isDeEmpresa() == true){
 					$xEmp	= new cEmpresas($personaAsoc);
@@ -747,6 +934,12 @@ class cReciboDeOperacion{
 					$tool	.= "<td>" . $xEmp->getNombre() . "</td>" ;
 				}
 				$tool	.= "</tr>";
+				if($this->getObservaciones() != ""){
+					$tool	.= "<tr>
+					<th class='izq'>" . $xLg->getT("TR.Observaciones") . "</th>
+					<td colspan='3'>" . $this->getObservaciones() . "</td>
+					</tr>";
+				}
 			}
 			if($this->isDivisaExtranjera() == true){
 				$tool	.= "<tr><th class='izq'>" . $xLg->getT("TR.Moneda") . "</th>";
@@ -755,27 +948,28 @@ class cReciboDeOperacion{
 				$tool	.= "<td>" . $this->getUnidadesOriginales() . "</td>" ;				
 				$tool	.= "</tr>";
 			}			
-			$xF		= new cFecha(0);
+			$tool		.= $trTool;
+			
 			$exoFicha =  "
 				<table id=\"ficharecibo\">
 				<tbody>
 					<tr>
-						<th class='izq'>Numero de Recibo</th>
+						<th class='izq'>" . $xLg->getT("TR.Numero de Recibo"). "</th>
 						<td class='mny'>" . $this->mCodigoDeRecibo . "</td>
-						<th class='izq'>Tipo de Recibo</th>
+						<th class='izq'>" . $xLg->getT("TR.Tipo de Recibo"). "</th>
 						<td>" . $this->mTipoDescripcion . "</td>
 					</tr>
 					<tr>
-						<th class='izq'>Fecha de Recibo</th>
+						<th class='izq'>" . $xLg->getT("TR.Fecha de Recibo"). "</th>
 						<td>" . $xF->getFechaCorta($this->mFechaDeOperacion) . "</td>
-						<th class='izq'>Recibo Fiscal</th>
+						<th class='izq'>" . $xLg->getT("TR.Recibo Fiscal") ."</th>
 						<td>" . $this->mReciboFiscal . "</td>
 					</tr>
 					<tr>
-						<th class='izq'>Tipo de Pago</th>
+						<th class='izq'>" . $xLg->getT("TR.Tipo de Pago") . "</th>
 						<td>" .  strtoupper( $this->mTipoDePago ) . "</td>
-						<th class='izq'>Total</th>
-						<td>" .  getFMoney( $this->mTotalRecibo ) . "</td>
+						<th class='izq'>" . $xLg->getT("TR.Total") ."</th>
+						<td class='mny'>" .  getFMoney( $this->mTotalRecibo ) . "</td>
 
 					</tr>
 
@@ -793,7 +987,6 @@ class cReciboDeOperacion{
 	}
 	/**
 	 * Retorna un Array de Datos por el Documento Usado segun el Origen del recibo
-	 *
 	 * @return array
 	 */
 	function getInfoDoctoInArray(){
@@ -832,7 +1025,7 @@ class cReciboDeOperacion{
 				numero_cuenta = " . $this->mDocto . "
 				LIMIT 0,1";
 				$datosA		= obten_filas($sqlA);
-				$datos		= $datosC; //array_merge($datosC, $datosA);
+				$datos		= $datosC;
 			break;
 		}
 		return $datos;
@@ -846,9 +1039,10 @@ class cReciboDeOperacion{
 					$ocaja->setPagoEfectivo($this->mCodigoDeRecibo, $this->mTotalRecibo, 0, $this->mObservaciones, $this->mFechaDeOperacion, $this->mMoneda, $this->mTotalRecibo);
 				break;
 				case TESORERIA_COBRO_DESCTO:
-					$cuenta		= $arrParams["cuenta"];
-					$cheque		= $arrParams["cheque"];
-					$ocaja->setCobroChequeInterno($this->mCodigoDeRecibo, $this->mTotalRecibo, $cuenta, $cheque);
+					$cuenta	= (isset($arrParams["cuenta"])) ? $arrParams["cuenta"] : $this->mCuentaBancaria;
+					$cheque	= (isset($arrParams["cheque"])) ? $arrParams["cheque"] : $this->mNumeroCheque;
+					$monto	= (isset($arrParams[SYS_MONTO])) ? $arrParams[SYS_MONTO] : $this->mTotalRecibo; 
+					$ocaja->setCobroDescuentoCheque($this->mCodigoDeRecibo, $monto, $cuenta, $cheque);
 				break;
 			}
 		}
@@ -896,27 +1090,35 @@ class cReciboDeOperacion{
 	}
 	function setCambiarCodigo($folio = false){
 		$recibo		= $this->mCodigoDeRecibo;
+		$xQL		= new MQL();
+		$xFolios	= new cFolios();
 		$this->init();
 		$socio		= $this->mSocio;
-		$folio		= ( $folio == false ) ? getFolio( iDE_RECIBO ) : $folio;
+		$folio		= setNoMenorQueCero($folio);
+		$folio		= ($folio <= 0) ? $xFolios->getClaveDeRecibo() : $folio;
 	
 		$msg		= "$recibo\tCambiando el Recibo $recibo de la persona $socio al Nuevo Numero $folio\r\n";
 	
-		$sqlUM 		= "UPDATE operaciones_mvtos SET recibo_afectado = $folio WHERE
-					recibo_afectado = $recibo AND socio_afectado = $socio";
-		$m			= my_query($sqlUM);
-		if ( $m["stat"] == false ){
-			$msg	.= $m[SYS_MSG] . "\r\n";
-		}
-		
-		$sqlURec	= "UPDATE operaciones_recibos SET idoperaciones_recibos = $folio WHERE
-						idoperaciones_recibos = $recibo AND numero_socio = $socio ";
-		$r = my_query($sqlURec) . "\r\n";
-		if ($r["stat"] == false ){
-			$msg	.= $r[SYS_MSG];
-		}
+		$sqlUM 		= "UPDATE operaciones_mvtos SET recibo_afectado = $folio WHERE recibo_afectado = $recibo AND socio_afectado = $socio";
+		$m			= $xQL->setRawQuery($sqlUM);
+	
+		$sqlURec	= "UPDATE operaciones_recibos SET idoperaciones_recibos = $folio WHERE idoperaciones_recibos = $recibo AND numero_socio = $socio ";
+		$r 			= $xQL->setRawQuery($sqlURec);
+
 		return $msg;
 	}
+	function setCambiarCuentaBancaria($cuenta = false){
+		$cuenta	= setNoMenorQueCero($cuenta);
+		if($cuenta != $this->getClaveCuentaBancaria()){
+			$xQL	= new MQL();
+			$xQL->setRawQuery("UPDATE `tesoreria_cajas_movimientos` SET `cuenta_bancaria`=$cuenta WHERE `recibo`=" . $this->getCodigoDeRecibo());
+			$xQL->setRawQuery("UPDATE `operaciones_recibos` SET `cuenta_bancaria`=$cuenta WHERE `idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
+			$xQL->setRawQuery("UPDATE `contable_polizas_proforma` SET `banco`=$cuenta WHERE `numero_de_recibo`=" . $this->getCodigoDeRecibo());
+			$xQL->setRawQuery("UPDATE `bancos_operaciones` SET `cuenta_bancaria`=$cuenta WHERE `recibo_relacionado`=". $this->getCodigoDeRecibo());
+		} else {
+			$this->mMessages	.= "WARN\tNo se Actualizo la cuenta $cuenta\r\n";
+		}
+	}	
 	function getCodigoDeSocio(){ return $this->mSocio; }
 	function getSocio(){ return new cSocio($this->mSocio);	}
 	function getCodigoDeDocumento(){ return $this->mDocto; }
@@ -925,16 +1127,21 @@ class cReciboDeOperacion{
 	function getOrigen(){ return $this->mOrigen; }
 	function getCodigoDeUsuario(){ return $this->mUsuario; }
 	function getClaveDeOrigen(){ return $this->mOrigen; }
+	function getSaldoHistorico(){ return $this->mSaldoHistorico; }
+	function getClaveCuentaBancaria(){ return $this->mCuentaBancaria; }
 	function getIndiceOrigen(){ return $this->mIndiceOrigen; }
 	function setMoneda($moneda){$this->mMoneda = $moneda;}
 	function setUnidadesOriginales($unidades){ $this->mUnidadesOriginales = $unidades; }
 	function getUnidadesOriginales(){ return $this->mUnidadesOriginales; }
 	function setFechaVencimiento($fecha = false){ 	if ($fecha == false ){ $fecha	= fechasys(); } $this->mFechaDeVcto	= $fecha;	}
 	function setFecha($fecha, $actualizacion = false){
+		$xQL				= new MQL();
+		$xF					= new cFecha();
+		$fecha				= $xF->getFechaISO($fecha);
 		$this->mFechaDeOperacion	= $fecha;
 		$recibo				= $this->mCodigoDeRecibo;
 		$this->mMessages	.= "WARN\tRecibo $recibo . Actualizando la fecha " . $this->getFechaDeRecibo() . " A  $fecha\r\n";
-		$xQL				= new MQL();
+		
 		if( $actualizacion == true ){
 			$xQL->setRawQuery("UPDATE operaciones_recibos SET fecha_operacion='$fecha' WHERE idoperaciones_recibos=$recibo");
 			if($this->mUnicoDocto == true){
@@ -947,34 +1154,50 @@ class cReciboDeOperacion{
 			//ejecutar aviso
 			$xLog		= new cCoreLog();
 			$xLog->add($this->mMessages);
-			$xLog->guardar($xLog->OCat()->EDICION_RAW);
+			$xLog->guardar($xLog->OCat()->EDICION_RAW, $this->getCodigoDeSocio());
 		}
 	}
 	function setPeriodo($periodo = false, $actualizacion = false){
-		if($actualizacion == true){
-			$this->mMessages		.= "WARN\tActualizando a nuevo periodo $periodo\r\n";
-			$recibo					= $this->mCodigoDeRecibo;
-			my_query("UPDATE operaciones_mvtos SET periodo_socio=$periodo WHERE recibo_afectado=$recibo");
-			$this->mPeridoActivo	= $periodo;
+		$periodAnterior			= $this->getPeriodo();
+		$this->mPeriodoActivo	= setNoMenorQueCero($periodo);
+		$recibo					= setNoMenorQueCero($this->mCodigoDeRecibo);
+		if($actualizacion == true AND $recibo >  0){
+			$ql					= new MQL();
+			$periodo			= $this->mPeriodoActivo;
+			$this->mMessages	.= "WARN\tActualizando a nuevo periodo $periodo\r\n";
+			$this->setCleanCache();
+			$ql->setRawQuery("UPDATE operaciones_mvtos SET periodo_socio=$periodo WHERE recibo_afectado=$recibo");
+			$ql->setRawQuery("UPDATE `operaciones_recibos` SET `periodo_de_documento`=$periodo WHERE `idoperaciones_recibos`=$recibo");
+			//Actualiza los envios de nomina
+			$ql->setRawQuery("UPDATE `empresas_cobranza` SET `recibo`= 0, `estado`=1, `tiempocobro`=0, `observaciones`='' WHERE `recibo`=$recibo");
+			//Actualiza los recibos al nuevo
+			$ql->setRawQuery("UPDATE `empresas_cobranza`, `operaciones_recibos` SET `recibo`= `operaciones_recibos`.`idoperaciones_recibos`, `tiempocobro`=UNIX_TIMESTAMP(`operaciones_recibos`.`fecha_operacion`), `estado`=0 
+			WHERE `empresas_cobranza`.`recibo`=0 AND `operaciones_recibos`.`docto_afectado`=`empresas_cobranza`.`clave_de_credito` AND `operaciones_recibos`.`periodo_de_documento`=`empresas_cobranza`.`parcialidad` AND `operaciones_recibos`.`tipo_docto`= 2");
 		}
 	}
 	function setTotalPorProrrateo($total){
-		$recibo		= $this->mCodigoDeRecibo;
-		$factor		= $total / $this->getTotal(); //2500 / 8000 = 
-		$this->mMessages	.= "CHANGES\tCambiar " . $this->getTotal() . " a $total\r\n";
-		$rec		= my_query("UPDATE operaciones_recibos SET total_operacion=(total_operacion*$factor) WHERE idoperaciones_recibos=$recibo");
-		$ops		= my_query("UPDATE operaciones_mvtos SET afectacion_real=(afectacion_real*$factor), afectacion_cobranza=(afectacion_cobranza*$factor), afectacion_contable=(afectacion_contable*$factor), afectacion_estadistica=(afectacion_estadistica*$factor) WHERE recibo_afectado=$recibo");
-		$this->mMessages	.= $rec[SYS_INFO];
-		$this->mMessages	.= $ops[SYS_INFO];
+		if(setNoMenorQueCero($total)>0){
+			$recibo				= $this->mCodigoDeRecibo;
+			$factor				= $total / $this->getTotal(); //2500 / 8000 = 
+			$this->mMessages	.= "CHANGES\tCambiar " . $this->getTotal() . " a $total\r\n";
+			$rec				= my_query("UPDATE operaciones_recibos SET total_operacion=(total_operacion*$factor) WHERE idoperaciones_recibos=$recibo");
+			$ops				= my_query("UPDATE operaciones_mvtos SET afectacion_real=(afectacion_real*$factor), afectacion_cobranza=(afectacion_cobranza*$factor), afectacion_contable=(afectacion_contable*$factor), afectacion_estadistica=(afectacion_estadistica*$factor) WHERE recibo_afectado=$recibo");
+			$this->mMessages	.= $rec[SYS_INFO];
+			$this->mMessages	.= $ops[SYS_INFO];
+		}
 	}
 	function getBancoPorOperacion(){
-		$ob	= null;
+		$ob		= null;
 		$sql 	= "SELECT `bancos_operaciones`.`cuenta_bancaria` FROM	`bancos_operaciones` `bancos_operaciones` 
 		WHERE (`bancos_operaciones`.`recibo_relacionado` =" . $this->mCodigoDeRecibo . ") ORDER BY `bancos_operaciones`.`monto_real` DESC LIMIT 0,1";
-		$d	= obten_filas($sql);
+		$d		= obten_filas($sql);
 		if(isset($d["cuenta_bancaria"])){
 			$ob	= new cCuentaBancaria($d["cuenta_bancaria"]);
-			$ob->init();
+			if($ob->init($d) == true){
+				$this->mMessages	.= "WARN\tSe Carga la cuenta " . $d["cuenta_bancaria"] . " desde Tesoreria\r\n";
+			}
+		} else {
+			$this->mMessages	.= "ERROR\tNo hay Operacion Bancaria del Recibo " . $this->mCodigoDeRecibo . " \r\n";
 		}
 		return $ob;
 	}
@@ -1020,11 +1243,11 @@ class cReciboDeOperacion{
 			}			
 		}
 	}
-	function setDatosDePago($moneda = '', $monto_moneda = 0, $cheque ='', $tipo_de_pago = false, $transaccion = SYS_NINGUNO){
-		
+	function setDatosDePago($moneda = '', $monto_moneda = 0, $cheque ='', $tipo_de_pago = false, $transaccion = SYS_NINGUNO, $CuentaBancaria = 0){
+		$xQL			= new MQL();
 		$moneda			= ($moneda =='') ? $this->mMoneda : $moneda;
 		$moneda			= strtoupper($moneda);
-		
+		$CuentaBancaria	= setNoMenorQueCero($CuentaBancaria);
 		$tipo_de_pago	= ($tipo_de_pago == false) ? $this->getTipoDePago() : $tipo_de_pago;
 		$recibo			= $this->getCodigoDeRecibo();
 		$tipo_de_pago	= strtolower($tipo_de_pago);
@@ -1033,11 +1256,14 @@ class cReciboDeOperacion{
 		switch ($tipo_de_pago){
 			case TESORERIA_COBRO_EFECTIVO:
 				$origenAML	= ($moneda != AML_CLAVE_MONEDA_LOCAL) ? AML_OPERACIONES_PAGOS_EFVO_INT : AML_OPERACIONES_PAGOS_EFVO;
+				$this->mTipoOrigenAML	= $origenAML;
 				break;
 			case TESORERIA_PAGO_EFECTIVO:
 				$origenAML	= ($moneda != AML_CLAVE_MONEDA_LOCAL) ? AML_OPERACIONES_RETIRO_EFVO_INT : AML_OPERACIONES_RETIRO_EFVO;
+				$this->mTipoOrigenAML	= $origenAML;
 				break;
 			default:
+
 				if( setNoMenorQueCero($transaccion) > 0){
 					//obtener Infor de la DB
 					$origenAML				= setNoMenorQueCero($transaccion);
@@ -1055,15 +1281,19 @@ class cReciboDeOperacion{
 				}
 				break;
 		}
-
-		$sql			= "UPDATE operaciones_recibos SET  cheque_afectador='$cheque', tipo_pago='$tipo_de_pago', origen_aml = $origenAML, clave_de_moneda='$moneda', unidades_en_moneda=$monto_moneda WHERE idoperaciones_recibos= $recibo";
-		$rs 			= my_query($sql);
+		$sql			= "UPDATE operaciones_recibos SET  cheque_afectador='$cheque', tipo_pago='$tipo_de_pago', origen_aml = $origenAML, 
+							clave_de_moneda='$moneda', unidades_en_moneda=$monto_moneda,
+							cuenta_bancaria='$CuentaBancaria' 
+							WHERE idoperaciones_recibos= $recibo";
+		$rs 			= $xQL->setRawQuery($sql);
+		//
+		$this->setCleanCache();
 		//Validar Moneda Extranjera
-		if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_INFO];	}
-		if($rs[SYS_ESTADO] == true){
-			$this->mMessages	.= "OK\tActualizacion correcta del Recibo $recibo ($moneda|$tipo_de_pago|$monto_moneda|$cheque|$transaccion)\r\n";
-		} else{
+		
+		if($rs === false){
 			$this->mMessages	.= "ERROR\tError al actualizar el Recibo $recibo ($moneda|$tipo_de_pago|$monto_moneda|$cheque|$transaccion)\r\n";
+		} else{
+			$this->mMessages	.= "OK\tActualizacion correcta del Recibo $recibo ($moneda|$tipo_de_pago|$monto_moneda|$cheque|$transaccion)\r\n";
 		}
 		//-- AML
 		$this->init();
@@ -1079,14 +1309,19 @@ class cReciboDeOperacion{
 				$info		.= $this->getOCaja()->getChequeActivo() . "|";
 				$info		.= $this->getOCaja()->getCuentaBancoActivo() . "|";
 				$info		.= $this->getOCaja()->getBancoActivo() . "|";
-				$this->mCuentaBancaria	= setNoMenorQueCero($this->getOCaja()->getCuentaBancoActivo());
-				$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
-				if($xCtaBanc->init() == true){
-					$this->mOBanco	= $xCtaBanc;
+				if($this->getOCuentaBancaria() != null){
 					$xBanc		= new cBancos_entidades();
-					$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+					$xBanc->setData( $xBanc->query()->initByID( $this->getOCuentaBancaria()->getClaveDeBanco() ) );
 					$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";					
 				}
+				//$this->mCuentaBancaria	= setNoMenorQueCero($this->getOCaja()->getCuentaBancoActivo());
+				//$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
+				//if($xCtaBanc->init() == true){
+				//	$this->mOCuentaBancaria	= $xCtaBanc;
+				//	$xBanc		= new cBancos_entidades();
+				//	$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+				//	$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";					
+				//}
 								
 				break;
 			case SYS_SALIDAS:
@@ -1100,14 +1335,19 @@ class cReciboDeOperacion{
 						$info		.= $xOp->getNumeroDeCheque() . "|";
 						$info		.= $xOp->getCuentaBancaria() . "|";
 						//obtener el nombre del banco
-						$this->mCuentaBancaria	= setNoMenorQueCero($xOp->getCuentaBancaria());
-						$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
-						if($xCtaBanc->init() == true){
-							$this->mOBanco	= $xCtaBanc;
+						if($this->getOCuentaBancaria() != null){
 							$xBanc		= new cBancos_entidades();
-							$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+							$xBanc->setData( $xBanc->query()->initByID( $this->getOCuentaBancaria()->getClaveDeBanco() ) );
 							$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";
 						}
+						//$this->mCuentaBancaria	= setNoMenorQueCero($xOp->getCuentaBancaria());
+						//$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
+						//if($xCtaBanc->init() == true){
+						//	$this->mOCuentaBancaria	= $xCtaBanc;
+						//	$xBanc		= new cBancos_entidades();
+						//	$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+						//	$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";
+						//}
 						break;
 					case TESORERIA_PAGO_DOCTO:
 		
@@ -1121,15 +1361,20 @@ class cReciboDeOperacion{
 						//$PorOperar	= setNoMenorQueCero($this->getTotal() - $xOp->getMonto());
 						$info		.= $xOp->getNumeroDeCheque() . "|";
 						$info		.= $xOp->getCuentaBancaria() . "|";
-						//obtener el nombre del banco
-						$this->mCuentaBancaria	= setNoMenorQueCero($xOp->getCuentaBancaria());
-						$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
-						if($xCtaBanc->init() == true){
-							$this->mOBanco	= $xCtaBanc;
+						if($this->getOCuentaBancaria() != null){
 							$xBanc		= new cBancos_entidades();
-							$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+							$xBanc->setData( $xBanc->query()->initByID( $this->getOCuentaBancaria()->getClaveDeBanco() ) );
 							$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";
-						}		
+						}						
+						//obtener el nombre del banco
+						//$this->mCuentaBancaria	= setNoMenorQueCero($xOp->getCuentaBancaria());
+						//$xCtaBanc	= new cCuentaBancaria($this->mCuentaBancaria);
+						//if($xCtaBanc->init() == true){
+						//	$this->mOCuentaBancaria	= $xCtaBanc;
+						//	$xBanc		= new cBancos_entidades();
+						//	$xBanc->setData( $xBanc->query()->initByID( $xCtaBanc->getClaveDeBanco() ) );
+						//	$info		.= $xBanc->nombre_de_la_entidad()->v(OUT_TXT) . "|";
+						//}		
 						break;
 				}
 				break;
@@ -1157,11 +1402,12 @@ class cReciboDeOperacion{
 	}
 	function getOUsuario(){ if($this->mOUsuario == null){ $this->mOUsuario = new cSystemUser($this->mUsuario); $this->mOUsuario->init(); } return $this->mOUsuario; }
 	function getPeriodo(){
-		if($this->mPeridoActivo == null){
+		//si es inversiones o pago de credito
+		if(setNoMenorQueCero($this->mPeriodoActivo) <= 0 AND $this->isPagable() == true){
 			$sql					= "SELECT MAX(periodo_socio) AS 'parcialidad' FROM operaciones_mvtos WHERE recibo_afectado=" . $this->mCodigoDeRecibo;
-			$this->mPeridoActivo	= mifila($sql, "parcialidad");
+			$this->mPeriodoActivo	= mifila($sql, "parcialidad");
 		}
-		return $this->mPeridoActivo;
+		return $this->mPeriodoActivo;
 	}
 	function isDivisaExtranjera(){
 		return ( strtoupper($this->mMoneda) == strtoupper(AML_CLAVE_MONEDA_LOCAL) ) ? false : true;
@@ -1207,6 +1453,7 @@ class cReciboDeOperacion{
 		$sql		= "SELECT * FROM `operaciones_archivo_de_facturas` WHERE `clave_de_recibo` = " . $this->mCodigoDeRecibo . " LIMIT 0,1";
 		$xArch		= new cOperaciones_archivo_de_facturas();
 		$DFact		= $mql->getDataRow($sql);
+		
 		if(isset($DFact["clave_de_recibo"])){
 			$xArch->setData($DFact);
 			$this->mMessages	.= "OK\tEl UUID existe  " . $xArch->uuid()->v(OUT_TXT) . "\r\n";
@@ -1267,6 +1514,7 @@ class cReciboDeOperacion{
 						$xLoc->DomicilioNumeroInterior(), $xLoc->DomicilioCodigoPostal(), $xLoc->DomicilioColonia(),
 					$xLoc->DomicilioMunicipio(), $xLoc->DomicilioEstado(), $xLoc->getNombreDePais());
 				
+				
 				if($xSocDom == null){
 					$xLog->add("WARN\tNo hay domicilio Valido\r\n", $xLog->DEVELOPER);
 				} else {
@@ -1288,6 +1536,9 @@ class cReciboDeOperacion{
 					$xLog->add("WARN\tLa tasa de IVA es $tasa_iva\r\n", $xLog->DEVELOPER);
 				}
 				$xFact->setReceptor($xSoc->getNombreCompleto(), $xSoc->getRFC(true, true), $calle, $numeroExt, $numeroInt, $codigoPostal, $colonia, $municipio,$estado, $pais);
+				
+				
+				
 				//Datos del pagos
 				$formaDePago		= "Pago en una sola exhibición";
 				
@@ -1394,6 +1645,7 @@ class cReciboDeOperacion{
 				$xCa	= $this->getOCaja();
 				$pagado	= $xCa->getReciboEnCorte($this->mCodigoDeRecibo);
 				
+				$PorOperar	= setNoMenorQueCero($this->getTotal() - $pagado);
 				break;
 			case SYS_SALIDAS:
 				switch ($this->getTipoDePago()){
@@ -1420,16 +1672,101 @@ class cReciboDeOperacion{
 		}
 		return $PorOperar;
 	}
-	function getOBanco(){ return  $this->mOBanco; }
+	function getOCuentaBancaria(){
+		if($this->mOCuentaBancaria == null){
+			$xF	= new cFecha();
+			if( ($xF->getInt($this->mFechaDeCaptura) < $xF->getInt("2015-06-30")) AND $this->mCuentaBancaria <= FALLBACK_CUENTA_BANCARIA){
+				//Actualizar Banco
+				$this->mOCuentaBancaria	= $this->getBancoPorOperacion();
+				if($this->mOCuentaBancaria != null){
+					$CuentaBancaria	= $this->mOCuentaBancaria->getNumeroDeCuenta();
+					$xQL			= new MQL();
+					$xQL->setRawQuery("UPDATE `operaciones_recibos` SET `cuenta_bancaria`=$CuentaBancaria WHERE`idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
+					$this->mCuentaBancaria	= $CuentaBancaria;
+					$this->mMessages	.= "OK\tLa Cuenta Bancaria Iniciada es "  . $CuentaBancaria .  " en primera opcion\r\n";
+				} else {
+					$this->mMessages	.= "ERROR\tSe falla al obtener la Cuenta por Operacion\r\n";
+				}
+			} else {
+				$this->mOCuentaBancaria	= new cCuentaBancaria($this->mCuentaBancaria);
+				if($this->mOCuentaBancaria->init() == true){
+					$this->mMessages	.= "OK\tLa Cuenta Bancaria Iniciada es "  . $this->mCuentaBancaria .  "\r\n";
+				} else {
+					$this->mMessages	.= $this->mOCuentaBancaria->getMessages();
+				}
+			}
+		} else {
+			$this->mMessages	.= $this->mOCuentaBancaria->getMessages();
+		}
+		return $this->mOCuentaBancaria;
+	}
+	function getSucursal(){ return $this->mSucursal; }
+	
+	function setCuandoSeActualiza(){
+		$this->setCleanCache();
+		//Actualizar Saldo
+		$this->setForceUpdateSaldos(true);
+		$this->setFinalizarRecibo(true);
+		//Actualizar Relacionados
+		switch ($this->getOrigen()){
+			case TESORERIA_RECIBOS_ORIGEN_CAPT:
+				$xCapt	= new cCuentaDeCaptacion($this->getCodigoDeDocumento());
+				if($xCapt->init() == true){
+					$xCapt->setCuandoSeActualiza();
+					$this->mMessages	.= $xCapt->getMessages();
+				}				
+				break;
+			case TESORERIA_RECIBOS_ORIGEN_CRED:
+				$xCred	= new cCredito($this->getCodigoDeDocumento());
+				if($xCred->init() == true){
+					$xCred->setCuandoSeActualiza();
+					$this->mMessages	.= $xCred->getMessages();
+				}				
+				break;
+			case TESORERIA_RECIBOS_ORIGEN_MIXTO:
+				//Actualizar Credito
+				$xCred	= new cCredito($this->getCodigoDeDocumento());
+				if($xCred->init() == true){
+					$xCred->setCuandoSeActualiza();
+					$this->mMessages	.= $xCred->getMessages();
+				}
+				$xCapt	= new cCuentaDeCaptacion($this->getCodigoDeDocumento());
+				if($xCapt->init() == true){
+					$xCapt->setCuandoSeActualiza();
+					$this->mMessages	.= $xCapt->getMessages();
+				}
+				break;
+		}
+	}
+	function setMontoHistorico($monto){
+		$xQL	= new MQL();
+		$monto	= setNoMenorQueCero($monto);
+		$xQL->setRawQuery("UPDATE `operaciones_recibos` SET `montohist`=$monto WHERE `idoperaciones_recibos`=" . $this->mCodigoDeRecibo);
+		$this->setCleanCache();
+	}
+	function getAfectacionEnCaja(){
+		if($this->mAfectaEnCaja === false){
+			if($this->getOTipoRecibo() !== null){
+				$this->mAfectaEnCaja 	= $this->getOTipoRecibo()->getAfectacionEnEfvo();
+			}
+		}
+		return $this->mAfectaEnCaja;
+	}
 }
 
 class cMovimientoDeOperacion{
-	private $mCodigo		= 0;
-	private $mArrayData		= array();
-	private $mInit			= false;
-	private $mMessages		= "";
-	
-	function __construct($codigo = false){ $this->mCodigo		= $codigo; }
+	private $mCodigo			= 0;
+	private $mArrayData			= array();
+	private $mInit				= false;
+	private $mMessages			= "";
+	private $mEstado			= 30;
+	private $mValorAfectacion	= 1;
+	private $mActualizarEst		= false;
+	private $mActualizarAfec	= false;
+	private $mDoctoNeutral		= 1;
+	private $mActualizarNeutral	= false;
+
+	function __construct($codigo = false){ $this->mCodigo		= setNoMenorQueCero($codigo); }
 	function init($arrInicial = false){
 		$sqlM = "SELECT
 					`operaciones_mvtos`.*,
@@ -1456,12 +1793,12 @@ class cMovimientoDeOperacion{
 			if ( $this->mInit == false ){
 				$this->init();
 			}
-			$rw			= $this->mArrayData;
+			$rw				= $this->mArrayData;
 			$codigo			= $rw["idoperaciones_mvtos"];
 			$docto			= $rw["docto_afectado"];
 			$socio			= $rw["socio_afectado"];
-			$preservar_mvto 	= $rw["preservar_movimiento"];
-			$CodeRevertir		= $rw["formula_de_cancelacion"];
+			$preservar_mvto = $rw["preservar_movimiento"];
+			$CodeRevertir	= $rw["formula_de_cancelacion"];
 			$monto			= $rw["afectacion_real"];
 			$afectacion		= $rw["valor_afectacion"];
 			$recibo			= $rw["recibo_afectado"];
@@ -1530,13 +1867,221 @@ class cMovimientoDeOperacion{
 		if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_MSG]; }
 		return $sucess;
 	}
+	function setNeutralizarRAW($tipo = false, $credito = false, $persona = false, $recibo = false, $periodo = false){
+		$sucess		= false;
+		$sql		= "UPDATE operaciones_mvtos SET afectacion_real=0 WHERE idoperaciones_mvtos != 0 ";
+		$sql		.= (setNoMenorQueCero($tipo) <= 0) ?  "" : " AND (tipo_operacion = $tipo) ";
+		$sql		.= (setNoMenorQueCero($credito) <= 0) ?  "" : " AND (docto_afectado = $credito) ";
+		$sql		.= (setNoMenorQueCero($persona) <= 0) ?  "" : " AND (socio_afectado=$persona) ";
+		$sql		.= (setNoMenorQueCero($recibo) <= 0 ) ?  "" : " AND (recibo_afectado=$recibo) ";
+		$sql		.= (setNoMenorQueCero($periodo) <= 0 ) ?  "" : " AND (periodo_socio=$periodo) ";
+		$xQL		= new MQL();
+		$rs			= $xQL->setRawQuery($sql);
+		$sucess		= ($rs === false) ? false : true;
+		if($sucess	== true ){
+			$this->mMessages	.= "OK\tUP_MVTO\tOperacion Actualizada ($persona-$credito-$recibo-$tipo-$periodo)\r\n";
+		}
+		
+		return $sucess;
+	}
+	function setActualizaRAW($tipo = false, $monto = "", $operador = "+", $credito = false, $persona = false, $recibo = false, $periodo = false){
+		$sucess				= false;
+		$UpdEstado			= ($this->mActualizarEst == false) ? "" : ", `estatus_mvto`=" . $this->mEstado;
+		$UpdAfecta			= ($this->mActualizarAfec == false) ? "" : " ,`valor_afectacion`= " . $this->mValorAfectacion;
+		$UpdDoctoNeutral	= ($this->mActualizarNeutral == false) ? "" : ", `docto_neutralizador`=" . $this->mDoctoNeutral;
+		$sql		= "UPDATE `operaciones_mvtos` SET `afectacion_real`=setNoMenorCero(`afectacion_real` $operador $monto), `afectacion_estadistica`=setNoMenorCero(`afectacion_estadistica` $operador $monto) $UpdEstado $UpdAfecta $UpdDoctoNeutral WHERE `idoperaciones_mvtos` != 0 ";
+		$sql		.= (setNoMenorQueCero($tipo) <= 0) ?  "" : " AND (tipo_operacion = $tipo) ";
+		$sql		.= (setNoMenorQueCero($credito) <= DEFAULT_CREDITO) ?  "" : " AND (docto_afectado = $credito) ";
+		$sql		.= (setNoMenorQueCero($persona) <= DEFAULT_SOCIO) ?  "" : " AND (socio_afectado=$persona) ";
+		$sql		.= (setNoMenorQueCero($recibo) <= 0 ) ?  "" : " AND (recibo_afectado=$recibo) ";
+		$sql		.= (setNoMenorQueCero($periodo) <= 0 ) ?  "" : " AND (periodo_socio=$periodo) ";
+		$rs			= my_query($sql);
+		
+		$sucess		= $rs[SYS_ESTADO];
+		if($sucess	== true ){
+			$this->mMessages	.= "OK\tUP_MVTO\tOperacion Actualizada ($persona-$credito-$recibo-$tipo-$periodo)\r\n";
+		}
+		if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_MSG]; }
+		return $sucess;
+	}	
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
-
+	function setActualizarEstado($estado = 30){ $this->mEstado = $estado; $this->mActualizarEst = true; }
+	function setActualizarAfecta($ValorAfectacion = 1){$this->mValorAfectacion= $ValorAfectacion; $this->mActualizarAfec = true; }
+	function setActualizarDNeutral($DoctoNeutralizador = 1){ $this->mDoctoNeutral = $DoctoNeutralizador; $this->mActualizarNeutral = true; }
+	function add($monto){
+		$xOp	= new cOperaciones_mvtos();
+		$xOp->afectacion_cobranza(0);
+		$xOp->afectacion_contable(0);
+		$xOp->afectacion_estadistica($monto);
+		$xOp->afectacion_real($monto);
+		
+	}
+	function setNeutralizarBatch($montoInit, $documento, $tipo, $periodoInit = 0){
+		$xQL	= new MQL();
+		$rs		= $xQL->getRecordset("SELECT * FROM `operaciones_mvtos` WHERE `docto_afectado`=$documento AND `periodo_socio`>=$periodoInit AND `tipo_operacion`=$tipo LIMIT 0,100");
+		if($rs){
+			while($rw = $rs->fetch_assoc() ){
+				$xMov	= new cOperaciones_mvtos();
+				$xMov->setData($rw);
+				$id		= $xMov->idoperaciones_mvtos()->v();
+				$monto	= $xMov->afectacion_real()->v();
+				
+				if($montoInit > 0){
+					if($monto >= $montoInit){
+						$monto		= round(($monto - $montoInit),2);
+						$montoInit	= 0;
+						//echo "<h2>2.- Monto a matar $monto , Monto Restante $montoInit</h2>";
+						$xQL->setRawQuery("UPDATE `operaciones_mvtos` SET `afectacion_real`=$monto, `afectacion_estadistica`=$monto WHERE `idoperaciones_mvtos`=$id");
+					} else {
+						$montoInit	= round(($montoInit - $monto),2);
+						//echo "<h3>3.- Monto a matar $monto , Monto Restante $montoInit</h3>";
+						$xQL->setRawQuery("UPDATE `operaciones_mvtos` SET `afectacion_real`=0, `afectacion_estadistica`=0 WHERE `idoperaciones_mvtos`=$id");
+					}
+				} else {
+					//echo "<h3>A la Mierda</h3>";
+					break;
+				}
+			}
+		}
+	}
 }
 
 class cTipoDeOperacion{
-	function __construct(){
-
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mTasaIVA	= 0;
+	private $mPrecio	= 0;
+	private $mIDCache	= "";
+	function __construct($clave = false){
+		$this->mClave	= setNoMenorQueCero($clave);
+		$this->mTasaIVA	= TASA_IVA;
+	}
+	function getIDCache(){return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= TOPERACIONES_TIPOS . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache			= new cCache();
+		if(!is_array($data)){
+			$data		= $xCache->get($this->mClave);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `operaciones_tipos` WHERE `idoperaciones_tipos`=". $this->mClave);
+			}
+		}
+		if(isset($data["idoperaciones_tipos"])){
+			$this->mObj		= new cOperaciones_tipos(); //Cambiar
+			$this->mObj->setData($data);
+			$this->mNombre	= $this->mObj->descripcion_operacion()->v();
+			$this->mTasaIVA	= $this->mObj->tasa_iva()->v();
+			$this->mClave	= $this->mObj->idoperaciones_tipos()->v();
+			$this->mPrecio	= $this->mObj->precio()->v();
+			$this->setIDCache($this->mClave);
+			$this->mInit	= true;
+			$xCache->set($this->getIDCache(), $data);
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){
+		$this->mObj			= null;
+		$this->mMessages	= "";
+	}
+	function getExigenciaEnPagTotCred($ClaveProducto){
+		$xQL	= new MQL();
+		$res	= false;
+		$DD		= $xQL->getDataRow("SELECT * FROM `creditos_productos_costos` WHERE `clave_de_producto`=$ClaveProducto AND `clave_de_operacion`=" . $this->mClave . " LIMIT 0,1");
+		if(isset($DD["exigencia"])){
+			$res= ($DD["exigencia"] == 1) ? true : false;
+		}
+		return $res;
+	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function getTasaIVA(){return $this->mTasaIVA;}
+	function getPrecio(){ return $this->mPrecio; }
+	function setEsOtrosIngresos(){
+		$this->getObj()->recibo_que_afecta(RECIBOS_TIPO_OINGRESOS);
+		$this->getObj()->query()->update()->save($this->getObj()->idoperaciones_tipos()->v());
+		$this->setCleanCache();
+	}
+	function setEsOtrosEgresos(){
+		//Cambiar estadistico.- Por defecto se guarda
+		//$xO->es_estadistico("0");//Si es estadistico, operacion base estadisticos.- Obsoleto pero usado.
+		//Agregar clase efectivo
+		//Cambiar el recibo que afecta
+		$this->getObj()->recibo_que_afecta(RECIBOS_TIPO_OEGRESOS);
+		$this->getObj()->query()->update()->save($this->getObj()->idoperaciones_tipos()->v());
+		$this->setCleanCache();
+	}	
+	function add($nombre, $numero = false, $alias = "", $clonarDe = false, $precio = 0){
+		$numero		= setNoMenorQueCero($numero);
+		$alias		= ($alias == "") ? $nombre : $alias;
+		$clonarDe	= setNoMenorQueCero($clonarDe);
+		
+		/*insert  into `operaciones_tipos`(`idoperaciones_tipos`,`descripcion_operacion`,`clasificacion`,`subclasificacion`,`cuenta_contable`,`descripcion`,`recibo_que_afecta`,`tipo_operacion`,`visible_reporte`,`class_efectivo`,`mvto_que_afecta`,`afectacion_en_recibo`,`afectacion_en_notificacion`,`producto_aplicable`,`constituye_fondo_automatico`,`integra_vencido`,`afectacion_en_sdpm`,`cargo_directo`,`codigo_de_valoracion`,`periocidad_afectada`,`integra_parcialidad`,`es_estadistico`,`formula_de_calculo`,`formula_de_cancelacion`,`importancia_de_neutralizacion`,`preservar_movimiento`,`tasa_iva`,`nombre_corto`,`estatus`)
+		 * values
+		 * (99,'NO DETERMINADO',99,99,'$cuenta = CUENTA_DE_CUADRE;','Ingresos no Clasificados',999,99,1,1,99,0,0,0,'0','1',0,0,'','ninguna','0','1','','',0,'0',0.000,'',1)*/
+		$xO	= new cOperaciones_tipos();
+		if($numero <=0){
+			$numero	= $xO->query()->getLastID();
+		}		
+		if($clonarDe > 0){
+			$DD		= $xO->query()->initByID($clonarDe);
+			$xO->setData($DD);
+			$xO->descripcion($nombre);
+			$xO->descripcion_operacion($nombre);
+			$xO->idoperaciones_tipos($numero);
+			$xO->nombre_corto($alias);
+			$xO->tipo_operacion($numero);
+			$xO->estatus("1");//Activo 1
+		} else {
+			$xO->afectacion_en_notificacion("0");
+			$xO->afectacion_en_recibo("0");
+			$xO->afectacion_en_sdpm("0");
+			$xO->cargo_directo("0");
+			$xO->clasificacion("0");//Tipo de producto que afecta.- Obsoleto
+			$xO->class_efectivo("1");//Base de efectivo.- Obsoleto pero usado penosamente .- 8 es descuentos
+			$xO->codigo_de_valoracion("");//Javascript.- Obsoleto
+			$xO->constituye_fondo_automatico("0");//Base Fondos automaticos.- obsoleto, pero usado
+			$xO->cuenta_contable("\$cuenta = CUENTA_DE_CUADRE;");//CUENTA DE CUADRE
+			$xO->descripcion($nombre);
+			$xO->descripcion_operacion($nombre);
+			$xO->es_estadistico("0");//Si es estadistico, operacion base estadisticos.- Obsoleto pero usado.
+			$xO->estatus("1");//Activo 1
+			$xO->formula_de_calculo("");//Pre formula de calculo en PHP
+			$xO->formula_de_cancelacion("");//Formula de Cancelacion en PHP
+			$xO->importancia_de_neutralizacion("0");//Orden en que se Cancela, en recibos.
+	
+			$xO->idoperaciones_tipos($numero);
+			$xO->integra_parcialidad("0");//Si es parte de la parcialidad de pago.- Obsoleto.- en uso
+			$xO->integra_vencido("0");//Si integra base vencidos.- Obsoleto
+			$xO->mvto_que_afecta("99");//Ninguno.-
+			$xO->nombre_corto($alias);
+			$xO->periocidad_afectada("ninguna");//No m acuerdo :p ninguna todas vencimiento periodico
+			$xO->preservar_movimiento("0");//Si no
+			$xO->producto_aplicable("0");//Producto de Credito 2.- Captacio  21.- captacion corriente.- obsoleto y usado
+			$xO->recibo_que_afecta("999");//Tipo de recibo que integra.- Obsoleto 999.- Ninguno
+			$xO->subclasificacion("0");//No tiene un finalidad.- Obsoleto
+			
+			$xO->tasa_iva(0);			//tasa de IVA
+			$xO->tipo_operacion($numero);//cagada
+			$xO->visible_reporte("0");//Visible en reportes.- Obsoleto.
+		}
+		$xO->precio($precio);
+		
+		$rs		= $xO->query()->insert()->save();
+		if($rs != false){
+			$this->mClave	= $numero;
+		}
+		return ($rs == false) ? false : $rs;
 	}
 }
 class cTipoDeRecibo{
@@ -1547,32 +2092,60 @@ class cTipoDeRecibo{
 	private $mOrigen			= "mixto";
 	private $mAfectacionEfvo	= 0;
 	private $mNombre			= "";
-	 
+	
+	public $ORIGEN_MIXTO		= "mixto";
+	public $ORIGEN_COLOCACION	= "colocacion";
+	public $ORIGEN_CAPTACION	= "captacion";
+	public $ORIGEN_OTROS		= "otros";
 	function __construct($tipo){
-		$this->mCodigo	= $tipo;
-		$this->init();
+		$this->mCodigo	= setNoMenorQueCero($tipo);
+		if($this->mCodigo>0){
+			$this->setIDCache($this->mCodigo);
+			$this->init();
+		}
 	}
-	function init(){
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mCodigo : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= TOPERACIONES_RECIBOSTIPOS . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== "" AND $this->mCodigo>0){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
 		$arrEq	= array(
-			"aumento" => 1,
-			"disminucion" => -1,
-			"" => 0,
-			"ninguno" => 0,
-			"ninguna" => 0,
+			"aumento" 		=> 1,
+			"disminucion" 	=> -1,
+			"" 				=> 0,
+			"ninguno" 		=> 0,
+			"ninguna"		=> 0,
 		);
-		$sql	= "SELECT idoperaciones_recibostipo, descripcion_recibostipo, detalles_del_concepto, subclasificacion,
-			        nombre_sublasificacion, mostrar_en_corte, tipo_poliza_generada,
-			        afectacion_en_flujo_efvo, path_formato, origen
-			    FROM operaciones_recibostipo
-			    WHERE idoperaciones_recibostipo=" . $this->mCodigo . " LIMIT 0,1 ";
-		$this->aDatos			= obten_filas($sql);
-		$this->mPathFormato		= $this->aDatos["path_formato"];
-		$this->mTipoPolizaCont	= $this->aDatos["tipo_poliza_generada"];
-		$this->mOrigen			= $this->aDatos["origen"];
-		//ninguna disminucion aumento
-		$this->mAfectacionEfvo	= $arrEq[ $this->aDatos["afectacion_en_flujo_efvo"] ];
-		$this->mNombre			= $this->aDatos["descripcion_recibostipo"];
-		unset($arrEq);
+		$xCache	= new cCache();
+		$xT		= new cOperaciones_recibostipo();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mCodigo . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj				= $xT;
+			$this->mCodigo			= $data[$xT->getKey()];
+
+			$this->aDatos			= $data;
+			$this->mPathFormato		= $this->aDatos["path_formato"];
+			$this->mTipoPolizaCont	= $this->aDatos["tipo_poliza_generada"];
+			$this->mOrigen			= $this->aDatos["origen"];
+			//ninguna disminucion aumento
+			$this->mAfectacionEfvo	= $arrEq[ $this->aDatos["afectacion_en_flujo_efvo"] ];
+			$this->mNombre			= $this->aDatos["descripcion_recibostipo"];
+			
+			$this->setIDCache($this->mCodigo);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit			= true;
+			$xT 					= null;
+		}
 	}
 	function getPathForma(){ return $this->mPathFormato;	}
 	function getTipoPolizaContable(){ return $this->mTipoPolizaCont; }
@@ -1584,6 +2157,12 @@ class cTipoDeRecibo{
 		return $esta;
 	}
 	function getNombre(){ return $this->mNombre; }
+	function getEsDeColocacion(){
+		return ($this->mOrigen == $this->ORIGEN_MIXTO OR $this->mOrigen == $this->ORIGEN_COLOCACION) ? true : false;
+	}
+	function getEsDeCaptacion(){
+		return ($this->mOrigen == $this->ORIGEN_MIXTO OR $this->mOrigen == $this->ORIGEN_COLOCACION) ? true : false;
+	}
 }
 class cFacturaElectronica {
 	private $mEmisor			= "";
@@ -1635,13 +2214,13 @@ class cFacturaElectronica {
 		}
 				
 		$this->mLugarExp = '<cfdi:ExpedidoEn calle="' . strtoupper($calle) . '" 
-		noExterior="' . strtoupper($numeroExt) . '" 
-		colonia="' . strtoupper($colonia) . '" 
-		municipio="' . strtoupper($municipio) . '" 
-		estado="' . strtoupper($estado) . '" 
-		pais="' . strtoupper($pais) . '" 
+		noExterior="' . setCadenaVal($numeroExt) . '" 
+		colonia="' . setCadenaVal($colonia) . '" 
+		municipio="' . setCadenaVal($municipio) . '" 
+		estado="' . setCadenaVal($estado) . '" 
+		pais="' . setCadenaVal($pais) . '" 
 		codigoPostal="' . $codigoPostal . '" />';
-		$this->mHeadLugarExp			= ' LugarExpedicion="' . strtoupper($municipio) .',' . strtoupper($estado) . '" ';
+		$this->mHeadLugarExp			= ' LugarExpedicion="' . setCadenaVal($municipio) .',' . setCadenaVal($estado) . '" ';
 	}
 	function setRegimenFiscal($regimen = ""){	$this->mRegimenFiscal = '<cfdi:RegimenFiscal Regimen="' . strtoupper($regimen) . '" />'; }
 	function setReceptor($nombre, $rfc, $calle, $numeroExt, $numeroInt,$codigoPostal, $colonia = "", $municipio = "", $estado = "", $pais = ""){
@@ -1658,12 +2237,12 @@ class cFacturaElectronica {
 		$this->mReceptor .= '<cfdi:Receptor 
 		nombre="' . strtoupper($nombre)  .  '" 
 		rfc="' . strtoupper($rfc) . '">
-		<cfdi:Domicilio calle="' . strtoupper($calle) . '" 
-		noExterior="' . strtoupper($numeroExt) . '" 
+		<cfdi:Domicilio calle="' . setCadenaVal($calle) . '" 
+		noExterior="' . setCadenaVal($numeroExt) . '" 
 		' . $sInterior . '
-		colonia="' . strtoupper($colonia) . '" 
-		municipio="' . strtoupper($municipio) . '" 
-		estado="' . strtoupper($estado) . '" pais="' . strtoupper($pais) . '" 
+		colonia="' . setCadenaVal($colonia) . '" 
+		municipio="' . setCadenaVal($municipio) . '" 
+		estado="' . setCadenaVal($estado) . '" pais="' . setCadenaVal($pais) . '" 
 		codigoPostal="' . $codigoPostal . '" /></cfdi:Receptor>';
 	}
 	
@@ -1769,7 +2348,7 @@ class cFacturaElectronica {
 		return $xdoc->saveXML();
 	
 	}
-	function timbrar($numero_de_certificado = "20001000000200000192"){
+	function timbrar($num_certificado = ""){
 		$sucess			= false;
 		/**
 		 * Niveles de debug:
@@ -1787,7 +2366,7 @@ class cFacturaElectronica {
 		
 		$archivo_cer 		= $this->mCERT; //"utilerias/certificados/20001000000200000192.cer";
 		$archivo_pem 		= $this->mPEM; //"utilerias/certificados/20001000000200000192.key.pem";
-	
+		$num_certificado	= ($num_certificado == "") ? FACTURACION_NUM_CERT : $num_certificado;
 	
 		//Datos de acceso al ambiente de pruebas
 		$url_timbrado 		= FACTURACION_URL_SERVICIO;// "https://t1demo.facturacionmoderna.com/timbrado/wsdl";
@@ -1796,7 +2375,7 @@ class cFacturaElectronica {
 	
 		//generar y sellar un XML con los CSD de pruebas
 		$cfdi = $this->get();
-		$cfdi = $this->sellarXML($numero_de_certificado);
+		$cfdi = $this->sellarXML($num_certificado);
 	
 	
 		$parametros 		= array('emisorRFC' => $rfc_emisor,'UserID' => $user_id,'UserPass' => $user_password);
@@ -1876,9 +2455,24 @@ class cMonedas {
 	private $mData		= array();
 	private $isInit		= false;
 	private $mObj		= null;
+	private $mPais		= "";
+	private $mValor		= 1;
+	private $mNombre	= "MONEDA_DESCONOCIDA";
 	function __construct($clave = ""){
 		$this->mClave		= strtoupper($clave);
 		if($clave != ""){ $this->init(); }
+	}
+	function initByPais($pais){
+		$xCache		= new cCache();
+		$pais		= strtoupper($pais);
+		
+		$data		= $xCache->get("moneda-por-pais-$pais");
+		if($data == null){
+			$ql			= new MQL();
+			$data		= $ql->getDataRow("SELECT * FROM `tesoreria_monedas` WHERE `pais_de_origen`='$pais' LIMIT 0,1");
+			$xCache->set("moneda-por-pais-$pais", $data);
+		}
+		return $this->init($data);	
 	}
 	function init($data = false){
 		$clave		= $this->mClave;
@@ -1886,18 +2480,84 @@ class cMonedas {
 			
 		} else {
 			$ql			= new MQL();
-			$data		= $ql->getDataRow("SELECT * FROM `tesoreria_monedas` WHERE `clave_de_moneda`='$clave' ");
+			$data		= $ql->getDataRow("SELECT * FROM `tesoreria_monedas` WHERE `clave_de_moneda`='$clave' LIMIT 0,1");
 		}
-		$this->mObj		= new cTesoreria_monedas();
-		$this->mObj->setData($data);
-		$this->mData	= $data;
+		if(isset($data["clave_de_moneda"])){
+			$this->mObj		= new cTesoreria_monedas();
+			$this->mObj->setData($data);
+			$this->mData	= $data;
+			$this->isInit	= true;
+			$this->mPais	= strtoupper($this->mObj->pais_de_origen()->v());
+			$this->mNombre	= strtoupper($this->mObj->nombre_de_la_moneda()->v(OUT_TXT));
+			$this->mClave	= strtoupper($this->mObj->clave_de_moneda()->v());
+			$this->mValor	= setNoMenorQueCero($this->mObj->quivalencia_en_moneda_local()->v());
+		}
+		return $this->isInit;
 	}
-	function getPais(){ return strtoupper($this->mObj->pais_de_origen()->v()); }
-	function getNombre(){ return strtoupper($this->mObj->nombre_de_la_moneda()->v(OUT_TXT)); }
-	function getValor(){ return setNoMenorQueCero($this->mObj->quivalencia_en_moneda_local()->v()); }
+	function getClave(){return $this->mClave;}
+	function getPais(){ return $this->mPais; }
+	function getNombre(){ return $this->mNombre; }
+	function getValor(){ return $this->mValor; }
 	function getEnDolares($cantidad = 1){
-		return ($this->getValor() * $cantidad) / VALOR_ACTUAL_DOLAR;
+		return round((($this->getValor() * $cantidad) / VALOR_ACTUAL_DOLAR),2);
 	}
+}
+
+class cTesoreriaTiposDePagoCobro {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTable		= "";
+	private $mEquivCont	= 0;
+	private $mTipoAML	= 0;
+	function __construct($clave = false){ $this->mClave	= strtolower($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){return $this->mIDCache; }
+	function setIDCache($clave = ""){
+		$clave = ($clave != "") ? $this->mClave : $clave;
+		$clave = ($clave != "") ? microtime() : $clave;
+		$this->mIDCache	= TTESORERIA_TIPOS_DE_PAGO . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cTesoreria_tipos_de_pago();
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`='". $this->mClave . "' LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj			= $xT;
+			$this->mClave		= $data[$xT->getKey()];
+			$this->mNombre		= $xT->descripcion()->v();
+			$this->mTipoAML		= $xT->equivalente_aml()->v();
+			$this->mEquivCont	= $xT->eq_contable()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit		= true;
+			$xT 				= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){
+		$this->mObj			= null;
+		$this->mMessages	= "";
+	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function getTipoEnAML(){ return $this->mTipoAML; }
+	function getTipoContable(){ return $this->mEquivCont; }
+	function add(){}
+
 }
 
 ?>

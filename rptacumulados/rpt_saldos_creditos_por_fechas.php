@@ -41,6 +41,7 @@ SELECT
 	`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS 'convenio',
 		
 	COUNT(`creditos_solicitud`.`numero_solicitud`) AS 'numero',
+	SUM(IF((`creditos_solicitud`.`saldo_actual`> " . TOLERANCIA_SALDOS ."), 1,0) ) AS 'activos',
 	(AVG(`creditos_solicitud`.`tasa_interes`) * 100) AS 'tasa_promedio',
 	AVG(`creditos_solicitud`.`saldo_actual`) AS 'saldo_promedio',
 		
@@ -54,7 +55,7 @@ FROM
 		ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
 		`idcreditos_tipoconvenio` 
 WHERE
-	`estatus_actual` != 50 
+	`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . " 
 	AND
 	(`creditos_solicitud`.`monto_autorizado` >=" . TOLERANCIA_SALDOS . ")
 	
@@ -62,11 +63,14 @@ WHERE
 	$BySuc
 GROUP BY
 	`creditos_solicitud`.`tipo_convenio` ";
-	
+	//setLog($sql);
 $xT		= new cTabla($sql);
 $xT->setFootSum(array(
 	1 => "numero",
-	5 => "saldo"
+	3 => "tasa_promedio",
+	2 => "vigente",
+	5 => "ministrado",
+	6 => "saldo"
 ));
 $xRPT->setOut($out);
 $xRPT->addContent( $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal) );

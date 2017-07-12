@@ -18,7 +18,7 @@ include_once("../core/core.fechas.inc.php");
 include_once("../libs/sql.inc.php");
 include_once("../core/core.config.inc.php");
 
-$oficial = elusuario($iduser);
+
 //require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");	

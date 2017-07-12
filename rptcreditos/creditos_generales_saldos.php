@@ -74,7 +74,7 @@ WHERE
 GROUP BY
 	`operaciones_mvtos`.`docto_afectado`
 	
-HAVING saldo > 0
+HAVING saldo != 0
 
 ORDER BY `creditos_solicitud`.`fecha_ministracion` ";
 //$sql				= "CALL sp_saldos_al_cierre('$fechaFinal')";

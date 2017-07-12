@@ -146,7 +146,7 @@ switch($step){
 		$BySucursal 		= "  AND sucursal = '$sucursal' ";
 		$SegundaCondicion 	= "";
 
-		$xTablas			= new cSAFETabla();
+		$xTablas			= new cSQLTabla();
 		//Eliminar Archivos existentes
 		$aFilesT			= $xTablas->getTablasConOperaciones();
 

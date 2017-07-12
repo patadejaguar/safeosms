@@ -13,7 +13,7 @@ $_SESSION["current_file"]	= addslashes( $theFile );
 $iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP		= new cHPage("TR.Utilerias del Sistema");
-
+$xF			= new cFecha();
 
 $oficial 	= elusuario($iduser);
 
@@ -25,15 +25,28 @@ $jsExtra	= "";
 $rmtCmd		= (isset($_GET["r"])) ? $_GET["r"] : 0;
 
 function jsinfo_util($id, $frm){
-	$sqlInfo = "SELECT * FROM general_utilerias WHERE idgeneral_utilerias =$id";
-	$rw = obten_filas($sqlInfo);
-	$tab = new TinyAjaxBehavior();
+	$xF			= new cFecha();
+	$sqlInfo 	= "SELECT * FROM general_utilerias WHERE idgeneral_utilerias =$id";
+	$rw 		= obten_filas($sqlInfo);
+	$tab 		= new TinyAjaxBehavior();
+	$par1		= $rw["describe_param_1"];
+	$par2		= $rw["describe_param_2"];
+	$par3		= $rw["describe_param_3"];
+	if($par1 == "FECHA_INICIAL"){ $par1		= EACP_FECHA_DE_CONSTITUCION; }
+	if($par2 == "FECHA_INICIAL"){ $par2		= EACP_FECHA_DE_CONSTITUCION; }
+	if($par3 == "FECHA_INICIAL"){ $par3		= EACP_FECHA_DE_CONSTITUCION; }
+	
+	if($par1 == "FECHA_FINAL"){ $par1		= $xF->get(); }
+	if($par2 == "FECHA_FINAL"){ $par2		= $xF->get(); }
+	if($par3 == "FECHA_FINAL"){ $par3		= $xF->get(); }
 
+	if($par1 == "FECHA_DE_CORTE"){ $par1		= $xF->get(); }
+	if($par1 == "FECHA_ACTUAL"){ $par1		= $xF->get(); }
 	//$tab -> add(TabSetValue::getBehavior("i_3193c", $rw["nombre_utilerias"]));
 	$tab -> add(TabSetValue::getBehavior("imsg", $rw["descripcion_utileria"]));
-	$tab -> add(TabSetValue::getBehavior("iID1", $rw["describe_param_1"]));
-	$tab -> add(TabSetValue::getBehavior("iID2", $rw["describe_param_2"]));
-	$tab -> add(TabSetValue::getBehavior("iID3", $rw["describe_param_3"]));
+	$tab -> add(TabSetValue::getBehavior("iID1", $par1));
+	$tab -> add(TabSetValue::getBehavior("iID2", $par2));
+	$tab -> add(TabSetValue::getBehavior("iID3", $par3));
 	$tab -> add(TabSetValue::getBehavior("id_de",$rw["describe_init"]));
 	$tab -> add(TabSetValue::getBehavior("id_a", $rw["describe_end"]));
 
@@ -117,7 +130,7 @@ $xHP->init();
 		$id 			= parametro("cID1", false, MQL_RAW);
 		$id2 			= parametro("cID2", false, MQL_RAW);
 		$id3 			= parametro("cID3", false, MQL_RAW);
-
+		
 		$de 			= 0;//parametro("de"];
 		$a 				= 0;//$_POST["a"];
 
@@ -327,17 +340,49 @@ $xHP->init();
 
 			case 901:
 				/**
-				 * Comvierte de ISAM a INNODB o viceversa
+				 * Corrige ultimos pagos
 				 */
-				$sucursal			= getSucursal();
-				$querytbl 			= "SHOW TABLES";
-				$rsquerytbl 		= mysql_query($querytbl, cnnGeneral() );
-				$new_engine			= "MyISAM";
-				while($rwquery = mysql_fetch_array($rsquerytbl)) {
-					$sql_change 	= "ALTER TABLE $sucursal.$rwquery[0] ENGINE = $new_engine";
-					my_query($sql_change);
-					echo "<p class='aviso'>$sql_change </p> ";
+				$xQL		= new MQL();
+				$rs			= $xQL->getDataRecord("SELECT `numero_socio`,`numero_solicitud`,`pagos_autorizados`,`monto_parcialidad`, 
+						SUM(`operaciones_mvtos`.`afectacion_real`) AS `monto`,
+						SUM(IF(`operaciones_mvtos`.`tipo_operacion`=410,0,`operaciones_mvtos`.`afectacion_real`)) AS `accesorios`
+						FROM
+							`creditos_solicitud` `creditos_solicitud` 
+								INNER JOIN `operaciones_mvtos` `operaciones_mvtos` 
+								ON `creditos_solicitud`.`numero_solicitud` = `operaciones_mvtos`.
+								`docto_afectado` 
+						WHERE 
+						(`operaciones_mvtos`.`tipo_operacion`=411 OR `operaciones_mvtos`.`tipo_operacion` = 413 OR `operaciones_mvtos`.`tipo_operacion` = 410)
+						AND 
+						(`operaciones_mvtos`.`periodo_socio`=`creditos_solicitud`.`pagos_autorizados`)
+						
+						AND  (`creditos_solicitud`.`estatus_actual` !=99) 
+						AND (`creditos_solicitud`.`estatus_actual` !=98) 
+						AND (`creditos_solicitud`.`saldo_actual` >0) 
+						AND (`creditos_solicitud`.`periocidad_de_pago` !=360)
+												AND `creditos_solicitud`.`tipo_de_pago`=2
+						GROUP BY  `creditos_solicitud`.`numero_solicitud`");
+				foreach ($rs as $rw){
+					$persona		= $rw["numero_socio"];
+					$credito		= $rw["numero_solicitud"];
+					$pago			= $rw["pagos_autorizados"];
+					$parcialidad	= $rw["monto_parcialidad"];
+					$accesorios		= $rw["accesorios"];
+					$diff			= $rw["monto"];
+					$rdiff			= setNoMenorQueCero($rw["monto"],0);
+					$ajuste			= setNoMenorQueCero(($parcialidad-$diff));
+					
+					if(($parcialidad > $rdiff) AND $rdiff >0){
+						$msg		.= "WARN\t$persona - $credito\tAjuste ($ajuste) por $diff - $accesorios con la parcialidad $parcialidad de $pago\r\n";
+						$sqlu		= "UPDATE `operaciones_mvtos` SET `afectacion_real`=(`afectacion_real`+$ajuste), 
+						`afectacion_estadistica`=(`afectacion_estadistica`+$ajuste) WHERE `tipo_operacion`=410 AND `docto_afectado`=$credito AND `periodo_socio`=$pago";
+						$xQL->setRawQuery($sqlu);
+					} else {
+						$msg		.= "OK\t$persona - $credito\tSin Ajuste $diff -  $parcialidad\r\n";
+					}
 				}
+
+				$rs					= null;
 				break;
 			case 803:
 
@@ -927,6 +972,7 @@ $xHP->init();
 							periodo_anual = DATE_FORMAT(fecha_afectacion, '%Y'),
 							periodo_semanal = DATE_FORMAT(fecha_afectacion, '%w'),
 							periodo_mensual = DATE_FORMAT(fecha_afectacion, '%m')";
+				$sql = "UPDATE operaciones_mvtos SET periodo_mensual = 0, periodo_anual = 0, periodo_semanal = 0";
 				$x = my_query($sql);
 				$msg .= $x["info"];
 				break;
@@ -947,8 +993,8 @@ $xHP->init();
 				$xRec			= new cReciboDeOperacion();
 				$recibo			= $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, $fecha_inicial, 1, RECIBOS_TIPO_ESTADISTICO, "AJUSTE_DE_ESTATUS_DE_CREDITOS");
 				//$recibo 		= setNuevoRecibo(1, 1, fechasys(), 0, 10, "AJUSTE_DE_ESTATUS_DE_CREDITOS", "NA", "ninguno", "NA", 99, 0);
-				$cUtils 	= new cUtileriasParaCreditos();
-				$msg        .= $cUtils->setEstatusDeCreditos($recibo, $fecha_inicial, false, true);
+				$cUtils 		= new cUtileriasParaCreditos();
+				$msg        	.= $cUtils->setEstatusDeCreditos($recibo, $fecha_inicial, false, true);
 				break;
 				//Valida Recibos
 			case 856:
@@ -1042,15 +1088,24 @@ $xHP->init();
 
 				break;
 			case 857:
+				$ql						= new MQL();
 				$ForzarCorreccion		= strtoupper($id);
+				$soloTodos				= $id2;
 				$Forzar					= ( $ForzarCorreccion == "SI") ? true : false;
+				$TodosSin				= ($soloTodos == "SI") ? true : false; 
 				$msg .= "================== REESTRUCTURANDO SALDOS DE INTERESES EN CREDITOS\r\n ";
 				$msg .= "================== USUARIO: $oficial \r\n ";
 				//Actualiza los Intereses Devengados y Pagados, asi  como los no pagados en base a los movimientos que tengan.
 				//lleva a cero los registros
 				$xCUtils			= new cUtileriasParaCreditos();
-				$msg				.= $xCUtils->setAcumularIntereses($Forzar);
-
+				$msg				.= $xCUtils->setAcumularIntereses($Forzar, false, $TodosSin);
+				//Actualizar Fecha
+				$fechaop				= fechasys();
+				$ql->setRawQuery("SET @fecha_de_corte='$fechaop';");
+				$ql->setRawQuery("CALL `sp_correcciones`()");
+				$ql->setRawQuery("CALL `proc_creditos_letras_del_dia`()");
+				//rehacer intereses
+				$msg				.= $xCUtils->setAcumularMoraDeParcialidades();
 				break;
 			case 858:
 				$validar	= strtolower($id);
@@ -1249,8 +1304,9 @@ $xHP->init();
 					
 				break;
 			case 870:
+				$tolerancia		= setNoMenorQueCero($id);
 				$cUCredit 		= new cUtileriasParaCreditos();
-				$msg			.= $cUCredit->setEliminarCreditosNegativos();
+				$msg			.= $cUCredit->setEliminarCreditosNegativos($tolerancia);
 				break;
 
 			case 871:
@@ -1432,20 +1488,23 @@ $xHP->init();
 				break;
 			case 889:
 				$xCUtils		= new cUtileriasParaCreditos();
+				$idcredito		= setNoMenorQueCero($id);
+				$idcredito		= ($idcredito <= DEFAULT_CREDITO) ? false : $idcredito;
+				$consaldos		= ($id2 == "SI") ? true : false;
 				$msg			.= "============ GENERANDO SALDOS SPM DE CREDITOS HISTORICOS \r\n";
-				$msg			.= $xCUtils->setReestructurarSDPM_Planes();
-				
-				$msg			.= $xCUtils->setReestructurarSDPM(false, false, false, false, false, false);
-				
+				$xCUtils->setReestructurarSDPM_Planes($consaldos, $idcredito, true, fechasys(), EACP_FECHA_DE_CONSTITUCION, true);
+				$xCUtils->setReestructurarSDPM($consaldos, $idcredito, true, fechasys(), EACP_FECHA_DE_CONSTITUCION, true);
+				$msg			.= $xCUtils->getMessages();				
 				break;
 			case 900:
-				$NumeroDeCredito	= ( $id == "NUMERO_DE_CREDITO") ? false : $id;
+				$NumeroDeCredito	= setNoMenorQueCero($id);
 				$FechaInicial		= ( $id2 == "FECHA_INICIAL" ) ? false : $id2 ;
 				$FechaFinal			= ( $id3 == "FECHA_FINAL" ) ? false : $id3 ;
 					
 				$xCUtils			= new cUtileriasParaCreditos();
 				$msg				.= "============ GENERANDO INTERESES SOBRE SDPM HISTORICOS \r\n";
 				$msg				.= $xCUtils->setRegenerarInteresDevengado( $NumeroDeCredito, $FechaInicial, $FechaFinal );
+				
 				break;
 			case 1101:
 				//Contabilidad.- generar Saldos del Ejercicio
@@ -1455,10 +1514,12 @@ $xHP->init();
 				break;
 			case 1102:
 				//regenerar perfil contable de polizas
-				$Fecha		= $id;
+				$Fecha		= $xF->getFechaISO( $id );
 				$xUCont		= new cUtileriasParaContabilidad();
+				
 				$msg		.= "============ GENERAR PREPOLIZAS CONTABLES AL $Fecha \r\n";
 				$msg		.= $xUCont->setRegenerarPrepolizaContable($Fecha);
+				
 				break;
 			case 1103:
 				//numero de recibo
@@ -1483,6 +1544,17 @@ $xHP->init();
 				$numero_de_poliza	= ( $id3 == "NUMERO_DE_POLIZA") ? false : $id3;
 				$xUCont				= new cUtileriasParaContabilidad();
 				//$msg				.= $xUCont->setPolizaPorCajero( $cajero, $fecha, $numero_de_poliza );
+				break;
+			case 1105:
+					$xC				= new cUtileriasParaContabilidad();
+					$msg			.= $xC->setResetearContabilidad();
+					break;
+			case 1106:
+				//generar Poliza del dia
+				$Fecha		= $xF->getFechaISO( $id );
+				$xC				= new cUtileriasParaContabilidad();
+				$msg			.= $xC->setGenerarPolizasAlCierre($Fecha);
+				//SELECT DISTINCT numero_de_recibo FROM `contable_polizas_proforma` WHERE fecha='2015-06-24'
 				break;
 			case 501:
 				$xop				= new cUtileriasParaOperaciones();
@@ -1524,12 +1596,33 @@ $xHP->init();
 					$xCol->sucursal(getSucursal());
 					$xCol->tipo_colonia("Colonia");
 					$xCol->idgeneral_colonia( $xLoc->clave_de_localidad()->v() );
-					$xCol->query()->insert()->save();
+					$idx			= $xCol->query()->insert()->save();
+					if($idx != false){
+						$msg				.="OK\t$idx\tColonia  " . $xCol->nombre_colonia()->v() . " Agregada\r\n";
+					} else {
+						$msg				.="ERROR\t$idx\tColonia  " . $xCol->nombre_colonia()->v() . " Agregada\r\n";
+					}
 				}
 				break;
 			case 21101:
 				$xUtils				= new cUtileriasParaCreditos();
 				$msg				.= $xUtils->setActualizarPrimerPago();
+				break;
+				
+/* 2017 07 10 */
+			case 21102:
+				$xQL		= new MQL();
+				$rs			= $xQL->getRecordset("SELECT * FROM `vw_creds_montos_dup`");
+				while($rw = $rs->fetch_assoc()){
+					$idx		= $rw["indice"];
+					$credito	= $rw["credito"];
+					$xQL->setRawQuery("DELETE FROM `creditos_montos` WHERE `clave_de_credito`=$credito AND `idcreditos_montos`!=$idx");
+				}
+				//$msg				.= $xUtils->setActualizarPrimerPago();
+				break;
+			case 21103:
+				$xUtils		= new cUtileriasParaCreditos();
+				$msg		.= $xUtils->setCuadrarCreditosByMvtos();
 				break;
 			case 8201:
 				$xUAml		= new cUtileriasParaAML();
@@ -1556,6 +1649,17 @@ $xHP->init();
 					$isql		= "UPDATE $tabla SET sucursal='$asucursal' WHERE sucursal='$desucursal' ";
 					$ql->setRawQuery($isql);
 					$ql->setRawQuery("UPDATE $tabla SET sucursal=LOWER(sucursal)");
+				}
+				break;
+			case 9002:
+
+				$xQL				= new MQL();
+				$sql			= "SHOW TABLES IN " . MY_DB_IN;
+				$rs				= $xQL->getDataRecord($sql);
+				foreach ($rs as $row){
+					$tabla		= $row["Tables_in_" . MY_DB_IN];
+					$isql		= "ALTER TABLE " . MY_DB_IN . ".$tabla ENGINE = InnoDB ";
+					$xQL->setRawQuery($isql);
 				}
 				break;
 		}

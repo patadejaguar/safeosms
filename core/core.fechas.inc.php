@@ -5,6 +5,10 @@ include_once ("core.common.inc.php");
 include_once ("core.init.inc.php");
 include_once ("core.html.inc.php");
 include_once ("core.lang.inc.php");
+include_once ("core.db.inc.php");
+include_once ("core.db.dic.php");
+
+//ini_set("max_execution_time", 600);
 
 $xL = new cLang ();
 define ( "CTRL_FECHA_EXTEMPORANEA", "<tr><td>" . $xL->getT ( "TR.Fecha_de_Captura" ) . "</td><td colspan='2'>" . ctrl_date ( 98 ) . "</td></tr>" );
@@ -282,86 +286,25 @@ class cFecha {
 	 */
 	function __construct($index = 0, $fecha = false) {
 		$this->mIndex = $index;
-		
-		if (SAFE_LANG != "es") {
-			$xL = new cLang ();
-			$this->mAMeses = array (
-					1 => $xL->getT ( "JANUARY" ),
-					2 => $xL->getT ( "FEBRUARY" ),
-					3 => $xL->getT ( "MARCH" ),
-					4 => $xL->getT ( "APRIL" ),
-					5 => $xL->getT ( "MAY" ),
-					6 => $xL->getT ( "JUNE" ),
-					7 => $xL->getT ( "JULY" ),
-					8 => $xL->getT ( "AUGUST" ),
-					9 => $xL->getT ( "SEPTEMBER" ),
-					10 => $xL->getT ( "OCTOBER" ),
-					11 => $xL->getT ( "NOVEMBER" ),
-					12 => $xL->getT ( "DECEMBER" ),
-					"01" => $xL->getT ( "JANUARY" ),
-					"02" => $xL->getT ( "FEBRUARY" ),
-					"03" => $xL->getT ( "MARCH" ),
-					"04" => $xL->getT ( "APRIL" ),
-					"05" => $xL->getT ( "MAY" ),
-					"06" => $xL->getT ( "JUNE" ),
-					"07" => $xL->getT ( "JULY" ),
-					"08" => $xL->getT ( "AUGUST" ),
-					"09" => $xL->getT ( "SEPTEMBER" ),
-					"10" => $xL->getT ( "OCTOBER" ),
-					"11" => $xL->getT ( "NOVEMBER" ),
-					"12" => $xL->getT ( "DECEMBER" )
-			);
-				
-			// Dias de la Semana en Array
-			$this->mASpanishWeekDay = array (
-					7 => $xL->getT ( "Sunday" ),
-					1 => $xL->getT ( "Monday" ),
-					2 => $xL->getT ( "Tuesday" ),
-					3 => $xL->getT ( "Wednesday" ),
-					4 => $xL->getT ( "Thursday" ),
-					5 => $xL->getT ( "Friday" ),
-					6 => $xL->getT ( "Saturday" )
-			);
-		} else {
-			
-			$this->mAMeses = array (
-					1 => "ENERO",
-					2 => "FEBRERO",
-					3 => "MARZO",
-					4 => "ABRIL",
-					5 => "MAYO",
-					6 => "JUNIO",
-					7 => "JULIO",
-					8 => "AGOSTO",
-					9 => "SEPTIEMBRE",
-					10 => "OCTUBRE",
-					11 => "NOVIEMBRE",
-					12 => "DICIEMBRE",
-					"01" => "ENERO",
-					"02" => "FEBRERO",
-					"03" => "MARZO",
-					"04" => "ABRIL",
-					"05" => "MAYO",
-					"06" => "JUNIO",
-					"07" => "JULIO",
-					"08" => "AGOSTO",
-					"09" => "SEPTIEMBRE",
-					"10" => "OCTUBRE",
-					"11" => "NOVIEMBRE",
-					"12" => "DICIEMBRE" 
-			);
-			
-			// Dias de la Semana en Array
-			$this->mASpanishWeekDay = array (
-					7 => "Domingo",
-					1 => "Lunes",
-					2 => "Martes",
-					3 => "Miercoles",
-					4 => "Jueves",
-					5 => "Viernes",
-					6 => "Sabado" 
-			);
+		switch (SAFE_LANG){
+			case "es":
+				$this->mAMeses = array (1 => "ENERO", 2 => "FEBRERO", 3 => "MARZO", 4 => "ABRIL", 5 => "MAYO", 6 => "JUNIO", 7 => "JULIO", 8 => "AGOSTO", 9 => "SEPTIEMBRE", 10 => "OCTUBRE", 11 => "NOVIEMBRE", 12 => "DICIEMBRE",
+						"01" => "ENERO", "02" => "FEBRERO", "03" => "MARZO", "04" => "ABRIL", "05" => "MAYO", "06" => "JUNIO", "07" => "JULIO",	"08" => "AGOSTO", "09" => "SEPTIEMBRE",	"10" => "OCTUBRE", "11" => "NOVIEMBRE","12" => "DICIEMBRE");
+				// Dias de la Semana en Array
+				$this->mASpanishWeekDay = array (7 => "Domingo", 1 => "Lunes", 2 => "Martes", 3 => "Miercoles", 4 => "Jueves", 5 => "Viernes", 6 => "Sabado");				
+				break;
+			case "en":
+				$this->mAMeses = array (1 =>"JANUARY", 2 =>"FEBRUARY", 3 =>"MARCH", 4 =>"APRIL",5 =>"MAY", 6 =>"JUNE", 7 =>"JULY", 8 =>"AUGUST", 9 =>"SEPTEMBER", 10 =>"OCTOBER", 11 =>"NOVEMBER", 12 =>"DECEMBER",
+						"01" =>"JANUARY","02" =>"FEBRUARY","03" =>"MARCH","04" =>"APRIL","05" =>"MAY","06" =>"JUNE","07" =>"JULY","08" =>"AUGUST","09" =>"SEPTEMBER","10" =>"OCTOBER","11" =>"NOVEMBER","12" =>"DECEMBER");
+				$this->mASpanishWeekDay = array (7 =>"Sunday",1 =>"Monday",2 =>"Tuesday",3 =>"Wednesday",4 =>"Thursday",5 =>"Friday",6 =>"Saturday");				
+				break;
+			default:
+				$this->mAMeses = array (1 =>"JANUARY", 2 =>"FEBRUARY", 3 =>"MARCH", 4 =>"APRIL",5 =>"MAY", 6 =>"JUNE", 7 =>"JULY", 8 =>"AUGUST", 9 =>"SEPTEMBER", 10 =>"OCTOBER", 11 =>"NOVEMBER", 12 =>"DECEMBER",
+						"01" =>"JANUARY","02" =>"FEBRUARY","03" =>"MARCH","04" =>"APRIL","05" =>"MAY","06" =>"JUNE","07" =>"JULY","08" =>"AUGUST","09" =>"SEPTEMBER","10" =>"OCTOBER","11" =>"NOVEMBER","12" =>"DECEMBER");
+				$this->mASpanishWeekDay = array (7 =>"Sunday",1 =>"Monday",2 =>"Tuesday",3 =>"Wednesday",4 =>"Thursday",5 =>"Friday",6 =>"Saturday");
+				break;
 		}
+
 		$this->mLimitByMonths = array (
 				1 => 31,
 				2 => 28,
@@ -406,24 +349,21 @@ class cFecha {
 			$fecha = date ( "Y-m-d" );
 		}
 		
-		$this->mFecha = date ( "Y-m-d", strtotime ( $fecha ) );
-		$this->init ();
-		// if(!defined("EACP_FECHA_DE_CONSTITUCION")){
-		// define("EACP_FECHA_DE_CONSTITUCION", date("Y-m-d"));
-		// }
-		$this->mCurrentHour = date ( "G" );
+		$this->mFecha 			= date ( "Y-m-d", strtotime ( $fecha ) );
+		$this->init();
+		$this->mCurrentHour 	= date ( "G" );
 		// Anno Maximo Operativo
-		$annoConst = (defined ( "EACP_FECHA_DE_CONSTITUCION" )) ? explode ( "-", EACP_FECHA_DE_CONSTITUCION, 2 ) : 2012;
-		$annoA = date ( "Y" ) - $annoConst [0]; // 1998 - 2012 = 14
+		$annoConst 				= (defined ( "EACP_FECHA_DE_CONSTITUCION" )) ? explode ( "-", EACP_FECHA_DE_CONSTITUCION, 2 ) : 2012;
+		$annoA					= date ( "Y" ) - $annoConst [0]; // 1998 - 2012 = 14
 		$this->mAnnosOperativos = ($annoA > $this->mAnnosOperativos) ? $annoA : $this->mAnnosOperativos;
 		unset ( $annoConst );
 	}
-	function setFechaPorSemana($semana, $dia = false) {
-		$anno = $this->anno ();
-		$fi = "$anno-01-01";
-		$di = date ( "N", strtotime ( $fi ) );
-		$dias = ($semana * 7) - ($di);
-		$d = new DateTime ( "$anno-01-01" );
+	function setFechaPorSemana($semana, $dia = false, $AnnoFecha = false) {
+		$anno 	= $this->anno($AnnoFecha);
+		$fi 	= "$anno-01-01";
+		$di 	= date ( "N", strtotime ( $fi ) );
+		$dias 	= ($semana * 7) - ($di);
+		$d 		= new DateTime ( "$anno-01-01" );
 		$fecha = date ( "Y-m-d", strtotime ( "$anno-01-01 +$dias day" ) ); // $d->modify("+$semana week");
 		if ($dia != false) {
 			if ($dia > 0 and $dia <= 7) {
@@ -436,12 +376,12 @@ class cFecha {
 						6 => "Saturday",
 						7 => "Sunday" 
 				);
-				$tim = strtotime ( $fecha );
-				$fecha = strtotime ( "Last " . $WDias [$dia], $tim );
+				$tim 		= strtotime ( $fecha );
+				$fecha 		= strtotime ( "Last " . $WDias [$dia], $tim );
 			}
 		}
-		$this->set ( $fecha );
-		$this->init ();
+		$this->set( $fecha );
+		$this->init();
 	}
 	function setFechaPorQuincena($quincena) {
 		$qnas = array (
@@ -491,14 +431,14 @@ class cFecha {
 	}
 	function init($formato = false) {
 		$xT = new cTipos ();
-		$fecha = $this->mFecha;
-		$this->mCurrentAnno = $xT->cInt ( date ( "Y", strtotime ( $fecha ) ), true );
-		$this->mCurrentMonth = $xT->cInt ( date ( "n", strtotime ( $fecha ) ), true );
-		$this->mCurrentDay = $xT->cInt ( date ( "j", strtotime ( $fecha ) ), true );
-		$this->mDiasDelMes = $xT->cInt ( date ( "t", strtotime ( $fecha ) ), true );
-		$this->mCurrentWeekday = $xT->cInt ( date ( "N", strtotime ( $fecha ) ), true );
-		$this->mCurrentNumberWeek = $xT->cInt ( date ( "W", strtotime ( $fecha ) ), true );
-		$this->mFormat = ($formato == false) ? $this->mFormat : $formato;
+		$fecha 	= $this->mFecha;
+		$this->mCurrentAnno 		= setNoMenorQueCero( date ( "Y", strtotime ( $fecha ) ), true );
+		$this->mCurrentMonth 		= setNoMenorQueCero( date ( "n", strtotime ( $fecha ) ), true );
+		$this->mCurrentDay 			= setNoMenorQueCero( date ( "j", strtotime ( $fecha ) ), true );
+		$this->mDiasDelMes 			= setNoMenorQueCero( date ( "t", strtotime ( $fecha ) ), true );
+		$this->mCurrentWeekday 		= setNoMenorQueCero( date ( "N", strtotime ( $fecha ) ), true );
+		$this->mCurrentNumberWeek 	= setNoMenorQueCero( date ( "W", strtotime ( $fecha ) ), true );
+		$this->mFormat 				= ($formato == false) ? $this->mFormat : $formato;
 	}
 	/**
 	 * Retorna un Control Select con Dias Mes Anno
@@ -613,10 +553,10 @@ class cFecha {
 	 * @return string del SELECT o se imprime con echo
 	 */
 	function getHours($ret = false, $titulo = "", $id = "") {
-		$id = ($id == "") ? "id-hours-" . $this->mIndex : $id;
-		$name = ($id == "") ? "cHours-" . $this->mIndex : $id;
-		$options = "";
-		$xL = new cLang ();
+		$id 			= ($id == "") ? "id-hours-" . $this->mIndex : $id;
+		$name 			= ($id == "") ? "cHours-" . $this->mIndex : $id;
+		$options 		= "";
+		$xL 			= new cLang ();
 		$titulo = ($titulo == "") ? "" : $xL->getT ( $titulo );
 		foreach ( $this->mAHours as $key => $value ) {
 			$options .= "<option value=\"$key\">$value</option>";
@@ -688,14 +628,12 @@ class cFecha {
 		return $ctrl;
 	}
 	function set($mFecha = false) {
-		if ($mFecha == false) {
-		} else {
-			$this->mFecha = $mFecha;
+		if ($mFecha != false) {
+			$this->mFecha = date ( "Y-m-d", strtotime ( $mFecha ) );
 			$this->init ();
 		}
 	}
-	function getJSEvaluateDateCode() {
-	}
+	function getJSEvaluateDateCode() {	}
 	function setSeparador($separador) {
 		$this->mArrFormat [$this->mFormat] = str_replace ( "-", $separador, $this->mArrFormat [$this->mFormat] );
 		// error_log($this->mArrFormat[ $this->mFormat ]);
@@ -804,14 +742,20 @@ class cFecha {
 		if (WORK_IN_SATURDAY == false) {
 			$dias_no_laborables ["Saturday"] = 6;
 		}
-		$Operador = "+";
-		$dias_no_laborables ["Sunday"] = 7;
+		$Operador 			= "+";
+		$dias_no_laborables["Sunday"] = 7;
 		
-		$fecha_no_festiva = $dia_a_evaluar;
-		$sqlnf = "SELECT * FROM general_dias_festivos";
-		$rs = getRecordset ( $sqlnf );
-		while ( $rw = mysql_fetch_array ( $rs ) ) {
-			if (strtotime ( $dia_a_evaluar ) == strtotime ( $rw [0] )) {
+		$fecha_no_festiva 	= $dia_a_evaluar;
+		$xCache				= new cCache();
+		$idx				= "general_dias_festivos-rs";
+		$rs					= $xCache->get($idx);
+		if($rs === null){
+			$xQL			= new MQL();
+			$rs				= $xQL->getDataRecord("SELECT * FROM general_dias_festivos");
+			$xCache->set($idx, $rs);
+		}
+		foreach ($rs as $rw){
+			if (strtotime ( $dia_a_evaluar ) == strtotime ( $rw ["fecha_marcado"] )) {
 				$fecha_no_festiva = date ( "Y-m-d", strtotime ( "$dia_a_evaluar" . $Operador . "1 day" ) );
 			}
 		}
@@ -878,7 +822,6 @@ class cFecha {
 	}
 	/**
 	 * Obtiene el Dia Inicial del Mes según fecha dada
-	 * 
 	 * @param string $dateme        	
 	 */
 	function getDiaInicial($dateme = false) {
@@ -887,6 +830,12 @@ class cFecha {
 		}
 		return date ( "Y-m-", strtotime ( $this->get () ) ) . "01";
 	}
+	function getFechaInicialDelAnno($dateme = false) {
+		if ($dateme !== false) {
+			$this->set ( $dateme );
+		}
+		return date("Y-01-01", $this->getInt());
+	}	
 	/**
 	 * Obtiene el Dia Final del Mes según fecha dada
 	 * 
@@ -902,16 +851,22 @@ class cFecha {
 		$dateme = ($dateme == false) ? $this->mFecha : $dateme;
 		return date ( "Y-m-d", strtotime ( "$dateme-$MesesAnteriores month" ) );
 	}
-	function dia() {
+	function dia($fecha = false) {
+		if($fecha != false){ $this->set($fecha); }
 		return $this->mCurrentDay;
 	}
-	function anno() {
+	function anno($fecha = false) {
+		if($fecha != false){ $this->set($fecha); }
 		return $this->mCurrentAnno;
 	}
-	function mes() {
+	function mes($fecha = false) {
+		if($fecha != false){ $this->set($fecha); }
 		return $this->mCurrentMonth;
 	}
-	function semana() {
+	function semana($fecha = false) {
+		if($fecha != false){
+			$this->mCurrentNumberWeek 	= setNoMenorQueCero( date ( "W", strtotime ( $fecha ) ), true );
+		}
 		return $this->mCurrentNumberWeek;
 	}
 	function quincena($fecha = false) {
@@ -931,32 +886,33 @@ class cFecha {
 		return $this->mDiasDelMes;
 	}
 	function getFechaMaximaOperativa() {
-		$AnnoFinal = date ( "Y" ) + $this->mAnnosOperativos;
-		$FechaMaxima = ($AnnoFinal > $this->mAnnoMaximo) ? $this->mAnnoMaximo . "-12-31" : $AnnoFinal . "-12-31";
+		$AnnoFinal		= date ( "Y" ) + $this->mAnnosOperativos;
+		$FechaMaxima 	= ($AnnoFinal > $this->mAnnoMaximo) ? $this->mAnnoMaximo . "-12-31" : $AnnoFinal . "-12-31";
 		return $FechaMaxima;
 	}
+	function getFechaMinimaOperativa(){ return $this->getFechaISO(EACP_FECHA_DE_CONSTITUCION);	}
 	function getDiaAbonoQuincenal($dia_primer_periodo, $dia_segundo_periodo, $date = false) {
-		$this->set ( $date );
+		$fecha_de_pago 	= ($date == false) ? $this->mFecha : $date;
+		$this->set( $fecha_de_pago );
+		$dias_del_mes 	= $this->getDiasDelMes($fecha_de_pago);
+		$dia_en_el_mes 	= $this->dia($fecha_de_pago);
 		
-		$dias_del_mes = $this->getDiasDelMes ();
-		$dia_en_el_mes = $this->dia ();
-		$fecha_de_pago = ($date == false) ? $this->mFecha : $date;
-		$dif_mes = 0;
-		$dias_ajustados = 0;
-		$diferencia_en_el_mes = 0;
+		$dif_mes 				= 0;
+		$dias_ajustados 		= 0;
+		$diferencia_en_el_mes 	= 0;
 		
-		$i_primer_periodo = $dia_primer_periodo - 8;
+		$i_primer_periodo 		= $dia_primer_periodo - 8;
 		if ($i_primer_periodo < 0) {
-			$i_primer_periodo = 0;
+			$i_primer_periodo 	= 0;
 		}
-		$f_primer_periodo = $dia_primer_periodo + 8;
-		$i_segundo_periodo = $dia_segundo_periodo - 8;
+		$f_primer_periodo 		= $dia_primer_periodo + 8;
+		$i_segundo_periodo 		= $dia_segundo_periodo - 8;
 		if ($i_segundo_periodo < $f_primer_periodo) {
-			$i_segundo_periodo = $f_primer_periodo + 1;
+			$i_segundo_periodo 	= $f_primer_periodo + 1;
 		}
 		$f_segundo_periodo = $dia_segundo_periodo + 8;
 		if ($f_segundo_periodo > $dias_del_mes) {
-			$f_segundo_periodo = $dias_del_mes;
+			$f_segundo_periodo 	= $dias_del_mes;
 		}
 		
 		if ($dia_en_el_mes >= $i_primer_periodo && $dia_en_el_mes <= $f_primer_periodo) {
@@ -964,9 +920,9 @@ class cFecha {
 		} elseif ($dia_en_el_mes >= $i_segundo_periodo && $dia_en_el_mes <= $f_segundo_periodo) {
 			$fecha_de_pago = date ( "Y-m", strtotime ( $date ) ) . "-" . $dia_segundo_periodo;
 		} elseif ($dia_en_el_mes > $f_segundo_periodo) {
-			$diferencia_en_el_mes = $dias_del_mes - $dia_en_el_mes;
-			$dias_ajustados = $diferencia_en_el_mes + $dia_primer_periodo;
-			$fecha_de_pago = sumardias ( $date, $dias_ajustados );
+			$diferencia_en_el_mes 	= $dias_del_mes - $dia_en_el_mes;
+			$dias_ajustados 		= $diferencia_en_el_mes + $dia_primer_periodo;
+			$fecha_de_pago 			= sumardias ( $date, $dias_ajustados );
 		}
 		return $fecha_de_pago;
 	}
@@ -982,32 +938,30 @@ class cFecha {
 				$dia3 
 		);
 		asort ( $d );
-		$dia1 = isset ( $d [0] ) ? $d [0] : 10;
-		$dia2 = isset ( $d [1] ) ? $d [1] : 20;
-		$dia3 = isset ( $d [2] ) ? $d [2] : 30;
+		$dia1 			= isset ( $d [0] ) ? $d [0] : 10;
+		$dia2 			= isset ( $d [1] ) ? $d [1] : 20;
+		$dia3 			= isset ( $d [2] ) ? $d [2] : 30;
 		
-		$ifecha = strtotime ( $fecha );
-		$dia_del_mes = intval ( date ( "j", $ifecha ) );
-		$dias_del_mes = intval ( date ( "t", $ifecha ) );
-		// $mes_del_dia = intval(date("n", $ifecha));
+		$ifecha 		= strtotime ( $fecha );
+		$dia_del_mes 	= intval ( date ( "j", $ifecha ) );
+		$dias_del_mes 	= intval ( date ( "t", $ifecha ) );
 		
-		$dia3 = ($dia3 > $dias_del_mes) ? $dias_del_mes : $dia3;
-		$res = $fecha;
-		$lim0 = intval ( $dia1 / 2 );
-		$lim1 = $dia1 + intval ( $dia1 / 2 );
-		$lim2 = $dia2 + intval ( ($dia2 - $dia1) / 2 );
+		$dia3 			= ($dia3 > $dias_del_mes) ? $dias_del_mes : $dia3;
+		$res 			= $fecha;
+		$lim0 			= intval ( $dia1 / 2 );
+		$lim1 			= $dia1 + intval ( $dia1 / 2 );
+		$lim2 			= $dia2 + intval ( ($dia2 - $dia1) / 2 );
 		if ($dia_del_mes <= $lim0) {
-			$res = $this->setRestarDias ( $lim0, date ( "Y-m-", $ifecha ) . "01" );
+			$res 			= $this->setRestarDias ( $lim0, date ( "Y-m-", $ifecha ) . "01" );
+			$dias_del_mes 	= intval ( date ( "t", strtotime ( $res ) ) );
+			$dia3			= ($dia3 > $dias_del_mes) ? $dias_del_mes : $dia3;
 			$res = date ( "Y-m-", strtotime ( $res ) ) . $dia3;
 		} elseif ($dia_del_mes > $lim0 and ($dia_del_mes <= $lim1)) {
 			$res = date ( "Y-m-", $ifecha ) . $dia1;
-			// $this->mMessages .= "F$fecha\tObteniendo fecha a $res de $dia1\r\n";
 		} elseif (($dia_del_mes > $lim1) and ($dia_del_mes <= $lim2)) {
 			$res = date ( "Y-m-", $ifecha ) . $dia2;
-			// $this->mMessages .= "F$fecha\tObteniendo fecha a $res de $dia2\r\n";
 		} elseif ($dia_del_mes > $lim2) {
-			$res = date ( "Y-m-", $ifecha ) . $dia3;
-			// $this->mMessages .= "F$fecha\tObteniendo fecha a $res de $dia3\r\n";
+			$res 			= date ( "Y-m-", $ifecha ) . $dia3;
 		}
 		return $res;
 	}
@@ -1039,9 +993,7 @@ class cFecha {
 		
 		return $arrAnnios;
 	}
-	function getDiasDeSemanaInArray() {
-		return $this->mASpanishWeekDay;
-	}
+	function getDiasDeSemanaInArray() {	return $this->mASpanishWeekDay;	}
 	function getDiaDeAbonoMensual($dia_en_el_mes, $date = false) {
 		$date = ($date == false) ? $this->mFecha : $date;
 		$dia_abono_mensual = $date;
@@ -1053,40 +1005,45 @@ class cFecha {
 		return $dia_abono_mensual;
 	}
 	function getFechaISO($fecha_ES_MX = false) {
-		$fecha_ES_MX = ($fecha_ES_MX == false) ? $this->mFecha : $fecha_ES_MX;
-		
-		$fecha_ES_MX = str_replace ( "/", "-", $fecha_ES_MX );
-		$D = explode ( "-", $fecha_ES_MX, 3 );
-		$anno = $this->anno ();
-		$mes = $this->mes ();
-		$dia = $this->dia ();
-		if (setNoMenorQueCero ( $D [0] ) > 31) {
-			$anno = setNoMenorQueCero ( $D [0] );
-			$mes = setNoMenorQueCero ( $D [1] );
-			$dia = setNoMenorQueCero ( $D [2] );
-			//setLog($fecha_ES_MX);
+		$fecha_ES_MX 	= ($fecha_ES_MX == false) ? $this->mFecha : $fecha_ES_MX;
+		$fecha_ES_MX 	= str_replace("/", "-", $fecha_ES_MX);
+		$D 				= explode("-", $fecha_ES_MX, 3);
+		if(setNoMenorQueCero($D[0]) <= 0 OR (!isset($D[1])) ){
+			if (MODO_DEBUG == true) {
+				//setLog( "Fecha fallida $fecha_ES_MX" );
+			}			
 		} else {
-			if (isset ( $D [2] )) {
-				$panno = setNoMenorQueCero ( $D [2] );
-				if ($panno > 31) {
-					$anno = $panno;
+			$anno 			= $this->anno();
+			$mes 			= $this->mes();
+			$dia 			= $this->dia();
+			
+			if (setNoMenorQueCero( $D[0] ) > 31) {
+				$anno 		= setNoMenorQueCero ( $D[0] );
+				$mes 		= setNoMenorQueCero ( $D[1] );
+				$dia 		= setNoMenorQueCero ( $D[2] );
+				//setLog($fecha_ES_MX);
+			} else {
+				if (isset ( $D [2] )) {
+					$panno 	= setNoMenorQueCero ( $D [2] );
+					if ($panno > 31) {
+						$anno = $panno;
+					}
 				}
-			}
-			if (! isset ( $D [1] )) {
-				if (MODO_DEBUG == true) {
-					setLog ( "Fecha fallida $fecha_ES_MX" );
+				if (! isset ( $D [1] )) {
+					if (MODO_DEBUG == true) {
+						//setLog ( "Fecha fallida $fecha_ES_MX" );
+					}
 				}
+				$mes = setNoMenorQueCero ( $D [1] );
+				$dia = setNoMenorQueCero ( $D [0] );
 			}
-			$mes = setNoMenorQueCero ( $D [1] );
-			$dia = setNoMenorQueCero ( $D [0] );
+			
+			$anno = ($anno > 2099 or $anno < 1900) ? $this->anno () : $anno;
+			$mes = ($mes < 1 or $mes > 12) ? $this->mes () : $mes;
+			$dia = ($dia < 1 or $dia > 31) ? $this->dia () : $dia;
+			$fecha_ES_MX = mktime ( 0, 0, 0, $mes, $dia, $anno );
+			$this->mFecha = date ( "Y-m-d", $fecha_ES_MX );
 		}
-		
-		$anno = ($anno > 2099 or $anno < 1900) ? $this->anno () : $anno;
-		$mes = ($mes < 1 or $mes > 12) ? $this->mes () : $mes;
-		$dia = ($dia < 1 or $dia > 31) ? $this->dia () : $dia;
-		$fecha_ES_MX = mktime ( 0, 0, 0, $mes, $dia, $anno );
-		$this->mFecha = date ( "Y-m-d", $fecha_ES_MX );
-		
 		return $this->mFecha;
 	}
 	function getFechaMX($fecha = false, $separador = false) {
@@ -1105,10 +1062,10 @@ class cFecha {
 		return $id;
 	}
 	function getSelectSemanas($id, $mark = 1) {
-		$options = array ();
+		$options 		= array ();
 		for($i = 1; $i <= 52; $i ++) {
 			$this->setFechaPorSemana ( $i );
-			$options [$i] = "SEMANA $i -" . $this->getFechaDDMM ();
+			$options [$i] = "SEMANA $i -" . $this->getFechaCorta();
 		}
 		return new cHSelect ( $id, $options );
 	}
@@ -1116,7 +1073,7 @@ class cFecha {
 		$options = array ();
 		for($i = 1; $i <= 24; $i ++) {
 			$this->setFechaPorQuincena ( $i );
-			$options [$i] = "QUINCENA $i -" . $this->getFechaDDMM ();
+			$options [$i] = "QUINCENA $i -" . $this->getFechaCorta();
 		}
 		return new cHSelect ( $id, $options );
 	}
@@ -1173,6 +1130,7 @@ class cFecha {
 		$date = $this->getInt ();
 		return date ( "Ymd.His", $date );
 	}
+	
 	function getFechaDeInicioDeSemana($fecha = false) {
 		// $this->mCurrentWeekday = $xT->cInt( date("N", strtotime($fecha)), true );
 		$fecha = ($fecha == false) ? $this->get () : $fecha;
@@ -1199,6 +1157,7 @@ class cFecha {
 		return new cFechaTrimestre($fecha);
 	}
 	function getAnnosOperativos(){ return $this->mAnnosOperativos; }
+	function getFechaFinAnnio(){ return $this->anno() . "-12-31"; }
 }
 class cFechaTrimestre {
 	private $mFechaInicial	= false;

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item><pubDate>Tue, 07 Feb 2017 17:19:43 -0600</pubDate><title><![CDATA[Quiero un Crédito]]></title><url><![CDATA[quiero-un-credito]]></url><meta><![CDATA[]]></meta><metad><![CDATA[]]></metad><menu><![CDATA[Quiero un Crédito]]></menu><menuOrder><![CDATA[2]]></menuOrder><menuStatus><![CDATA[Y]]></menuStatus><template><![CDATA[template.php]]></template><parent><![CDATA[]]></parent><content><![CDATA[&lt;!-- Start Formoid form--&gt;
+&lt;div class=&quot;col-two&quot;&gt;
+	&lt;form class=&quot;formoid-flat-blue&quot; method=&quot;post&quot; style=&quot;background-color: #FFFFFF; font-size: 14px; font-family: &#039;Lato&#039;, sans-serif; color: #666666; max-width: 100%; min-width: 150px&quot;&gt;
+	&lt;div class=&quot;title&quot;&gt;
+		&lt;h2&gt;Capture su Información&lt;/h2&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-separator&quot;&gt;
+		&lt;hr /&gt;
+		&lt;h3 class=&quot;section-break-title&quot;&gt;Datos de Contacto&lt;/h3&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-name&quot;&gt;&lt;span class=&quot;nameFirst&quot;&gt; &lt;input id=&quot;idnombre&quot; name=&quot;name[first]&quot; placeholder=&quot;Nombre Completo&quot; size=&quot;18&quot; type=&quot;text&quot; /&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;nameLast&quot;&gt; &lt;input id=&quot;idapellidos&quot; name=&quot;name[last]&quot; placeholder=&quot;Apellidos&quot; size=&quot;14&quot; type=&quot;text&quot; /&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;&lt;/div&gt;
+
+	&lt;div class=&quot;element-phone&quot;&gt;&lt;label class=&quot;title&quot;&gt;&lt;span class=&quot;required&quot;&gt;*&lt;/span&gt; &lt;/label&gt;
+
+		&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idtelefono&quot; maxlength=&quot;24&quot; name=&quot;phone&quot; pattern=&quot;[+]?[\\.\\s\\-\\(\\)\\*\\#0-9]{3,}&quot; placeholder=&quot;Numero Telefónico&quot; required=&quot;required&quot; type=&quot;tel&quot; value=&quot;&quot; /&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-email&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idmail&quot; name=&quot;email&quot; placeholder=&quot;Dirección de correo electrónico&quot; type=&quot;email&quot; value=&quot;&quot; /&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-separator&quot;&gt;
+		&lt;hr /&gt;
+		&lt;h3 class=&quot;section-break-title&quot;&gt;Datos del Crédito&lt;/h3&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-select&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;
+			&lt;div class=&quot;large&quot;&gt;&lt;span&gt; &lt;select id=&quot;idplazo&quot; name=&quot;select&quot;&gt;&lt;option value=&quot;7-26&quot;&gt;Semanal / 6 Meses&lt;/option&gt;&lt;option value=&quot;7-52&quot;&gt;Semanal / 12 Meses&lt;/option&gt;&lt;option value=&quot;15-12&quot;&gt;Quincenal / 6 Meses&lt;/option&gt;&lt;option value=&quot;15-24&quot;&gt;Quincenal / 1 Año&lt;/option&gt;&lt;option value=&quot;30-12&quot;&gt;Mensual /1 Año&lt;/option&gt; &lt;/select&gt; &lt;i&gt;&lt;/i&gt; &lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt; &lt;/span&gt;&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;element-input&quot;&gt;
+		&lt;div class=&quot;item-cont&quot;&gt;&lt;input class=&quot;large&quot; id=&quot;idmonto&quot; name=&quot;input&quot; placeholder=&quot;Monto del Crédito Solicitado&quot; type=&quot;text&quot; /&gt;&lt;span class=&quot;icon-place&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+	&lt;/div&gt;
+
+	&lt;div class=&quot;submit&quot;&gt;&lt;input onclick=&quot;jsSendData(); return false&quot; type=&quot;submit&quot; value=&quot;Quiero que me contacten&quot; /&gt;&lt;/div&gt;
+	&lt;/form&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;col-two&quot;&gt;
+	&lt;div class=&quot;title&quot;&gt;
+		&lt;h1&gt;Instrucciones&lt;/h1&gt;
+	&lt;/div&gt;
+
+	&lt;h3&gt;Datos de Contacto&lt;/h3&gt;
+
+	&lt;p&gt;Capture su &lt;em&gt;Nombre Completo&lt;/em&gt; por Ejemplo: &lt;code&gt;Juan José&lt;/code&gt;&lt;/p&gt;
+
+	&lt;p&gt;Capture sus &lt;em&gt;Apellidos&lt;/em&gt; por Ejemplo: &lt;code&gt;Gomez Gomez&lt;/code&gt;&lt;/p&gt;
+
+	&lt;p&gt;Capture su &lt;em&gt;Teléfono&lt;/em&gt; con Lada que nos servirá para contactarlo, por Ejemplo: &lt;code&gt;999-90 00 00&lt;/code&gt;&lt;/p&gt;
+
+	&lt;p&gt;Capture su &lt;em&gt;Correo Electrónico&lt;/em&gt; completo por donde podremos contactarlo, por Ejemplo: &lt;code&gt;jhon@doe.com.mx&lt;/code&gt;&lt;/p&gt;
+
+	&lt;h3&gt;Datos del Crédito&lt;/h3&gt;
+
+	&lt;p&gt;Elija el &lt;em&gt;Plazo&lt;/em&gt; por el cuál desea su Crédito, por Ejemplo : &lt;code&gt;Semanal / 6 Meses&lt;/code&gt;&lt;/p&gt;
+
+	&lt;p&gt;Elija el &lt;em&gt;Monto&lt;/em&gt; por el cuál desea su Crédito, Por Ejemplo : &lt;code&gt;10000&lt;/code&gt;(Diez Mil)&lt;/p&gt;
+
+	&lt;h3&gt;Dudas a : &lt;a href=&quot;mailto:software@grupopadio.com.mx&quot;&gt;Contacto&lt;/a&gt;&lt;/h3&gt;
+
+	&lt;h3&gt;&lt;a href=&quot;privacidad.html&quot;&gt;Declaración de Privacidad&lt;/a&gt;&lt;/h3&gt;
+&lt;/div&gt;
+&lt;script&gt;
+		var mSite = &quot;http://localhost/svc/pc.svc.php?cmd=precredito&amp;&quot;;
+		function jsSendData(){
+			var idnombre	= $(&quot;#idnombre&quot;).val();
+			var idapellidos	= $(&quot;#idapellidos&quot;).val();
+			var idcondicion	= $(&quot;#idplazo&quot;).val();
+			var idmonto		= $(&quot;#idmonto&quot;).val();
+			var idmail		= $(&quot;#idmail&quot;).val();
+			var idtelefono	= $(&quot;#idtelefono&quot;).val();
+			
+			var mUrl		= mSite + &quot;idnombre=&quot; + idnombre + &quot;&amp;idapellidos=&quot; + idapellidos + &quot;&amp;idcondiciones=&quot; + idcondicion + &quot;&amp;idmonto=&quot; + idmonto + &quot;&amp;idemail=&quot; + idmail + &quot;&amp;idtelefono=&quot; + idtelefono;
+			
+			$.getJSON( mUrl, function( data ) {
+				alert(data.message);
+			});
+		}
+&lt;/script&gt;&lt;!-- Stop Formoid form--&gt;]]></content><private><![CDATA[]]></private><author><![CDATA[root]]></author></item>

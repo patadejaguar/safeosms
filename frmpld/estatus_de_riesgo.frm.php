@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Actualizar estado de riesgo", HP_FORM);
+$xHP		= new cHPage("TR.estatus de riesgo", HP_FORM);
 $xF			= new cFecha();
 $xlistas	= new cSQLListas();
 $jxc 		= new TinyAjax();
@@ -42,6 +42,9 @@ if($clave == null){
 
 $xFRM			= new cHForm("frmaml_risk_register", "estatus_de_riesgo.frm.php?action=$step&codigo=$codigo");
 $xFRM->addSubmit();
+$xFRM->setTitle($xHP->getTitle());
+
+$xFRM->endSeccion();
 
 if($action == MQL_ADD){		//Agregar
 	$clave 		= parametro($xTabla->getKey(), null, MQL_INT);
@@ -69,14 +72,17 @@ $msg		= "";
 $xAlert		= new cAMLAlertas($codigo);
 
 $xAlert->init();
+$xFRM->addSeccion("iddiv", $xHP->getTitle());
 
-$xFRM->addAviso( $xAlert->getDescripcion() );
 $xFRM->OTextArea("razones_de_reporte", $xTabla->razones_de_reporte()->v(), "TR.AML_TEXTO_A");
 $xFRM->OTextArea("acciones_tomadas", $xTabla->acciones_tomadas()->v(), "TR.AML_TEXTO_B");
 $xFRM->OTextArea("notas_de_checking", $xTabla->notas_de_checking()->v(), "TR.Observaciones de la operacion");
 $xFRM->OHidden("clave_de_riesgo", $xTabla->clave_de_riesgo()->v(),"");
 $xFRM->OHidden("fecha_de_checking", $xF->getInt() ,"");
-
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddivmsg", "TR.AVISO DEL SISTEMA");
+$xFRM->addAviso( $xAlert->getDescripcion() );
+$xFRM->endSeccion();
 echo $xFRM->get();
 
 ?>
@@ -86,6 +92,10 @@ var xG		= new Gen();
 //function jsConfirmaRiesgo(){ xG.confirmar({ msg : "Desea Confirmar la Alerta como Riesgo?", callback : "jsaConfirmaRiesgo()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia" }); }
 function jsRazonNoVacia(){
 	var valid	= new ValidGen();
+	xG.cleanText("#notas_de_checking");
+	xG.cleanText("#razones_de_reporte");
+	xG.cleanText("#acciones_tomadas");
+
 	return valid.NoVacio( $("#notas_de_checking").val() );
 }
 

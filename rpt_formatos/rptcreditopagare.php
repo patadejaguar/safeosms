@@ -17,6 +17,7 @@
 $oficial 		= elusuario($iduser);
 $idsolicitud 	= parametro("i", DEFAULT_CREDITO, MQL_INT); $idsolicitud = parametro("credito", $idsolicitud, MQL_INT); $idsolicitud = parametro("solicitud", $idsolicitud, MQL_INT);
 $formato		= parametro("forma", 21, MQL_INT);
+$xHP->addCSS("../css/contrato.css.php");
 $xHP->init();
 
 $xForma			= new cFormato($formato);

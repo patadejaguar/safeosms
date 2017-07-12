@@ -83,9 +83,25 @@ class cUtileriasParaContabilidad{
 		$wLim	= ( setNoMenorQueCero($NumeroDeRecibo) > 0  ) ? " AND ( `operaciones_recibos`. `idoperaciones_recibos` = '$NumeroDeRecibo') " : $wLim;
 		$xCat	= new cCatalogoOperacionesDeCaja();
 		$ql		= new MQL();
-		$xLogg	= new cCoreLog();
+		$xLog	= new cCoreLog();
 		$xPol	= new cPoliza(false);
 		$msg	.= "Recibo\tDocumento\tSocio\tOperacion\tMonto\tContable\r\n";
+		$DAfecta= array();
+		$DAlt	= array();
+		$FForm	= array();
+		$sqlAfecta		= "SELECT * FROM `contable_polizas_perfil`";// WHERE (`contable_polizas_perfil`.`tipo_de_recibo` = $TipoDeRec)";
+		$rsAfecta		= $ql->getDataRecord($sqlAfecta);
+		
+		foreach ($rsAfecta as $rwAfecta){
+			$DAfecta[$rwAfecta["tipo_de_recibo"]][$rwAfecta["tipo_de_operacion"]]		= $rwAfecta["operacion"];			//operacion cargo/abono
+			if(setNoMenorQueCero($rwAfecta["cuenta_alternativa"]) > 0){
+				$DAlt[$rwAfecta["tipo_de_recibo"]][$rwAfecta["tipo_de_operacion"]]= $rwAfecta["cuenta_alternativa"];	//cuenta alternativa
+			}
+			if(trim($rwAfecta["formula_posterior"]) != ""){
+				$DForm[$rwAfecta["tipo_de_recibo"]][$rwAfecta["tipo_de_operacion"]]	= $rwAfecta["formula_posterior"];	//formula evaluada
+			}
+		}
+		$rsAfecta		= null;
 		//$xLogg->add(, $xLogg->DEVELOPER);
 		//
 		$sql	= "SELECT
@@ -101,6 +117,7 @@ class cUtileriasParaContabilidad{
 							WHERE tipo_de_recibo = `operaciones_recibos`.`tipo_docto` ) > 0 
 							 $wLim ";
 		$rs 				= $ql->getDataRecord($sql);
+		//setLog($sql);
 		foreach ( $rs as $rw  ){
 			$Recibo			= $rw["idoperaciones_recibos"];
 			$TipoDeRec		= $rw["tipo_docto"];
@@ -109,27 +126,42 @@ class cUtileriasParaContabilidad{
 			$socio_de_rec	= $rw["numero_socio"];
 			$docto_de_rec	= $rw["docto_afectado"];
 			$usrRec			= $rw["idusuario"];
+			$banco			= $rw["cuenta_bancaria"];
+			$fecha			= $rw["fecha_operacion"];
+			$TIPO_DE_RECIBO	= $TipoDeRec;			//vars en formulas
+			$TIPO_DE_PAGO	= $TipoDePago;			//vars en formulas
+			//setLog("$TIPO_DE_RECIBO ... REC");
 			
+			$DatosAfect		= (isset($DAfecta[$TipoDeRec])) ? $DAfecta[$TipoDeRec] : array();
+			$DatosAlter		= (isset($DAlt[$TipoDeRec])) ? $DAlt[$TipoDeRec] : array();
+			$DatosForm		= (isset($DForm[$TipoDeRec])) ? $DForm[$TipoDeRec] : array();
 			$xRec			= new cReciboDeOperacion(false, false, $Recibo);
-			$xRec->init($rw);
-			$xRec->getDatosDeCobro();
-			$OBanco			= $xRec->getOBanco();;			
-			$banco			= 0;
-			if($OBanco != null){
-				$banco 		= $OBanco->getNumeroDeCuenta();
+			
+			if($xRec->init($rw) == true){
+				$xRec->getDatosDeCobro();
+				if($banco <= FALLBACK_CUENTA_BANCARIA){
+					$OBanco			= $xRec->getOCuentaBancaria();
+					if($OBanco != null){
+						$xLog->add("WARN\tCambio de Banco $banco a " . $OBanco->getNumeroDeCuenta() . "\r\n", $xLog->DEVELOPER);
+						$banco 		= $OBanco->getNumeroDeCuenta();
+					} else {
+						$xLog->add("ERROR\tAl Obtener el banco $banco\r\n", $xLog->DEVELOPER);
+					}					
+				}
+				//setLog($xRec->getMessages());
+			} else {
+				$xLog->add("ERROR\tAl Iniciar el recibo $Recibo\r\n", $xLog->DEVELOPER);
 			}
+			if($banco <= FALLBACK_CUENTA_BANCARIA){
+				$banco	= FALLBACK_CUENTA_BANCARIA;
+			}
+			$xLog->add($xRec->getMessages(), $xLog->DEVELOPER);
 			$TotalSuma		= 0;
-			$DatosAfect		= array();
-			$sqlAfecta		= "SELECT * FROM	`contable_polizas_perfil`		WHERE (`contable_polizas_perfil`.`tipo_de_recibo` = $TipoDeRec)";
-			$rsAfecta		= $ql->getDataRecord($sqlAfecta);
-			foreach ($rsAfecta as $rwAfecta){
-				$DatosAfect[$rwAfecta["tipo_de_operacion"]]	= $rwAfecta["operacion"];
-				//setLog($rwAfecta["tipo_de_operacion"] . "    ----- " . $rwAfecta["operacion"]);
-			}
-			$xLogg->add("OK\tRecibo $Recibo Tipo $TipoDeRec con Pago $TipoDePago \r\n", $xLogg->DEVELOPER);
+
+			$xLog->add("OK\tRecibo $Recibo Tipo $TipoDeRec con Pago $TipoDePago y Banco $banco \r\n", $xLog->DEVELOPER);
 			//Eliminar Prepoliza de ese dia.
-			$sqlDR			= " DELETE FROM `contable_polizas_proforma` WHERE numero_de_recibo = $Recibo ";
-			my_query($sqlDR);
+			$sqlDR			= "DELETE FROM `contable_polizas_proforma` WHERE numero_de_recibo = $Recibo ";
+			$ql->setRawQuery($sqlDR);
 					
 			$sqlM		= "SELECT
 							`operaciones_mvtos`.*,
@@ -148,30 +180,43 @@ class cUtileriasParaContabilidad{
 				$socio			= $rwM["socio_afectado"];
 				$docto			= $rwM["docto_afectado"];
 				$usr			= $rwM["idusuario"];
+				$REVERTIR_ASIENTOS=false;
 				//setLog($sqlAfecta);
-				$xLogg->add("OK\tOperacion $TipoOperacion con Monto $Monto ($usr)\r\n", $xLogg->DEVELOPER);
+				$xLog->add("OK\tOperacion $TipoOperacion con Monto $Monto ($usr)\r\n", $xLog->DEVELOPER);
 				
-				$AfectaCont		= ( isset( $DatosAfect[$TipoOperacion] ) ) ? $DatosAfect[$TipoOperacion] : 1;
-				
-
+				$AfectaCont		= (isset($DatosAfect[$TipoOperacion] ) ) ? $DatosAfect[$TipoOperacion] : 1;
+				$otro			= (isset($DatosAlter[$TipoOperacion])) ? $DatosAlter[$TipoOperacion] : 0;
+				$AfectaRev		= ($AfectaCont == TM_ABONO) ? TM_CARGO : TM_ABONO;
 				$TotalSuma		+= $Monto;//( ( $Monto * $AfectaCont) * -1);
-				$xPol->addProforma($Recibo, $TipoOperacion, $Monto, $socio, $docto, $AfectaCont, $usr, $banco);
+				if(isset($DatosForm[$TipoOperacion])){
+					eval($DatosForm[$TipoOperacion]);
+				}
+				$xPol->addProforma($Recibo, $TipoOperacion, $Monto, $socio, $docto, $AfectaCont, $usr, $banco, $otro, $fecha);
 				$msg			.= "$Recibo\t$socio\t$docto\t$TipoOperacion\t$Monto\t$AfectaCont\r\n";
+				//para tipos de pago Ninguno
+				if($REVERTIR_ASIENTOS == true){
+					$xPol->addProforma($Recibo, $TipoOperacion, $Monto, $socio, $docto, $AfectaRev, $usr, $banco, $otro, $fecha);
+					$msg			.= "$Recibo\t$socio\t$docto\t$TipoOperacion\t$Monto\t$AfectaRev\tREV\r\n";
+					$TotalSuma		= ($TotalSuma - $Monto);
+				}
 			}
-			//por el pago
-			$OperacionPago		= $xCat->getTipoOperacionByTipoPago($TipoDePago);
-
-			$AfectaCont		= ( isset( $DatosAfect[$OperacionPago] ) ) ? $DatosAfect[$OperacionPago] : 1;
-						
-			//Agregar un movimiento por el Tipo de Pago.. Cambiado monto por Monto
-			//setLog($DatosAfect[$OperacionPago]);
-			$xPol->addProforma($Recibo, $OperacionPago, $TotalSuma, $socio_de_rec, $docto_de_rec, $AfectaCont, $usrRec, $banco);
-			$msg				.= "$Recibo\t$socio_de_rec\t$docto_de_rec\t$OperacionPago\t$TotalSuma\t$AfectaCont\r\n";
+			if($TotalSuma != 0){
+				//por el pago
+				$OperacionPago	= $xCat->getTipoOperacionByTipoPago($TipoDePago);
+				//setLog("$Recibo --- $TipoDePago");
+				$AfectaCont		= (isset($DatosAfect[$OperacionPago] ) ) ? $DatosAfect[$OperacionPago] : 1;
+				//Agregar un movimiento por el Tipo de Pago.. Cambiado monto por Monto
+				$alternativo	= (isset($DatosAlter[$OperacionPago] ) ) ? $DatosAlter[$OperacionPago] : 0;
+				//setLog($DatosAfect[$OperacionPago]);
+				$xPol->addProforma($Recibo, $OperacionPago, $TotalSuma, $socio_de_rec, $docto_de_rec, $AfectaCont, $usrRec, $banco, $alternativo, $fecha);
+				$msg				.= "$Recibo\t$socio_de_rec\t$docto_de_rec\t$OperacionPago\t$TotalSuma\t$AfectaCont\r\n";
+			}
 			//TODO: Ampliar funcionalidad de poliza, agregar suma de cargos, suma de abonos y si debe se cargo o abono
 		}
-		$xLogg->add($msg, $xLogg->DEVELOPER);
-		$this->mMessages	.= $xLogg->getMessages();
-		return $xLogg->getMessages();	
+		$xLog->add($msg, $xLog->DEVELOPER);
+		$this->mMessages	.= $xLog->getMessages();
+		$rs					= null;
+		return $xLog->getMessages();	
 	}
 	function setPolizaPorRecibo($recibo, $generador = false){
 		$sucess					= false;
@@ -186,6 +231,13 @@ class cUtileriasParaContabilidad{
 			if (  setNoMenorQueCero($recibo) > 0 ){
 				$xRec	= new cReciboDeOperacion(false, false, $recibo);
 				if($xRec->init() == true){
+					//Iniciar centro de costo por Sucursal
+					$xSuc	= new cSucursal($xRec->getSucursal());
+					if($xSuc->init() == true){
+						if($xSuc->getCentroDeCosto() > 0){
+							$centro_de_costo	= $xSuc->getCentroDeCosto();
+						}
+					}
 					$sucess = true;
 					//Obten datos del recibo para la Poliza
 					$sqlRec = "SELECT
@@ -295,7 +347,7 @@ class cUtileriasParaContabilidad{
 						$tipo_movimiento 		= $rw["contable_operacion"];
 						$RecUsr					= $rw["idusuario"];
 						$cuenta_bancaria		= $rw["banco"];
-						
+						$alternativo			= $rw["cuenta_alternativa"];
 						$cargo_movimiento 		= 0;
 						$abono_movimiento		= 0;
 						if ( $tipo_movimiento == TM_CARGO ){
@@ -310,7 +362,10 @@ class cUtileriasParaContabilidad{
 						$sForms					= new cValorarFormulas();
 						$cuenta 				= $sForms->getCuentaContable($socio, $documento, $formula, $RecUsr, $xRec->getNumeroDeCheque(), $cuenta_bancaria);
 						$xLogg->add($sForms->getMessages() , $xLogg->DEVELOPER);
-						
+						if(setNoMenorQueCero($alternativo) > 0){
+							$cuenta				= $alternativo;
+							$xLogg->add("WARN\tCUENTA_ALT\tLa Cuenta $cuenta Es alternativa\r\n" , $xLogg->DEVELOPER);
+						}
 						//tipo de cuenta es Abonos a efectivo
 						
 						if ( $cuenta != "NO_CONTABILIZAR" ){
@@ -568,7 +623,20 @@ class cUtileriasParaContabilidad{
 		$this->mMessages.= $msg;
 		return $msg;
 	} //end function
-
+	function setResetearContabilidad(){
+		$xQL	= new MQL();
+		$sql	= array();
+		$notas	= "";
+		$sql[]	= "TRUNCATE `contable_movimientos`";
+		$sql[]	= "TRUNCATE `contable_polizas`";
+		$sql[]	= "TRUNCATE `contable_polizas_proforma`";
+		$sql[]	= "UPDATE contable_saldos SET saldo_inicial=0, imp1=0, imp2=0, imp3=0, imp4=0, imp5=0, imp6=0, imp7=0, imp8=0, imp9=0, imp10=0, imp11=0, imp12=0, imp13=0, imp14=0 ";
+		//$sql[]	= "TRUNCATE ";
+		foreach ($sql as $idx => $cnt){
+			$rs	= $xQL->setRawQuery($cnt);
+		}
+		return $notas;
+	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 }
 

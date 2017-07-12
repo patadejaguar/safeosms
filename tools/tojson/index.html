@@ -1,0 +1,415 @@
+<html>
+<head>
+	<meta charset="utf-8" />
+		<title>SQLite to JSON Script</title>
+		<meta name="description" content="how to convert DDL SQLite Script to Json Object" />
+		<meta name="author" content="Luis Humberto Balam Gonzalez" />
+
+		<meta name="viewport" content="width=device-width; initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css">
+			
+		<link rel="stylesheet" href="http://yandex.st/highlightjs/7.2/styles/default.min.css">
+		<script src="http://yandex.st/highlightjs/7.2/highlight.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+		
+		<script type="text/javascript" src="js/date.js"></script>
+		<script type="text/javascript" src="js/database.utils.js"></script>
+		<script type="text/javascript" src="js/ZeroClipboard.min.js"></script>
+	<script language="JavaScript">
+		var clip = null;
+		
+
+		
+		function init() {
+			ZeroClipboard.setMoviePath( 'http://www.opencorebanking/services/tojson/ZeroClipboard.swf' );
+			
+			clip = new ZeroClipboard.Client();
+			clip.setHandCursor( true );
+			clip.setCSSEffects( false );
+			
+			clip.addEventListener('load', function (client) {
+				debugstr("Flash movie loaded and ready.");
+			});
+			
+			clip.addEventListener('mouseOver', function (client) {
+				var xb	= new BuildSQL();
+				var sql	= $("#ocode").val()				
+				// update the text on mouse over
+				clip.setText( xb.parse(sql)  );
+			});
+			
+			clip.addEventListener('complete', function (client, text) {
+				debugstr("Copied text to clipboard: " + text );
+			});
+			
+			clip.glue( 'd_clip_button', 'd_clip_container' );
+		}
+		
+		function debugstr(msg) {
+			console.log(msg);
+		}
+	</script>
+	<script>
+	google_ad_client = "ca-pub-1005748569860531";
+	/* wiki2 */
+	google_ad_slot = "6340395152";
+	google_ad_width = 728;
+	google_ad_height = 90;
+	//-->
+	</script>
+	<script src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>	
+</head>
+<body onload="init()">
+	<div>
+		<header>
+			<h2>SQLite DDL to JSON Converter[v 0.9.10]</h2>
+			<a href="http://flattr.com/thing/892172/SAFE-Open-Source-Microfinance-suite" target="_blank">
+			<img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
+		</header>
+
+	<div id="container">
+				<div id="d_clip_container" style="position:relative"></div>
+				
+	<textarea id="ocode" style="min-height: 150px; width : 100%" placeholder="paste you DDL code like CREATE TABLE foo (foo int(4))"></textarea>
+	
+		<label for='idddl'>Source type</label>
+		<select id="idddl">
+			<option value="mysql">MySQL</option>
+			<option value="sqlite">SQLite</option>
+		</select>
+		<label for='idlang'>Source target</label>
+		<select id="idlang">
+			<option value="java">Java</option>
+			<option value="js">Javascript</option>
+		</select>		
+		<input type="button" onclick="getCode()" value="Obtain JSON code" />
+		<input type="button" value="Test CREATE" onclick="testCode('create')" />
+		<input type="button" value="Test SELECT" onclick="testCode('select')" />
+		<input type="button" value="Test INSERT" onclick="testCode('insert')" />
+		<input type="button" value="Test INSERT With Values" onclick="testCode('insert_test_values')" />
+		<input type="button" value="Test DELETE" onclick="testCode('delete')" />
+		<input type="button" value="Copy to ClipBoard" id="d_clip_button" onclick="copyCode()" />
+		<input type="button" value="Download Source" onclick="window.location.href='tojson.zip'" />
+		<input type="button" value="Home" onclick="window.location.href='http://www.opencorebanking.com';" />
+	<div style="max-width: 100%; ">
+	<pre><code id="mmm" ></code></pre>
+	</div>
+	
+		<h3>How to Use</h3>
+		<ul>
+			<li>Copy you SQLite DDL code.</li>
+			<li>Create JSON Object.</li>
+			<li>Include Script database utils <pre>&lt;script type="text/javascript" src="js/database.utils.js">&lt;/script></pre> o paste the content in you favorite file</li>
+			<li>Use the script like :<pre>var theSQL	= myTable.select();<br />var otherSQL	= myTable.create(); </pre></li>
+			<li>Enjoy!</li>
+		</ul>
+		<h3>Recomendations?</h3>
+		<p>Please send email to <a href="mailto:patadejaguar@gmail.com">my mail</a></p>
+		<h3>Donate?</h3>
+		<p>Yes!! Please!! in <a href="http://flattr.com/thing/892172/SAFE-Open-Source-Microfinance-suite" target="_blank">
+	<img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
+		</p>
+<div>
+<!-- hitwebcounter Code START -->
+<a href="http://www.hitwebcounter.com/htmltutorial.php" target="_blank">
+<img src="http://hitwebcounter.com/counter/counter.php?page=4567732&style=0035&nbdigits=5&type=page&initCount=0" title="http://www.hitwebcounter.com/htmltutorial.php" Alt="http://www.hitwebcounter.com/htmltutorial.php"   border="0" >
+</a><br/>
+<!-- hitwebcounter.com --><a href="http://www.hitwebcounter.com/" title="Blog Posts Counter" 
+target="_blank" style="font-family: Geneva, Arial, Helvetica; 
+font-size: 9px; color: #8A9087; text-decoration: underline ;"><strong>Blog Posts Counter</strong>
+</a>
+</div>
+	</div>
+	</div>
+<script>
+var objCreated			= {};
+var xTab				= "";
+var exaVals				= {};
+	
+var BuildSQL				= function (){};
+
+BuildSQL.prototype.parse	= function(sql){
+		var tipo			= $("#idddl").val();
+		var vtarget			= $("#idlang").val();
+		var str				= new String(sql);
+		var strO			= "";
+		
+		var vrs				= "";//variables
+		var fncs			= "";//Funciones
+		var isn				= "";//inserts
+		var rg				= "";//arguments
+		var setters			= "";
+		var getters			= "";
+		//alert(tipo + "|" + vtarget);
+		str				= str.replace(/CREATE TABLE |;/g, ""); //Eliminar Create y final
+		str				= str.replace(/IF NOT EXISTS|;/g, ""); //Eliminar Create y final
+		str				= str.replace(/AUTO_INCREMENT|;/g, ""); //Eliminar Create y final
+		//eiminar comments
+		if (tipo == "mysql") {
+			var xpr	= new RegExp("COMMENT\s*.*,", "g");
+			//$("#mmm").html(str);
+			str 	= String(str).replace(/COMMENT\s*.*,/g, ",");
+			str	= String(str).replace(/ENGINE|INNODB|InnoDB|=/g, "");
+			
+			//alert(str);
+		}		
+		str					= str.replace(/\n|\t/g, " "); //Eliminar saltos de linea y tabulaciones
+
+		//str					= str.replace(/\s\s\s\s\s\s\s/g, " "); //Eliminar doble y triple espacios
+		//str					= str.replace(/\s\s\s\s\s\s/g, " "); //Eliminar doble y triple espacios
+		//str					= str.replace(/\s\s\s\s\s/g, " "); //Eliminar doble y triple espacios
+		//str					= str.replace(/\s\s\s\s/g, " "); //Eliminar doble y triple espacios
+		str					= str.replace(/\s\s\s/g, " "); //Eliminar doble y triple espacios
+		str					= str.replace(/\s\s/g, " "); //Eliminar doble y triple espacios		
+		
+		
+		str					= str.replace(/"|'/g, "`"); //Eliminar comillas, y doble espacio
+		//str					= str.replace(/`/g, ""); //Eliminar comillas, y doble espacio
+
+		var Table			= $.trim( str.substring(0, str.indexOf("(")) );
+		//eliminar el divisor en los casos de la DB
+		Table				= Table.replace(/`/g, "");
+		if (String(Table).indexOf(".") !== -1) {
+			xTmp	= String(Table).split(".");
+			Table			= $.trim(xTmp[1]);
+		}
+	
+		//console.log(Table);
+		str				= str.substring( (str.indexOf("(")+1), str.length);
+		//Eliminar( y ) con espacios
+		str				= str.replace(/\(\s/g, "(");
+		str				= str.replace(/\s\)/g, ")");
+		//
+		var pkey			= str.substring(str.indexOf("PRIMARY KEY") );
+		str				= str.substring(0, (str.indexOf("PRIMARY KEY")-2) );
+		var flds			= str.split(", ");
+		pkey				= $.trim(pkey.replace(/PRIMARY KEY|[(]|[)]|[`]/g, ""));
+		alert(pkey);
+		var aFlds			= [];
+		var aQst			= [];
+		var aDef			= [];
+
+		//console.log(str);
+		//console.log("PRIMARY KEY:" + pkey);
+		//console.log(flds.toString() );
+		if (vtarget == "java") {
+			var javaT		= String(Table).charAt(0).toUpperCase() + String(Table).slice(1);
+			strO			= "@Table(name = \""  + javaT + "\")\npublic class " + javaT + " {\n";
+		} else {
+			strO			= "var " + Table + "\t= {\n";
+			strO			+= "\tname : '" + Table + "',\n";
+		}
+		
+		for(i=0;i<flds.length; i++){
+			var _Obj		= {};
+			var strK		= $.trim(flds[i]);
+			strK			= strK.replace(/\s\s\s/g, " ");	//triple espacio
+			strK			= strK.replace(/\s\s/g, " ");	//doble espacio
+			if (tipo == "mysql") {
+				console.log("MySQL::::::::::::" + strK);
+				strK		= strK.replace("NOT NULL", "0");
+				strK		= strK.replace(/`/g, "");
+				
+				var mfunc	= "";
+				var DD		= String(strK).split(" ", 5);
+				var iitems	= DD.length;
+				var fname	= DD[0];		//nombre
+				var ftipo	= DD[1];		//tipo
+				var fsize	= 0;			//tamannio
+				//separar ftipo
+				if (String(ftipo).indexOf("(") !== 1) {
+					ftipo	= String(ftipo).replace(")", "");
+					var DDT	= String(ftipo).split("(");
+					ftipo	= String(DDT[0]).toUpperCase();
+					fsize	= DDT[1];
+					if (String(fsize).indexOf(",") !== 1) {
+						var DDS	= String(fsize).split(",");
+						fsize	= parseInt(DDS[0]) + parseInt(DDS[1]);
+					}
+				}
+				ftipo		= String(ftipo).toUpperCase();
+				//Cambios de tipo a java
+				switch (ftipo) {
+					case "INT":
+						ftipo	= "int";
+						break;
+					case "BIGINT":
+						ftipo	= "long";
+						break;
+					case "FLOAT":
+						ftipo	= "float";
+						break;					
+					case "DATE":
+						ftipo	= "int";
+						break;
+					case "TIME":
+						ftipo	= "int";
+						break;					
+					case "VARCHAR":
+						ftipo	= "String";
+						break;
+					case "TEXT":
+						ftipo	= "String";
+						break;
+					case "TINYTEXT":
+						ftipo	= "String";
+						break;
+					case "MEDIUMTEXT":
+						ftipo	= "String";
+						break;					
+					case "LONGTEXT":
+						ftipo	= "String";
+						break;
+					default:
+						ftipo	= "String";
+						break;					
+				}
+				//@Column(name = "noteId", unique = true, notNull = true)
+				var javaN		= String(fname).charAt(0).toUpperCase() + String(fname).slice(1);
+				if (pkey == fname) {
+				    vrs			+= "\t@Column(name = \"" + pkey + "\", unique = true, notNull = true)\n";
+				}
+				vrs			+= "\t" + ftipo + "\t" + fname + ";\n";
+				rg			+= (rg == "") ? "" + ftipo + " " + fname : "," + ftipo + " " + fname;
+				isn			+= "\t\tthis." + fname + "\t= " + fname + ";\n";
+				getters			+= "\tpublic " +ftipo + " get"  + javaN + "(){return this." + fname + ";}\n";
+				setters			+= "\tpublic void set"  + javaN + "(" + ftipo + " " + fname + "){ this." + fname + "=" + fname + ";}\n";
+				//console.log(DD.toString())
+				
+			//console.log(strK);
+			} else {
+				console.log("SQLite::::::::::::" + strK);
+				strK			= strK.replace("NOT NULL", "0");
+				strK			= strK.replace("` ", "`|");
+				strK			= strK.replace(" ", "|");
+				strK			= strK.replace(")", "");
+				strK			= strK.replace("(", "|");
+				strK			= strK.replace(/DEFAULT\s/, "");
+				strK			= strK.replace(/`/g, "");
+				console.log(strK);
+			
+				var fprops		= strK.split("|");
+				strO			+= "\t" + fprops[0] + "\t: {\n"; // [" + fprops.toString() + "],";
+				strO			+= "\t\tname : '" + fprops[0] + "',\n";
+				strO			+= "\t\ttype : '" + fprops[1] + "'";
+				
+				aFlds.push("'" + fprops[0] + "'");
+				aQst.push("'" + "?" + "'");
+				
+				var d			= new Date();
+				//limpiar fprops1
+				fprops[1]	= $.trim(fprops[1]);
+				switch (fprops[1]){
+					case "time":
+						strO		+= ",\n\t\tdef : '" + d.getTime() + "'";
+						aDef.push("'" + d.getTime() + "'");
+						break;
+					case "date":
+						strO		+= ",\n\t\tdef : '" + d.getISO() + "'";
+						aDef.push("'" + d.getISO() + "'");
+						break;
+					default:
+						if( String(fprops[2]).indexOf(",") > 0){
+							//fprops[2] =  String(fprops[2]).split(",")[0];
+						}
+						if(fprops[3] == 'NULL' && (fprops[1] == 'varchar'||fprops[1] == 'text')){
+							fprops[3] = "''";
+						}
+						strO		+= ($.trim(fprops[2]) == "") ? "" : ",\n\t\tsize: '" + $.trim(fprops[2]) + "'";
+						strO		+= ( fprops[3] ) ? ",\n\t\tdef : '" + String(fprops[3]).replace(/'|,/g, "") + "' " : "";
+						( fprops[3] ) ? aDef.push("'" + String( $.trim(fprops[3]) ).replace(/'|,/g, "") + "'") : null;
+						break;
+				}
+				//strO			+= (fprops[1] == "time") ? "" : "\t\tdefault: '" + fprops[3] + "',\t\t"
+				strO			+= "\n\t},\n";
+				//strO			+= (i==(flds.length-1)) ? "\n" : ",\n";
+			}
+			//java o javascript
+			
+		}
+		if (vtarget == "java") {
+			strO			+= vrs;
+			strO			+= fncs;
+			strO			+= "\n\tpublic " + javaT + "(){}\n";
+			strO			+= "\n\tpublic " + javaT + "("  +  rg + "){\n" + isn + "\n\t}\n";
+			strO			+= setters;
+			strO			+= getters;
+			strO			+= "}";
+		} else {
+			//agregar listADO DE campos
+			strO			+= "\tgetFields : [" + aFlds.toString()  + "],\n";
+			strO			+= "\tgetSymbols : [" + aQst.toString()  + "],\n";
+			strO			+= "\tgetDefaults : [" + aDef.toString()  + "],\n";
+			
+			strO			+= "\tcreate : function(run){ var dl = new DDL(); return dl.create(this, run);},\n";
+			strO			+= "\tselect : function(options){ var dl = new DDL(); return dl.select(this, options);},\n";
+			strO			+= "\tinsert : function(options){ var dl = new DDL(); return dl.insert(this, options);},\n";
+			strO			+= "\tdel : function(options){ var dl = new DDL(); return dl.del(this, options);},\n";
+			strO			+= "\tupdate : function(options){ var dl = new DDL(); return dl.del(this, options);},\n";
+			strO			+= "\tprimaryKey : \"" + pkey + "\"\n"
+			//
+			strO			+= "}";
+			
+			
+			eval(strO);
+			eval("objCreated = " + Table + ";");
+			eval("exaVals = {" + pkey + " : '_VALUE_OF_TEST_'};");
+		}
+		console.log(strO);
+		//document.getElementById("mmm").innerHTML = String(strO).toString();
+	
+		return strO;
+}
+function getCode(){
+
+	hljs.initHighlightingOnLoad();
+	
+	var xb	= new BuildSQL();
+	var sql	= $("#ocode").val();
+	$("#mmm").html( hljs.highlight("javascript", xb.parse(sql)).value  );
+}
+
+function testCode(cmd){
+	hljs.initHighlightingOnLoad();
+	
+	var xb	= new BuildSQL();
+	var sql	= $("#ocode").val();
+	
+	xb.parse(sql);
+
+	var vtarget	= $("#idlang").val();
+	if (vtarget == "js") {
+	
+	if( objCreated.name ){
+		switch(cmd){
+			case "create":
+				$("#mmm").html( hljs.highlight("sql", objCreated.create()).value  );
+				break;
+			case "select":
+				$("#mmm").html( hljs.highlight("sql", objCreated.select()).value  );
+				break;
+			case "insert":
+				$("#mmm").html( hljs.highlight("sql", objCreated.insert()).value  );
+				break;
+			case "insert_test_values":
+				$("#mmm").html( hljs.highlight("sql", objCreated.insert({ values : exaVals })).value  );
+				break;
+			case "delete":
+				$("#mmm").html( hljs.highlight("sql", objCreated.del({ key : 10 })).value  );
+				break;
+		}
+	}
+	} else {
+		alert("unsopported");
+	}
+}
+function copyCode(){
+	var xb	= new BuildSQL();
+	var sql	= $("#ocode").val()				
+	// update the text on mouse over
+	clip.setText( xb.parse(sql)  );
+	console.log("String Copied!!");
+}
+</script>	
+</body>
+</html>

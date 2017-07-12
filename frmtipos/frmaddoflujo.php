@@ -1,4 +1,9 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package
+ */
 //=====================================================================================================
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
@@ -10,56 +15,49 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Agregar Tipo</title>
-</head>
-<link href="<?php echo CSS_GENERAL_FILE; ?>" rel="stylesheet" type="text/css">
-<body>
-<p class="frmTitle"><script> document.write(document.title ); </script></p>
-<hr>
-<hr>
-<form name="frmaddoflujo" action="frmaddoflujo.php" method="post">
-	<table   width="95%">
-		<tr>
-			<td>Identificador</td><td><input type='text' name='idoflujo' value='0'></td>
-			<td>Descripci&oacute;n</td><td><input name='noflujo' type='text' value='' size="60"></td>
-		</tr>
-	</table>
-	<input type="submit" value="GUADAR REGISTRO">
-</form>
-<hr>
-<?php
+$xHP		= new cHPage("TR.Tipo de flujos", HP_GRID);
+$xF			= new cFecha();
+$xL			= new cLang();
+$xTabla		= new cCreditos_origenflujo();
 	
-	$idtflujo = $_POST["idoflujo"];
-	$ntflujo = $_POST["noflujo"];
-	if ($idtflujo) {
-	$sqltd = "INSERT INTO creditos_origenflujo(idcreditos_origenflujo, descripcion_origenflujo, origen_flujo) VALUES ($idoflujo, '$noflujo', $idtflujo)";
-	my_query($sqltd);
-	echo "<p class='aviso'>EL REGISTRO SE HA GUARDADO SATISFACTORIAMENTE</p>";
-	}
-	$mtbl = new cTabla("SELECT idcreditos_origenflujo AS 'tipo', descripcion_origenflujo AS 'descripcion' FROM creditos_origenflujo");
-	$mtbl->addTool(1);
-	$mtbl->addTool(2);
-	echo $mtbl->Show();
+$xHP->setNoDefaultCSS();
+echo $xHP->getHeader(true);
+//HTML Object END
+echo '<body onmouseup="SetMouseDown(false);" >';
+//Define your grid
+	$_SESSION["grid"]->SetDatabaseConnection(MY_DB_IN, USR_DB, PWD_DB);
+	//Propiedades del GRID
+	$mGridTitulo		= $xHP->getTitle();
+	$mGridKeyField		= $xTabla->getKey();	//Nombre del Campo Unico
+	$mGridKeyEdit		= true;					//Es editable el Campo
+	$mGridTable			= $xTabla->get();	//Nombre de la tabla
+	$mGridSQL			= $xTabla->query()->getListaDeCampos();//  "*"; //$xTabla->query()->getCampos();
+	$mGridWhere			= "";
+
+	$mGridProp			= array(
+						"idcreditos_origenflujo" 	=> "TR.CLAVE,true,50",
+						"descripcion_origenflujo"	=> "TR.descripcion,true,265",
+						"origen_flujo" 				=> "TR.origen,true,60",
+						"afectacion" 				=> "TR.afectacion,true,40",
+						"tipo" 						=> "TR.tipo,true,80"
+						);
+	//===========================================================================================================
+	
+	$_SESSION["grid"]->SetSqlSelect($mGridSQL, $mGridTable, $mGridWhere);
+	$_SESSION["grid"]->SetUniqueDatabaseColumn($mGridKeyField, $mGridKeyEdit);
+	$_SESSION["grid"]->SetTitleName($mGridTitulo);
+	$_SESSION["grid"]->SetEditModeAdd(false);
+	//$_SESSION["grid"]->SetEditModeDelete(false);
+	//===========================================================================================================					
+		foreach ($mGridProp as $key => $value) {
+			$mVals		= explode(",", $value, 3);
+			if ( isset($mVals[0]) ){ $_SESSION["grid"]->SetDatabaseColumnName($key, $xL->getT($mVals[0]));	}
+			if ( isset($mVals[1]) ) { $_SESSION["grid"]->SetDatabaseColumnEditable($key, $mVals[1]); }
+			if ( isset($mVals[2]) ) { $_SESSION["grid"]->SetDatabaseColumnWidth($key, $mVals[2]); }	
+		}
+	//===========================================================================================================
+	$_SESSION["grid"]->SetMaxRowsEachPage(25);
+	$_SESSION["grid"]->PrintGrid(MODE_EDIT);
+
+echo $xHP->fin();
 ?>
-</body>
-<script  >
-	function actualizame(id) {
-	url = "../utils/frm8db7028bdcdf054882ab54f644a9d36b.php?t=creditos_origenflujo&f=idcreditos_origenflujo=" + id;
-			myurl = window.open(url);
-			myurl.focus();
-
-	}
-	function eliminame(id) {
-	var sURL = "../utils/frm9d23d795f8170f495de9a2c3b251a4cd.php?t=creditos_origenflujo&f=idcreditos_origenflujo=" + id;
-	delme = window.open( sURL, "window", "width=300,height=300,scrollbars=yes,dependent");
-	delme.focus();
-	}
-
-</script>
-</html>

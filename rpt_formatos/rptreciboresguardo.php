@@ -33,7 +33,9 @@ echo getRawHeader();
 <span class="Estilo1">
 <!-- -->
 <?php
-$idgarantia = $_GET["i"];
+$idgarantia = parametro("clave", false, MQL_INT);
+$idgarantia = parametro("i", $idgarantia, MQL_INT);
+
 	if (!$idgarantia) {
 		exit($msg_rpt_exit);
 	}

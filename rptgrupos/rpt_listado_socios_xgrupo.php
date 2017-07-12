@@ -10,48 +10,60 @@
 	if($permiso === false){		header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../core/core.fechas.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.config.inc.php";
-include_once "../core/core.common.inc.php";
+$xHP			= new cHPage("TR.TR.Estado_de_cuenta de Grupo ", HP_REPORT);
+$xL				= new cSQLListas();
+$xF				= new cFecha();
+$query			= new MQL();
 
-	$id 		= $_GET["id"];
-	$filter 	= "";
-	$oficial 	= elusuario($iduser);
+
+$estatus 		= parametro("estado", SYS_TODAS);
+$frecuencia 	= parametro("periocidad", SYS_TODAS);
+$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$grupo			= parametro("id", $grupo, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW);
+$out 			= parametro("out", SYS_DEFAULT);
+
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+
+
+$sql			= $xL->getListadoDeSocios("`grupo_solidario`=$grupo");
+
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
+
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+//$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
+$xG 		= new cGrupo($grupo);
+$xRPT->addContent($xG->getFicha());
+
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+$xRPT->setProcessSQL();
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Listado de Personas</title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body>
-<!-- -->
-<?php
-echo "$head_pagina
-<p class='bigtitle'>LISTADO DE INTEGRANTES DE GRUPOS</p>
-";
-	$xG = new cGrupo($id);
-	echo $xG->getFicha(true);
-
-	$sqlids = "SELECT codigo FROM socios_general WHERE grupo_solidario=$id";
-	$rs = mysql_query($sqlids);
-		
-		while($rws = mysql_fetch_array($rs)) {
-			$socio		= $rws["codigo"];
-			$xSoc = new cSocio($socio);
-			$xSoc->init();
-			echo $xSoc->getFicha();
-		}
-
-	
-echo getRawFooter();
-?>
-</body>
-</html>

@@ -18,12 +18,20 @@ $lis		= new cSQLListas();
 $xF			= new cFecha();
 
 $credito	= parametro("credito", 0, MQL_INT);
+$que		= parametro("q", "");
 $rs			= array();
 
 if(setNoMenorQueCero($credito) > 0){
 	$xCred		= new cCredito($credito);
 	if($xCred->init()  == true){
 		$rs["descripcion"]	= $xCred->getDescripcion();
+		//Otros datos
+		switch($que){
+			case "ESTATUS":
+				//
+				$rs["estatus"]	= $xCred->getEstadoActual();
+				break;
+		}
 	}
 }
 header('Content-type: application/json');

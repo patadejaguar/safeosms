@@ -14,29 +14,38 @@
 //=====================================================================================================
 $oficial 		= elusuario($iduser);
 //=====================================================================================================
-$xHP			= new cHPage("Reporte de Recibos por Usuarios", HP_REPORT);
-
+$xHP			= new cHPage("TR.Reporte de Recibos", HP_REPORT);
+$xL			= new cSQLListas();
 $xF			= new cFecha();
-$tipo_pago		= ( isset($_GET["tipodepago"])) ? $_GET["tipodepago"] : SYS_TODAS;
-$tipo_de_recibo		= ( isset($_GET["tipoderecibo"]) ) ? $_GET["tipoderecibo"] : SYS_TODAS;
-$oficial 		= (isset($_REQUEST["usuario"])) ? $_REQUEST["usuario"] : SYS_TODAS;
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
-$tipo_de_recibo	= parametro("tiporecibo", $tipo_de_recibo, MQL_INT);
+
+$tipo_pago			= (isset($_GET["tipodepago"])) ? $_GET["tipodepago"] : SYS_TODAS;
+$tipo_de_recibo		= (isset($_GET["tipoderecibo"]) ) ? $_GET["tipoderecibo"] : SYS_TODAS;
+$oficial 			= (isset($_REQUEST["usuario"])) ? $_REQUEST["usuario"] : SYS_TODAS;
+$tipo_de_recibo		= parametro("tiporecibo", $tipo_de_recibo, MQL_INT);
 
 $mx 			= (isset($_GET["mx"])) ? true : false;
 if($mx == true){
 	$fechaInicial	= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal	= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
+	$fechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
 } else {
 	$fechaInicial	= (isset($_GET["on"])) ? $_GET["on"] : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal	= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
+	$fechaFinal		= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
 }
 $ByOperacion		= "";
 
 $es_por_oficial		= ($oficial != SYS_TODAS) ? " AND (`usuarios`.`idusuarios`  = $oficial ) " : "";
-$ByTipoPago		= ($tipo_pago != SYS_TODAS) ? " AND (`operaciones_recibos`.`tipo_pago` ='$tipo_pago') " : "";
-$ByTRecibo		= ( setNoMenorQueCero($tipo_de_recibo) > 0) ? " AND (`operaciones_recibos`.`tipo_docto` ='$tipo_de_recibo') " : "";
-$input 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
+
+$empresa			= parametro("empresa", SYS_TODAS, MQL_INT);
+
+$ByTipoPago			= $xFil->RecibosPorTipoDePago($tipo_pago);// ($tipo_pago != SYS_TODAS) ? " AND (`operaciones_recibos`.`tipo_pago` ='$tipo_pago') " : "";
+$ByTRecibo			= $xFil->RecibosPorTipo($tipo_de_recibo);
+$ByEmpresa			= $xFil->RecibosPorPersonaAsociada($empresa);
+
+$out 				= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
+
 
 	$setSql = "SELECT
 		`usuarios`.`nombreusuario`                          AS `usuario`,
@@ -68,6 +77,7 @@ $input 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
 		$es_por_oficial
 		$ByTipoPago
 		$ByTRecibo
+		$ByEmpresa
 	ORDER BY
 		`operaciones_recibos`.`fecha_operacion`,
 		`operaciones_recibos`.`tipo_pago`,
@@ -79,19 +89,21 @@ $input 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
 
 
 
-if ($input==OUT_EXCEL) {
+if($out == OUT_EXCEL){
 	$xXls	= new cHExcel();
 	$xXls->convertTable($setSql, $xHP->getTitle());
 } else {
-	$xRpt	= new cReportes();
-	$cTbl 	= new cTabla($setSql);
-	echo $xHP->getHeader();
-	echo $xHP->setBodyinit();
-	echo $xHP->getEncabezado();
-	echo $xRpt->getEncabezado($xHP->getTitle(), $fechaInicial, $fechaFinal, $oficial );
-	$cTbl->setTdClassByType();
-	$cTbl->Show("", false);
-	echo $xHP->setBodyEnd();
+	$xRpt	= new cReportes($xHP->getTitle());
+	$xRpt->setOut($out);
+	//$cTbl 	= new cTabla($setSql);
+	
+	$xRpt->addContent( $xRpt->getEncabezado($xHP->getTitle(), $fechaInicial, $fechaFinal, $oficial ) );
+	//$cTbl->setTdClassByType();
+	$xRpt->setSQL($setSql);
+	$xRpt->addCampoSuma("total");
+	$xRpt->setProcessSQL();
+	//$xRpt->addContent($html)
+	echo $xRpt->render(true);
 }
 
 ?>

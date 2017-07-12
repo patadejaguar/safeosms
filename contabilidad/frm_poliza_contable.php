@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Poliza_Contable", HP_FORM);
+$xHP		= new cHPage("TR.LISTA DE Poliza_Contable", HP_FORM);
 $xQL		= new cSQLListas();
 $jxc 		= new TinyAjax();
 
@@ -24,6 +24,7 @@ function jsaGetPolizas($fecha, $tipo){
 	$fecha 		= $xF->getFechaISO($fecha);
 	$xQL		= new cSQLListas();
 	$xT			= new cTabla($xQL->getListadoDePolizasContables($fecha, $tipo), 7);
+	$xT->setPagination(50);
 	$xBtn		= new cHImg();
 	$xT->setKeyField("codigo");
 	$xT->OButton("TR.Modificar", "jsAgregarMovimientos('" . HP_REPLACE_ID . "')\"", $xT->ODicIcons()->AGREGAR);
@@ -54,6 +55,8 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 
 $xFRM		= new cHForm("frmpolizas", "frm_poliza_contable.php");
+$xFRM->setTitle($xHP->getTitle());
+
 $msg		= "";
 $xBtn		= new cHImg();
 $xHF		= new cHDate();
@@ -83,12 +86,16 @@ echo $xFRM->get();
 ?>
 <script>
 var xG = new Gen();
-function jsAgregarPoliza(){ xG.w({ url : "../frmcontabilidad/nueva_poliza.frm.php?", w : 640, h: 480, tiny : true  }); }
-function jsAgregarMovimientos(id){	xG.w({ url : "../frmcontabilidad/poliza_movimientos.frm.php?codigo=" + id, w : 800, h: 600, tiny : true  });}
+function jsAgregarPoliza(){ xG.w({ url : "../frmcontabilidad/nueva_poliza.frm.php?", w : 640, h: 480, tiny : true, callback: jsaGetPolizas  }); }
+function jsAgregarMovimientos(id){	xG.w({ url : "../frmcontabilidad/poliza_movimientos.frm.php?codigo=" + id, w : 900, h: 800, tiny : true  });}
 function jsImprimirPoliza(id){ var xCont	= new ContGen(); xCont.ImprimirPoliza(id);}
 function jsEliminarPoliza(id){
 	$("#idpolizaactiva").val(id);
-	xG.confirmar({ msg: "Desea ELiminar la Poliza Contable?", callback: jsaEliminarPoliza});
+	xG.confirmar({ msg: "Desea ELiminar la Poliza Contable?", callback: jsaEliminarPolizaConfirmado});
+}
+function jsaEliminarPolizaConfirmado(){
+	jsaEliminarPoliza();
+	xG.spin({callback: jsaGetPolizas })
 }
 </script>
 <?php

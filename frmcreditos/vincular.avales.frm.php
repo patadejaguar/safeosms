@@ -42,12 +42,15 @@ $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("s
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$monto		= 0;
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
 
 if( setNoMenorQueCero($persona) <= DEFAULT_SOCIO ){
 		$xDoc			= new cCredito($credito); $xDoc->init();
 		$persona		= $xDoc->getClaveDePersona();
 		$monto			= $xDoc->getMontoAutorizado();
+		if($monto <= 0){
+			$monto		= $xDoc->getMontoSolicitado();
+		}
 }
 $xHP->init();
 
@@ -59,14 +62,13 @@ $xFRM->addGuardar("jsVincularAval()");
 
 $xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
 $xFRM->addHElem( $xHSel->getListaDeTiposDeRelaciones("", PERSONAS_REL_CLASE_AVAL)->get(true) );
-
-$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco()->get(true)  );
+$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco("", false, DEFAULT_TIPO_CONSANGUINIDAD)->get(true)  );
 $xFRM->OMoneda("idmonto", $monto, "TR.Monto Avalado");
 
 
 
-$xFRM->OHidden("iddocumentorelacionado", $credito, "");
-$xFRM->OHidden("idpersonarelacionado", $persona, "");
+$xFRM->OHidden("iddocumentorelacionado", $credito);
+$xFRM->OHidden("idpersonarelacionado", $persona);
 $xFRM->addAviso("");
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);

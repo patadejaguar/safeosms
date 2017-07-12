@@ -31,7 +31,7 @@ if( setNoMenorQueCero($persona)  > DEFAULT_SOCIO){
 	$sql		= $lis->getListadoDeCreditos($persona, $SinSaldo, $estado);
 	$datos		= $ql->getDataRecord($sql);
 		foreach ($datos as $row){
-			$describe				= $xF->getFechaDDMM($row["otorgado"]) .   " ". $row["producto"] . "*".  $row["periocidad"] . " " .$row["periodo"] . "*" . $row["saldo"];
+			$describe				= $xF->getFechaDDMM( $row["otorgado"]) .   "-". $row["producto"] . "-".  $row["periocidad"] . "-" .$row["periodo"] . "-" . $row["saldo"];
 			
 			$rs[$row["credito"]]	= $describe;
 		}

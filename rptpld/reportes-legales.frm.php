@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.Reportes a ENTIDADSUPERVISORA", HP_FORM);
 
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -36,7 +36,7 @@ $xSel		= new cHSelect();
 $xHNot		= new cHNotif();
 $msg		= "";
 $xRPT		= new cPanelDeReportes(iDE_AML, "aml.legal");
-
+$xRPT->setTitle($xHP->getTitle());
 $xRPT->setConFechas();
 
 //$xRPT->addFechaInicial();

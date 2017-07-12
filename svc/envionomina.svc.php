@@ -36,38 +36,35 @@ $rs			= array();
 $idnomina	= parametro("nomina", false);
 $xEmp		= new cEmpresas($empresa); $xEmp->init();
 
-
+$rs["message"] 	= "";
 $msg			= "";
 if( setNoMenorQueCero($idnomina)  <= 0){
 	$rs["error"] 	= true;
-	$rs["message"] 	= "Nomina Invalida $idnomina ";	
+	$rs["message"] 	.= "Nomina Invalida $idnomina ";	
 } else {
 	if( setNoMenorQueCero($credito) > 1){
-		//sucess
-		//eliminar anteriores
-
-		$sqlNS			= "SELECT getSaldoPendienteDesdeLetra($credito, ($letra-1)) AS 'saldo_anterior' ";
-		$sdo_anterior	= mifila($sqlNS, "saldo_anterior");
-		$xO				= new cEmpresas_cobranza();
-		$idoriginal		= $xO->query()->getLastID();
-		$xO->idempresas_cobranza( $idoriginal );
-		$xO->clave_de_credito($credito);
-		$xO->clave_de_nomina($idnomina);
-		$xO->monto_enviado($monto);
-		$xO->observaciones($notas);
-		$xO->parcialidad($letra);
-		$xO->saldo_inicial($sdo_anterior);
-		$action			= $xO->query()->insert();
-		$id	= $action->save();
+		$xCob			= new cEmpresasCobranzaDetalle(false, $idnomina);
+		$id				= 0;
+		if($xCob->getExisteEnOtraNomina($letra, $credito, $empresa, $periodo, $periocidad) > 0 ){
+			$xErr		= new cCoreLog();
+			$xErr->add($xCob->getMessages());
+			$xErr->guardar($xErr->OCat()->NOMINA_ENVIO_DUP);
+			$rs["message"] 	.= $xErr->getMessages();
+			
+		}
+		//else {
+		$id = $xCob->add($letra, $monto, $notas, $credito);
 		if(setNoMenorQueCero($id) > 0){
 			$rs["error"] 	= false;
-			$rs["message"] 	= "Registro guardado con el ID $id-$idoriginal";
+			$rs["message"] 	.= "Registro guardado con el ID $id";
 			$rs["credito"] 	= $credito;
 		} else {
 			$rs["error"] 	= true;
 			$rs["credito"] 	= $credito;
-			$rs["message"] 	= $action->getMessages();
-		}
+			$rs["message"] 	.= "Error al Guardar el registro : " . $xCob->getMessages();
+		}			
+		//}
+
 	} else {
 		$rs["error"] 	= true;
 		$rs["message"] 	= "credito invalido $credito ";

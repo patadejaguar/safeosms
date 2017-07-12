@@ -1,83 +1,83 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
+$xHP		= new cHPage("TR.ACTIVAR PERSONAS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$tab = new TinyAjaxBehavior();
+//$tab -> add(TabSetValue::getBehavior("idide", $x));
+//return $tab -> getString();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-$xPage		= new cHPage(HP_FORM, 	 "Admitir Socios");
-echo $xPage->getHeader();
-?>
-<body>
-<fieldset>
-	<legend>SOCIO(S) NO ADMITIDO(S)</legend>
-<form name="frmAdmitir" action="frmadmitirsocios.php" method="post">
+$observaciones= parametro("idobservaciones");
+
+$xHP->init();
+
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
 
 
-<?php
 
-	$sqlSNA = "SELECT
+$xFRM->addCerrar();
+
+$sqlSNA = "SELECT
 	`socios_general`.`codigo`,
 	`socios_general`.`nombrecompleto` AS 'nombre',
 	`socios_general`.`apellidopaterno` AS 'apellido_paterno',
 	`socios_general`.`apellidomaterno` AS 'apellido_materno',
-	`socios_general`.`fechaentrevista` AS 'fecha_de_entrevista',
-	`socios_general`.`sucursal` 
+	`socios_general`.`fechaentrevista` AS 'fecha_de_registro',
+	`socios_general`.`sucursal`
 FROM
-	`socios_general` `socios_general` 
+	`socios_general` `socios_general`
 WHERE
-	(`socios_general`.`estatusactual` =99)
+	(`socios_general`.`estatusactual` = 99)
 ORDER BY
 	`socios_general`.`fechaentrevista` DESC
 LIMIT 0,20	";
 
-	$tSoc = new cTabla($sqlSNA);
-	$tSoc->setWidth();
-	$tSoc->addEspTool("<input type=\"checkbox\"  id=\"chk" . STD_LITERAL_DIVISOR . "_REPLACE_ID_\" />");
-	$tSoc->setTdClassByType();	
-	$tSoc->Show("", false);
+$tSoc = new cTabla($sqlSNA);
+
+$tSoc->setWidth();
+//$tSoc->addEspTool("<input type=\"checkbox\"  id=\"chk" . STD_LITERAL_DIVISOR . "_REPLACE_ID_\" />");
+$tSoc->setTdClassByType();
+
+
+$xFRM->addHElem( $tSoc->Show() );
+
+
+echo $xFRM->get();
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+
 ?>
-<input type="button" name="sendmme" value="GUARDAR AUTORIZACION" onClick="jsSetAdmision();" />
-</form>
-</fieldset>
-
-</body>
-<script language='javascript' src='../js/jsrsClient.js'></script>
-<script  >
-
-var Frm 					= document.frmAdmitir;
-var jsrCommon				= "../js/general.common.js.php";
-var divLiteral				= "<?php echo STD_LITERAL_DIVISOR; ?>";
-var jsrsContextMaxPool 		= 300;
-
-function jsSetAdmision(){
-	  	var isLims 			= Frm.elements.length - 1;
-
-  		for(i=0; i<=isLims; i++){
-			var mTyp 	= Frm.elements[i].getAttribute("type");
-			var mID 	= Frm.elements[i].getAttribute("id");
-			var mVal	= Frm.elements[i].checked;
-
-			//Verificar si es mayor a cero o no nulo
-			if ( (mID!=null) && (mID.indexOf("chk@")!= -1) && (mTyp == "checkbox") && (mVal == true) ){
-				//Despedazar el ID para obtener el denominador comun
-				var aID	= mID.split(divLiteral);
-				jsrsExecute(jsrCommon, jsEchoMsg, "Common_52d87bf9711abf3a850de1dc12a14895", aID[1] );
-  			}
-
-  		}
-	Frm.submit();
-}
-function  jsEchoMsg(){
-	
-}
-</script>
-</html>

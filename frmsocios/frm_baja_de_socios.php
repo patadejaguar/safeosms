@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.BAJA DE PERSONAS", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -23,6 +23,8 @@ $xF			= new cFecha();
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT); $persona = parametro("i", $persona, MQL_INT);
 $xHP->init();
 $xFRM		= new cHForm("frm", "frm_baja_de_socios.php");
+$xFRM->setTitle($xHP->getTitle());
+
 $xSel		= new cHSelect();
 
 $msg		= "";
@@ -43,6 +45,7 @@ if($persona <= DEFAULT_SOCIO){
 			$ok		= $xSoc->setBaja($idrazon, $fecha, $fechavenc, $documento);
 			if($ok == true){
 				$xFRM->addAvisoRegistroOK();
+				$xFRM->addCerrar("",3);
 			} else {
 				$xFRM->addAvisoRegistroError();
 			}

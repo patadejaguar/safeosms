@@ -1,0 +1,5 @@
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteCond %{HTTP:if-modified-since} .
+	RewriteRule . /304.php [L]
+</IfModule>

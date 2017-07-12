@@ -13,6 +13,9 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP				= new cHPage("TR.Recibo general", HP_RECIBO);
+$xLang				= new cLang();
+$xQL				= new MQL();
+
 $recibo 			= parametro("recibo", false);
 if($recibo == false){ header("location:../404.php?i=" . DEFAULT_CODIGO_DE_ERROR); }
 
@@ -30,7 +33,9 @@ $sqlrec 		= "SELECT * FROM operaciones_recibos WHERE idoperaciones_recibos=$reci
 	$docto 		= $DRec[ "docto_afectado" ];
 	$oficial	= $xRec->getOUsuario()->getNombreCompleto();
 	
-	$eltitulo 	= eltipo("operaciones_recibostipo", $tiporec);
+	$xTipo		= $xRec->getOTipoRecibo();
+	
+	$eltitulo 	= $xTipo->getNombre();
 	echo "<hr /><p class='bigtitle'>$eltitulo</p><h />";
 //	$anotacion = "";
 	$totaloperacion		= $DRec[ "total_operacion" ];
@@ -53,18 +58,18 @@ $sqlrec 		= "SELECT * FROM operaciones_recibos WHERE idoperaciones_recibos=$reci
 	$observaciones = mifila($sqlrec, "observacion_recibo");
 echo "<table width='100%'  border='0'>
   <tr>
-    <td class='title'>Clave de Persona</td>
+    <td class='title'>" . $xLang->getT("TR.CLAVE_DE_PERSONA") . "</td>
     <td>$idsocio</td>
-    <td class='title'>Nombre Completo</td>
+    <td class='title'>" . $xLang->getT("TR.NOMBRE_COMPLETO") . "</td>
     <td>$nombre</td>
   </tr>
   <tr>
-  	<td class='title'>Domicilio</td>
+  	<td class='title'>" . $xLang->getT("TR.DOMICILIO") . "</td>
   	<td colspan='3'>$direccion</td>
   </tr>
   <tr>
-    <td class='title'>R. F. C.</td> <td>$rfc</td>
-    <td class='title'>C. U. R. P.</td>    <td>$curp</td>
+    <td class='title'>" . $xLang->getT("TR.RFC") . "</td> <td>$rfc</td>
+    <td class='title'>" . $xLang->getT("TR.CURP") . "</td><td>$curp</td>
   </tr>
   <tr>
     <td class='title'>Rec. Fiscal</td>	<td><b>" . $DRec["recibo_fiscal"] . "</b></td>
@@ -80,24 +85,32 @@ echo "<table width='100%'  border='0'>
     <th scope='col'  width='20%'>Monto</th>
     <th scope='col' width='22%'>Destino</th>
   </tr>";
-$sqlmvto = "SELECT * FROM operaciones_mvtos WHERE recibo_afectado=$recibo";
-	$rsmvto = mysql_query($sqlmvto, cnnGeneral());
-	while($rwm = mysql_fetch_array($rsmvto)) {
-		$tipomvto 	= eltipo("operaciones_tipos", $rwm[ "tipo_operacion" ] );
-		$montomvto 	= getFMoney( $rwm[ "afectacion_real" ] );
-		$documento	= $rwm[ "docto_afectado" ];
-		$operacion	= $rwm[ "idoperaciones_mvtos" ];
+$sqlmvto	= "SELECT * FROM operaciones_mvtos WHERE recibo_afectado=$recibo";
+$rs			= $xQL->getDataRecord($sqlmvto);
+	//$rsmvto = mysql_query($sqlmvto, cnnGeneral());
+	//while($rwm = mysql_fetch_array($rsmvto)) {
+	foreach ($rs as $rwm){
+		
+		
+		$montomvto 		= getFMoney( $rwm[ "afectacion_real" ] );
+		$documento		= $rwm["docto_afectado"];
+		$documento		= ($documento == DEFAULT_CREDITO) ? "" : $documento;
+		$operacion		= $rwm["idoperaciones_mvtos"];
+		$mobservaciones	= $rwm["detalles"];
+		$xTipoOp		= new cTipoDeOperacion($rwm[ "tipo_operacion" ]);
+		$xTipoOp->init();
+		$tipomvto 	= $xTipoOp->getNombre();
 		echo " <tr>
 			<td>$operacion</td>
     		<td>$tipomvto</td>
 		    <td class='money'>$montomvto</td>
-		    <td>$documento</td>
+		    <td>$documento-$mobservaciones</td>
 			</tr>";
 	}
 	echo "</table>
 	<hr>";
 
-	@mysql_free_result($rsmvto);
+	$rs	= null;
 
 echo "	<table border='0'  >
 		<tr>

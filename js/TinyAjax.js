@@ -1,6 +1,7 @@
 
 var form_data = '';
 
+
 function urlDecode( encoded )
 {
 	var HEXCHARS = "0123456789ABCDEFabcdef";
@@ -77,11 +78,11 @@ var numLoading = 0;
 function loading_show()
 {
 
-	var loading = document.getElementById('loading');
+	/*var loading = document.getElementById('indicador_de_carga');
 	if (!loading)
 	{
 		loading = document.createElement('div');
-		loading.id = 'loading';
+		loading.id = 'indicador_de_carga';
 		loading.innerHTML = '<font style="font-family:verdana; font-size:12px; color:white;">Loading...</' + 'font>';
 		loading.style.position = 'absolute';
 		loading.style.top = '4px';
@@ -90,8 +91,13 @@ function loading_show()
 		loading.style.width = '65px';
 		loading.style.padding = '2px';
 		document.getElementsByTagName('body').item(0).appendChild(loading);
+		console.log("Add loading...");
 	}
-	loading.style.display = 'block';
+	loading.style.display = 'block';*/
+	if($("#spin_modal_overlay").length <=0){
+		$(document.body).spin("modal");
+	}
+	
 	numLoading++;
 }
 
@@ -99,10 +105,15 @@ function loading_hide()
 {
 	numLoading--;
 	if(numLoading < 1) {
-		var loading = document.getElementById('loading');
+		if($("#spin_modal_overlay").length >0){
+				$(document.body).spin("modal").stop();
+				
+		}
+		/*var loading = document.getElementById('indicador_de_carga');
 		if (loading) {
 			loading.style.display = 'none';
-		}
+			console.log("Remove loading...");
+		}*/
 	}
 }
 
@@ -153,6 +164,7 @@ function aj_call(func_name, args, custom_cb) {
 	var i, x, n;
 	var uri;
 	var post_data;
+	
 
 	uri = request_uri;
 
@@ -186,9 +198,10 @@ function aj_call(func_name, args, custom_cb) {
 	x = aj_init_object();
 	
 	if(!x) { return true; }
-	
-	if(show_loading)
-	loading_show();
+	//cargando loader
+	if(show_loading){
+		loading_show();
+	}
 	//alert(uri);
 	x.open(xml_request_type, uri, true);
 	if (xml_request_type == "POST") {
@@ -203,7 +216,14 @@ function aj_call(func_name, args, custom_cb) {
 			}
 	
 			loading_hide();
-	
+			//ejecutar Callback
+			if(typeof session != "undefined"){
+				if(session("tinyajax.callback") != null){
+					var xxx1	= session("tinyajax.callback");
+					session("tinyajax.callback", null);
+					setTimeout(xxx1,10);
+				}
+			}
 			if(x.status != 200)
 			{
 				console.log('Error invalid status: ' + x.responseText + ' status: ' + x.status);
@@ -234,6 +254,8 @@ function aj_call(func_name, args, custom_cb) {
 	}
 	x.send(post_data);
 	delete x;
+	//=== Cancelar loading
+	
 	return false;
 }
 

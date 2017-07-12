@@ -207,25 +207,20 @@ function getDatosInicialSFecha($cuenta, $naturaleza, $fecha){
 	$mvtos		= 0;
 	$IFecha		= date("Y-m", strtotime($fecha)) . "-01";
 	$FFecha		= date("Y-m-d", strtotime($fecha));
-	$periodo	= $periodo -1;
+	$periodo	= setNoMenorQueCero(($periodo -1));
 			if($periodo == 0){
 				$SFld = "saldo_inicial";
 			} else {
 				$SFld = "imp$periodo";
 			}
-	$sql_de_mvtos = "SELECT
-	`contable_saldos`.`$SFld` AS 'saldo',
-	`contable_saldos`.`tipo`
-FROM
-	`contable_saldos` `contable_saldos`
-WHERE
-	(`contable_saldos`.`cuenta` =$cuenta) AND
-	(`contable_saldos`.`ejercicio` =$ejercicio)
-	AND
-	(`contable_saldos`.`tipo`=1)";
-	$Dats	= obten_filas($sql_de_mvtos);
-	$saldo	= $Dats["saldo"];
-	//saveError(2, 99, "$sql_de_mvtos ");
+	$xCta		= new cCuentaContable($cuenta);
+	if($xCta->init() == true){
+		$OSaldo	= $xCta->OSaldosDelEjercicio($fecha);
+		if($OSaldo->init() == true){
+			$saldo	= $OSaldo->getSaldo($OSaldo->SNATURAL, $periodo);
+		}
+	}
+
 	/**
 	 * Obtiene los movimientos restantes para ajustar el saldo,
 	 * si la fecha que solicita no es la Inicial del mes
@@ -248,10 +243,13 @@ WHERE
 							`contable_movimientos`.`numerocuenta`";
 			$MDats	= obten_filas($sqlGI);
 
-			//saveError(2, 99, "$sqlGI ");
-			$cargos	= $MDats["cargos"];
-			$abonos	= $MDats["abonos"];
-			$mvtos	= $MDats["mvtos"];
+			
+			if(isset($MDats["cargos"])){
+				$cargos	= $MDats["cargos"];
+				$abonos	= $MDats["abonos"];
+				$mvtos	= $MDats["mvtos"];
+			} else {
+			}
 
 			if($naturaleza == NC_DEUDORA){
 				//los cargos se suma
@@ -260,13 +258,13 @@ WHERE
 				$saldo	= ($saldo + $abonos) - $cargos;
 			}
 		}
-
-	return  array(
+	$arr	= array(
 	"saldo"			=>$saldo,
 	"movimientos"	=>$mvtos,
 	"cargos"		=>$cargos,
-	"abonos"		=>$abonos,
-	"sql"			=> $sql_de_mvtos);
+	"abonos"		=>$abonos);
+	//if(MODO_DEBUG == true){ $arr["sql"] = ""; }
+	return  $arr;
 }
 
 class cCuentasPorSector {
@@ -294,6 +292,7 @@ class cCuentasPorSector {
 		$subNam	= "";
 		$xLng	= new cLang();
 		$nTot	= $xLng->getT("TR.Total");
+		
 		foreach ($rs as $rows){
 			$nivel	= $rows["nivel"];
 			$monto	= $rows["monto"];
@@ -301,22 +300,24 @@ class cCuentasPorSector {
 			$nombre	= $rows["nombre"];
 			$xEsq	= new cCuentaContableEsquema($cuenta);
 			$txt	= "";
-			$fmonto	= ($monto == 0) ? "" : getFMoney($monto);
+			$fmonto	= ($monto == 0 AND $include_ceros == false) ? "" : getFMoney($monto);
 			if($cuenta > 0){
 			switch ($nivel){
 				case 1:
 					
 					//$this->mTitulos[$cuenta][SYS_DATOS]	= $rows;
-					$txt	.= (($cuenta != $titAnt) AND ($titAnt > 0)) ?  "<tr><td /><th colspan='3' class='total'>$nTot $titNam</th><th class='total'>" . getFMoney($titCant) . "</th></tr>" : "";
-					$txt	.= "<tr><td>" . $xEsq->CUENTA_FORMATEADA . "</td><td colspan='3'>$nombre</td><td /></tr>";
+					$txt	.= (($cuenta != $titAnt) AND ($titAnt > 0)) ?  "<tr><td /><th colspan='3' class='total'>$nTot $titNam</th><th class='total cont-cuenta'>" . getFMoney($titCant) . "</th></tr>" : "";
+					$txt	.= "<tr><td class='cont-cuenta'>" . $xEsq->CUENTA_FORMATEADA . "</td><td colspan='3'>$nombre</td><td /></tr>";
 					$titAnt	= $cuenta;
 					$titCant= $monto;
 					$titNam	= $nombre;
+					//setLog("Asignar monto a titulo por $titCant de la cuenta $cuenta");
+					$this->mSumaTitulo	= $titCant;
 					break;
 				case 2:
 					//$this->mSubtitulos[$cuenta][SYS_DATOS]	= $rows;
-					$txt	.= (($cuenta != $subAnt) AND ($subAnt > 0)) ?  "<tr><td /><th colspan='3' class='total'>$nTot $subNam</th><th class='total'>" . getFMoney($subCant) . "</th></tr>" : "";
-					$txt	.= "<tr><th>" . $xEsq->CUENTA_FORMATEADA . "</th><td /><td colspan='2'>$nombre</td><td /></tr>";
+					$txt	.= (($cuenta != $subAnt) AND ($subAnt > 0)) ?  "<tr><td ></td><th colspan='3' class='total'>$nTot $subNam</th><th class='total cont-cuenta'>" . getFMoney($subCant) . "</th></tr>" : "";
+					$txt	.= "<tr><th class='cont-cuenta'>" . $xEsq->CUENTA_FORMATEADA . "</th><td /><td colspan='2'>$nombre</td><td /></tr>";
 					$subAnt	= $cuenta;
 					$subCant= $monto;
 					$subNam	= $nombre;
@@ -324,13 +325,14 @@ class cCuentasPorSector {
 				case 3:
 					//$this->mMayor[$cuenta]		= $rows;
 					//$this->mSubtitulos[$xEsq->CUENTA_SUPERIOR][$cuenta]	= $rows;
-					$txt	.= ($monto == 0 AND $include_ceros == false) ? "" : "<tr><td>" . $xEsq->CUENTA_FORMATEADA . "</td><td /><td /><td >$nombre</td> <td class='mny'>$fmonto</td></tr>";
+					$txt	.= ($monto == 0 AND $include_ceros == false) ? "" : "<tr><td class='cont-cuenta'>" . $xEsq->CUENTA_FORMATEADA . "</td><td /><td /><td >$nombre</td> <td class='mny cont-cuenta'>$fmonto</td></tr>";
 					break;
 			}
 			$this->mTxt	.= $txt;
 			}
 		}
-		$this->mSumaTitulo	= $titCant;
+		$rs					= null;
+		
 	}
 	function render(){
 		return "<table>" . $this->mTxt . "</table>";
@@ -823,12 +825,14 @@ class cCuentaContable{
 	protected $mCuentaSuperior		= false;
 	protected $mArrayCuenta			= array();
 	protected $mArraySuperior		= array();
+	private $mOSaldos				= null;
 
 	protected $mCuentaIniciada		= false;
 	protected $mSuperiorIniciada	= false;
 	
 	protected $mNaturaleza			= false;
 	protected $mEquivalencia		= "";
+	
 
 	protected $mNombreCuenta		= false;
 	protected $mTipoDeCuenta		= false;
@@ -840,7 +844,7 @@ class cCuentaContable{
 	protected $mCuentasSuperiores	= array();
 	protected $mInmediatoSuperior	= false;
 	protected $mNivel				= 0;
-	public $mRaiseError				= false;
+	public 	  $mRaiseError				= false;
 	protected $mFactorDeCuenta		= false;
 	
 	protected $mEsquema				= null; 
@@ -877,7 +881,7 @@ class cCuentaContable{
 	function getCuentaCompleta($cuenta = false, $formato = false){
 		$xExq		= ($this->mEsquema == null) ? new cCuentaContableEsquema($cuenta) : $this->mEsquema;
 		$cuenta		= ($cuenta == false ) ? $this->mCuenta : $cuenta;
-		$cuenta		= ($formato == false) ? $xExq->CUENTA : $xExq->CUENTA_FORMATEADA; 
+		$cuenta		= ($formato == false) ? $xExq->CUENTA : $xExq->CUENTA_FORMATEADA;
 		return $cuenta;
 	}
 	/**
@@ -945,20 +949,30 @@ class cCuentaContable{
 	function getCuentaSuperior($inicializar = false){
 		$cuenta	= $this->mCuenta;
 		$cuenta = $this->getCuentaCompleta($cuenta);
+		//$cuenta	= number_format($cuenta,0, '','');
 		$lm		= $this->mEsquema->LARGO_TOTAL;
 		$xQl	= new cSQLListas();
 		if ( strlen($cuenta) == $this->mEsquema->LARGO_TOTAL ){
 			if($this->mInmediatoSuperior == false){
-				if($this->mEsquema->NIVEL_ACTUAL <= 1){
-					$cuenta	= false;
+				if($this->mEsquema->NIVEL_ACTUAL <= CONTABLE_CUENTA_NIVEL_TITULO AND ($cuenta != CUENTA_DE_CUADRE) ){
+					$cuenta				= false;
+					$this->mMessages	.= "ERROR\tCuenta Superio no carga en Titulo y Cuadre : " . $cuenta  . "\n";
 				} else {
-					$cuenta	= $this->mEsquema->SUPERIORES[ ($this->mEsquema->NIVEL_ACTUAL - 1) ];
+					$nnivel	= setNoMenorQueCero(($this->mEsquema->NIVEL_ACTUAL - 1));
+					if(isset($this->mEsquema->SUPERIORES[ $nnivel ])){
+						$cuenta	= $this->mEsquema->SUPERIORES[ $nnivel ];
+					} else {
+						$this->mMessages	.= "ERROR\tCuenta Superior  de " . $cuenta  . " no existe al nivel $nnivel\n";
+						$cuenta	= false;
+					}
+					
 				}
 			} else {
 				$cuenta		= $this->mInmediatoSuperior;
 			}
 			//return cuenta_completa($cuenta);
 			$cuenta			= setNoMenorQueCero($cuenta);
+			$cuenta			= number_format($cuenta,0, '','');
 			if ( $inicializar == true AND $cuenta > 0){
 				$this->mMessages	.= "SUPERIOR\tLa Cuenta Superior de " . $this->mCuenta . " es $cuenta\r\n";
 					$this->mArraySuperior 	= obten_filas( $xQl->getInicialDeCuentaContable($cuenta) );
@@ -988,14 +1002,14 @@ class cCuentaContable{
 							1 => "SALDOS",
 							3 => "ACREEDORES"
 							);
-		
+		$xQL			= new MQL();
 		$cuenta			= $this->mCuenta;
 		$ejercicio 		= ( $ejercicio == false ) ? EJERCICIO_CONTABLE : $ejercicio;
 		$NoHeredar		= ( $ArrSaldos == false OR !is_array($ArrSaldos) ) ? true : false;
 		$ArrSaldos		= ( $ArrSaldos == false OR !is_array($ArrSaldos) ) ? $this->mFallbackSaldos : $ArrSaldos;
 		$xLogg			= new cCoreLog();
-		$avisos	= "";
-		$si		= ( isset($ArrSaldos["saldo_inicial"]) ) ? $ArrSaldos["saldo_inicial"] : 0;
+		$avisos			= "";
+		$si				= ( isset($ArrSaldos["saldo_inicial"]) ) ? $ArrSaldos["saldo_inicial"] : 0;
 		//periodos
 		$p1		= $ArrSaldos["imp1"];
 		$p2		= $ArrSaldos["imp2"];
@@ -1011,64 +1025,70 @@ class cCuentaContable{
 		$p12	= $ArrSaldos["imp12"];
 		$p13	= $ArrSaldos["imp13"];
 		$p14	= $ArrSaldos["imp14"];
-		//$this->mDigitoAgrupador == CONTABLE_CUENTA_NIVEL_TITULO AND 
-		if(CONTABLE_EN_MIGRACION == true OR $cuenta_nueva == true){
-			foreach ($arrTipoSaldos as $tipoN => $nombre){
-				$sqlFall 	= "INSERT INTO contable_saldos( cuenta, ejercicio, tipo, saldo_inicial,
-				imp1, imp2, imp3, imp4, imp5, imp6, imp7, imp8, imp9, imp10, imp11, imp12, imp13, imp14, captado)
-				VALUES(
-				$cuenta, $ejercicio, $tipoN, $si,
-				$p1, $p2, $p3, $p4, $p5, $p6, $p7,
-				$p8, $p9, $p10, $p11, $p12, $p13, $p14,
-				'false')";
-				$rs			= my_query($sqlFall);
-				if($rs[SYS_ESTADO] == true){
-					$xLogg->add( "OK\t$cuenta\t$ejercicio\t$nombre\tSaldo de $nombre en Migracion\r\n", $xLogg->DEVELOPER);
-				} else {
-					$xLogg->add( "ERROR\t$cuenta\t$ejercicio\t$nombre\tSaldo de $nombre en Migracion\r\n", $xLogg->DEVELOPER);
-				}
-			}
-		} else {
-			if( $NoHeredar	== false ){		
-				$xLogg->add("WARN\tCREANDO SALDOS DE LA CUENTA $cuenta AL EJERCICIO $ejercicio \r\n", $xLogg->DEVELOPER);
-				//crear saldos por tipo, saldos cargos y abonos
-				for($i=1; $i<=3; $i++){
-					$tipo			= $i;
-					$sql_ISdoCta 	= "INSERT INTO contable_saldos(
-									cuenta, ejercicio, tipo, saldo_inicial,
-									imp1, imp2, imp3, imp4, imp5, imp6, imp7,
-									imp8, imp9, imp10, imp11, imp12, imp13, imp14,
-									captado)
-	    							VALUES(
-	    							$cuenta, $ejercicio, $tipo, $si,
-	    							$p1, $p2, $p3, $p4, $p5, $p6, $p7,
-	    							$p8, $p9, $p10, $p11, $p12, $p13, $p14,
-	    							'false')";
-					$rs			= my_query($sql_ISdoCta);
-					if($rs[SYS_ESTADO] == true){
-						$xLogg->add("OK\t$cuenta\tSe Crearon los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [243]\r\n", $xLogg->DEVELOPER);
+		$idx	= setNoMenorQueCero($cuenta);
+		if($idx > 0){
+			if(CONTABLE_EN_MIGRACION == true OR $cuenta_nueva == true){
+				foreach ($arrTipoSaldos as $tipoN => $nombre){
+					$sqlFall 	= "INSERT INTO contable_saldos( cuenta, ejercicio, tipo, saldo_inicial,
+					imp1, imp2, imp3, imp4, imp5, imp6, imp7, imp8, imp9, imp10, imp11, imp12, imp13, imp14, captado)
+					VALUES(
+					$cuenta, $ejercicio, $tipoN, $si,
+					$p1, $p2, $p3, $p4, $p5, $p6, $p7,
+					$p8, $p9, $p10, $p11, $p12, $p13, $p14,
+					'false')";
+					$rs			=  $xQL->setRawQuery($sqlFall);
+					if($rs == false){
+						$xLogg->add( "ERROR\t$cuenta\t$ejercicio\t$nombre\tSaldo de $nombre en Migracion -L1024\r\n", $xLogg->DEVELOPER);
 					} else {
-						$xLogg->add("ERROR\t$cuenta\tSe Crearon los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [243]\r\n", $xLogg->DEVELOPER);
+						$xLogg->add( "OK\t$cuenta\t$ejercicio\t$nombre\tSaldo de $nombre en Migracion -L1026\r\n", $xLogg->DEVELOPER);
 					}
 				}
 			} else {
-				
-				$ejercicio 		= ( isset($ArrSaldos["ejercicio"]) ) ? $ArrSaldos["ejercicio"] : EJERCICIO_CONTABLE;
-				$tipo 			= ( isset($ArrSaldos["tipo"]) ) ? $ArrSaldos["tipo"] : false;
-				$sql_ISdoCta 	= "INSERT INTO contable_saldos( cuenta, ejercicio, tipo, saldo_inicial,
-									imp1, imp2, imp3, imp4, imp5, imp6, imp7, imp8, imp9, imp10, imp11, imp12, imp13, imp14, captado)
-	    							VALUES(
-	    							$cuenta, $ejercicio, $tipo, $si,
-	    							$p1, $p2, $p3, $p4, $p5, $p6, $p7,
-	    							$p8, $p9, $p10, $p11, $p12, $p13, $p14,
-	    							'false')";
-	    		if( ($tipo != false) AND (trim($tipo) != "") ){
-					my_query($sql_ISdoCta);
-					$xLogg->add("OK\t$cuenta\t$ejercicio\t". $arrTipoSaldos[ $tipo ] . "\tSe Crearon los Saldos, Saldo Inicial: $si  [243] \r\n", $xLogg->DEVELOPER);
-	    		} else {
-	    			$xLogg->add("OK\t$cuenta\t$ejercicio\tWARN\tSe OMITIERON los Saldos, Saldo Inicial: $si  [246] \r\n", $xLogg->DEVELOPER);
-	    		}		
+				if( $NoHeredar	== false ){		
+					$xLogg->add("WARN\tCREANDO SALDOS DE LA CUENTA $cuenta AL EJERCICIO $ejercicio \r\n", $xLogg->DEVELOPER);
+					//crear saldos por tipo, saldos cargos y abonos
+					for($i=1; $i<=3; $i++){
+						$tipo			= $i;
+						$sql_ISdoCta 	= "INSERT INTO contable_saldos( cuenta, ejercicio, tipo, saldo_inicial,
+										imp1, imp2, imp3, imp4, imp5, imp6, imp7,imp8, imp9, imp10, imp11, imp12, imp13, imp14, captado)
+		    							VALUES(
+		    							$cuenta, $ejercicio, $tipo, $si,
+		    							$p1, $p2, $p3, $p4, $p5, $p6, $p7,
+		    							$p8, $p9, $p10, $p11, $p12, $p13, $p14,
+		    							'false')";
+						$rs			=  $xQL->setRawQuery($sql_ISdoCta);
+						if($rs === false){
+							$xLogg->add("ERROR\t$cuenta\tAl crear los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [L1047]\r\n", $xLogg->DEVELOPER);
+						} else {
+							$xLogg->add("OK\t$cuenta\tSe Crearon los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [L1049]\r\n", $xLogg->DEVELOPER);
+						}
+					}
+				} else {
+					
+					$ejercicio 		= ( isset($ArrSaldos["ejercicio"]) ) ? $ArrSaldos["ejercicio"] : EJERCICIO_CONTABLE;
+					$tipo 			= ( isset($ArrSaldos["tipo"]) ) ? $ArrSaldos["tipo"] : false;
+					$tipo			= setNoMenorQueCero($tipo);
+					$sql_ISdoCta 	= "INSERT INTO contable_saldos( cuenta, ejercicio, tipo, saldo_inicial,
+										imp1, imp2, imp3, imp4, imp5, imp6, imp7, imp8, imp9, imp10, imp11, imp12, imp13, imp14, captado)
+		    							VALUES(
+		    							$cuenta, $ejercicio, $tipo, $si,
+		    							$p1, $p2, $p3, $p4, $p5, $p6, $p7,
+		    							$p8, $p9, $p10, $p11, $p12, $p13, $p14,
+		    							'false')";
+		    		if( $tipo > 0 ){
+						$rs			=  $xQL->setRawQuery($sql_ISdoCta);
+		    			if($rs == false){
+							$xLogg->add("ERROR\t$cuenta\tSe Crearon los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [L1067]\r\n", $xLogg->DEVELOPER);
+						} else {
+							$xLogg->add("OK\t$cuenta\tSe Crearon los saldos del Tipo ". $arrTipoSaldos[$i] . " del Ejercicio $ejercicio [L1069]\r\n", $xLogg->DEVELOPER);
+						}
+		    		} else {
+		    			$xLogg->add("OK\t$cuenta\t$ejercicio\tWARN\tSe OMITIERON los Saldos, Saldo Inicial: $si  [L1072] \r\n", $xLogg->DEVELOPER);
+		    		}		
+				}
 			}
+		} else {
+			$xLogg->add("OK\t$cuenta\t$ejercicio\tERROR\tCUENTA INVALIDA [L1072] \r\n", $xLogg->DEVELOPER);
 		}
 		return $xLogg->getMessages();
 	}
@@ -1121,13 +1141,13 @@ class cCuentaContable{
 							$digito_agrupador = false,
 							$fecha_de_alta = false, $equivalencia = false, $superior = false ){
 		$xLog				= new cCoreLog();
-		$cuenta				= $this->mCuenta;
+		$cuenta				= setNoMenorQueCero($this->mCuenta);
 		$xEsq				= new cCuentaContableEsquema($cuenta);
 		$xF					= new cFecha();
-		$ready				= true;
+		$ready				= ($cuenta <= 0) ? false : true;
 		$heredar			= false;
 		$afectable			= 1;
-		$xLog->add( "WARN\tAlta a la Cuenta $cuenta \r\n");
+		$xLog->add( "WARN\tAlta a la Cuenta $cuenta de Nombre $nombre \r\n");
 		//si equivalencia es igual a null 
 		$equivalencia		= ($equivalencia == false) ? ZERO_EXO : $equivalencia;
 		//si la Fecha no Existe, llevarla a Default.
@@ -1137,12 +1157,13 @@ class cCuentaContable{
 		$digito_agrupador	= ($digito_agrupador <= 0) ? $xEsq->NIVEL_ACTUAL : $digito_agrupador;
 		$superior			= $xEsq->CUENTA_SUPERIOR;
 		//busca la cuenta superior, si esta no existe, obtener una nueva
-		if( $digito_agrupador > CONTABLE_CUENTA_NIVEL_TITULO){
-			$this->setSuperior($superior); $this->getParent(true);
+		if( $digito_agrupador > CONTABLE_CUENTA_NIVEL_TITULO OR $cuenta == CUENTA_DE_CUADRE){
+			$this->setSuperior($superior); 
+			$this->getParent(true); //$this->mSuperiorIniciada		= 
 			$InfoSuperior					= $this->mArraySuperior;
 			$ready							= $this->mSuperiorIniciada; //false
 			if($ready == false){
-				$xLog->add( "WARN\tError al Iniciar la Cuenta Superior $superior\r\n");
+				$xLog->add( "WARN\tError al Iniciar la Cuenta Superior $superior de la cuenta $nombre nivel $digito_agrupador\r\n");
 			} else {
 				$xLog->add( "OK\tCuenta Superior $superior INICIADA\r\n", $xLog->DEVELOPER);
 				//contar cuantos relaciones tiene
@@ -1181,30 +1202,34 @@ class cCuentaContable{
 			$sql 			= "INSERT INTO contable_catalogo(numero, equivalencia, nombre, tipo, ctamayor,	afectable, centro_de_costo, fecha_de_alta,	digitoagrupador)
 			VALUES($cuenta,	'$equivalencia', '$nombre', '$tipo', $es_mayor,	$afectable,
 			$centro_de_costo, '$fecha_de_alta',	$digito_agrupador)";
-			$ql->setRawQuery($sql);
-			$xLog->add("OK\tSe Guardo la Cuenta $cuenta de forma Satisfactoria \r\n");
-			$this->mCuentaSuperior	= $superior;
-			$this->mDigitoAgrupador	= $digito_agrupador;
-			$this->mCuenta			= $cuenta;
-			//Iniciar
-			$this->init();
-			$this->setRelation();
-			
-			if($heredar == true){
-				$msg				= $this->setHeredarSaldos($superior);
-				$xLog->add($msg, $xLog->DEVELOPER);
+			$exec	= $ql->setRawQuery($sql);
+			if($exec == false){
+				$xLog->add( "ERROR\t2.- Error al Agregar la cuenta $cuenta - $superior\r\n");
+				$cuenta					= CUENTA_DE_CUADRE;				
 			} else {
-				//Solo generar saldos
-				$msg 				= $this->setSaldos($xF->anno(), false, true);
-				$xLog->add($msg, $xLog->DEVELOPER);
+				$xLog->add("OK\tSe Guardo la Cuenta $cuenta de forma Satisfactoria \r\n");
+				$this->mCuentaSuperior	= $superior;
+				$this->mDigitoAgrupador	= $digito_agrupador;
+				$this->mCuenta			= $cuenta;
+				//Iniciar
+				$this->init();
+				$this->setRelation();
+				
+				if($heredar == true){
+					$msg				= $this->setHeredarSaldos($superior);
+					$xLog->add($msg, $xLog->DEVELOPER);
+				} else {
+					//Solo generar saldos
+					$msg 				= $this->setSaldos($xF->anno(), false, true);
+					$xLog->add($msg, $xLog->DEVELOPER);
+				}
 			}
-			
 		} else {
 			$xLog->add( "ERROR\tError al Agregar la cuenta $cuenta - $superior\r\n");
 			$cuenta					= CUENTA_DE_CUADRE;
 			
 		}
-		$this->mMessages		= $xLog->getMessages();
+		$this->mMessages		.= $xLog->getMessages();
 		return $cuenta;
 	}
 	/**
@@ -1223,21 +1248,16 @@ class cCuentaContable{
 	 * @return boolean								True si Existe, False si no
 	 */
 	function getCountCuenta($crear_si_no_existe = false ){
-			$existe	= false;
-			$sqlSC 	= "SELECT COUNT(numero) AS 'existentes' FROM contable_catalogo WHERE numero = " . $this->mCuenta;
-			$rw		= obten_filas($sqlSC);
-			if ($rw["existentes"] > 0){
-				$existe		= true;
-				$this->mMessages	.= "EXISTS\tLa cuenta " . $this->mCuenta . " Existe \r\n";
-				
-			} else {
-				if ($crear_si_no_existe == true ){
-
-				}
-				$existe		= false;
-				$this->mMessages	.= "NOEXISTS\tLa cuenta " . $this->mCuenta . " No existe\r\n";
-			}
-			return $existe;
+		$existe	= false;
+		$xLi	= new cSQLListas();
+		$xQL	= new MQL();
+		$datos	= $xQL->getDataRow(	$xLi->getInicialDeCuentaContable($this->mCuenta) );
+		$existe	= (isset($datos["numero"])) ? true : false;
+		$this->mMessages	.= ($existe == true) ? "OK\tEXISTS.- La cuenta " . $this->mCuenta . " Existe \r\n" : "ERROR\tNOEXISTS.- La cuenta " . $this->mCuenta . " No existe\r\n";
+		if($existe == true){
+			
+		}
+		return $existe;
 	}
 	function getMessages($put = OUT_TXT){ 	$xH		= new cHObject();	return $xH->Out($this->mMessages, $put);	}
 	function get(){	return $this->getCuentaCompleta( $this->mCuenta ); }
@@ -1274,7 +1294,7 @@ class cCuentaContable{
 				$ctasuperior	= $rows["numero"];
 				$sdo			= ($monto*($factor*$tipo_operacion));
 				
-				$xLogg->add("ERROR\tLa cuenta $ctasuperior con factor $factor\r\n", $xLogg->DEVELOPER);
+				$xLogg->add("OK\tLa cuenta $ctasuperior con factor $factor\r\n", $xLogg->DEVELOPER);
 				
 				
 				
@@ -1300,19 +1320,25 @@ class cCuentaContable{
 		$ejercicio	= (setNoMenorQueCero($ejercicio) <= 0) ? EJERCICIO_CONTABLE : $ejercicio;
 		$periodo	= (setNoMenorQueCero($periodo) <= 0) ? EACP_PER_CONTABLE : $periodo;
 		$cuenta 	= (setNoMenorQueCero($cuenta) <= 0  ) ? $this->mCuenta : $cuenta;
-		$xLogg		= new cCoreLog();
+		$xLog		= new cCoreLog();
 		$QL			= new MQL();
 		$simbol		= "+";
 		$monto		= ($revertir == true) ? $monto * -1 : $monto;
-		$xLogg->add("OK\t[]Afectar cuentas de la Cuenta $cuenta en el periodo $periodo/$ejercicio por $monto ($simbol)\r\n", $xLogg->DEVELOPER);
+		$ready		= true;
 		$exAfect	= "";
 		for($i = $periodo; $i <= 14; $i++){ $exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	}
-		$QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio=$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
+		$okYear		= $QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio=$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
 		//Annios futuros
 		$exAfect	= "";
 		for($i = 1; $i <= 14; $i++){ $exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	}
-		$QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio>$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
-		$this->mMessages	.= $xLogg->getMessages();
+		$proxYear	= $QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio>$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
+		if($okYear == false OR $proxYear == false){
+			$xLog->add("ERROR\tAl afectar cuentas de la Cuenta $cuenta en el periodo $periodo/$ejercicio por $monto ($simbol)\r\n", $xLog->DEVELOPER);
+			$ready	= false;
+		} else {
+			$xLog->add("OK\tAfectar cuentas de la Cuenta $cuenta en el periodo $periodo/$ejercicio por $monto ($simbol)\r\n", $xLog->DEVELOPER);
+		}		
+		$this->mMessages	.= $xLog->getMessages();
 		return "";
 	}
 
@@ -1340,6 +1366,7 @@ class cCuentaContable{
 		$DCuenta		= $this->getDatos();
 		$ql				= new MQL();
 		$xLis			= new cSQLListas();
+		$xF				= new cFecha();
 		
 		$DSuperior		= $this->mArraySuperior;
 		
@@ -1361,31 +1388,8 @@ class cCuentaContable{
 			$hsaldos		.= $xTable->Show("TR.Saldos");
 		}
 		if($operaciones  == true){
-			$sql		= "SELECT
-					`contable_movimientos`.`ejercicio`,
-					`contable_movimientos`.`periodo`     AS `mes`,
-					`contable_movimientos`.`fecha`,
-					`contable_polizasdiarios`.`nombre_del_diario` AS `tipo`,
-					`contable_movimientos`.`numeropoliza`    AS `poliza`,
-					`contable_movimientos`.`numeromovimiento`     AS `operacion`,
-					`contable_movimientos`.`numerocuenta`    AS `cuenta`,
-					
-					/*/`contable_movimientos`.`importe`,*/
-					
-					
-					`contable_movimientos`.`cargo`,
-					`contable_movimientos`.`abono`,
-					
-					/*`contable_movimientos`.`moneda`,*/
-					`contable_movimientos`.`referencia`,
-					`contable_movimientos`.`concepto`					 
-				FROM
-					`contable_movimientos` `contable_movimientos` 
-						INNER JOIN `contable_polizasdiarios` `contable_polizasdiarios` 
-						ON `contable_movimientos`.`tipopoliza` = `contable_polizasdiarios`.
-						`idcontable_polizadiarios` 
-				WHERE
-					(`contable_movimientos`.`numerocuenta` =$cuenta)";
+			$sql		= $xLis->getListadoDeOperacionesContables($cuenta, $xF->mes(), $xF->anno());
+
 			$xTable			= new cTabla($sql);
 			$xTable->setFootSum(array(
 				7 => "cargo",
@@ -1461,6 +1465,10 @@ class cCuentaContable{
 		$equivalencia		= ($equivalencia == "") ? $this->mEquivalencia : $equivalencia;
 		$sql				= "UPDATE `contable_catalogo` SET `equivalencia`='$equivalencia', `nombre`='$nombre', `centro_de_costo`=$centro_de_costo WHERE `numero` =" . $this->mCuenta;
 		$ql					= new MQL(); $ql->setRawQuery($sql);
+	}
+	function OSaldosDelEjercicio($fecha = false){
+		if($this->mOSaldos == null){ $this->mOSaldos	= new cContableSaldo($this->mCuenta, $fecha); }
+		return  $this->mOSaldos;
 	}
 }
 /**
@@ -1569,9 +1577,11 @@ class cPoliza{
 			numeropoliza, clase, impresa, concepto, fecha, cargos, abonos, diario, idusuario, recibo_relacionado)
 		    VALUES ($ejercicio, $periodo, $tipo, $NumeroDePoliza, $clase, '$impresa', '$Concepto',
 			'$FechaDePoliza', $TotalCargos,	$TotalAbonos, $DiarioDePoliza, $usuario, $recibo)";
-			$xR	= my_query($sqlnpol);
+			$xQL				= new MQL();
+			$xR	= $xQL->setRawQuery($sqlnpol);
+			$xR	= ($xR === false) ? false : true;
 		
-		if ( $xR["stat"] == true ){
+		if ( $xR == true ){
 			$msg	.= "OK\tPOLIZA\tPoliza Agregada con Num: $NumeroDePoliza de Fecha $FechaDePoliza y Tipo $tipo \r\n";
 		} else {
 			$msg	.= "ERROR\tError al Guardar Poliza con Num: $NumeroDePoliza de Fecha $FechaDePoliza y Tipo $tipo \r\n";
@@ -2099,10 +2109,11 @@ class cPoliza{
 	 */
 	function getMessages($put = OUT_TXT){	$xH		= new cHObject();	return $xH->Out($this->mMessages, $put);	}
 	function getDatos(){ return $this->mArrDatosPoliza; }
-	function getFicha(){
+	function getFicha($fielset = true){
 		$xL		= new cLang();
 		$xF		= new cFecha();
 		$xTipo	= $this->OTipoPoliza()->nombre_del_diario()->v();
+		$title	= "<legend>|&nbsp;&nbsp;" . $xL->get("Poliza") . "# " . $this->mCodigoUnico . "&nbsp;&nbsp;|</legend>";
 		$table	= "<table>
 					<tbody>
 						<tr>
@@ -2113,7 +2124,7 @@ class cPoliza{
 						</tr>
 					</tbody>
 				</table>";
-		return $table;
+		return ($fielset == true) ? "<fieldset>$title $table</fieldset>" : $table;
 	}
 	function OTipoPoliza(){
 		if($this->mOTipoPoliza == null){
@@ -2197,20 +2208,24 @@ class cPoliza{
 	 * @param integer 	$operacion	Tipo de Operacion Contable CARGO/ABONO
 	 * @param integer 	$usuario	Usuario de la Operacion
 	 */
-	function addProforma($recibo, $tipo_mvto, $monto, $socio, $docto, $operacion = 1, $usuario = false, $banco = false){
+	function addProforma($recibo, $tipo_mvto, $monto, $socio, $docto, $operacion = 1, $usuario = false, $banco = false, $altervativo = false, $fecha =false){
 		if(MODULO_CONTABILIDAD_ACTIVADO == true){
+			$xF				= new cFecha();
+			$fecha			= $xF->getFechaISO($fecha);
 			$usuario		= setNoMenorQueCero($usuario);
+			$altervativo	= setNoMenorQueCero($altervativo);
 			$usuario		= ( $usuario <= 0 ) ? getUsuarioActual() : $usuario ;
 			$sucursal		= getSucursal();
 			$banco			= setNoMenorQueCero($banco);
 			if($monto != 0){
 				$sqlI 		= "INSERT INTO contable_polizas_proforma
-				(numero_de_recibo, tipo_de_mvto, monto, socio, documento, contable_operacion, idusuario, sucursal, banco)
-				VALUES($recibo, $tipo_mvto, $monto, $socio, $docto, '$operacion', $usuario, '$sucursal', $banco)";
-				my_query($sqlI);
+				(numero_de_recibo, tipo_de_mvto, monto, socio, documento, contable_operacion, idusuario, sucursal, banco, cuenta_alternativa, fecha)
+				VALUES($recibo, $tipo_mvto, $monto, $socio, $docto, '$operacion', $usuario, '$sucursal', $banco, $altervativo, '$fecha')";
+				$xQL		= new MQL();
+				$xQL->setRawQuery($sqlI);
 			}
 		}
-		return "OK\tPROFORMA\t$socio\t$docto\t$recibo\t$tipo_mvto\t$monto\r\n";
+		return "OK\tPROFORMA\t$socio\t$docto\t$recibo\t$tipo_mvto\t$monto\t$altervativo\r\n";
 	}	
 }
 class cContableOperacion {
@@ -2352,4 +2367,58 @@ class cContableOperacion {
 	}
 	function getMessages($put = OUT_TXT){	$xH		= new cHObject();	return $xH->Out($this->mMessages, $put);	}	
 }
+
+class cContableSaldo {
+	private $mSaldos		= array();
+	private $mCuenta		= 0;
+	private $mEjercicio		= false;
+	private $mInit			= false;
+	public $SDEUDORES		= 2;
+	public $SACREEDORES		= 3;
+	public $SNATURAL		= 1;
+	private $mMessages		= "";
+	function __construct($cuenta, $fecha = false){
+		$xF					= new cFecha(0, $fecha);
+		$this->mEjercicio	= $xF->anno();
+		$this->mCuenta		= setNoMenorQueCero($cuenta);
+	}
+	function init(){
+		$xQL		= new MQL();
+		$xLog		= new cCoreLog();
+		$ejercicio	= $this->mEjercicio;
+
+		//1 =saldos
+		$sql		= "SELECT * FROM `contable_saldos` WHERE `cuenta`=" . $this->mCuenta . " AND ejercicio = $ejercicio";
+		$data		= $xQL->getDataRecord($sql);
+		if(isset($data["ejercicio"])){
+			foreach ($data as $rw){ $this->mSaldos[ $rw["tipo"] ] 	= $rw; } //cargar saldos
+			$this->mInit						= true;
+			if(!isset($this->mSaldos[ $this->SACREEDORES ])){ 
+				$this->mInit = false;
+				$xLog->add("ERROR\tSaldo ACREEDOR no existe\r\n", $xLog->DEVELOPER);
+			}
+			if(!isset($this->mSaldos[ $this->SDEUDORES ])){
+				$this->mInit = false;
+				$xLog->add("ERROR\tSaldo DEUDOR no existe\r\n", $xLog->DEVELOPER);
+			}
+			if(!isset($this->mSaldos[ $this->SNATURAL ])){
+				$this->mInit = false;
+				$xLog->add("ERROR\tSaldo NATURAL no existe\r\n", $xLog->DEVELOPER);
+			}			
+		}
+		$this->mMessages	.= $xLog->getMessages();
+		return $this->mInit;		
+	}
+	function getSaldo($tipo, $periodo = 0){
+		$saldo 		= 0;
+		$campo		= (setNoMenorQueCero($periodo) <= 0) ? "saldo_inicial" : "imp$periodo";
+		
+		if(isset($this->mSaldos[$tipo])){
+			$saldo	= $this->mSaldos[$tipo][$campo];
+		}
+		return $saldo;
+	}
+	function getMessages($put = OUT_TXT){	$xH		= new cHObject();	return $xH->Out($this->mMessages, $put);	}
+}
+
 ?>

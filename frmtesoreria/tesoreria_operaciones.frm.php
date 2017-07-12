@@ -5,137 +5,200 @@
  * @package
  */
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP			= new cHPage("", HP_FORM);
-
+$xHP		= new cHPage("TR.OPERACION DE CAJA", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
 $xF			= new cFecha();
-$xT			= new cTipos();
+$xLog		= new cCoreLog();
 
-$DDATA			= $_REQUEST;
-$action			= (isset($DDATA["cmd"])) ? $DDATA["cmd"] : SYS_NINGUNO;
-$cargar			= (isset($DDATA["item"])) ? $DDATA["item"] : "";
-$origen			= (isset($DDATA["origen"])) ? $DDATA["origen"] : SYS_NINGUNO;
-
-$recibo			= (isset($DDATA["idrecibo"])) ? $DDATA["idrecibo"] : DEFAULT_RECIBO;
-$operacion		= (isset($DDATA["idoperacion"])) ? $DDATA["idoperacion"] : SYS_UNO;
-
-$tipoDeExposicion	= (isset($DDATA["ctipo_pago"])) ? $DDATA["ctipo_pago"] : DEFAULT_TIPO_PAGO;
-
-$monto			= (isset($DDATA["idmonto"])) ? $xT->cFloat($DDATA["idmonto"]) : 0;
-
-$MontoOperacion 	= (isset($DDATA["idmontooperado"])) ? $DDATA["idmontooperado"] : $monto;
-$MontoCambio 		= (isset($DDATA["idmontocambio"])) ? $DDATA["idmontocambio"] : 0;
-$banco 			= (isset($DDATA["idbanco"])) ? $DDATA["idbanco"] : 99; //FALLBACK_BANCO
-$cheque 		= (isset($DDATA["idcheque"])) ? $DDATA["idcheque"] : DEFAULT_CHEQUE;
-$CuentaBancaria 	= (isset($DDATA["idcuenta"])) ? $DDATA["idcuenta"] : DEFAULT_CUENTA_BANCARIA;
-$documento 		= (isset($DDATA["iddoctodescontado"])) ? $DDATA["iddoctodescontado"] : DEFAULT_CREDITO;
-$observaciones 		= (isset($DDATA["idobservaciones"])) ? $DDATA["idobservaciones"] : "";
-$fecha 			= (isset($DDATA["idfecha-0"])) ?  $xF->getFechaISO($DDATA["idfecha-0"]) : fechasys();
-$msg			= (isset($DPDATA[SYS_MSG]) ) ? $DPDATA[SYS_MSG] : "";
-
-$hora 			= date("H:i");
-
-//$msg		.= "MONTO $monto .... " . $DDATA["idmonto"] ;
-if($monto > 0){
-    $xCaja	= new cCaja();
-    /*
-$recibo, $tipoDeExposicion, $MontoRecibido, $MontoOperacion = 0, $MontoCambio = 0, 
-		$banco = 1, $cheque = "", $CuentaBancaria = 0, $DocumentoDescontado = 0, $Observaciones = "", $fecha = false, $hora = false
-    */
-    $xCaja->addOperacion($recibo, $tipoDeExposicion, $monto, $MontoOperacion, $MontoCambio, $banco, $cheque, $CuentaBancaria, $documento,
-			 $observaciones, $fecha, $hora);
-    $msg		.= $xCaja->getMessages(OUT_TXT);
-}
-if($cargar != "" AND $origen = "recibo"){
-	$xRec		= new cReciboDeOperacion(false, true, $cargar);
-	$xRec->init();
-	$monto		= $xRec->getTotal();
-	//$documento	= $xRec->getCodigoDeDocumento();
-	$recibo		= $cargar;
-	$fecha		= $xRec->getFechaDeRecibo();
-	//$operacion	= BANCOS_OPERACION_DEPOSITO;
-	$cheque		= $xRec->getNumeroDeCheque();
-	$observaciones	= $xRec->getObservaciones();
-	//$xBanc		= new cCuentaBancaria("");
-	$xBanc		= $xRec->getBancoPorOperacion();
-	if($xBanc != null){
-	    $banco		= $xBanc->getClaveDeBanco();
-	    $CuentaBancaria	= $xBanc->getNumeroDeCuenta();
-	}
-	$msg		.= $xRec->getMessages(OUT_TXT);
-}
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
-echo $xHP->getHeader();
-$jsb	= new jsBasicForm("tesoreria_operaciones", iDE_OPERACION);
-$jsb->setIncludeOnlyCommons();
-//$jxc ->drawJavaScript(false, true);
-echo $xHP->setBodyinit();
+$clave					= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha					= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);
+$persona				= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito				= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta					= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback				= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto					= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo					= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$cuentabanco			= parametro("idcodigodecuenta", DEFAULT_CUENTA_BANCARIA, MQL_INT);
+$banco					= parametro("idcodigodebanco", FALLBACK_CLAVE_DE_BANCO, MQL_INT);
+$cheque					= parametro("idcheque", 0, MQL_INT);
+$origen					= parametro("origen", SYS_NINGUNO, MQL_RAW);
+$origen					= parametro("tipodeorigen", $origen, MQL_RAW);
 
-$xFRM	= new cHForm("tesoreria_operaciones", "./tesoreria_operaciones.frm.php");
-$xBtn	= new cHButton();		
-$xTxt	= new cHText();
+//$tipoDeExp				= parametro("idtipodeafectacion", SYS_NINGUNO, MQL_RAW);
+$tipoDeExp				= parametro("idtipodepagotesoreria", SYS_NINGUNO, MQL_RAW);
+$moneda					= parametro("idcodigodemoneda", AML_CLAVE_MONEDA_LOCAL, MQL_RAW);
+$observaciones			= parametro("idobservaciones");
+$unidades_originales	= 0;
+$MontoOperacion			= parametro("idmontooperacion", 0, MQL_FLOAT);
+$MontoCambio			= parametro("idmontocambio", 0, MQL_FLOAT);
+$documento				= parametro("iddocumento", 0, MQL_INT);
+$hora					= parametro("idhora", 0);
+$ClaveDeOrigen			= parametro("item", $recibo, MQL_INT);
 
+if($action == SYS_NINGUNO){
+	if($origen == iDE_RECIBO OR $origen == "recibo"){
+		$recibo			= $ClaveDeOrigen;
+		
+		$xRec			= new cReciboDeOperacion(false, false, $recibo);
+		$xRec->init();
+		$monto			= $xRec->getTotal();
+	}
 
-$xTest	= new cCaja();
+}
 
-//$xTest->addOperacion($recibo, )
-$xHCob			= new cHCobros();
-$xHSel			= new cHSelect();
-$xHSel->addOptions( array(1=> "INGRESO", 0 => "NINGUNO", -1 => "EGRESO") );
-$xHSel->setDefault(SYS_UNO);
-//$selOperacion		= $xHSel->get("idoperacion", "operacion", $operacion);
-$xSel			= new cSelect("idbanco", "idbanco" , TBANCOS_ENTIDADES);
-$xSel->setOptionSelect($banco);
-$xSel2			= new cSelect("idcuenta", "idcuenta" , TBANCOS_CUENTAS);
-$xSel2->setOptionSelect($CuentaBancaria);
+$xHP->init();
 
-/*
-SELECT idtesoreria_cajas_movimientos, codigo_de_caja, idusuario, documento, recibo, tipo_de_movimiento, tipo_de_exposicion, fecha, hora,
-monto_del_movimiento, monto_recibido, monto_en_cambio, banco, numero_de_cheque,
-observaciones, sucursal,
-eacp, cuenta_bancaria, documento_descontado 
-    FROM tesoreria_cajas_movimientos
-*/
-$xF			= new cHDate(0, $fecha, TIPO_FECHA_OPERATIVA);
-$xFRM->addHElem($xF->get("Fecha de Operacion"));
+$xFRM	= new cHForm("tesoreria_operaciones", "./tesoreria_operaciones.frm.php?action=" . MQL_ADD);
+$xCob	= new cHCobros();
+$xSel	= new cHSelect();
 
-$xFRM->addHElem($xHSel->get("idoperacion", "Operacion", $operacion) );
-$xFRM->addHElem( "<div class='tx4'>" . $xHCob->getSelectTiposDePago() . "</div>" );
-/*$xFRM->addHElem($xTxt->get("idsocio", $socio, "Persona"));*/
-//$xFRM->addHElem($xTxt->get("iddocumento", $documento, "Documento"));
-$xFRM->addHElem($xTxt->get("idrecibo", $recibo, "Recibo"));
-$xFRM->addHElem($xTxt->getDeMoneda("idmonto", "Monto", $monto));
+if($action == MQL_ADD AND $monto > 0){
+	$xCaja	= new cCaja();
+	$xCaja->addOperacion($recibo, $tipoDeExp, $monto, $MontoOperacion, $MontoCambio, $banco, $cheque, $cuentabanco,
+			 $documento, $observaciones, $fecha, $hora,
+			$moneda, $unidades_originales, $persona, $documento	);
+	$xFRM->addLog($xCaja->getMessages());	
+}
+if($action == MQL_MOD AND $clave > 0){
+	$xTes	= new cOperacionDeCaja($clave);
+	if($xTes->init() == true){
+		$xTes->getObj()->banco($banco);
+		$xTes->getObj()->recibo($recibo);
+		$xTes->getObj()->tipo_de_exposicion($tipoDeExp);
+		$xTes->getObj()->monto_recibido($monto);
+		$xTes->getObj()->monto_del_movimiento($MontoOperacion);
+		$xTes->getObj()->monto_en_cambio($MontoCambio);
+		$xTes->getObj()->numero_de_cheque($cheque);
+		$xTes->getObj()->cuenta_bancaria($cuentabanco);
+		$xTes->getObj()->moneda_de_operacion($moneda);
+		$xTes->getObj()->documento($documento);
+		$xTes->getObj()->observaciones($observaciones);
+		$xTes->getObj()->fecha($fecha);
+		$xTes->getObj()->hora($hora);
+		$xTes->getObj()->unidades_de_moneda($unidades_originales);
+		$xTes->getObj()->persona($persona);
+		$xTes->getObj()->documento_descontado($documento);
+		$rs	= $xTes->getObj()->query()->update()->save($clave);
+		$xFRM->setResultado($rs);
+	}
+}
+$msg		= "";
+if($action == SYS_NINGUNO){
+	if($clave > 0){
+		$xTes			= new cOperacionDeCaja($clave);
+		if( $xTes->init() == true){
+			$tipoDeExp		= $xTes->getTipoDeExpocision();
+			$MontoOperacion	= $xTes->getMontoOperado();
+			$MontoCambio	= $xTes->getMontoDevuelto();
+			$banco			= $xTes->getBanco();
+			$monto			= $xTes->getMontoOperado();
+			$clave			= $xTes->getClave();
+			$hora			= $xTes->getObj()->hora()->v();
+			$persona		= $xTes->getObj()->persona()->v();
+			$documento		= $xTes->getObj()->documento()->v();
+			$recibo			= $xTes->getObj()->recibo()->v();
+			$observaciones	= $xTes->getObj()->observaciones()->v();
+		}
+	}	
+	if($recibo > 1 ){
+		$xRec	= new cReciboDeOperacion(false, false, $recibo);
+		if($xRec->init() == true){
+			$xFRM->addHElem( $xRec->getFicha(true) );
+			$MontoOperacion	= $xRec->getTotal();
+			$fecha			= $xRec->getFechaDeRecibo();
+			$cheque			= $xRec->getNumeroDeCheque();
+			$observaciones	= $xRec->getObservaciones();
+			$xBanc			= $xRec->getBancoPorOperacion();
+			$tipoDeExp		= $xRec->getTipoDePago();
+			$documento		= $xRec->getCodigoDeDocumento();
+			$persona		= $xRec->getCodigoDeSocio();
+			//$monto			= $xRec->getTotal();
+			if($xBanc != null){
+				$banco			= $xBanc->getClaveDeBanco();
+				$CuentaBancaria	= $xBanc->getNumeroDeCuenta();
+			}
+			$xFRM->OHidden("idrecibo", $recibo);
+			$xLog->add("Se carga datos del Recibo $recibo", $xLog->DEVELOPER);
+			$xTes			= new cOperacionDeCaja();
+			if( $xTes->initByRecibo($recibo) == true){
+				
+				$tipoDeExp		= $xTes->getTipoDeExpocision();
+				$MontoOperacion	= $xTes->getMontoOperado();
+				$MontoCambio	= $xTes->getMontoDevuelto();
+				$banco			= $xTes->getBanco();
+				$monto			= $xTes->getMontoOperado();
+				$clave			= $xTes->getClave();
+				$hora			= $xTes->getObj()->hora()->v();
+				$xFRM->setAction("./tesoreria_operaciones.frm.php?clave=$clave&action=" . MQL_MOD);
+				$xLog->add("Se carga la Operacion $clave para editarla");
+			}
+			//if($xCaja != null){	}
+			//$xFRM->addLog( $xRec->getMessages(OUT_TXT) );		
+		}
+	}
 
-$xFRM->addHElem($xSel->get("Banco", true));
-$xFRM->addHElem($xSel2->get("Cuenta Bancaria", true));
-$xFRM->addHElem($xTxt->get("idcheque", $cheque, "Numero de Cheque"));
+}
 
-$xFRM->addHElem($xTxt->get("idobservaciones", $observaciones, "Observaciones"));
-$xFRM->addHTML("<div class='aviso'>$msg</div>");
-$xFRM->addFootElement($xBtn->getBasic("Guardar", "setGuardar", "guardar"));
+if($persona > DEFAULT_SOCIO){
+	$xFRM->OHidden("idsocio", $persona);
+	if($recibo <= 1){
+		$xSoc	= new cSocio($persona);
+		if($xSoc->init() == true){
+			$xFRM->addHElem( $xSoc->getFicha(false, false, "", true) );
+		}
+	}
+} else {
+		$xFRM->addPersonaBasico();
+}
+
+$xFRM->setTitle($xHP->getTitle());
+
+$xFRM->addFecha($fecha);
+$xFRM->addHElem($xSel->getListaDeTiposDeAfectacionOperaciones("", SYS_ENTRADAS)->get(true));
+$xFRM->addHElem($xSel->getListaDeTipoDePagoTesoreria("", false, $tipoDeExp)->get(true) );
+$xFRM->addHElem($xSel->getListaDeBancos("", $banco)->get(true) );
+$xFRM->addHElem($xSel->getListaDeCuentasBancarias("", false, $cuentabanco)->get(true) );
+$xFRM->addHElem($xSel->getListaDeMonedas("", $moneda)->get(true));
+$xFRM->OMoneda("iddocumento", $documento, "TR.Documento");
+if($recibo <= 1){
+	$xFRM->OMoneda("idrecibo", $recibo, "TR.Recibo de Operacion");
+}
+$xFRM->addMonto($monto, true);
+$xFRM->setValidacion("idmonto", $xFRM->VALIDARCANTIDAD);
+//$xFRM->addAvisoInicial("TR.ver");
+if($MontoOperacion > 0){
+	$xFRM->OHidden("idmontooperacion",$MontoOperacion);
+	$xCant	= new cCantidad($MontoOperacion);
+	$xFRM->addHElem( $xCant->getFicha() );
+} else {
+	$xFRM->OMoneda("idmontooperacion", $MontoOperacion, "TR.Monto Operacion", true);
+}
+
+$xFRM->OMoneda("idmontocambio", $MontoCambio, "TR.Monto devuelto", true);
+$xFRM->addObservaciones("", $observaciones);
+$xFRM->OHidden("idhora", $hora);
+
+$xFRM->addGuardar();
+
+$xFRM->addAviso($xLog->getMessages());
 
 
 echo $xFRM->get();
-echo $xHP->setBodyEnd();
-$jsb->show();
-?>
-<!-- HTML content -->
-<script>
-    function setGuardar(){
-	jsEvaluarFormulario();
-    }
-</script>
-<?php
-$xHP->end();
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
 ?>

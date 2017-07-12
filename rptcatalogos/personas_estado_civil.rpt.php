@@ -25,7 +25,7 @@ $query		= new MQL();
 	
 $xHP->setTitle("TR.catalogo_de estado_civil");
 
-$oficial = elusuario($iduser);
+
 
 $estatus 		= (isset($_GET["estado"]) ) ? $_GET["estado"] : SYS_TODAS;
 $frecuencia 	= (isset($_GET["periocidad"]) ) ? $_GET["periocidad"] : SYS_TODAS;

@@ -11,11 +11,12 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
 //=====================================================================================================
-$xP		= new cHPage("Pruebas de Fechas", HP_FORM);
+	
+$xHP		= new cHPage("Pruebas de Fechas", HP_FORM);
+$xHP->init();
 
 
-echo $xP->getHeader();
-echo $xP->setBodyinit();
+
 //Crear formularios
 $xFRM	= new cHForm("frmTest", "./test.php");
 
@@ -31,7 +32,7 @@ $xFRM->addHElem( $xHChk->get("id4") );
 
 $xSoc		= new cSocios_general();
 $xSoc->setData( $xSoc->query()->initByID(DEFAULT_SOCIO) );
-var_dump($xSoc->query()->getCampos());
+//var_dump($xSoc->query()->getCampos());
 //$xFRM->addAviso( $xSoc->query()->getListaDeCampos() );
 
 $xFRM->OMoneda("ix", 4500, convertirletras("4,455.05"));
@@ -54,6 +55,11 @@ if($xEmp->getOPersona() == null){
 	$xFRM->OText("idper", $xEmp->getOPersona()->getNombreCompleto(), "TR.Persona");
 }
 
+///Diccionario de Tablas
+
+$xHDic	= new cHTablaDic();
+
+$xFRM->addHElem($xHDic->getHGuardarRelacion(10029));
 
 echo $xFRM->get();
 
@@ -94,9 +100,7 @@ $gantti = new Gantti($data, array(
 echo $gantti;
 
 
-echo $xP->setBodyEnd();
-
-echo $xP->end();
+$xHP->fin();
 //=====================================================================================================
 
 ?>

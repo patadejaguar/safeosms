@@ -29,10 +29,10 @@ $money			= new cTesoreria_monedas();
 $money->setData(  $money->query()->initByID($arg2) );
 $valor_local	= $money->quivalencia_en_moneda_local()->v();
 
-$valor			= $arg * $valor_local;
-$letras			= convertirletras($valor, $arg2);
+$valor				= $arg * $valor_local;
+$letras				= convertirletras($valor, $arg2);
 $rs["equivalencia"]	= $valor;
-$rs["letras"]	= $letras;
+$rs["letras"]		= $letras;
 $rs["cotizacion"]	= $valor_local;
 
 echo json_encode($rs);

@@ -12,24 +12,24 @@ $xC     = new cConfiguration();
 define("SYS_FECHA_DE_MIGRACION", 				$xC->get("fecha_de_migracion_al_sistema", "2012-01-01", $xC->SISTEMA) );
 //========================================= DATOS GENERALES DE LA ENTIDAD ===========================================
 define("EACP_ID_DE_PERSONA", 	    			$xC->get("clave_de_persona_en_sistema", 10000, 	$xC->ENTIDAD));
-define("EACP_NAME", 								$xC->get("nombre_de_la_entidad", "", 				$xC->ENTIDAD));
-define("EACP_DESCRIPTION",      					$xC->get("descripcion_de_la_entidad", "", 			$xC->ENTIDAD));
+define("EACP_NAME", 							$xC->get("nombre_de_la_entidad", "", 				$xC->ENTIDAD));
+define("EACP_DESCRIPTION",      				$xC->get("descripcion_de_la_entidad", "", 			$xC->ENTIDAD));
 define("EACP_PATH_LOGO", 						vIMG_PATH . "/logo.png");
 //========================================= DATOS LEGALES DE LA ENTIDAD ===========================================
-define("EACP_CLAVE", 								$xC->get("registro_ante_la_cnbv", "", 						$xC->ENTIDAD_LEGAL));
-define("EACP_CLAVE_CASFIN", 						$xC->get("registro_casfin", "", 							$xC->ENTIDAD_LEGAL));
+define("EACP_CLAVE", 							$xC->get("registro_ante_la_cnbv", "", 						$xC->ENTIDAD_LEGAL));
+define("EACP_CLAVE_CASFIN", 					$xC->get("registro_casfin", "", 							$xC->ENTIDAD_LEGAL));
 define("EACP_RFC", 								$xC->get("rfc_de_la_entidad", "", 							$xC->ENTIDAD_LEGAL));
 define("EACP_REGISTRO_PATRONAL",				$xC->get("registro_patronal_imss", "", 						$xC->ENTIDAD_LEGAL));
 define("EACP_FECHA_DE_CONSTITUCION", 			$xC->get("fecha_de_constitucion", date("Y-m-d"), 			$xC->ENTIDAD_LEGAL));
-define("ENTIDAD_CLAVE_SIC", 						$xC->get("entidad_clave_en_el_sic", "SinRegistro",			$xC->ENTIDAD_LEGAL) ); //Abril-2012 ;
+define("ENTIDAD_CLAVE_SIC", 					$xC->get("entidad_clave_en_el_sic", "SinRegistro",			$xC->ENTIDAD_LEGAL) ); //Abril-2012 ;
 define("ENTIDAD_NOMBRE_SIC", 					$xC->get("entidad_corto_en_el_sic", "FINANCIERA", 			$xC->ENTIDAD_LEGAL) ); //Abril-2012 ;
 define("EACP_DOCTO_CONSTITUCION", 				$xC->get("descripcion_del_documento_constitutivo", "", 		$xC->ENTIDAD_LEGAL));
 define("EACP_REP_LEGAL", 	    				$xC->get("nombre_del_representante_legal", "", 				$xC->ENTIDAD_LEGAL));
 define("EACP_RFC_REP_LEGAL", 	    			$xC->get("rfc_del_representante_legal", "", 				$xC->ENTIDAD_LEGAL));
 define("EACP_CURP_REP_LEGAL", 	    			$xC->get("curp_del_representante_legal", "", 				$xC->ENTIDAD_LEGAL));
 define("EACP_REGIMEN_FISCAL", 	    			$xC->get("regimen_fiscal_de_la_entidad", "REGIMEN GENERAL DE LEY PERSONAS MORALES", $xC->ENTIDAD_LEGAL));
-define("EACP_DOCTO_REP_LEGAL",  					$xC->get("descripcion_del_documento_de_asignacion_del_representante", "", 			$xC->ENTIDAD_LEGAL));
-define("EACP_PDTE_VIGILANCIA",  					$xC->get("nombre_del_presidente_del_consejo_de_vigilancia", "",						$xC->ENTIDAD_LEGAL));
+define("EACP_DOCTO_REP_LEGAL",  				$xC->get("descripcion_del_documento_de_asignacion_del_representante", "", 			$xC->ENTIDAD_LEGAL));
+define("EACP_PDTE_VIGILANCIA",  				$xC->get("nombre_del_presidente_del_consejo_de_vigilancia", "",						$xC->ENTIDAD_LEGAL));
 //========================================= DATOS RELACIONADOS AL DOMICILIO ===========================================
 define("EACP_DOMICILIO_CALLE",					$xC->get("domicilio.calle", "", 							$xC->ENTIDAD_DOMICILIO) );
 define("EACP_DOMICILIO_NUM_EXT",				$xC->get("domicilio.numero_exterior", "", 					$xC->ENTIDAD_DOMICILIO));
@@ -40,7 +40,7 @@ define("EACP_LOCALIDAD", 						$xC->get("domicilio.localidad", "", 						$xC->EN
 define("EACP_COLONIA", 							$xC->get("domicilio.colonia", "", 							$xC->ENTIDAD_DOMICILIO ));
 define("EACP_CODIGO_POSTAL", 					$xC->get("domicilio.codigo_postal", "", 					$xC->ENTIDAD_DOMICILIO ));
 define("EACP_ESTADO", 							$xC->get("domicilio.estado", "", 							$xC->ENTIDAD_DOMICILIO ));
-define("EACP_DOMICILIO_CORTO",  					$xC->get("domicilio.domicilio_integrado", "", 				$xC->ENTIDAD_DOMICILIO ));
+define("EACP_DOMICILIO_CORTO",  				$xC->get("domicilio.domicilio_integrado", "", 				$xC->ENTIDAD_DOMICILIO ));
 define("EACP_HORARIO_DE_TRABAJO", 				$xC->get("horario_general_en_texto", "", 					$xC->OPERACIONES));
 define("EJERCICIO_CONTABLE", 					date("Y"));
 define("EACP_CLAVE_DE_PAIS", 					$xC->get("domicilio.clave_de_pais", "MX", 					$xC->ENTIDAD_DOMICILIO ));
@@ -53,6 +53,7 @@ define("EACP_TELEFONO_PRINCIPAL", 				$xC->get("domicilio.telefono_principal", "
 //========================================= OTROS DATOS ===========================================
 //========================================= DATOS DE COLOCACION ===========================================
 define("EACP_PER_SOLICITUDES", 					$xC->get("periodo_de_solicitudes_actual", "", 							$xC->COLOCACION));
+define("EACP_PER_SOLICITUDES_ANT", 				$xC->get("periodo_de_solicitudes_anterior", "", 						$xC->COLOCACION));
 define("PQ_DIA_PRIMERA_QUINCENA", 				$xC->get("pagos_quincenales.primera_quincena", 15, 						$xC->COLOCACION));
 define("PQ_DIA_SEGUNDA_QUINCENA", 				$xC->get("pagos_quincenales.segunda_quincena", 30, 						$xC->COLOCACION));
 
@@ -61,16 +62,17 @@ define("INTERES_DIAS_MAXIMO_A_DEVENGAR", 		$xC->get("dias_maximos_en_que_se_acum
 define("DIAS_PAGO_UNICOS", 						$xC->get("dias_para_vencimiento_en_pago_unico",30, 						$xC->COLOCACION));	//dias para vencer en Pagos a final de plazo
 define("DIAS_PAGO_VARIOS", 						$xC->get("dias_para_vencimiento_en_pagos_varios",90, 					$xC->COLOCACION));	// '   '     '      '   '  en Parcialidades
 define("PM_DIA_DE_PAGO", 						$xC->get("pagos_mensuales.dia_de_pago",2,								$xC->COLOCACION));
+define("PS_DIA_DE_PAGO", 						$xC->get("pagos_semanales.dia_de_pago",1,								$xC->COLOCACION));
 define("DIAS_ESPERA_CREDITO", 					$xC->get("dias_en_espera_maxima_para_ministracion_de_creditos",45, 		$xC->COLOCACION));
 define("CREDITO_TIPO_POR_DESTINO", 				$xC->get("determinar_modalidad_por_destino","false", 					$xC->COLOCACION));
 define("EACP_INCLUDE_INTERES_IN_PAGARE", 		$xC->get("incluir_intereses_en_pagare", "true", 						$xC->COLOCACION));
 define("EACP_DIAS_MINIMO_CREDITO", 				$xC->get("dias_de_credito_minimo_otorgable", 1, 						$xC->COLOCACION));
 //========================================= DATOS DE CAPTACION ===========================================
-define("EACP_MINIMO_INVERSION", 					$xC->get("saldo_minimo_de_inversion", 1, 					$xC->CAPTACION));
+define("EACP_MINIMO_INVERSION", 				$xC->get("saldo_minimo_de_inversion", 1, 					$xC->CAPTACION));
 define("INVERSION_MONTO_MINIMO", 				$xC->get("saldo_minimo_de_inversion", 1, 					$xC->CAPTACION));
 define("EACP_MINIMO_A_LA_VISTA", 				$xC->get("deposito_minimo", 1, 								$xC->CAPTACION));
 define("A_LA_VISTA_MONTO_MINIMO", 				$xC->get("deposito_minimo", 1, 								$xC->CAPTACION));
-define("CTA_GLOBAL_CORRIENTE", 					$xC->get("numero_de_contrato_por_defecto", "2000001", 		$xC->CAPTACION));
+define("CTA_GLOBAL_CORRIENTE", 					$xC->get("numero_de_contrato_por_defecto", "200001", 		$xC->CAPTACION));
 define("DEFAULT_CUENTA_CORRIENTE", 				CTA_GLOBAL_CORRIENTE);
 define("INVERSION_DIAS_MINIMOS", 				$xC->get("inversion_dias_minimos", 7, 						$xC->CAPTACION));
 //========================================= DATOS DE OPERACIONES ===========================================
@@ -87,6 +89,8 @@ define("AML_FECHA_DE_INICIO", 					$xC->get("aml_fecha_de_activacion", date("Y-m
 define("AML_KYC_DIAS_PARA_REVISAR_DOCTOS", 	$xC->get("aml_dias_para_revisar_documentos_de_personas", 3, 	$xC->AML) );
 define("AML_KYC_DIAS_PARA_COMPLETAR_PERFIL", 	$xC->get("aml_dias_para_completar_perfil_transaccional", 3, 	$xC->AML) );
 define("AML_CLAVE_MONEDA_LOCAL", 				strtoupper($xC->get("aml_clave_de_moneda_local", "MXN", 		$xC->AML) ));
+
+define("EACP_CLAVE_MONEDA_LOCAL", 				strtoupper($xC->get("aml_clave_de_moneda_local", "MXN", 		$xC->OPERACIONES) ));
 
 //========================================= DATOS DE CONTABILIDAD ===========================================
 define("COSTE_POR_ACCION", 						$xC->get("costo_por_accion", "1000", 							$xC->CONTABILIDAD) );
@@ -155,13 +159,13 @@ $fhtm		 	= 	"</body></html>";
 $atras 			= "<img src='images/query_back.png' onClick='javascript:history.back();'>";
 
 $c_gosocio 		= "<img class='buscador' title=\"Buscar una Persona\" src=\"../images/common/search.png\" onclick=\"goSocio_();\"/>";
-$c_gocredit 		= "<img class='buscador' title=\"Buscar un Credito\" src=\"../images/common/search.png\" onclick=\"goCredit_();\"/>";
+$c_gocredit 	= "<img class='buscador' title=\"Buscar un Credito\" src=\"../images/common/search.png\" onclick=\"goCredit_();\"/>";
 $c_goletra 		= "<img class='buscador' title=\"Buscar una Parcialidad\" src=\"../images/common/search.png\"  onclick=\"goLetra_();\"/>";
-$c_gocuentas 		= "<img class='buscador' title=\"Buscar una Cuenta de Captacion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_();\"/>";
+$c_gocuentas 	= "<img class='buscador' title=\"Buscar una Cuenta de Captacion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_();\"/>";
 $c_gocuentas_a 	= "<img class='buscador' title=\"Buscar una Cuenta Corriente\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(10);\"/>";
 $c_gocuentas_i 	= "<img class='buscador' title=\"Buscar una Cuenta de Inversion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(20);\"/>";
 $c_gorecibo		= "<img class='buscador' title=\"Buscar un Recibo de Pago\" src=\"../images/common/search.png\"  onclick=\"goRecibos_();\"/>";
-$c_gogrupos 		= "<img class='buscador' title=\"Buscar un Grupo\" src=\"../images/common/search.png\"  onclick=\"goGrupos_();\"/>";
+$c_gogrupos 	= "<img class='buscador' title=\"Buscar un Grupo\" src=\"../images/common/search.png\"  onclick=\"goGrupos_();\"/>";
 
 function GO_CALENDAR($id, $type = "default"){
 	$ctrl1 = "";

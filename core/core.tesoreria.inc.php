@@ -67,27 +67,28 @@ class cCaja{
 	private $mArqueoInit		= false; 
 	 
 	function __construct($clave = false, $fecha = false){
-		$fecha			= ($fecha == false) ? fechasys() : $fecha;
+		$xF				= new cFecha();
+		$fecha			= $xF->getFechaISO($fecha);
 		$this->mFecha	= $fecha;
 		$this->mMoneda	= AML_CLAVE_MONEDA_LOCAL;
 		$this->mEstadoActual	= TESORERIA_CAJA_CERRADA;
-		$this->mCajero		= getUsuarioActual();
+		$this->mCajero			= getUsuarioActual();
 		if($clave == false){ $this->initByFechaUsuario($fecha, $this->mCajero); }
 	}
-	function getKey(){ 
+	function getKey(){
+		
 		$this->mCajero 		= ($this->mCajero == "") ? $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"] : $this->mCajero;
 		$this->mIP			= ($this->mIP != "") ? $this->mIP : $_SERVER['REMOTE_ADDR'];
-		$this->mFecha		= ($this->mFecha == false) ? date("Y-m-d") : $this->mFecha;
+		$this->mFecha		= $this->mFecha;
 		$this->mMoneda		= AML_CLAVE_MONEDA_LOCAL;
 		$this->mKey			= md5($this->mCajero . $this->mFecha);
 		
 		return $this->mKey;	}
 	function initByFechaUsuario($fecha, $cajero){
-		$clave				= md5($cajero . $fecha);
+		$this->mKey			= md5($cajero . $fecha);
 		$this->mFecha		= $fecha;
 		$this->mCajero		= $cajero;
-		$this->mMessages	.= "ALERT\t1Iniciar Caja con ID $clave, base $fecha|$cajero\r\n";
-		return $this->init($clave);
+		return $this->init($this->mKey);
 	}
 	function init($clave = false){
 		$iniciar		= false;
@@ -106,6 +107,7 @@ class cCaja{
 				$this->mFondoInicial	= $xCaja->fondos_iniciales()->v();
 				$this->mFecha			= $xCaja->fecha_inicio()->v();
 				$this->mEstadoActual	= $xCaja->estatus()->v();
+				
 				$iniciar				= true;
 			}
 			
@@ -114,18 +116,18 @@ class cCaja{
 		return $this->mCajaIniciada;
 	}
 	function setOpenBox($oficial_superior, $fondo_inicial = 0){
+		$osuperior		= $oficial_superior;
 		unset($_SESSION["codigo_de_caja"]);
-		$stat		= false;
-		$oficial_superior	= setNoMenorQueCero($oficial_superior);	
-		$key		= $this->getKey();
-		$usr 		= $this->mCajero;
-		$ip			= $this->mIP;
-		$hora		= date("H:i:s");
-		$fecha		= $this->mFecha;
+		$stat			= false;
+		$osuperior		= setNoMenorQueCero($osuperior);	
+		$key			= $this->getKey();
+		$usr 			= $this->mCajero;
+		$ip				= $this->mIP;
+		$hora			= date("H:i:s");
+		$fecha			= $this->mFecha;
+		$xLog			= new cCoreLog();
+		$xQL			= new MQL();
 		
-		if($oficial_superior <= 0){
-			$this->mMessages	.= "ERROR\tNo existe el Usuario superior\r\n";
-		}
 
 		//VALIDAR SI ESTA ABIERTA NO CERRADA
 		$eacp 		= EACP_CLAVE;
@@ -133,33 +135,36 @@ class cCaja{
 
 		$sqlNC = "INSERT INTO tesoreria_cajas
 		(idtesoreria_cajas, eacp, sucursal, maquina, idusuario, fecha_inicio, hora_inicio, estatus, usuario_que_autoriza, firma_digital, fondos_iniciales)
-    	VALUES('$key', '$eacp', '$suc', '$ip', $usr, '$fecha', '$hora', '" . TESORERIA_CAJA_ABIERTA . "', $oficial_superior, '', $fondo_inicial)";
-		if($usr == $oficial_superior AND (MODO_DEBUG == false)){
+    	VALUES('$key', '$eacp', '$suc', '$ip', $usr, '$fecha', '$hora', '" . TESORERIA_CAJA_ABIERTA . "', $osuperior, '', $fondo_inicial)";
+		if($usr == $osuperior AND (MODO_DEBUG == false)){
 			$stat	= false;
-			$this->mMessages	.= "ERROR\tUsuario no autorizado para abrir CAJA\r\n";
+			$xLog->add("ERROR\tUsuario no autorizado para abrir CAJA\r\n");
 			if (TESORERIA_FORZAR_SESSION == true){
-				$stat	= true;
-				$this->mMessages	.= "WARN\tSession forzada\r\n";
-				$x		= my_query($sqlNC);
+				$xLog->add("WARN\tSession forzada\r\n");
+				$stat	= $xQL->setRawQuery($sqlNC);
 			}
 		} else {
-			if( $this->existe() == true ){
-				$this->init($key);
-				
-				if($this->getEstatus() == TESORERIA_CAJA_CERRADA ){
-					$this->mMessages			.= "ERROR\tCERRADO\tLa Caja con Clave $key al esta cerrada!!\r\n";
-					$stat						= false;					
-				} else {
-					$_SESSION["codigo_de_caja"] = $key;
-					$this->mMessages			.= "OK\tACTIVA\tLa Caja con Clave $key al parecer existe!!\r\n";
-					$stat						= true;
-				}	
+			if($osuperior <= 0){ 
+				$xLog->add("ERROR\tNo existe el Usuario superior\r\n");
+				$stat			= false; 
 			} else { 
-				$x		= my_query($sqlNC);
-				$stat	= $x[SYS_ESTADO];
+				if( $this->existe() == true ){
+					$this->init($key);
+					if($this->getEstatus() == TESORERIA_CAJA_CERRADA ){
+						$xLog->add("ERROR\tCERRADO\tLa Caja con Clave $key al esta cerrada!!\r\n");
+						$stat	= false;					
+					} else {
+						$_SESSION["codigo_de_caja"] = $key;
+						$xLog->add("OK\tACTIVA\tLa Caja con Clave $key al parecer existe!!\r\n");
+						$stat	= true;
+					}	
+				} else { 
+					$stat		= $xQL->setRawQuery($sqlNC);
+				}
 			}
 		}
-		$this->mMessages	.= "OK\tCLAVE\tLa Clave de Caja Cargada es ($key)\r\n";
+		$xLog->add("OK\tCLAVE\tLa Clave de Caja Cargada es ($key)\r\n");
+		$this->mMessages	.= $xLog->getMessages();
 		return $stat;
 	}
 	function setCloseBox($oficial_de_cierre = false, $fondos_arqueados = 0){
@@ -179,8 +184,9 @@ class cCaja{
 			} else { 
 				//actualizar estado
 				$sql		= "UPDATE tesoreria_cajas SET estatus='" . TESORERIA_CAJA_CERRADA . "', usuario_que_autoriza=$oficial_de_cierre, firma_digital='', fondos_arqueados=$fondos_arqueados  WHERE idtesoreria_cajas='" . $this->mKey . "' ";
-				$rs			= my_query($sql);
-				$result		= $rs[SYS_ESTADO];	
+				$xQL		= new MQL();
+				$rs			= $xQL->setRawQuery($sql);
+				$result		= ($rs === false) ? false : true;	
 				//Ejecutar regla de negocio
 			
 				$xRegla		= new cReglaDeNegocio(RN_CAJA_AL_CERRAR);
@@ -191,7 +197,10 @@ class cCaja{
 		}
 		return $result;
 	}
-	function getEstatus(){ $this->init(); return $this->mEstadoActual;	}
+	function getEstatus(){ 
+		if($this->mCajaIniciada == false){ $this->init(); }
+		return $this->mEstadoActual;	
+	}
 	function existe(){
 		$key	= $this->getKey();
 		$sql	= "SELECT COUNT(idtesoreria_cajas) AS 'existentes' FROM tesoreria_cajas WHERE idtesoreria_cajas='$key' ";
@@ -210,7 +219,7 @@ class cCaja{
 		$sqlIF 		= "SELECT * FROM	`tesoreria_cajas` WHERE (`tesoreria_cajas`.`idtesoreria_cajas` = '$key') LIMIT 0,1";
 		return obten_filas($sqlIF);
 	}
-	function getMessages($put = OUT_HTML){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }	
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }	
 	function getCorteDeCaja($put = OUT_HTML){}
 	/**
 	 * Determina si un recibo esta saldado en tesoreria
@@ -231,6 +240,13 @@ class cCaja{
 		$banco	= $xCta->getClaveDeBanco();
 		return $this->addOperacion($recibo, TESORERIA_COBRO_INTERNO, $MontoRecibido, ($MontoRecibido-$diferencia), $diferencia, $banco, $cheque, $cuenta);
 	}
+	function setCobroDescuentoCheque($recibo, $MontoRecibido, $cuenta, $cheque, $diferencia = 0){
+		$xCta	= new cCuentaBancaria($cuenta); $xCta->init();
+		$banco	= $xCta->getClaveDeBanco();
+		$xCta->addOperacion(BANCOS_OPERACION_DEPOSITO, $cheque, $recibo, "", $MontoRecibido);
+		return $this->addOperacion($recibo, TESORERIA_COBRO_DESCTO, $MontoRecibido, ($MontoRecibido-$diferencia), $diferencia, $banco, $cheque, $cuenta);
+	}	
+	
 	/**
 	 * Agrega un cobro por Transferencia SPEI o Deposito en Cuenta
 	 */
@@ -252,57 +268,85 @@ class cCaja{
 	function setCobroChequeForaneo($recibo, $MontoRecibido, $banco = FALLBACK_CLAVE_DE_BANCO, $cheque = DEFAULT_CHEQUE, $diferencia = 0){
 		return $this->addOperacion($recibo, TESORERIA_COBRO_CHEQUE, $MontoRecibido, ($MontoRecibido-$diferencia), $diferencia, $banco, $cheque);
 	}
-	function setCobroCargoDocumento(){  }
+
+	function setCobroCargoDocumento($recibo, $MontoRecibido, $documento, $diferencia = 0){
+		$banco	= 0;
+		$cheque = 0;
+		$cuenta	= 0;
+		return $this->addOperacion($recibo, TESORERIA_COBRO_DOCTO, $MontoRecibido, ($MontoRecibido-$diferencia), $diferencia, $banco, $cheque, $cuenta);
+	}
 	/**
 	 * Agrega una operacion a tesoreria
-	 * @param integer $recibo	Numero de recibo
-	 * 
-	*/
+	 * @param integer $recibo				Numero de recibo
+	 * @param string $tipoDeExposicion		Tipo de pago ninguno efectivo			
+	 * @param number $MontoRecibido		Monto que se recibe en la operacion
+	 * @param number $MontoOperacion		Monto total de la Operacion
+	 * @param number $MontoCambio
+	 * @param string $banco
+	 * @param number $cheque
+	 * @param number $CuentaBancaria
+	 * @param number $DocumentoDescontado	Documento/cuenta al que va dirigido el Cargo.
+	 * @param string $Observaciones
+	 * @param string $fecha
+	 * @param string $hora
+	 * @param string $moneda
+	 * @param number $monto_original
+	 * @param string $persona
+	 * @param string $documento				Documento de Origen. Credito etc.
+	 * @param string $transaccionAML		Transaccion AML equivalencia de instrumento Financiero
+	 * @return boolean
+	 */
 	function addOperacion($recibo, $tipoDeExposicion, $MontoRecibido, $MontoOperacion = 0, $MontoCambio = 0, 
-		$banco = FALLBACK_CLAVE_DE_BANCO, $cheque = "", $CuentaBancaria = 0, $DocumentoDescontado = 0, 
-			$Observaciones = "", $fecha = false, $hora = false, $moneda	= false, $monto_original = 0, $persona = false, $documento = false, $transaccion = SYS_NINGUNO ){
-		$sucess			= false;
-		$fecha			= ($fecha == false) ? fechasys() : $fecha;
-		$arrQ			= array("aumento" => 1, "disminucion" => -1, "ninguna" => 0);
-		$xF				= new cFecha(0, $fecha);
+		$banco = FALLBACK_CLAVE_DE_BANCO, $cheque = 0, $CuentaBancaria = 0, $DocumentoDescontado = 0, $Observaciones = "", $fecha = false, $hora = false, $moneda	= false, 
+			$monto_original = 0, $persona = false, $documento = false, $transaccionAML = SYS_NINGUNO ){
+		$xF				= new cFecha();
 		$xT				= new cTipos();
-		$fecha			= $xF->get();
+		$xQL			= new MQL();		
+		$sucess			= false;
+		$persona		= setNoMenorQueCero($persona);
+		$documento		= setNoMenorQueCero($documento);
 		$hora			= ($hora == false ) ? date("H:i:s") : $hora;
 		$CodigoDeCaja	= $this->getKey();
 		$cajero			= $this->mCajero;
+		$cheque			= setNoMenorQueCero($cheque);
 		$banco			= (setNoMenorQueCero($banco) <= 0) ? FALLBACK_CLAVE_DE_BANCO : $banco;
 		$this->mMoneda	= ($this->mMoneda == "") ? AML_CLAVE_MONEDA_LOCAL : $this->mMoneda;
 		if(($moneda == false) OR ($moneda == AML_CLAVE_MONEDA_LOCAL)) {
 			$moneda		= ($this->mMoneda != AML_CLAVE_MONEDA_LOCAL) ? $this->mMoneda : AML_CLAVE_MONEDA_LOCAL;
 		}
-		//$monto_original	= setNoMenorQueCero($monto_original);
 		$monto_original	= ($monto_original == 0) ? $this->mMontoOrigen : $monto_original;
 		
 		$xRec			= new cReciboDeOperacion(false, false, $recibo);
-		$xRec->init();
-		$DRec			= $xRec->getDatosInArray();
-		$persona		= ($persona == false OR $persona == "") ? DEFAULT_SOCIO : $persona;
-		$documento		= ($documento == false) ? $xRec->getCodigoDeDocumento() : $documento;
-		$afectaCaja		= $arrQ[ $DRec["afectacion_en_flujo_efvo"] ];
-		$MontoOperacion	= ( $MontoOperacion	== 0 ) ? $DRec["total_operacion"] : $MontoOperacion;
-		$MontoCambio	= ( $MontoCambio == 0 ) ? $MontoRecibido - $MontoOperacion : $MontoCambio;
+		if($xRec->init() == true){
+			$persona		= ($persona <=DEFAULT_SOCIO) ? $xRec->getCodigoDeSocio() : $persona;
+			$documento		= ($documento <= DEFAULT_CREDITO) ? $xRec->getCodigoDeDocumento() : $documento;
+			$afectaCaja		= $xRec->getOTipoRecibo()->getAfectacionEnEfvo(); // $DRec["afectacion_en_flujo_efvo"]
+			$MontoOperacion	= ($MontoOperacion	== 0 ) ? $xRec->getTotal() : $MontoOperacion;
+			$fecha			= ($fecha === false) ? $xRec->getFechaDeRecibo() : $fecha;//TODO: cambiar a la de captura
+		}
+		$fecha			= $xF->getFechaISO($fecha);
+		//end rec
+		$MontoCambio	= ($MontoCambio == 0 ) ? $MontoRecibido - $MontoOperacion : $MontoCambio;
 		//Obtener Banco
 		$pais			= EACP_CLAVE_DE_PAIS;
 		$eacp			= EACP_CLAVE;
 		$sucursal		= getSucursal();
 		if($banco == FALLBACK_CLAVE_DE_BANCO AND $CuentaBancaria > 0){
 			$xCta		= new cCuentaBancaria($CuentaBancaria);
-			$xCta->init();
-			$banco		= $xCta->getClaveDeBanco();
-			$pais		= $xCta->getPaisDeOrigen();
+			if($xCta->init() == true){
+				$banco		= $xCta->getClaveDeBanco();
+				$pais		= $xCta->getPaisDeOrigen();
+			}
 		}
 		$xBanco			= new cBancos_entidades();
 		$xBanco->setData( $xBanco->query()->initByID($banco) );
 		$pais			= $xBanco->pais_de_origen()->v();
 		//Actualizar Moneda por pais
-		if($banco != FALLBACK_CLAVE_DE_BANCO){
-			$moneda2		= mifila("SELECT clave_de_moneda FROM `tesoreria_monedas` WHERE `pais_de_origen` ='$pais' LIMIT 0,1 ", "clave_de_moneda");
-			if($moneda2 === 0){} else { $moneda = $moneda2; }
+		if($banco != FALLBACK_CLAVE_DE_BANCO AND $moneda == AML_CLAVE_MONEDA_LOCAL AND $pais != EACP_CLAVE_DE_PAIS){
+			$xPais	= new cDomiciliosPaises($pais);
+			if($xPais->init() == true){
+				$moneda		= $xPais->getMoneda();
+			}
 		}
 		$xTes		= new cTesoreria_cajas_movimientos();
 		$xTes->banco($banco);
@@ -336,14 +380,11 @@ class cCaja{
 			$id		= $q->save();
 			$sucess	= ($id == false) ? false : true;
 			if($sucess == true){
-				$this->mMessages	.= "OK\tRegistro Agregado exitosamente, relacionado con el Recibo $recibo, Operacion $id ($moneda|$monto_original|$cheque|$tipoDeExposicion|$transaccion)\r\n";
+				$this->mMessages	.= "OK\tRegistro Agregado exitosamente, relacionado con el Recibo $recibo, Operacion $id ($moneda|$monto_original|$cheque|$tipoDeExposicion|$transaccionAML)\r\n";
 				//Agregar recibo
-				$xRec->setDatosDePago($moneda, $monto_original, $cheque, $tipoDeExposicion, $transaccion);
+				$xRec->setDatosDePago($moneda, $monto_original, $cheque, $tipoDeExposicion, $transaccionAML, $CuentaBancaria);
 				$this->mMessages	.= $xRec->getMessages(OUT_TXT);
-			} else {
-				if(MODO_DEBUG == true){ $this->mMessages	.= $q->getMessages(OUT_TXT); } 
 			}
-			
 		} else {
 			$this->mMessages	.= "ERROR\tSe produjo un error al Agregar la Operacion de Tesoreria($cajero, $CodigoDeCaja)\r\n";
 		}
@@ -394,6 +435,7 @@ class cCaja{
 	}
 	function getBancoActivo(){ return $this->mBancoActivo; }
 	function getCuentaBancoActivo(){ return $this->mCuentaBancoActivo; }
+	
 	function getMonedaActiva(){ return $this->mMonedaActiva; }
 	function getChequeActivo(){ return $this->mChequeActivo; }
 	function getLinkDeCorte(){
@@ -432,22 +474,32 @@ class cCaja{
 		$resumen		.=$xTE->Show("TR.Cobros por Efectivo");
 		$this->mSumaRecibos	+= $xTE->getFieldsSum("total");
 		
+		$sqlTG			= $xSQL->getListadoResumenOperaciones($fecha_inicial, $fecha_final, $cajero, TESORERIA_PAGO_EFECTIVO);
+		$xTG			= new cTabla($sqlTG); $xTG->setTdClassByType();
+		$xTG->setFootSum(array( 5 =>"total" ));
+		$resumen		.=$xTG->Show("TR.Gastos en Efectivo");
+		
+		$this->mSumaRecibos	+= $xTG->getFieldsSum("total");		
+		//-------------------------------------------------------- retiros y gastos
+		
 		
 		$resumen		.= "<h3>" . $xLn->getT("TR.Documentos") . "</h3>";
 		$sqlArq			= "SELECT
 				`tesoreria_caja_arqueos`.`fecha_de_arqueo`,
 				`tesoreria_caja_arqueos`.`documento`,
-				`tesoreria_caja_arqueos`.`monto_total_arqueado`,
+				`numero_arqueado` AS `unidades`,
+				`tesoreria_caja_arqueos`.`monto_total_arqueado` AS `monto`,
 				`tesoreria_caja_arqueos`.`observaciones` 
 			FROM
 				`tesoreria_caja_arqueos` `tesoreria_caja_arqueos` 
 			WHERE
-				(`tesoreria_caja_arqueos`.`codigo_de_caja` ='" . $this->getKey() . "')";
+				(`tesoreria_caja_arqueos`.`codigo_de_caja` ='" . $this->getKey() . "') ORDER BY `documento`, `monto_total_arqueado`";
+		
 		$xTArq				= new cTabla($sqlArq);
 		$xTArq->setTdClassByType();
 		$xTArq->setFootSum(array( 2 =>"monto_total_arqueado" ));
 		$resumen			.= $xTArq->Show("TR.Arqueo");
-		$this->mSumaCobros	+= $xTArq->getFieldsSum("monto_total_arqueado");
+		$this->mSumaCobros	+= $xTArq->getFieldsSum("monto");
 		
 		//==================================================================== CHEQUES Y DOCUMENTOS
 		$sqlLC				= $xSQL->getListadoDeTesoreria($cajero, $fecha_inicial, $fecha_final, TESORERIA_COBRO_CHEQUE);
@@ -480,18 +532,27 @@ class cCaja{
 		
 		//==================================================================== 
 		$xTbl->initRow();
-			$xTbl->addTH("TR.Suma de Recibos");
-			$xTbl->addTD( getFMoney($this->mSumaRecibos) );
+		$xTbl->addTH("TR.Suma de Recibos");
+		$xTbl->addTH("TR.Suma de Cobranza");
 		$xTbl->endRow();
 
 		$xTbl->initRow();
-		$xTbl->addTH("TR.Suma de Cobranza");
+		
+		$xTbl->addTD( getFMoney($this->mSumaRecibos) );
 		$xTbl->addTD( getFMoney($this->mSumaCobros) );
 		$xTbl->endRow();		
 		
 		$resumen	.= $xTbl->get();
 		$resumen		.= "<input type='hidden' id='idsumaoperaciones' value='" .  $this->mSumaRecibos . "' />";
 		$resumen		.= "<input type='hidden' id='idsumacobros' value='" .  $this->mSumaCobros . "' />";
+		$xNot			= new cHNotif();
+		if($this->mSumaRecibos > $this->mSumaCobros){
+			$resumen		.= $xNot->get($xLn->get("FALTANTE") . "" . getFMoney(($this->mSumaRecibos-$this->mSumaCobros)), "idavisodif", $xNot->ERROR);
+		} else if($this->mSumaRecibos < $this->mSumaCobros){
+			$resumen		.= $xNot->get($xLn->get("SOBRANTE") . "" . getFMoney(($this->mSumaCobros - $this->mSumaRecibos)), "idavisodif", $xNot->WARNING);
+		} else {
+			$resumen		.= $xNot->get($xLn->getT("TR.Caja Cuadrada"), "idavisodif", $xNot->SUCCESS);
+		}
 		$this->mArqueoInit	= true;
 		return $resumen;
 	}
@@ -516,31 +577,41 @@ class cCaja{
 		$ql->setRawQuery($sql);
 		return setNoMenorQueCero($fondos);
 	}
+	function setReactivar(){
+		$sql	= "UPDATE `tesoreria_cajas` SET `estatus` = '" .TESORERIA_CAJA_ABIERTA . "' WHERE `idtesoreria_cajas` = '" . $this->getKey() . "' ";
+		$ql		= new MQL();
+		$rs		= $ql->setRawQuery($sql);
+		return ($rs === false) ? false : true;		
+	}
 	function setPagoEfectivo($recibo, $MontoRecibido, $MontoOperado = 0, $notas = "", $fecha = false, $Moneda = AML_CLAVE_MONEDA_LOCAL, $MontoOriginal = 0){
 		return $this->addOperacion($recibo, TESORERIA_PAGO_EFECTIVO, $MontoRecibido, $MontoOperado, 0,FALLBACK_CLAVE_DE_BANCO,
 				"", 0, 0, $notas, $fecha, false, $Moneda, $MontoOriginal);
 	}	
 }
 class cCuentaBancaria{
-	protected	$mCuenta	= false;
-	private		$mMessages	= "";
-	private 	$mClaveBanco	= false;
-	private 	$mNombreBanco	= "";
-	private		$mPaisDeOrigen	= "";
-	private		$mDatosInArray	= array(); 
-	private		$mInit			= false; 
-	private 	$mCuentaContable= CUENTA_DE_CUADRE;
-	private 	$mOBanco		= null;
-	private		$mObj			= null;
-	private		$mConsecutivo	= 0;
+	private	$mCuenta		= false;
+	private	$mMessages		= "";
+	private $mClaveBanco	= false;
+	private $mNombreBanco	= "";
+	private	$mPaisDeOrigen	= "";
+	private	$mDatosInArray	= array(); 
+	private	$mInit			= false; 
+	private $mCuentaContable= CUENTA_DE_CUADRE;
+	private $mOBanco		= null;
+	private	$mObj			= null;
+	private	$mConsecutivo	= 0;
+	public	$DEPOSITO		= "deposito";
+	public $CHEQUE			= "cheque";
+	
 	function __construct($numero_de_cuenta){
-		$this->mCuenta	= $numero_de_cuenta;
+		$this->mCuenta			= setNoMenorQueCero($numero_de_cuenta);
 		$this->mPaisDeOrigen	= EACP_CLAVE_DE_PAIS;
+		$this->mClaveBanco		= FALLBACK_CLAVE_DE_BANCO;
 	}
 	/**
 	 * Agrega una Nueva Operacion a Bancos
 	 * @param string $Operacion deposito, retiro, cheque
-	 * @param string $DoctoDeSoporte
+	 * @param string $DoctoDeSoporte Numero de Cheque Credito Recibo etc
 	 * @param integer $recibo
 	 * @param string $beneficiario
 	 * @param float $monto
@@ -553,6 +624,7 @@ class cCuentaBancaria{
 	function addOperacion($Operacion, $DoctoDeSoporte, $recibo, $beneficiario,  $monto,	$socio = false,
 							$fecha = false, $estado = "", $autorizo = false, $descuento = 0, $cuenta_de_origen = false ){
 		$xOper	= new cOperacionBancaria();
+		$estado	= ($estado == "") ? $xOper->AUTORIZADO : $estado;
 		$id 	= $xOper->add($this->mCuenta, $Operacion, $DoctoDeSoporte, $recibo, $beneficiario, $monto, $socio, $fecha, $descuento, $cuenta_de_origen);
 		return ($id >  0) ? true : false;
 	}
@@ -640,28 +712,27 @@ class cCuentaBancaria{
 	}
 	function setUltimoCheque($cheque = 0, $CuentaBancaria = false){
 		$this->set($CuentaBancaria);
-		$CuentaBancaria			= $this->mCuenta;
+		$CuentaBancaria		= $this->mCuenta;
 		$documento 			= 1;
 		$xT					= new cTipos();
+		$xQL				= new MQL();
 		$cheque 			= setNoMenorQueCero($cheque);
 				
 		if($cheque <= 0) {
 			//Obtiene el Cheque de un Conteo SQL
-			$sql = "SELECT numero_de_documento
-			FROM bancos_operaciones
-			WHERE cuenta_bancaria = $CuentaBancaria
-			ORDER BY idcontrol ASC, fecha_expedicion ASC
-			LIMIT 0,1";
-			$documento 		= getFila($sql, "numero_de_documento");
-			$documento 		= $xT->cInt($documento);
+			$sql 			= "SELECT numero_de_documento FROM bancos_operaciones WHERE cuenta_bancaria = $CuentaBancaria ORDER BY idcontrol ASC, fecha_expedicion ASC LIMIT 0,1";
+			$D				= $xQL->getDataRow($sql);
+			if(isset($D["numero_de_documento"])){
+				$documento	= $D["numero_de_documento"];
+			}
+			$documento 		= setNoMenorQueCero($documento);
 			$documento 		= $documento + 1;
 		} else {
-			$documento 		= $xT->cInt($cheque);
+			$documento 		= $cheque;
 		}
 		
-		$sqlD = "UPDATE bancos_cuentas SET consecutivo_actual = $documento
-		WHERE idbancos_cuentas = $CuentaBancaria";
-		my_query($sqlD);
+		$sqlD = "UPDATE bancos_cuentas SET consecutivo_actual = $documento WHERE idbancos_cuentas = $CuentaBancaria";
+		$xQL->setRawQuery($sqlD);
 	}
 	function init($arr = false){
 		
@@ -671,20 +742,23 @@ class cCuentaBancaria{
 			$ql					= new MQL();
 			$D					= $ql->getDataRow("SELECT * FROM `bancos_cuentas` WHERE `idbancos_cuentas` = " . $this->mCuenta . " LIMIT 0,1");
 		}
-		$xB						= new cBancos_cuentas();
-		$xB->setData($D);
-		$this->mClaveBanco		= $xB->entidad_bancaria()->v();
-		//Clave de Pais del banco
-		$xBE					= new cBancos_entidades();
-		$xBE->setData( $xBE->query()->initByID($this->mClaveBanco) );
-		$this->mNombreBanco		= $xBE->nombre_de_la_entidad()->v();
-		$this->mPaisDeOrigen	= $xBE->pais_de_origen()->v(OUT_TXT);
-		$this->mCuentaContable	= $xB->codigo_contable()->v(OUT_TXT);
-		$this->mConsecutivo		= setNoMenorQueCero($xB->consecutivo_actual()->v());
-		$this->mObj				= $xB;
-		$this->mOBanco			= $xBE;
-		$this->mInit			= true;
-
+		if(isset($D["idbancos_cuentas"])){
+			$xB						= new cBancos_cuentas();
+			$xB->setData($D);
+			$this->mClaveBanco		= $xB->entidad_bancaria()->v();
+			//Clave de Pais del banco
+			$xBE					= new cBancos_entidades();
+			$xBE->setData( $xBE->query()->initByID($this->mClaveBanco) );
+			$this->mNombreBanco		= $xBE->nombre_de_la_entidad()->v();
+			$this->mPaisDeOrigen	= $xBE->pais_de_origen()->v(OUT_TXT);
+			$this->mCuentaContable	= $xB->codigo_contable()->v(OUT_TXT);
+			$this->mConsecutivo		= setNoMenorQueCero($xB->consecutivo_actual()->v());
+			$this->mObj				= $xB;
+			$this->mOBanco			= $xBE;
+			$this->mCuenta			= $xB->idbancos_cuentas()->v();
+			$this->mInit			= true;
+			$xB	= null; $xBE = null;
+		}
 		return $this->mInit;
 	}
 	function getClaveDeBanco(){ return $this->mClaveBanco; }
@@ -797,13 +871,18 @@ class cOperacionBancaria {
 		$DoctoDeSoporte		= setNoMenorQueCero($DoctoDeSoporte);
 		$persona			= (setNoMenorQueCero($persona) == 0) ? DEFAULT_SOCIO : setNoMenorQueCero($persona);
 		$autorizo			= setNoMenorQueCero($autorizo);
+		$autorizo			= ($autorizo <= 0) ? getUsuarioActual() : $autorizo;
 		$id					= 0;
-		if($recibo > 0 AND ($persona <= DEFAULT_SOCIO) ){
+		$documento			= DEFAULT_CREDITO;
+		//AND ($persona <= DEFAULT_SOCIO)
+		if($recibo > 0 ){
 			$xRec			= new cReciboDeOperacion(false, false, $recibo);
 			if($xRec->init() == true){
 				$persona			= ($persona <= DEFAULT_SOCIO) ? $xRec->getCodigoDeSocio() : $persona;
 				$tipo_de_exhibicion	= ($tipo_de_exhibicion == "") ? $xRec->getTipoDePago() : $tipo_de_exhibicion;
 				$fecha				= ($fecha == false) ? $xRec->getFechaDeRecibo() : $fecha;
+				$documento			= ($documento <= DEFAULT_CREDITO) ? $xRec->getCodigoDeDocumento() : $documento;
+				//$DoctoDeSoporte		= ($DoctoDeSoporte <=DEFAULT_CREDITO) ? $xRec->getCodigoDeDocumento() : $DoctoDeSoporte;
 				if(trim($beneficiario) == ""){
 					if($xRec->getOPersona() != null){
 						$beneficiario	= $xRec->getOPersona()->getNombreCompleto(OUT_TXT);
@@ -834,6 +913,7 @@ class cOperacionBancaria {
 			$xOp->tipo_de_exhibicion($tipo_de_exhibicion);
 			$xOp->tipo_operacion($Operacion);
 			$xOp->usuario_autorizo($autorizo);
+			$xOp->documento_de_origen($documento);
 			$id	= $xOp->query()->insert()->save();
 		}
 		return $id;
@@ -848,39 +928,77 @@ class cOperacionDeCaja {
 	private $mFechaDePago		= false;
 	private $mDataArray			= array();
 	private $mObj				= null; 
+	private $mInit				= false;
+	private $mMontoRecibido		= 0;
+	private $mMontoOperado		= 0;
+	private $mMontoDevuelto		= 0;
+	private $mTipoPago			= "";
+	private $mTabla				= "tesoreria_cajas_movimientos";
+	
 	
 	function __construct($clave = false){
-		$this->mCodigo		= $clave;
+		$this->mCodigo		= setNoMenorQueCero($clave);
+		$this->mTipoPago	= SYS_NINGUNO;
 	}
 	function setCodigoDeRecibo($recibo){  $this->mCodigoDeRecibo = $recibo; return $this->mCodigoDeRecibo; }
 	function getCodigoDeRecibo(){ return $this->mCodigoDeRecibo; }
 	function initByRecibo($recibo = false){
-		$recibo	= ($recibo == false) ? $this->getCodigoDeRecibo() : $recibo;
-		$this->setCodigoDeRecibo($recibo);
-		$data	= obten_filas("SELECT * FROM `tesoreria_cajas_movimientos` WHERE `recibo`=$recibo LIMIT 0,1");
 		
-		$this->init($data);
+		$recibo	= ($recibo == false) ? $this->getCodigoDeRecibo() : $recibo;
+		$recibo	= setNoMenorQueCero($recibo);
+		$idx	= $this->mTabla . "-by-rec-$recibo";
+		$xCache	= new cCache();
+		$data	= $xCache->get($idx);
+		$this->setCodigoDeRecibo($recibo);
+		
+		if(!is_array($data)){
+			$data	= obten_filas("SELECT * FROM `tesoreria_cajas_movimientos` WHERE `recibo`=$recibo LIMIT 0,1");
+			if(isset($data["idtesoreria_cajas_movimientos"])){
+				$xCache->set($idx, $data);
+			}
+		}
+		return $this->init($data);
 	}
 	function init($arrDatos	= false){
-		if(is_array($arrDatos)){
-			$this->mDataArray	= $arrDatos;
-		} else {
-			$this->mDataArray 	= obten_filas("SELECT * FROM `tesoreria_cajas_movimientos` WHERE `idtesoreria_cajas_movimientos` =" . $this->mCodigo . " LIMIT 0,1");
+		$this->mDataArray	= $arrDatos;
+		$xCache				= new cCache();
+		$idx				= $this->mTabla . "-" . $this->mCodigo;
+		if(!is_array($this->mDataArray)){
+			$this->mDataArray	= $xCache->get($idx);
+			if(!is_array($this->mDataArray)){
+				$this->mDataArray 	= obten_filas("SELECT * FROM `tesoreria_cajas_movimientos` WHERE `idtesoreria_cajas_movimientos` =" . $this->mCodigo . " LIMIT 0,1");
+			}
 		}
-		//if($this->mObj	== null){
-			$this->mObj	= new cTesoreria_cajas_movimientos($this->mDataArray);
-		//}
-		if( setNoMenorQueCero($this->mCodigo) <= 0 ){
-			$this->mCodigo		= $this->mObj->idtesoreria_cajas_movimientos()->v();
+		$this->mObj	= new cTesoreria_cajas_movimientos();
+		if(isset($this->mDataArray["idtesoreria_cajas_movimientos"])){
+			$this->mObj->setData($this->mDataArray);
+			$this->mCodigo 			= $this->mObj->idtesoreria_cajas_movimientos()->v();
+			$this->mClaveDeBanco	= $this->mObj->cuenta_bancaria()->v();
+			$this->mCodigoDeRecibo	= $this->mObj->recibo()->v();
+			$this->mMontoDevuelto	= $this->mObj->monto_en_cambio()->v();
+			$this->mMontoOperado	= $this->mObj->monto_del_movimiento()->v();
+			$this->mMontoRecibido	= $this->mObj->monto_recibido()->v();
+			$this->mTipoPago		= $this->mObj->tipo_de_exposicion()->v();
+			$this->mCodigo			= $this->mObj->idtesoreria_cajas_movimientos()->v();
+			$this->mInit			= true;
+			
 		}
-		$this->mObj->setData($this->mDataArray);
-		$this->mClaveDeBanco	= $this->mObj->cuenta_bancaria()->v();
-		$this->mCodigoDeRecibo	= $this->mObj->recibo()->v();
-		
+		return $this->mInit;
 	}
+	function getMontoOperado(){ return $this->mMontoOperado; }
+	function getMontoDevuelto(){ return $this->mMontoDevuelto; }
+	function getMontoRecibido(){ return $this->mMontoRecibido; }
+	function getTipoDeExpocision(){ return $this->mTipoPago; }
+	function getBanco(){ return $this->getObj()->banco()->v(); }
+	function getClave(){ return $this->mCodigo; }
 	function del(){
 		
 	}
+	function getObj(){
+		if($this->mObj == null){ $this->init(); }
+		return $this->mObj;
+	}
+	function __destruct(){	$this->mObj	= null;	}
 }
 
 
@@ -897,22 +1015,30 @@ class cCajaArqueos{
 		$hora	= ($hora == false) ? time() : $hora;
 		$monto	= $valor_arqueado * $numero_arqueado;
 		$xArq	= new cTesoreria_caja_arqueos();
-		$id		= $xArq->query()->getLastID();
-		$xArq->codigo_de_arqueo( $id );
-		$xArq->codigo_de_caja($this->mClaveDecaja);
-		$xArq->documento($documento);
-		$xArq->eacp(EACP_CLAVE);
-		$xArq->fecha_de_arqueo($fecha);
-		$xArq->hora_de_arqueo( $hora );
-		$xArq->idusuario(getUsuarioActual());
-		$xArq->monto_total_arqueado($monto);
-		$xArq->observaciones($notas);
-		$xArq->sucursal(getSucursal());
-		$xArq->valor_arqueado($valor_arqueado);
-		$xArq->numero_arqueado($numero_arqueado);
-		$cmd	= $xArq->query()->insert();
-		$cmd->save();
-		if(MODO_DEBUG == true){ setLog($cmd->getMessages()); }
+		if($monto >0){
+			$xArq->codigo_de_caja($this->mClaveDecaja);
+			$xArq->documento($documento);
+			$xArq->eacp(EACP_CLAVE);
+			$xArq->fecha_de_arqueo($fecha);
+			$xArq->hora_de_arqueo( $hora );
+			$xArq->idusuario(getUsuarioActual());
+			$xArq->monto_total_arqueado($monto);
+			$xArq->observaciones($notas);
+			$xArq->sucursal(getSucursal());
+			$xArq->valor_arqueado($valor_arqueado);
+			$xArq->numero_arqueado($numero_arqueado);
+			$id		= $xArq->query()->getLastID();
+			$xArq->codigo_de_arqueo( $id );
+			$cmd	= $xArq->query()->insert();
+			if($cmd->save() == false){
+				$this->mMessages	.= "ERROR\tAl Agregar Monto $valor_arqueado y Numero $numero_arqueado\r\n";
+			} else {
+				$this->mMessages	.= "OK\tAgregar Monto $valor_arqueado y Numero $numero_arqueado\r\n";
+			}
+		} else {
+			$this->mMessages	.= "WARN\tSe omite el registro por no existir monto\r\n";
+		}
+		//if(MODO_DEBUG == true){ setLog($cmd->getMessages()); }
 		return $id;
 	}
 	function getValoresArqueados($fecha = false){
@@ -922,9 +1048,80 @@ class cCajaArqueos{
 	}
 	function getMessages($put = OUT_HTML){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function setEliminarArqueo(){
-		$sql = "DELETE FROM `tesoreria_caja_arqueos` WHERE `codigo_de_caja`='" . $this->mClaveDecaja . "'";
-		my_query($sql);
+		$sql 	= "DELETE FROM `tesoreria_caja_arqueos` WHERE `codigo_de_caja`='" . $this->mClaveDecaja . "'";
+		$xQL	= new MQL(); $xQL->setRawQuery($sql);
 	}
+}
+class cTesoreriaEstadisticas {
+	function __construct(){
+		
+	}
+	function getNumeroCajasAbiertas(){
+		$xli		= new cSQLListas();
+		$sqlSc		= $xli->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA);
+		$xQL		= new MQL();
+		$rs			= $xQL->getDataRecord($sqlSc);
+		$rs			= null;
+		return $xQL->getNumberOfRows();		
+	}
+}
+
+class cTesoreriaMonedas {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTable		= "";
+	private $mValor		= 0;
+	function __construct($clave = ""){ 
+		$this->mClave	= $clave; 
+		if($clave !== ""){
+			$this->setIDCache($this->mClave);
+		}
+	}
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= "tesoreria_monedas" . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cTesoreria_monedas();
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`='". $this->mClave . "' LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj		= $xT; //Cambiar
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mNombre	= $xT->nombre_de_la_moneda()->v();
+			$this->mValor	= $xT->quivalencia_en_moneda_local()->v();
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function getValor(){ return $this->mValor; }
+	function setCuandoSeActualiza(){
+		$this->setCleanCache();
+	}
+	function add(){}
+
 }
 
 ?>

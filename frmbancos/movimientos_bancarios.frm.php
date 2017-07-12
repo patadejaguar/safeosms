@@ -1,131 +1,160 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
- * @version 1.0
- * @package
- */
+* @version 0.0.01
+* @package
+*/
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
-$xHP->setIncludes();
-echo $xHP->getHeader();
-$xHP->setArchivo("../frmbancos/movimientos_bancarios.frm.php");
-$xF		= new cFecha();
-$oficial 			= elusuario($iduser);
+$xHP		= new cHPage("TR.Operaciones Bancarias", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
-$DPDATA				= $_REQUEST;//)) ? isset($_REQUEST) : array();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+//$cuenta_bancaria	= para
+$operacion	= parametro("idtipooperacionbanco", BANCOS_OPERACION_DEPOSITO, MQL_RAW);
+$recibo		= parametro("idrecibo", 1, MQL_INT); $recibo = parametro("item", $recibo, MQL_INT); $recibo	= parametro("recibo", $recibo, MQL_INT);
+$monto		= parametro("idmonto", 0, MQL_FLOAT);
+$monto		= parametro("monto", $monto, MQL_FLOAT);
 
-$monto				= (isset($DPDATA["idmonto"]) ) ? $DPDATA["idmonto"] : 0;
-$numero_de_cuenta		= (isset($DPDATA["idcuenta"]) ) ? $DPDATA["idcuenta"] : "";
-$socio				= (isset($DPDATA["idsocio"]) ) ? $DPDATA["idsocio"] : "";
-$documento			= (isset($DPDATA["iddocumento"]) ) ? $DPDATA["iddocumento"] : "";
-$recibo				= (isset($DPDATA["idrecibo"]) ) ? $DPDATA["idrecibo"] : "";
-$operacion			= (isset($DPDATA["idoperacion"]) ) ? $DPDATA["idoperacion"] : "";
-$estado				= (isset($DPDATA["idestatus"]) ) ? $DPDATA["idestatus"] : "";
-$beneficiario			= (isset($DPDATA["idbeneficiario"]) ) ? $DPDATA["idbeneficiario"] : "";
-$descuento			= (isset($DPDATA["iddescuento"]) ) ? $DPDATA["iddescuento"] : 0;
-$fecha				= (isset($DPDATA["idfecha-0"]) ) ? $xF->getFechaISO( $DPDATA["idfecha-0"]) : fechasys();
-$msg				= (isset($DPDATA[SYS_MSG]) ) ? $DPDATA[SYS_MSG] : "";
+$documento	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $documento = parametro("idsolicitud", $documento, MQL_INT); $documento = parametro("solicitud", $documento, MQL_INT);
+$documento	= parametro("cuenta", $documento, MQL_INT); $documento = parametro("idcuenta", $documento, MQL_INT);
+$documento	= parametro("iddocumento", $documento, MQL_INT);
 
-$cargar				= (isset($DPDATA["item"]) ) ? $DPDATA["item"] : "";
-$origen 			= (isset($DPDATA["origen"]) ) ? $DPDATA["origen"] : SYS_NINGUNO;
+$numero_de_cuenta		= parametro("idcodigodecuenta", 0, MQL_INT);
+$descuento				= parametro("iddescuento",0, MQL_FLOAT);
+$beneficiario			= "";
+$tituloDoc				= "TR.Documento";
+$origen					= parametro("origen", 0, MQL_INT);
+$idorigen				= parametro("idorigen", 0, MQL_INT);
+$idobservaciones		= parametro("idobservaciones");
 
-if( $monto > 0 ){
-	//
-			
-	$xBanc			= new cCuentaBancaria($numero_de_cuenta);	
-	$r				= $xBanc->addOperacion($operacion, $documento, $recibo, $beneficiario, $monto, $socio, $fecha, $estado, false, $descuento);
-	if( $r == false ){
-		$strGet		= "";
-		$aviso		= "";
-		foreach($DPDATA as $llave => $valor ){
-			$valor	=	( $llave == "idmonto") ? 0 : $valor;
-			$strGet	.= "$llave=$valor&";
+
+if($recibo > 1 AND $recibo!= DEFAULT_RECIBO  ){
+	$xRec		= new cReciboDeOperacion(false, true, $recibo);
+	if($xRec->init() == true){
+		$monto			= $xRec->getTotal();
+		$documento		= $xRec->getCodigoDeDocumento();
+		$fecha			= $xRec->getFechaDeRecibo();
+		$operacion		= BANCOS_OPERACION_DEPOSITO;
+		$persona		= $xRec->getCodigoDeSocio();
+		$xSoc			= new cSocio($persona, true);
+		$beneficiario	= $xSoc->getNombreCompleto();
+	}
+} else {
+	if($documento > DEFAULT_CREDITO){
+		$xCred			= new cCredito($documento);
+		if($xCred->init() == true){
+			$operacion		= BANCOS_OPERACION_CHEQUE;
+			$persona		= $xCred->getClaveDePersona();
+			$xSoc			= new cSocio($persona, true);
+			$beneficiario	= $xSoc->getNombreCompleto();
+			$fecha			= $xCred->getFechaDeMinistracion();
+			$monto			= $xCred->getMontoAutorizado();
 		}
-		$aviso		= "El Registro no se Guardo, Revise sus Valores, EL Monto se lleva a Cero";
-		$strGet		.= "msg=" . htmlentities($aviso);
-		echo $xHP->getJsBack($aviso, $strGet);
-	} else {
-		$msg		= "El Registro se ha Guardado Exitosamente";
 	}
 }
-if($cargar != "" AND $origen = "recibo"){
-	$xRec		= new cReciboDeOperacion(false, true, $cargar);
-	$xRec->init();
-	$monto		= $xRec->getTotal();
-	$documento	= $xRec->getCodigoDeDocumento();
-	$recibo		= $cargar;
-	$fecha		= $xRec->getFechaDeRecibo();
-	$operacion	= BANCOS_OPERACION_DEPOSITO;
-	$socio		= $xRec->getCodigoDeSocio();
-	$xSoc		= new cSocio($socio, true);
-	$beneficiario	= $xSoc->getNombreCompleto();
-	
+
+$xHP->init();
+
+$xFRM			= new cHForm("frm", "movimientos_bancarios.frm.php?action=" . MQL_ADD);
+$xSel			= new cHSelect();
+
+if($action == MQL_ADD){
+	if($monto > 0 AND $numero_de_cuenta > 0 ){
+		$xBanc			= new cCuentaBancaria($numero_de_cuenta);
+		$r				= $xBanc->addOperacion($operacion, $documento, $recibo, $beneficiario, $monto, $persona, $fecha, "", false, $descuento);
+		if($r== false){
+			$xFRM->addAvisoRegistroError();
+		} else {
+			$xFRM->addAvisoRegistroOK();
+			switch ($origen){
+				case iDE_PRESUPUESTO:
+					//Actualizar Presupuesto a Pagado
+					$sql	= $xLi->getListadoDePresupuestoPorPagar($persona);
+					$rs		= $xQL->getDataRecord($sql);
+					foreach ($rs as $rw){
+						$idx	= $rw["control"];
+						$xDep	= new cCreditosPresupuestoDetalle($idx);
+						if( $xDep->init() == true){
+							if($xDep->setPagado($documento, $idobservaciones, $fecha) == false){
+								$xFRM->addAvisoRegistroError();
+							}
+						} else {
+							$xFRM->addAvisoRegistroError();
+						}
+						//$uql	= "UPDATE `creditos_destino_detallado` SET `estado_actual`=1 WHERE `idcreditos_destino_detallado`=$idx";
+						//$xQL->setRawQuery($uql);
+						//TODO: Agregar memo
+						//ID de cheque en todos los pagos
+						//setLog($uql);
+					}
+					break;
+			}
+			//Agregar Impŕimir
+			
+		}
+	} else {
+		$xFRM->addAvisoRegistroOK();
+	}
 }
-$jsb	= new jsBasicForm("bancos_operaciones", iDE_OPERACION);
-$jsb->setIncludeOnlyCommons();
 
+$xFRM->OHidden("idorigen", $idorigen);
+$xFRM->OHidden("origen", $origen);
+if($operacion == BANCOS_OPERACION_CHEQUE){
+	$tituloDoc		= "TR.Numero de Cheque";
+}
+$xFRM->setTitle($xHP->getTitle());
+if($persona > DEFAULT_SOCIO){
+	$xSoc	= new cSocio($persona);
+	if($xSoc->init() == true){
+		$xFRM->addHElem( $xSoc->getFicha() );
+	}
+} else {
+	$xFRM->addPersonaBasico("", false, $persona, "", "TR.Nombre del Beneficiario");
+}
+if($monto > 0){
+	$xFRM->OHidden("idmonto", $monto);
+	$xCat	= new cCantidad($monto);
+	$xFRM->addHElem($xCat->getFicha());
+} else {
+	$xFRM->addMonto($monto, true);
+}
 
-//$jsb->show();
-//$jxc ->drawJavaScript(false, true);
-echo $jsb->setIncludeJQuery();
-echo $xHP->setBodyinit();
-$xTxt			= new cHText();
-$xBtn			= new cHButton();
+if($operacion == BANCOS_OPERACION_DEPOSITO){
+	$xFRM->addHElem( $xSel->getListaDeTiposDeOperacionesBancarias("", $operacion)->get(true) );
+} else {
+	$xFRM->OHidden("idtipooperacionbanco", $operacion);
+}
 
-$xFRM			= new cHForm("bancos_operaciones", "movimientos_bancarios.frm.php");
-//id,	label value, size,	class,	options[])
-$xSel			= new cSelect("idcuenta", "idcuenta" , TBANCOS_CUENTAS);
-$xSel->setOptionSelect($numero_de_cuenta);
-$xHSel			= new cHSelect();
-$xHSel->addOptions(array("cheque" => "Cheque", "deposito" => "Deposito", "retiro" => "Retiro") );
-$selOperacion		= $xHSel->get("idoperacion", "operacion", $operacion);
-$xHSel->setClearOptions();
-$xHSel->addOptions(array("autorizado" => "Autorizado", "noautorizado" => "No Autorizdo", "cancelado" => "Cancelado") );
-$selEstatus		= $xHSel->get("idestatus", "Estatus", $estado);
-$xF			= new cHDate(0, $fecha, TIPO_FECHA_OPERATIVA);
+$xFRM->addFecha($fecha);
+$xFRM->addHElem($xSel->getListaDeCuentasBancarias("", true, $numero_de_cuenta)->get(true) );
 
-$xFRM->addHElem($xF->get("Fecha de Operacion"));
-$xFRM->addHElem($xSel->get("Cuenta", true));
+$xFRM->OText("iddocumento", $documento, $tituloDoc);
 
-$xFRM->addHElem($selOperacion);
-$xFRM->addHElem($selEstatus);
-$xFRM->addHElem($xTxt->get("idsocio", $socio, "Persona"));
-$xFRM->addHElem($xTxt->get("idbeneficiario", $beneficiario, "Beneficiario(Nombre)"));
-$xFRM->addHElem($xTxt->get("iddocumento", $documento, "Documento"));
-$xFRM->addHElem($xTxt->get("idrecibo", $recibo, "Recibo"));
-$xFRM->addHElem($xTxt->getDeMoneda("idmonto", "Monto", $monto));
+$xFRM->OMoneda("idrecibo", $recibo, "TR.Recibo Relacionado");
 
-$xFRM->addHTML("<div class='aviso'>$msg</div>");
-//$xFRM->addSubmit("Guardar Movimiento", "setGuardar");
-$xFRM->addToolbar($xBtn->getBasic("Guardar", "setGuardar", "guardar", "idsave", false));
-
+$xFRM->addObservaciones("", $idobservaciones);
+$xFRM->addGuardar();
 echo $xFRM->get();
-echo $jsb->get();
 
-//id value class size maxlength arra(varias_opciones)
-//nombre = id
-echo $xHP->setBodyEnd();
+//$jxc ->drawJavaScript(false, true);
 
-?>
-
-<script  >
-function setGuardar(){
-
-	jsEvaluarFormulario();
-}
-
-</script>
-<?php
-$xHP->end();
+$xHP->fin();
 ?>

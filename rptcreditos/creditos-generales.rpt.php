@@ -27,28 +27,122 @@ $convenio 				= (isset($_GET["convenio"])) ? $_GET["convenio"] : $convenio; $con
 $empresa				= (isset($_GET["empresa"]) ) ? $_GET["empresa"] : SYS_TODAS;
 $out 					= parametro("out", SYS_DEFAULT, MQL_RAW);
 $tipoautorizacion		= parametro("tipoautorizacion", SYS_TODAS, MQL_INT);
+$destino				= parametro("destino", SYS_TODAS ,MQL_INT);
+$otros					= parametro("otrosdatos", false, MQL_BOOL);
+$compacto				= parametro("compacto", false, MQL_BOOL);
+$conseguimiento			= parametro("conseguimiento", false, MQL_BOOL);
 
 $ByOficial				= $xLi->OFiltro()->CreditosPorOficial(parametro("oficial", SYS_TODAS ,MQL_INT));
 $BySucursal				= $xLi->OFiltro()->CreditosPorSucursal(parametro("sucursal", ""));
 $es_por_estatus 		= $xLi->OFiltro()->CreditosPorEstado($estatus);
-$BySaldo				= $xLi->OFiltro()->CreditosPorSaldos("0.99", ">=");
+$BySaldo				= $xLi->OFiltro()->CreditosPorSaldos(TOLERANCIA_SALDOS, ">=");
 $ByEmpresa				= $xLi->OFiltro()->CreditosPorEmpresa($empresa);
 $ByTipoAut				= $xLi->OFiltro()->CreditosPorAutorizacion($tipoautorizacion);
+$ByDestino				= $xLi->OFiltro()->CreditosPorDestino($destino);
 
-
-$fechaInicial			= $xF->getFechaISO( parametro("on", fechasys()) );
-$fechaFinal				= $xF->getFechaISO( parametro("off", fechasys()) );
+$FechaInicial			= $xF->getFechaISO( parametro("on", fechasys()) );
+$FechaFinal				= $xF->getFechaISO( parametro("off", fechasys()) );
+$senders				= getEmails($_REQUEST);
 
 if($estatus == CREDITO_ESTADO_AUTORIZADO OR $estatus == CREDITO_ESTADO_SOLICITADO){ $BySaldo		= ""; }
 
 $es_por_frecuencia 		= $xLi->OFiltro()->CreditosPorFrecuencia($frecuencia);
 $es_por_convenio 		= $xLi->OFiltro()->CreditosPorProducto($convenio);
+$FProducto				= " `creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `producto`, ";
+if($es_por_convenio != ""){
+	$xCon	= new cProductoDeCredito($convenio);
+	$xCon->init();
+	$FProducto			= "";
+	$xHP->setTitle($xHP->getTitle() . " - " . $xCon->getNombre() );
+}
+$TxtOtros				= "";
+if($otros == true){
+	$TxtOtros			= "`personas`.`correo_electronico`,`personas`.`telefono`, `personas`.`figura_juridica` ,getViviendaPorPersona(`personas`.`codigo`) AS `vivienda`,";
+}
+$BySeguimiento			= "";
+$TxtSeguimiento			= "";
+if($conseguimiento == true){
+	$BySeguimiento		= $xLi->OFiltro()->CreditosProductosPorSeguimiento(0);
+	$TxtSeguimiento		= "getDiasDeMora(`creditos_solicitud`.`numero_solicitud`,`creditos_solicitud`.`periocidad_de_pago`)                                	AS `dias_de_mora`,";
+}
 
-$ByFecha				= " AND (creditos_solicitud.fecha_ministracion >='$fechaInicial' AND creditos_solicitud.fecha_ministracion <= '$fechaFinal') ";
+
+$ByFecha				= " AND (creditos_solicitud.fecha_ministracion >='$FechaInicial' AND creditos_solicitud.fecha_ministracion <= '$FechaFinal') ";
 /* ******************************************************************************/
 $OperadorFecha			= ($out == OUT_EXCEL) ?  " " : "getFechaMX";
+/* ********************* CAMPOS EXTRAS *******************************************/
+$FEmpresa				= ($ByEmpresa == "") ? " `personas`.`dependencia` AS	`empresa`, " : "";
+if(PERSONAS_CONTROLAR_POR_EMPRESA == false){ $FEmpresa = ""; }
+$saldo_migrado			= (MODO_MIGRACION == true) ? " `saldo_conciliado` AS `migrado`, " : "";
+$setSql	= "SELECT
+	`creditos_solicitud`.`sucursal`,
+	`personas`.`codigo`,
+	`personas`.`nombre`,
+	$TxtOtros
+	$FEmpresa
+	`creditos_solicitud`.`numero_solicitud`                            AS `credito`,
+	$FProducto
+	`creditos_periocidadpagos`.`descripcion_periocidadpagos`           AS `frecuencia`,
+	`creditos_estatus`.`descripcion_estatus`                           AS `estado_actual`,
+	`creditos_tipo_de_autorizacion`.`descripcion_tipo_de_autorizacion` AS `autorizacion`,
+	$OperadorFecha(`creditos_solicitud`.`fecha_ministracion`)         	AS `fecha_de_desembolso`,
+	`creditos_tipo_de_pago`.`descripcion`                              AS `forma_de_pagos`,
+	ROUND((`creditos_solicitud`.`tasa_interes`*100),2)					AS `tasa_interes`,
+	ROUND((`creditos_solicitud`.`tasa_moratorio`*100),2)				AS `tasa_moratorio`,
+	`creditos_solicitud`.`pagos_autorizados`							AS `total_pagos`,
+	creditos_solicitud.ultimo_periodo_afectado							AS `pago`,
+	$OperadorFecha(`creditos_solicitud`.`fecha_ultimo_mvto`)         	AS `ultimo_pago`,
+	
+	
+	/*$OperadorFecha(`creditos_solicitud`.`fecha_vencimiento_dinamico`)  	AS `fecha_de_vencimiento_calculado`,*/
+	$TxtSeguimiento
+	`creditos_solicitud`.`monto_autorizado`                            	AS `monto_original`,
+	`creditos_solicitud`.`saldo_actual`                                	AS `saldo_capital`,
+	$saldo_migrado
+	`oficiales`.`nombre_corto` AS	`oficial`
+	
+FROM
+	`creditos_solicitud` `creditos_solicitud` 
+		INNER JOIN `oficiales` `oficiales` 
+		ON `creditos_solicitud`.`oficial_seguimiento` = `oficiales`.`id` 
+			INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` 
+			ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
+			`idcreditos_tipoconvenio` 
+				INNER JOIN `creditos_tipo_de_autorizacion` 
+				`creditos_tipo_de_autorizacion` 
+				ON `creditos_solicitud`.`tipo_autorizacion` = 
+				`creditos_tipo_de_autorizacion`.
+				`idcreditos_tipo_de_autorizacion` 
+					INNER JOIN `personas` `personas` 
+					ON `creditos_solicitud`.`numero_socio` = `personas`.`codigo` 
+						INNER JOIN `creditos_estatus` `creditos_estatus` 
+						ON `creditos_solicitud`.`estatus_actual` = 
+						`creditos_estatus`.`idcreditos_estatus` 
+							INNER JOIN `creditos_tipo_de_pago` 
+							`creditos_tipo_de_pago` 
+							ON `creditos_solicitud`.`tipo_de_pago` = 
+							`creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` 
+								INNER JOIN `creditos_periocidadpagos` 
+								`creditos_periocidadpagos` 
+								ON `creditos_solicitud`.`periocidad_de_pago` = 
+								`creditos_periocidadpagos`.
+								`idcreditos_periocidadpagos`
+	WHERE (creditos_solicitud.numero_solicitud != 0)
+	$BySaldo
+	$es_por_estatus
+	$es_por_frecuencia
+	$es_por_convenio
+	$ByEmpresa
+	$ByFecha
+	$ByTipoAut
+	$BySucursal
+	$ByOficial
+	
+	$ByDestino
+	$BySeguimiento
+	ORDER BY `creditos_solicitud`.`tipo_convenio`, `personas`.`nombre` ";
 
-$setSql = "SELECT socios.nombre,	socios.alias_dependencia AS 'empresa',
+/*$setSql = "SELECT socios.nombre,	socios.alias_dependencia AS 'empresa',
 		creditos_solicitud.numero_socio AS 'socio',
 	socios.genero, socios.tipo_ingreso AS 'tipo_de_ingreso',
 	
@@ -96,23 +190,45 @@ FROM
 	$ByTipoAut
 	$BySucursal
 	$ByOficial
-	ORDER BY `creditos_solicitud`.`tipo_convenio`, socios.nombre ";
+	ORDER BY `creditos_solicitud`.`tipo_convenio`, socios.nombre ";*/
+$titulo			= $xHP->getTitle();
+$archivo		= "";
 
-	//echo $setSql; exit();
-if ($out!= OUT_EXCEL) {
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($setSql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
 
-	$oRpt = new PHPReportMaker();
-	$oRpt->setDatabase(MY_DB_IN);
-	$oRpt->setUser(RPT_USR_DB);
-	$oRpt->setPassword(RPT_PWD_DB);
-	//$oRpt->setConnection( cnnGeneral() );
-	$oRpt->setSQL($setSql);
-	$oRpt->setXML("../repository/report45d.xml");
-	$oOut = $oRpt->createOutputPlugin($out);
-	$oRpt->setOutputPlugin($oOut);
-	$oRpt->run();
-} else {
-	$xHP	= new cHExcel();
-	$xHP->convertTable($setSql);
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+$xRPT->addContent($body);
+if($ByOficial != ""){
+	$xRPT->setGrupo("oficial");
 }
+if($es_por_convenio !== "" AND $FProducto !== ""){
+	//$xRPT->setGrupo("producto");
+}
+$xRPT->addCampoSuma("monto_original");
+$xRPT->addCampoSuma("saldo_capital");
+if(MODO_MIGRACION == true){
+	$xRPT->addCampoSuma("migrado");
+}
+$xRPT->addCampoContar("credito");
+if($otros == false){
+	$xRPT->setOmitir("sucursal");
+	$xRPT->setOmitir("fecha_de_vencimiento_calculado");
+	$xRPT->setOmitir("tasa_moratorio");
+	$xRPT->setOmitir("autorizacion");
+	//$xRPT->setOmitir("codigo");
+}
+//if($es_por_convenio != ""){ $xRPT->setGrupo(""); }
+$xRPT->setProcessSQL();
+//============ Agregar HTML
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>

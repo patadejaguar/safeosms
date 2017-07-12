@@ -15,70 +15,70 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("Renegociar Creditos", HP_FORM);
+$xHP		= new cHPage("TR.REESTRUCTURAR Credito", HP_FORM);
+$xSel		= new cHSelect();
+$jxc		= new TinyAjax();
 
 function jsaGuardarReestructura($credito, $monto, $pagos, $periocidad, $tasa, $observaciones, $producto, $tipopago){
     $tasa	= $tasa / 100;
     
     $xCred	= new cCredito($credito); $xCred->init();
     $xCred->setReconvenido($monto, 0, $tasa, $periocidad, $pagos, $observaciones, false, false, $tipopago, $producto);
-	
+	//TODO: Cambiar a solo root
     $xF		= new cFileLog();
     $xF->setWrite($xCred->getMessages());
     $xF->setClose();
 	
-    return  $xCred->getMessages(OUT_HTML) . $xF->getLinkDownload("Descarga de Log");
+    return  $xF->getLinkDownload("Descarga de Log");
 }
 
-$credito	= (isset($_REQUEST["credito"])) ? $_REQUEST["credito"] : false;
+//$credito	= (isset($_REQUEST["credito"])) ? $_REQUEST["credito"] : false;
+$credito	= parametro("credito", 0, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 
-
-$jxc = new TinyAjax();
 $jxc ->exportFunction('jsaGuardarReestructura', array('idsolicitud', 'idmonto', 'idpagos', 'idperiocidad', 'idtasa', 'idobservaciones',
 													'idpdto', 'idtipopago'), "#resultados");
 $jxc ->process();
 
-echo $xHP->getHeader();
+$xHP->init();
 
 //$xHP->setTamannio(500,800);
-$jsb	= new jsBasicForm("frmrenegociar");
-echo $xHP->setBodyinit();
+//$jsb	= new jsBasicForm("frmrenegociar");
+
 
 echo "<input type='hidden' id='idsolicitud' value='$credito'>";
 
 $xCred	= new cCredito($credito); $xCred->init();
-$oBtn	= new cHButton(); $oTxt	= new cHText(); $oFech	= new cHDate(); $oSel	= new cSelect(""); $oUL	= new cHUl(); $oTa	= new cHTextArea();
-
-$xCE	= new cCreditos_estatus();
-$xSelEA	= $xCE->query()->html()->select( $xCE->descripcion_estatus()->get() );
-
-$xCP	= new cCreditos_periocidadpagos();
-$xSelCP	= $xCP->query()->html()->select( $xCP->descripcion_periocidadpagos()->get() );
-
-$xCTP	= new cCreditos_tipo_de_pago();
-$xSelTP	= $xCTP->query()->html()->select( $xCTP->descripcion()->get()  );
-
-$xPP	= new cCreditos_tipoconvenio();
-$xSelPP	= $xPP->query()->html()->select($xPP->descripcion_tipoconvenio()->get());
-
-$oFRM	= new cHForm("frmrenegociar", "", "idfrmrenegociar");
+$xFRM	= new cHForm("frmrenegociar", "", "idfrmrenegociar");
 
 
-$oFRM->addHElem( $xSelPP->get("idpdto", "Producto Actual", $xCred->getClaveDeProducto() ) );
-$oFRM->addHElem( $xSelCP->get("idperiocidad", "Nueva Periocidad", $xCred->getPeriocidadDePago() ) );
-$oFRM->addHElem( $xSelTP->get("idtipopago", "Nuevo Tipo de Pago", $xCred->getTipoDePago() ) );
-
-$oFRM->addHElem( $oTxt->getDeMoneda("idmonto", "Monto a Renegociar", $xCred->getSaldoActual() ) );
-$oFRM->addHElem( $oTxt->getDeMoneda("idpagos", "Pagos nuevos", $xCred->getPagosAutorizados() ) );
-$oFRM->addHElem( $oTxt->getDeMoneda("idtasa", "Tasa Nueva", ($xCred->getTasaDeInteres()*100) ) );
-//$oFRM->addHElem( $oTxt->getDeMoneda("idinteres", "Interes a Renegociar", $xCred->getInteresNormalPorPagar() ) );
-
-$oFRM->addHElem( $oTa->get("idobservaciones", "", "Observaciones") );
+ $oUL	= new cHUl();
 
 
-$oFRM->addHTML("<p class='aviso' id='resultados'></p>");
 
-	$oFRM->addHTML(
+
+$xFRM->addHElem($xCred->getFichaMini());
+
+$xFRM->setTitle($xHP->getTitle());
+
+$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("idpdto", $xCred->getClaveDeProducto())->get(true) );
+
+
+$xFRM->addHElem($xSel->getListaDePeriocidadDePago("idperiocidad",$xCred->getPeriocidadDePago())->get("TR.NUEVA PERIOCIDAD", true) );
+
+
+$xFRM->addHElem($xSel->getListaDeTipoDePago("idtipopago", $xCred->getTipoDePago())->get(true));
+
+
+$xFRM->OMoneda("idmonto", $xCred->getSaldoActual(), "TR.MONTO A REESTRUCTURAR");
+$xFRM->OMoneda("idpagos", $xCred->getPagosAutorizados(), "TR.PAGOS NUEVO");
+$xFRM->OMoneda("idtasa", ($xCred->getTasaDeInteres()*100), "TR.TASA NUEVA");
+
+$xFRM->addObservaciones();
+
+
+
+
+$xFRM->addHTML(
 			$oUL->li("Se Clona el Credito")->
 			li("Eliminar Plan de Pagos")->
 			li("Reestructurar SDPM")->
@@ -88,33 +88,24 @@ $oFRM->addHTML("<p class='aviso' id='resultados'></p>");
 			end()
 			);
 
-$oFRM->addHElem( $oBtn->getBasic("Guardar", "jsGuardarCambios", "guardar", "idguardar" ) );
-$oFRM->addHElem( $oBtn->getBasic("Cancelar", "jsCancelarCambios", "cancelar", "idcancelar" ) );
+$xFRM->addGuardar("jsGuardarCambios()");
+$xFRM->addAviso("", "resultados");
 
-echo $oFRM->get();
+echo $xFRM->get();
 
 
-echo $xHP->setBodyEnd();
-$jsb->show();
 $jxc ->drawJavaScript(false, true);
 ?>
 <!-- HTML content -->
 <script>
-    var xGen	= new Gen();
-    function jsGuardarCambios(){
-        var si	= confirm("DESEA REESTRUCTURAR ESTE CREDITO?\nESTO NO PUEDE DESHACERSE.\nTENGA CUIDADO!.\n-----------------------------");
-		if(si){
-			jsaGuardarReestructura();
-		}
-    }
-    function jsCancelarCambios(){
-	//esconder qtip
-	$(window).qtip("hide");
-	//$(window).remove();
-	//window.close();
-	xGen.close();
-    }
+var xG		= new Gen();
+function jsGuardarCambios(){
+	xG.confirmar({msg: "Desea Renovar este Credito?", callback:jsaGuardarReestructura, cancelar: jsCancelar});
+}
+function jsCancelar(){
+	xG.close();
+}
 </script>
 <?php
-$xHP->end();
+$xHP->fin();
 ?>

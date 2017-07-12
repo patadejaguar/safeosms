@@ -15,9 +15,9 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CARGA DE DOCUMENTO", HP_FORM);
 $xDoc		= new cDocumentos();
-
+$xF			= new cFecha();
 $DDATA		= $_REQUEST;
 $persona	= ( isset($DDATA["persona"]) ) ? $DDATA["persona"] : DEFAULT_SOCIO;
 $action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
@@ -47,38 +47,49 @@ $xTxt2	= new cHText();
 $xTxtF	= new cHText();
 $xSel	= new cHSelect();
 $xImg	= new cHImg();
+$xFRM->setNoAcordion();
+$xFRM->setTitle($xHP->getTitle());
 
 if($action == SYS_CERO){
+	$xFRM->addSeccion("iddivar", "TR.ARCHIVO");
 	$xTxtF->setDivClass("");
 	//$xTxtF->setProperty("class", "")
 	$xFRM->OFile("idnuevoarchivo","", "TR.Cargar Documento");
-	$xFRM->OText("iddocumento", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
+	$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
+	$xFRM->endSeccion();
+	$xFRM->addSeccion("iddotros", "TR.DATOS");
 	$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType)->get(true) );
-	$xFRM->addHElem( $xTxt2->getDeMoneda("idnumeropagina", "TR.Numero de Pagina") );
-	$xFRM->addObservaciones();
-	$xFRM->addSubmit();
+	$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE EMISION");
+	$xFRM->OText_13("idnumeropagina", 0, "TR.Numero de Documento");
 	
+	//$xFRM->ODate("idfechavencimiento", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
+	$xFRM->addObservaciones();
+	$xFRM->addGuardar();
+	$xFRM->endSeccion();
 } else {
 	$xFRM->addCerrar();
-	$doc1			= parametro("iddocumento", "", MQL_RAW);
-	$observaciones	= ( isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
-	$tipodedocto	= ( isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";
-	$pagina			= ( isset($DDATA["idnumeropagina"]) ) ? $DDATA["idnumeropagina"] : "";
-	$archivoenviado	= (isset($_FILES["idnuevoarchivo"])) ? $_FILES["idnuevoarchivo"] : null;
+	$nombrearchivo	= parametro("nombrearchivo", "", MQL_RAW);
+	$observaciones	= (isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
+	$tipodedocto	= (isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";
+	$pagina			= parametro("idnumeropagina", "");
+	$archivonuevo	= (isset($_FILES["idnuevoarchivo"])) ? $_FILES["idnuevoarchivo"] : null;
+	$fechacarga		= parametro("idfechacarga", false, MQL_DATE);
+	
+	$fechavenc		= false; //parametro("idfechavencimiento", $xF->getFechaMaximaOperativa(), MQL_DATE);
 	if(isset($_FILES["idnuevoarchivo"])){
 		if(trim($_FILES["idnuevoarchivo"]["name"]) == ""){ $archivoenviado = null; }
 	}
 	$xSoc		= new cSocio($persona);
-	$xSoc->init();
-	if($doc1 !== false){
-		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $doc1, $pagina, $observaciones, false, $archivoenviado);
+	if($xSoc->init() == true){
+	//if($doc1 !== false){
+		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $nombrearchivo, $pagina, $observaciones, $fechacarga, $archivonuevo, $fechavenc);
 		if($ready == true){
 			$xFRM->addAvisoRegistroOK();
 		} else {
 			$xFRM->addAvisoRegistroError();
 		}
 	}
-	if(MODO_DEBUG == true){ $xFRM->addLog($xSoc->getMessages(OUT_TXT) ); }
+	//if(MODO_DEBUG == true){ $xFRM->addLog($xSoc->getMessages(OUT_TXT) ); }
 }
 echo $xFRM->get();
 
@@ -89,11 +100,11 @@ echo $xFRM->get();
 var xG	= new Gen();
 function jsGetDocto(){
 	xG.w({
-		url : "../frmutils/docs.explorer.php?callback=jsSetDocto"
+		url : "../frmutils/docs.explorer.php?callback=jsSetDocto", tiny:true
 		});
 }
 function jsSetDocto(mfile){
-	$("#iddocumento").val(mfile);
+	$("#nombrearchivo").val(mfile);
 }
 </script>
 <?php

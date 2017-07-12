@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Alertas Descartadas", HP_REPORT);
+$xHP		= new cHPage("TR.Alertas Confirmadas", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -36,8 +36,10 @@ $FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $Fe
 $FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
-
-
+$extenso		= parametro("ext", false, MQL_BOOL);
+$conchecking	= parametro("condictamen", false, MQL_BOOL);
+$consistema		= parametro("consistema", false, MQL_BOOL);
+$tiporiesgo		= parametro("tipoderiesgo", false, MQL_INT);
 $titulo			= "";
 $archivo		= "";
 
@@ -47,7 +49,10 @@ $xRPT->setOut($out);
 //$xRPT->setSQL($sql);
 $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
-
+$CamposExtras	= "";
+if($conchecking	== true){
+	$CamposExtras	= ", getFechaByInt(`fecha_de_checking`) AS `fecha_de_dictamen` ,`notas_de_checking` AS `dictamen` ";
+}
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
@@ -56,10 +61,10 @@ $xRPT->addContent($body);
 
 //Descartados
 
-$sql		= $xlistas->getListadoDeAlertas(false,$FechaInicial, $FechaFinal, false, " AND resultado_de_checking=1 AND `estado_en_sistema` =" . SYS_CERO);
-$xT			= new cTabla($sql);
-$xRPT->addContent( $xT->Show() );
+$sql		= $xlistas->getListadoDeAlertas($tiporiesgo,$FechaInicial, $FechaFinal, false, " AND resultado_de_checking=1 AND `estado_en_sistema` =" . SYS_CERO, $CamposExtras);
 
+$xRPT->setSQL($sql);
+$xRPT->setProcessSQL();
 
 $xRPT->setResponse();
 $xRPT->setSenders($senders);

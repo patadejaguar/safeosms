@@ -26,19 +26,35 @@ $content	= parametro("content", "", MQL_RAW);
 $rs			= array();
 
 if($tabla != null AND $clave != null){
-	$xObj	= new cSAFETabla($tabla);
+	
+	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
-		$rs["message"]		= "ERROR\t para la Tabla $tabla y clave $clave\r\n";
+		$rs["message"]		= "ERROR\tNo se actualiza la Tabla $tabla y el registro $clave\r\n";
 		$rs["error"]				= true;
 	} else {
 		$obj	= $xObj->obj();
 		//$obj	= new cAml_alerts();
 		$key	= $obj->getKey();
+		$antes	= $obj->query()->initByID($clave);
+		$obj->setData($antes);
+		$despues= $_REQUEST;
+		$obj->setData($despues);
+		$txtan	= json_encode(array_diff($antes, $despues));
+		$txtde	= json_encode(array_diff($despues, $antes));
+		$xLog	= new cCoreLog();
+		$xLog->add("El Usuario " . getUsuarioActual() . " Actualiza ($txtan) antes ($txtde) de el ID $clave en $tabla");
+		$txtan	= null;
+		$txtde	= null;
+		$antes	= null;
+		$despues= null;
 		
-		$obj->setData($obj->query()->initByID($clave));
-		$obj->setData($_REQUEST); 
+		$xLog->guardar($xLog->OCat()->EDICION_RAW);
+		$xCache				= new cCache();
+		$xCache->clean("$tabla-$clave");
+		
 		$res	= $obj->query()->update()->save("$key='$clave'");
-		$rs["error"] = ($res == true) ? false : true;
+		
+		$rs["error"] = ($res == false) ? true : false;
 		$rs["message"]		= "OK\tRegistro con ID $clave Guardado\r\n";
 	}
 }

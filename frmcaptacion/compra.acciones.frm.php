@@ -65,9 +65,9 @@ $html	= new cHTMLObject();
 <?php
 //0 Compra
 //1 Venta
-
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $action			= ( isset( $_GET["o"] ) ) ? $_GET["o"] : false;
-$socio			= ( isset( $_GET["s"] ) ) ? $_GET["s"] : false;
+$socio			= $persona;
 $cuenta			= ( isset( $_GET["c"] ) ) ? $_GET["c"] : false;
 $RDeposito		= "0";
 $ReciboIDE		= "0";

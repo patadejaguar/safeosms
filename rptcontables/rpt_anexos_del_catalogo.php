@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP					= new cHPage("TR.Movimientos de Auxiliares del Catalogo", HP_REPORT);
+$xHP					= new cHPage("TR.Anexos del Catalogo", HP_REPORT);
 $xF						= new cFecha();
 $QL						= new MQL();
 

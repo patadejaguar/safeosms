@@ -47,7 +47,9 @@ echo $xHP->getHeader();
 	
 //Datos de importacion externa
 
-$e_socio 			= ( isset($_GET["s"]) ) ? $_GET["s"] : DEFAULT_SOCIO;
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+
+$e_socio 			= $persona;
 $e_origen			= ( isset($_GET["o"]) ) ? $_GET["o"] : 1;
 $e_credito 			= ( isset($_GET["c"]) ) ? $_GET["c"] : DEFAULT_CREDITO;
 $e_tipo 			= ( isset($_GET["t"]) ) ? $_GET["t"] : CAPTACION_TIPO_VISTA;
@@ -74,24 +76,29 @@ if($action == SYS_NINGUNO){
 	$xFRM->ODate("idfecha", false, "TR.fecha de registro");
 	$xSp	= $xSel->getListaDeProductosDeCaptacion();
 	$xSp->setOptionSelect($e_producto);
-	//$xSp->addEvent("onchange", "getNewCuenta");
-	//$xSp->addEvent("onblur", "jsaGetValidacion()");	
 	$xFRM->addHElem( $xSp->get(true) );
 	$xFRM->addHElem( $xSel->getListaDeOrigenDeCaptacion()->get(true) );
 	$xFRM->addHElem( $xSel->getListaDeTituloDeCaptacion()->get(true) );
 	$xFRM->addObservaciones();
 	
 	$xFRM->addHElem("<h3>" . $xFRM->l()->getT("TR.Otros") . "</h3><div id='idotrosdatos'></div>");
-	
-	$xFRM->addGrupoBasico("", DEFAULT_GRUPO);
+	if(PERSONAS_CONTROLAR_POR_GRUPO == true){
+		$xFRM->addGrupoBasico("", DEFAULT_GRUPO);
+	} else {
+		$xFRM->OHidden("idgrupo", DEFAULT_GRUPO);
+	}
+	if(GARANTIA_LIQUIDA_EN_CAPTACION == true){
+		$xFRM->addCreditBasico(DEFAULT_CREDITO, false, false, "TR.Credito Relacionado");
+	} else {
+		$xFRM->OHidden("idsolicitud", DEFAULT_CREDITO);
+	}
 	//$xFRM->addCuentaCaptacionInteres();
 	
 	$xFRM->addHElem("<h3>" . $xFRM->l()->getT("TR.Mancomunados") . "</h3>");
 	$xFRM->addPersonaBasico("2");
 	$xFRM->addPersonaBasico("3");
-	
-	
-	$xFRM->addSubmit();
+
+	$xFRM->addGuardar();
 	
 } else {
 
@@ -100,8 +107,9 @@ if($action == SYS_NINGUNO){
 	if ($idsocio == DEFAULT_SOCIO ) {
 		$msg						.= "ERROR\tPersona $idsocio OR cuenta $idcuenta INVALIDA\r\n";
 	} else {
+		$credito					= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 		
-		$idsolicitud 				= DEFAULT_CREDITO;
+		$idsolicitud 				= $credito;
 		$idgrupo 					= parametro("idgrupo", DEFAULT_GRUPO, MQL_INT);
 		$observacion				= parametro("idobservaciones");
 		$origencuenta 				= parametro("idorigencaptacion", DEFAULT_CAPTACION_ORIGEN, MQL_INT);
@@ -144,7 +152,7 @@ if($action == SYS_NINGUNO){
 					exit ( $html->setJsDestino("frmcaptacioncuentas.php?s=$idsocio&x=$idcuenta&i=$cuentaDeIntereses&o=$origencuenta&ti=$tipotitulo&n=$observacion&g=$idgrupo&c=$idsolicitud&p=$subpdto&msg=$msg") );
 				}
 				//verifica si existe la Cuenta
-				$sqlcuenta_hay 			= "SELECT COUNT(numero_cuenta) AS 'cuentame' FROM captacion_cuentas WHERE numero_cuenta=$idcuenta";
+				/*$sqlcuenta_hay 			= "SELECT COUNT(numero_cuenta) AS 'cuentame' FROM captacion_cuentas WHERE numero_cuenta=$idcuenta";
 				$sihayc 				= the_row($sqlcuenta_hay);
 		
 				$cuentas_existentes 		= $sihayc["cuentame"];
@@ -153,7 +161,7 @@ if($action == SYS_NINGUNO){
 					$sql_ultima_cuenta 	= "SELECT MAX(numero_cuenta) AS 'ultima_cuenta' FROM captacion_cuentas";
 					$ultima_cuenta 		= the_row($sql_ultima_cuenta);
 					$ultima_cuenta 		= $ultima_cuenta["ultima_cuenta"];
-				}
+				}*/
 		
 			// Si es Inversion la Cuenta Estara Inactiva
 			if(setNoMenorQueCero($man1) > 0){
@@ -161,15 +169,15 @@ if($action == SYS_NINGUNO){
 				if($xMan1->init() == true){
 					//agregar relacion
 					$xSoc->addRelacionPorDocumento($man1, $idcuenta, PERSONAS_REL_MANCOMUNADO);
-					$man1	= "$man1|" . $xMan1->getNombreCompleto();
+					$man1	= "$man1-" . $xMan1->getNombreCompleto();
 				}
 			}
 			if(setNoMenorQueCero($man2) > 0){
-				$xMan2	= new cSocio($man2);
+				$xMan2		= new cSocio($man2);
 				if($xMan2->init() == true){
 					//agregar relacion
 					$xSoc->addRelacionPorDocumento($man2, $idcuenta, PERSONAS_REL_MANCOMUNADO);
-					$man2	= "$man2|" . $xMan2->getNombreCompleto();
+					$man2	= "$man2-" . $xMan2->getNombreCompleto();
 				}
 			}		
 			$xCta		= new cCuentaDeCaptacion($idcuenta, $idsocio, $dias, $tasa, $fechaalta);
@@ -182,7 +190,7 @@ if($action == SYS_NINGUNO){
 
 			$xCta->init();
 			
-			
+			$xFRM->addCerrar();
 			$xFRM->addHTML( $xCta->getFicha(true) );
 			$contrato 				= $xCta->getURLContrato();
 			$msg					.= $xCta->getMessages();
@@ -256,4 +264,4 @@ var jsWorkForm	= document.frmcaptacion;
 	}
 
 </script>
-<?php echo $xHP->end(); ?>
+<?php $xHP->fin(); ?>

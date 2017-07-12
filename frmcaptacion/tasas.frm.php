@@ -1,6 +1,117 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
+//=====================================================================================================
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.TASAS DE CAPTACION", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+
+$producto	= parametro("producto", 0, MQL_INT);
+
+$xHP->addJTableSupport();
+$xHP->init();
+
+$W			= ($producto >0) ? " WHERE (`captacion_tasas`.`subproducto`=$producto) " : " ";
+
+$xFRM		= new cHForm("frmtasa", "tasas.frm.php?action=$action");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
+$xFRM->OHidden("producto", $producto);
+
+/* ===========		GRID JS		============*/
+
+$xHG	= new cHGrid("iddivtasas",$xHP->getTitle());
+
+$xHG->setSQL("SELECT   `captacion_tasas`.`idcaptacion_tasas` AS `clave`,
+         `captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
+         `captacion_subproductos`.`descripcion_subproductos` AS `producto`,
+         `captacion_tasas`.`monto_mayor_a`,
+         `captacion_tasas`.`monto_menor_a`,
+         `captacion_tasas`.`dias_mayor_a`,
+         `captacion_tasas`.`dias_menor_a`,
+         ( `captacion_tasas`.`tasa_efectiva`*100 ) AS `tasa`
+FROM     `captacion_tasas` 
+LEFT OUTER JOIN `captacion_subproductos`  ON `captacion_tasas`.`subproducto` = `captacion_subproductos`.`idcaptacion_subproductos` 
+INNER JOIN `captacion_cuentastipos`  ON `captacion_tasas`.`modalidad_cuenta` = `captacion_cuentastipos`.`idcaptacion_cuentastipos` $W ORDER BY `captacion_cuentastipos`.`descripcion_cuentastipos` DESC,
+         `captacion_subproductos`.`descripcion_subproductos` DESC,
+         `captacion_tasas`.`monto_mayor_a` ASC,
+         `captacion_tasas`.`dias_mayor_a` ASC");
+
+$xHG->addList();
+$xHG->addKey("clave");
+
+$xHG->col("tipo", "TR.TIPO", "10%");
+$xHG->col("producto", "TR.SUBPRODUCTO", "10%");
+
+$xHG->col("monto_mayor_a", "TR.LIMITEINFERIOR", "10%");
+$xHG->col("monto_menor_a", "TR.LIMITESUPERIOR", "10%");
+
+$xHG->col("dias_mayor_a", "TR.DIAS MAYOR A", "10%");
+$xHG->col("dias_menor_a", "TR.DIAS MENOR A", "10%");
+
+
+$xHG->col("tasa", "TR.TASA", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+$xFRM->addHElem("<div id='iddivtasas'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+echo $xFRM->get();
+?>
+<script>
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../frmcaptacion/tasas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivtasas});
+}
+function jsAdd(){
+	var idp	= $("#producto").val();
+	xG.w({url:"../frmcaptacion/tasas.new.frm.php?producto="+idp, tiny:true, callback: jsLGiddivtasas});
+}
+function jsDel(id){
+	xG.rmRecord({tabla:"captacion_tasas", id:id, callback:jsLGiddivtasas});
+}
+</script>
+<?php
+	
+
+
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+exit;
+/**
+ * @author Balam Gonzalez Luis Humberto
  * @version 1.0
  * @package
  */

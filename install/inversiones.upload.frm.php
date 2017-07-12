@@ -148,7 +148,7 @@ if ( $action == false ){
 												$xInv->setFechaDeOperacion($fechaApertura);
 												$xInv->setDiasInvertidos($plazo);
 												
-												$RDeposito				= $xInv->setDeposito($importe, DEFAULT_CHEQUE, DEFAULT_TIPO_PAGO, DEFAULT_RECIBO_FISCAL, $observaciones,
+												$RDeposito				= $xInv->setDeposito($importe, DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA, DEFAULT_RECIBO_FISCAL, $observaciones,
 																				DEFAULT_GRUPO, $fechaApertura);
 												$msg 					.= "$iReg\t$socio\tRECIBO_DEPOSITO\tSe Efectua un Deposito de $importe al Recibo $RDeposito\r\n";
 												$xInv->init();

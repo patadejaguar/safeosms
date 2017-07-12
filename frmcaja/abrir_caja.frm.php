@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.ABRIR_SESSION DE CAJA", HP_FORM);
 
 $msg		= "";
 //$jxc = new TinyAjax();
@@ -26,29 +26,33 @@ $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("s
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 
 $xHP->init();
+$xFRM		= new cHForm("frmabrir", "abrir_caja.frm.php");
+$xFRM->setTitle($xHP->getTitle());
+$xSel		= new cHSelect();
+$txtP		= new cHText();
 
 if($action == SYS_UNO){
-	//		$oficial	= trim(substr($_POST["cOficialDeApertura"], 0, 15));
-	//		$pwd		= trim( md5( substr($_POST["cOficialClave"],0,20) ) );
 	$oficial_s	= parametro("oficial", "", MQL_RAW);
 	$pwd		= parametro("password", "", MQL_RAW);
 	$fondos		= parametro("fondodecaja", 0, MQL_FLOAT);
-	$pwd		= strtolower($pwd);
+	//$pwd		= strtolower($pwd);
 	//Definir bien los PWD
 	$cUsr		= new cSystemUser($oficial_s, false);
+	$pwd		= $cUsr->getHash($pwd, false);
 	$sucess		= $cUsr->getCompareData("contrasenna", $pwd);
 	
 	$cUsr->init();
 	
 	if ( $sucess == true ){
 		$IOficial	= $cUsr->getID();
-		if($fondos <= 0){
+		if($fondos < 0){
 			$msg		.= "ERROR\tFondos menores a los establecido $fondos \r\n";
 		} else {
 		
-			$cCj 	= new cCaja();
+			$cCj 	= new cCaja(false, $fecha);
 			$ropen	= $cCj->setOpenBox($IOficial, $fondos);
 			if($ropen == true ){
 				$msg	.= "OK\tLa Caja esta abierta\r\n";
@@ -61,35 +65,24 @@ if($action == SYS_UNO){
 		}
 	} else {
 		if(MODO_DEBUG == true){ $msg	.= $cUsr->getMessages(OUT_TXT);	}
-		$msg		.= "WARN\tERROR AL INICIAR LA SESSION DE CAJA\r\n";
+		$msg	.= "ERROR\tERROR AL INICIAR LA SESSION DE CAJA\r\n";
+		
 	}
+	$xFRM->setResultado($sucess, $msg, $msg);
+	$xFRM->addCerrar();
+} else {
+	if(PERMITIR_EXTEMPORANEO == true){
+		$xFRM->addFecha($fecha);
+	}
+	$xFRM->setAction("abrir_caja.frm.php?action=1");
+	$txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");
+	$xFRM->OText_13("oficial", "", "TR.JEFE_DE_CAJA");
+	$xFRM->addHElem( $txtP->getPassword("password", "TR.Password", "") );
+	$xFRM->OMoneda("fondodecaja", 0, "TR.FONDO DE CAJA", true);
+	$xFRM->addSubmit();
 }
-
-$xFRM		= new cHForm("frmabrir", "abrir_caja.frm.php?action=1");
-$xBtn		= new cHButton();		
-$xTxt		= new cHText();
-$xDate		= new cHDate();
-$xSel		= new cHSelect();
-$txtP		= new cHText();
-
-$txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");
-
-//$xFRM->addJsBasico();
-//$xFRM->addCreditBasico();
-$xFRM->addHElem( $xTxt->getNormal("oficial", "", "TR.Usuario superior") );
-$xFRM->addHElem( $txtP->getPassword("password", "TR.Password", "") );
-$xFRM->addHElem( $xTxt->getDeMoneda("fondodecaja", "TR.Fondo de Caja", 0, true) );
-$xFRM->addAviso($msg);
-$xFRM->addSubmit();
-
 echo $xFRM->get();
 
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();
-
-
-//} else {
-	//evaluar al usuario
-
-//}
 ?>

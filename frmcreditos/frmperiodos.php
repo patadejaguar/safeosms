@@ -1,123 +1,97 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
 //=====================================================================================================
 	include_once("../core/go.login.inc.php");
-	include_once ("../core/core.error.inc.php");
-	$permiso = getSIPAKALPermissions(__FILE__);
-	if($permiso === false){
-		header ("location:../404.php?i=999");	
-	}
-	$iduser = $_SESSION["log_id"];
+	include_once("../core/core.error.inc.php");
+	include_once("../core/core.html.inc.php");
+	include_once("../core/core.init.inc.php");
+	include_once("../core/core.db.inc.php");
+	$theFile			= __FILE__;
+	$permiso			= getSIPAKALPermissions($theFile);
+	if($permiso === false){	header ("location:../404.php?i=999");	}
+	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-include_once("../core/entidad.datos.php");
-include_once("../core/core.deprecated.inc.php");
-include_once("../core/core.fechas.inc.php");
-include_once("../libs/sql.inc.php");
-include_once("../core/core.config.inc.php");
+$xHP		= new cHPage("TR.CREDITOS_PERIODOS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc = new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$observaciones	= parametro("idobservaciones");
 
-$oficial 			= elusuario($iduser);
-$periodo_propuesto	= ( isset( $_GET["p"] ) ) ? $_GET["p"] : date("Y") . date("m"); 
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Periodos de Sesiones.- Altas</title>
-</head>
-<link href="<?php echo CSS_GENERAL_FILE; ?>" rel="stylesheet" type="text/css">
-<script  >
-	function changedate() {
-		document.frmperiodos.elmes0.value = <?php echo dmes(); ?>;
-		document.frmperiodos.elmes1.value = <?php echo dmes(); ?>;
-		document.frmperiodos.elmes2.value = <?php echo dmes(); ?>;
-	}
-</script>
-
-<body>
-<fieldset>
-	<legend>Periodos de Sesiones.- Altas</legend>
-<form name="frmperiodos" action="frmperiodos.php?a=i" method="post">
-	<table  >
-		<tr>
-			<td>Descripcion del Periodo</td>
-			<td colspan="3"><input name='descripcion' type='text' value='' size="80" maxlength="100" onchange="changedate();"></td>
-		</tr>
-		<tr>
-		<td>Identificador</td><td><input type='text' name='idperiodo' value='<?php echo $periodo_propuesto; ?>' size='10' class='mny'></td>
-		<td>Fecha de Reunion</td><td><?php echo ctrl_date(0); ?></td>
-		</tr>
-		<tr>
-			<td>Fecha Inicial</td><td><?php echo ctrl_date(1); ?></td>
-			<td>Fecha Final</td><td><?php echo ctrl_date(2); ?></td>
-		</tr>
-		<tr>
-			<th>Oficial de Credito</th>
-			<td colspan='3'><?php
-				$sqlTO = "SELECT id, nombre_completo FROM oficiales /* WHERE estatus='activo' */ ";
-				$xTO = new cSelect("cOficial", "idOficial", $sqlTO);
-				$xTO->setEsSql();
-				
-				$xTO->addEspOption("todas", "Todos");
-				$xTO->show(false);
-				$xTO->setOptionSelect("todas");
-			?></td>		
-		</tr>
-	</table>
-
-	<input type='button' name='btnsend' value='Guardar Registro' onClick='frmperiodos.submit();' class="button">
-	<?php
-	$xBtn	= new cHButton("");
-	echo $xBtn->getSalir(); 
-	?>	
-</form>
-
-<?php
-/**
- * 			Imprime Datos de las sesiones de creditos
- */
+$xHP->init();
 
 
-$action			= ( isset($_GET["a"]) ) ? $_GET["a"] : "x";
-$descripcion 	= ( isset($_POST["descripcion"] )) ? $_POST["descripcion"] : "";
-if($action == "i" AND strlen($descripcion) > 1){
-	$idperiodo 		= $_POST["idperiodo"];
+
+/* ===========		FORMULARIO		============*/
+$clave		= parametro("idcreditos_periodos", null, MQL_INT);
+$xTabla		= new cCreditos_periodos();
+if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
+$xTabla->setData($_REQUEST);
+$clave		= parametro("id", null, MQL_INT);
+$xSel		= new cHSelect();
+$xF			= new cFecha();
+
+if($clave == null){
+	$step		= MQL_ADD;
+	$clave		= $xTabla->query()->getLastID() + 1;
+	$xTabla->idcreditos_periodos($clave);
+	$xTabla->fecha_inicial($xF->getFechaInicialDelAnno());
+	$xTabla->fecha_final($xF->getFechaFinAnnio());
+	$xTabla->fecha_reunion($xF->setSumarDias(1, $xF->getFechaFinAnnio()));
 	
-	
-	$reunion 	= $_POST["elanno0"] . "-" . $_POST["elmes0"] . "-" . $_POST["eldia0"];
-	$inicial 	= $_POST["elanno1"] . "-" . $_POST["elmes1"] . "-" . $_POST["eldia1"];
-	$final 		= $_POST["elanno2"] . "-" . $_POST["elmes2"] . "-" . $_POST["eldia2"];
-	$resp		= $_POST["cOficial"];
-	
-	$xP			= new cPeriodoDeCredito();
-	$xP->add($inicial, $final, $resp, $reunion, $descripcion, $ideperiodo );
+} else {
+	$step		= MQL_MOD;
+	if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
 }
+$xFRM	= new cHForm("frmcreditos_periodos", "frmperiodos.php?action=$step");
+$xFRM->setTitle($xHP->getTitle());
 
-$cTbl = new cTabla("select creditos_periodos.idcreditos_periodos AS 'codigo_de_periodo',
-					creditos_periodos.descripcion_periodos AS 'nombre_periodo',
-					creditos_periodos.fecha_inicial AS 'fecha_de_inicio',
-					creditos_periodos.fecha_final AS 'fecha_de_termino',
-					creditos_periodos.fecha_reunion AS 'fecha_de_reunion',
-					CONCAT(usuarios.nombres, ' ',usuarios.apellidopaterno, ' ', usuarios.apellidomaterno) AS 'oficial_responsable'
-				FROM 
-				
-					`creditos_periodos` `creditos_periodos` 
-						INNER JOIN `usuarios` `usuarios` 
-						ON `creditos_periodos`.`periodo_responsable` = `usuarios`.`idusuarios`
-				
-				ORDER BY fecha_reunion ", 0);
-$cTbl->setWidth();
-$cTbl->addTool(1);
-$cTbl->setKeyField("idcreditos_periodos");
-$cTbl->Show("", false);
+if($step == MQL_MOD){ } else { }
+$clave 		= parametro($xTabla->getKey(), null, MQL_INT);
 
+if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
+	$xTabla->setData( $xTabla->query()->initByID($clave));
+	$xTabla->setData($_REQUEST);	
+
+	if($action == MQL_ADD){
+		$xTabla->query()->insert()->save();
+	} else {
+		$xTabla->query()->update()->save($clave);
+	}
+	$xFRM->addAvisoRegistroOK();
+	$xFRM->addCerrar();
+} else {
+	$xFRM->addGuardar();
+	$xFRM->OMoneda("idcreditos_periodos", $xTabla->idcreditos_periodos()->v(), "TR.CLAVE");
+	$xFRM->OText("descripcion_periodos", $xTabla->descripcion_periodos()->v(), "TR.DESCRIPCION");
+	$xFRM->ODate("fecha_inicial", $xTabla->fecha_inicial()->v(), "TR.FECHA_INICIAL");
+	$xFRM->ODate("fecha_final", $xTabla->fecha_final()->v(), "TR.FECHA_FINAL");
+	$xFRM->ODate("fecha_reunion", $xTabla->fecha_reunion()->v(), "TR.FECHA_REUNION");
+
+	$xFRM->addHElem($xSel->getListaDeOficiales("periodo_responsable","", $xTabla->periodo_responsable()->v())->get(true) );
+}
+echo $xFRM->get();
+
+
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
 ?>
-<p class='aviso'>AGREGUE LA DESCRIPCION QUE IDENTIFIQUE A LA SESION DE CREDITO ACTUAL, 
-EN CASO DE NO LLEVAR PERIODOS DE CREDITO AGREGUE UN PERIODO DESDE EL INICIO DE AÑO HASTA EL FIN DE AÑO, UN PERIODO POR A&Ntilde;O</p>
-</fieldset>
-</body>
-<script  >
-<?php
-	echo $cTbl->getJSActions();
-?>
-
-</script>
-</html>

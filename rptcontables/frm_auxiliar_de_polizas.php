@@ -1,6 +1,63 @@
 <?php
 //=====================================================================================================
 //=====>	INICIO_H
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+$theFile					= __FILE__;
+$permiso					= getSIPAKALPermissions($theFile);
+if($permiso === false){		header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//<=====	FIN_H
+$iduser = $_SESSION["log_id"];
+//=====================================================================================================
+$xHP		= new cHPage("TR.Auxiliares de Poliza", HP_FORM);
+$xHP->init();
+
+$xSel		= new cHSelect();
+$xHRPT		= new cPanelDeReportesContables(false, false);
+
+$xHRPT->OFRM()->setTitle($xHP->getTitle());
+
+$xHRPT->addFechaInicial();
+$xHRPT->addFechaFinal();
+$xHRPT->addRangosDeNumero(99999,0);
+$xHRPT->addTipoDePolizas();
+$xHRPT->addVistaDePolizas();
+//$xHRPT->addCuentaInicial();
+//$xHRPT->addCuentaFinal();
+//$xHRPT->addTipoDeCuentas();
+//$xHRPT->addNivelesDeCuentas();
+//$xHRPT->addEstadoDeMovimiento();
+
+//$xHRPT->addMoneda();
+
+echo $xHRPT->render();
+?>
+<script>
+var xG 	= new Gen();
+function jsGetReporte(){
+	var mFechaF		= $("#idfechafinal").val();
+	var mFechaI		= $("#idfechainicial").val();
+	var vMone		= ""; //$("#idcodigodemoneda").val();
+	var vtipo		= $("#idtipodepoliza").val();//$("#idtipodecuentacontable").val();
+	var vinit		= $("#idnumeroinicial").val();
+	var vfin		= $("#idnumerofinal").val();
+	var vvista		= $("#idvistapoliza").val();
+	
+	var urlrpt 		= "rpt_auxiliar_de_polizas.php?on=" + mFechaI + '&off=' + mFechaF + '&moneda=' + vMone + '&init=' + vinit + '&end=' + vfin + "&tipo=" + vtipo + "&vista=" + vvista ;
+	xG.w({ url : urlrpt });
+}
+</script>
+<?php
+$xHP->fin();
+
+
+exit;
+
+//=====================================================================================================
+//=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");

@@ -108,12 +108,7 @@ $xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
 
 //$xT		= new cTabla($xL->getListadoDePerfil($persona) );
 //$xRPT->addContent( $xT->Show(  ) );
-if( MODO_DEBUG == true ){
-	$periodo_inicial= date("Ym", $xF->getInt($FechaInicial));
-	$periodo_final	= date("Ym", $xF->getInt($FechaFinal));	
-	//$xT2	= new cTabla($xL->getAMLAcumuladoDeEgresos($periodo_inicial, $periodo_final, $persona));
-	//$xRPT->addContent($xT2->Show());
-}
+
 
 //============ Agregar HTML
 //$xRPT->addContent( $xHP->init($jsEvent) );

@@ -154,7 +154,7 @@ FROM
 				$estadoNac	= str_replace($arrRep, "", $estadoNac);
 				$estadoNac	= strtoupper($estadoNac);
 				//
-				$arrEdoNac	= split(" ", $estadoNac);
+				$arrEdoNac	= explode(" ", $estadoNac);
 				$parecido	= 0;
 				$xVEstado	= "";
 				

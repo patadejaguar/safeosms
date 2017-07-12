@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.REPORTES GENERALES PLD", HP_FORM);
 
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -34,74 +34,30 @@ $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
 $xHNot		= new cHNotif();
-$msg		= "";
+$xSelT		= $xSel->getListaDeRiesgosAML("idtiporiesgo");
+$xSelT->addEspOption(SYS_TODAS);
+$xSelT->setOptionSelect(SYS_TODAS);
+
+$xSelN		= $xSel->getListaDeTipoDeRiesgoEnAML("idnaturaleza");
+$xSelN->addEspOption(SYS_TODAS);
+$xSelN->setOptionSelect(SYS_TODAS);
+
+
 $xRPT		= new cPanelDeReportes(iDE_AML, "aml");
 
-//$xRPT->setConFechas();
+$xRPT->setTitle($xHP->getTitle());
+$xRPT->OFRM()->addHElem( $xSelN->get(true) );
+$xRPT->addjsVars("idnaturaleza", "clasificacion");
 
-//$xRPT->addFechaInicial();
-//$xRPT->OFRM()->addToolbar("<div class='noticon'> <i class='fa fa-warning fa-lg'></i> <span id='numeroerrores' class='noticount'>0</span></div><div class='noticon'> <i class='fa fa-newspaper-o fa-lg'></i><span id='numeroregistros' class='noticount'>0</span></div>");
-//$xRPT->OFRM()->addToolbar($xHNot->getNoticon("numeroerrores", $xHNot->NOTICE) . $xHNot->getNoticon("numeroregistros", $xHNot->ic()->REGISTROS));
-//$xRPT->OFRM()->addDivSolo($xHNot->getNoticon("numeroerrores", $xHNot->NOTICE) . "<label>ERRORES</label>", $xHNot->getNoticon("numeroerrores", $xHNot->NOTICE), "tx24", "txt24");
+$xRPT->OFRM()->addHElem( $xSelT->get(true) );
+$xRPT->addjsVars("idtiporiesgo", "tipoderiesgo");
 
-//$xRPT->OFRM()->addHElem( $xRPT->addFechaFinal("TR.Fecha de Corte") );
-
-//$xRPT->addCheckBox("TR.Definitivo", "definitivo");
-
-$xhtm		= "<h2>Errores</h2><p id='mensajesdelreporte' class='warn'></p>";
-//$xRPT->addFooterBar($xhtm);// $xHNot->get($xhtm, "idnoticias", $xHNot->WARNING) );
+$xRPT->addCheckBox("TR.Extenso", "ext");
+$xRPT->addCheckBox("TR.DICTAMEN", "condictamen");
+$xRPT->addCheckBox("TR.MENSAJE DEL SISTEMA", "consistema");
 echo $xRPT->get();
-echo $xRPT->getJs();
+echo $xRPT->getJs(true);
 //$jxc ->drawJavaScript(false, true);
-?>
-<script>
-function jsBlurListaDeReportes(){
-	jsDiagnosticoReporte();
-}
-function jsDiagnosticoReporte(){
-	var fechaFinal	= $('#idfecha-1').val();
-	var idreporte	= $('#idreporte').val();
-	var idsucursal	= $('#idsucursal').val();
-	var idtiposalida	= $('#idtipodesalida').val();
-	var g 		= new Gen();
-	var murl 	= idreporte + "mx=true" + "" + "&off=" + fechaFinal  + "&fechafinal=" + fechaFinal  + "&sucursal=" + idsucursal  + "&s=" + idsucursal  + "&out=" + idtiposalida + "&pregunta=true";
-	
-var AjxOpts	= {
-	url		: murl,
-	contentType	: "json",
-	success		: function(rs){
-		if (typeof rs.mensajes != "undefined") {
 
-			 $.amaran({
-				 content:{
-					 message : "Numero de registros : " + rs.registros,
-					 info : "Numero de registros que contiene el reporte",
-					 icon : 'fa fa-info',
-					 title : "Registros"
-					 },
-				 theme:'awesome green'
-			 	
-			 });			
-
-			 $.amaran({
-				 content:{
-					 message : "Numero de errores : " + rs.errores,
-					 info : rs.mensajes,
-					 icon : 'fa fa-warning',
-					 title : "Errores" 
-					 },
-				 theme:'awesome error'
-			 	
-			 });
-
-		}
-		
-	}
-};
-
-$.ajax(AjxOpts);	  	
-}
-</script>
-<?php
 $xHP->fin();
 ?>

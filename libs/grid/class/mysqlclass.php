@@ -22,6 +22,7 @@
 
 class MySql extends Database
 {
+	private $mCnn	= false;
 	function MySql($database, $username, $password, $hostname = "localhost")
 	{
 		Database::Database($database, $username, $password, $hostname);
@@ -29,32 +30,35 @@ class MySql extends Database
 
 	function Connect()
 	{
-		$db = mysql_connect($this->hostname, $this->username, $this->password) or die(mysql_error());
-		$ret = mysql_select_db($this->database, $db) or die(mysql_error());
-		return $ret;
+		//$this->mCnn	= ($this->mCnn === false) ? mysqli_connect($this->hostname, $this->username, $this->password, $this->database) : $this->mCnn;
+		//if($this->mCnn == false){
+			$this->mCnn	= new mysqli($this->hostname, $this->username, $this->password, $this->database);
+		//}
+		return $this->mCnn;
 	}
 	
-	function Disconnect()
-	{
-	    return mysql_close();
+	function Disconnect(){
+		//return $this->mCnn->close();
 	}
 	
 	function GetColumnNames($columns, $table)
 	{
-		$names = array();
-		
-		$result = mysql_query("SELECT ".$columns." FROM ".$table." LIMIT 1") or die(mysql_error());
-		$num_fields = mysql_num_fields($result)  or die(mysql_error());
-
-		for ($i = 0; $i < $num_fields; $i++)
-			$names[] = mysql_field_name($result, $i);
-
+		$names 		= array();
+		$rs			= $this->Connect()->query("SELECT ".$columns." FROM ".$table." LIMIT 1");
+		while($obj	= $rs->fetch_field()){
+			$names[]= $obj->name;
+		}
+		//$rs->free();
 		return $names;
 	}
 
 	function Select($query)
 	{
-		return mysql_query($query);
+		$rs			= $this->Connect()->query($query);
+		$data		= array();
+		while ($row = $rs->fetch_assoc()) { 	$data[]		= $row;}
+		$rs->free();
+		return $data;
 	}
 	
 	function GetRows($columns, $table, $where_attributes, $order_column, $is_asc_order, $limit)
@@ -81,16 +85,19 @@ class MySql extends Database
 			
 		$sql = "SELECT ".$columns." FROM ".$table." ".$where_attributes." ".$order." ".$limit;
 		#var_dump($sql);
-		return mysql_query($sql);
+		$rs	= $this->Connect()->query($sql);
+		return $rs;
 	}
 	
 	function Delete($table, $column, $value)
 	{
-		mysql_query("DELETE FROM `".$table."` WHERE `".$column."` = '".$value."' LIMIT 1");
+		$this->Connect()->query("DELETE FROM `".$table."` WHERE `".$column."` = '".$value."' LIMIT 1");
+		//$rs->free();
+		return true;
 	}
 
-	function Update($table, $id_column, $id_value, $column_names, $column_values)
-	{global $query;
+	function Update($table, $id_column, $id_value, $column_names, $column_values){
+		//$GLOBALS[] $query;
 		$index = 0;
 		$query  = "UPDATE `".$table."` SET ";
 		
@@ -108,12 +115,14 @@ class MySql extends Database
 		
 		$query .= " WHERE `".$id_column."` = '".$id_value."' LIMIT 1";
 		#var_dump($query);
-		mysql_query($query);
+		$this->Connect()->query($query);
+		
+		return true;
 	}
 	
 	function Insert($table, $column_names, $column_values)
 	{
-		$index = 0;
+		$index 	= 0;
 		$query  = "INSERT INTO `".$table."` ( ";
 		
 		//Columns.
@@ -146,28 +155,28 @@ class MySql extends Database
 		}
 
 		$query .= ");";
-	
-		
-		return @mysql_query($query);
+		//syslog(LOG_DEBUG, $query);
+		$this->Connect()->query($query);
+		return true;//@mysql_query($query);
 	}
 	
 	function FreeResult($result)
 	{
-	    @mysql_free_result($result);
+		//$result->free();
+	    //@mysql_free_result($result);
 	}
 	
-	function FetchArray($result)
-	{
-		return mysql_fetch_array($result);
-	}
+	function FetchArray($rs){ return $rs->fetch_assoc(); }
 	
 	function GetNumberOfRows($table, $where)
 	{
-		$sql = sprintf("SELECT COUNT(*) as TOTALFOUND FROM $table %s", !empty($where) ? "WHERE $where": "");
-		
-		$my_table = mysql_query($sql); //EXECUTE SQL CODE
-
-		return (mysql_result($my_table,0,"TOTALFOUND"));
+		$sql 	= sprintf("SELECT COUNT(*) as TOTALFOUND FROM $table %s", !empty($where) ? "WHERE $where": "");
+		$rs		= $this->Connect()->query($sql);
+		$data	= $rs->fetch_assoc();
+		$nrows	= isset($data["TOTALFOUND"]) ? $data["TOTALFOUND"] : 0;
+		$data	= null;
+		$rs->free();	
+		return $nrows;
 	}
 }
 ?>

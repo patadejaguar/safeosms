@@ -1,0 +1,9 @@
+.margin-minus{
+	*margin-bottom: 0px;
+}
+.container{
+	*width : 960px;
+}
+[class*="col"] {
+  *margin : 0px 0.95% 20px;
+}

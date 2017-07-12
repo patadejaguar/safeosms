@@ -236,7 +236,7 @@ class MessageFactory implements MessageFactoryInterface
             );
         } elseif ($authType == 'digest') {
             // Currently only implemented by the cURL adapter.
-            // @todo: Need an event listener solution that does not rely on cURL
+            // Need an event listener solution that does not rely on cURL
             $config = $request->getConfig();
             $config->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
             $config->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");

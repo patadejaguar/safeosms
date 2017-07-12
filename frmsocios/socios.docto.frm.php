@@ -19,10 +19,18 @@ $xF			= new cFecha();
 $xHP->init();
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $docto		= parametro("docto", "", MQL_RAW);
+$clave		= parametro("id", 0, MQL_INT); $clave = parametro("clave", $clave, MQL_INT);
+if($clave > 0){
+	$xDoc	= new cPersonas_documentacion();
+	$xDoc->setData($xDoc->query()->initByID($clave));
+	$persona	= $xDoc->clave_de_persona()->v();
+	$docto		= $xDoc->archivo_de_documento()->v();
+}
+
 $xFRM		= new cHForm("frmdocto");
 //$docto				= $rows["archivo_de_documento"];
-$xDoc				= new cDocumentos($docto);
-$xFRM->addHElem( "<div class='tx4'>" . $xDoc->getEmbed($docto, $persona) . "</div>");
+$xDoc		= new cDocumentos($docto);
+$xFRM->addHElem("<div class='tx1'>" . $xDoc->getEmbed($docto, $persona) . "</div>");
 $xFRM->addCerrar();
 echo $xFRM->get();
 $xHP->fin();

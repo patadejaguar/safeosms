@@ -35,7 +35,7 @@ FROM
 	`general_municipios` `general_municipios` 
 WHERE
 	`idgeneral_municipios` > 0  $ByCP $ByEst $ByMun $ByCol
-	LIMIT 0,10
+	LIMIT 0,200
 ";
 
 header('Content-type: application/json');

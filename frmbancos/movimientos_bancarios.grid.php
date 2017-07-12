@@ -90,7 +90,7 @@ $ByBusqueda			= ($busqueda == "") ? "" : " AND (`bancos_operaciones`.`beneficiar
 	$_SESSION["grid"]->SetSqlSelect($mGridSQL, $mGridTable, $mGridWhere);
 	$_SESSION["grid"]->SetUniqueDatabaseColumn($mGridKeyField, $mGridKeyEdit);
 	$_SESSION["grid"]->SetTitleName($mGridTitulo);
-	$_SESSION["grid"]->SetEditModeAdd(false);
+	$_SESSION["grid"]->SetEditModeAdd(true);
 	//$_SESSION["grid"]->SetEditModeDelete(false);
 	//var_dump( $_SESSION["grid"] );
 	//===========================================================================================================					

@@ -40,7 +40,7 @@ $fecha_final			= date("Y-m-t" , strtotime($fecha) );
 $NombreEntidad			= EACP_NAME;
 $RFC_Declarante			= EACP_RFC;
 $Representante_Nombre	= EACP_REP_LEGAL;
-$DRepLegal				= split(" ", $Representante_Nombre, 3);
+$DRepLegal				= explode(" ", $Representante_Nombre, 3);
 
 $RepNom					= $DRelLegal[0];
 $RepAP					= $DRelLegal[1];

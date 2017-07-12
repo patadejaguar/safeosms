@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.PROPIETARIO / BENEFICIARIO", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -35,6 +35,9 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 
 $xFRM		= new cHForm("frm", "./"); $xSel	= new cHSelect(); $xTxt	= new cHText();
+$xFRM->setNoAcordion();
+$xFRM->setTitle($xHP->getTitle());
+
 $msg		= "";
 //$xFRM->addJsBasico();
 if($credito > DEFAULT_CREDITO){
@@ -43,13 +46,15 @@ if($credito > DEFAULT_CREDITO){
 	$persona	= $xCred->getClaveDePersona();
 	$xFRM->addSeccion("idprops", "TR.Propietarios Reales");
 	
-	$xTbl	= new cHTabla("idtblrels");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
-	$xBtn	= new cHButton(); 
-	$xUl		= new cHUl(); $li = $xUl->getO(); $li->setT("ul"); $li->setClass("tags blue");
-	$li->add($xBtn->getBasic("TR.Guadar", "jsGuardarPropietario()", $xBtn->ic()->GUARDAR, "idguardar", false, true), "");
+	$xTbl		= new cHTabla("idtblrels");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
+	$xBtn		= new cHButton(); 
+	$xUl		= new cHUl("idlistpr1", "ul", "tags green");
+	$xUl->setTags("");
+	$xUl->li($xBtn->getBasic("TR.Guadar", "jsGuardarPropietario()", $xBtn->ic()->GUARDAR, "idguardar1", false, true), "");
 		
 	$xTbl->initRow();
 	$xTbl->addTD($xText->getDeNombreDePersona("idpersona1"));
+	
 	$xFRM->OHidden("idtipoderelacion1", PERSONAS_REL_PROP_REAL);
 	$xTbl->addTD($xHSel->getListaDeTiposDeParentesco("idtipodeparentesco1")->get("")  );
 	$xTbl->addRaw("<td class='toolbar-24'>". $xUl->get() . "</td>" );
@@ -60,11 +65,11 @@ if($credito > DEFAULT_CREDITO){
 	$xFRM->endSeccion();
 	$xFRM->addSeccion("idprovs", "TR.Proveedores de recursos");
 	//proveedor de recursos.
-	$xTbl	= new cHTabla("idtblprov");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
-	$xBtn	= new cHButton(); 
-	$xUl		= new cHUl(); $li = $xUl->getO(); $li->setT("ul"); $li->setClass("tags blue");
-	
-	$li->add($xBtn->getBasic("TR.Guadar", "jsGuardarProveedor()", $xBtn->ic()->GUARDAR, "idguardar", false, true), "");
+	$xTbl		= new cHTabla("idtblprov");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
+	$xBtn		= new cHButton(); 
+	$xUl		= new cHUl("idlistpr", "ul", "tags blue");
+	$xUl->setTags("");
+	$xUl->li($xBtn->getBasic("TR.Guadar", "jsGuardarProveedor()", $xBtn->ic()->GUARDAR, "idguardar2", false, true), "");
 	$xTbl->initRow();
 	$xTbl->addTD($xText->getDeNombreDePersona("idpersona2"));
 	$xFRM->OHidden("idtipoderelacion2", PERSONAS_REL_PROV_RECURSOS);
@@ -81,16 +86,17 @@ if($credito > DEFAULT_CREDITO){
 	$xFRM->OHidden("idcredito", $credito);
 	$xFRM->OHidden("idpersona", $persona);
 	
+	$xFRM->endSeccion();
+	
 } else {
 	$xFRM->addCreditBasico();
 	$xFRM->addSubmit();
 }
-
+$xHG	= new cHGrid("aml_alerts");
 echo $xFRM->get();
 //$jxc ->drawJavaScript(false, true);
 ?>
 <link href="../css/jtable/lightcolor/orange/jtable.min.css" rel="stylesheet" type="text/css" />
-<script src="../js/jtable/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
 <script src="../js/jtable/jquery.jtable.js" type="text/javascript"></script>
 
 <script>
@@ -103,7 +109,7 @@ $(document).ready(function () {
 	
 	//alert(session(ID_PERSONA));
     $('#ListaDeRelaciones').jtable({
-        title: 'Partes Relacionadas',
+        title: '',
         actions: {
             listAction: '../svc/referencias.svc.php?out=jtable&persona=' + idxpersona + "&documento=" + idxcredito
 
@@ -128,7 +134,7 @@ $(document).ready(function () {
             domicilio: {
                 title: 'Domicilio',
                 width: '30%'
-            }
+            }            
         }
     });
     jsRefreshTable();

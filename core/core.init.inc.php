@@ -6,7 +6,6 @@ include_once ("core.common.inc.php");
 include_once ("core.db.inc.php");
 include_once ("core.db.dic.php");
 
-
 @include_once ("../libs/Encoding.php");
 //mysql_set_charset('latin1');
 
@@ -36,9 +35,14 @@ function setFechaValida($value){
 	$value		= $xF->getFechaISO($value);
 	return $value;
 }
-function setCadenaVal($valor){
+function setCadenaVal($valor, $largo=0){
+	if($largo>0){
+		$valor	= substr($valor, 0,$largo);
+	}
 	$xT			= new cTipos();
 	$xT->setForceMayus();
+	$xT->setForceClean();
+	
 	return $xT->cChar($valor);
 }
 function getIncludes($extPath = "..", $mTipoObj = HP_FORM){
@@ -54,6 +58,7 @@ function getIncludes($extPath = "..", $mTipoObj = HP_FORM){
 	include_once("$extPath/core/core.creditos.inc.php");
 	include_once("$extPath/core/core.creditos.pagos.inc.php");
 	include_once("$extPath/core/core.creditos.utils.inc.php");
+	include_once("$extPath/core/core.creditos.originacion.inc.php");
 	
 	include_once("$extPath/core/core.operaciones.inc.php");
 	include_once("$extPath/core/core.operaciones.utils.inc.php");
@@ -81,6 +86,7 @@ function getIncludes($extPath = "..", $mTipoObj = HP_FORM){
 	include_once("$extPath/core/core.riesgo.inc.php");
 	
 	include_once("$extPath/core/core.seguimiento.inc.php");
+	include_once("$extPath/core/core.seguimiento.utils.inc.php");
 	
 	include_once("$extPath/core/core.region.inc.php");
 	
@@ -115,7 +121,7 @@ function parametro($nombre, $fallback = null, $tipo = MQL_STRING, $fuente = fals
 		switch ($tipo){
 			case MQL_INT:
 				$fallback	= ($fallback == null) ? 0 : $fallback;
-				$valor 		= isset($fuente[$nombre]) ? $xT->cInt( $fuente[$nombre] ) : $fallback;
+				$valor 		= isset($fuente[$nombre]) ? setNoMenorQueCero($fuente[$nombre],0) : $fallback;
 				break;
 			case MQL_FLOAT:
 				$fallback	= ($fallback == null) ? 0 : $fallback;
@@ -131,7 +137,8 @@ function parametro($nombre, $fallback = null, $tipo = MQL_STRING, $fuente = fals
 				$valor		= isset($fuente[$nombre]) ? $fuente[$nombre] : $fallback;
 				break;
 			case MQL_DATE:
-				$valor		= isset($fuente[$nombre]) ? setFechaValida($fuente[$nombre]) : fechasys(); //setLog(setFechaValida($fuente[$nombre]));
+				$valor		= isset($fuente[$nombre]) ? $fuente[$nombre] : $fallback; //setLog(setFechaValida($fuente[$nombre]));
+				$valor		= setFechaValida($valor);
 				break;
 			default:
 				$fallback	= ($fallback == null) ? "" : $fallback;
@@ -195,6 +202,8 @@ class cTipos {
 	private $mForceUTF	= false;
 	private $mForceMayus	= false;
 	private $mForceClean	= false; 
+	private $mForceEnc		= false;
+	private $mEncodeSRC		= "ISO-8859-1"; 
 	
 	private $mArrOps	= array(
 			"efectivo" =>  9100,
@@ -241,7 +250,9 @@ class cTipos {
 		}
 		return $value;
 	}
-	//TODO: Terminar
+	/**
+	 * @deprecated @since 2015.07.01
+	 * */
 	function cFecha($value){
 		if ($value == false){
 			$value 	= $this->mPrimate;
@@ -262,6 +273,7 @@ class cTipos {
 		$value			= strval($value);
         $value          = $this->setNoAcentos($value);
         $value			= ($tamano != false ) ? substr($value, 0, $tamano) : $value;
+        if($this->mForceClean == true){ $value = $this->cleanString($value); }
         if($this->mForceMayus	== true){ $value		= strtoupper($value); }
 		$value			= addslashes($value);
 		return 		$value;
@@ -319,20 +331,13 @@ class cTipos {
 	 * @return string
 	 */
 	function setNoAcentos($cadena)	{
-		//if($this->mForceUTF == true){ 
-			//mb_detect_encoding($dato)
-			//$cadena	= iconv('UTF-8', 'UTF-8//IGNORE', $cadena);
-		//}
-		$html	= @htmlentities(strtolower($cadena), ENT_COMPAT, "UTF-8");
-		if($html == false){
-			$html = htmlentities($cadena);
+
+		if($this->mForceEnc == true){
+			$cadena	= mb_convert_encoding($cadena, "UTF-8", $this->mEncodeSRC );
 		}
-		/*if(htmlentities($cadena, ENT_COMPAT, "UTF-8")){
-			$html	= htmlentities($cadena, ENT_COMPAT, "UTF-8");
-		} else {
-			$html = htmlentities($cadena);
-		}*/
-		//if(!$html){ $html = htmlentities(strtolower($cadena)); }
+		$html	= @htmlentities(strtolower($cadena), ENT_COMPAT, "UTF-8");
+		if($html == false){ $html = htmlentities($cadena); }
+		
 		$text	= preg_replace('~&([a-z]{1,2})(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);~i', '$1', $html);
 		$text	= htmlspecialchars_decode($text);
 		$text 	= html_entity_decode($text);//*/
@@ -340,6 +345,7 @@ class cTipos {
 		$text	= ($this->mForceClean == true) ? cleanString($text) : $text;
 		return $text;
 	}
+	function setForceEncode($IDEncode = "ISO-8859-1"){ $this->mEncodeSRC = $IDEncode; $this->mForceEnc = true; }
 	function cMayusculas($cadena){
 		$buscar	= "àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ";
 		$reemp	= "aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY";
@@ -390,7 +396,7 @@ class cTipos {
 	function get(){
 		return $this->mPrimate;
 	}
-	function getMessages($put = "html"){
+	function getMessages($put = OUT_TXT){
 		$xH		= new cHObject();
 		return $xH->Out($this->mMessages, $put);
 	}
@@ -429,7 +435,7 @@ class cTipos {
 	function cBool($valor = false){
 		$rs		= false; //$valor;
 		if($valor === true OR $valor === false){
-			$rs =  (bool) $valor;
+			$rs 	= (bool) $valor;
 		} else {
 			$aEq	= array("1" => true, 1 => true, "TRUE" => true, "VERDADERO" => true, "ON" => true, "YES" => true, "SI" => true, true => true);
 			$rs		= ( isset($aEq[strtoupper( (string) $valor)]) ) ? true : false;
@@ -517,6 +523,27 @@ class cTipos {
 	function setToUTF8(){	$this->mForceUTF		= true;	}
 	function setForceMayus(){ $this->mForceMayus = true;}
 	function setForceClean(){ $this->mForceClean = true; }
+	function cleanString($cadena, $otros = false){
+		$cleanArr	= array('/\s\s+/', '/(\")/', '[\\\\]', '/(\')/');
+		if(is_array($otros)){
+			$cleanArr	= array_merge($cleanArr,$otros);
+		}
+		$cadena 		= preg_replace($cleanArr, ' ', $cadena); //dob
+		return $cadena;
+	}	
+}
+
+function getMemoriaLibre($megas = false){
+	$multiplo	= 1;
+	$iniVal		= strtoupper(ini_get("memory_limit"));
+	if(strpos($iniVal, "M") !== false){	$multiplo = (1024 * 1000); }
+	if(strpos($iniVal, "K") !== false){	$multiplo = 1024; }
+	$iniVal		= preg_replace("/[^0-9]/", "", $iniVal);
+	$v			= ($iniVal	* $multiplo) - memory_get_peak_usage();
+	if($megas == true){
+		$v = round( (($v / 1024) /1000),0 );
+	}
+	return $v;
 }
 
 /**
@@ -549,6 +576,7 @@ class jsBasicForm {
 	
 	protected $mWidth			= 600;
 	protected $mHeigth			= 480;
+
 	
 	private $mFiltroCreditos	= "todos";
 	
@@ -1204,11 +1232,33 @@ function goSocio_(){
 }
 
 class cTableStructure{
+	public $ACTUALIZAR			= 1;
+	public $AGREGAR				= 2;	
+	public $NUEVO				= 0;
+	public $OPT_ACT_TITULO		= "actualizar_titulo";
+	
 	private $mTable		= "";
 	
 	
 	function __construct($nombre_de_la_tabla){
 		$this->mTable = $nombre_de_la_tabla;
+	}
+	function getTitulosInArray(){
+		$idx	= $this->mTable . "-general_structure-describe";
+		$xCache	= new cCache();
+		$arr	= $xCache->get($idx);
+		if(!is_array($arr)){
+			$sql 	= "SELECT * FROM general_structure WHERE
+							tabla = '" . $this->mTable . "'
+							ORDER BY tab_num, order_index ASC ";
+			$xQL	= new MQL();
+			$rs		= $xQL->getDataRecord($sql);
+			foreach ($rs as $rw){
+				$arr[$rw["campo"]] 	= $rw["titulo"];
+			}
+			$xCache->set($idx, $arr);
+		}
+		return $arr;
 	}
 	function getCampos_InArray(){
 		$sql 	= "SELECT * FROM general_structure WHERE
@@ -1273,9 +1323,7 @@ class cTableStructure{
 		$msg	= "";
 			//Elimna los registros anteriores
 			$sql_d_reg = "DELETE FROM general_structure WHERE tabla='$NTable'";
-			if($TCond =="1"){
-	
-			} else {
+			if($TCond == $this->NUEVO){
 				my_query($sql_d_reg);
 			}
 	
@@ -1324,41 +1372,46 @@ class cTableStructure{
 					}
 					//if( $EQUIV[strtoupper($field_type)] == MQL_INT||$EQUIV[strtoupper($field_type)] == MQL_FLOAT) { $ctrl = "number"; }
 					if($field_long > 75){ $ctrl 		= "textarea"; }
-					$sql_i_v 		= "'$NTable','$rowf[0]', '$valor', '$field_type', $field_long, '$titulo', '$ctrl', $i";
-					$sql_i_d 		= "INSERT INTO general_structure(tabla, campo,valor,tipo,longitud,titulo,control, order_index) VALUES ($sql_i_v)";
+					
+					$DExiste		= $xMQ->getDataRow("SELECT COUNT(*) AS 'numero' FROM general_structure WHERE tabla='$NTable' AND campo='$rowf[0]' ");
+					$existentes		= $DExiste["numero"];
+					$sqlNuevo 		= "INSERT INTO general_structure(tabla, campo,valor,tipo,longitud,titulo,control, order_index) VALUES ('$NTable','$rowf[0]', '$valor', '$field_type', $field_long, '$titulo', '$ctrl', $i)";
 					//
-					//
-					if($TCond=="1"){
-						//, control='$ctrl'
-						$siHay 		= mifila("SELECT COUNT(valor) AS 'idcnt' FROM general_structure WHERE tabla='$NTable' AND campo='$rowf[0]'", "idcnt");
-						if( $siHay > 0){
-							//
-							$upTitulo	= ( isset( $options["actualizar_titulo"] ) ) ? ", titulo='$titulo' " : "";
-							$upOrden	= "";
-							$sql_i_ 	= "UPDATE general_structure
-	    									SET valor='$valor', tipo='$field_type', longitud=$field_long
-	    									$upTitulo $upOrden
-	    									WHERE tabla='$NTable' AND campo='$rowf[0]' ";
+					//"SELECT COUNT(0) AS 'idcnt' FROM general_structure WHERE tabla='$NTable' AND campo='$rowf[0]'"
+					switch ($TCond){
+						case $this->NUEVO:
 							
-							$msg		.= "$NTable\t$rowf[0]\tACTUALIZAR\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
-						} else {
-							$sql_i_v 	= "'$NTable','$rowf[0]', '$valor', '$field_type', $field_long, '$titulo', '$ctrl', $i";
-							$sql_i_ 	= "INSERT INTO general_structure(tabla, campo,valor,tipo,longitud,titulo,control, order_index) VALUES ($sql_i_v)";
+							$xMQ->setRawQuery($sqlNuevo);
 							$msg		.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
-						}
-						my_query($sql_i_);
-					} else {
-						my_query($sql_i_d);
-						$msg			.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+							break;
+						case $this->ACTUALIZAR:
+							$upTitulo	= ( isset( $options[$this->OPT_ACT_TITULO] ) ) ? ", titulo='$titulo' " : "";
+							$upOrden	= "";
+							$sqlUpd 	= "UPDATE general_structure
+										SET valor='$valor', tipo='$field_type', longitud=$field_long $upTitulo $upOrden WHERE tabla='$NTable' AND campo='$rowf[0]' ";
+							if($existentes > 0){
+								$xMQ->setRawQuery($sqlUpd);
+								$msg	.= "$NTable\t$rowf[0]\tACTUALIZAR\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+							} else {
+								$xMQ->setRawQuery($sqlNuevo);
+								$msg	.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+							}
+							break;
+						case $this->AGREGAR:
+							if($existentes <= 0){
+								$xMQ->setRawQuery($sqlNuevo);
+								$msg	.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+							}
+							break;
 					}
-					//
-					//
-	
 					//echo "<p class='aviso'>$sql_i_d</p>";
 					$i++;
 				}
 			@mysql_free_result($rs_fields);
 		return $msg;
+	}
+	function setActualizar(){
+		$this->setStructureTableByDemand($this->AGREGAR);
 	}
 	function getNumeroDeCampos(){
 		$result		= 0;
@@ -1378,13 +1431,19 @@ class cSAFEData{
 	private $mCnn   = false;
 	
 	function __construct(){
-	    $this->connect();
+	    //$this->connect();
+	}
+	function getIDUnico($tipo){
+		$tipo	= setNoMenorQueCero($tipo);
+		switch ($tipo){
+					
+		}
 	}
 	function execQuery($sql){
-	    if ( isset($sql) ){
-			$cnn = $this->mCnn;
-			$cnn->query($sql);
-	    }
+		$xQL	= new MQL();
+		$rs 	= $xQL->setRawQuery($sql);
+		unset($xQL);
+		return ($rs == false) ? false : true;
 	}
 	function connect(){
 	    $mCnx 	= new mysqli( WORK_HOST , USR_DB, PWD_DB, MY_DB_IN, PORT_HOST);
@@ -1401,18 +1460,19 @@ class cSAFEData{
 	function setCatalogoInArray($tabla_de_tipo, $campo_clave = 0, $campo_valor = 1){
 		$DArray	= array();
 		$sql	= "SELECT * FROM $tabla_de_tipo LIMI 0,100";
-		$rs		= mysql_query($sql, $this->connect() );
-
-			while($rw = mysql_fetch_array($rs)){
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		foreach($rs as $rw){
 				$DArray[ $rw[$campo_clave] ] = $rw[$campo_valor];
-			}
+		}
+		unset($rs);
 		return $DArray;
 	}
 	function setPurgueDB(){
 		$sqlT	= array();
 		$msg	= "";
 		$xF		= new cFecha();
-		
+		$xQL	= new MQL();
 		$sqlT[]	= "DELETE FROM bancos_cuentas WHERE idbancos_cuentas != " . FALLBACK_CUENTA_BANCARIA;
 		$sqlT[]	= "DELETE FROM bancos_operaciones ";
 		
@@ -1436,7 +1496,7 @@ class cSAFEData{
 		$sqlT[]	= "DELETE FROM creditos_productos_otros_parametros ";
 		$sqlT[]	= "DELETE FROM creditos_sdpm_historico";
 		$sqlT[]	= "DELETE FROM creditos_periodos "; //WHERE idcreditos_periodos != 
-		$sqlT[]	= "DELETE FROM  creditos_rechazados ";
+		$sqlT[]	= "DELETE FROM creditos_rechazados ";
 		
 		$sqlT[]	= "DELETE FROM general_sucursales WHERE codigo_sucursal != \"matriz\" AND codigo_sucursal !='" . getSucursal() . "'  ";
 		$sqlT[]	= "DELETE FROM general_log ";
@@ -1488,7 +1548,7 @@ class cSAFEData{
 		$sqlT[]	= "DELETE FROM contable_centrodecostos WHERE idcontable_centrodecostos !=0 ";
 		$sqlT[]	= "DELETE FROM general_log ";
 
-		$sqlT[]	= "UPDATE t_03f996214fba4a1d05a68b18fece8e71 SET f_34023acbff254d34664f94c3e08d836e = md5('root') WHERE f_28fb96d57b21090705cfdf8bc3445d2a = 'root'"; //*/
+		$sqlT[]	= "UPDATE t_03f996214fba4a1d05a68b18fece8e71 SET f_34023acbff254d34664f94c3e08d836e = getHash('root') WHERE f_28fb96d57b21090705cfdf8bc3445d2a = 'root'"; //*/
 
 		
 		//TODO: Actualizar nombre de la tabla
@@ -1511,18 +1571,34 @@ class cSAFEData{
 		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '' WHERE `idgeneral_contratos` = '5' ";
 		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '' WHERE `idgeneral_contratos` = '9' ";
 		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '' WHERE `idgeneral_contratos` = '8' ";
-
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '102' ";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '103' ";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '104' ";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '105' ";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '106'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '107'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '201'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '202'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '203'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '220'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '900'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '2011'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '2012'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '2013'";
+		$sqlT[]	= "DELETE FROM `creditos_tipoconvenio` WHERE `idcreditos_tipoconvenio` = '2014'";
+		
 		//$sqlT[]	= "DELETE FROM  ";
-		$sqlT[]	= "DELETE FROM  creditos_otros_datos ";
-		$sqlT[]	= "DELETE FROM  `aml_perfil_egresos_por_persona` ";
-		$sqlT[]	= "DELETE FROM  `historial_de_pagos` ";
-		$sqlT[]	= "DELETE FROM  `operaciones_archivo_de_facturas` ";
-		$sqlT[]	= "DELETE FROM  `personas_operaciones_recursivas` ";
-		$sqlT[]	= "DELETE FROM  `personas_relaciones_recursivas` ";
-		$sqlT[]	= "DELETE FROM  `tesoreria_caja_arqueos` ";
-		//$sqlT[]	= "DELETE FROM  ";
-		//$sqlT[]	= "DELETE FROM  ";
-		//$sqlT[]	= "DELETE FROM  ";
+		$sqlT[]	= "DELETE FROM creditos_otros_datos ";
+		$sqlT[]	= "DELETE FROM `aml_perfil_egresos_por_persona` ";
+		$sqlT[]	= "DELETE FROM `historial_de_pagos` ";
+		$sqlT[]	= "DELETE FROM `operaciones_archivo_de_facturas` ";
+		$sqlT[]	= "DELETE FROM `personas_operaciones_recursivas` ";
+		$sqlT[]	= "DELETE FROM `personas_relaciones_recursivas` ";
+		$sqlT[]	= "DELETE FROM `tesoreria_caja_arqueos` ";
+		$sqlT[]	= "DELETE FROM `aml_personas_descartadas`";
+		$sqlT[]	= "DELETE FROM `creditos_destino_detallado`";
+		$sqlT[]	= "DELETE FROM `programacion_de_avisos`";
+		$sqlT[]	= "DELETE FROM `creditos_presupuestos`";
 		
 		$sqlT[]	= "UPDATE `socios_general` SET `nombrecompleto` = 'REGISTRO_INICIAL_FINANCIERA' WHERE `codigo` = '10000'";
 		
@@ -1565,26 +1641,104 @@ class cSAFEData{
 		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '' WHERE `idgeneral_contratos` = '801'";
 		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '' WHERE `idgeneral_contratos` = '4'";
 		$sqlT[]	= "INSERT INTO `contable_centrodecostos` (`idcontable_centrodecostos`, `nombre_centrodecostos`) VALUES ('1', 'POR DEFECTO')";
+		$sqlT[]	= "TRUNCATE `tmp_creditos_mensuales_cnivelsalarial`";
+		$sqlT[]	= "TRUNCATE `tmp_personas_extranjeras`";
+		$sqlT[]	= "TRUNCATE `creditos_plan_de_pagos`";
+		//$sqlT[]	= "";
+		$sqlT[]	= "TRUNCATE `creditos_productos_otros_parametros`";
+		
+		$sqlT[]	= "ALTER TABLE `creditos_sdpm_historico` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `operaciones_mvtos` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `general_folios` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `personas_operaciones_recursivas` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `contable_polizas_proforma` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `aml_risk_catalog` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `operaciones_recibos` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `seguimiento_llamadas` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `contable_movimientos` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `contable_polizas` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `empresas_operaciones` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE  `empresas_cobranza` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `socios_vivienda` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `socios_relaciones` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `socios_patrimonio` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `socios_aeconomica` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `seguimiento_llamadas` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `seguimiento_compromisos` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `personas_perfil_transaccional` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `personas_documentacion` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `aml_alerts` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `personas_operaciones_recursivas` AUTO_INCREMENT = 1";
+		$sqlT[]	= "ALTER TABLE `usuarios_web_connected` AUTO_INCREMENT = 1 ";
+		$sqlT[]	= "INSERT INTO `operaciones_mvtos`(`idoperaciones_mvtos`) VALUES (1)";			//Operacion null
+		
+		$sqlT[]	= "TRUNCATE creditos_montos";
+		$sqlT[]	= "TRUNCATE `tmp_personas_estadisticas`";
+		$sqlT[]	= "TRUNCATE `entidad_calificacion`";
+		//== 2017 04 11
+		$sqlT[]	= "TRUNCATE `aml_riesgo_producto`";
+		$sqlT[]	= "TRUNCATE `creditos_datos_originacion`";
+		$sqlT[]	= "TRUNCATE `tmp_creds_prox_letras`";
+		$sqlT[]	= "TRUNCATE `personas_consulta_lista`";
+		$sqlT[]	= "TRUNCATE `tmp_personas_domicilios`";
+		$sqlT[]	= "TRUNCATE `tmp_personas_geografia`";
+		$sqlT[]	= "TRUNCATE `sistema_eliminados`";
+		$sqlT[]	= "TRUNCATE `sistema_eliminados`";
+		$sqlT[]	= "TRUNCATE `mercadeo_envios`";
+		$sqlT[]	= "TRUNCATE `personas_checklist`";
+		$sqlT[]	= "TRUNCATE `entidad_creditos_proyecciones`";
+		//$sqlT[]	= "";
+		
+		//==
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '1003' ";
+		$sqlT[]	= "DELETE FROM `general_contratos` WHERE `idgeneral_contratos` = '1005'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '102'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '191'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '20010'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '21'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<p>variable_encabezado_de_reporte</p>\r\n\r\n<h1>CARTA DE ENTREGA</h1>\r\n\r\n<h2 style=\"text-align:right\">BUENO POR <strong>variable_monto_del_recibo</strong></h2>\r\n\r\n<p>RECIBI DE LA SOCIEDAD MERCANTIL , ENTIDAD NO REGULADA, LA CANTIDAD DE <strong>variable_monto_del_recibo</strong>&nbsp; SON : ( <strong>variable_monto_del_recibo_en_letras</strong> ).</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<h4 style=\"text-align:right\">variable_lugar a variable_docto_fecha_larga_actual</h4>\r\n\r\n<h2>RECIB&Iacute;</h2>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<h4>_____________________</h4>\r\n\r\n<h4><strong>variable_nombre_del_socio</strong></h4>\r\n\r\n<p>variable_pie_de_reporte</p>\r\n' WHERE `idgeneral_contratos` = '200'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '1503'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '9002'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '9001'";
+		$sqlT[]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<!-- contenido -->' WHERE `idgeneral_contratos` = '9003'";
+		//$sqlT[]	= "";
 		
 		
+		$sqlT[]	= "CALL `proc_creditos_a_final_de_plazo`";
+		$sqlT[]	= "CALL `proc_creditos_abonos_por_mes`";
+		$sqlT[]	= "CALL `proc_creditos_letras_pendientes`";
+		$sqlT[]	= "CALL `proc_historial_de_pagos`";
+		$sqlT[]	= "CALL `proc_listado_de_ingresos`";
+		$sqlT[]	= "CALL `proc_perfil_egresos_por_persona`";
+		$sqlT[]	= "CALL `proc_personas_operaciones_recursivas`";
+		$sqlT[]	= "CALL `sp_clonar_actividades`";
+		$sqlT[]	= "CALL `proc_creditos_letras_del_dia`()";
+		$sqlT[]	= "CALL `proc_personas_extranjeras`()";
+		$sqlT[]	= "CALL `sp_setFoliosAlMaximo`()";
+		
+		$sqlT[]	= "UPDATE `general_estados` SET `operacion_habilitada`=1";
+		$sqlT[]	= "CALL `proc_colonias_activas`";
+		$sqlT[]	= "UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `f_28fb96d57b21090705cfdf8bc3445d2a`='default', `f_34023acbff254d34664f94c3e08d836e`=getHash(NOW()),`f_f2cd801e90b78ef4dc673a4659c1482d`=1,`estatus`='baja' WHERE `idusuarios`=1 ";
+		//$sqlT[]	= "";
+		//$sqlT[]	= "";
+		//$sqlT[]	= "";
+		//$sqlT[]	= "";
 		foreach($sqlT as $id => $sql){
-			$x = my_query( $sql );
-			if ($x[SYS_ESTADO] != false){
-				if(isset($x[SYS_INFO])){
-					$msg	.= "OK\t" . $xF->getMarca() ."\t" . $x[SYS_INFO] . " SQL : $sql\r\n";
-				} else {
-					$msg	.= "OK\t" . $xF->getMarca() ."\tSQL : $sql \r\n";
-				}
+			$x	= $xQL->setRawQuery($sql);
+			//$isUpdate	= (strpos($sql, "DELETE") !== false ) ? true : false;
+			//$isDelete	= (strpos($sql, "DELETE") !== false ) ? true : false;
+			
+			if($x === false){
+				$msg	.= "ERROR\tSe fallo al ejecutar : [$sql] \r\n";
 			} else {
-				if(isset($x[SYS_ERROR])){
-					$msg	.= "ERROR\t" . $xF->getMarca() ."\t" . $x[SYS_ERROR] . " SQL : $sql \r\n";
-				} else {
-					$msg	.= "ERROR\t" . $xF->getMarca() ."- \tSQL : $sql \r\n";
-				}				
+				$msg	.= "OK\tEjecucion exitosa : [$sql] \r\n";
 			}
+
 		}
+		//Reparar tablas
+		$this->setCheckDatabase();
 		//llevar los folios al maximo
-		$msg		.= setFoliosAlMaximo();
+		setFoliosAlMaximo();
 		//
 		$xRec		= new cReciboDeOperacion(12);
 		$idrecibo	=  $xRec->setNuevoRecibo(1,1,fechasys(), 1, 12, "CIERRE_ESTABLECIDO_POR_DEFECTO", "NA", "ninguno", "NA", DEFAULT_GRUPO);
@@ -1603,7 +1757,7 @@ class cSAFEData{
 		$xSoc->setOmitirAML();
 		$xSoc->add(EACP_NAME, "", "", EACP_RFC, "", getCajaLocal(), EACP_FECHA_DE_CONSTITUCION, EACP_LOCALIDAD);
 		$xSoc->addVivienda(EACP_DOMICILIO_CORTO, "", EACP_CODIGO_POSTAL, "", "", EACP_TELEFONO_PRINCIPAL, "", true, 1,1,99, EACP_COLONIA, "calle", "", EACP_CLAVE_DE_LOCALIDAD, EACP_CLAVE_DE_PAIS);
-		my_query("INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `estatusactual`, `cajalocal`, `sucursal`) VALUES ('10000', 'MICROFINANCIERA', '10', '1', 'matriz')");	
+		$xQL->setRawQuery("INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `estatusactual`, `cajalocal`, `sucursal`) VALUES ('10000', '" . EACP_NAME . "', '10', '1', '" . getSucursal() . "')");	
 		return $msg;
 	}
 	function setPurgueSucursal($sucursal = false ){
@@ -1641,7 +1795,7 @@ class cSAFEData{
 				    OR
 				    (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%IMPORT%') ";
 		my_query($sqlUsrs);
-		$xTab		= new cSAFETabla();
+		$xTab		= new cSQLTabla();
 		$arrT		= $xTab->getTablasConOperaciones();
 		
 		$msg	= "=============\tSUCURSAL:\t$sucursal \r\n";
@@ -1662,16 +1816,19 @@ class cSAFEData{
 	 * @return	string		Texto de los resultados de las consultas
 	 * */
 	function setLowerSucursal(){
-
-		$sqlST	= "SHOW TABLES IN " . MY_DB_IN;
-		$rs		= mysql_query($sqlST, cnnGeneral() );
 		$msg	= "============= \tREPARANDO DATOS DE SUCURSAL \r\n";
-
-		while( $rw = mysql_fetch_array($rs) ){
-			$table 		= $rw[0];
-			$sqlMT		= "UPDATE $table SET sucursal = LCASE(sucursal) ";
-			$x			=  my_query($sqlMT);
-			$msg		.= $x["info"];
+		$xQL	= new MQL();
+		$sql	= "SELECT DISTINCT TABLE_NAME, COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE COLUMN_NAME IN ('sucursal', 'centro_de_trabajo')
+        AND TABLE_SCHEMA='" . MY_DB_IN ."'";
+		$rs		= $xQL->getDataRecord($sql);
+		foreach ($rs as $rw){
+			$tabla	= $rw["TABLE_NAME"];
+			$col	= $rw["COLUMN_NAME"];
+			$sqlMT	= "UPDATE $tabla SET `$col` = IF(TRIM(`$col`)='', 'matriz', LCASE(`$col`)) ";
+			$ready	= $xQL->setRawQuery($sqlMT);	
+			$msg	.= ($ready == false) ? "ERROR\tAl actualizar la columna $col en la Tabla $tabla\r\n" : "OK\tColumna $col de la Tabla $tabla Actualizada\r\n";
 		}
 		return $msg;
 	}
@@ -1682,17 +1839,18 @@ class cSAFEData{
 	 * */
 	function clearCacheSessions(){
 		$sql = "DELETE FROM usuarios_web_connected";
-		my_query($sql);
+		$this->execQuery($sql);
 	}
 
 	function setFoliosAlMaximo(){
+		$xQL	= new MQL();
 		$arrDev = array();
 			/*
 			 * Actualiza los Folios a Maximos
 			 */
 			//elimina los registros
 			$sql_t = "DELETE FROM general_folios";
-			my_query($sql_t);
+			$xQL->setRawQuery($sql_t);
 			//Busca los Maximos
 			$sql_u_ops	= "INSERT INTO general_folios(	numerooperacion, numerocredito, numerosocio, numerocontrato , numeroestadistico, numerorecibo, 
 				numerogposolidario , polizacontable) VALUES( 
@@ -1704,37 +1862,41 @@ class cSAFEData{
 				COALESCE( ( SELECT MAX(idoperaciones_recibos) FROM operaciones_recibos ), 0), 
 				COALESCE( ( SELECT MAX(idsocios_grupossolidarios) FROM socios_grupossolidarios ), 0),
 				'')";
-			my_query($sql_u_ops);
+			$xQL->setRawQuery($sql_u_ops);
 			$arrDev["recibos"] 		= 0;
 			$arrDev["operaciones"] 	= 0;
 			return $arrDev;
 	}
 	function setCheckDatabase(){
+		/*$ql		= new MQL();
+		$rs		= $ql->getDataRecord("SHOW TABLES");
+		foreach ($rs as $rw){
+			$t	= $rw["Tables_in_". MY_DB_IN];
+			$ql->setRawQuery("OPTIMIZE TABLE $t");
+		}
+		$rs		= null;*/
 		exec( "mysqlcheck --user=" . USR_DB . " --password=" . PWD_DB . " --databases " . MY_DB_IN . " --auto-repair --optimize " );
 	//exec	mysqlcheck --user=root --password= --databases matriz --auto-repair
-	}
-	function getRecordset($SQL){
-		 //mysql_query($sql, cnnGeneral());
-		 //$xQ	= new mysqli_result()
 	}
 	function setCrearEjemplos(){
 		$sqlT	= array();
 		$msg	= "";
 		$xF		= new cFecha();
-		$msg		.= setFoliosAlMaximo();
+		$msg	.= setFoliosAlMaximo();
+		$ff		= $xF->getFechaISO();
 		
 		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `apellidopaterno`, `apellidomaterno`, `rfc`, `curp`, `estatusactual`, `cajalocal`, `lugarnacimiento`,
-`tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`, `dependientes_economicos`) VALUES
-('99999', 'SUJETO DE', 'PRUEBAS', 'PARA REPORTAR', 'NNGL000000', 'NGL000000', '10', '1', 'YC,MERIDA', '200', '1', '1', 'SRNC6900601', 'matriz', 'IFE9999999', 'software@grupopadio.com.mx', '9811098164', '1')";
+				`tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`, `dependientes_economicos`) VALUES
+				('99999', 'SUJETO DE', 'PRUEBAS', 'PARA REPORTAR', 'NNGL000000', 'NGL000000', '10', '1', 'YC,MERIDA', '200', '1', '1', 'SRNC6900601', 'matriz', 'IFE9999999', 'software@grupopadio.com.mx', '9811098164', '1')";
 		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `rfc`, `curp`, `fechaentrevista`, `fechaalta`, `estatusactual`, `cajalocal`, `fechanacimiento`, `lugarnacimiento`,
-`tipoingreso`, `genero`, `eacp`, `sucursal`, `fecha_de_revision`, `tipo_de_identificacion`, `correo_electronico`, `telefono_principal`,
-`dependientes_economicos`, `titulo_personal`) VALUES ('99998', 'PERSONA DE EJEMPLO',
-'RFC0000000', 'CURP00000000', '2014-01-01', '2014-01-01', '10', '1', '1981-08-22', 'MERIDA,YUCATAN', '500', '1', 'SRN69300601', 'matriz', '2014-01-01', '99', 'admin@sipakal.com', '9811098164', '4', 'SR')";
+				`tipoingreso`, `genero`, `eacp`, `sucursal`, `fecha_de_revision`, `tipo_de_identificacion`, `correo_electronico`, `telefono_principal`,
+				`dependientes_economicos`, `titulo_personal`) VALUES ('99998', 'PERSONA DE EJEMPLO',
+				'RFC0000000', 'CURP00000000', '$ff', '$ff', '10', '1', '1981-08-22', 'MERIDA,YUCATAN', '500', '1', 'SRN69300601', 'matriz', '$ff', '99', 'admin@sipakal.com', '9811098164', '4', 'SR')";
 		$sqlT[]	= "INSERT INTO `socios_aeconomica` (`socio_aeconomica`, `tipo_aeconomica`, `sector_economico`, `nombre_ae`, `domicilio_ae`, `localidad_ae`, `municipio_ae`,
-`estado_ae`, `telefono_ae`, `extension_ae`, `numero_empleado`, `antiguedad_ae`, `departamento_ae`, `monto_percibido_ae`, `fecha_alta`, `sucursal`, `oficial_de_verificacion`, `numero_de_seguridad_social`) VALUES ('99999', '10', '1', 'EMPRESA DE EJEMPLO, S.A. DE C.V.', 'DOMICILIO CONOCIDO, MERIDA YUCATAN.', 'Merida', 'Merida', 'Yucatan', '9811098164', '0', '0', '2266', 'NA', '7000', '2014-01-01', 'matriz', '99', '0000000000')";
+					`estado_ae`, `telefono_ae`, `extension_ae`, `numero_empleado`, `antiguedad_ae`, `departamento_ae`, `monto_percibido_ae`, `fecha_alta`, `sucursal`, `oficial_de_verificacion`, `numero_de_seguridad_social`) VALUES ('99999', '10', '1', 'EMPRESA DE EJEMPLO, S.A. DE C.V.', 'DOMICILIO CONOCIDO, MERIDA YUCATAN.', 'Merida', 'Merida', 'Yucatan', '9811098164', '0', '0', '2266', 'NA', '7000', '$ff', 'matriz', '99', '0000000000')";
 		$sqlT[]	= "INSERT INTO `socios_aeconomica` (`socio_aeconomica`, `tipo_aeconomica`, `sector_economico`, `nombre_ae`, `domicilio_ae`, `localidad_ae`, `municipio_ae`,
-`estado_ae`, `telefono_ae`, `extension_ae`, `numero_empleado`, `antiguedad_ae`, `departamento_ae`, `monto_percibido_ae`, `fecha_alta`, `sucursal`, `oficial_de_verificacion`, `numero_de_seguridad_social`) VALUES ('99998', '10', '1', 'EMPRESA DE EJEMPLO, S.A. DE C.V.', 'DOMICILIO CONOCIDO, MERIDA YUCATAN.', 'Merida', 'Merida', 'Yucatan', '9811098164', '0', '0', '2266', 'NA', '7000', '2014-01-01', 'matriz', '99', '0000000000')";
-		$sqlT[]	= "INSERT INTO `creditos_solicitud` (`numero_solicitud`, `fecha_solicitud`, `fecha_autorizacion`, `monto_solicitado`, `monto_autorizado`, `numero_socio`, `plazo_en_dias`, `numero_pagos`, `tasa_interes`, `periocidad_de_pago`, `tipo_credito`, `fecha_vencimiento`, `pagos_autorizados`, `dias_autorizados`, `periodo_solicitudes`, `fecha_ultimo_mvto`, `tipo_convenio`, `interes_diario`, `tasa_moratorio`, `fecha_ministracion`) VALUES ('29000201', '2014-01-01', '2014-01-01', '120000', '120000', '99999', '360', '24', '0.6', '15', '3', '2014-12-31', '24', '365', '201499', '2014-01-01', '200', '10', '1.2', '2014-01-01')";
+					`estado_ae`, `telefono_ae`, `extension_ae`, `numero_empleado`, `antiguedad_ae`, `departamento_ae`, `monto_percibido_ae`, `fecha_alta`, `sucursal`, `oficial_de_verificacion`, `numero_de_seguridad_social`) VALUES ('99998', '10', '1', 'EMPRESA DE EJEMPLO, S.A. DE C.V.', 'DOMICILIO CONOCIDO, MERIDA YUCATAN.', 'Merida', 'Merida', 'Yucatan', '9811098164', '0', '0', '2266', 'NA', '7000', '$ff', 'matriz', '99', '0000000000')";
+		$sqlT[]	= "INSERT INTO `creditos_solicitud` (`numero_solicitud`, `fecha_solicitud`, `fecha_autorizacion`, `monto_solicitado`, `monto_autorizado`, `numero_socio`, `plazo_en_dias`, `numero_pagos`, `tasa_interes`, `periocidad_de_pago`, `tipo_credito`, `fecha_vencimiento`, `pagos_autorizados`, `dias_autorizados`, `periodo_solicitudes`, `fecha_ultimo_mvto`, `tipo_convenio`, `interes_diario`, `tasa_moratorio`, `fecha_ministracion`) VALUES ('29000201', '$ff', '$ff', '120000', '120000', '99999', '360', '24', '0.6', '15', '3', '2014-12-31', '24', '365', '201499', '$ff', '200', '10', '1.2', '$ff')";
 		$sqlT[]	= "INSERT INTO `personas_perfil_transaccional` (`clave_de_persona`, `fecha_de_registro`, `fecha_de_vencimiento`, `clave_de_tipo_de_perfil`, `pais_de_origen`, `maximo_de_operaciones`, `cantidad_maxima`, `operaciones_calculadas`, `cantidad_calculada`, `fecha_de_calculo`, `afectacion`, `observaciones`) VALUES ('99999', '1394172000', '1394172000', '101', 'MX', '10', '10000', '0', '0', '1394172000', '-1', '')";
 		$sqlT[]	= "INSERT INTO `personas_perfil_transaccional` (`clave_de_persona`, `fecha_de_registro`, `fecha_de_vencimiento`, `clave_de_tipo_de_perfil`, `pais_de_origen`, `maximo_de_operaciones`, `cantidad_maxima`, `operaciones_calculadas`, `cantidad_calculada`, `fecha_de_calculo`, `afectacion`, `observaciones`) VALUES ('99999', '1394172000', '1394172000', '201', 'MX', '5', '50000', '0', '0', '1394172000', '-1', '')";
 		$sqlT[]	= "INSERT INTO `personas_perfil_transaccional` (`clave_de_persona`, `fecha_de_registro`, `fecha_de_vencimiento`, `clave_de_tipo_de_perfil`, `pais_de_origen`, `maximo_de_operaciones`, `cantidad_maxima`, `operaciones_calculadas`, `cantidad_calculada`, `fecha_de_calculo`, `afectacion`, `observaciones`) VALUES ('99999', '1394172000', '1394172000', '301', 'MX', '5', '50000', '0', '0', '1394172000', '-1', '')";
@@ -1743,21 +1905,20 @@ class cSAFEData{
 		$sqlT[]	= "INSERT INTO `creditos_tipoconvenio` (`idcreditos_tipoconvenio`, `descripcion_tipoconvenio`, `tipo_convenio`, `numero_creditos_maximo`, `dias_maximo`, `pagos_maximo`, `interes_normal`, `interes_moratorio`, `maximo_otorgable`, `tolerancia_dias_primer_abono`, `numero_avales`, `minimo_otorgable`, `php_monto_maximo`, `tasa_iva`) VALUES ('501', 'EJEMPLO DIARIO', '501', '10', '180', '180', '6.896551724', '6.896551724', '1', '20', '0', '100', '\$monto_maximo = \$producto_monto_maximo;', '0.16')";
 		$sqlT[]	= "UPDATE `creditos_tipoconvenio` SET `maximo_otorgable` = '1000000' WHERE `idcreditos_tipoconvenio` = '501'";
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = '99' WHERE `nombre_del_parametro` = 'clave_de_usuario_del_oficial_de_cumplimiento'";
-		$sqlT[]	= "INSERT INTO `matriz`.`t_03f996214fba4a1d05a68b18fece8e71` 
+		$sqlT[]	= "INSERT INTO `t_03f996214fba4a1d05a68b18fece8e71` 
 				(`idusuarios`, `f_28fb96d57b21090705cfdf8bc3445d2a`, `f_34023acbff254d34664f94c3e08d836e`, `nombres`, `apellidopaterno`, `apellidomaterno`, `puesto`, 
 				`f_f2cd801e90b78ef4dc673a4659c1482d`, `periodo_responsable`, `date_expire`, `codigo_de_persona`) 
 				VALUES 
-				('400', 'cajero', MD5('cajero'), 'CAJERO', 'DE', 'PRUEBA', 'Cajero', '4', '400', '2014-01-01', '1'),
-				('1000', 'cumplimiento', MD5('cumplimiento'), 'OFICIAL', 'DE', 'CUMPLIMIENTO', 'Oficial de Cumplimiento', '10', '1000', '2014-01-01', '1'),
-				('600', 'contabilidad', MD5('contabilidad'), 'USUARIO', 'DE', 'CONTABILIDAD', 'Contabilidad', '6', '600', '2014-01-01', '1'),
-				('700', 'credito', MD5('credito'), 'OFICIAL', 'DE', 'CREDITO', 'Oficial de Credito', '7', '700', '2014-01-01', '1')
+				('400', 'cajero', getHash('cajero'), 'CAJERO', 'DE', 'PRUEBA', 'Cajero', '4', '400', '$ff', '1'),
+				('1000', 'cumplimiento', getHash('cumplimiento'), 'OFICIAL', 'DE', 'CUMPLIMIENTO', 'Oficial de Cumplimiento', '10', '1000', '$ff', '1'),
+				('600', 'contabilidad', getHash('contabilidad'), 'USUARIO', 'DE', 'CONTABILIDAD', 'Contabilidad', '6', '600', '$ff', '1'),
+				('700', 'credito', getHash('credito'), 'OFICIAL', 'DE', 'CREDITO', 'Oficial de Credito', '7', '700', '$ff', '1')
 		";
-		$sqlT[]	= "INSERT INTO `matriz`.`t_03f996214fba4a1d05a68b18fece8e71`
+		$sqlT[]	= "INSERT INTO `t_03f996214fba4a1d05a68b18fece8e71`
 				(`idusuarios`, `f_28fb96d57b21090705cfdf8bc3445d2a`, `f_34023acbff254d34664f94c3e08d836e`, `nombres`, `apellidopaterno`, `apellidomaterno`, `puesto`,
 				`f_f2cd801e90b78ef4dc673a4659c1482d`, `periodo_responsable`, `date_expire`, `codigo_de_persona`)
 				VALUES
-				('100', 'remoteuser', MD5('remoteuser'), 'TRABAJOS', '', 'AUTOMATICOS', 'Trabajos automaticos', '7', '100', '2014-01-01', '1')
-		";		
+				('100', 'remoteuser', getHash('remoteuser'), 'TRABAJOS', '', 'AUTOMATICOS', 'Trabajos automaticos', '7', '100', '$ff', '1')	";		
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'remoteuser' WHERE `nombre_del_parametro` = 'contrasenna_de_trabajos_automaticos' ";
 		$sqlT[]	= "INSERT INTO `bancos_entidades` (`idbancos_entidades`, `nombre_de_la_entidad`, `rfc_de_la_entidad`, `pais_de_origen`) VALUES ('700', 'EL BANCO EXTRANJERO', 'EXT99999', 'US')";
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = '99999' WHERE `nombre_del_parametro` = 'registro_ante_la_cnbv'";
@@ -1781,28 +1942,25 @@ class cSAFEData{
 		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `apellidopaterno`, `apellidomaterno`, `rfc`, `curp`, `estatusactual`, `cajalocal`, `fechanacimiento`, `lugarnacimiento`, `tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`) VALUES ('90001', 'LUIS HUMBERTO', 'BALAM', 'GONZALEZ', 'BAGL810822VE5', 'BAGL810822HCCLNS12', '10', '1', '1981-08-22', 'CC,CAMPECHE', '200', '1', '1', 'SRN69300601', 'matriz', 'IFE1000000', 'patadejaguar@gmail.com', '9811371867'); ";
 		$sqlT[]	= "UPDATE `socios_general` SET `correo_electronico` = 'luis.balam@opencorebanking.com' WHERE `codigo` = '90001' ";
 		$sqlT[]	= "UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `codigo_de_persona` = '99999' WHERE `idusuarios` != '99'";
-		$sqlT[]	= "INSERT INTO `bancos_cuentas` (`idbancos_cuentas`, `descripcion_cuenta`, `fecha_de_apertura`, `estatus_actual`, `consecutivo_actual`, `saldo_actual`, `codigo_contable`, `entidad_bancaria`) VALUES ('12000', 'BANCO DE PRUEBA', '2014-01-01', 'activo', '00001', '100000', '110215', '50')";
-		//$sqlT[]	= "";
+		$sqlT[]	= "INSERT INTO `bancos_cuentas` (`idbancos_cuentas`, `descripcion_cuenta`, `fecha_de_apertura`, `estatus_actual`, `consecutivo_actual`, `saldo_actual`, `codigo_contable`, `entidad_bancaria`) VALUES ('12000', 'BANCO DE PRUEBA', '$ff', 'activo', '00001', '100000', '110215', '50')";
+
+		$sqlT[]	= "INSERT INTO `creditos_periodos` (`idcreditos_periodos`, `descripcion_periodos`, `fecha_inicial`, `fecha_final`, `fecha_reunion`) VALUES ('201799', 'Periodo General', '2017-01-01', '2017-12-31', '2017-12-31');";
 		
+		//$sqlT[]	= "";
+		$xQL	= new MQL();
 		foreach($sqlT as $id => $sql){
-			$x = my_query( $sql );
-			if ($x[SYS_ESTADO] != false){
-				if(isset($x[SYS_INFO])){
-					$msg	.= "OK\t" . $xF->getMarca() ."\t" . $x[SYS_INFO] . "\r\n";
-				} else {
-					$msg	.= "OK\t" . $xF->getMarca() ."\tSQL : $sql \r\n";
-				}
+			$x = $xQL->setRawQuery( $sql );
+			if($x === false){
+				$msg	.= "ERROR\tNo echo ($sql)!\r\n";
 			} else {
-				if(isset($x[SYS_ERROR])){
-					$msg	.= "ERROR\t" . $xF->getMarca() ."\t" . $x[SYS_ERROR] . "\r\n";
-				} else {
-					$msg	.= "ERROR\t" . $xF->getMarca() ."- \tSQL : $sql \r\n";
-				}
+				$msg	.= "OK\techo!\r\n";
 			}
 		}
 		//llevar los folios al maximo
 		return $msg;
 	}
+	
+	
 }
 function getUsuarioActual($parametro = false){
 	$usr	= false;
@@ -1851,25 +2009,40 @@ function getVariablesSanas($contents, $vars){
 	}
 	return $contents;
 }
+function getEnCierre($v = null){
+	if(!isset($_SESSION)){
+		return false;
+	} else {
+		if(!isset($_SESSION["oncierre"])){
+			$_SESSION["oncierre"] = false;
+		}
+		if($v !== null){
+			$_SESSION["oncierre"] = $v;
+		}
+		return $_SESSION["oncierre"];
+	}
+}
 
 class cCierreDelDia {
-	private $mFecha		= false;
-	private $mMessages			= "";
-	
+	private $mFecha			= false;
+	private $mMessages		= "";
+	private $mFechaUltima	= false;
+	private $mForce			= false;
 	function __construct($fecha = false){
 		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
 	}
+	function setForzar($forzar = false){ $this->mForce = $forzar; }
 	function checkCierre($fecha = false){
-		$fecha		= ($fecha == false) ? $this->mFecha : $fecha;
-		$sql		= "SELECT COUNT(idoperaciones_recibos) AS 'recibos' FROM operaciones_recibos WHERE fecha_operacion='$fecha' AND tipo_docto=12 ";
-		$recibos	= mifila($sql, "recibos");
-		$recibos	= setNoMenorQueCero($recibos);
-		$xCaja		= new cCaja();
-		//if(MODULO_CAJA_ACTIVADO == true){
-		if($xCaja->getCajasAbiertas($fecha) > 0 ){ $this->mMessages	.= "ERROR\tFecha $fecha tiene cortes pendientes\r\n"; }
-		//}
-		if ($recibos > 0){ $this->mMessages	.= "WARN\tFecha $fecha Existe en el cierre\r\n"; }
-				
+		$recibos	= 0;
+		if($this->mForce == false){
+			$fecha		= ($fecha == false) ? $this->mFecha : $fecha;
+			$sql		= "SELECT COUNT(idoperaciones_recibos) AS 'recibos' FROM operaciones_recibos WHERE fecha_operacion='$fecha' AND tipo_docto=12 ";
+			$recibos	= mifila($sql, "recibos");
+			$recibos	= setNoMenorQueCero($recibos);
+			$xCaja		= new cCaja();
+			if($xCaja->getCajasAbiertas($fecha) > 0 ){ $this->mMessages	.= "ERROR\tFecha $fecha tiene cortes pendientes\r\n"; }
+			if ($recibos > 0){ $this->mMessages	.= "WARN\tFecha $fecha Existe en el cierre\r\n"; }
+		}
 		return ($recibos == 0) ? false : true;
 	}
 	function check5Cierres($fecha_final, $alCerrar = false){
@@ -1905,24 +2078,37 @@ class cCierreDelDia {
 					$res[$fecha]		= false;
 					$ok					= false;
 					$this->mMessages	.= "ERROR\tFecha $fecha No existe en el sistema\r\n";
+					if($this->mFechaUltima === false){
+						$this->mFechaUltima	= $fecha;
+					}
 					if($xF->getInt($fecha) == $xF->getInt($fecha_final) ){
 						$this->mMessages	.= "ERROR\tPROCESAR LA FECHA $fecha_final|$fecha LAS FECHAS SON LAS MISMAS A " . fechasys() . "\r\n";
 						$res[$fecha]		= true;
 						$ok					= true;
-					} 
+					}
+					if(MODO_MIGRACION == true AND $ok == false){
+						$res[$fecha]		= true;
+						$ok					= true;
+						$this->mMessages	.= "OK\tSistema en Migracion a la Fecha $fecha_final|$fecha\r\n";
+					}
 				} else {
 					$res[$fecha]		= true;
 					$ok					= true;
 					$this->mMessages	.= "OK\tFecha $fecha existente\r\n";
 				}
 			}
-			$xCaja					= new cCaja();
+			
+			$xCaja						= new cCaja();
 			if ($alCerrar == true){
 				if($xCaja->getCajasAbiertas($fecha) > 0 ){
 					$ok					= false;
 					$res[$fecha]		= false;
 					$this->mMessages	.= "OK\tFecha $fecha tiene cortes pendientes\r\n";
 				}
+			}
+			if($this->mForce == true){
+				$res[$fecha]		= true;
+				$ok					= true;
 			}
 		}
 		unset($res[fechasys()]);
@@ -1940,6 +2126,7 @@ class cCierreDelDia {
 		return $res;
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function getFechaUltima(){ return $this->mFechaUltima; }
 }
 
 function estaFueraDeRango($valor, $rango_inicial, $rango_final){
@@ -1948,10 +2135,8 @@ function estaFueraDeRango($valor, $rango_inicial, $rango_final){
 	$rs		= ($valor < $rango_inicial) ? true : $rs;
 	return $rs;
 }
-function getCajaLocal(){
-	$xSucursal	= new cSucursal();
-	return $xSucursal->getCajaLocalResidente();
-}
+function getCajaLocal(){ $xSucursal	= new cSucursal();return $xSucursal->getCajaLocalResidente();}
+function getRegion(){ $xSucursal	= new cSucursal();return $xSucursal->getRegionLocal();   }
 function getAdsense(){
 	$adsense	= (SAFE_PAY_VERSION == "") ? "<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>
 <!-- SAFE-OSMS -->
@@ -1961,8 +2146,9 @@ function getAdsense(){
 }
 
 function getPalabraDeFrase($frase, $idx = 0, $separador = " "){
+	$str	= $frase;
 	$str	= (strpos($str, "+") !== false) ? urldecode($str) : $str;
-	$str	= trim($frase);
+	$str	= trim($str);
 	
 	if(strpos($str, $separador) !== false){
 		$segs	= explode($separador, $str);
@@ -2050,7 +2236,11 @@ function cleanString($text) {
 	return ($text);
 }
 
-
+function getOficialAML(){
+	$xLoc	= new cLocal();
+	$xLoc->init();
+	return $xLoc->getOficialDeCumplimiento();
+}
 
 class cLocal {
 	private $mCajaLocal				= 0;
@@ -2068,18 +2258,20 @@ class cLocal {
 	private $mCalle					= "";
 	private $mNombrePais			= "";
 	private $mColonia				= "";
+	private $mOficialDeCump			= 0;
+	private $mInit					= false;
 	function __construct($sucursal	= false){
 		$sucursal	= ($sucursal == false) ? getSucursal() : $sucursal;
 		$this->init($sucursal);
 	}
 	function init($sucursal = false){
-		$sucursal	= ($sucursal == false) ? getSucursal() : $sucursal;
-		//if( ($sucursal != getSucursal()) OR !isset($_SESSION["domicilio.cp"]) ){
+		$sucursal		= ($sucursal == false) ? getSucursal() : $sucursal;
 		$cargar			= false;
 		$cargar			= (!isset($_SESSION[SYS_LOCAL_VARS_LOAD]))? true : $cargar;
 		$cargar			= ($sucursal != getSucursal()) ? true : $cargar;
 		if(  $cargar == true ){
 			//$this->mCajaLocal
+			
 			$this->mClaveDeEstado		= EACP_CLAVE_NUM_ENTIDADFED;
 			$this->mClaveDeEstadoABC	= EACP_CLAVE_DE_ENTIDADFED;
 			$this->mClaveDeEstadoSIC	= EACP_CLAVE_DE_ENTIDAD_SIC;
@@ -2095,7 +2287,7 @@ class cLocal {
 			$this->mNumeroInt			= EACP_DOMICILIO_NUM_INT;
 			$this->mNombrePais			= EACP_DOMICILIO_PAIS;
 			$this->mColonia				= EACP_COLONIA;
-			
+			$this->mOficialDeCump		= AML_OFICIAL_DE_CUMPLIMIENTO;
 			$xSuc = new cSucursal($sucursal);
 			if( $xSuc->init() == true){
 				$this->mClaveDeEstado		= $xSuc->getClaveDeEstado();
@@ -2113,6 +2305,8 @@ class cLocal {
 				$this->mNumeroInt			= $xSuc->getNumeroInterior();
 				//$this->mNombrePais			= $xSuc->ge
 				$this->mColonia				= $xSuc->getColonia();
+				$this->mOficialDeCump		= $xSuc->getOficialDeCumplimiento();
+				$this->mInit				= true;
 			}
 			$_SESSION["domicilio.localidad"]		= $this->mLocalidad;
 			$_SESSION["domicilio.localidad.clave"]	= $this->mClaveLocalidad;
@@ -2129,8 +2323,10 @@ class cLocal {
 			$_SESSION["domicilio.numero.ext"]		= $this->mNumeroExt;
 			$_SESSION["domicilio.numero.int"]		= $this->mNumeroInt;
 			$_SESSION["domicilio.pais"]				= $this->mNombrePais;
-			$_SESSION[SYS_LOCAL_VARS_LOAD]		= true;
+			$_SESSION["oficial.aml"]				= $this->mOficialDeCump;
+			$_SESSION[SYS_LOCAL_VARS_LOAD]			= true;
 		}
+		return $this->mInit;
 	}
 	function DomicilioLocalidad($valor = false){	if($valor != false) { $_SESSION["domicilio.localidad"] = $valor; } return $_SESSION["domicilio.localidad"];	}
 	function DomicilioLocalidadClave($valor = false){ if($valor != false) { $_SESSION["domicilio.localidad.clave"] = $valor; } return $_SESSION["domicilio.localidad.clave"];	}
@@ -2149,6 +2345,7 @@ class cLocal {
 	function getCajaLocal(){ return $_SESSION["domicilio.cajalocal"];  }
 	function getNombreDePais(){ return $_SESSION["domicilio.pais"]; }
 	function DomicilioColonia(){ return $_SESSION["domicilio.colonia"]; }
+	function getOficialDeCumplimiento(){ return $_SESSION["oficial.aml"]; }
 	function getListadoDePersonasBuscadas($arrDatos, $DModel = array(), $useSound = false){
 	
 		//primerapellido segundoapellido nombre
@@ -2237,8 +2434,13 @@ class cCantidad {
 		$this->mValor	= $xT->cFloat($monto);
 		$this->mMoneda	= AML_CLAVE_MONEDA_LOCAL;
 	}
-	function moneda(){ return getFMoney($this->mValor); 	}
-	function letras(){ 	return convertirletras($this->mValor, $this->mMoneda); }
+	function moneda($cantidad = false){ 
+		return ($cantidad === false) ? getFMoney($this->mValor) : getFMoney($cantidad);
+	}
+	function letras($monto = false){
+		$monto	= (setNoMenorQueCero($monto) <= 0) ? $this->mValor : $monto; 	
+		return convertirletras($monto, $this->mMoneda);
+	}
 	function v(){ return setNoMenorQueCero($this->mValor, 2); }
 	function diff($cantidad){
 		$xT	= new cTipos();
@@ -2257,6 +2459,9 @@ class cCantidad {
 	function getOtros($v){ return (isset($this->mArrData[$v])) ? $this->mArrData[$v] : null; }
 	function getClaveDeMoneda(){ return $this->mMoneda; }
 	function getNumero(){ return $this->mNumero; }
+	function getFicha(){
+		return "<div class='tx1'><div class='cantidad-moneda' style='min-width:24%'>" . $this->moneda() . "</div><div class='cantidad-letras' style='min-width:74%'>" . $this->letras() . "</div></div>";
+	}
 }
 
 /*================================================================= CLASE PARA MIGRAR ============================================*/
@@ -2616,20 +2821,283 @@ function convertirletras_porcentaje($numero){
 	return $numf." PUNTO $cents POR CIENTO";
 }
 
-function getEsModuloMostrado($tipo_de_usuario){
+function getEsModuloMostrado($tipo_de_usuario, $contexto = false){
 	$acceder		= false;
+	$lvl			= getUsuarioActual(SYS_USER_TIPO);
+	//$xUsr			= new cSystemUser();
+	
+	
 	if( OPERACION_LIBERAR_ACCIONES == true OR MODO_DEBUG == true){
 		$acceder	= true;
+		
 	} else {
-		if(getUsuarioActual(SYS_USER_NIVEL) == $tipo_de_usuario){
+		if($lvl == $tipo_de_usuario){
 			$acceder	= true;
 		}
 	}
+	//acceso denegado
 	if($tipo_de_usuario == USUARIO_TIPO_CONTABLE AND MODULO_CONTABILIDAD_ACTIVADO == false ){
 		$acceder		= false;
 	}
+	if($tipo_de_usuario == USUARIO_TIPO_OFICIAL_AML AND MODULO_AML_ACTIVADO == false){
+		$acceder		= false;
+	}
+	if($tipo_de_usuario == USUARIO_TIPO_OFICIAL_CRED AND MODULO_SEGUIMIENTO_ACTIVADO == false){
+		$acceder		= false;
+	}
 	
+	switch ($contexto){
+		case MMOD_AML:
+			break;
+		case MMOD_TESORERIA:
+			
+			if($lvl == USUARIO_TIPO_CAJERO OR $lvl == 5){
+				$acceder	= true;
+			} else {
+				$acceder	= false;
+			}
+			break;
+	}
 	return $acceder;
 }
+function getSePuedeMostrar($contexto = false, $accion = false){
+	$tipo_de_usuario	= getUsuarioActual(SYS_USER_NIVEL);
+	$acceder			= false;
+	
+	if(MODO_CORRECION == true OR MODO_CORRECION == true OR MODO_DEBUG == true){
+		$acceder	= true;
+	} else {
+		if($tipo_de_usuario == USUARIO_TIPO_OFICIAL_AML AND $contexto == MMOD_AML ){
+			$acceder	= true;
+		}
+	}
+	return $acceder;
+}
+function cors() {
+	// Allow from any origin
+	if (isset($_SERVER['HTTP_ORIGIN'])) {
+		header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+		header('Access-Control-Allow-Credentials: true');
+		header('Access-Control-Max-Age: 86400');    // cache for 1 day
+	}
+	// Access-Control headers are received during OPTIONS requests
+	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+		if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+			header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+		if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+			header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+		exit(0);
+	}
+}
 
+class cFolios {
+	private $mQ		= null;
+	function __construct(){
+		$this->mQ	= new MQL();
+		$sql		= "SELECT COUNT(`idgeneral_folios`) AS `items` FROM `general_folios`";
+		$folios		= $this->mQ->getDataRow($sql);
+		if(isset($folios["items"])){
+			if($folios["items"] >= 4000){
+				$this->mQ->setRawQuery("CALL `sp_setFoliosAlMaximo`");
+			}
+		} else {
+			$this->mQ->setRawQuery("CALL `sp_setFoliosAlMaximo`");
+		}
+	}
+	function getClaveDeRecibo(){
+		$datos	= $this->mQ->getDataRow("SELECT getUltimoRecibo() AS 'folio'");
+		$item	= 1;
+		if(isset($datos["folio"])){
+			$item	= $datos["folio"];
+		}
+		return $item;
+	}
+	function getClaveDePersonas($reservar = true, $comparar = false){
+		//SELECT idgeneral_folios, numerooperacion, numerocredito, , numerocontrato, numeroestadistico, numerorecibo, numerogposolidario, polizacontable
+		$campo		=  "numerosocio";
+		$sumar		= '1';
+		$item		= 1;
+    	if($comparar != false){
+    		$datos	= $this->mQ->getDataRow("SELECT COUNT(*) AS `existentes` FROM `general_folios` WHERE $campo = $comparar");
+    		if(isset($datos["existentes"]) ){
+    			//existe y actualizar
+    			$folios	= $this->mQ->getDataRow("SELECT COALESCE((MAX($campo)+$sumar),1) AS `folio` FROM `general_folios`");
+    			$item	= $folios["folio"];
+    			$folios	= null;
+    		} else {
+    			//si no existe.- Item es igual al folio
+    			$item	= $comparar;
+    		}
+    		$datos		= null;
+    	} else {
+    		$folios	= $this->mQ->getDataRow("SELECT COALESCE((MAX($campo)+$sumar),1) AS `folio` FROM `general_folios`");
+    		$item	= $folios["folio"];
+    		$folios	= null;    		
+    	}
+    	if($reservar == true){
+    		$this->mQ->setRawQuery("INSERT INTO `general_folios`($campo) VALUES ($item)");
+    	}
+    	return $item;
+	}
+	function getClaveDeOperaciones($reservar = true, $comparar = false){
+		//SELECT idgeneral_folios, , numerocredito, , numerocontrato, numeroestadistico, numerorecibo, numerogposolidario, polizacontable
+		$campo		= "numerooperacion";
+		$sumar		= '1';
+		$item		= 1;
+		if($comparar != false){
+			$datos	= $this->mQ->getDataRow("SELECT COUNT(*) AS `existentes` FROM `general_folios` WHERE $campo = $comparar");
+			if(isset($datos["existentes"]) ){
+				//existe y actualizar
+				$folios	= $this->mQ->getDataRow("SELECT COALESCE((MAX($campo)+$sumar),1) AS `folio` FROM `general_folios`");
+				$item	= $folios["folio"];
+				$folios	= null;
+			} else {
+    			//si no existe.- Item es igual al folio
+    			$item	= $comparar;
+    		}
+			$datos		= null;
+		} else {
+			$folios	= $this->mQ->getDataRow("SELECT COALESCE((MAX($campo)+$sumar),1) AS `folio` FROM `general_folios`");
+			$item	= $folios["folio"];
+			$folios	= null;
+		}
+		if($reservar == true){
+			$this->mQ->setRawQuery("INSERT INTO `general_folios`($campo) VALUES ($item)");
+		}
+		return $item;
+	}	
+	function __destruct(){ $this->mQ	= null;	}
+}
+
+
+
+
+/**
+ * Clase que Trabaja las distintas bases de Registros en SAFE
+ * @version 1.0.02
+ * @package common
+ * @subpackage core
+ */
+class cBases{
+	private $mCodigoDeBase	= false;
+	private $mAMembers		= false;
+	private $mMessages		= "";
+	public $BASE_CREDITOS_ESTADO_CUENTA	= 1000;
+	public $BASE_ESTADO_APORTACIONES	= 101;
+	public $BASE_IVA_OTROS				= 7013;
+	private $mInit						= false;
+	function __construct($codigo = false){ $this->mCodigoDeBase	= setNoMenorQueCero($codigo);	}
+	function init(){
+		if($this->mCodigoDeBase>0){
+			$this->getMembers_InArray();
+		}
+	}
+	function setClave($codigo){ $this->mCodigoDeBase	= $codigo;	}
+	function getMembers_InArray($ConAfectacion = false, $base = false){
+		$xCache			= new cCache();
+		$base			= setNoMenorQueCero($base);
+		$base			= ($base <= 0 ) ? $this->mCodigoDeBase : $base;
+		$this->mCodigoDeBase	= $base;
+		$IDCache		= ($ConAfectacion == true) ? "base-arr-ca-id-$base" : "base-arr-sa-$base";
+		$members		= $xCache->get($IDCache);
+		$this->mAMembers= array();
+		if($members === null){
+			$sql 		= "SELECT `codigo_de_base`, `miembro`, `afectacion` FROM `eacp_config_bases_de_integracion_miembros` WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =$base)";
+			$xQL		= new MQL();
+			$rs 		= $xQL->getDataRecord($sql);
+			
+			foreach($rs as $rw){ 
+				$this->mAMembers[] = ($ConAfectacion == true ) ? $rw["miembro"] . "-" . $rw["afectacion"] : $rw["miembro"];
+			}
+			$xCache->set($IDCache, $this->mAMembers);
+			$this->mInit		= true;
+		} else {
+			//si el cache es array y es valido
+			if(is_array($members)){
+				$this->mAMembers	= $members;
+				$members			= null;
+				$this->mInit		= true;
+			} else {
+				$this->mInit		= false;
+			}
+		}
+		return $this->mAMembers;
+	}
+	function getIsMember($member){
+		$stat	= false;
+		if (  $this->mInit == false ){
+			$this->getMembers_InArray();
+		}
+		if ( in_array($member, $this->mAMembers) ){
+			$stat = true;
+		}
+		return $stat;
+	}
+	/**
+	 * Funcion que retorna una base de mvtos clasificado en socio@document
+	 * @param	string	$AndWhere		Se refiere a los Filtros extras en la clausula WHERE
+	 * @param	boolean	$IncludeDocto	Indica si se incluye el Documento Afectado como Filtro extra, por default es TRUE
+	 * @return	array	Base de Movimientos
+	 */
+	function getBaseMvtosInArray($AndWhere = "", $IncludeDocto = true){
+		$arr    		= array();
+		
+		
+		$GByDocto		= " , `operaciones_mvtos`.`docto_afectado` ";
+		$FByDocto		= " `operaciones_mvtos`.`docto_afectado`, ";
+
+		if ( $IncludeDocto == false ){
+			$GByDocto	= "";
+			$FByDocto	= "";
+		}
+		$sql    = "SELECT
+		`operaciones_mvtos`.`socio_afectado`,
+		$FByDocto
+		SUM(`operaciones_mvtos`.`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`) AS `monto`
+		FROM
+		`operaciones_mvtos` `operaciones_mvtos`
+		INNER JOIN `eacp_config_bases_de_integracion_miembros`
+		`eacp_config_bases_de_integracion_miembros`
+		ON `operaciones_mvtos`.`tipo_operacion` =
+		`eacp_config_bases_de_integracion_miembros`.`miembro`
+		WHERE
+		(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = "  . $this->mCodigoDeBase . ")
+		$AndWhere
+		GROUP BY
+		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+		`operaciones_mvtos`.`socio_afectado`
+		$GByDocto
+		ORDER BY
+		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` ";
+		$xQL				= new MQL();
+		$rs  = $xQL->getDataRecord($sql);
+		
+		foreach ( $rs as $rw ){
+			if ( $IncludeDocto == false ){
+				$arr[ $rw["socio_afectado"] ] = $rw["monto"];
+			} else {
+							$arr[ $rw["socio_afectado"] . "@" . $rw["docto_afectado"] ] = $rw["monto"];
+			}
+		}
+						$rs = null;
+						return $arr;
+	}
+	function getMembers_InString($ConAfectacion = false, $base = false){
+		$xCache		= new cCache();
+		$base		= setNoMenorQueCero($base);
+		$base		= ($base <= 0 ) ? $this->mCodigoDeBase : $base;
+		$IDCache	= ($ConAfectacion == true) ? "base-str-ca-id-$base" : "base-str-sa-$base";
+		$str		= $xCache->get($IDCache);;
+		$itn		= 0;
+		if($str === null){
+			$arr		= $this->getMembers_InArray($ConAfectacion, $base);
+			foreach($arr as $m => $v){
+				$str	.= ($itn == 0) ? "'$v'" : ", '$v'";
+				$itn++;
+			}
+		}
+		return $str;
+	}
+	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
+}
 ?>

@@ -1,5 +1,6 @@
 <?php
 //=====================================================================================================
+
 //=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
@@ -13,11 +14,20 @@
 //=====================================================================================================
 $xHP	     = new cHPage("TR.Consulta en Lista_Negra", HP_SERVICE);
 include_once("../libs/aml.jaro-winkler.inc.php");
+include_once("../libs/wikipedia.php");
 
-$txt		= "";
+$txt			= "";
+$ByTipoPersona	= "";
+
 $nombre		= parametro("nombre"); $nombre	= parametro("n", $nombre);
 $apaterno	= parametro("apaterno"); $apaterno	= parametro("p", $apaterno);
 $amaterno	= parametro("amaterno"); $amaterno	= parametro("m", $amaterno);
+//========== RAW
+$nombreR	= parametro("nombre", "", MQL_RAW); $nombreR	= parametro("n", $nombreR, MQL_RAW);
+$apaternoR	= parametro("apaterno", "", MQL_RAW); $apaternoR	= parametro("p", $apaternoR, MQL_RAW);
+$amaternoR	= parametro("amaterno", "", MQL_RAW); $amaternoR	= parametro("m", $amaternoR, MQL_RAW);
+
+
 //sanear la variable para obtener el primer id.
 $nombre		= getPalabraDeFrase($nombre);
 $apaterno	= getPalabraDeFrase($apaterno);
@@ -40,9 +50,15 @@ $txtLst				= "";
 
 $action		= "LIST";
 
-$ByNombre		= ($nombre == "") ? "" :  " AND (nombrecompleto SOUNDS LIKE '%$nombre%' OR nombrecompleto LIKE '%$nombre%') ";
-$ByAPaterno		= ($apaterno == "") ? "" : " AND (apellidopaterno SOUNDS LIKE '%$apaterno%' OR apellidopaterno LIKE '%$apaterno%') ";
-$ByAMaterno		= ($amaterno == "") ? "" : " AND (apellidomaterno SOUNDS LIKE '%$amaterno%' OR apellidomaterno LIKE '%$amaterno%') ";
+if(AML_BUSQUEDA_POR_SONIDO == false){
+	$ByNombre		= ($nombre == "") ? "" :  " AND (nombrecompleto LIKE '%$nombre%') ";
+	$ByAPaterno		= ($apaterno == "") ? "" : " AND (apellidopaterno LIKE '%$apaterno%') ";
+	$ByAMaterno		= ($amaterno == "") ? "" : " AND (apellidomaterno LIKE '%$amaterno%') ";
+} else {
+	$ByNombre		= ($nombre == "") ? "" :  " AND (nombrecompleto SOUNDS LIKE '%$nombre%' OR nombrecompleto LIKE '%$nombre%') ";
+	$ByAPaterno		= ($apaterno == "") ? "" : " AND (apellidopaterno SOUNDS LIKE '%$apaterno%' OR apellidopaterno LIKE '%$apaterno%') ";
+	$ByAMaterno		= ($amaterno == "") ? "" : " AND (apellidomaterno SOUNDS LIKE '%$amaterno%' OR apellidomaterno LIKE '%$amaterno%') ";
+}
 //Metaphone
 $ByMNombre		= ($nombre == "") ? "" :  " AND func_DoubleMetaphone(nombrecompleto) = func_DoubleMetaphone('$nombre') ";
 $ByMAPaterno	= ($apaterno == "") ? "" : " AND func_DoubleMetaphone(apellidopaterno) = func_DoubleMetaphone('$apaterno') ";
@@ -53,9 +69,15 @@ $ByJWAPaterno	= ($apaterno == "") ? "" : " AND jaro_winkler_similarity(apellidop
 $ByJWAMaterno	= ($amaterno == "") ? "" : " AND jaro_winkler_similarity(apellidomaterno, '$amaterno' ) >= $umbral ";
 
 $OrderBy		= ($UseMeta == true OR $UseJW) ? "" : "ORDER BY	`socios_general`.`apellidopaterno`,	`socios_general`.`apellidomaterno`,	`socios_general`.`nombrecompleto` ";
-
+if($ByNombre !="" AND $amaterno == "" AND $apaterno == ""){
+	$ByTipoPersona	= " AND `personalidad_juridica`= " . PERSONAS_FIGURA_MORAL;
+}
 if($ByAMaterno != "" AND $ByAPaterno != "" ){
-	$ByAPaterno	= "AND ( (apellidopaterno SOUNDS LIKE '%$apaterno%' OR apellidopaterno LIKE '%$apaterno%') OR (apellidomaterno SOUNDS LIKE '%$amaterno%' OR apellidomaterno LIKE '%$amaterno%') ) ";
+	if(AML_BUSQUEDA_POR_SONIDO == false){
+		$ByAPaterno	= "AND ( ( apellidopaterno LIKE '%$apaterno%') OR ( apellidomaterno LIKE '%$amaterno%') ) ";
+	} else {
+		$ByAPaterno	= "AND ( (apellidopaterno SOUNDS LIKE '%$apaterno%' OR apellidopaterno LIKE '%$apaterno%') OR (apellidomaterno SOUNDS LIKE '%$amaterno%' OR apellidomaterno LIKE '%$amaterno%') ) ";
+	}
 	$ByAMaterno	= "";
 }
 
@@ -69,8 +91,8 @@ $sql 	= "SELECT
 	FROM
 		`socios_general`
 	WHERE
-		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_SDN . " OR `nivel_de_riesgo_aml` = 100)
-		$ByNombre $ByAPaterno $ByAMaterno $OrderBy LIMIT 0,10";
+		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso` = " . TIPO_INGRESO_SDN . " OR `nivel_de_riesgo_aml` = 100)
+		$ByNombre $ByAPaterno $ByAMaterno $ByTipoPersona $OrderBy LIMIT 0,10";
 if($UseJW == true){
 	$sql 	.= " UNION SELECT
 		`socios_general`.`codigo`          AS `codigo`,
@@ -83,7 +105,7 @@ if($UseJW == true){
 		`socios_general`
 	WHERE
 		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_SDN . " OR `nivel_de_riesgo_aml` = 100)
-			$ByJWNombre  $ByJWAPaterno $ByJWAMaterno $OrderBy
+			$ByJWNombre  $ByJWAPaterno $ByJWAMaterno $ByTipoPersona $OrderBy
 			LIMIT 0,10";	
 }
 if($UseMeta == true){
@@ -99,7 +121,7 @@ if($UseMeta == true){
 	WHERE
 		codigo != " . DEFAULT_SOCIO . "
 		AND (`tipoingreso`= " . TIPO_INGRESO_SDN . "	OR `nivel_de_riesgo_aml` = 100)
-			$ByMNombre $ByMAPaterno $ByMAMaterno $OrderBy LIMIT 0,10
+			$ByMNombre $ByMAPaterno $ByMAMaterno $ByTipoPersona $OrderBy LIMIT 0,10
 			";	
 }
 
@@ -119,9 +141,50 @@ if($rs){
 			}
 			$json["record_$idx"][$campo]	= $valor; //base64_encode($valor);//utf8_encode($valor);
 		}
-		$idx++;
+		
+		//================= Consultar en wikipedia
+		$mNombre	= $row["nombres"];
+		$mAPaterno	= $row["primerapellido"];
+		$mAMaterno	= $row["segundoapellido"];
+		//Consultar el Wikipedia
+		$xWiki		= new cWikipedia();
+		$arrWiki	= $xWiki->buscar(trim("$mNombre $mAPaterno $mAMaterno"));
+		if($xWiki->esBusqueda($arrWiki) == false){
+			$arrWiki	= $xWiki->buscar(trim("$mNombre $mAPaterno"));
+			if($xWiki->esBusqueda($arrWiki) == false){
+				$arrWiki	= $xWiki->buscar(trim("$mAPaterno $mAMaterno"));
+			}
+		}
+		
 		//Generar el Acuse
-		if($getPDF == true){
+		if($getPDF == false){
+//====================== Wiki values
+			if(is_array($arrWiki)){
+				$QD	= $arrWiki;
+				if(isset($QD["search"])){
+					$dataWiki	= $QD["search"];
+					$cntWiki	= 0;
+					foreach ($dataWiki as  $items ){
+						$title		= $items["title"];
+						$snip		= $items["snippet"];
+						
+						if(strpos($snip, "#REDIR") !== false){
+							$snip	= str_replace("#REDIRECCIÓN", "", $snip);
+							$DSnip	= explode("[[", $snip);
+							$snip	= $DSnip[1];
+							$snip	= str_replace("]]", "", $snip);
+							$title	= $snip;
+						}						
+						//if(strpos($items["snippet"], "#REDIRECT") !== false){
+							$json["record_$idx"]["info_$cntWiki"]		= $xWiki->getPage($title);
+						//}
+						//setLog($items["snippet"]);
+						$cntWiki++;
+					}
+				}
+			}
+//====================			
+		} else {
 			$id			= $row["codigo"];
 			$tipo		= $row["tipo"];
 			$app1		= $row["primerapellido"];
@@ -157,7 +220,7 @@ if($rs){
 					$xTbl->addTD("$score1 / $score2 / $score3");
 					break;
 				case "metaphone":
-					$flTitle	= $xLng->getT("TR.Algoritmo") . " : METAPHONE";
+					$flTitle		= $xLng->getT("TR.Algoritmo") . " : METAPHONE";
 					$xTbl->addTH($xLng->getT("TR.Coincidencia"));
 					$score1			= "";
 					$score2			= "";
@@ -205,14 +268,112 @@ if($rs){
 			
 			//$xTbl->addTH();
 			//$xTbl->addTD($adr);
-			$xTbl->addRaw("<tr><td colspan='3'><h1>"  . $xLng->getT("TR.Direcciones") . "<h1><hr />$adr</td></tr>");			
+			$xTbl->addRaw("<tr><td colspan='3'><h1>"  . $xLng->getT("TR.Direcciones conocidas") . "<h1><hr />$adr</td></tr>");			
 			//$xTbl->endRow()
+			
+///======= Wiki data
+			if(is_array($arrWiki)){
+				$QD	= $arrWiki;
+				if(isset($QD["search"])){
+					$dataWiki	= $QD["search"];
+					$cntWiki	= 0;
+					foreach ($dataWiki as  $items ){
+						$title		= $items["title"];
+						$snip		= $items["snippet"];
+							
+						if(strpos($snip, "#REDIR") !== false){
+							$snip	= str_replace("#REDIRECCIÓN", "", $snip);
+							$DSnip	= explode("[[", $snip);
+							$snip	= $DSnip[1];
+							$snip	= str_replace("]]", "", $snip);
+							$title	= $snip;
+						}
+						$xTbl->addRaw("<tr><td colspan='3'><h1>Informaci&oacute;n Extendida</h1></td></tr>");
+						$xTbl->addRaw("<tr><td colspan='3'>" . $xWiki->getPage($title) . "</td></tr>");
+						$cntWiki++;
+					}
+				}
+			}
+//======== End Wiki data
+						
 			$xFld		= new cHFieldset($flTitle);
 			$xFld->addHElem($xTbl->get());
 			$txtLst 	.= $xFld->get(  );
 			
 		}
+		$idx++;
 	}
+	/*if($idx <= 0){
+		//Consultar el Wikipedia
+		$xWiki		= new cWikipedia();
+		$arrWiki	= $xWiki->buscar(trim("$nombreR $apaternoR $amaternoR"));
+			if($xWiki->esBusqueda($arrWiki) == false){
+			$arrWiki	= $xWiki->buscar(trim("$nombreR $apaternoR"));
+			if($xWiki->esBusqueda($arrWiki) == false){
+				$arrWiki	= $xWiki->buscar(trim("$apaternoR $nombreR"));
+			}
+		}
+		if($getPDF == false){
+			//====================== Wiki values
+			if(is_array($arrWiki)){
+				$QD				= $arrWiki;
+				if(isset($QD["search"])){
+					$dataWiki	= $QD["search"];
+					$cntWiki	= 0;
+					
+					$json["record_$idx"]["codigo"]			= 0;
+					$json["record_$idx"]["tipo"]			= "external";
+					$json["record_$idx"]["primerapellido"]	= $apaternoR;
+					$json["record_$idx"]["segundoapellido"]	= $amaternoR;
+					$json["record_$idx"]["nombres"]			= $nombreR;
+					$json["record_$idx"]["curp"]			= "";
+					$enable									= false;					
+					foreach ($dataWiki as  $items ){ //#REDIRECCI\u00d3N
+						$title		= $items["title"];
+						$snip		= $items["snippet"];
+						
+						if(strpos($snip, "#REDIR") !== false){
+							$snip	= str_replace("#REDIRECCIÓN", "", $snip);
+							$DSnip	= explode("[[", $snip);
+							$snip	= $DSnip[1];
+							$snip	= str_replace("]]", "", $snip);
+							$title	= $snip;
+						}
+						$json["record_$idx"]["info_$cntWiki"]		= $xWiki->getPage($title);
+						$enable								= (trim($json["record_$idx"]["info_$cntWiki"]) == "") ? $enable : true;
+						$cntWiki++;
+					}
+					if($enable == false){ unset($json["record_$idx"]); }
+				}
+			}
+		} else {
+			//
+			if(is_array($arrWiki)){
+				$QD				= $arrWiki;
+				if(isset($QD["search"])){
+					$dataWiki	= $QD["search"];
+					$cntWiki	= 0;
+					foreach ($dataWiki as  $items ){
+						$title		= $items["title"];
+						$snip		= $items["snippet"];
+						
+						if(strpos($snip, "#REDIR") !== false){
+							$snip	= str_replace("#REDIRECCIÓN", "", $snip);
+							$DSnip	= explode("[[", $snip);
+							$snip	= $DSnip[1];
+							$snip	= str_replace("]]", "", $snip);
+							$title	= $snip;
+						}						
+						//if(strpos($items["snippet"], "#REDIRECT") !== false){
+							$cnt= $xWiki->getPage($title);
+							$txtLst	.= "<fieldset><legend>INFORME EXTERNO</legend><table><tbody><tr><td>" . $cnt . "</td></tr></tbody></table></fieldset>";
+						//}
+						$cntWiki++;
+					}
+				}
+			}
+		}
+	}*/
 	if($getPDF == true){
 		//base64_encode($sql)
 		$xFMT		= new cFormato(8801);

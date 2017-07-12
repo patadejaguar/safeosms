@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channel><item><title><![CDATA[Ra carousel]]></title><slug>ra-carousel</slug><value><![CDATA[&lt;?php
+	global $args;
+	global $TEMPLATE;
+	$error_mess1= &#039;Sending parameters must be in array.&#039;;
+	$error_mess2= &#039;Page content slug(s) is required.&#039;;
+	if(is_array($args)) {
+		if(isset($args[0]) &amp;&amp; !empty($args[0]) ) {
+			$param1=$args[0];
+			if(!is_array($args[0])) {
+				$param1=array($args[0]);
+			}
+			if(!is_array($args[0])) {
+				$param1=array($args[0]);
+				if( strstr( trim($args[0]), &#039; &#039; ) ) {
+					$param1=explode(&#039; &#039;, trim($args[0]));
+				}
+			}
+			$elem_count = sizeof($param1);
+		}
+		else {  echo &#039;&lt;script type=&quot;text/javascript&quot;&gt;  alert(&quot;&#039;.$error_mess2.&#039;&quot;); &lt;/script&gt;&#039;; return; }
+	}
+	else { echo &#039;&lt;script type=&quot;text/javascript&quot;&gt;  alert(&quot;&#039;.$error_mess1.&#039;&quot;); &lt;/script&gt;&#039;; return; }
+	$anim_effects=array(&#039;fadeInLeft&#039;,&#039;fadeInRight&#039;,&#039;bounceInDown&#039;,&#039;bounceIn&#039;,&#039;slideInUp&#039;,&#039;slideInDown&#039;,&#039;zoomIn&#039;,&#039;zoomInRight&#039;);
+	$datax = getXML(GSDATAOTHERPATH.&#039;theme_settings_&#039;.$TEMPLATE.&#039;.xml&#039;);
+    if ($datax != null) {
+		$use_fade=$datax-&gt;use_fade;
+		if(!isset($use_fade) || empty($use_fade)) $use_fade=0;
+		if(!isset($datax-&gt;min_height) || empty($datax-&gt;min_height)) $min_height=&#039;&#039;;
+		else $min_height=$datax-&gt;min_height.&#039;px;&#039;;
+		if(!isset($datax-&gt;max_height) || empty($datax-&gt;max_height)) $max_height=&#039;&#039;;
+		else $max_height=$datax-&gt;max_height.&#039;px;&#039;;
+		if(!isset($datax-&gt;control_color) || empty($datax-&gt;control_color)) $ctrl_color=&#039;&#039;;
+        else $ctrl_color=$datax-&gt;control_color;
+		$indi_color=$datax-&gt;indicator_color;
+		if(!isset($indi_color) || empty($indi_color)) $indi_color=&#039;&#039;;
+	}
+	if($use_fade==1) {
+	?&gt;
+	&lt;style&gt;
+		.carousel.fade {
+		opacity: 1;
+		overflow: hidden;
+		}
+		.carousel.fade .item {
+		-webkit-transition: opacity 1s;
+		-moz-transition: opacity 1s;
+		-ms-transition: opacity 1s;
+		-o-transition: opacity 1s;
+		transition: opacity 1s;
+		}
+		.carousel.fade .active.left, .carousel .active.right {
+		left:0;
+		opacity:0;
+		z-index:2;
+		}
+		.carousel.fade .next, .carousel .prev {
+		left:0;
+		opacity:1;
+		z-index:1;
+		}
+&lt;?php
+			if(!empty($indi_color)) { ?&gt;
+				.carousel-indicators .active {
+					background-color:&lt;?php echo $indi_color; ?&gt;;
+                    border: 1px solid &lt;?php echo $indi_color; ?&gt;;
+				}
+                .carousel-indicators li {
+					border: 1px solid &lt;?php echo $indi_color; ?&gt;;
+				}
+&lt;?php 		} ?&gt;
+	&lt;/style&gt;
+&lt;?php } ?&gt;
+&lt;div id=&quot;carousel-example-generic&quot; class=&quot;carousel slide&lt;?php echo ($use_fade==1)?&#039; fade&#039;:&#039;&#039;;?&gt;&quot; data-ride=&quot;carousel&quot;&gt;
+	&lt;!-- Indicators --&gt;
+	&lt;ol class=&quot;carousel-indicators&quot;&gt;
+		&lt;?php
+			for( $c=0; $c &lt; count( $param1 ); $c++){
+			?&gt;
+			&lt;li data-target=&quot;#carousel-example-generic&quot; data-slide-to=&quot;&lt;?php echo $c; ?&gt;&quot; class=&quot;&lt;?php echo ($c==0)?&#039; active&#039;:&#039;&#039;;?&gt;&quot;&gt;&lt;/li&gt;
+			&lt;?php
+			}
+		?&gt;
+	&lt;/ol&gt;
+	&lt;!-- Slider Content (Wrapper for slides )--&gt;
+	&lt;div class=&quot;carousel-inner&quot; id=&quot;carousel-inner&quot;&gt;
+		&lt;?php
+			$slide_count = 1;
+			foreach ($param1 as $ablock) {
+			?&gt;
+			&lt;div id=&quot;item-&lt;?php echo $slide_count; ?&gt;&quot; class=&quot;item &lt;?php echo ($slide_count==1)?&#039; active&#039;:&#039;&#039;;?&gt;&quot; style=&quot;height:100%;width:100%;&lt;?php echo (!empty($max_height))?&#039;max-height:&#039;.$max_height:&#039;&#039;;?&gt;&quot; &gt;
+				&lt;?php
+				if (function_exists(&#039;return_i18n_page_data&#039;)) {
+					$mycont =  return_i18n_page_data($ablock);
+					$mycontent = preg_replace( &quot;/
+s+/&quot;, &quot;
+&quot;, rtrim(html_entity_decode(strip_tags($mycont-&gt;content))) );
+				} else {
+					$mycontent =  returnPageContent($ablock);
+				}
+					
+					$doc = new DOMDocument();
+					$doc-&gt;loadHTML(mb_convert_encoding($mycontent, &#039;HTML-ENTITIES&#039;, &#039;UTF-8&#039;));
+					$tags = $doc-&gt;getElementsByTagName(&#039;p&#039;);
+					if ( count($tags ) ) {
+						$element_count = 1;
+						foreach ( $tags as $tag ) {
+							$style =  &#039;&#039;;
+							$src =  &#039;&#039;;
+							$position =  &#039;&#039;;
+							$effect =  &#039;&#039;;
+							$delay = &#039;&#039;;
+							$delayms = 500;
+							$position = $tag-&gt;getAttribute(&quot;style&quot;);
+							if(!isset($position) || empty($position)) {
+								$position = &#039;top:&#039;.rand(-10,40).&#039;%;left:&#039;.rand(-50,50);
+							}
+							$effect = $tag-&gt;getAttribute(&quot;data-effect&quot;);
+							if(!isset($effect) || empty($effect)) {
+								$effect = $anim_effects[rand(0,7)];
+							}
+							$delays = $tag-&gt;getAttribute(&quot;data-delay&quot;);
+							if(!isset($delays) || empty($delays)) {
+								$delay = &#039;-webkit-animation-delay:&#039;.$delayms*$element_count.&#039;ms;animation-delay:&#039;.$delayms*$element_count.&#039;ms&#039;;
+								} else {
+								$delay = &#039;-webkit-animation-delay:&#039;.$delays.&#039;ms;animation-delay:&#039;.$delays.&#039;ms&#039;;
+							}
+							
+							for( $i=0; $i &lt; $tag-&gt;childNodes-&gt;length; $i++){
+								$cn = $tag-&gt;childNodes-&gt;item($i);
+								$cn_name = $cn-&gt;nodeName;
+								if($cn_name == &quot;span&quot;) {
+									if($element_count==1) {
+										$attrib = $cn-&gt;getAttribute(&quot;style&quot;);
+										$style =  $attrib;
+									?&gt;
+									&lt;div style=&quot;&lt;?php echo $style; ?&gt; height:100%;width:100%;&lt;?php echo (!empty($min_height))?&#039;min-height:&#039;.$min_height:&#039;&#039;;?&gt;&quot;&gt;&lt;/div&gt;
+									&lt;?php
+									} else { $style =  $cn-&gt;getAttribute(&quot;style&quot;); }
+								}
+								if($cn_name == &quot;img&quot;) {
+									if($element_count==1) {
+										$src =  $cn-&gt;getAttribute(&quot;src&quot;);
+									?&gt;
+									&lt;img src=&quot;&lt;?php echo $src; ?&gt;&quot; style=&quot;width:100%;height:&lt;?php echo $max_height; ?&gt;;&quot; &gt;
+									&lt;?php
+									} else {
+												$src =  $cn-&gt;getAttribute(&quot;src&quot;);
+												$img_style =  $cn-&gt;getAttribute(&quot;style&quot;);
+											}
+								}
+								for( $j=0; $j &lt; $cn-&gt;childNodes-&gt;length; $j++){
+									if($element_count!=1) {
+										$sub_cn = $cn-&gt;childNodes-&gt;item($j)-&gt;nodeName;
+										$sub_style =  $cn-&gt;childNodes-&gt;item($j)-&gt;getAttribute(&quot;style&quot;);
+									}
+								}
+								if(isset($sub_style) &amp;&amp; $sub_style) $style = $style.&#039; &#039;.$sub_style;
+								if($delay) $style = $style.&#039; &#039;.$delay;
+							}
+							if($element_count!=1) {
+							?&gt;
+							&lt;div class=&quot;carousel-caption&quot; style=&quot;&lt;?php echo $position;?&gt;&quot; &gt;
+								&lt;p id=&quot;carousel-caption&quot; class=&quot;&quot; data-animation=&quot;animated &lt;?php echo $effect;?&gt;&quot; style=&quot;&lt;?php echo $style; ?&gt;&quot;&gt;
+									&lt;?php 
+											if($cn_name == &quot;img&quot;) { ?&gt;
+												&lt;img src=&quot;&lt;?php echo $src; ?&gt;&quot; style=&quot;&lt;?php echo $img_style; ?&gt;&quot;&gt;
+											&lt;?php
+											} else {
+												echo (string)$tag-&gt;nodeValue; }  ?&gt;
+								&lt;/p&gt;
+							&lt;/div&gt;
+							&lt;?php
+							}
+							$element_count = $element_count+1;
+						}
+					}
+					$slide_count = $slide_count+1;
+				?&gt;
+			&lt;/div&gt;
+			&lt;?php
+			}
+		?&gt;
+	&lt;/div&gt;
+	&lt;!-- Controls --&gt;
+	&lt;a class=&quot;left carousel-control&quot; href=&quot;#carousel-example-generic&quot; data-slide=&quot;prev&quot;  style=&quot;z-index: 999;&lt;?php echo (!empty($ctrl_color))?&#039;color:&#039;.$ctrl_color:&#039;&#039;;?&gt;&quot; &gt;
+	&lt;span class=&quot;glyphicon glyphicon-chevron-left&quot;&gt;&lt;/span&gt;
+	&lt;/a&gt;
+	&lt;a class=&quot;right carousel-control&quot; href=&quot;#carousel-example-generic&quot; data-slide=&quot;next&quot;  style=&quot;z-index: 999;&lt;?php echo (!empty($ctrl_color))?&#039;color:&#039;.$ctrl_color:&#039;&#039;;?&gt;&quot; &gt;
+	&lt;span class=&quot;glyphicon glyphicon-chevron-right&quot;&gt;&lt;/span&gt;
+	&lt;/a&gt;
+&lt;/div&gt;]]></value></item><item><title><![CDATA[Tagline]]></title><slug>tagline</slug><value><![CDATA[]]></value></item></channel>

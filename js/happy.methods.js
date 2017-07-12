@@ -9,7 +9,8 @@ var happy = {
     },
 
     email: function (val) {
-        return /^(?:\w+\.?\+?)*\w+@(?:\w+\.)+\w+$/.test(val);
+        var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+        return re.test(val);    
     },
 
     minLength: function (val, length) {

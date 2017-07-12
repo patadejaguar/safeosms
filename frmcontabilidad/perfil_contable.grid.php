@@ -17,10 +17,8 @@
 //=====================================================================================================
 $xHP		= new cHPage("TR.Perfil Contable de recibos", HP_GRID);
 $xF			= new cFecha();
-
-	$xTabla				= new cContable_polizas_perfil();
-	$filtro1			= "";
-	$filtro2			= "";
+$xL			= new cLang();
+$xTabla		= new cContable_polizas_perfil();
 	
 	$xHP->setNoDefaultCSS();
 	echo $xHP->getHeader(true);
@@ -37,11 +35,13 @@ $xF			= new cFecha();
 	$mGridWhere			= "";
 
 	$mGridProp			= array(
-	"idcontable_poliza_perfil" => "idcontable poliza perfil,true,11",
-	"tipo_de_recibo" => "tipo de recibo,true,11",
-	"tipo_de_operacion" => "tipo de operacion,true,11",
-	"descripcion" => "descripcion,true,90",
-	"operacion" => "operacion,true,11"
+	"idcontable_poliza_perfil" 	=> "TR.ID,true,110",
+	"tipo_de_recibo" 			=> "TR.CLAVE Recibo,true,110",
+	"tipo_de_operacion" 		=> "TR.CLAVE operacion,true,110",
+	"descripcion" 				=> "TR.DESCRIPCION,true,350",
+	"operacion" 				=> "TR.OPERACION CONTABLE,true,110",
+	"formula_posterior" 		=> "TR.FORMULA,true,300",
+	"cuenta_alternativa" 		=> "TR.cuenta_CONTABLE alternativa,true,125"			
 						);
 	//===========================================================================================================
 	
@@ -52,18 +52,10 @@ $xF			= new cFecha();
 	//$_SESSION["grid"]->SetEditModeDelete(false);
 	//===========================================================================================================					
 		foreach ($mGridProp as $key => $value) {
-			$mVals		= explode(",", $value, 10);
-			
-			if ( isset($mVals[0]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnName($key, $mVals[0]);
-			}
-			
-			if ( isset($mVals[1]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnEditable($key, $mVals[1]);
-			}
-			if ( isset($mVals[2]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnWidth($key, $mVals[2]);
-			}	
+			$mVals		= explode(",", $value, 3);
+			if ( isset($mVals[0]) ){ $_SESSION["grid"]->SetDatabaseColumnName($key, $xL->getT($mVals[0]));	}
+			if ( isset($mVals[1]) ) { $_SESSION["grid"]->SetDatabaseColumnEditable($key, $mVals[1]); }
+			if ( isset($mVals[2]) ) { $_SESSION["grid"]->SetDatabaseColumnWidth($key, $mVals[2]); }		
 		}
 	//===========================================================================================================
 	$_SESSION["grid"]->SetMaxRowsEachPage(40);

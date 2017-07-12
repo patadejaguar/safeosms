@@ -19,11 +19,7 @@ $xHP		= new cHPage("TR.Reporte de Operaciones Bancarias");
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");	
 //$jxc ->process();
 
-echo $xHP->getHeader();
-echo $xHP->setBodyinit("initComponents()");
-
-
-//$xFrm->addHElem()
+$xHP->init();
 
 	$xB	= new cPanelDeReportes(iDE_BANCOS, "bancos");
 	$xB->setConOperacion(false);
@@ -33,7 +29,5 @@ echo $xHP->setBodyinit("initComponents()");
 	echo $xB->get();
 	
 	echo $xB->getJs();
-	
+	$xHP->fin();
 ?>
-</body>
-</html>

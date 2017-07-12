@@ -1,7 +1,7 @@
 <?php
 /**
- * Reporte de
- *
+ * Reporte de Creditos a final de plazo que se dieron un día en concluso. por ejemplo 10 de cada mes
+ * Sirve para informar
  * @author Balam Gonzalez Luis Humberto
  * @version 1.0
  * @package seguimiento
@@ -35,7 +35,7 @@ $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
 
 
-$sql			= $xL->getListadoDeCreditos(false, false, false, CREDITO_PRODUCTO_INDIVIDUAL, " AND (DATE_FORMAT(fecha_ministracion, '%d')=DATE_FORMAT('$FechaFinal', '%d')) ");
+$sql			= $xL->getListadoDeCreditos(false, false, false, false, " AND (DATE_FORMAT(fecha_ministracion, '%d')=DATE_FORMAT('$FechaFinal', '%d')) ");
 $titulo			= "";
 $archivo		= "";
 

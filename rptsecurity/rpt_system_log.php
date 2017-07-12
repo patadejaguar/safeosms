@@ -1,99 +1,84 @@
 <?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-$xHP		= new cHPage("TR.Eventos del sistema", HP_RPTXML);
-
-$oficial = elusuario($iduser);
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$input 				= $_GET["out"];
-
-	if (!$input) {
-		$input = "default";
-	}
-
-$logType 		= $_GET["f1"];
-$siType 		= $_GET["f71"];
-$errType		= $_GET["codigo"];
-$cUsuario		= $_GET["usuario"];
-$cBuscar		= $_GET["buscar"];
-
-$ByNivel 		= "";
-
-$ByCodigo		= "";
-$ByUsuario		= "";
-$ByLike			= "";
+$xHP		= new cHPage("TR.REPORTE DE Eventos del Sistema", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$xQL		= new MQL();
+$xFil		= new cSQLFiltros();
 
 
-//TIPO: developer, comun, etc
-if( (isset($logType) ) and ($logType != "todas") ){
-	$ByNivel = " AND (`general_error_codigos`.`type_err`='$logType') ";
-}
-//Codigo de error
-if((isset($errType)) and ($errType != "todas") ){
-	$ByCodigo ="  AND `general_log`.`type_error`='$errType' ";
-}
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
+$usuario		= parametro("usuario", $oficial ,MQL_INT);
 
-if((isset($cUsuario)) and ($cUsuario != "todas") ){
-	$ByUsuario ="  AND `general_log`.`usr_log`='$cUsuario' ";
-}
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+$buscar			= parametro("buscar", "", MQL_RAW);
+//===========  Individual
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT); $clave		= parametro("codigo", $clave, MQL_INT);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+$nivel			= parametro("f1", SYS_TODAS, MQL_RAW);
 
-if ( isset($cBuscar) AND $cBuscar != "" ){
-	$ByLike		= "  AND `general_log`.`text_log` LIKE '%$cBuscar%' ";
-}
+$sql			= $xL->getListadoDeEventos($FechaInicial, $FechaFinal, $nivel, $clave, $usuario, $buscar);
+$titulo			= "";
+$archivo		= "";
 
-	$setSql = " SELECT
-	`general_log`.`fecha_log`            AS `fecha`,
-	`general_log`.`hour_log`             AS `hora`,
-	`general_error_codigos`.`description_error` AS `Descripcion`,
-	getUserByID(`general_log`.`usr_log`)        AS `usuario`,
-	`general_log`.`text_log`             AS `texto`,
-	`general_error_codigos`.`type_err`	AS `tipo`
-FROM
-	`general_error_codigos` `general_error_codigos`
-		INNER JOIN `general_log` `general_log`
-		ON `general_error_codigos`.`idgeneral_error_codigos` =
-		`general_log`.`type_error`
-	WHERE (`general_log`.`fecha_log` >='$fecha_inicial')
-		AND
-		(`general_log`.`fecha_log` <='$fecha_final')
-	$ByNivel
-	$ByCodigo
-	$ByUsuario
-	$ByLike
-";
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
 
 
-if ($input!=OUT_EXCEL) {
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
 
-	$oRpt = new PHPReportMaker();
-	$oRpt->setDatabase(MY_DB_IN);
-	$oRpt->setUser(RPT_USR_DB);
-	$oRpt->setPassword(RPT_PWD_DB);
-	$oRpt->setSQL($setSql);
-	$oRpt->setXML("../repository/report53.xml");
-	$oOut = $oRpt->createOutputPlugin($input);
-	$oRpt->setOutputPlugin($oOut);
-	$oRpt->run();
-} else {
-  $filename = "export_from_" . date("YmdHi") . "_to_uid-" .  $iduser . ".xls";
-	header("Content-type: application/x-msdownload");
-	header("Content-Disposition: attachment; filename=$filename");
-	header("Pragma: no-cache");
-	header("Expires: 0");
+$xRPT->addContent($body);
 
-	$cTbl = new cTabla($setSql);
-	$cTbl->setWidth();
-	$cTbl->Show("", false);
-}
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>

@@ -1,0 +1,1264 @@
+/* flat-blue */
+@import url(https://fonts.googleapis.com/css?family=Lato);
+
+html{
+  height: 100%;
+}
+.formoid-flat-blue{
+  margin:0 auto;
+}
+.formoid-flat-blue>div,
+.formoid-flat-blue>.title{
+  margin: 8px;
+}
+.formoid-flat-blue .error-field .required{
+  color:#FF9999;
+}
+.formoid-flat-blue .error-field input,
+.formoid-flat-blue .error-field input[type=text],
+.formoid-flat-blue .error-field input[type=password],
+.formoid-flat-blue .error-field input[type=email],
+.formoid-flat-blue .error-field input[type=url],
+.formoid-flat-blue .error-field input[type=date],
+.formoid-flat-blue .error-field input[type=number],
+.formoid-flat-blue .error-field input[type=tel],
+.formoid-flat-blue .error-field textarea{
+  border-color:#D893A1;
+  background-color: #FBE6F2;
+}
+.formoid-flat-blue label.error{
+  display:inline-block;
+  font-size:0.9em;
+}
+.formoid-flat-blue .error,
+.formoid-flat-blue .error #recaptcha_widget_div{
+  padding: 3px 14px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  background-color: #fcf8e3;
+  border: 1px solid #fbeed5;
+  border-radius: 4px;
+
+  color: #b94a48;
+  background-color: #f2dede;
+  border-color: #eed3d7;
+  color: #c09853;
+}
+.formoid-flat-blue .error h4 {
+  color: #b94a48;
+  margin: 0;
+}
+
+.formoid-flat-blue .error .close {
+  position: relative;
+  top: -2px;
+  right: -21px;
+  line-height: 20px;
+}
+.formoid-flat-blue .column{
+  float:left; 
+}
+/* width = parseInt(100/columns.length)*/
+.formoid-flat-blue .column1{ width:100%;}
+.formoid-flat-blue .column2{ width:50%; }
+.formoid-flat-blue .column3{ width:33%; }
+.formoid-flat-blue .column4{ width:25%; }
+.formoid-flat-blue .column5{ width:20%; }
+
+
+
+.formoid-flat-blue .large{
+  width: 100%;
+  *width: 94%;
+}
+.formoid-flat-blue .medium{
+  width: 50%;
+  *width: 47%;
+}
+.formoid-flat-blue .small{
+  width: 25%;
+  *width: 23%;
+}
+
+.formoid-flat-blue textarea.large{
+  width: 100%;
+  *width: 94%;
+  height: 20em;
+}
+.formoid-flat-blue textarea.medium{
+  width: 100%;
+  *width: 94%;
+  height: 10em;
+}
+.formoid-flat-blue textarea.small{
+  width: 100%;
+  *width: 94%;
+  height: 5.5em;
+}
+
+/* address select style */
+.formoid-flat-blue .element-address .country {
+  position: relative;
+}
+
+.frmd{
+  display:none;
+}
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  line-height: 0;
+  content: "";
+}
+
+
+.blurBg,
+.blurBg-true{
+  background-attachment: fixed;
+  background-image:
+    -webkit-linear-gradient(5deg, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 20%), /* linear bottom */
+    -webkit-radial-gradient(40% 60%, ellipse farthest-side, rgba(255, 255, 255, 0.45) -10%, rgba(255, 255, 255, 0) 100%),/* center white */
+    -webkit-radial-gradient(50% -10%, circle farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 30%),/* top center white */
+    -webkit-radial-gradient(100% 0%, ellipse farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 20%),/* top right white */
+    -webkit-radial-gradient(0% 0%, ellipse farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 10%),/* top left white */
+    -webkit-radial-gradient(90% 60%, ellipse farthest-side, rgba(0, 0, 0, 0.35) -10%, rgba(0, 0, 0, 0) 100%),/* center right black */
+    -webkit-radial-gradient(20% 10%, circle farthest-side, rgba(0, 0, 0, 0.25) -10%, rgba(0, 0, 0, 0) 20%);
+  
+  background-image:
+    linear-gradient(85deg, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 20%), /* linear bottom */
+    radial-gradient(40% 60%,ellipse farthest-side, rgba(255, 255, 255, 0.45) -10%, rgba(255, 255, 255, 0) 100%),/* center white */
+    radial-gradient(50% -10%,circle farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 30%),/* top center white */
+    radial-gradient(100% 0%,ellipse farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 20%),/* top right white */
+    radial-gradient(0% 0%,ellipse farthest-side, rgba(255, 255, 255, 0.35) -10%, rgba(255, 255, 255, 0) 10%),/* top left white */
+    radial-gradient(90% 60%,ellipse farthest-side, rgba(0, 0, 0, 0.35) -10%, rgba(0, 0, 0, 0) 100%),/* center right black */
+    radial-gradient(20% 10%,circle farthest-side, rgba(0, 0, 0, 0.25) -10%, rgba(0, 0, 0, 0) 20%);/* top left black */
+  /*
+    radial-gradient(40% 60%,ellipse farthest-side, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 50%),
+    radial-gradient(50% -10%,circle closest-corner, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0) 50%),
+    radial-gradient(0% 100%,ellipse farthest-side, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(100% 0%,ellipse farthest-side, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(1% 2%,circle farthest-side, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 20%);
+  */
+}
+
+#formoid-info {
+  display: block;
+  width: 400px;
+  margin: 0 auto;
+  padding: 10px;
+  text-align: center;
+  color: #c09853;
+  font-size: 12px;
+  max-width: 100%;
+}/*
+
+
+Flat style
+
+
+*/
+@font-face {
+  font-family: formoid;
+  src:url('formoid.eot');
+  src:url('formoid.eot?#iefix') format('embedded-opentype'),
+  url('formoid.ttf') format('truetype'),
+  url('formoid.woff') format('woff'),
+  url('formoid.svg#formoid') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+.formoid-flat-blue{
+  border: 2px solid #bdc3c7;
+  font-size: 1em;
+  line-height: 1.231;
+  border-radius:6px;
+}
+.formoid-flat-blue label.title{
+  font-size: 1em;
+  font-weight: 500;
+  width: auto;
+}
+.formoid-flat-blue input[type=button]{
+  color: #666;
+  outline: none;
+  font-size: 1em;
+}
+.formoid-flat-blue input[type=submit]{
+  color: #666;
+  outline: none;
+  font-size: 1.2em;
+}
+.formoid-flat-blue>div{
+  position: relative;
+  margin-left: 25px;
+  margin-right: 25px;
+}
+.formoid-flat-blue h2 {
+  margin: 0.2em 0;
+  font-size: 1.7em;
+  color: #fff;
+}
+.formoid-flat-blue h3.title {
+  margin-bottom: 0.5em;
+  margin-top: 1.5em;
+}
+.formoid-flat-blue h3.section-break-title {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.formoid-flat-blue label {
+  display: block;
+  margin-bottom: 3px;
+  clear: both;
+}
+
+.formoid-flat-blue div, .formoid-flat-blue span, .formoid-flat-blue label, .formoid-flat-blue input, .formoid-flat-blue textarea, .formoid-flat-blue select, .formoid-flat-blue button, .formoid-flat-blue ul, .formoid-flat-blue li, .formoid-flat-blue a{
+  font-family: inherit;
+  color: inherit;
+}
+/* Global Declaration */
+
+/*
+CORE FUNCTIONALITY 
+
+Not advised to edit stuff below this line
+-----------------------------------------------------
+*/
+code {
+	font-family: monospace !important;
+	background-color: #DEDEDE;
+}
+em {
+	font-weight: bolder;
+	color: #FFFFFF;
+	background-color: #2E5798;
+}
+em, code{
+	padding-left: .5em;
+	padding-right: .5em;
+}
+/* submit + title */
+.formoid-flat-blue div.submit,
+.formoid-flat-blue div.title{
+  margin: 0;
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+.formoid-flat-blue div.submit{
+  vertical-align: middle;
+  text-align: right;
+  border-top: 2px solid #d6dbdf;
+  border-radius: 0 0 6px 6px;
+}
+.formoid-flat-blue div.title{
+  background-color: #BCC3CA;
+}
+.formoid-flat-blue div.title h2{
+  margin-left: 27px;
+}
+
+
+/* Button & submit*/
+.formoid-flat-blue input[type=button],
+.formoid-flat-blue input[type=submit]{
+  display: inline-block;
+  padding: 4px 12px;
+  margin-bottom: 1px;
+  color: #666666;
+  text-align: left;
+  vertical-align: middle;
+  cursor: pointer;
+  background: #fff;
+
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: normal;
+
+  border: 2px solid #bdc3c7;
+  -webkit-transition: border-color 0.6s;
+  transition: border-color 0.6s;
+  border-radius:6px;
+}
+
+.formoid-flat-blue input[type=button][disabled] {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.formoid-flat-blue input[type=submit]{
+  text-align: center;
+  opacity: 1;
+  color: #ffffff;
+  border: none;
+  right: 20px;
+  margin-right: 27px;
+  padding: 7px 15px;
+
+  -webkit-transition: background-color .25s;
+  transition: background-color .25s;
+}
+
+.formoid-flat-blue input[type=submit]:hover{
+  text-decoration: none;
+}
+.formoid-flat-blue input[type=submit]:active{
+}
+
+/* File input */
+.formoid-flat-blue .element-file label{
+  position: relative;
+}
+.formoid-flat-blue .element-file .title{
+  position: static;
+}
+.formoid-flat-blue .element-file .button {
+  z-index: 1;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  float: none;
+  font-size: 1em;
+  color: #fff;
+
+  padding: 1.8% 1.2em 0 1.2em;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+
+  -webkit-transition: background-color .25s;
+  transition: background-color .25s;
+}
+.formoid-flat-blue .element-file .file_text{
+  overflow: hidden;
+  -webkit-transition: border-color .25s;
+  transition: border-color .25s;
+}
+
+.formoid-flat-blue .element-file .file_input {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  width: 100%;
+}
+* html .formoid-flat-blue .element-file .file_input,
+*+html .formoid-flat-blue .element-file .file_input{
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+  width: auto;
+  opacity: 1;
+  filter: alpha(opacity=100);
+}
+* html .formoid-flat-blue .element-file .button,
+*+html .formoid-flat-blue .element-file .button{
+  display: none;
+}
+* html .formoid-flat-blue .element-file label,
+*+html .formoid-flat-blue .element-file label,
+* html .formoid-flat-blue .element-file .file_text,
+*+html .formoid-flat-blue .element-file .file_text{
+  border: none;
+}
+* html .formoid-flat-blue .element-file .title,
+*+html .formoid-flat-blue .element-file .title{
+  display: block;
+}
+
+
+/* Radio & checkbox */
+.formoid-flat-blue div.element-checkbox, .formoid-flat-blue div.element-radio{
+  overflow:hidden;
+}
+.formoid-flat-blue input[type=checkbox],
+.formoid-flat-blue input[type=radio]{
+  z-index:1;
+  position:absolute;
+  float: left;
+  opacity:0.01;
+  font-size: 1em;
+  width: 1em;
+  height: 1em;
+  margin: 0;
+  cursor: pointer;
+}
+
+.formoid-flat-blue input[type=radio]+span,
+.formoid-flat-blue input[type=checkbox]+span{
+  height: 19px;
+  margin-right:-19px;
+  padding-top: 0;
+  z-index:0;
+  position: relative;
+  left: 0;
+  top: 0;
+  vertical-align:top;
+  font-size: 1em;
+  line-height: 0.8;
+  cursor: pointer;
+}
+.formoid-flat-blue input[type=radio]+span:before,
+.formoid-flat-blue input[type=checkbox]+span:before{
+  position: relative;
+  font-family: formoid;
+  margin-right: 0.2em;
+  color: #bdc3c7;
+  font-size: 1em;
+  line-height: 1;
+  vertical-align:top;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* checkbox */
+.formoid-flat-blue input[type=checkbox]+span:before{
+  content: "\e004";
+  font-size: 0.6em;
+  padding: 0.3em;
+  margin-right: 0.4em;
+  line-height: 1.8;
+  -webkit-transition: background-color .5s;
+  transition: background-color .5s;
+  border-radius:0.3em;
+}
+.formoid-flat-blue input[type=checkbox]:hover+span:before{
+  color: #fff;
+}
+.formoid-flat-blue input[type=checkbox]:checked+span:before{
+  color: #fff;
+}
+
+/* radio */
+.formoid-flat-blue input[type=radio]+span:before{
+  content: "\e001";
+  -webkit-transition: color .5s;
+  transition: color .5s;
+}
+.formoid-flat-blue input[type=radio]:hover+span:before{
+  content: "\e000";
+}
+.formoid-flat-blue input[type=radio]:checked+span:before{
+  content: "\e000";
+}
+
+
+/* rating */
+.formoid-flat-blue .rating {
+  overflow: hidden;
+  display: inline-block;
+  position: relative;
+}
+.formoid-flat-blue .rating-input {
+  display: none;
+}
+.formoid-flat-blue .rating-star:after {
+  font-family: formoid;
+  font-size: 1.2em;
+  -webkit-transition: color .5s;
+  transition: color .5s;
+}
+.formoid-flat-blue .rating-star,
+.formoid-flat-blue .rating:hover .rating-star {
+  position: relative;
+  cursor: default;
+  clear: none;
+  float: right;
+  display: block;
+  width: 1.5em;
+  height: 1.2em;
+}
+.formoid-flat-blue .rating-star:after,
+.formoid-flat-blue .rating:hover .rating-star:after {
+  content: '\e006';
+  color: #BDBDBD;
+}
+
+
+
+.formoid-flat-blue input[type=text],
+.formoid-flat-blue input[type=tel],
+.formoid-flat-blue input[type=password],
+.formoid-flat-blue input[type=email],
+.formoid-flat-blue input[type=url],
+.formoid-flat-blue input[type=date],
+.formoid-flat-blue input[type=number],
+.formoid-flat-blue textarea,
+.formoid-flat-blue .element-file .file_text,
+.formoid-flat-blue select{
+  border-style: solid;
+  border-width: 2px;
+  border-color: #bdc3c7;
+  -webkit-transition: border-color 0.6s;
+  transition: border-color 0.6s;
+  border-radius:6px;
+
+  padding: 6px 10px;
+  
+  outline:none;
+  -o-box-sizing: border-box;
+  box-sizing: border-box;
+
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: normal;
+  
+  font-size: 1em;
+}
+.formoid-flat-blue .element-address input[type=text],
+.formoid-flat-blue .element-name input[type=text],
+.formoid-flat-blue .element-file .file_text,
+.formoid-flat-blue textarea{
+  width: 100%;
+  *width: 94%;
+}
+.formoid-flat-blue textarea{
+  height: auto;
+}
+.formoid-flat-blue  select{
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+
+/* NAME last first */
+.formoid-flat-blue .element-name .nameFirst{
+  width: 40%;
+  *width: 39%;
+  left: 0;
+  display: inline-block;
+  margin-right: 5%;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+}
+.formoid-flat-blue .element-name .nameLast{
+  width: 55%;
+  *width: 50%;
+  display: inline-block;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+}
+/* ADDRESS */
+.formoid-flat-blue .element-address .city,
+.formoid-flat-blue .element-address .zip{
+  width: 47%;
+  *width: 44%;
+  display: inline-block;
+  zoom: 1;
+  *display: inline;
+  vertical-align: top;
+  margin-right: 6%;
+}
+.formoid-flat-blue .element-address .state,
+.formoid-flat-blue .element-address .country{
+  width: 47%;
+  *width: 44%;
+  display: inline-block;
+  zoom: 1;
+  *display: inline;
+  vertical-align: top;
+}
+.formoid-flat-blue .element-address .country select{
+  cursor: pointer;
+}
+.formoid-flat-blue .element-address label,
+.formoid-flat-blue .element-name label{
+  font-size: 0.8em;
+}
+.formoid-flat-blue .element-address label.title,
+.formoid-flat-blue .element-name label.title{
+  font-size: 1em;
+}
+
+/* type number */
+.formoid-flat-blue input[type=number]::-webkit-inner-spin-button, 
+.formoid-flat-blue input[type=number]::-webkit-outer-spin-button{ 
+  -webkit-appearance: none;
+}
+
+/* recaptcha */
+.formoid-flat-blue .recaptchatable,
+.formoid-flat-blue .recaptchatable #recaptcha_image,
+.formoid-flat-blue .recaptchatable #recaptcha_challenge_field_holder input{
+  border-collapse: separate !important;
+  border: 2px solid #BDC3C7 !important;
+  border-radius: 6px;
+}
+.formoid-flat-blue .recaptchatable #recaptcha_image img{
+  border-color: transparent;
+  border-radius: 6px;
+}
+
+/* ERRORs */
+.formoid-flat-blue .error,
+.formoid-flat-blue .error #recaptcha_widget_div{
+  background-color: #e74c3c;
+  color: #fff;
+  border-radius: 6px;
+  text-shadow: none;
+  border: none;
+  padding: 5px 20px 5px 20px;
+  margin-left: 25px;
+}
+.tooltip {
+  position: relative;
+  margin-top: 4px;
+}
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+}
+
+.tooltip.bottom .tooltip-arrow {
+  top: -8px;
+  left: 20px;
+  border-bottom-color: #e74c3c;
+  border-width: 0 8px 8px;
+}
+.alert {
+  padding: 8px 35px 8px 14px;
+  margin-bottom: 20px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  background-color: #fcf8e3;
+  border: 1px solid #fbeed5;
+  border-radius: 4px;
+}
+.alert,
+.alert h4 {
+  color: #c09853;
+}
+
+.alert h4 {
+  margin: 0;
+}
+
+.alert .close {
+  position: relative;
+  top: -2px;
+  right: -21px;
+  line-height: 20px;
+}
+
+
+.alert-success {
+  color: #468847;
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+}
+
+.alert-success h4 {
+  color: #468847;
+}
+
+.alert-error {
+  color: #b94a48;
+  background-color: #f2dede;
+  border-color: #eed3d7;
+}
+
+.alert-info {
+  color: #3a87ad;
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+}
+
+.alert-info h4 {
+  color: #3a87ad;
+}
+
+
+
+
+@media all and (max-width:400px){
+  .formoid-flat-blue .element-radio .column,
+  .formoid-flat-blue .element-checkbox .column,
+  .formoid-flat-blue .element-name .nameFirst,
+  .formoid-flat-blue .element-name .nameLast,
+  .formoid-flat-blue .element-address .city,
+  .formoid-flat-blue .element-address span.state,
+  .formoid-flat-blue .element-address .zip,
+  .formoid-flat-blue .element-address .country{
+    width: 100%;
+    display: block;
+    margin-right: 0;
+  }
+}/* 
+
+bootstrap 
+
+*/
+.formoid-flat-blue .dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  min-width: 160px;
+  padding: 5px 0;
+  margin: 2px 0 0;
+  list-style: none;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  *border-right-width: 2px;
+  *border-bottom-width: 2px;
+  border-radius: 6px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+}
+
+.formoid-flat-blue .dropdown-menu > li > a:hover,
+.formoid-flat-blue .dropdown-menu > li > a:focus,
+.formoid-flat-blue .dropdown-submenu:hover > a,
+.formoid-flat-blue .dropdown-submenu:focus > a {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: #0081c2;
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#0077b3));
+  background-image: -webkit-linear-gradient(top, #0088cc, #0077b3);
+  background-image: linear-gradient(to bottom, #0088cc, #0077b3);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc', endColorstr='#ff0077b3', GradientType=0);
+}
+
+.formoid-flat-blue .btn-group {
+  position: relative;
+  display: inline-block;
+  *display: inline;
+  *margin-left: .3em;
+  white-space: nowrap;
+  vertical-align: middle;
+  *zoom: 1;
+}
+
+.formoid-flat-blue .btn-group > .dropdown-menu{
+  font-size: 1em;
+}
+
+.formoid-flat-blue .btn{
+  text-align: left;
+  border: 0;
+  cursor: pointer;
+  border-radius:6px;
+
+  width: 100%;
+  height: 100%;
+  padding: 7px 10px;
+
+  color: #fff;
+  
+  outline:none;
+
+  -webkit-transition: 0.25s;
+  transition: 0.25s;
+  -o-box-sizing: border-box;
+  box-sizing: border-box;
+
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: normal;    
+
+  font-size: 1em;
+}
+.formoid-flat-blue .btn:active,
+.formoid-flat-blue .btn-group.open .btn.dropdown-toggle,
+.formoid-flat-blue .btn.active {
+  background-color: #a1a6a9;
+  color: rgba(255, 255, 255, 0.75);
+  box-shadow: none;
+}
+.formoid-flat-blue .btn.disabled,
+.formoid-flat-blue .btn[disabled] {
+  background-color: #bdc3c7;
+  color: rgba(255, 255, 255, 0.75);
+  box-shadow: none;
+  opacity: 0.7;
+  filter: alpha(opacity=70);
+}
+
+.formoid-flat-blue .select {
+  width: 100%;
+}
+
+.formoid-flat-blue .select .btn .filter-option {
+  position: absolute;
+  left: 13px;
+  right: 30px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.formoid-flat-blue .select .btn .dropdown-toggle {
+  border-radius: 6px;
+}
+.formoid-flat-blue .select .btn .dropdown-menu {
+  min-width: 100%;
+  box-sizing: border-box;
+}
+.formoid-flat-blue .select .btn .dropdown-menu li:not(.disabled) > a:hover small {
+  color: rgba(255, 255, 255, 0.004);
+}
+
+.formoid-flat-blue .select .btn > .disabled,
+.formoid-flat-blue .select .btn .dropdown-menu li.disabled > a {
+  cursor: default;
+}
+.formoid-flat-blue .select .caret {
+  position: absolute;
+  
+  border-top: 6px solid #fff;
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+
+  right: 10px;
+  top: 50%;
+}
+
+.formoid-flat-blue .dropdown-menu {
+  overflow-x: hidden;
+  background-color: #f3f4f5;
+  border: none;
+  display: block;
+  opacity: 0;
+  padding: 0;
+  visibility: hidden;
+  width: 100%;
+  box-shadow: none;
+  -webkit-transition: 0.25s;
+  transition: 0.25s;
+  -webkit-backface-visibility: hidden;
+}
+.formoid-flat-blue .dropdown-menu.typeahead {
+  display: none;
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+}
+.formoid-flat-blue .open > .dropdown-menu {
+  margin-top: 10px;
+  opacity: 1;
+  visibility: visible;
+}
+.formoid-flat-blue .dropdown-menu li:first-child dt + a {
+  border-radius: 0;
+}
+.formoid-flat-blue .dropdown-menu li.active > a,
+.formoid-flat-blue .dropdown-menu li.selected > a,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted,
+.formoid-flat-blue .dropdown-menu li.active > a:hover,
+.formoid-flat-blue .dropdown-menu li.selected > a:hover,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted:hover,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted:hover,
+.formoid-flat-blue .dropdown-menu li.active > a:focus,
+.formoid-flat-blue .dropdown-menu li.selected > a:focus,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted:focus,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted:focus {
+  color: #ffffff;
+}
+.formoid-flat-blue .dropdown-menu li > a {
+  color: rgba(52, 73, 94, 0.75);
+  padding: 6px 15px 6px;
+  text-decoration: none;
+  *zoom: 1;
+  -webkit-transition: background-color 0.25s;
+  transition: background-color 0.25s;
+  -webkit-backface-visibility: hidden;
+  display: block;
+  clear: both;
+  white-space: nowrap;
+}
+.formoid-flat-blue .dropdown-menu li > a:before,
+.formoid-flat-blue .dropdown-menu li > a:after {
+  display: table;
+  content: "";
+}
+.formoid-flat-blue .dropdown-menu li > a:after {
+  clear: both;
+}
+.formoid-flat-blue .dropdown-menu li > a.highlighted {
+  background: #c9cfd4;
+  color: #ffffff;
+}
+.formoid-flat-blue .dropdown-menu li > a.highlighted:hover,
+.formoid-flat-blue .dropdown-menu li > a.highlighted:focus {
+  background: #bac1c8;
+  color: #ffffff;
+}
+.formoid-flat-blue .dropdown-menu li > a:before {
+  margin-top: 3px;
+}
+.formoid-flat-blue .dropdown-menu li > a:hover,
+.formoid-flat-blue .dropdown-menu li > a:active,
+.formoid-flat-blue .dropdown-menu li > a:focus {
+  background: #e1e1e1;
+  color: inherit;
+  outline: none;
+}
+.formoid-flat-blue .dropdown-menu li dt {
+  margin-bottom: 3px;
+  margin-top: 12px;
+  padding: 0 15px;
+}
+.formoid-flat-blue .dropdown-inverse {
+  background-color: #34495e;
+  color: #cccccc;
+  padding-top: 4px;
+}
+.formoid-flat-blue .dropdown-inverse li {
+  margin: 0 4px -2px;
+}
+.formoid-flat-blue .dropdown-inverse li:first-child > a,
+.formoid-flat-blue .dropdown-inverse li:last-child > a {
+  border-radius: 2px;
+  padding-bottom: 7px;
+  padding-top: 5px;
+}
+.formoid-flat-blue .dropdown-inverse li:first-child dt + a,
+.formoid-flat-blue .dropdown-inverse li:last-child dt + a {
+  border-radius: 2px;
+}
+.formoid-flat-blue .dropdown-inverse li.active > a,
+.formoid-flat-blue .dropdown-inverse li.selected > a {
+  color: #ffffff;
+  position: relative;
+  z-index: 1;
+}
+.formoid-flat-blue .dropdown-inverse li dt {
+  padding-left: 11px;
+  padding-right: 11px;
+}
+.formoid-flat-blue .dropdown-inverse li .divider {
+  margin-left: 11px;
+  margin-right: 11px;
+}
+.formoid-flat-blue .dropdown-inverse li > a {
+  border-radius: 2px;
+  color: #ffffff;
+  padding: 5px 11px 7px;
+}
+.formoid-flat-blue .dropdown-inverse li > a:hover,
+.formoid-flat-blue .dropdown-inverse li > a:active,
+.formoid-flat-blue .dropdown-inverse li > a:focus {
+  background: #2c3e50;
+}
+.formoid-flat-blue .dropdown-inverse li > a.highlighted {
+  background: #526476;
+}
+.formoid-flat-blue .dropdown-inverse li > a.highlighted:hover,
+.formoid-flat-blue .dropdown-inverse li > a.highlighted:focus {
+  background: #677786;
+}
+.formoid-flat-blue .dropdown-inverse li .divider {
+  background-color: #526476;
+  border-bottom-color: #526476;
+}
+.formoid-flat-blue .dropdown-menu.pull-right {
+  right: 0;
+  left: auto;
+}
+.formoid-flat-blue .dropdown-arrow {
+  border-color: transparent transparent #F3F4F5;
+  border-style: solid;
+  border-width: 0 9px 9px;
+  height: 0;
+  margin-top: 0;
+  opacity: 0;
+  position: absolute;
+  right: 13px;
+  top: 100%;
+  -webkit-transform: rotate(360deg);
+      -ms-transform: rotate(360deg);
+          transform: rotate(360deg);
+  -webkit-transition: 0.25s;
+  transition: 0.25s;
+  -webkit-backface-visibility: hidden;
+  width: 0;
+  z-index: 10;
+}
+.formoid-flat-blue .dropdown-arrow-inverse {
+  border-bottom-color: #34495E !important;
+  border-top-color: #34495E !important;
+}
+.formoid-flat-blue .open > .dropdown-arrow {
+  margin-top: 2px;
+  opacity: 1;
+}/* .formoid-flat-blue color scheme begin */
+
+.formoid-flat-blue input[type=button]:focus,
+.formoid-flat-blue input[type=button]:active,
+.formoid-flat-blue input[type=button][disabled]{
+  border-color: #3498DB;
+}
+
+.formoid-flat-blue input[type=submit]{
+  background-color: #3498DB;
+}
+
+.formoid-flat-blue input[type=submit]:hover{
+  background-color: #5DADE2;
+}
+.formoid-flat-blue input[type=submit]:active{
+  background-color: #2C81BA;
+}
+
+/* File input */
+.formoid-flat-blue .element-file .button {
+  background-color: #bdc3c7;
+}
+.formoid-flat-blue .element-file .file_text{
+  border-color: #bdc3c7;
+}
+.formoid-flat-blue .element-file label:hover .button{
+  background-color: #3498DB;
+}
+.formoid-flat-blue .element-file label:active .button{
+  background-color: #2C81BA;
+}
+.formoid-flat-blue .element-file label:hover .file_text{
+  border-color: #3498DB;
+}
+.formoid-flat-blue .element-file label:active .file_text{
+  border-color: #2C81BA;
+}
+
+/* element-submit + element-text */
+.formoid-flat-blue > .submit,
+.formoid-flat-blue > .title{
+  background-color: #bcc3ca;
+}
+.formoid-flat-blue > .submit{
+  background-color: #edeff1;
+  border-top: 2px solid #d6dbdf;
+}
+
+/* Radio & checkbox */
+.formoid-flat-blue input[type=radio]+span:before,
+.formoid-flat-blue input[type=checkbox]+span:before{
+  color: #bdc3c7;
+}
+/* checkbox */
+.formoid-flat-blue input[type=checkbox]+span:before{
+  background-color: #bdc3c7;
+}
+.formoid-flat-blue input[type=checkbox]:checked+span:before{
+  background-color: #3498DB;
+}
+
+/* radio */
+.formoid-flat-blue input[type=radio]:checked+span:before{
+  color: #3498DB;
+}
+
+/* rating */
+.formoid-flat-blue .rating:hover .rating-star:hover:after,
+.formoid-flat-blue .rating:hover .rating-star:hover ~ .rating-star:after,
+.formoid-flat-blue .rating-input:checked ~ .rating-star:after {
+  color: #3498DB;
+}
+
+
+.formoid-flat-blue input[type=text]:focus,
+.formoid-flat-blue input[type=tel]:focus,
+.formoid-flat-blue input[type=password]:focus,
+.formoid-flat-blue input[type=email]:focus,
+.formoid-flat-blue input[type=url]:focus,
+.formoid-flat-blue input[type=date]:focus,
+.formoid-flat-blue input[type=number]:focus,
+.formoid-flat-blue textarea:focus,
+.formoid-flat-blue .element-file .file_text:active,
+.formoid-flat-blue  select:focus{
+  border-color: #3498DB;
+}
+
+
+/* bootstrap select */
+.formoid-flat-blue .btn.btn-primary,
+.formoid-flat-blue .dropdown-menu li.active > a,
+.formoid-flat-blue .dropdown-menu li.selected > a,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted,
+.formoid-flat-blue .dropdown-inverse li.active > a,
+.formoid-flat-blue .dropdown-inverse li.selected > a {
+  background-color: #3498db;
+}
+.formoid-flat-blue .btn.btn-primary:hover,
+.formoid-flat-blue .btn.btn-primary:focus,
+.formoid-flat-blue .btn-group:focus .btn.btn-primary.dropdown-toggle {
+  background-color: #5dade2;
+}
+.formoid-flat-blue .btn.btn-primary:active,
+.formoid-flat-blue .btn-group.open .btn.btn-primary.dropdown-toggle,
+.formoid-flat-blue .btn.btn-primary.active,
+.formoid-flat-blue .dropdown-menu li.active > a:hover,
+.formoid-flat-blue .dropdown-menu li.selected > a:hover,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted:hover,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted:hover,
+.formoid-flat-blue .dropdown-menu li.active > a:focus,
+.formoid-flat-blue .dropdown-menu li.selected > a:focus,
+.formoid-flat-blue .dropdown-menu li.active > a.highlighted:focus,
+.formoid-flat-blue .dropdown-menu li.selected > a.highlighted:focus {
+  background-color: #2c81ba;
+}
+
+/* datepicker */
+.datepicker {
+  border: 2px solid #3498DB;
+}
+.datepicker:before {
+	border-bottom: 7px solid #3498DB;
+}
+.datepicker td.active,
+.datepicker td.active:hover,
+.datepicker td.active:hover:hover,
+.datepicker td.active:focus,
+.datepicker td.active:hover:focus,
+.datepicker td.active:active,
+.datepicker td.active:hover:active,
+.datepicker td.active.active,
+.datepicker td.active:hover.active,
+.datepicker td.active.disabled,
+.datepicker td.active:hover.disabled,
+.datepicker td.active[disabled],
+.datepicker td.active:hover[disabled],
+.datepicker td.active:active,
+.datepicker td.active:hover:active,
+.datepicker td.active.active,
+.datepicker td.active:hover.active,
+.datepicker td span.active,
+.datepicker td span.active:hover,
+.datepicker td span.active:focus,
+.datepicker td span.active:active,
+.datepicker td span.active.active,
+.datepicker td span.active.disabled,
+.datepicker td span.active[disabled]{
+  color: #ffffff;
+  background-image: none;
+  background-color: #3498DB;
+}
+
+/* .formoid-flat-blue color scheme begin end *//*!
+ * Datepicker for Bootstrap
+ *
+ * Copyright 2012 Stefan Petre
+ * Licensed under the Apache License v2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+.datepicker {
+  width: 14em;
+  position: absolute;
+  background-color: #fff;
+  color: #34495e;
+  font-size: 1em;
+  top: 0;
+  left: 0;
+  padding: 4px;
+  margin-top: 8px;
+  border-radius: 4px;
+  display: none;
+  z-index: 10;
+}
+.datepicker:before {
+  content: '';
+  display: inline-block;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  position: absolute;
+  top: -9px;
+  left: 6px;
+}
+.datepicker:after {
+  content: '';
+  display: inline-block;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #ffffff;
+  position: absolute;
+  top: -6px;
+  left: 7px;
+}
+.datepicker > div {
+  display: none;
+}
+.datepicker table {
+  width: 100%;
+  margin: 0;
+}
+.datepicker td,
+.datepicker th {
+  text-align: center;
+  width: 2.9em;
+  border-radius: 4px;
+}
+.datepicker td.day:hover {
+  background: #eeeeee;
+  cursor: pointer;
+}
+.datepicker td.day.disabled {
+  color: #eeeeee;
+}
+.datepicker td.old,
+.datepicker td.new {
+  color: #999999;
+}
+.datepicker td.active,
+.datepicker td.active:hover {
+  color: #ffffff;
+  background-image: none;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.datepicker td span {
+  display: block;
+  width: 1.5em;
+  height: 1.7em;
+  line-height: 1.6;
+  float: left;
+  margin: 2px;
+  cursor: pointer;
+  border-radius: .2em;
+}
+.datepicker .datepicker-months td span,
+.datepicker .datepicker-years td span {
+  width: 3.5em;
+  height: 3em;
+  line-height: 3;
+}
+.datepicker td span:hover {
+  background: #eeeeee;
+}
+.datepicker td span.active {
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.datepicker td span.old {
+  color: #999999;
+}
+.datepicker thead tr:first-child th {
+  cursor: pointer;
+}
+.datepicker thead tr:first-child th:hover {
+  background: #eeeeee;
+}
+.input-append.date .add-on i,
+.input-prepend.date .add-on i {
+  display: block;
+  cursor: pointer;
+  width: 1.02em;
+  height: 1.02em;
+}
+ 

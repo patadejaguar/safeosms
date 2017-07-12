@@ -26,7 +26,9 @@ function jsaSetPago($Recibo, $cuentabancaria, $monto, $fecha, $referencia){
     if( $xCta->init() == true){
     	$xCta->setNuevoRetiro($referencia, $Recibo, "", $monto, $fecha);
     	$xRec	= new cReciboDeOperacion(false, false, $Recibo);
-    	$xRec->setDatosDePago(AML_CLAVE_MONEDA_LOCAL, $monto, $referencia, TESORERIA_PAGO_TRANSFERENCIA);
+		if($xRec->init() == true){
+			$xRec->setDatosDePago(AML_CLAVE_MONEDA_LOCAL, $monto, $referencia, TESORERIA_PAGO_TRANSFERENCIA, $cuentabancaria);
+		}
     }
 }
 $jxc ->exportFunction('jsaSetPago', array('iRecibo', 'idcuentabancaria', 'iMonto', 'idfechapago', 'idreferencia'), '#avisos' );

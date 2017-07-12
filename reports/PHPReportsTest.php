@@ -1,16 +1,17 @@
 <?php
+require_once("../core/core.config.inc.php");
 	// insert your phpreports path here
-	ini_set("include_path",ini_get("include_path").":/home/taq/network/phpreports/");
+	//ini_set("include_path",ini_get("include_path").":/home/taq/network/phpreports/");
 	require_once("PHPReportMaker.php");
 
 	print "Running PHPReports test.\n";
 
 	// configure your parameters here
-	$sUser = "";	// database user
-	$sPass = "";	// database password
-	$sData = "";	// database name
-	$sInte = "";	// database interface
-	$sConn = "";	// database connection
+	$sUser = "safeuser";	// database user
+	$sPass = "safepwd";	// database password
+	$sData = "matriz";	// database name
+	$sInte = "mysql";	// database interface
+	$sConn = "localhost";	// database connection
 
 	// check them
 	if(strlen($sUser)<1 ||

@@ -1,0 +1,6 @@
+<FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|js)(\.gz)?$">
+	Header set Cache-Control "public"
+	Header set Expires "Thu, 15 Dec 2015 20:00:00 GMT"
+	Header unset ETag
+	FileETag None
+</FilesMatch>

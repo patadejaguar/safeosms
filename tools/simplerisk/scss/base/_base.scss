@@ -1,0 +1,86 @@
+/*--------------------------------------------------------------
+ ## Box Model and Font Smoothing
+ --------------------------------------------------------------*/
+*{
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+
+
+/*--------------------------------------------------------------
+ ## Body Styles
+ --------------------------------------------------------------*/
+ body {
+   color: $text-color;
+   font-size: $base-font-size;
+   font-family: $base-font-family;
+   font-weight: $base-font-weight;
+   line-height: 1.6;
+
+   background-color:$theme-bg-color;
+ }
+
+
+/*--------------------------------------------------------------
+ ## Link Styles
+ --------------------------------------------------------------*/
+a{
+    text-decoration:none;
+
+    &:focus,
+    &:active{
+        outline:none;
+    }
+}
+
+/*--------------------------------------------------------------
+ ## Separator Styles
+ --------------------------------------------------------------*/
+hr{
+    margin:0px;
+    padding:0px;
+    border:1px solid $border-color;
+}
+
+
+/*--------------------------------------------------------------
+ ## Label and Span
+ --------------------------------------------------------------*/
+label{
+    font-weight:700;
+}
+
+.dropdown-menu{
+    z-index: 99999;
+}
+
+ul.ui-autocomplete {
+    list-style-type: none;
+    color: #3f3f3f;
+    font-family: "Titillium Web", sans-serif;
+    font-size: 14px;
+    > li.ui-menu-item{
+	padding-left: 10px;
+    }
+
+    .ui-state-focus{
+        background: #F0F0F0;
+        color: #000;
+    }
+    
+    &.popup-ui-complete{
+        width: 50% !important;
+        color: #fff;
+    }
+}
+
+.bottom-offset-10{
+    margin-bottom: 10px;
+}
+
+.top-offset-15{
+    margin-top: 15px;
+}
+

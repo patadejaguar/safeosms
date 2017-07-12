@@ -4,6 +4,7 @@ require 'exception.php';
 
 class IncompleteMessageException extends CustomException
 {
+
     private $input;
 
     public function __construct($message = null, $code = 0)
@@ -25,6 +26,7 @@ class IncompleteMessageException extends CustomException
 
 class ProtocolNode
 {
+
     private $tag;
     private $attributeHash;
     private $children;
@@ -37,15 +39,11 @@ class ProtocolNode
      */
     private static function isCli()
     {
-        if(self::$cli === null)
-        {
+        if (self::$cli === null) {
             //initial setter
-            if(php_sapi_name() == "cli")
-            {
+            if (php_sapi_name() == "cli") {
                 self::$cli = true;
-            }
-            else
-            {
+            } else {
                 self::$cli = false;
             }
         }
@@ -86,15 +84,15 @@ class ProtocolNode
 
     public function __construct($tag, $attributeHash, $children, $data)
     {
-        $this->tag = $tag;
+        $this->tag           = $tag;
         $this->attributeHash = $attributeHash;
-        $this->children = $children;
-        $this->data = $data;
+        $this->children      = $children;
+        $this->data          = $data;
     }
 
     /**
      * @param string $indent
-     * @param bool $isChild
+     * @param bool   $isChild
      * @return string
      */
     public function nodeString($indent = "", $isChild = false)
@@ -103,11 +101,10 @@ class ProtocolNode
         $lt = "<";
         $gt = ">";
         $nl = "\n";
-        if(!self::isCli())
-        {
-            $lt = "&lt;";
-            $gt = "&gt;";
-            $nl = "<br />";
+        if ( ! self::isCli()) {
+            $lt     = "&lt;";
+            $gt     = "&gt;";
+            $nl     = "<br />";
             $indent = str_replace(" ", "&nbsp;", $indent);
         }
 
@@ -136,13 +133,11 @@ class ProtocolNode
             $ret .= implode($nl, $foo);
             $ret .= $nl . $indent;
         }
-        $ret .=  $lt . "/" . $this->tag . $gt;
+        $ret .= $lt . "/" . $this->tag . $gt;
 
-        if(!$isChild)
-        {
+        if ( ! $isChild) {
             $ret .= $nl;
-            if(!self::isCli())
-            {
+            if ( ! self::isCli()) {
                 $ret .= $nl;
             }
         }
@@ -182,14 +177,10 @@ class ProtocolNode
     {
         $ret = null;
         if ($this->children) {
-            if(is_int($tag))
-            {
-                if(isset($this->children[$tag]))
-                {
+            if (is_int($tag)) {
+                if (isset($this->children[$tag])) {
                     return $this->children[$tag];
-                }
-                else
-                {
+                } else {
                     return null;
                 }
             }
@@ -222,17 +213,17 @@ class ProtocolNode
     public function refreshTimes($offset = 0)
     {
         if (isset($this->attributeHash['id'])) {
-            $id = $this->attributeHash['id'];
-            $parts = explode('-', $id);
-            $parts[0] = time() + $offset;
+            $id                        = $this->attributeHash['id'];
+            $parts                     = explode('-', $id);
+            $parts[0]                  = time() + $offset;
             $this->attributeHash['id'] = implode('-', $parts);
         }
         if (isset($this->attributeHash['t'])) {
             $this->attributeHash['t'] = time();
         }
     }
-    
-    
+
+
     /**
      * Print human readable ProtocolNode object
      *
@@ -247,13 +238,14 @@ class ProtocolNode
             'data'          => $this->data
         );
 
-        return print_r( $readableNode, true );
+        return print_r($readableNode, true);
     }
 
 }
 
 class BinTreeNodeReader
 {
+
     private $input;
     /** @var $key KeyStream */
     private $key;
@@ -273,15 +265,16 @@ class BinTreeNodeReader
         if ($input != null) {
             $this->input = $input;
         }
-        $stanzaFlag = ($this->peekInt8() & 0xF0) >> 4;
-        $stanzaSize = $this->peekInt16(1);
+        $firstByte  = $this->peekInt8();
+        $stanzaFlag = ($firstByte & 0xF0) >> 4;
+        $stanzaSize = $this->peekInt16(1) | (($firstByte & 0x0F) << 16);
         if ($stanzaSize > strlen($this->input)) {
             throw new Exception("Incomplete message $stanzaSize != " . strlen($this->input));
         }
         $this->readInt24();
         if ($stanzaFlag & 8) {
             if (isset($this->key)) {
-                $realSize = $stanzaSize - 4;
+                $realSize    = $stanzaSize - 4;
                 $this->input = $this->key->DecodeMessage($this->input, $realSize, 0, $realSize);// . $remainingData;
             } else {
                 throw new Exception("Encountered encrypted message, missing key");
@@ -294,17 +287,57 @@ class BinTreeNodeReader
         return null;
     }
 
+    protected function readNibble() {
+      $byte = $this->readInt8();
+
+      $ignoreLastNibble = (bool) ($byte & 0x80);
+      $size = ($byte & 0x7f);
+      $nrOfNibbles = $size * 2 - (int) $ignoreLastNibble;
+
+      $data = $this->fillArray($size);
+      $string = '';
+
+      for ($i = 0; $i < $nrOfNibbles; $i++) {
+        $byte = $data[(int) floor($i / 2)];
+        $ord = ord($byte);
+
+        $shift = 4 * (1 - $i % 2);
+        $decimal = ($ord & (15 << $shift)) >> $shift;
+
+        switch ($decimal) {
+          case 0:
+          case 1:
+          case 2:
+          case 3:
+          case 4:
+          case 5:
+          case 6:
+          case 7:
+          case 8:
+          case 9:
+          $string .= $decimal;
+          break;
+          case 10:
+          case 11:
+          $string .= chr($decimal - 10 + 45);
+          break;
+          default:
+          throw new Exception("Bad nibble: $decimal");
+        }
+      }
+
+      return $string;
+    }
+
     protected function getToken($token)
     {
-        $ret = "";
+        $ret     = "";
         $subdict = false;
         TokenMap::GetToken($token, $subdict, $ret);
-        if(!$ret)
-        {
+        if ( ! $ret) {
             $token = $this->readInt8();
             TokenMap::GetToken($token, $subdict, $ret);
-            if(!$ret)
-            {
+            if ( ! $ret) {
                 throw new Exception("BinTreeNodeReader->getToken: Invalid token $token");
             }
         }
@@ -317,27 +350,26 @@ class BinTreeNodeReader
         if ($token == -1) {
             throw new Exception("BinTreeNodeReader->readString: Invalid token $token");
         }
-        if (($token > 4) && ($token < 0xf5)) {
+        if (($token > 2) && ($token < 0xf5)) {
             $ret = $this->getToken($token);
         } elseif ($token == 0) {
             $ret = "";
         } elseif ($token == 0xfc) {
             $size = $this->readInt8();
-            $ret = $this->fillArray($size);
+            $ret  = $this->fillArray($size);
         } elseif ($token == 0xfd) {
             $size = $this->readInt24();
-            $ret = $this->fillArray($size);
-        } elseif ($token == 0xfe) {
-            $token = $this->readInt8();
-            $ret = $this->getToken($token + 0xf5);
+            $ret  = $this->fillArray($size);
         } elseif ($token == 0xfa) {
-            $user = $this->readString($this->readInt8());
+            $user   = $this->readString($this->readInt8());
             $server = $this->readString($this->readInt8());
             if ((strlen($user) > 0) && (strlen($server) > 0)) {
                 $ret = $user . "@" . $server;
             } elseif (strlen($server) > 0) {
                 $ret = $server;
             }
+        } elseif ($token == 0xff) {
+            $ret = $this->readNibble();
         }
 
         return $ret;
@@ -345,11 +377,11 @@ class BinTreeNodeReader
 
     protected function readAttributes($size)
     {
-        $attributes = array();
+        $attributes  = array();
         $attribCount = ($size - 2 + $size % 2) / 2;
         for ($i = 0; $i < $attribCount; $i++) {
-            $key = $this->readString($this->readInt8());
-            $value = $this->readString($this->readInt8());
+            $key              = $this->readString($this->readInt8());
+            $value            = $this->readString($this->readInt8());
             $attributes[$key] = $value;
         }
 
@@ -359,7 +391,7 @@ class BinTreeNodeReader
     protected function nextTreeInternal()
     {
         $token = $this->readInt8();
-        $size = $this->readListSize($token);
+        $size  = $this->readListSize($token);
         $token = $this->readInt8();
         if ($token == 1) {
             $attributes = $this->readAttributes($size);
@@ -368,7 +400,7 @@ class BinTreeNodeReader
         } elseif ($token == 2) {
             return null;
         }
-        $tag = $this->readString($token);
+        $tag        = $this->readString($token);
         $attributes = $this->readAttributes($size);
         if (($size % 2) == 1) {
             return new ProtocolNode($tag, $attributes, null, "");
@@ -389,7 +421,7 @@ class BinTreeNodeReader
     protected function readList($token)
     {
         $size = $this->readListSize($token);
-        $ret = array();
+        $ret  = array();
         for ($i = 0; $i < $size; $i++) {
             array_push($ret, $this->nextTreeInternal());
         }
@@ -459,7 +491,7 @@ class BinTreeNodeReader
         $ret = 0;
         if (strlen($this->input) >= (1 + $offset)) {
             $sbstr = substr($this->input, $offset, 1);
-            $ret = ord($sbstr);
+            $ret   = ord($sbstr);
         }
 
         return $ret;
@@ -479,7 +511,7 @@ class BinTreeNodeReader
     {
         $ret = "";
         if (strlen($this->input) >= $len) {
-            $ret = substr($this->input, 0, $len);
+            $ret         = substr($this->input, 0, $len);
             $this->input = substr($this->input, $len);
         }
 
@@ -490,6 +522,7 @@ class BinTreeNodeReader
 
 class BinTreeNodeWriter
 {
+
     private $output;
     /** @var $key KeyStream */
     private $key;
@@ -507,11 +540,11 @@ class BinTreeNodeWriter
     public function StartStream($domain, $resource)
     {
         $attributes = array();
-        $header = "WA";
+        $header     = "WA";
         $header .= $this->writeInt8(1);
-        $header .= $this->writeInt8(4);
+        $header .= $this->writeInt8(5);
 
-        $attributes["to"] = $domain;
+        $attributes["to"]       = $domain;
         $attributes["resource"] = $resource;
         $this->writeListStart(count($attributes) * 2 + 1);
 
@@ -524,6 +557,7 @@ class BinTreeNodeWriter
 
     /**
      * @param ProtocolNode $node
+     * @param bool         $encrypt
      * @return string
      */
     public function write($node, $encrypt = true)
@@ -578,18 +612,17 @@ class BinTreeNodeWriter
     {
         $size = strlen($this->output);
         $data = $this->output;
-        if($this->key != null && $encrypt)
-        {
+        if ($this->key != null && $encrypt) {
             $bsize = $this->getInt24($size);
             //encrypt
-            $data = $this->key->EncodeMessage($data, $size, 0, $size);
-            $len = strlen($data);
+            $data     = $this->key->EncodeMessage($data, $size, 0, $size);
+            $len      = strlen($data);
             $bsize[0] = chr((8 << 4) | (($len & 16711680) >> 16));
             $bsize[1] = chr(($len & 65280) >> 8);
             $bsize[2] = chr($len & 255);
-            $size = $this->parseInt24($bsize);
+            $size     = $this->parseInt24($bsize);
         }
-        $ret = $this->writeInt24($size) . $data;
+        $ret          = $this->writeInt24($size) . $data;
         $this->output = '';
         return $ret;
     }
@@ -662,12 +695,10 @@ class BinTreeNodeWriter
 
     protected function writeString($tag)
     {
-        $intVal = -1;
+        $intVal  = -1;
         $subdict = false;
-        if(TokenMap::TryGetToken($tag, $subdict, $intVal))
-        {
-            if($subdict)
-            {
+        if (TokenMap::TryGetToken($tag, $subdict, $intVal)) {
+            if ($subdict) {
                 $this->writeToken(236);
             }
             $this->writeToken($intVal);
@@ -676,7 +707,7 @@ class BinTreeNodeWriter
         $index = strpos($tag, '@');
         if ($index) {
             $server = substr($tag, $index + 1);
-            $user = substr($tag, 0, $index);
+            $user   = substr($tag, 0, $index);
             $this->writeJid($user, $server);
         } else {
             $this->writeBytes($tag);
@@ -703,5 +734,4 @@ class BinTreeNodeWriter
             $this->output .= "\xf9" . $this->writeInt16($len);
         }
     }
-
 }

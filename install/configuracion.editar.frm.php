@@ -72,23 +72,22 @@ if($parent == false AND $txtBuscar == ""){
 						
 						// End definition
 
-						$_SESSION["grid"]->SetDatabaseColumnWidth("parametro",80);
+						$_SESSION["grid"]->SetDatabaseColumnWidth("parametro",400);
 						$_SESSION["grid"]->SetDatabaseColumnName("parametro", "Parametro");
 						$_SESSION["grid"]->SetDatabaseColumnEditable("parametro", false);
 						
 						
-						$_SESSION["grid"]->SetDatabaseColumnWidth("descripcion_del_parametror",100);
+						$_SESSION["grid"]->SetDatabaseColumnWidth("descripcion_del_parametror",400);
 						$_SESSION["grid"]->SetDatabaseColumnName("descripcion_del_parametro", "Descripcion");
 						$_SESSION["grid"]->SetDatabaseColumnEditable("descripcion_del_parametro", false);
 						
-						$_SESSION["grid"]->SetDatabaseColumnWidth("valor_del_parametror",50);
+						$_SESSION["grid"]->SetDatabaseColumnWidth("valor_del_parametror",250);
 						$_SESSION["grid"]->SetDatabaseColumnName("valor_del_parametro", "Valor");
 												
-						$_SESSION["grid"]->SetMaxRowsEachPage(20);
+						$_SESSION["grid"]->SetMaxRowsEachPage(40);
 						$_SESSION["grid"]->PrintGrid(MODE_EDIT);
 
 						//Create the grid.
 }
-echo "</body>";
-echo $xHP->end();
+$xHP->fin();
 ?>

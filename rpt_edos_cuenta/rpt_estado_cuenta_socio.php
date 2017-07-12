@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP			= new cHPage("TR.Estado de Cuenta", HP_REPORT);
+$xHP			= new cHPage("TR.EXPEDIENTE", HP_REPORT);
 $xQL			= new MQL();
 $xLi			= new cSQLListas();
 
@@ -26,7 +26,7 @@ $todo 			= parametro("f14", false, MQL_BOOL);
 $xHP->init();
 
 echo getRawHeader();
-	echo "<p class='bigtitle'>ESTADO DE CUENTA GENERAL DE PERSONAS</p><hr />";
+	echo "<p class='bigtitle'>EXPEDIENTE DE PERSONAS</p><hr />";
 	
 	$subf 		= ($todo == true) ? "" : " AND estatus_mvto=30";
 	// REPORTES DE SOCIOS
@@ -57,8 +57,7 @@ echo getRawHeader();
 		echo $cTcta->Show("TR.CUENTAS DE CAPTACION");
 		//
 		
-		$sqlgar		= $sqlb17_ext . " AND creditos_garantias.socio_garantia=$idsocio ";		
-		$cTgar		= new cTabla($sqlgar);
+		$cTgar		= new cTabla($xLi->getListadoDeGarantiasReales($idsocio) );
 		echo $cTgar->Show("TR.GARANTIAS DE CREDITOS");
 	
 
@@ -69,10 +68,21 @@ echo getRawHeader();
 		// MOVIMIENTOS
 
 		$sqli = $sqlb18d . " AND socio_afectado=$idsocio " . $subf;
-		$xLi->getListadoDeOperaciones($idsocio);
+		//$xLi->getListadoDeOperaciones($idsocio);
 		$cTi		= new cTabla($xLi->getListadoDeOperaciones($idsocio) );
 		$cTi->setTdClassByType();
 		echo $cTi->Show("TR.MOVIMIENTOS GENERALES");
+		
+		// NOTAS
+		
+		
+		
+		
+		$cTi		= new cTabla($xLi->getListadoDeNotas($idsocio));
+		$cTi->setTdClassByType();
+		echo $cTi->Show("TR.NOTAS");
+		
+		
 		//
 echo getRawFooter();
 ?>

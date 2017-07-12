@@ -1,58 +1,76 @@
 <?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
 //=====================================================================================================
-//=====>	INICIO_H
 	include_once("../core/go.login.inc.php");
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");
 	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
+	include_once("../core/core.db.inc.php");
+	$theFile			= __FILE__;
+	$permiso			= getSIPAKALPermissions($theFile);
+	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-include_once( "../core/entidad.datos.php");
-include_once( "../core/core.deprecated.inc.php");
-include_once( "../core/core.fechas.inc.php");
-include_once( "../libs/sql.inc.php");
-include_once( "../core/core.config.inc.php");
-	
-$oficial = elusuario($iduser);
-//TODO: Actualizar Modulo
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title></title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body onLoad="javascript:window.print();">
-<p class="bigtitle">LISTADO DE CREDITOS A ANALIZAR EN LA SESI&Oacute;N DE CR&Eacute;DITO ACTUAL</p>
-<!-- -->
-<?php
-echo getRawHeader();
-$sql_detalle = $sqlb19f . " AND  creditos_solicitud.periodo_solicitudes=$periodosolicitudes AND creditos_solicitud.estatus_actual=99";
-// suma solicitudes
-$sql_suma_detalle = $sqlb19g . " WHERE  creditos_solicitud.periodo_solicitudes=$periodosolicitudes AND creditos_solicitud.estatus_actual=99 GROUP BY creditos_solicitud.periodo_solicitudes";
-$suma_detalle = obten_filas($sql_suma_detalle);
-//
-sqltabla($sqlb11 . " WHERE creditos_periodos.idcreditos_periodos=$periodosolicitudes", "", "fieldnames");
-echo "<hr /><hr />";
-sqltabla($sql_detalle, "", "fieldnames");
-/**
- * Obtiene la Suma de los Creditos en Sesion
- */
+$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
-echo "<hr />
-	<table width='100%'>
-		<tr>
-			<td>Suma de Cr&eacute;ditos Solicitados</td><th>$ $suma_detalle[0]</th>
-		</tr>
-	</table>
-	<hr />
-$pie_pagina";
+	
+$estatus 		= parametro("estado", SYS_TODAS);
+$frecuencia 	= parametro("periocidad", SYS_TODAS);
+$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW);
+
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Bancos
+
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+
+
+$sql			= $xL->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES);
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
+$xT->setFootSum(array( 7 => "monto_solicitado"));
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+$xRPT->addContent( $xT->Show() );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 ?>
-</body>
-</html>

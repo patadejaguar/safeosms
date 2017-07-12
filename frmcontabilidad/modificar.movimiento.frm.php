@@ -55,8 +55,8 @@ $xFRM->addGuardar("jsEditarMovimiento()");
 $xFRM->OButton("TR.Eliminar", "jsEliminarMovimiento()", $xFRM->ic()->ELIMINAR);
 $xFRM->addHElem( $xTxt->getDeCuentaContable("numerocuenta", $xTabla->numerocuenta()->v(), true ) );
 $xFRM->addDivSolo(
-		$xTxtM->getDeMoneda("cargo", "TR.Cargo", $xTabla->cargo()->v()),
-		$xTxtM->getDeMoneda("abono", "TR.Abono", $xTabla->abono()->v()),
+		$xTxtM->getDeMoneda("cargo", "TR.Cargos", $xTabla->cargo()->v()),
+		$xTxtM->getDeMoneda("abono", "TR.Abonos", $xTabla->abono()->v()),
 		"tx24", "tx24"
 );
 //$xFRM->OMoneda("cargo", $xTabla->cargo()->v(), "TR.cargo");
@@ -68,6 +68,7 @@ $xFRM->OText("concepto", $xTabla->concepto()->v(), "TR.concepto");
 //$xFRM->OMoneda("diario", , "TR.diario");
 $xFRM->addHElem( $xSel->getListaDeDiarioDeMvtosContables("diario", $xTabla->diario()->v())->get(true) );
 
+$xFRM->addAviso("");
 
 $xFRM->OHidden("moneda", $xTabla->moneda()->v(), "TR.moneda");
 $xFRM->OHidden("fecha", $xTabla->fecha()->v(), "TR.fecha");
@@ -82,7 +83,7 @@ $xFRM->OHidden("tipomovimiento", $xTabla->tipomovimiento()->v(), "TR.tipomovimie
 
 //$xFRM->OHidden("poliza_clave_unica", $xTabla->tipomovimiento()->v(), "");
 
-$xFRM->addAviso("");
+
 
 //$xFRM->OMoneda("idnumerode", $valor, $titulo)
 //$xFRM->addJsBasico();
@@ -93,7 +94,7 @@ echo $xFRM->get();
 <script>
 var xG		= new Gen();
 var xCont	= new ContGen();
-function jsEliminarMovimiento(){ xG.confirmar({msg: "Confirma Eliminar este Movimiento?", callback: "jsEliminarConfirmado()"}); }
+function jsEliminarMovimiento(){ xG.confirmar({msg: "Confirma Eliminar este Movimiento?", callback: "jsaEliminarMovimiento()"}); }
 function jsConfirmarEliminado(){ jsaEliminarMovimiento(); xG.close(); }
 function jsEditarMovimiento(){  xG.confirmar({msg: "Confirma guardar los cambios?", callback: "jsaEditarMovimiento()"}); }
 </script>

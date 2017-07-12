@@ -22,42 +22,41 @@ $jxc 		= new TinyAjax();
 function jsaSetCreditosADespedidos($credito, $fecha, $observaciones){
     $msg		= "";
     $xCred		= new cCredito($credito);
-    $xCred->init();
-    
-    $xdat	= new cFecha(0);
-    $fecha	= $xdat->getFechaISO($fecha);
+    $xdat		= new cFecha(0);
+    $fecha		= $xdat->getFechaISO($fecha);
 
-    $xCred->init();
-    $socio	= $xCred->getClaveDePersona();
-    $xSoc	= new cSocio($socio);
-    $xSoc->init();
-
-    $xCred->setCambioProducto(CREDITO_PRODUCTO_DESTINO_DESCARTADOS);
-    $xCred->setResetPersonaAsociada($fecha, $observaciones);
-    //Agregar operacion de desvinculacion
-    $xRe	= new cReciboDeOperacion(RECIBOS_TIPO_ESTADISTICO, false, DEFAULT_RECIBO);
-    $xRe->init();
-    $xRe->setNuevoMvto($fecha, $xCred->getSaldoActual(), OPERACION_CLAVE_DESVINCULACION, $xCred->getPeriodoActual(), "", 1, false, 
-    $socio, $credito, $fecha);
-    $xRe->setFinalizarRecibo();
-    
-    $msg	.= $xSoc->getMessages(OUT_TXT);
+    if($xCred->init() == true){
+	    $socio	= $xCred->getClaveDePersona();
+	    $xSoc	= new cSocio($socio);
+	    $xSoc->init();
+	    
+	    $xCred->setCambioProducto(CREDITO_PRODUCTO_DESTINO_DESCARTADOS);
+	    
+	    //Agregar operacion de desvinculacion
+	    $xRe	= new cReciboDeOperacion(RECIBOS_TIPO_ESTADISTICO, false, DEFAULT_RECIBO);
+	    $xRe->init();
+	    $xRe->setNuevoMvto($fecha, $xCred->getSaldoActual(), OPERACION_CLAVE_DESVINCULACION, $xCred->getPeriodoActual(), "", 1, false, $socio, $credito, $fecha);
+	    $xRe->setFinalizarRecibo();
+	    
+	    $xCred->setResetPersonaAsociada($fecha, $observaciones, FALLBACK_CLAVE_EMPRESA);
+	    
+	    $msg	.= $xSoc->getMessages(OUT_TXT);
+	    $msg	.= $xRe->getMessages(OUT_TXT);
+	
+		$xRN	= new cReglaDeNegocio();
+		$xEmp	= new cEmpresas($xCred->getClaveDeEmpresa()); $xEmp->init();
+		$oP		= $xCred->getOPersona();
+		
+		$xRN->setVariables(array(
+				"nombre_de_persona" => $oP->getNombreCompleto(),
+				"mensaje" => $observaciones,
+				"saldo_del_credito" => $xCred->getSaldoActual(),
+				"nombre_de_la_empresa" => $xEmp->getNombreCorto()
+		));	
+		
+		$xRN->setExecuteActions($xRN->reglas()->RN_NOMINA_AL_DESPEDIR);
+    }
     $msg	.= $xCred->getMessages(OUT_TXT);
-    $msg	.= $xRe->getMessages(OUT_TXT);
-
-	$xRN	= new cReglaDeNegocio();
-	$xEmp	= new cEmpresas($xCred->getClaveDeEmpresa()); $xEmp->init();
-	$oP		= $xCred->getOPersona();
-	
-	$xRN->setVariables(array(
-			"nombre_de_persona" => $oP->getNombreCompleto(),
-			"mensaje" => $observaciones,
-			"saldo_del_credito" => $xCred->getSaldoActual(),
-			"nombre_de_la_empresa" => $xEmp->getNombreCorto()
-	));	
-	
-	$xRN->setExecuteActions($xRN->reglas()->RN_NOMINA_AL_DESPEDIR);
-	
     $xF		= new cFileLog();
     $xF->setWrite($msg);
     $xF->setClose();
@@ -74,10 +73,10 @@ function jsaSetDesvincularPersona($credito, $fecha, $observaciones){
 	$xdat		= new cFecha(0);
     $fecha		= $xdat->getFechaISO($fecha);
     
-	$xCred->setResetPersonaAsociada($fecha, $observaciones);
+	$xCred->setResetPersonaAsociada($fecha, $observaciones, FALLBACK_CLAVE_EMPRESA);
 	$oP			= $xCred->getOPersona();
-	$xEmp	= new cEmpresas($xCred->getClaveDeEmpresa()); $xEmp->init();
-	$xRN	= new cReglaDeNegocio();
+	$xEmp		= new cEmpresas($xCred->getClaveDeEmpresa()); $xEmp->init();
+	$xRN		= new cReglaDeNegocio();
 	$xRN->setVariables(array(
 		"nombre_de_persona" => $oP->getNombreCompleto(),
 		"mensaje" => $observaciones,
@@ -103,9 +102,9 @@ function jsaSetPagarCredito($credito, $fecha, $observaciones){
 }
 
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-$jxc ->exportFunction('jsaSetDesvincularPersona', array("idcredito", "idfecha-0", "idobservaciones"), "#idmsg");
-$jxc ->exportFunction('jsaSetCreditosADespedidos', array("idcredito", "idfecha-0", "idobservaciones"), "#idmsg");
-$jxc ->exportFunction('jsaSetPagarCredito', array("idcredito", "idfecha-0", "idobservaciones"), "#idmsg");
+$jxc ->exportFunction('jsaSetDesvincularPersona', array("idcredito", "idfechaactual", "idobservaciones"), "#idmsg");
+$jxc ->exportFunction('jsaSetCreditosADespedidos', array("idcredito", "idfechaactual", "idobservaciones"), "#idmsg");
+$jxc ->exportFunction('jsaSetPagarCredito', array("idcredito", "idfechaactual", "idobservaciones"), "#idmsg");
 
 $jxc ->process();
 
@@ -129,7 +128,7 @@ $xDate		= new cHDate();
 
 $jsb->setNameForm( $xFRM->getName() );
 //$xFRM->addCreditBasico();
-$xFRM->addHElem( $xDate->get($xFRM->lang("fecha") )  );
+$xFRM->addFecha();
 $xFRM->addObservaciones();
 //$xFRM->addHElem( $xTxt->get("idobservaciones", "", $xFRM->lang("observaciones")) );
 
@@ -138,10 +137,11 @@ $xFRM->addToolbar( $xBtn->getBasic("TR.Desvincular de la_empresa", "jsSaveEstado
 $xFRM->addToolbar( $xBtn->getBasic("TR.Pago Total", "jsSaveEstado(3)", "dinero", "id4", false ) );
 
 $xFRM->addFootElement( "<p class='aviso' id='idmsg'></p>" );
-$xFRM->addFootElement( "<input type='hidden' id='idcredito' value='$credito' />" );
+$xFRM->OHidden("idcredito", $credito);
+
 echo $xFRM->get();
 
-echo $xHP->setBodyEnd();
+
 $jsb->show();
 $jxc->drawJavaScript(false, true);
 ?>
@@ -151,7 +151,7 @@ var msg		= "<?php  echo $xFRM->lang(MSG_CONFIRM_SAVE); ?>";
 var msg1	= "<?php  echo $xFRM->lang("despedido"); ?>";
 var msg2	= "<?php  echo $xFRM->lang("desvinculado"); ?>";
 var xG		= new Gen();
-    function jsSaveEstado(tipo){
+function jsSaveEstado(tipo){
 	var sip	= false;
 	if (tipo == 1) {
 	    var sip	= confirm(msg + ":\n" + msg1);
@@ -163,10 +163,10 @@ var xG		= new Gen();
 	    var sip	= confirm(msg + ":\n" + msg2);
 	    if (sip == true) { jsaSetPagarCredito(); }
 	}
-	setTimeout("jsEnd()",2000);
+	setTimeout("jsEnd()",5000);
 }
 function jsEnd(){ xG.close();   }
 </script>
 <?php
-$xHP->end();
+$xHP->fin();
 ?>

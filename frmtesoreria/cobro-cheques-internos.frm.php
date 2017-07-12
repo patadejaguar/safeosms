@@ -11,8 +11,8 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
 //=====================================================================================================
-$xP				= new cHPage("Cobranza.- Cheques Internos", HP_FORM);
-$xP->setIncludes();
+$xHP				= new cHPage("Cobranza.- Cheques Internos", HP_FORM);
+$xHP->setIncludes();
 
 
 $xJS			= new jsBasicForm("frmCobrosEnCheque");
@@ -77,20 +77,22 @@ if( $recibo != false ){
 	$DRec			= $xRec->getDatosInArray();
 	$MontoOperacion	= $DRec["total_operacion"];
 	//=========================== HTML
-	echo $xP->getHeader();
+	echo $xHP->getHeader();
 	echo $xJS->setIncludeJQuery();
 	
 	$jxc ->drawJavaScript(false, true);
-	echo $xP->setBodyinit();
+	echo $xHP->setBodyinit();
 	
-	$xFrm	= new cHForm("frmCobrosEnCheque", "cobro-cheques.frm.php");
+	?> <style> #idavisopago, #idimporte, #iMontoRecibido, #iNumeroCheque2, #iNumeroCheque1, #iMontoCheque2, #iMontoCheque1 { font-size : 1.3em !important; } </style> <?php
+	
+	$xFRM	= new cHForm("frmCobrosEnCheque", "cobro-cheques.frm.php");
+	$xFRM->setTitle($xHP->getTitle());
 	//agrega en un hidden el idrecibo
 
-	
 	$xTxt	= new cHText("id");
-	$xTxt->setIncludeLabel(false);
-	
 	$xTxt2	= new cHText("id");
+	$xHNot	= new cHNotif();
+	
 	$xTxt2->setIncludeLabel(false);	
 	$xTxt2->setProperty("size", "10");
 	$xTxt2->setProperty("maxlength", "12");
@@ -104,29 +106,30 @@ if( $recibo != false ){
 	
 
 	
-	$xFrm->addHElem( array("", "<div class='title'>IMPORTE :</div>",  $xTxt0->getDeMoneda("iMontoOperacion", "", $MontoOperacion) ));
+	//$xFRM->addHElem( array("", "<div class='title'>IMPORTE :</div>",  $xTxt0->getDeMoneda("iMontoOperacion", "", $MontoOperacion) ));
+	$xFRM->addHElem( $xHNot->get($xHP->lang("importe") . " : " . getFMoney($MontoOperacion) . AML_CLAVE_MONEDA_LOCAL, "idimporte") );
 	
 	$xTxt->setDropProperty("disabled");
 
-	$xFrm->addHElem( array( "<div class='title'>Banco</div>", "<div class='title'>Num. Cheque</div>", "<div class='title'>Monto</div>")  );
+	$xFRM->addHElem( array( "<div class='title'>Banco</div>", "<div class='title'>Num. Cheque</div>", "<div class='title'>Monto</div>")  );
 	$xTxt2->addEvent("onblur", "jsaGetCheque1");
-	$xFrm->addHElem( array( $xSel1->get(), $xTxt2->getBasic("iNumeroCheque1", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque1", "", 0.00) ) );
+	$xFRM->addHElem( array( $xSel1->get(), $xTxt2->getBasic("iNumeroCheque1", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque1", "", 0.00) ) );
 	
 	$xTxt->addEvent("jsActualizarPago", "onblur");
 //	$xTxt->addEvent("jsActualizarPago", "onchange");
 
 	$xTxt2->addEvent("onblur", "jsaGetCheque2");
-	$xFrm->addHElem( array( $xSel2->get(), $xTxt2->getBasic("iNumeroCheque2", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque2", "", 0.00) ) );
+	$xFRM->addHElem( array( $xSel2->get(), $xTxt2->getBasic("iNumeroCheque2", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque2", "", 0.00) ) );
 	
 	$xTxt->setProperty("disabled", "true");
-	$xFrm->addHElem( array("", "<div class='title'>SUMA:</div>",  $xTxt->getDeMoneda("iTotal", "", 0) ));
+	$xFRM->addHElem( array("", "<div class='title'>SUMA:</div>",  $xTxt->getDeMoneda("iTotal", "", 0) ));
 	
 	
-	$xFrm->addHTML("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
-	$xFrm->addHTML("<textarea id='avisos' rows='2' cols='52' disabled></textarea>");
+	$xFRM->addHTML("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
+	$xFRM->addHTML("<textarea id='avisos' rows='2' cols='52' disabled></textarea>");
 		
-	echo $xFrm->get();
-	echo $xP->setBodyEnd();
+	echo $xFRM->get();
+	echo $xHP->setBodyEnd();
 	//=========================== HTML
 	?>
 	<script type="text/javascript">
@@ -174,6 +177,6 @@ if( $recibo != false ){
 	}
 	</script>
 	<?php
-	$xP->end();
+	$xHP->end();
 }
 ?>

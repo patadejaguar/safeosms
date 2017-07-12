@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item><pubDate>Fri, 30 Sep 2016 15:16:53 -0500</pubDate><title><![CDATA[¿Cuanto Debo?]]></title><url><![CDATA[estado-de-cuenta]]></url><meta><![CDATA[]]></meta><metad><![CDATA[]]></metad><menu><![CDATA[¿Cuanto Debo?]]></menu><menuOrder><![CDATA[4]]></menuOrder><menuStatus><![CDATA[Y]]></menuStatus><template><![CDATA[template.php]]></template><parent><![CDATA[]]></parent><content><![CDATA[	&lt;!-- Start Formoid form--&gt;
+	&lt;div class=&#039;col-two&#039;&gt;
+	&lt;form class=&quot;formoid-flat-blue&quot;
+		style=&quot;background-color: #FFFFFF; font-size: 14px; font-family: &#039;Lato&#039;, sans-serif; color: #666666; max-width: 100%; min-width: 150px&quot;
+		method=&quot;post&quot;&gt;
+		&lt;div class=&quot;title&quot;&gt;
+			&lt;h2&gt;Capture su Informaci&amp;oacute;n&lt;/h2&gt;
+		&lt;/div&gt;
+		&lt;!-- &lt;div class=&quot;element-input&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;Capture su telefono&lt;/label&gt;
+			&lt;input class=&quot;large&quot; type=&quot;text&quot; id=&quot;idtelefono&quot; /&gt;
+		&lt;/div&gt; --&gt;
+		&lt;div class=&quot;element-input&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;Su clave de Credito&lt;/label&gt;
+			&lt;input class=&quot;large&quot; type=&quot;text&quot; id=&quot;idcredito&quot; /&gt;
+		&lt;/div&gt;		
+		
+		&lt;div class=&quot;element-email&quot;&gt;
+			&lt;label class=&quot;title&quot;&gt;Su Correo electronico&lt;/label&gt;
+			&lt;input class=&quot;large&quot; type=&quot;email&quot; id=&quot;idmail&quot; value=&quot;&quot; /&gt;
+		&lt;/div&gt;
+		
+		&lt;div class=&quot;submit&quot;&gt;
+			&lt;input type=&quot;submit&quot; value=&quot;Obtener Estado de Cuenta&quot; onclick=&quot;jsSendData(); return false&quot; /&gt;
+		&lt;/div&gt;
+	&lt;/form&gt;
+	&lt;/div&gt;
+	&lt;div class=&#039;col-two&#039;&gt;
+		&lt;div class=&quot;title&quot;&gt;
+			&lt;h1&gt;Instrucciones&lt;/h1&gt;
+		&lt;/div&gt;
+		
+		&lt;h3&gt;Capture su clave de Cr&amp;eacute;dito&lt;/h3&gt;
+		&lt;p&gt;Capture su &lt;em&gt;Clave de Cr&amp;eacute;dito&lt;/em&gt;, si no tiene esa informaci&amp;oacute puede acudir a las Oficinas de recursos Humanos de su Empresa o en las Oficinas de la Financiera&lt;/p&gt;
+		&lt;p&gt;Por ser un datos Personal, solo se otorga al Titular o Co-Titulares de la Cuenta&lt;/p&gt;
+		&lt;h3&gt;Capture su Correo Electr&amp;oacute;nico&lt;/h3&gt;
+		&lt;P&gt;Capture su &lt;em&gt;Correo Electr&amp;oacute;nico&lt;/em&gt;, este debe ser igual al registrado en el Sistema de la Financiera, si no lo recuerda pregunte en las Oficinas de la Financiera&lt;/P&gt;
+		&lt;p&gt;En caso de que el Correo Electr&amp;oacute;nico no sea igual, el env&amp;iacute;o ser&amp;aacute; rechazado&lt;/p&gt;
+		&lt;h3&gt;Dudas a : &lt;a href=&quot;mailto:software@grupopadio.com.mx&quot;&gt;Contacto&lt;/a&gt;&lt;/h3&gt;
+		&lt;h3&gt;&lt;a href=&quot;privacidad.html&quot;&gt;Declaraci&amp;oacute;n de Privacidad&lt;/a&gt;&lt;/h3&gt;
+	&lt;/div&gt;	
+	
+	&lt;link href=&quot;./formoid1/formoid-flat-blue.css&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot; /&gt;
+	&lt;script type=&quot;text/javascript&quot; src=&quot;./formoid1/jquery.min.js&quot;&gt;&lt;/script&gt;
+	&lt;script&gt;
+		var mSite = &quot;http://localhost/svc/pc.svc.php?cmd=consulta&amp;&quot;;
+		function jsSendData(){
+			var idcredito 	= $(&quot;#idcredito&quot;).val();
+			var idmail 		= $(&quot;#idmail&quot;).val();
+			var mUrl		= mSite + &quot;credito=&quot; + idcredito + &quot;&amp;email=&quot; + idmail;
+			$.getJSON( mUrl, function( data ) {
+				alert(data.message);	
+			});	
+		}
+	&lt;/script&gt;
+	&lt;!-- Stop Formoid form--&gt;
+]]></content><private><![CDATA[]]></private><author><![CDATA[root]]></author></item>

@@ -43,22 +43,35 @@ $xRPT->setTitle($xHP->getTitle());
 $activo			= 1;
 $xHP->init();
 $xFormat		= new cFormato(501);
+//============ Procesar estado de Resultados
+$xSec			= new cCuentasPorSector(CONTABLE_CLAVE_INGRESOS, $fecha);
+$xSec->init(false);
+$suma_ingresos	= $xSec->getSumaTitulo();
+
+$xSec			= new cCuentasPorSector(CONTABLE_CLAVE_EGRESOS, $fecha);
+$xSec->init(false);
+$suma_egresos	= $xSec->getSumaTitulo();
+
+$resultado		= $suma_ingresos - $suma_egresos;
+//Actualizar Resultados
+$xConf			= new cConfiguration();
+$xConf->set("resultado_del_periodo_contable", $resultado);
 
 //============ Reporte
-$xSec			= new cCuentasPorSector(1, $fecha); 
+$xSec			= new cCuentasPorSector(CONTABLE_CLAVE_ACTIVO, $fecha); 
 $xSec->init(false);
 $activo			= $xSec->render();
 $suma_activo	= $xSec->getSumaTitulo();
 
-$xSec			= new cCuentasPorSector(2, $fecha); 
+$xSec			= new cCuentasPorSector(CONTABLE_CLAVE_PASIVO, $fecha); 
 $xSec->init(false);
 $pasivo			= $xSec->render();
 $suma_pasivo	= $xSec->getSumaTitulo();
 
-$xSec			= new cCuentasPorSector(3, $fecha);
+$xSec			= new cCuentasPorSector(CONTABLE_CLAVE_CAPITAL, $fecha);
 $xSec->init(false);
 $capital		= $xSec->render();
-$suma_capital	= $xSec->getSumaTitulo() + CONTABLE_RESULTADO_DEL_PERIODO;
+$suma_capital	= $xSec->getSumaTitulo() + $resultado;
 
 $pasivo_mas_capital	= $suma_pasivo + $suma_capital;
 
@@ -70,7 +83,7 @@ $xFormat->setProcesarVars(array(
 		"variable_ficha_capital" => $capital,
 		"variable_total_capital" => getFMoney($suma_capital),
 		"variable_pasivo_mas_capital" => getFMoney($pasivo_mas_capital),
-		"variable_resultado_del_periodo" => getFMoney(CONTABLE_RESULTADO_DEL_PERIODO)
+		"variable_resultado_del_periodo" => getFMoney($resultado)
 ));
 
 echo $xFormat->get();

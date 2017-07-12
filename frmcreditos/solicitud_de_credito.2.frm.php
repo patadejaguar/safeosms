@@ -23,7 +23,10 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP				= new cHPage("TR.Solicitud de Credito .- Modulo de Validacion");
+$xHP->setNoCache();
 $xFecha				= new cFecha();
+$xCred				= new cCredito();
+
 $msg				= "";
 $persona			= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito			= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -48,14 +51,34 @@ $esrenovado			= parametro("idrenovado", false, MQL_BOOL);
 $tieneprops			= parametro("idpropietario", false, MQL_BOOL);				//propietarios reales
 $tieneprovs			= parametro("idproveedor", false, MQL_BOOL);				//proveedores de recursos
 
+$idorigen			= parametro("idorigen",1, MQL_INT);
+$origen				= parametro("origen",1, MQL_INT);
+$TipoLugarCobro		= parametro("idtipolugarcobro",0, MQL_INT);
+
+$oficial_de_credito	= parametro("oficial", getUsuarioActual(), MQL_INT);
+
+$TasaDeInteres		= parametro("tasa",false, MQL_FLOAT);
+
 $fecha_solicitud 	= $xFecha->getFechaISO($solicitado);
 $fecha_ministracion = $xFecha->getFechaISO($ministrado);
 $fecha_vencimiento 	= $xFecha->getFechaISO($vencido);
-$oficial_de_credito	= getUsuarioActual();
+
+//$oficial_de_credito	= getUsuarioActual();
 $xBtn				= new cHButton();
 $xFRM				= new cHForm("frmcreditoautorizado");
 $xFRM->setTitle($xHP->getTitle());
 $xHP->init();
+//================== Cargar datos del Presupuesto
+switch ($origen){
+	case $xCred->ORIGEN_ARRENDAMIENTO:
+		$xLeas		= new cCreditosLeasing($idorigen);
+		if($xLeas->init() == true){
+			$TasaDeInteres	= $xLeas->getTasaInteres()+$xLeas->getTasaTiie();
+		}
+		break;
+}
+
+//================== Cargar datos de Arrendamiento puro
 
 //Correccciones
 $contrato_corriente	= (setNoMenorQueCero($contrato_corriente) <= 0) ? DEFAULT_CUENTA_CORRIENTE : $contrato_corriente;
@@ -67,7 +90,9 @@ $arrDatos			= array(
 						"contrato_corriente_relacionado" => $contrato_corriente,
 						"fecha_de_ministracion" => $ministrado,
 						"fecha_de_vencimiento" => $vencido,
-						"monto_solicitado"		=> $monto_solicitado
+						"monto_solicitado"		=> $monto_solicitado,
+						"tipo_de_origen" => $origen,
+						"clave_de_origen" => $idorigen
 						);
 $sucess				= true;
 if($xSoc->isOperable() == true){
@@ -98,10 +123,11 @@ if($sucess == true){
 		$TipoDeAutorizacion			= CREDITO_AUTORIZACION_RENOVADO;
 		$msg						.= "WARN\tCredito marcado como Renovado \r\n";
 	}
-	$xCred		= new cCredito();
+	//INTERES_POR_SALDO_INSOLUTO
+	
 	$result		= $xCred->add($tipoconvenio, $persona,$contrato_corriente, $monto_solicitado, $periocidad, $numeropagos, $dias_solicitados, $rubro_destino, false,
 			$grupo_asociado, $amp_destino, $observaciones, $oficial_de_credito, $fecha_solicitud, $tipo_de_pago,
-			INTERES_POR_SALDO_INSOLUTO, false,  $fecha_ministracion, $xSoc->getClaveDeEmpresa(), $TipoDeAutorizacion);
+			$xConv->getTipoDeBaseCalc(), $TasaDeInteres,  $fecha_ministracion, $xSoc->getClaveDeEmpresa(), $TipoDeAutorizacion, $idorigen, $origen);
 	if($result == false){
 		$xFRM->addToolbar($xBtn->getRegresar("solicitud_de_credito.frm.php", true) );
 		$xFRM->addAviso($xHP->lang(MSG_ERROR_SAVE));
@@ -112,6 +138,10 @@ if($sucess == true){
 		$xFRM->addToolbar( $xFL->getLinkDownload("Log de eventos", "") );
 		$xFRM->addAviso($xCred->getMessages());
 	} else {
+		if($TipoLugarCobro > 0){
+			$xCred->setTipoDeLugarDeCobro($TipoLugarCobro, true);
+		}
+		$xCred				= new cCredito($xCred->getNumeroDeCredito());
 		$xCred->init(); $credito	= $xCred->getNumeroDeCredito();
 		//Si es Automatizado
 		$xCat						= new cCreditosOtrosDatos();
@@ -124,16 +154,20 @@ if($sucess == true){
 		if($xCred->getTipoDeAutorizacion() == CREDITO_TIPO_AUTORIZACION_AUTOMATICA){
 			//$saldo_actual = $monto_autorizado;
 			//TODO: Acabar con este modulo
-			$xFRM->addToolbar( $xBtn->getBasic($xHP->lang("Imprimir", "Orden de Desembolso"), "jsImprimirOrdenDeDesembolso()", "imprimir", "cmdprintdes", false) );
+			$xFRM->addToolbar( $xBtn->getBasic("TR.Imprimir Orden de Desembolso", "jsImprimirOrdenDeDesembolso()", "imprimir", "cmdprintdes", false) );
 		}
 		//----------------------------------------------------------------------
 		
 		$xFRM->addHTML( $xCred->getFichaDeSocio() );
 		$xFRM->addHTML( $xCred->getFicha() );
-		$xFRM->addCreditoComandos($xCred->getNumeroDeCredito());
-		$xFRM->addToolbar( $xBtn->getBasic("TR.Autorizar credito", "var CGen=new CredGen();CGen.getFormaAutorizacion($credito)", "imprimir", "cmdprintdes5", false) );
-		$xFRM->addToolbar($xBtn->getBasic("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", "reporte", "generar-plan", false ) );
+		$xFRM->addCreditoComandos($xCred->getNumeroDeCredito(), $xCred->getEstadoActual());
+		$xFRM->addCerrar();
+		
+		//$xFRM->addToolbar( $xBtn->getBasic("TR.Autorizar credito", "var CGen=new CredGen();CGen.getFormaAutorizacion($credito)", "imprimir", "cmdprintdes5", false) );
+		//$xFRM->addToolbar($xBtn->getBasic("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", "reporte", "generar-plan", false ) );
 	}	
+} else {
+	$xFRM->addAtras();
 }
 	$msg		.= $xSoc->getMessages();
 	$xFRM->addAviso($msg);

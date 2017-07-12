@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.REGISTRO DE CUENTA_BANCARIA", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -40,6 +40,7 @@ $clave 		= parametro("idbancos_cuentas", null, MQL_INT);
 $xTabla		= new cBancos_cuentas();
 $xSel		= new cHSelect();
 if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
+
 $xTabla->setData($_REQUEST);
 $clave = parametro("id", null, MQL_INT);
 $xSel		= new cHSelect();
@@ -71,24 +72,31 @@ if($action == MQL_ADD){		//Agregar
 		$xFRM->addAvisoRegistroOK();
 	}
 }
-
+$xFRM->setTitle($xHP->getTitle());
 $xFRM->addSubmit();
+
+$xTabla->fecha_de_apertura(fechasys());
+
+$xFRM->OHidden("fecha_de_apertura", $xTabla->fecha_de_apertura()->v());
+
 $xFRM->OMoneda("idbancos_cuentas", $xTabla->idbancos_cuentas()->v(), "TR.clave_de_cuenta");
-$xFRM->OText("descripcion_cuenta", $xTabla->descripcion_cuenta()->v(), "TR.descripcion cuenta");
-$xFRM->ODate("fecha_de_apertura", $xTabla->fecha_de_apertura()->v(), "TR.fecha de registro");
+$xFRM->OText("descripcion_cuenta", $xTabla->descripcion_cuenta()->v(), "TR.descripcion");
+
 
 //$xFRM->OHidden("sucursal", $xTabla->sucursal()->v(), "TR.sucursal");
 $xFRM->addHElem( $xSel->getListaDeSucursales("sucursal", $xTabla->sucursal()->v())->get(true) );
 
 $xFRM->OSelect("estatus_actual", $xTabla->estatus_actual()->v() , "TR.estatus actual", array("activo"=>"ACTIVO", "baja"=>"BAJA"));
-$xFRM->OText("consecutivo_actual", $xTabla->consecutivo_actual()->v(), "TR.consecutivo actual");
-$xFRM->OMoneda("saldo_actual", $xTabla->saldo_actual()->v(), "TR.saldo actual");
+$xFRM->OText_13("consecutivo_actual", $xTabla->consecutivo_actual()->v(), "TR.consecutivo actual");
+$xFRM->OMoneda2("saldo_actual", $xTabla->saldo_actual()->v(), "TR.saldo actual");
 
 //$xTabla->entidad_bancaria()->v()
 
-$xFRM->OText("codigo_contable", $xTabla->codigo_contable()->v(), "TR.codigo contable");
+$xFRM->OTextContable("codigo_contable", $xTabla->codigo_contable()->v());
+
 //$xFRM->OMoneda("entidad_bancaria", $xTabla->entidad_bancaria()->v(), "TR.entidad bancaria");
-$xFRM->addHElem( $xSel->getListadoDeBancos("entidad_bancaria", $xTabla->entidad_bancaria()->v())->get(true) );
+
+$xFRM->addHElem( $xSel->getListaDeBancos("entidad_bancaria", $xTabla->entidad_bancaria()->v())->get(true) );
 $xFRM->OSelect("tipo_de_cuenta", $xTabla->tipo_de_cuenta()->v() , "TR.tipo de cuenta", array("cheques"=>"CHEQUES", "inversion"=>"INVERSION"));
 
 $xFRM->OHidden("eacp", EACP_CLAVE, "TR.eacp");

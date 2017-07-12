@@ -19,34 +19,55 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP		= new cHPage("TR.REPORTE DE OPERACIONES DE CAJA", HP_REPORT);
-$mql		= new cSQLListas();
-$xF			= new cFecha();
-$query		= new MQL();
-	
-$xHP->setTitle($xHP->getTitle() );
+$xF					= new cFecha();
+$xSQL				= new cSQLListas();
+//=====================================================================================================
+$cajero 			= parametro("f3", getUsuarioActual(), MQL_INT); $cajero = parametro("cajero", $cajero, MQL_INT); $cajero = parametro("usuarios", $cajero, MQL_INT);
+$out				= parametro("out", OUT_HTML, MQL_RAW);
+$mails				= getEmails($_REQUEST);
+$empresa			= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$FechaInicial		= parametro("fechaMX", $xF->getFechaMinimaOperativa(), MQL_DATE);
+$FechaInicial		= parametro("on", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal			= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$TipoDePago			= parametro("tipodepago", SYS_TODAS, MQL_RAW); $TipoDePago	= parametro("formadepago", $TipoDePago, MQL_RAW);
+$estatus 			= parametro("estado", SYS_TODAS);
+$frecuencia 		= parametro("periocidad", SYS_TODAS);
+$producto 			= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
 
-$oficial = elusuario($iduser);
+$ByAll				= "";
 
 
-$estatus 		= parametro("estado", SYS_TODAS);
-$frecuencia 	= parametro("periocidad", SYS_TODAS);
-$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
-$empresa		= parametro("empresa", SYS_TODAS);
+$ByEmpresa			= $xSQL->OFiltro()->RecibosPorPersonaAsociada( $empresa);
+$ByCajero			= $xSQL->OFiltro()->TesoreriaOperacionesPorCajero($cajero);
+//if(MODO_DEBUG == true){	$ByCajero		= ""; }
+$ByFecha			= $xSQL->OFiltro()->TesoreriaOperacionesPorFechas($FechaInicial, $FechaFinal);
+$ByTipoDePago		= $xSQL->OFiltro()->RecibosPorTipoDePago($TipoDePago);
 
-$out 			= parametro("out", SYS_DEFAULT);
+$titulo				= $xHP->getTitle();
+
+if ( $ByEmpresa != "" ){
+	$xEmp			= new cEmpresas($empresa); $xEmp->init();
+	$titulo			= $titulo . " / " . $xEmp->getNombreCorto();
+}
+if($ByCajero != ""){
+	$xCaj			= new cSystemUser($cajero);
+	if($xCaj->init() == true){
+		$titulo			= $titulo . " / " . $xCaj->getNombreCompleto();
+	}
+}
+if($ByTipoDePago != ""){
+	$xTipoP			= new cTesoreriaTiposDePagoCobro($TipoDePago);
+	if($xTipoP->init() == true){
+		$titulo			= $titulo . " / " . $xTipoP->getNombre();
+	}
+}
 
 
-//$fechaInicial	= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-//$fechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
-$fecha_inicial	= (isset($_GET["on"])) ?  $_GET["on"] : "";
-$fecha_final	= (isset($_GET["off"])) ?  $_GET["off"] : "";
 
-$cajero		= (isset($_GET["f3"])) ? $_GET["f3"] : SYS_TODAS;
-$cajero		= (isset($_GET["cajero"])) ? $_GET["cajero"] : $cajero;
 
 $ByCajero	= ($cajero == "" OR $cajero == SYS_TODAS) ? "" : " AND (`tesoreria_cajas_movimientos`.`idusuario` = $cajero) ";
 
-echo $xHP->getHeader();
+
 $sql 	= "
 SELECT
 	`tesoreria_cajas_movimientos`.`fecha`,
@@ -65,11 +86,10 @@ SELECT
  (SELECT `nombre_de_la_entidad` FROM `bancos_entidades`	WHERE `idbancos_entidades` = `tesoreria_cajas_movimientos`.`banco` LIMIT 0,1)) 
 	ELSE '' END) AS 'datos'
 FROM
-	`tesoreria_cajas_movimientos` `tesoreria_cajas_movimientos`
-WHERE 
-		(`tesoreria_cajas_movimientos`.`fecha` >='$fecha_inicial'
-		AND
-		`tesoreria_cajas_movimientos`.`fecha` <='$fecha_final')
+	`tesoreria_cajas_movimientos`
+WHERE `tesoreria_cajas_movimientos`.`idtesoreria_cajas_movimientos`>0
+		$ByFecha
+	
 		$ByCajero
 ORDER BY
 	`tesoreria_cajas_movimientos`.`fecha`,
@@ -78,36 +98,23 @@ ORDER BY
 	`tesoreria_cajas_movimientos`.`cuenta_bancaria`
 	";
 
-if($out == OUT_EXCEL ){
-	echo $xHP->setBodyinit();
-	$xls	= new cHExcel();
-	$xls->convertTable($sql, $xHP->getTitle());
-} else {
-	echo $xHP->setBodyinit("initComponents();");
-	$xRPT			= new cReportes();
-	
-	$xTBL			= new cTabla($sql);
-	$xTBL->setTdClassByType();
-	echo $xRPT->getHInicial($xHP->getTitle());
-	
-	$xTBL->setFootSum(array(
-		3 => "monto",
-		4 => "recibido",
-		5 => "cambio"
-	));
-	
-	echo $xTBL->Show();
-	
-	echo $xRPT->getPie();
-	?>
-	<script>
-	<?php ?>
-	function initComponents(){ window.print();	}
-	</script>
-	<?php
-	
-}
+$xRPT		= new cReportes($titulo);
+$xRPT->addContent($xRPT->getEncabezado($xRPT->getTitle(), $FechaInicial, $FechaFinal));
+$xRPT->setSenders($mails);
+$xRPT->setOut($out);
+$xRPT->setConfig("CORTE-RECIBOS");
 
-echo $xHP->setBodyEnd();
-$xHP->end(); 
+$xRPT->setSQL($sql);
+//if($ByEmpresa != "" OR PERSONAS_CONTROLAR_POR_EMPRESA == false){ $xRPT->setOmitir("empresa"); }
+if($ByCajero != ""){ $xRPT->setOmitir("cajero"); }
+if($ByTipoDePago != ""){ $xRPT->setOmitir("tipo_de_pago"); }
+$xRPT->addCampoSuma("monto");
+$xRPT->setFormato("fecha", $xRPT->FMT_FECHA);
+
+$xRPT->setToPrint();
+$xRPT->setProcessSQL();
+		
+echo $xRPT->render(true);
+		
+
 ?>

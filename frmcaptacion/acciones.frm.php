@@ -35,7 +35,8 @@ $oficial = elusuario($iduser);
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
-$socio			= ( isset( $_GET["s"] ) ) ? $_GET["s"] : false;
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$socio			= $persona;
 $cuenta			= ( isset( $_GET["c"] ) ) ? $_GET["c"] : false;
 $msg			= ( isset( $_GET[SYS_MSG] ) ) ? $_GET[SYS_MSG] : false;
 

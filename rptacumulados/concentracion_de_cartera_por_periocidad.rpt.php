@@ -1,139 +1,95 @@
 <?php
 /**
- * @author Balam Gonzalez Luis
- * @version 1.2
- * @since 2007-06-01
- * Changes:
- * 05/05/2008 Reescritura
- */
+ * Reporte de
+*
+* @author Balam Gonzalez Luis Humberto
+* @version 1.0
+* @package seguimiento
+* @subpackage reports
+*/
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.fechas.inc.php";
-include_once "../core/core.config.inc.php";
-include_once "../core/core.common.inc.php";
-include_once "../libs/open_flash_chart_object.php";
-
-$oficial = elusuario($iduser);
-
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Reporte de Recuperacion en un Rango de Fechas</title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body onLoad="javascript:window.print();">
-<!--  -->
-<?php
-echo getRawHeader();
-/**
- * Filtrar si hay Fecha
- */
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$si_es_por_fecha 	= "";
-$Mvto 				= $_GET["f3"];
-$Stat 				= $_GET["f2"];
-
-$BySuc				= "";
-$mSuc				= $_GET["s"];
-if($mSuc!="todas"){
-	$BySuc			= " 	AND
-	(`creditos_solicitud`.`sucursal` ='$mSuc') ";
-}
-$ByStat				= "";
+$xHP		= new cHPage("TR.CONCENTRACION DE LA CARTERA POR FRECUENCIA", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
 
-$inputG 			= $_GET["outg"];
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
 
-if ($Stat != "todas"){
-	$ByStat	= " AND
-				(`creditos_solicitud`.`estatus_actual` =$Stat)  ";
-}
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Individual
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false, MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+$ByFechas		= $xFil->OperacionesPorFecha($FechaInicial, $FechaFinal);
 
-$sql = "SELECT
-	`creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `periocidad`,
-	COUNT(`creditos_solicitud`.`numero_solicitud`)           AS `numero`,
-	SUM(`creditos_solicitud`.`saldo_actual`)                 AS
-	`monto`,
-	`creditos_solicitud`.`periocidad_de_pago`
-FROM
-	`creditos_solicitud` `creditos_solicitud`
-		INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos`
-		ON `creditos_solicitud`.`periocidad_de_pago` =
+$sql			= "SELECT
+	`creditos_periocidadpagos`.`descripcion_periocidadpagos`   AS `frecuencia`,
+	EnMiles(SUM(`creditos_solicitud`.`saldo_actual`)) AS `monto`
+	
+	FROM
+	`creditos_solicitud` `creditos_solicitud` 
+		INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos` 
+		ON `creditos_solicitud`.`periocidad_de_pago` = 
 		`creditos_periocidadpagos`.`idcreditos_periocidadpagos`
-WHERE
-	(`creditos_solicitud`.`saldo_actual` >=0.99)
-	$ByStat
-	$BySuc
+
 	GROUP BY
-		`creditos_solicitud`.`periocidad_de_pago`";
-	$rs 	= 	mysql_query($sql, cnnGeneral());
-	$lbl	= array();
-	$val	= array();
-
-
-	while ($rw = mysql_fetch_array($rs)){
-
-		$val[] 	= round( ($rw["monto"] / 1000) , 2);
-		$lbl[] 	= $rw["destino"];
-
-	$sm += $rw["monto"];
-	$nm += $rw["numero"];
-
-
-	$tds = $tds . "<tr>
-	<td>" . $rw["periocidad"] .  "</td>
-	<td>" . $rw["numero"] .  "</td>
-	<td class='mny'>". getFMoney($rw["monto"]) . "</td>
-	</tr>";
-		$i++;
-	}
-	//echo $gnames;
-	//echo $gvalues;
-
-
-	echo "<table align=\"center\" width='100%'>
-	<tr>
-		<th>Destino del Credito</th>
-		<th>Numero de Credito</th>
-		<th>Saldo del Capital Insoluto</th>
-	</tr>
-
-	$tds
-
-	<tr>
-		<td>Sumas</td>
-		<th>". getFMoney($nm) ."</th>
-		<th>". getFMoney($sm) ."</th>
-	</tr>
-	</td>
-	</table>
+		`creditos_solicitud`.`periocidad_de_pago`
+	HAVING `monto`  > 0
+	ORDER BY `monto` DESC
 ";
+$titulo			= "";
+$archivo		= "";
 
-	$x = new SAFEChart();
-	$x->setValues($val);
-	$x->setLabels($lbl);
-	$x->setTitle("REPORTE DE CONCENTRACION DE LA CARTERA POR DESTINO ECONOMICO(Miles)");
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 0);
+$xT->setTipoSalida($out);
+//$xT->setPrepareChart(true, $xT->CHART_PIE);
 
-	$mFile	= $x->ChartPIE();
-	open_flash_chart_object( 768, 512, $mFile, true, "../" );
-	echo getRawFooter();
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+$xRPT->addContent("<div id='idivchart'></div>");
+$xCh	= new cChart("idivchart");
+$xCh->addDataset($sql, "monto", "frecuencia");
+$xCh->setProcess();
+$xRPT->addJsCode($xCh->getJs());
+$xT->setFootSum(array(1=> "monto"));
+
+$xRPT->addContent( $xT->Show("", true, "idtbl"  ) );
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 ?>
-</body>
-</html>

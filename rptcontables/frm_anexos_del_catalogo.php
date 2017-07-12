@@ -13,19 +13,12 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP							= new cHPage("TR.Anexos del Catalogo", HP_FORM);
-/*include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../core/core.fechas.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.config.inc.php";
-include_once "../core/core.contable.inc.php";
-$oficial = elusuario($iduser);*/
-
 
 $xHP->init();
 
 $xSel		= new cHSelect();
 $xHRPT		= new cPanelDeReportesContables();
+$xHRPT->OFRM()->setTitle($xHP->getTitle());
 $xHRPT->addCuentaFinal();
 $xHRPT->addMoneda();
 $xHRPT->addTipoDeCuentas();

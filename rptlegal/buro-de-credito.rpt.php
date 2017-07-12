@@ -35,11 +35,8 @@ $convenio 		= (isset($_GET["convenio"]) ) ? $_GET["convenio"] : SYS_TODAS;
 $empresa		= (isset($_GET["empresa"]) ) ? $_GET["empresa"] : SYS_TODAS;
 $out 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
 
-//$FechaInicial	= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-//$FechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
-
-$FechaInicial	= (isset($_GET["on"])) ?  $_GET["on"] : FECHA_INICIO_OPERACIONES_SISTEMA;
-$FechaFinal		= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 
 $xBuro			= new cReporteBuroDeCredito_tipo(DEFAULT_CREDITO, $FechaFinal);
 

@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xHP		= new cHPage("TR.REPORTE DE PLD PERSONAS FISICAS", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -47,7 +47,7 @@ $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
 //$xT		= new cTabla($sql, 2);
 //$xT->setTipoSalida($out);
-
+ini_set("max_execution_time", 1600);
 		
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
@@ -63,7 +63,9 @@ $DPaises		= $xCats->initPorTabla(TCATALOGOS_PAISES);
 $DRiesgo		= $xCats->initPorTabla(TCATALOGOS_GRADO_RIESGO);
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
-$sql		= $xL->getInicialDePersonas() . " WHERE (`personalidad_juridica` != 2 AND `personalidad_juridica` != 5)";
+$sql		= $xL->getInicialDePersonas() . " WHERE (`fechaalta`<='$FechaFinal') AND (`personalidad_juridica` != 2 AND `personalidad_juridica` != 5)";
+
+$xRPT->setSQL($sql);
 $rs			= $query->getDataRecord($sql);
 $xTa		= new cHTabla();
 $xDSoc		= new cSocios_general();
@@ -105,9 +107,10 @@ foreach ($rs as $rows){
 	$codigo_de_socio	= $xDSoc->codigo()->v();
 	$xSoc				= new cSocio($codigo_de_socio);
 	$xSoc->init($rows);
-	$xSoc->getOEstats()->initDatosDeCredito();
+	$xSoc->getOEstats()->initDatosDeCredito(true);
 	$saldoCred	= setNoMenorQueCero($xSoc->getCreditosComprometidos());
 
+	//setLog("Creditos de $saldoCred en persona $codigo_de_socio");
 	if($saldoCred > 0){
 			
 		
@@ -175,7 +178,9 @@ foreach ($rs as $rows){
 			$xTa->addTD( $rperfil["perfil"] );
 			$xTa->addTD( $rperfil["numero"] );
 			$xTa->addTD( $rperfil["monto"] );
+			
 		}
+		unset($rsql);
 		//perfil transaccional
 		//$xAml	= new cAMLPersonas($codigo_de_socio);
 		//$xAml->init($codigo_de_socio, $rows);
@@ -185,6 +190,7 @@ foreach ($rs as $rows){
 		$xTa->endRow();
 	}
 }
+unset($rs);
 $xRPT->addContent( $xTa->get() );
 //$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
 //============ Agregar HTML

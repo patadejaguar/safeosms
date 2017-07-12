@@ -18,6 +18,8 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP			= new cHPage("TR.Ingresos", HP_REPORT);
+$xL				= new cSQLListas();
+
 $periodo		= (isset($_GET["periodo"])) ? $_GET["periodo"]: SYS_TODAS;
 //$estado		= (isset($_GET["estado"])) ? $_GET["estado"]: SYS_TODAS;
 /**
@@ -28,24 +30,20 @@ $frecuencia 	= (isset($_GET["periocidad"]) ) ? $_GET["periocidad"] : SYS_TODAS;
 $convenio 		= (isset($_GET["convenio"]) ) ? $_GET["convenio"] : SYS_TODAS;
 $convenio 		= (isset($_GET["producto"]) ) ? $_GET["producto"] : $convenio;
 
-$empresa		= (isset($_GET["empresa"]) ) ? $_GET["empresa"] : SYS_TODAS;
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
 $out 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
-$fechaInicial	= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-$fechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
 
-$es_por_estatus 	= "";
-$es_por_frecuencia 	= "";
-$es_por_convenio 	= "";
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 
-$ByEmpresa		= ( $empresa == SYS_TODAS ) ? "" : " AND socios.iddependencia = $empresa ";
+$es_por_estatus 	= $xL->OFiltro()->CreditosPorEstado($estatus);
+$es_por_frecuencia 	= $xL->OFiltro()->CreditosPorFrecuencia($frecuencia);
+$es_por_convenio 	= $xL->OFiltro()->CreditosPorProducto($convenio);
 
-if($estatus != SYS_TODAS){ $es_por_estatus = " AND creditos_solicitud.estatus_actual=$estatus "; }
-//
-if($frecuencia != SYS_TODAS){ $es_por_frecuencia 	= " AND creditos_solicitud.periocidad_de_pago =$frecuencia ";}
-//
-if($convenio != SYS_TODAS){ $es_por_convenio = " AND creditos_solicitud.tipo_convenio = $convenio "; }
+$ByEmpresa			= $xL->OFiltro()->VSociosPorEmpresa($empresa);
+$ByFecha			= $xL->OFiltro()->OperacionesPorFecha($FechaInicial, $FechaFinal);
 /* ******************************************************************************/
-$setSql = "SELECT
+$sql = "SELECT
 	`socios`.`iddependencia`                         AS `empresa`,
 	`socios`.`dependencia`                           AS `nombre`,
 	`operaciones_mvtos`.`tipo_operacion`             AS `tipo`,
@@ -60,23 +58,37 @@ FROM
 			INNER JOIN `socios` `socios` 
 			ON `operaciones_mvtos`.`socio_afectado` = `socios`.`codigo`
 WHERE
-	(`socios`.`iddependencia` =$empresa) AND
-	(`operaciones_mvtos`.`fecha_afectacion` >='$fechaInicial') AND (`operaciones_mvtos`.`fecha_afectacion` <='$fechaFinal')
+	(`socios`.`iddependencia` > 0) $ByEmpresa
+	$ByFecha
 GROUP BY
 	`socios`.`iddependencia`,
 	`operaciones_mvtos`.`tipo_operacion`
 	";
-	$xT		= new cTabla($setSql, 0);
-	
-	echo $xHP->getHeader();
-	echo $xHP->setBodyinit();
-	$xRPT	= new cReportes();
-	echo $xRPT->getEncabezado($xHP->getTitle(), $fechaInicial, $fechaFinal);	
-	//echo $setSql;
-	
-	echo $xT->Show();
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 0);
+$xT->setTipoSalida($out);
 
-	echo $xRPT->getPie();
-	echo $xHP->setBodyEnd();
-	echo $xHP->end();
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+	
 ?>

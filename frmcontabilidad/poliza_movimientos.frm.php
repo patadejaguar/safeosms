@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP				= new cHPage("TR.Diario Contable", HP_FORM);
+$xHP				= new cHPage("TR.Poliza Contable", HP_FORM);
 $poliza				= parametro("codigo", "");
 $jxc 				= new TinyAjax();
 function jsaGetCuentas($cuenta){
@@ -95,25 +95,31 @@ $msg		= "";
 $xPol		= new cPoliza(false);
 $xPol->setPorCodigo($poliza);
 $xPol->init();
+$xFRM ->setTitle($xHP->getTitle());
+
 
 $xFRM->addHElem( $xPol->getFicha() );
-$comp	= "<table class='mvtoscontables'><td class=\"cuenta\"><input type='text' id='idcuenta' onkeyup='jsKeyAction(event, this)' list='listadocuentas' placeholder='numero de cuenta' autocomplete='off'  onfocus='this.select()' onblur='jsaGetNombreCuenta()' /></td>";
+
+$comp	= "<fieldset class='mvtoscontables'><legend>" . $xFRM->lang("Captura") . "</legend><table class='mvtoscontables'><td class=\"cuenta\"><input type='text' id='idcuenta' onkeyup='jsKeyAction(event, this)' list='listadocuentas' placeholder='numero de cuenta' autocomplete='off'  onfocus='this.select()' onblur='jsaGetNombreCuenta()' /></td>";
 $comp	.= "<th class=\"nombrecuenta\"><input type='text' id='idnombrecuenta' disabled /></td>";
 $comp	.= "<td class=\"cargos\"><input type='number' id='idcargo' value='0' onfocus='this.select()' onchange='setFMonto(this)' onfocus='setFMonto(this)' /></td>";
 $comp	.= "<td class=\"abonos\"><input type='number' id='idabono' value='0' onfocus='this.select()' onchange='setFMonto(this)' onfocus='setFMonto(this)' /></td>";
 $comp	.= "<td class=\"referencia\"><input type='text' id='idreferencia' onfocus='this.select()' /></td>";
-$comp	.= "<td class=\"concepto\"><input type='text' id='idconcepto' onfocus='this.select()' onblur='jsSaveMvto()' /></td></table>";
+$comp	.= "<td class=\"concepto\"><input type='text' id='idconcepto' onfocus='this.select()' onblur='jsSaveMvto()' /></td></table></fieldset>";
 $xFRM->addDivSolo($comp, "", "tx34", "txt14", array( 1 => array("id" => "idagregados")));
 
-$xFRM->addDivSolo(" ", "", "tx34", "txt14", array( 1 => array("id" => "idlistado")));
-$xFRM->addCerrar();
-$xFRM->addRefrescar("jsaGetListadoDeMovimientos()");
+//$xFRM->addDivSolo(", "", "tx34", "txt14", array( 1 => array("id" => "idlistado")));
+$xFRM->addHElem("<fieldset class='mvtoscontables'><legend>" . $xFRM->lang("Movimientos") . "</legend><div id='idlistado'></div></fieldset>");
+
 $xFRM->OButton("TR.Eliminar", "jsEliminarPoliza()", $xFRM->ic()->ELIMINAR);
 $xFRM->OButton("TR.Imprimir", "jsImprimirPoliza()", "imprimir");
-$xFRM->OButton("TR.Finalizar", "jsFinalizarPoliza()", "guardar");
+$xFRM->OButton("TR.Guardar", "jsFinalizarPoliza()", "guardar");
 $xFRM->addAviso($poliza);
 $xFRM->addFootElement("<input type='hidden' id='idpoliza' value='$poliza' />");
 $xFRM->addFootElement("<datalist id='listadocuentas'></datalist>");
+
+$xFRM->addRefrescar("jsaGetListadoDeMovimientos()");
+$xFRM->addCerrar();
 echo $xFRM->get();
 
 ?>

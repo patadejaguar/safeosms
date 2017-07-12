@@ -19,7 +19,7 @@ $xL			= new cSQLListas();
 $oficial = elusuario($iduser);
 //$i 			= $_GET["i"];
 $f 				= parametro("f", false, MQL_RAW);
-$tipo 			= parametro("a", false, MQL_INT);
+$tipo 			= parametro("a", false, MQL_INT); $tipo = parametro("tipo", $tipo, MQL_INT); 
 $c				= parametro("c", "idcuenta");
 $subtipo		= parametro("s", SYS_TODAS, MQL_INT);
 $OtherEvent		= parametro("ev"); //Otro Evento Desatado
@@ -61,26 +61,28 @@ echo $xFRM->get();
 
 ?>
 <script  >
+var xGen = new Gen();
 function setCuenta(id){
 	msrc	= null;
 	if (window.parent){ msrc = window.parent.document; }
 	if (opener){ msrc = opener.document; }
 <?php
-		if( $f != false ){
-			echo "
-			if(msrc == null){} else {
-				msrc.$f.$c.value 	= id;
-				msrc.$f.$c.focus();
-				msrc.$f.$c.select();
-				//if(typeof msrc.jsGetDescCredito != \"undefined\"){ msrc.jsGetDescCredito();	}
-			}";
-			if( $OtherEvent != ""){
-					echo "if(msrc == null){} else { msrc.$OtherEvent;}";
-			} 
-		}
+echo "
+		if(msrc == null){ } else {
+			if(msrc.getElementById('$c')){
+				var rmt	= msrc.getElementById('$c');
+				rmt.value 	= id;
+				rmt.focus();
+				rmt.select();
+			}
+		}";
+		if( $OtherEvent != ""){
+			echo "if(msrc == null){} else { msrc.$OtherEvent;}";
+		} 
+
 ?>
 jsEnd();
 }
-function jsEnd(){	var xGen = new Gen();	xGen.close(); }
+function jsEnd(){		xGen.close(); }
 </script>
 <?php $xHP->fin(); ?>

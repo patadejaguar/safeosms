@@ -19,6 +19,7 @@ include_once("../core/core.config.inc.php");
 include_once("../core/core.captacion.inc.php");
 include_once("../core/core.riesgo.inc.php");
 include_once("../core/core.seguimiento.inc.php");
+include_once("../core/core.seguimiento.utils.inc.php");
 include_once("../core/core.creditos.inc.php");
 include_once("../core/core.operaciones.inc.php");
 include_once("../core/core.common.inc.php");
@@ -26,17 +27,18 @@ include_once("../core/core.html.inc.php");
 include_once("../core/core.db.inc.php");
 
 
-    ini_set("display_errors", "off");
-    ini_set("max_execution_time", 900);
-    
-    $key		 	= (isset($_GET["k"]) ) ? true : false;
-    $parser			= (!isset($_GET["s"]) ) ? false : $_GET["s"];
-    
-    //Obtiene la llave del
-//if ($key == MY_KEY) {
-	$messages		= "";
-	$fechaop		= parametro("f", fechasys());
+ini_set("display_errors", "off");
+ini_set("max_execution_time", 900);
+ini_set("memory_limit", SAFE_MEMORY_LIMIT);
+$key			= parametro("k", true, MQL_BOOL);
+$parser			= parametro("s", false, MQL_RAW);
+$fechaop		= parametro("f", fechasys(), MQL_DATE);
+$messages		= "";
 
+$xF				= new cFecha(0, $fechaop);
+$fechaop		= $xF->getFechaISO($fechaop);
+getEnCierre(true);
+$next			= "./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop";
 	/**
 	 * Generar el Archivo HTMl del LOG
 	 * eventos-del-cierre + fecha_de_cierre + .html
@@ -64,26 +66,23 @@ include_once("../core/core.db.inc.php");
 		$dia_siguiente	= sumardias($fechaop, 1);
 		$xAv			= new cAlertasDelSistema($dia_siguiente);
 		$messages		.= $xAv->setGenerarAlCierre($dia_siguiente);
-	
 		$messages		.= vencer_notificaciones();
-		
 		$messages		.= vencer_llamadas();
 		
 		$messages		.= vencer_compromisos();
-		$xLlam		= new cLlamada();
+		$xLlam			= new cUtileriasParaSeguimiento();
 		$xLlam->setCancelarLlamadasAnteriores($fechaop);
-		$messages		.= setLlamadasDiariasCreditosNo360($fechaop, $idrecibo);
-		
-		$messages		.= setLlamadasDiariasPorMora($fechaop, $idrecibo);
+		if(SEGUIMIENTO_GENERAR_AL_CIERRE == true){
+			$messages	.= setLlamadasDiariasCreditosNo360($fechaop, $idrecibo);
+			$messages	.= setLlamadasDiariasPorMora($fechaop, $idrecibo);
+		}
 	
 		$xLog->setWrite($messages);
 		$xLog->setClose();
 		if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre del Seguimiento"); }
 	}
 	if ($parser != false){
-		header("Location: ./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop");
+		header("Location: $next"); flush();
 	}
-	
-//}
-
+	getEnCierre(false);
 ?>

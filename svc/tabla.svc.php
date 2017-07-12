@@ -17,17 +17,21 @@ $ql			= new MQL();
 $lis		= new cSQLListas();
 $xF			= new cFecha();
 
-$tabla	= parametro("tabla", false, MQL_RAW);
-$clave	= parametro("clave", false, MQL_RAW);
-$action	= parametro("action", SYS_NINGUNO);
-$out	= parametro("out", "", MQL_RAW);
+$tabla		= parametro("tabla", false, MQL_RAW);
+$clave		= parametro("clave", false, MQL_RAW);
+$action		= parametro("action", SYS_NINGUNO);
+$out		= parametro("out", "", MQL_RAW);
+$buscar		= parametro("buscar", "", MQL_RAW);
+$endonde	= parametro("en", "", MQL_RAW);
+
+$operador	= parametro("operador", "=");
 $rs			= array();
 header('Content-type: application/json');
  
-if($tabla != false ){
-	$xObj	= new cSAFETabla($tabla);
+if($tabla !== false ){
+	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
-		$rs[MSG_NO_PARAM_VALID]		= "ERROR\t para la Tabla $tabla y clave $clave\r\n";
+		$rs[MSG_NO_PARAM_VALID]		= "ERROR\tPara la Tabla $tabla y clave $clave\r\n";
 	} else {
 		$obj	= $xObj->obj();
 		
@@ -44,6 +48,7 @@ if($tabla != false ){
 			
 			$indice	= $obj->getKey();
 			$etiq	= $xObj->getCampoDescripcion();
+			
 			if($etiq == ""){
 				$campos	= $obj->query()->getCampos();
 				$cnt	= 0;
@@ -52,7 +57,12 @@ if($tabla != false ){
 					$cnt++;
 				}
 			}
-			$sql	= "SELECT `$tabla`.`$indice` AS `indice`, `$tabla`.`$etiq` AS `etiqueta` FROM $tabla WHERE (`$tabla`.`$indice` LIKE '%$clave%' OR  `$tabla`.`$etiq` LIKE '%$clave%' ) LIMIT 0,100";
+			if($buscar == "" OR $endonde == ""){
+				$w	= " WHERE (`$tabla`.`$indice` LIKE '%$clave%' OR  `$tabla`.`$etiq` LIKE '%$clave%' ) ";
+			} else {
+				$w	= " WHERE $endonde $operador $buscar ";
+			}
+			$sql	= "SELECT `$tabla`.`$indice` AS `indice`, `$tabla`.`$etiq` AS `etiqueta` FROM $tabla $w LIMIT 0,100";
 			//setLog($sql);
 			$xSVC	= new MQLService($action, $sql);
 			$cadena	=  $xSVC->getJSON($out);

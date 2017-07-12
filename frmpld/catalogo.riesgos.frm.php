@@ -1,80 +1,84 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
- * @version 1.0
- * @package
- */
+* @version 0.0.01
+* @package
+*/
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Catalogo de Riesgos", HP_GRID);
+$xHP		= new cHPage("TR.CATALOGO DE RIESGOS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
 $xF			= new cFecha();
 
-	$xTabla				= new cAml_risk_catalog();
-	$filtro1			= "";
-	$filtro2			= "";
-	
-	$xHP->setNoDefaultCSS();
-	echo $xHP->getHeader(true);
-	//HTML Object END
-	echo '<body onmouseup="SetMouseDown(false);" ><div id="onGrid">';
-    //Define your grid
-	$_SESSION["grid"]->SetDatabaseConnection(MY_DB_IN, USR_DB, PWD_DB);
-	//Propiedades del GRID
-	$mGridTitulo		= $xHP->getTitle();
-	$mGridKeyField		= $xTabla->getKey();	//Nombre del Campo Unico
-	$mGridKeyEdit		= true;					//Es editable el Campo
-	$mGridTable			= $xTabla->get();		//Nombre de la tabla
-	$mGridSQL			= $xTabla->query()->getListaDeCampos();//  "*"; //$xTabla->query()->getCampos();
-	$mGridWhere			= "";
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
-	$mGridProp			= array(
-				"clave_de_control" => "Clave,true,11",
-				"descripcion" => "descripcion,true,150",
-				"tipo_de_riesgo" => "tipo,true,11",
-				"valor_ponderado" => "valor,true,37",
-				"unidades_ponderadas" => "unidades,true,37",
-				"unidad_de_medida" => "medida,true,10",
-				"forma_de_reportar" => "Reporte,false,4",
-				"frecuencia_de_chequeo" => "chequeo,false,4"
 
-						);
-	$mGridSQL			= "clave_de_control,descripcion,tipo_de_riesgo,valor_ponderado,unidades_ponderadas,unidad_de_medida,forma_de_reportar,frecuencia_de_chequeo";
-	//===========================================================================================================
-	
-	$_SESSION["grid"]->SetSqlSelect($mGridSQL, $mGridTable, $mGridWhere);
-	$_SESSION["grid"]->SetUniqueDatabaseColumn($mGridKeyField, $mGridKeyEdit);
-	$_SESSION["grid"]->SetTitleName($mGridTitulo);
-	$_SESSION["grid"]->SetEditModeAdd(false);
-	//$_SESSION["grid"]->SetEditModeDelete(false);
-	
-	$_SESSION["grid"]->SetPlugin("tipo_de_riesgo", "select", array("sql" => "SELECT * FROM aml_risk_types"));
-	//===========================================================================================================					
-		foreach ($mGridProp as $key => $value) {
-			$mVals		= explode(",", $value, 10);
-			
-			if ( isset($mVals[0]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnName($key, $mVals[0]);
-			}
-			
-			if ( isset($mVals[1]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnEditable($key, $mVals[1]);
-			}
-			if ( isset($mVals[2]) ) {
-				$_SESSION["grid"]->SetDatabaseColumnWidth($key, $mVals[2]);
-			}	
-		}
-	//===========================================================================================================
-	$_SESSION["grid"]->SetMaxRowsEachPage(25);
-	$_SESSION["grid"]->PrintGrid(MODE_EDIT);
 
-echo $xHP->end();
+$xHP->addJTableSupport();
+$xHP->init();
+
+
+
+$xFRM	= new cHForm("frmaml_risk_catalog", "catalogo.riesgos.frm.php?action=$action");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
+
+
+/* ===========		GRID JS		============*/
+
+$xHG	= new cHGrid("iddivriskcatalog",$xHP->getTitle());
+
+$xHG->setSQL($xLi->getListadoDeCatalogoRiesgos());
+$xHG->addList();
+$xHG->addKey("clave_de_control");
+$xHG->col("descripcion", "TR.DESCRIPCION", "40%");
+$xHG->col("tipo_de_riesgo", "TR.TIPO", "10%");
+$xHG->col("valor_ponderado", "TR.VALOR", "10%");
+$xHG->col("unidades_ponderadas", "TR.UNIDADES", "10%");
+$xHG->col("unidad_de_medida", "TR.MEDIDA", "10%");
+$xHG->col("forma_de_reportar", "TR.REPORTE", "7%");
+$xHG->col("frecuencia_de_chequeo", "TR.CHEQUEO", "7%");
+//$xHG->col("fundamento_legal", "TR.FUNDAMENTO LEGAL", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
+$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+$xFRM->addHElem("<div id='iddivriskcatalog'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+echo $xFRM->get();
+?>
+<script>
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../frmpld/catalogo.riesgos.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivriskcatalog});
+}
+function jsAdd(){
+	xG.w({url:"../frmpld/catalogo.riesgos.new.frm.php?", tiny:true, callback: jsLGiddivriskcatalog});
+}
+function jsDel(id){
+	xG.rmRecord({tabla:"aml_risk_catalog", id:id, callback:jsLGiddivriskcatalog});
+}
+</script>
+<?php
+	
+
+
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
 ?>

@@ -1,0 +1,32 @@
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Warning:  chmod(): Operation not permitted in /home/sipakal/Dropbox/htdocs/site/admin/install.php on line 44
+[22-Sep-2015 13:21:54 America/Chicago] PHP Stack trace:
+[22-Sep-2015 13:21:54 America/Chicago] PHP   1. {main}() /home/sipakal/Dropbox/htdocs/site/admin/install.php:0
+[22-Sep-2015 13:21:54 America/Chicago] PHP   2. chmod() /home/sipakal/Dropbox/htdocs/site/admin/install.php:44

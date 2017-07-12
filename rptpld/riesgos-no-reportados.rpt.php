@@ -36,7 +36,7 @@ $FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $Fe
 $FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
-
+$extenso		= parametro("ext", false, MQL_BOOL);
 
 $titulo			= "";
 $archivo		= "";
@@ -55,15 +55,17 @@ $xRPT->addContent($body);
 
 
 //Descartados
+$otrosCamp	= "";
+if($extenso == true){
+	$otrosCamp	= ",`aml_risk_register`.`notas_de_checking`,
+`aml_risk_register`.`razones_de_reporte`,
+/*`aml_risk_register`.`acciones_tomadas`,*/
+`aml_risk_register`.`mensajes_del_sistema`";
+}
+$sql		= $xlistas->getListadoDeRiesgosConfirmados($FechaInicial, $FechaFinal, false, false, false, " AND `estado_de_envio`= " . SYS_CERO, $otrosCamp);
 
-$sql		= $xlistas->getListadoDeRiesgosConfirmados($FechaInicial, $FechaFinal, false, false, false, " AND `estado_de_envio`= " . SYS_CERO);
-$xT			= new cTabla($sql);
-$xRPT->addContent( $xT->Show() );
-
-//$sql		= $xlistas->getListadoDeRiesgosConfirmados(false, false, false, false, false, " AND `estado_de_envio`= " . SYS_CERO);
-//$xT			= new cTabla($sql);
-//$xRPT->addContent( $xT->Show( "TR.Alertas pendientes de reportar" ) );
-
+$xRPT->setSQL($sql);
+$xRPT->setProcessSQL();
 
 $xRPT->setResponse();
 $xRPT->setSenders($senders);

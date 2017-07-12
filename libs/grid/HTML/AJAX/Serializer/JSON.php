@@ -1,6 +1,6 @@
 <?php
 require_once 'HTML/AJAX/JSON.php';
-ini_set("display_errors", "0");
+//ini_set("display_errors", "0");
 // $Id$
 /**
  * JSON Serializer
@@ -45,7 +45,7 @@ class HTML_AJAX_Serializer_JSON
         if(!$this->_jsonext) {
             $use_loose_type = ($this->loose_type) ? SERVICES_JSON_LOOSE_TYPE : 0;
             //TODO: Cambiar =& por =
-            $this->_json =& new HTML_AJAX_JSON($use_loose_type);
+            $this->_json = new HTML_AJAX_JSON($use_loose_type);
         }
     }
     // }}}

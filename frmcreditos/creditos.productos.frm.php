@@ -14,12 +14,12 @@
     if($permiso === false){    header ("location:../404.php?i=999");    }
     $_SESSION["current_file"]    = addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("Asistente de Productos de Credito", HP_FORM);
+$xHP		= new cHPage("TR.Editar PRODUCTO", HP_FORM);
 $xT			= new cTipos();
 $ql			= new MQL();
 $dSN		= array("1"=>"SI", "0"=>"NO");
 $msg		= "";
-$jxc = new TinyAjax();
+$jxc 		= new TinyAjax();
 
 function jsaGetCuentas($cuenta){
 	$xCta	= new cCuentaContableEsquema($cuenta);
@@ -49,6 +49,7 @@ $clave 		= parametro("id", null, MQL_INT);
 $xSel		= new cHSelect();
 $xTabla		= new cCreditos_tipoconvenio();
 
+
 if($clave == null){
 	$step		= MQL_ADD;
 } else {
@@ -70,6 +71,7 @@ if($action == MQL_ADD){
 		$xTabla->setData( $xTabla->query()->initByID($clave)); 
 		$xTabla->setData($_REQUEST);
 		$xTabla->query()->update()->save($clave);
+		$opcion = "fin";
 	}
 } else {
 	
@@ -77,79 +79,77 @@ if($action == MQL_ADD){
 
 $xFRM	= new cHForm("frmcreditos_tipoconvenio", "../frmcreditos/creditos.productos.frm.php?id=$clave&tema=$opcion&action=$step");
 //setLog("../frmcreditos/creditos.productos.frm.php?action=$step");
-$xFRM->addSubmit();
+//$xFRM->addSubmit();
 $xFRM->OHidden("idcreditos_tipoconvenio", $xTabla->idcreditos_tipoconvenio()->v(), "TR.Clave");
 $xFRM->OHidden("tipo_convenio", $xTabla->tipo_convenio()->v(), "TR.Clave");
 $xTxt		= new cHText();
-
+$xFRM->setTitle($xHP->getTitle() . " : " . $xTabla->descripcion_tipoconvenio()->v());
 switch ($opcion){
 	case "contablecapital":
+		$xFRM->addGuardar();
 		
-		$xTxt->addEvent("jsKeyAction(event, this)", "onkeyup");
-		$xTxt->setProperty("list", "listadocuentas");
-		$xTxt->setProperty("autocomplete", "off");
-		$xFRM->addFootElement("<datalist id='listadocuentas'></datalist>");
-		$xFRM->addFootElement("<input type='hidden' id='idcuenta' />");
-				
-		$xFRM->addHElem( $xTxt->get("contable_cartera_vigente", $xTabla->contable_cartera_vigente()->v(), "TR.Cuenta Contable para Capital de Cartera vigente"));
-		$xFRM->addHElem( $xTxt->get("contable_cartera_vencida", $xTabla->contable_cartera_vencida()->v(), "TR.Cuenta Contable para Capital de Cartera vencida"));
-		$xFRM->addHElem( $xTxt->get("capital_vencido_normal", $xTabla->capital_vencido_normal()->v(), "TR.capital vencido normal"));
-		$xFRM->addHElem( $xTxt->get("capital_vencido_reestructurado", $xTabla->capital_vencido_reestructurado()->v(), "TR.capital vencido reestructurado"));
-		$xFRM->addHElem( $xTxt->get("capital_vencido_renovado", $xTabla->capital_vencido_renovado()->v(), "TR.capital vencido renovado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_cartera_vigente", $xTabla->contable_cartera_vigente()->v(), false, CONTABLE_MAYOR_CARTERA_VIG, "TR.CARTERA VIGENTE NORMAL"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vigente_normal", $xTabla->capital_vigente_normal()->v(), false, CONTABLE_MAYOR_CARTERA_VIG, "TR.CARTERA VIGENTE NORMAL"));
 		
-		$xFRM->addHElem( $xTxt->get("capital_vigente_normal", $xTabla->capital_vigente_normal()->v(), "TR.capital vigente normal"));
-		$xFRM->addHElem( $xTxt->get("capital_vigente_reestructurado", $xTabla->capital_vigente_reestructurado()->v(), "TR.capital vigente reestructurado"));
-		$xFRM->addHElem( $xTxt->get("capital_vigente_renovado", $xTabla->capital_vigente_renovado()->v(), "TR.capital vigente renovado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_cartera_vencida", $xTabla->contable_cartera_vencida()->v(), false, CONTABLE_MAYOR_CARTERA_VENC, "TR.CARTERA VENCIDA NORMAL"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vencido_normal", $xTabla->capital_vencido_normal()->v(), false, CONTABLE_MAYOR_CARTERA_VENC, "TR.CARTERA VENCIDA NORMAL"));
+		
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vencido_reestructurado", $xTabla->capital_vencido_reestructurado()->v(), false, CONTABLE_MAYOR_CARTERA_REST_VENC, "TR.CARTERA REESTRUCTURADO VENCIDO"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vigente_reestructurado", $xTabla->capital_vigente_reestructurado()->v(), false, CONTABLE_MAYOR_CARTERA_REST, "TR.CARTERA REESTRUCTURADO NORMAL"));
+		
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vencido_renovado", $xTabla->capital_vencido_renovado()->v(), false, CONTABLE_MAYOR_CARTERA_REN_VENC, "TR.CARTERA RENOVADO VENCIDO"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("capital_vigente_renovado", $xTabla->capital_vigente_renovado()->v(), false, CONTABLE_MAYOR_CARTERA_REN, "TR.CARTERA RENOVADO NORMAL"));
+		
+		
+
 		
 		break;
 	case "contableinteres":
+		$xFRM->addGuardar();
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_intereses_devengados", $xTabla->contable_intereses_devengados()->v(), false, CONTABLE_MAYOR_INT_DEV_VIG, "TR.Cuenta_contable Interes Vigente devengado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vigente_normal", $xTabla->interes_vigente_normal()->v(), false, CONTABLE_MAYOR_INT_DEV_VIG, "TR.Cuenta_contable Interes Vigente devengado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vigente_reestructurado", $xTabla->interes_vigente_reestructurado()->v(), false, CONTABLE_MAYOR_INT_DEV_VIG, "TR.CUENTA_CONTABLE para Interes Vigente Reestructurado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vigente_renovado", $xTabla->interes_vigente_renovado()->v(), false, CONTABLE_MAYOR_INT_DEV_VIG, "TR.Cuenta_CONTABLE para Interes Vigente Renovados"));
 		
-		$xTxt->addEvent("jsKeyAction(event, this)", "onkeyup");
-		$xTxt->setProperty("list", "listadocuentas");
-		$xTxt->setProperty("autocomplete", "off");
-		$xFRM->addFootElement("<datalist id='listadocuentas'></datalist>");
-		$xFRM->addFootElement("<input type='hidden' id='idcuenta' />");
-						
-		$xFRM->addHElem( $xTxt->get("contable_intereses_cobrados", $xTabla->contable_intereses_cobrados()->v(), "TR.Cuenta de Balance de Cargos en Intereses Cobrados"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_intereses_vencidos", $xTabla->contable_intereses_vencidos()->v(), false, CONTABLE_MAYOR_INT_DEV_VENC, "TR.Cuenta_CONTABLE para Interes Vencido devengado"));		
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vencido_normal", $xTabla->interes_vencido_normal()->v(), false, CONTABLE_MAYOR_INT_DEV_VENC, "TR.Cuenta_CONTABLE para Interes Vencido devengado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vencido_reestructurado", $xTabla->interes_vencido_reestructurado()->v(), false, CONTABLE_MAYOR_INT_DEV_VENC, "TR.Cuenta de Balance para Interes Vencido Reestructurado"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_vencido_renovado", 	$xTabla->interes_vencido_renovado()->v(), false, CONTABLE_MAYOR_INT_DEV_VENC,  "TR.Cuenta de Balance para Interes Vencido devengado"));
+
+		$xFRM->addHElem($xTxt->getDeCuentaContable("interes_cobrado", 	$xTabla->interes_cobrado()->v(), false, CONTABLE_MAYOR_INGRESO_INT, "TR.CUENTA_CONTABLE INTERES_NORMAL_COBRADO"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("moratorio_cobrado", $xTabla->moratorio_cobrado()->v(), false, CONTABLE_MAYOR_INGRESO_MORA, "TR.CUENTA_CONTABLE INTERES_MORA_COBRADO"));
+
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_intereses_cobrados", $xTabla->contable_intereses_cobrados()->v(), false, CONTABLE_MAYOR_INGRESO_INT, "TR.CUENTA_CONTABLE para Intereses Normales Cobrados"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_intereses_moratorios", $xTabla->contable_intereses_moratorios()->v(), false, CONTABLE_MAYOR_INGRESO_MORA, "TR.CUENTA_CONTABLE para Intereses Moratorios Cobrados"));
 		
-		$xFRM->addHElem( $xTxt->get("contable_intereses_devengados", $xTabla->contable_intereses_devengados()->v(), "TR.Cuenta de Balance para Interes Vigente devengado"));
-		$xFRM->addHElem( $xTxt->get("contable_intereses_moratorios", $xTabla->contable_intereses_moratorios()->v(), "TR.Cuenta de Resultados para Abono en Intereses Moratorios Devengados"));
-		$xFRM->addHElem( $xTxt->get("contable_intereses_vencidos", $xTabla->contable_intereses_vencidos()->v(), "TR.Cuenta de Balance para Interes Vencidos"));
-
-		$xFRM->addHElem( $xTxt->get("interes_vigente_normal", $xTabla->interes_vigente_normal()->v(), "TR.Cuenta_de_Balance para Interes Vigente devengado"));
-		$xFRM->addHElem( $xTxt->get("interes_vigente_reestructurado", $xTabla->interes_vigente_reestructurado()->v(), "TR.Cuenta de Balance para Interes Vigente Reestructurados"));
-		$xFRM->addHElem( $xTxt->get("interes_vigente_renovado", $xTabla->interes_vigente_renovado()->v(), "TR.Cuenta de Balance para Interes Vigente Renovados"));		
-
-		$xFRM->addHElem( $xTxt->get("interes_vencido_normal", $xTabla->interes_vencido_normal()->v(), "TR.Cuenta de Balance para Interes Vencido devengado"));
-		$xFRM->addHElem( $xTxt->get("interes_vencido_reestructurado", $xTabla->interes_vencido_reestructurado()->v(), "TR.Cuenta de Balance para Interes Vencido Reestructurado"));
-		$xFRM->addHElem( $xTxt->get("interes_vencido_renovado", 	$xTabla->interes_vencido_renovado()->v(), "TR.Cuenta de Balance para Interes Vencido devengado"));
-
-		$xFRM->addHElem( $xTxt->get("interes_cobrado", 			$xTabla->interes_cobrado()->v(), "TR.Cuenta de Ingresos por Intereses Normales Cobrados"));
-		$xFRM->addHElem( $xTxt->get("moratorio_cobrado", 			$xTabla->moratorio_cobrado()->v(), "TR.Cuenta de Ingresos para Intereses Moratorios Cobrados"));
-
-		$xFRM->addHElem( $xTxt->get("contable_cartera_castigada", $xTabla->contable_cartera_castigada()->v(), "TR.Cuenta_Contable para Capital de Cartera Castigada"));
-		$xFRM->addHElem( $xTxt->get("contable_intereses_anticipados", $xTabla->contable_intereses_anticipados()->v(), "TR.Cuenta_Contable para Intereses Cobrado por Anticipado"));
+		
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_cartera_castigada", $xTabla->contable_cartera_castigada()->v(), false, CONTABLE_CLAVE_EGRESOS, "TR.CARTERA CASTIGADA"));
+		$xFRM->addHElem($xTxt->getDeCuentaContable("contable_intereses_anticipados", $xTabla->contable_intereses_anticipados()->v(), false, CONTABLE_CLAVE_PASIVO, "TR.CUENTA_CONTABLE para Intereses Cobrado por Anticipado"));
+		//$xFRM->addHElem( $xTxt->get("contable_intereses_anticipados", $xTabla->contable_intereses_anticipados()->v(), "TR.Cuenta_Contable para Intereses Cobrado por Anticipado"));
 		break;		
 	case "tasas":
+		$xFRM->addGuardar();
 		$xFRM->OMoneda("interes_moratorio", $xTabla->interes_moratorio()->v(), "TR.Tasa anualizada de interes moratorio");
 		$xFRM->OMoneda("interes_normal", $xTabla->interes_normal()->v(), "TR.Tasa anualizada del interes normal");
 		$d34 	= $ql->getArrayRecord("SELECT * FROM `creditos_tipo_de_calculo_de_interes`");
 		$xFRM->OSelect("base_de_calculo_de_interes", $xTabla->base_de_calculo_de_interes()->v(), "TR.base de calculo de interes", $d34);
 
-		$xFRM->OMoneda("porcentaje_ica", $xTabla->porcentaje_ica()->v(), "TR.porcentaje de tasa de Interes Cobrado por Anticipado");
+		$xFRM->OMoneda("porcentaje_ica", $xTabla->porcentaje_ica()->v(), "TR.tasa de Interes Cobrado por Anticipado");
 		$xFRM->OMoneda("porcentaje_otro_credito", $xTabla->porcentaje_otro_credito()->v(), "TR.porcentaje para obtener otro credito");
 		$xFRM->OMoneda("porciento_garantia_liquida", $xTabla->porciento_garantia_liquida()->v(), "TR.Porcentaje de deposito en garantia liquida");		
 		
-		$xFRM->OMoneda("tasa_ahorro", $xTabla->tasa_ahorro()->v(), "TR.Porcentaje de Ahorro condicionado sobre el Credito");
+		$xFRM->OMoneda("tasa_ahorro", $xTabla->tasa_ahorro()->v(), "TR.TASA de Ahorro condicionado sobre el Credito");
 		$xFRM->OMoneda("tasa_iva", $xTabla->tasa_iva()->v(), "TR.Tasa de Impuesto_al_Consumo");
 		$xFRM->OSelect("iva_incluido", $xTabla->iva_incluido()->v() , "TR.impuesto_al_consumo en la Tasa de Interes", $dSN);
 		break;
 	case "dias":
+		$xFRM->addGuardar();
 		$xFRM->OMoneda("dias_maximo", $xTabla->dias_maximo()->v(), "TR.Numero de Dias Maximo de Plazo");
 		$xFRM->OMoneda("tolerancia_dias_no_pago", $xTabla->tolerancia_dias_no_pago()->v(), "TR.tolerancia de espera en dias por falta de pago");
 		$xFRM->OMoneda("tolerancia_dias_primer_abono", $xTabla->tolerancia_dias_primer_abono()->v(), "TR.tolerancia dias para el primer abono");				
 		break;
 	case "cantidades":
+		$xFRM->addGuardar();
 			$xFRM->OMoneda("minimo_otorgable", $xTabla->minimo_otorgable()->v(), "TR.monto minimo", true);
 			$xFRM->OMoneda("maximo_otorgable", $xTabla->maximo_otorgable()->v(), "TR.monto maximo", true);
 						
@@ -160,12 +160,15 @@ switch ($opcion){
 			$xFRM->OMoneda("fuente_de_fondeo_predeterminado", $xTabla->fuente_de_fondeo_predeterminado()->v(), "TR.Fuente de fondeo predeterminado");
 			break;		
 	case "garantias":
+		$xFRM->addGuardar();
 		$xFRM->OMoneda("numero_avales", $xTabla->numero_avales()->v(), "TR.numero avales");
 		$xFRM->OMoneda("razon_garantia", $xTabla->razon_garantia()->v(), "TR.Razon de la garantia Fisica sobre el Credito");
-		$xFRM->OSelect("tipo_de_garantia", $xTabla->tipo_de_garantia()->v() , "TR.tipo de garantia reales aceptadas", array("todas"=>"TODAS", "cuenta_inversion"=>"CUENTA INVERSION", "aportacion"=>"APORTACION"));
+		$arropts	= array("todas"=>"TODAS", "cuenta_inversion"=>"CUENTA INVERSION", "aportacion"=>"APORTACION", "prenda" => "PRENDARIA", "inmuebles" => "INMUEBLES");
+		$xFRM->OSelect("tipo_de_garantia", $xTabla->tipo_de_garantia()->v() , "TR.tipo de garantia reales aceptadas", $arropts);
 		$xFRM->OMoneda("creditos_mayores_a", $xTabla->creditos_mayores_a()->v(), "TR.Monto minimo para solicitar Garantias");
 		break;
 	case "comisiones":
+		$xFRM->addGuardar();
 		$xFRM->OSelect("aplica_gastos_notariales", $xTabla->aplica_gastos_notariales()->v() , "TR.se aplican gastos notariales", $dSN);
 		$xFRM->OSelect("aplica_mora_por_cobranza", $xTabla->aplica_mora_por_cobranza()->v() , "TR.se aplican mora por cobranza", $dSN);
 		$xFRM->OMoneda("comision_por_apertura", $xTabla->comision_por_apertura()->v(), "TR.Tasa de comision por apertura");
@@ -173,6 +176,7 @@ switch ($opcion){
 						
 		break;
 	case "permisos":
+		$xFRM->addGuardar();
 		$off = $xSel->getListaDeOficiales("oficial_seguimiento");
 		$off->setOptionSelect($xTabla->oficial_seguimiento()->v());
 		$xFRM->addHElem( $off->get("TR.oficial por defecto", true) );
@@ -188,6 +192,7 @@ switch ($opcion){
 		break;
 		
 		case "codigo":
+			$xFRM->addGuardar();
 			$xFRM->OTextArea("code_valoracion_javascript", $xTabla->code_valoracion_javascript()->v(), "TR.code valoracion javascript");
 			$xFRM->OTextArea("php_monto_maximo", $xTabla->php_monto_maximo()->v(), "TR.php monto maximo");
 			$xFRM->OTextArea("valoracion_php", $xTabla->valoracion_php()->v(), "TR.valoracion php");
@@ -199,17 +204,19 @@ switch ($opcion){
 			$xFRM->OTextArea("pre_modificador_de_vencimiento", $xTabla->pre_modificador_de_vencimiento()->v(), "TR.pre modificador de vencimiento");			
 			break;		
 	default:
+		$xFRM->addGuardar();
 		$xFRM->OText("descripcion_tipoconvenio", $xTabla->descripcion_tipoconvenio()->v(), "TR.Nombre");
 		$xFRM->OText("descripcion_completa", $xTabla->descripcion_completa()->v(), "TR.descripcion completa");
+		$xFRM->OText("nombre_corto", $xTabla->nombre_corto()->v(), "TR.NOMBRE_CORTO");
 		$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.Estado Actual del Producto", array("baja"=>"BAJA", "activo"=>"ACTIVO"));
 		
-		$xFRM->OSelect("tipo_de_convenio", $xTabla->tipo_de_convenio()->v() , "TR.tipo de agrupacion", array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+		$xFRM->OSelect("tipo_de_convenio", $xTabla->tipo_de_convenio()->v() , "TR.TIPO_AGRUPACION", 			array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+		$xFRM->OSelect("tipo_de_integracion", $xTabla->tipo_de_integracion()->v(), "TR.TIPO_AGRUPACION", 	array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+		
 		$d2 	= $ql->getArrayRecord("SELECT * FROM creditos_modalidades");
 		$xFRM->OSelect("tipo_de_credito", $xTabla->tipo_de_credito()->v() , "TR.Clasificacion Legal", $d2);
-		//$xFRM->OMoneda("tipo_de_credito", $xTabla->tipo_de_credito()->v(), "TR.Clasificacion Legal");
-		
-		$xFRM->OSelect("tipo_de_integracion", $xTabla->tipo_de_integracion()->v(), "TR.tipo de integracion", array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
-		
+			
+		//		
 		$xFRM->OMoneda("tipo_de_interes", $xTabla->tipo_de_interes()->v(), "TR.tipo de interes");
 		$xFRM->OMoneda("perfil_de_interes", $xTabla->perfil_de_interes()->v(), "TR.perfil de interes");
 		
@@ -221,34 +228,15 @@ switch ($opcion){
 				
 		$xFRM->OText("clave_de_tipo_de_producto", $xTabla->clave_de_tipo_de_producto()->v(), "TR.clave de tipo de producto en SIC");
 		
-		$xFRM->OText("path_del_contrato", $xTabla->path_del_contrato()->v(), "TR.URl relativa del path contrato");
+		$xFRM->OText("path_del_contrato", $xTabla->path_del_contrato()->v(), "TR.URl del contrato");
 		$xFRM->OMoneda("codigo_de_contrato", $xTabla->codigo_de_contrato()->v(), "TR.Numero de formato en el sistema");
 		
-	break;	
+	break;
+	case "fin":
+		$xFRM->addCerrar("", 2);
+		$xFRM->addAvisoRegistroOK($msg);
+	breaK;	
 }
-
-
-
-
-//$xFRM->OMoneda("aplica_gastos_notariales", $xTabla->aplica_gastos_notariales()->v(), "TR.se aplican gastos notariales");
-//$xFRM->OMoneda("aplica_mora_por_cobranza", $xTabla->aplica_mora_por_cobranza()->v(), "TR.se aplican mora por cobranza");
-
-//$xFRM->OMoneda("estatus_predeterminado", $xTabla->estatus_predeterminado()->v(), "TR.Estado predeterminado");
-
-//$xFRM->OMoneda("oficial_seguimiento", $xTabla->oficial_seguimiento()->v(), "TR.oficial seguimiento por defecto");
-
-
-
-
-
-
-
-
-
-
-
-
-$xFRM->addAviso($msg);
 
 echo $xFRM->get();
 ?>

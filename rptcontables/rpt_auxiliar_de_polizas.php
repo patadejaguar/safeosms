@@ -15,20 +15,33 @@
 $xHP					= new cHPage("TR.Poliza_contable", HP_REPORT);
 $ql						= new MQL();
 $xF						= new cFecha();
+$xL						= new cLang();
+
 $xHP->init("initComponents()");
 
 $fechas					= parametro("f");
 $folios					= parametro("n");
-$fecha_inicial			= parametro("idfecha-0", false);
-$fecha_final			= parametro("idfecha-1", false);
-$folio_inicial			= parametro("init", false, MQL_INT);
-$folio_final			= parametro("end", false, MQL_INT);
+$fecha_inicial			= parametro("idfecha-0", false, MQL_DATE);
+$fecha_inicial			= parametro("idfechafinal", $fecha_inicial, MQL_DATE);
+$fecha_inicial			= parametro("on", $fecha_inicial, MQL_DATE);
+
+$fecha_final			= parametro("idfecha-1", false, MQL_DATE);
+$fecha_final			= parametro("idfechainicial", $fecha_final, MQL_DATE);
+$fecha_final			= parametro("off", $fecha_final, MQL_DATE);
+
+$folio_inicial			= parametro("init", 0, MQL_INT);
+$folio_final			= parametro("end", 99999, MQL_INT);
+
 $tipos_de_poliza		= parametro("t", false, MQL_INT);
-$mostrar_como			= parametro("v");
+$tipos_de_poliza		= parametro("tipo", $tipos_de_poliza, MQL_INT);
+$mostrar_como			= parametro("v", SYS_DEFAULT, MQL_RAW);
+$mostrar_como			= parametro("vista", SYS_DEFAULT, MQL_RAW);
+
 $imprimir_y_cerrar		= parametro("c");
 $codigo_unico			= parametro("codigo");
 
 
+//--------------------	OLD
 if($fechas != ""){
 	$fechas				= explode("|", $_GET["f"]);
 	$fecha_inicial		= $fechas[0];
@@ -39,23 +52,23 @@ if($folios != ""){
 	$folio_inicial		= $folios[0];
 	$folio_final		= $folios[1];		
 }
+
 $fecha_final			= $xF->getFechaISO($fecha_final);
 $fecha_inicial			= $xF->getFechaISO($fecha_inicial);
 //Filtros Opcionales
-$ByCodigo					= "";
+$ByCodigo				= "";
+$WhereTipos				= (setNoMenorQueCero($tipos_de_poliza) <= 0) ? "" : " AND `contable_polizas`.`tipopoliza`=$tipos_de_poliza ";
 
-$WhereTipos					= " AND `contable_polizas`.`tipopoliza`=$tipos_de_poliza ";
-if($tipos_de_poliza == false OR $tipos_de_poliza == SYS_TODAS) { $WhereTipos = ""; }
-
-$ByFolio					= ($folio_final == false and $folio_inicial == false) ? "" : " AND `contable_polizas`.`numeropoliza`>=$folio_inicial AND `contable_polizas`.`numeropoliza`<=$folio_final ";
-$ByFecha					= " AND `contable_polizas`.`fecha`>='$fecha_inicial'	AND `contable_polizas`.`fecha`<= '$fecha_final' ";
+$ByFolio				= ($folio_inicial <= 0) ? "" : " AND `contable_polizas`.`numeropoliza`>=$folio_inicial ";
+$ByFolio				.= ($folio_final <= 0) ? "" : " AND `contable_polizas`.`numeropoliza`<=$folio_final ";
+$ByFecha				= " AND `contable_polizas`.`fecha`>='$fecha_inicial'	AND `contable_polizas`.`fecha`<= '$fecha_final' ";
 
 if($codigo_unico != ""){
 	$xPol				= new cPoliza(false);
 	$xPol->setPorCodigo($codigo_unico);
 	$ByCodigo			= " AND (`contable_polizas`.`ejercicio` = " . $xPol->getEjercicio() . " AND	`contable_polizas`.`periodo`=" . $xPol->getPeriodo() . "
 							AND `contable_polizas`.`tipopoliza`=" . $xPol->getTipo() . " AND `contable_polizas`.`numeropoliza` =" . $xPol->getNumero() . ") ";
-	$mostrar_como		= "detalle";
+	$mostrar_como		= SYS_TODAS;
 	$ByFecha			= "";
 	$ByFolio			= "";
 	$WhereTipos			= "";
@@ -67,7 +80,7 @@ $NetoAbonos					= 0;
 
 $xT							= new cTipos();
 $xFe						= new cFecha(0);
-
+$titleSuma					= $xL->getT("TR.SUMA");
 $SQL_poliza = "SELECT
 	`contable_polizas`.`fecha`,
 	`contable_polizasdiarios`.`nombre_del_diario`,
@@ -125,7 +138,7 @@ ORDER BY
 		</tr>
 		";
 		switch($mostrar_como){
-			case "detalle":
+			case SYS_TODAS:
 		$SQL_mvtos = "SELECT
 		`contable_movimientos`.`numeromovimiento`,
 		`contable_movimientos`.`referencia`,
@@ -202,7 +215,7 @@ ORDER BY
 			<td></td>
 			<td></td>
 			<td></td>
-			<td >**** SUMAS ****</td>
+			<th >$titleSuma</th>
 			<th class='mny'>" .  getFMoney($TCargos) . "</th>
 			<th class='mny'>" . getFMoney($TAbonos) . "</th>		
 		</tr>

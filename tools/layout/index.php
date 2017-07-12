@@ -32,7 +32,7 @@ $arr	=  array(
 		"progress_bar" => "Barra de Progreso",
 		"notice" => "Noticias",
 		"title" => "Titulo",
-		"dynamic_components" => "Componentes Dinamicos",
+		"dynamic_components" => "Javascript",
 		"accordion" => "Acordion",
 		"ready" => "Exito",
 		"slider" => "Carrusel",
@@ -74,6 +74,11 @@ $arr	=  array(
 		"mini" => "Mini",
 		"normal" => "Normal",
 		"extend" => "Extendido",
+		"groups" => "Grupos",
+		"rounded" => "Redondeado",
+		"Circle" => "Círculo",
+		"with_frame" => "Con Marco",
+		"link" => "Enlace",
 		
 		"res_1" => "Cerrar",
 		"res_2" => "Ancho fijo",
@@ -94,7 +99,8 @@ $arr	=  array(
 		"res_17" => "Navegar",
 		"res_18" => "El béisbol es un tipo de palo de jugar como las principales características de los colectivos altamente confrontacionales proyectos, juegos de pelota en los Estados Unidos, Japón, es particularmente popular.",
 		"res_19" => "Béisbol",
-		"msg_1" => "Tenga en cuenta que su privacidad personal."	
+		"msg_1" => "Tenga en cuenta que su privacidad personal.",
+		"msg_2" => "Por favor, trate de usar formatos de vídeo compatibles con HTML5 y la dirección del vídeo de reproducción de vídeo, con el fin de lograr una mejor experiencia de navegación."
 );
 echo $tpl->render($arr);
 ?>

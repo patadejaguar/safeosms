@@ -1,6 +1,4 @@
 html {
-	/*font-size: 10px;
-	font-family: monospace !important;*/
 	font: 8pt "Trebuchet MS", Arial, Helvetica, sans-serif !important;
 }
 body {
@@ -69,7 +67,7 @@ fieldset {
 	color: #000162;
 	text-align: right;
 }
-.mny,td.mny,th.mny,.numc,.real,.int {
+.mny,td.mny,th.mny,.numc,.real,.int,.float {
 	color: #000162;
 	text-align: right !important;
 }
@@ -168,7 +166,7 @@ page {
 th {
 	text-align: left;
 	vertical-align: middle;
-	background-color: #F3F3F3;
+	background-color: #DEDEDE;
 }
 
 .parrafo_izquierda {
@@ -195,6 +193,7 @@ td.date, td.otromes,th.date,.cnt,.ctr {
 
 table, table.default {
 	width: 100%;
+	border-collapse: collapse;
 }
 
 legend {
@@ -255,9 +254,7 @@ th.izq,.izq {
 .cmayor-sum {
 	text-indent: 10%;
 }
-td:hover{
-	background-color: #ffffbf;
-}
+
 
 .cwarn {
 	color: Purple;
@@ -317,19 +314,20 @@ ol.rounded-list a img { visibility: hidden; display: none;}
 }
 .alert-box  span.close-tip:hover { text-shadow: 1px 1px 1px rgba(0, 0, 0, 1); color: white;	border-color: rgb(18, 52, 86);}
 .error, .credito-estado-20 {
-    background:#ffecec url('../images/notification/error.png') no-repeat 10px 50%;
+    background:#ffecec  no-repeat 10px 50%;
     border:1px solid #f5aca6;
 }
-.success, .credito-estado-10 {
-    background:#e9ffd9 url('../images/notification/success.png') no-repeat 10px 50%;
+.success, .credito-estado-10, tr:hover {
+    background:#e9ffd9 no-repeat 10px 50%;
     border:1px solid #a6ca8a;
 }
+tr:hover{ font-weight: bold; }
 .warning, .credito-estado-30 {
-    background:#fff8c4 url('../images/notification/warning.png') no-repeat 10px 50%;
+    background:#fff8c4 no-repeat 10px 50%;
     border:1px solid #f2c779;
 }
 .notice {
-    background:#e3f7fc url('../images/notification/notice.png') no-repeat 10px 50%;
+    background:#e3f7fc no-repeat 10px 50%;
     border:1px solid #8ed9f6;
 }
 .footer-bar {
@@ -348,7 +346,14 @@ ol.rounded-list a img { visibility: hidden; display: none;}
 	
    color: #800000;
 }
-
+th mark {
+	background:none;
+}
+tbody tr td {
+	border-bottom-color: rgb(204, 204, 204);
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
 
 
 	.legal h1, .legal h2,.legal h3,.legal h4{
@@ -402,3 +407,13 @@ ol.rounded-list a img { visibility: hidden; display: none;}
 	.firma, .firma td, .firma th {
 		border: none !important;
 	}
+	.cont-cuenta {
+		max-width: 10%;
+		width: 10%;
+	}
+	.ct-series-a .ct-barlabel,.ct-barlabel {	fill: rgba(0,0,0,.4);color: rgba(0,0,0,.4);font-size: .75rem; line-height: 1;}
+@media print {
+	thead {
+		z-index: -1;
+	}
+}

@@ -31,17 +31,17 @@ class Grid
 	var $databasetype;
 	var $sql_table;
 
-	var $width 			= 600;
+	var $width 					= 0;
 	var $order_column_index 	= 0;
-	var $columns 			= array();
+	var $columns 				= array();
 	var $number_of_rows_each_page 	= 10;
-	var $current_page 		= 1;
-	var $total_pages;
-	var $print 			= false;
-	var $sql_where 			= "";
-	var $sql_columns 		= "*";
+	var $current_page 			= 1;
+	var $total_pages			= 1;
+	var $print 					= false;
+	var $sql_where 				= "";
+	var $sql_columns 			= "*";
 	var $mode; /*= MODE_VIEW, MODE_EDIT*/
-	var $id_row_value_edit_form 	= "";
+	var $id_row_value_edit_form = "";
 	var $show_excel_ico 		= true;
 	var $show_print_ico 		= true;
 	var $strip_html_tags 		= false;
@@ -59,14 +59,14 @@ class Grid
 	var $editmode_add 		= true;
 	var $editmode_edit 		= true;
 	var $editmode_delete 		= true;
-	var $edit_column_width 		= 8;
-	var $delete_column_width 	= 8;
+	var $edit_column_width 		= 20;
+	var $delete_column_width 	= 20;
 	var $sql_table_override 	= "";
 	var $database_plugins 		= array();
 	var $all_plugins		= array();
 
 
-	function Grid($id, $width = 600){	$this->width	= $width;		$this->id = $id;	}
+	function Grid($id, $width = 0){	$this->width	= $width;		$this->id = $id;	}
 
 	function StripTags($str)
 	{
@@ -88,7 +88,11 @@ class Grid
 		echo $this->MainDivBottom();
 	}
 
-	function MainDivTop(){	echo "<div class='".$this->id."_maindiv' id=\"".$this->id."\" width=$this->width>";	}
+	function MainDivTop(){	
+		if($this->width<600){$this->width=600;}
+		$this->width += 40;
+		echo "<div class='".$this->id."_maindiv' id=\"".$this->id."\" style='min-width:600px;width:" . $this->width . "px'>";
+	}
 	function MainDivBottom(){	echo "</div>";	}
 
 	function LoadColumnNames()
@@ -195,8 +199,8 @@ class Grid
 			$this->GoToPage($_GET[$this->id."_go_to_page_number"]);
 		}
 
-		$this->excel_info = "";
-		$grid = "";
+		$this->excel_info 	= "";
+		$grid 				= "";
 
 		if ($this->database->Connect() == false) {	return "Could not connect to database...";	}
 
@@ -210,7 +214,7 @@ class Grid
 											$this->print == true ? "":$this->current_page * $this->number_of_rows_each_page);
 
 
-		$table_main = "<table cellspacing='0' cellpadding='0' border='0' class='".$this->id."_table'>";
+		$table_main = "<table class='".$this->id."_table'>";
 		$number_of_rows = 0;
 
 		if ($rows != false)
@@ -272,7 +276,7 @@ class Grid
 					else
 						$javascript_order_column_sort = "onclick=\"HTML_AJAX.replace('$this->id', 'gridajax', 'AjaxSort', '$this->id', '".$order_column_keys[$order_column_index]."');\"";
 
-					$table_main .= "<td  ".$javascript_order_column_sort."  class=\"".$this->id."_table_header_row\" id=\"".$this->id."_column_".$order_column_index."\" style='width: ".$objColumn->width."px' onMouseOver='this.className =\"".$this->id."_table_header_row_hover\"' onMouseOut='this.className=\"".$this->id."_table_header_row\"'>";
+					$table_main .= "<td  ".$javascript_order_column_sort."  class=\"".$this->id."_table_header_row\" id=\"".$this->id."_column_".$order_column_index."\" style='max-width: ".$objColumn->width."px' onMouseOver='this.className =\"".$this->id."_table_header_row_hover\"' onMouseOut='this.className=\"".$this->id."_table_header_row\"'>";
 
 					$column_name = "";
 					if ($objColumn->user_defined_name != "")
@@ -288,9 +292,9 @@ class Grid
 						/**
 						 * @see Cambiado por Luis Balam
 						 */
-							$table_main .= "<img src=\"../images/grid/up.gif\" alt=\"\" />";
+							$table_main .= "<img src=\"../images/grid/up.gif\"/>";
 						else
-							$table_main .= "<img src=\"../images/grid/down.gif\" alt=\"\" />";
+							$table_main .= "<img src=\"../images/grid/down.gif\"/>";
 					}
 
 					$table_main .= "</td>";
@@ -333,6 +337,7 @@ class Grid
 				if ($check_id_column == true)
 				{
 					if (array_key_exists($this->column_id->name, $row) == false)
+						//if(!isset($row[$this->column_id->name]))
 						return "Cannot find the id column \"".$this->column_id->name."\".<br/>The name must be exactly the same as the id database column.<br/>Items case-sensitive (= small/large characters matter).";
 				}
 				$check_id_column = false;
@@ -406,7 +411,7 @@ class Grid
 
 			$table_main .= 	"</tr>";
 
-			$table_main .= "</table>";
+			$table_main .= "</table></form>";
 
 			$table_main .= "</td>";
 			$table_main .= "</tr>";
@@ -442,9 +447,9 @@ class Grid
 
 	function CreateRow($row, $row_index, &$visible_row_index, &$table_main)
 	{
-		$xajax_select_row = "";
-		$column_index = 0;
-		$first_column = true;
+		$xajax_select_row 	= "";
+		$column_index 		= 0;
+		$first_column 		= true;
 
 		foreach ($this->columns as $objColumn)
 		{
@@ -659,10 +664,11 @@ class Grid
 	{
 		$this->databasetype = $databasetype;
 
-		if ($databasetype == DATABASE_MYSQL)
+		if ($databasetype == DATABASE_MYSQL){
 			$this->database = new MySql($database, $username, $password, $hostname);
-		else if ($databasetype == DATABASE_POSGRESQL)
+		} else if ($databasetype == DATABASE_POSGRESQL){
 			$this->database = new PosgreSql($database, $username, $password, $hostname);
+		}
 	}
 
 	function SetSqlSelect($columns, $table, $where = "")
@@ -735,17 +741,18 @@ class Grid
 
 		$this->database->Connect();
 
-		$column_names = array();
-		$column_values_new = array();
-		$index = 0;
+		$column_names 		= array();
+		$column_values_new 	= array();
+		$index 				= 0;
 		foreach ($this->columns as $column)
 		{
 			if ($index < (count($this->columns)-2))
 			{
-				if ($id_column != $column->name && ($column->editable != false))
+				//TODO: modificacion Luis Balam
+				//$id_column != $column->name &&
+				if ( ($column->editable != false))
 				{
 					$column_names[] = $column->name;
-
 					$column_values_new[] = $this->StripTags($column_values[$index]);
 				}
 			}
@@ -814,9 +821,9 @@ class Grid
 
 	function SetUniqueDatabaseColumn($id_column_name, $show)
 	{
-	    if (array_key_exists($id_column_name, $this->user_defined_columns) == false)
+	    if (array_key_exists($id_column_name, $this->user_defined_columns) == false){
 			$this->user_defined_columns[$id_column_name] = new Column($id_column_name);
-
+	    }
 		$this->user_defined_columns[$id_column_name]->is_id = true;
 		$this->user_defined_columns[$id_column_name]->show = $show;
 
@@ -937,6 +944,7 @@ class Grid
 			$this->user_defined_columns[$column_name] = new Column($column_name);
 
 		$this->user_defined_columns[$column_name]->width = $width;
+		$this->width	= $this->width + $width;
 	}
 
 	function SetDatabaseColumnName($old_column_name, $new_column_name)

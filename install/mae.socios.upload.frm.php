@@ -1,12 +1,10 @@
 <?php
 /**
- * @see Modulo de Carga de Respaldos a la Matriz
+ * @see Modulo de Carga de personas
  * @author Balam Gonzalez Luis Humberto
- * @version 1.1
- * @package common
+ * @version 1.01.05
+ * @package migration
  *  Actualizacion
- * 		16/04/2008
- *		2008-06-10 Se Agrego la Linea de Informacion del Actualizacion de Movimeintos y recibos
  *
  */
 //=====================================================================================================
@@ -23,7 +21,7 @@
 //=====================================================================================================
 
 $xHP				= new cHPage("TR.Carga de Personas");
-	
+$vimport			= "1.01.05";
 ini_set("max_execution_time", 600);
 $action 			= ( isset($_GET["o"]) )? $_GET["o"] : false ;
 $xHP->init();
@@ -40,10 +38,11 @@ $ql			= new MQL();
 $xDiv		= new cHDiv();
 $xFil		= new cHFile();
 $xChk		= new cHCheckBox();
+$xQL		= new MQL();
 
 $xImp		= new cFileImporter();
 
-
+$xFRM->setTitle($xHP->getTitle(). " $vimport");
 
 //Si la Operacion es Configurar los Datos
 if ( $action == false ){
@@ -135,41 +134,15 @@ if ( $action == false ){
 						"NINGUNO" 	=> 99,
 						""			=> 99,
 						"MASCULINO" => 1,
-				"MASCULINA" => 1,
+						"MASCULINA" => 1,
 						"FEMENINO"	=> 2,
-				"FEMENINA"	=> 2
+						"FEMENINA"	=> 2
 						);
-		$arrFJuridica		= array(
-								"PERSONA FISICA" 	=> 1,
-								"PERSONA MORAL" 	=> 2,
-				
-				"FISICA" 	=> 1,
-				"MORAL" 	=> 2,
-								
-				"NATURAL" 	=> 1,
-				"JURIDICA" 	=> 2,
-								
-								""			=> 1,
-								"NINGUNO"	=> 99
-								);
-		$arrEcivil		= array(
-				"CASADO" 	=> 1,
-				"CASADA" 	=> 1,
-						"SOLTERO" 	=> 2,
-				"SOLTERA" 	=> 2,
-						"NINGUNO" 	=> 99,
-						"" 		=> 99,
-						"DIVORCIADO" 	=> 3,
-				"DIVORCIADA" 	=> 3,
-						"UNION LIBRE" 	=> 4,
-						"VIUDO" 	=> 6
-					);
-		$arr2RegMat		= array(
-						"" => "NINGUNO",
-						"MANCOMUNADO" => "SOCIEDAD_CONYUGAL",
-						"SEPARADOS" => "BIENES_SEPARADOS"
-					);
-		$arrVivienda		= array("PROPIA" =>1, "RENTADA"=>2, "NA"=>99, "NINGUNO" => 99);
+		$arrFJuridica	= array("PERSONA FISICA" 	=> 1,"PERSONA MORAL" 	=> 2,"FISICA" 	=> 1,"MORAL" 	=> 2,"NATURAL" 	=> 1,"JURIDICA" 	=> 2,""			=> 1,
+								"NINGUNO"	=> 99, "F" => 1, "M"=> 2);
+		$arrEcivil		= array("CASADO" 	=> 1,"CASADA" 	=> 1,"SOLTERO" 	=> 2,"SOLTERA" 	=> 2,"NINGUNO" 	=> 99,"" 		=> 99,"DIVORCIADO" 	=> 3,"DIVORCIADA" 	=> 3,"UNION LIBRE" 	=> 4,"VIUDO" 	=> 6,"VIUDA" 	=> 6);
+		$arr2RegMat		= array("" => "NINGUNO","MANCOMUNADO" => "SOCIEDAD_CONYUGAL","SEPARADOS" => "BIENES_SEPARADOS");
+		$arrVivienda	= array("PROPIA" =>1, "RENTADA"=>2, "NA"=>99, "NINGUNO" => 99);
 	
 		$doc1				= (isset($_FILES["idarchivo"])) ? $_FILES["idarchivo"] : false;
 		$xFi				= new cFileImporter();
@@ -200,6 +173,10 @@ if ( $action == false ){
 			public $NACIONALIDAD			= 23;
 			public $CIUDAD_NACIMIENTO		= 24;
 			public $INGRESOS_MENSUALES		= 25;
+			public $DIA_MES_CUOTA			= 26;
+			public $TIPO_PAGO_CUOTA			= 27;
+			public $ID_CENTRO				= 28; //Filial
+			
 		}
 		//Cedula de Identidad
 		$tmp	= new cTmp();
@@ -242,19 +219,26 @@ if ( $action == false ){
 							
 							$xFi->getV($tmp->GENERO, DEFAULT_GENERO, MQL_INT, $arrGenero), FALLBACK_CLAVE_EMPRESA, DEFAULT_REGIMEN_CONYUGAL,
 							
-							
 							$xFi->getV($tmp->TIPO_PERSONA, FALLBACK_PERSONAS_FIGURA_JURIDICA, MQL_INT, $arrFJuridica), FALLBACK_CLAVE_DE_GRUPO , "",
 							
 							FALLBACK_PERSONAS_TIPO_IDENTIFICACION, $xFi->getV($tmp->ID_POBLACIONAL), $idpersona, getSucursal(),
 							0, "", 0, $xFi->getV($tmp->FECHA_ALTA)
 						);
-					//sucess
 						if($pass == true){
 							$ingreso	= $xFi->getFlotante($tmp->INGRESOS_MENSUALES );
 							if($ingreso > 0){
-								if( $xSoc->init() == true){
-									$xSoc->addActividadEconomica($xFi->getV($tmp->EMPRESA_TRABAJO, ""), $ingreso, $xFi->getV($tmp->OCUPACION, ""));
-								}
+								if( $xSoc->init() == true){ $xSoc->addActividadEconomica($xFi->getV($tmp->EMPRESA_TRABAJO, ""), $ingreso, $xFi->getV($tmp->OCUPACION, "")); }
+							}
+							//Agregar Datos de Cobro
+							if(PERSONAS_CONTROLAR_POR_APORTS == true){
+								//26 y  27
+								
+								$ccpago		= $xFi->getV($tmp->TIPO_PAGO_CUOTA, "DESCONOCIDO");
+								$ddpago		= $xQL->getDataRow("SELECT `tipo_de_dispersion` AS 'tipo' FROM `catalogos_tipo_de_dispersion` WHERE `descripcion` LIKE '%$ccpago%' LIMIT 0,1");
+								$lugardepago	= setNoMenorQueCero($ddpago["tipo"]);
+								$lugardepago	= ($lugardepago <= 0) ? 1 : $lugardepago;
+								$diapago		=$xFi->getEntero($tmp->DIA_MES_CUOTA, $xF->dia());
+								$xSoc->setDatosColegiacion(FALLBACK_PERSONAS_TIPO_MEMBRESIA, $lugardepago, $diapago, 1);
 							}
 						}
 					}
@@ -264,22 +248,8 @@ if ( $action == false ){
 			}
 		}
 		$msg		.= $xFi->getMessages();
-		if(MODO_DEBUG == true){
-			$xLog		= new cFileLog();
-			$xLog->setWrite($msg);
-			$xFRM->addToolbar( $xLog->getLinkDownload("Archivo del proceso", ""));
-		}
+		if(MODO_DEBUG == true){ $xFRM->addLog($msg); }
 	//==================================================================================================================
-	/*			fclose ($gestor);
-				$xLog->setWrite($msg);
-				$xFRM->addToolbar( $xLog->getLinkDownload("Archivo del proceso", ""));
-		}	else {
-			$xFRM->addAviso("EL TIPO DE ARCHIVO DE " . $usrFiles[0]['name'] . "(" .$mExt . ") NO SE ACEPTA");
-		}
-
-	}*/
-
-
 }
 if ( !isset($iReg) ){	$iReg	= 0; }
 echo $xFRM->get();

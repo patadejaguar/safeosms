@@ -15,143 +15,54 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Reporte de Catalogo de Cuentas", HP_FORM);
+$xHP		= new cHPage("TR.Reporte de CATALOGO_CONTABLE", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc = new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-echo $xHP->getHeader();
+$observaciones= parametro("idobservaciones");
 
-echo jsBasicContable("frmreports");
-$xBtn		= new cHButton("");
-$xChk		= new cHCheckBox();
+$xHP->init();
 
-echo $xHP->setBodyinit("initComponents();");
+$xFRM		= new cHForm("frm", "./", false, "", "formoid-default panel");
+$xSel		= new cHSelect();
+$xRPT		= new cPanelDeReportesContables(false, false);
+$xRPT->OFRM()->setTitle($xHP->getTitle());
+$xRPT->OFRM()->addHElem($xSel->getListaDeTiposDeCuentasContables()->get(true) );
+$xRPT->OFRM()->addHElem($xSel->getListaDeNivelesDeCuentasContables()->get(true) );
+$xRPT->OFRM()->OCheck("TR.SOLO AFECTABLES", "idafectables");
+$xRPT->OFRM()->OCheck("TR.MOSTRAR TODO", "idtodo");
+echo $xRPT->render();
 
-
+//$jxc ->drawJavaScript(false, true);
 ?>
-<form name="frmreports" method="post" action="" class="formoid-default">
-<table>
-	<tbody>
-    <tr>
-		<td><fieldset>
-			<legend>Tipo de Cuentas</legend>
-			Tipo de Cuentas :<br />
-			<?php 	$cCta = new cSelect("tipocuentas", "", "contable_catalogotipos");
-					//$cCta->addEspOption("algunas", "Algunas");
-					$cCta->addEspOption(SYS_TODAS);
-					//$cCta->addEspOption("cuadre", "Cuadre");
-					$cCta->setOptionSelect(SYS_TODAS);
-					$cCta->show(false);
-			 ?><br />
-	<!-- comparativo Real vs Presupuesto -->
-	<!-- en Presentacion Especial UDIS/Pesos/Dolares -->
-		</fieldset>
-		</td>
-		</tr>
-		<tr>
-			<td><fieldset>
-				<legend>Rango de Niveles</legend>
-				<select name="rangoNiveles" id="idrangoNiveles">
-					<option value="1">Titulo</option>
-					<option value="2">SubTitulo</option>
-					<option value="3">Mayor</option>
-					<option value="99">Personalizar</option>
-					<option value="0">Todas</option>
-				</select>
-			</fieldset></td>
-		</tr>
-		<tr>
-    		<td>
-			<fieldset>
-				<legend>Otras opciones</legend>
-				<?php 
-					echo $xChk->get("TR.Solo Afectables", "soloAfectables");
-				?>
-				
-				<p><input type="checkbox" name="QueAcumulenA" />Que Acumulen a :</p>
-				<p><input type='text' name='ci' value='<?php echo ZERO_EXO; ?>' id="idci" size="35" onchange="getCuentaFmt('idci');" /></p>
-				<?php 
-					echo $xChk->get("TR.Mostrar Todos", "mostrarTodos");
-				?>				
-				<!--  <p><input type="checkbox" name="mMostrarTodos" />Mostrar Todas las Cuentas(Es Tardado)</p> -->
-		</fieldset>
-      </td>
-    </tr>
-
-    <tr>
-    	<td colspan="2">
-			<table style=""
- 				     >
-			<tbody>
-				<tr>
-
-					<td><?php echo $xBtn->getBasic("Aceptar", "cmdTAceptar(event);", "aceptar"); ?></td>
-					<td><?php echo $xBtn->getSalir(); ?></td>
-				</tr>
-			</tbody>
-			</table>
-    	</td>
-    </tr>
-	</tbody>
-</table>
-</form>
-<?php 
-echo $xHP->setBodyEnd();
-?>
-<script  >
-var xG		= new Gen();
-function cmdTEliminar(evt){
-	onAsClicked = true;
-	imgAsClicked(evt.target.id);
-}
-function cmdTNuevo(evt){
-	onAsClicked = true;
-	imgAsClicked(evt.target.id);
-}
-function cmdTAceptar(evt){
-	openReport();
-	onAsClicked = true;
-	imgAsClicked(evt.target.id);
-}
-function cmdTImprimir(evt){
-	onAsClicked = true;
-	imgAsClicked(evt.target.id);
-}
-function imgAsClicked(sId){
-
-}
-/**
-**********************************
-*/
-var wfrm = document.frmreports;
-
-function openReport() {
-		//control de opciones
-		var vf71 = 0;		//Cuenta Especial
-		var vf70 = 0;		//Estatus
-		var vf72 = 0;		//Convenio
-		var vf73 = 0;		//Fechas
-		
-		if(wfrm.QueAcumulenA.checked){
-			vf71 = 1;
-		}
-		var mTodas		= $("#mostrarTodos").prop('checked');//(wfrm.mMostrarTodos.checked) ? 1 : 0;
-		var mAffect		= $("#soloAfectables").prop('checked');
-		//
-		vfor = document.getElementById("idci").value;
-		vto = 0;	//document.getElementById("idcf").value;
-		vf1 = document.getElementById("idtipocuentas").value;
-		vf2 = document.getElementById("idrangoNiveles").value;
-		vf3 = 0;
-		vOut = 0;
-		fi = 0;
-		ff = 0;
-
-		var urlrpt = "rpt_reporte_del_catalogo.php?" + 'on=' + fi + '&off=' + ff + '&for=' + vfor + '&to=' +
-						vto + '&out=' + vOut + '&f1=' + vf1 + '&f2=' + vf2 + '&f71=' + vf71 + '&mostrar=' + mTodas + "&afectables=" + mAffect;
-		xG.w({ url: urlrpt, h : 800, w: 600 });
-}
-function initComponents(){
+<script>
+var xG 	= new Gen();
+function jsGetReporte(){
+	var idtipodecuentacontable	= $("#idtipodecuentacontable").val();
+	var idniveldecuenta			= $("#idniveldecuenta").val();
+	var idtodo					= document.getElementById("idtodo").checked;
+	var idafectables			= document.getElementById("idafectables").checked;
+	var urlrpt 		= "rpt_reporte_del_catalogo.php?mostrar=" + idtodo + "&afectables=" + idafectables;
+	xG.w({ url : urlrpt });
 }
 </script>
 <?php
-$xHP->end(); 
+$xHP->fin();
+
 ?>

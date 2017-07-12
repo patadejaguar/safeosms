@@ -17,18 +17,26 @@ $ql			= new MQL();
 $lis		= new cSQLListas();
 $xF			= new cFecha();
 
-$tabla	= parametro("tabla", false, MQL_RAW);
-$clave	= parametro("clave", false, MQL_RAW);
-$query	= parametro("q", false, MQL_RAW);
-$where	= parametro("w", false, MQL_RAW);
+$tabla	= parametro("tabla", "", MQL_RAW);
+$clave	= parametro("clave", "", MQL_RAW);
+$query	= parametro("q", "", MQL_RAW);
+
+
+$where	= parametro("w", "", MQL_RAW);
 $out	= parametro("out", "", MQL_RAW);
+$param	= parametro("vars", "", MQL_RAW);
+$jTLim	= parametro("jtStartIndex", 0, MQL_INT);
+$jTPag	= parametro("jtPageSize", 0, MQL_INT);
+
 $err	= false;
 $rs		= array();
+$run	= true;
+
 header('Content-type: application/json');
 //exit(base64_encode("nombrecompleto LIKE '%pedro%' "));
-if($query != false OR $where != false){
-	if($tabla != false){							//tabla con where
-		$xObj	= new cSAFETabla($tabla);
+if($query !== "" OR $where !== ""){
+	if($tabla !== ""){							//tabla con where
+		$xObj	= new cSQLTabla($tabla);
 		if( $xObj->obj() == null){
 			$err	= true;
 		} else {
@@ -40,14 +48,39 @@ if($query != false OR $where != false){
 			exit;
 		}		
 	} else {
-		$wher	= ($where == false) ? "" : $where;
-		$sql	= base64_decode($query) . " " . base64_decode($where);
+		$sql	= base64_decode($query);
+		
+		$sql	.= ($where == "") ? "" : " " . base64_decode($where);
+		
+		//setLog($sql);
+		
+		if($param !== ""){
+			$sql	= str_replace("?", $param, $sql);
+		}
+		
 		$svc	= new MQLService("list", $sql);
+		if($out == $svc->JTABLE){
+			if($jTPag > 0){
+				if(strpos($sql, "UNION") === false){ //Si no hay UNION
+					if(strpos($sql, "LIMIT") !== false){
+						$sql	= preg_replace("/LIMIT[\s][0-9],[\d][0-9]+/", "LIMIT $jTLim,$jTPag", $sql);
+					} else {
+						$sql 	= $sql . " LIMIT $jTLim,$jTPag";
+					}
+					$sql	= preg_replace("/SELECT[\s]/", "SELECT SQL_CALC_FOUND_ROWS ", $sql);
+				}
+				
+				
+				$svc->setSQL($sql);
+			}
+		}
+		
+		
 		echo $svc->getJSON($out); exit;		
 	}
 }
-if ($tabla != false AND $clave != false){
-	$xObj	= new cSAFETabla($tabla);
+if ($tabla !== "" AND $clave !== "" AND $run == true){
+	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
 		$err	= true;
 	} else {
@@ -63,7 +96,7 @@ if ($tabla != false AND $clave != false){
 }
 
 if($err == true){
-	$rs[MSG_NO_PARAM_VALID]		= "ERROR\t para la Tabla $tabla y clave $clave\r\n";
+	$rs[MSG_NO_PARAM_VALID]		= "ERROR\tEn la Tabla $tabla y clave $clave\r\n";
 	$rs["error"]				= true;
 }
 echo json_encode($rs);

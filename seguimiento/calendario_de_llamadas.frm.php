@@ -11,26 +11,12 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP			= new cHPage("TR.Calendario de llamadas");
-
 $jxc 			= new TinyAjax();
 function jsaGetCallsToToday($fecha, $efectuadas, $vencidas, $canceladas, $mark){
-	$xF		= new cFecha();
-	$fecha	= $xF->getFechaISO($fecha);
-	$cCalls	= new cLlamada();
-
-	$cCalls->setLimitRecords();
-
-	if ($vencidas == "on"){
-		$cCalls->setIncludeVencidas();
-	}
-	if ($canceladas == "on"){
-		$cCalls->setIncludeCanceladas();
-	}
-	if ($efectuadas == "on"){
-		$cCalls->setIncludeEfectuadas();
-	}
-
-	return $cCalls->getLlamadas($fecha, $fecha, $mark);
+	$xF			= new cFecha();
+	$fecha		= $xF->getFechaISO($fecha);
+	$cCalls		= new cHDicccionarioDeTablas();
+	return $cCalls->getLlamadas($fecha, $fecha, $mark, $efectuadas, $canceladas, $vencidas);
 }
 function jsaSaveNote($id, $note){
 	$msg	= "";
@@ -48,8 +34,10 @@ function jsaSaveNote($id, $note){
 
 
 
-$jxc ->exportFunction('jsaGetCallsToToday', array('idfecha-0', "idChkEfectuadas", "idChkVencidas", "idChkCanceladas", "idMarkRecord"), "#tdCalendar");
-$jxc ->exportFunction('jsaSaveNote', array('idIDNode', "idTxtNote"), "#idTdMsgs");
+
+$jxc ->exportFunction('jsaGetCallsToToday', array('idfecha-0', "idChkEfectuadas", "idChkVencidas", "idChkCanceladas", "idMarkRecord"), "#divcalendar");
+$jxc ->exportFunction('jsaSaveNote', array('idIDNote', "idTxtNote"), "#idmsg");
+
 $jxc ->process();
 
 $xFRM		= new cHForm("frmnav", "./");
@@ -57,81 +45,39 @@ $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
+$xChk		= new cHCheckBox();
 
-echo $xHP->init("jsaGetCallsToToday()");
-?>
-<form name="frmcalendario" method="POST" action="./">
+$xHP->init("jsaGetCallsToToday()");
 
-<input type="hidden" id="idMarkRecord" value="0" />
 
-<fieldset>
-	<legend>Calendario de Llamadas</legend>
 
-	<?php
-	//mostrar el Arbol de llamadas
-	?>
-	<table>
-		<tbody>
-		<tr>
-			<td width="10%" height="50%">
-			<div id="display-cal">
-			<?php
-			$xFRM->addToolbar( $xBtn->getBasic("", "getBackRecords()", "atras", "idanterior", false));
-			$xFRM->addToolbar( $xBtn->getBasic("", "getFirstRecords()", "inicio", "idhome", false));
-			$xFRM->addToolbar( $xBtn->getBasic("", "getNextRecords()", "siguiente", "idsiguiente", false));
-			$xFRM->addToolbar($xDate->get("") );
-			echo $xFRM->get();
-			?>
-			</div>
-			<div id="div-options">
-			<fieldset>
-				<legend>Opciones</legend>
-				<table id="tbl-options"  >
-					<tbody>
-						<tr>
-							<th colspan="2">Mostrar Tambi&eacute;n:</th>
-						</tr>
-						<tr>
-							<td class="efectuado">llamadas Efectuadas</td>
-							<th><input type="checkbox" id="idChkEfectuadas" /></th>
-						</tr>
-						<tr>
-							<td class="cancelado">Llamadas canceladas</td>
-							<th><input type="checkbox" id="idChkCanceladas" /></th>
-						</tr>
-						<tr>
-							<td class="vencido">Llamadas vencidas</td>
-							<th><input type="checkbox" id="idChkVencidas" /></th>
-						</tr>
-						<tr>
-							<td colspan="2"><a class="button" onclick="jsaGetCallsToToday()">Obtener Lista</a></td>
-						</tr>
-					</tbody>
-				</table>
-			</fieldset>
-			</div></td>
+$xFRM		= new cHForm("frmcalendario");
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->OHidden("idMarkRecord", 0);
 
-			<td width="90%" rowspan="2" id="tdCalendar">
-			</td>
-		</tr>
+$xDate->setDivClass("tx24");
 
-		<tr>
-			<th width="10%" height="50%" id="idTdMsgs"></th>
+$xFRM->OHidden("idTxtNote", "");
+$xFRM->OHidden("idIDNote", "");
+$xChk->setDivClass("");
+$xDate->setDivClass("");
 
-		</tr>
+$xFRM->addHTML("<idv id='divcalendar'></div>");
+$xFRM->OButton("TR.Obtener Lista", "jsaGetCallsToToday()", $xFRM->ic()->EJECUTAR);
 
-		</tbody>
-	</table>
-</fieldset>
-<input type="hidden" id="idTxtNote" value="" />
-<input type="hidden" id="idIDNode" value="" />
+$xFRM->addToolbar($xChk->get("TR.Incluir Efectuadas", "idChkEfectuadas"));
+$xFRM->addToolbar($xChk->get("TR.Incluir Canceladas", "idChkCanceladas"));
+$xFRM->addToolbar($xChk->get("TR.Incluir Vencidas", "idChkVencidas"));
+$xFRM->addToolbar($xDate->get("TR.Fecha"));
+$xFRM->OButton("TR.Anterior", "getBackRecords()", $xFRM->ic()->ATRAS, "idanterior");
+$xFRM->OButton("TR.Inicio", "getFirstRecords()", $xFRM->ic()->HOME, "idinicio");
+$xFRM->OButton("TR.Siguiente", "getNextRecords()", $xFRM->ic()->ADELANTE, "idsiguiente");
 
-</form>
-<?php 
+echo $xFRM->get();
+ 
 $jxc ->drawJavaScript(false, true);
 ?>
 </body>
-
 <script  >
 var MINUTE 				= 60 * 1000;
 var HOUR 				= 60 * MINUTE;
@@ -173,7 +119,8 @@ function jsSetAction(strID){
 
 	switch(vActionType){
 		case "set-cumplido":
-			jsrsExecute(jsrsSeguimiento, jsMsgBox, 'Common_84fb77b61619740746901b9329ff2c9d', strID + vLITERAL_SEPARATOR + "efectuado");
+			$("#idTxtNote").val("efectuado"); $("#idIDNote").val(strID); jsaSetEstadoLlamada();
+			//jsrsExecute(jsrsSeguimiento, jsMsgBox, 'Common_84fb77b61619740746901b9329ff2c9d', strID + vLITERAL_SEPARATOR + "efectuado");
 			var mMsg	= confirm("Desea Agregar el Resultado de la Llamada");
 			if ( mMsg == false ){
 				document.getElementById("tr-" + strID).innerHTML = "";
@@ -184,7 +131,7 @@ function jsSetAction(strID){
 
 		break;
 		case "set-cancelado":
-			jsrsExecute(jsrsSeguimiento, jsMsgBox, 'Common_84fb77b61619740746901b9329ff2c9d', strID + vLITERAL_SEPARATOR + "cancelado");
+			$("#idTxtNote").val("efectuado"); $("#idIDNote").val(strID); jsaSetEstadoLlamada();
 		break;
 		//Agregar Llamada
 		case "add-llamada":
@@ -200,7 +147,7 @@ function jsSetAction(strID){
 			var mSocio		= document.getElementById("socio-" + strID).value;
 			var mCredito	= document.getElementById("credito-" + strID).value;
 
-			var xWin = "frm_agregar_compromisos.php?p=" + mSocio + "|" + mCredito;
+			var xWin = "frm_agregar_compromisos.php?persona=" + mSocio + "&credito=" + mCredito;
 			xG.w({url: xWin, tiny : true});
 		break;
 		case "add-memo":
@@ -237,29 +184,29 @@ function jsSetAction(strID){
 		case "info-llamadas":
 			var mSocio		= document.getElementById("socio-" + strID).value;
 			var mCredito	= document.getElementById("credito-" + strID).value;
-			var mURI 		= "../rptseguimiento/llamadas_individuales.rpt.php?o=" + mSocio + "|" + mCredito;
+			var mURI 		= "../rptseguimiento/llamadas_individuales.rpt.php?persona=" + mSocio + "&credito=" + mCredito;
 			xG.w({url: mURI, tiny : true});
 		break;
 		case "info-notificaciones":
 			var mSocio		= document.getElementById("socio-" + strID).value;
 			var mCredito	= document.getElementById("credito-" + strID).value;
-			var mURI 		= "../rptseguimiento/notificaciones_individuales.rpt.php?o=" + mSocio + "|" + mCredito;
+			var mURI 		= "../rptseguimiento/notificaciones_individuales.rpt.php?persona=" + mSocio + "&credito=" + mCredito;
 			xG.w({url: mURI, tiny : true});
 		break;
 		case "info-compromisos":
 			var mSocio		= document.getElementById("socio-" + strID).value;
 			var mCredito	= document.getElementById("credito-" + strID).value;
-			var mURI 		= "../rptseguimiento/rptcompromisos.php?o=" + mSocio + "|" + mCredito;
+			var mURI 		= "../rptseguimiento/rptcompromisos.php?persona=" + mSocio + "&credito=" + mCredito;
 			xG.w({url: mURI, tiny : true});
 		break;
 		case "info-moral":
 			var mSocio		= document.getElementById("socio-" + strID).value;
-			var mURI 		= "../rptseguimiento/historial_individual.rpt.php?o=" + mSocio;
+			var mURI 		= "../rptseguimiento/historial_individual.rpt.php?perona=" + mSocio;
 			xG.w({url: mURI, tiny : true});
 		break;
 		case "info-creditos":
 			var mCredito	= document.getElementById("credito-" + strID).value;
-			var mURI 		= "../rpt_edos_cuenta/rptestadocuentacredito.php?pb=" + mCredito;
+			var mURI 		= "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + mCredito;
 			xG.w({url: mURI, tiny : true});
 		break;
 		case "set-none":
@@ -273,7 +220,7 @@ function jsSetAction(strID){
 			jsMsgBox(">>Accion no Implementada!!");
 		break;
 	}
-	document.getElementById("ids-" + strID).value = "set-none";
+	//$("#ids-" + strID).val("set-none");
 
 }
 function saveNotes(strID){

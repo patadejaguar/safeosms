@@ -36,7 +36,7 @@ function Common_97de3870795ecc1247287ab941d9719b($params){
  */
 function Common_695bad33e1f2af343f99c6a4ceb9d045($params){
 	$nombre	= MSG_NO_PARAM_VALID;
-	$xT	= new cTipos();
+	$xT		= new cTipos();
 	$socio	= $xT->cInt($params);
 	$xSoc	= new cSocio($socio);
 	if( $xSoc->existe($socio) == true){
@@ -46,19 +46,14 @@ function Common_695bad33e1f2af343f99c6a4ceb9d045($params){
 }
 
 function Common_aa694e8dd43c7c608757fae91f4d75fe($params){
-	/*$xT	= new cTipos();
-	$vals	= explode(STD_LITERAL_DIVISOR, $params, STD_MAX_ARRAY_JS);
-	$socio	= $xT->cInt($vals[0]);*/
 	//vencimiento 2o parametro
-	$socio = 0;
-	settype($socio, "integer");
-	$socio	= trim($params);
+	$socio			= setNoMenorQueCero($params);
 	$xFormulaDef	= new cFormula("fondo_defuncion");
 	
 }
 function Common_52d87bf9711abf3a850de1dc12a14895( $strOrden ){
 	$v 			= explode(STD_LITERAL_DIVISOR, $strOrden, 2);
-	$socio		= $v[0];
+	$socio		= setNoMenorQueCero($v[0]);
 	$xCl		= new cCajaLocal(0);
 	$xCl->setAdmitirSocio( $socio );
 }

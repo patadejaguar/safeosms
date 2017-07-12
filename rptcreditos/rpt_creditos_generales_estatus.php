@@ -30,6 +30,7 @@ $input 			= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
 $es_por_estatus 	= "";
 $es_por_frecuencia 	= "";
 $es_por_convenio 	= "";
+$BySaldo			= "";
 
 $ByEmpresa		= ( $empresa == SYS_TODAS ) ? "" : " AND socios.iddependencia = $empresa ";
 

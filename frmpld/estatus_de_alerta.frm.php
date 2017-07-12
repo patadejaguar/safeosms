@@ -15,30 +15,30 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Actualizar estado de riesgo", HP_FORM);
+$xHP		= new cHPage("TR.Dictamen de ALERTA_AML", HP_FORM);
 $xF			= new cFecha();
 $xlistas	= new cSQLListas();
-
 $jxc 		= new TinyAjax();
 
-function jsaConfirmaRiesgo($id, $observaciones, $reporte24){
+function jsaConfirmaRiesgo($id, $observaciones, $reporte24, $fecha){
 	$xAML		= new cAMLAlertas($id);
 	$inmediato	= false;
 	if(strtolower($reporte24) == "on"){ $inmediato = true; }
-	$xAML->setConfirmaAlerta($observaciones, false, $inmediato);
+	$xAML->setConfirmaAlerta($observaciones, $fecha, $inmediato);
 	return $xAML->getMessages(OUT_HTML);
 }
 
-function jsaDescartaRiesgo($id, $observaciones){
+function jsaDescartaRiesgo($id, $observaciones, $fecha, $recursivo){
 	$xAML	= new cAMLAlertas($id);
-	$xAML->setDescartaAlerta($observaciones);
+	
+	$xAML->setDescartaAlerta($observaciones, $fecha, $recursivo);
 	return $xAML->getMessages(OUT_HTML);
 }
 
-$jxc ->exportFunction('jsaConfirmaRiesgo', array('idriesgo', 'idnotas', 'ides24'), "#idmsgs");
-$jxc ->exportFunction('jsaDescartaRiesgo', array('idriesgo', 'idnotas'), "#idmsgs");
+$jxc->exportFunction('jsaConfirmaRiesgo', array('idriesgo', 'idnotas', 'ides24', 'idfechaactual'), "#idmsgs");
+$jxc->exportFunction('jsaDescartaRiesgo', array('idriesgo', 'idnotas', 'idfechaactual', 'iddescartar'), "#idmsgs");
 
-$jxc ->process();
+$jxc->process();
 
 $codigo		= parametro("codigo", 0, MQL_INT);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -48,27 +48,52 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 $xFRM		= new cHForm("frmeditariesgo", "./");
+$xFRM->setNoAcordion();
 $msg		= "";
+$xFRM->setTitle($xHP->getTitle());
 
 $xAlert		= new cAMLAlertas($codigo);
 $xAlert->init();
-$xFRM->addAviso( $xAlert->getDescripcion() );
+$xFRM->addSeccion("iddiv", $xHP->getTitle());
+if(PERMITIR_EXTEMPORANEO == true){
+	$xFRM->addFecha();
+} else {
+	$xFRM->OHidden("idfechaactual", $xF->getFechaISO());
+}
+
+$xFRM->OCheck("TR.Guardar como REPORTE_X_HORAS", "ides24");
+$xFRM->OCheck("TR.Descartar Avisos Anterior", "iddescartar");
 
 $xFRM->OTextArea("idnotas", "", "TR.Acciones_tomadas / observaciones");
-$xFRM->OCheck("TR.Guardar como REPORTE_X_HORAS", "ides24");
-$xFRM->addHTML("<input type='hidden' id='idriesgo' value='$codigo'");
-$xFRM->OButton("TR.Confirmar", "jsConfirmaRiesgo()", $xFRM->ic()->OK, "idconfirma" );
-$xFRM->OButton("TR.Descartar", "jsDescartaRiesgo()", $xFRM->ic()->NO, "iddescarta" );
+$xFRM->setValidacion("idnotas", "validacion.novacio", "", true);
 
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddivmsg", "TR.REPORTE DEL SISTEMA");
+$xFRM->addAviso( $xAlert->getDescripcion() );
+$xFRM->OHidden("idriesgo", $codigo);
+$xFRM->endSeccion();
+$xFRM->OButton("TR.Confirmar Riesgo", "jsConfirmaRiesgo()", $xFRM->ic()->OK, "idconfirma", "yellow" );
+$xFRM->OButton("TR.Descartar Riesgo", "jsDescartaRiesgo()", $xFRM->ic()->NO, "iddescarta", "green" );
+
+switch ($xAlert->getTipoDeDocto()){
+	case iDE_RECIBO:
+		$recibo		= $xAlert->getDocumento();
+		$xFRM->OButton("TR.Reporte del Recibo", "var xRec = new RecGen();xRec.reporte($recibo);", $xFRM->ic()->REPORTE, "rpt-$recibo");		
+		break;
+	case iDE_CREDITO:
+		break;
+}
 
 echo $xFRM->get();
 ?>
 <script>
 var xG		= new Gen();
-function jsDescartaRiesgo(){ xG.confirmar({ msg : "Desea Descartar la Alerta como Riesgo?", callback : "jsDescartaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia"}); }
-function jsConfirmaRiesgo(){ xG.confirmar({ msg : "Desea Confirmar la Alerta como Riesgo?", callback : "jsConfirmaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia" }); }
+function jsDescartaRiesgo(){ xG.confirmar({ msg : "Desea Descartar la Alerta_AML como Riesgo?", callback : "jsDescartaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia"}); }
+function jsConfirmaRiesgo(){ xG.confirmar({ msg : "Desea Confirmar la Alerta_AML como Riesgo?", callback : "jsConfirmaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia" }); }
 function jsRazonNoVacia(){
 	var valid	= new ValidGen();
+	xG.cleanText("#idnotas");
+	//$("#idnotas").val()
 	return valid.NoVacio( $("#idnotas").val() );
 }
 function jsDescartaRiesgo2(){
@@ -76,6 +101,7 @@ function jsDescartaRiesgo2(){
 	setTimeout("jsSalir()", 2000);
 }
 function jsConfirmaRiesgo2(){
+	
 	jsaConfirmaRiesgo();
 	setTimeout("jsSalir()", 2000);
 }

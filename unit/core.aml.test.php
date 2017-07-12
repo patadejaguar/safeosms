@@ -30,7 +30,32 @@ $persona_de_pruebas		= parametro("persona",99999, MQL_INT);
 $credito_de_pruebas		= 29000201;
 
 $xAML	= new cAMLPersonas($persona_de_pruebas);
-$x2AML	= new cAMLPersonas_PerfilTransaccional($persona_de_pruebas);
+$x2AML	= new cAMLPersonasPerfilTransaccional($persona_de_pruebas);
+$xCon	= new cAMLListasProveedores();
+
+$xCon->getConsultaGWS("enrique", "Pena", "Nieto");
+
+$js = json_decode('{
+  "spotlight": {
+    "folio": "64564",
+    "fecha_busqueda": "19 de Enero del 2016, 12:30 pm",
+    "busqueda_peps": {
+      "encontrados": {
+        "pep": {
+          "nombre": "Enrique",
+          "apellido_paterno": "Peña",
+          "apellido_materno": "Nieto",
+          "clasificacion": "PEP",
+          "cargo": "Presidente de los Estados Unidos Mexicanos",
+          "ciudad": "Cd. de México",
+          "institucion": "Presidencia de la República.",
+          "observaciones": "Lugar y fecha de nacimiento: 20 de julio de 1966 en Atlacomulco, Estado de
+México."
+        }
+      }
+    }
+  }
+}', true);
 
 if($runTest == true){
 	

@@ -1,4 +1,6 @@
 <?php
+
+
 /**
  * Modulo de Carga masiva de cobros
  * @author Balam Gonzalez Luis Humberto
@@ -39,16 +41,13 @@ $action				= $_GET["o"];
 function jsaNewRecibo($observaciones, $cheque){
 	$fecha 	= fechasys();
 	setFoliosAlMaximo();
-	
-	$xRec	= setNuevorecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, $fecha, 1, 200, $observaciones, $cheque, "foraneo",
-							DEFAULT_RECIBO_FISCAL, DEFAULT_GRUPO );
-
-		if ( isset($_SESSION["recibo_en_proceso"]) ){
- 			unset($_SESSION["recibo_en_proceso"]);
-			unset($_SESSION["total_recibo_en_proceso"]);
-		}
- 		$_SESSION["recibo_en_proceso"] 			= $xRec;
-		$_SESSION["total_recibo_en_proceso"]	= 0;
+	$xRec	= setNuevorecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, $fecha, 1, 200, $observaciones, $cheque, "foraneo", DEFAULT_RECIBO_FISCAL, DEFAULT_GRUPO );
+	if ( isset($_SESSION["recibo_en_proceso"]) ){
+ 		unset($_SESSION["recibo_en_proceso"]);
+		unset($_SESSION["total_recibo_en_proceso"]);
+	}
+ 	$_SESSION["recibo_en_proceso"] 			= $xRec;
+	$_SESSION["total_recibo_en_proceso"]	= 0;
 }
 function jsaGetReciboEnSesion($ctrl){
 	if ( isset($_SESSION["recibo_en_proceso"]) ){

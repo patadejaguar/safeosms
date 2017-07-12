@@ -1,0 +1,149 @@
+﻿<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:icc="http://www.cnbv.gob.mx/recepcion/icc"
+            targetNamespace="http://www.cnbv.gob.mx/recepcion/icc"
+            elementFormDefault="qualified">
+
+    <xsd:element name="informe" type="icc:informe_type"/>
+    <xsd:complexType name="informe_type">
+        <xsd:sequence>
+            <xsd:element name="clave_organo_regulador" type="icc:clave_organo_regulador_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="clave_sujeto_obligado" type="icc:clave_sujeto_obligado_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="periodo_informado" type="icc:periodo_informado_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="datos_capacitacion" type="icc:datos_capacitacion_type" minOccurs="0"
+                         maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="clave_organo_regulador_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{2}-[0-9]{3}"/>
+            <xsd:minLength value="6"/>
+            <xsd:maxLength value="6"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="clave_sujeto_obligado_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{2}-[0-9]{3,6}"/>
+            <xsd:minLength value="6"/>
+            <xsd:maxLength value="9"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="periodo_informado_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{4}"/>
+            <xsd:minLength value="4"/>
+            <xsd:maxLength value="4"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="datos_capacitacion_type">
+        <xsd:sequence>
+            <xsd:element name="programa_anual" type="icc:programa_anual_type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="capacitacion_ano_anterior" type="icc:capacitacion_ano_anterior_type" minOccurs="1"
+                         maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="programa_anual_type">
+        <xsd:sequence>
+            <xsd:element name="cursos_programados" type="icc:cursos_programados_type" minOccurs="1"
+                         maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="capacitacion_ano_anterior_type">
+        <xsd:sequence>
+            <xsd:element name="cursos_efectuados" type="icc:cursos_efectuados_type" minOccurs="1"
+                         maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="cursos_programados_type">
+        <xsd:sequence>
+            <xsd:element name="tipo_capacitacion" type="icc:tipo_capacitacion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="nombre_capacitacion" type="icc:nombre_capacitacion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="fecha_inicio_imparticion" type="icc:fecha_inicio_imparticion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="fecha_fin_imparticion" type="icc:fecha_inicio_imparticion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="areas_capacitacion" type="icc:areas_capacitacion_type" minOccurs="0"
+                         maxOccurs="1"/>
+            <xsd:element name="total_personas" type="icc:total_personas_type" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="cursos_efectuados_type">
+        <xsd:sequence>
+            <xsd:element name="tipo_capacitacion" type="icc:tipo_capacitacion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="nombre_capacitacion" type="icc:nombre_capacitacion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="fecha_inicio_imparticion" type="icc:fecha_inicio_imparticion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="fecha_fin_imparticion" type="icc:fecha_inicio_imparticion_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="areas_capacitadas" type="icc:areas_capacitacion_type" minOccurs="0"
+                         maxOccurs="1"/>
+            <xsd:element name="total_personas_capacitadas" type="icc:total_personas_type" minOccurs="1"
+                         maxOccurs="1"/>
+            <xsd:element name="documento_emitido" type="icc:documento_emitido_type" minOccurs="0"
+                         maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="tipo_capacitacion_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{2}"/>
+            <xsd:minLength value="2"/>
+            <xsd:maxLength value="2"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="nombre_capacitacion_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[A-ZÑ0-9/ \.,:-_#@&apos;&amp;]{1,300}"/>
+            <xsd:minLength value="1"/>
+            <xsd:maxLength value="300"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="fecha_inicio_imparticion_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{4}-(0[1-9]|1[0-2])"/>
+            <xsd:minLength value="7"/>
+            <xsd:maxLength value="7"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="areas_capacitacion_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[A-ZÑ0-9/ \.,:-_#@&apos;&amp;]{1,500}"/>
+            <xsd:minLength value="1"/>
+            <xsd:maxLength value="500"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="total_personas_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[0-9]{1,6}"/>
+            <xsd:minLength value="1"/>
+            <xsd:maxLength value="6"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="documento_emitido_type">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[A-ZÑ0-9/ \.,:-_#@&apos;&amp;]{1,300}"/>
+            <xsd:minLength value="1"/>
+            <xsd:maxLength value="300"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+</xsd:schema>

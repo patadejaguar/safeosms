@@ -35,6 +35,7 @@ function cnnGeneral(){
 			//saveError(2, $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], " No se puede Conectar :" . mysql_error($CNX) . "|Numero: " . mysql_errno($CNX) . "|connect: \n " . $_SESSION["current_file"]);
 			syslog(E_ERROR, " No se puede Conectar :" . mysql_error($CNX) . "|Numero: " . mysql_errno($CNX) . "|connect: \n " . $_SESSION["current_file"]);
 		} else {
+			mysql_set_charset('utf8',$CNX);
 			if ( mysql_select_db(MY_DB_IN, $CNX) == false ) {
 				//syslog("", "Z>ZZZZZZZZZZZZZZZZZZZ");
 				//saveError(2, $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], " No se puede seleccionar la Base de Datos :" . mysql_error($CNX) . "|Numero: " .mysql_errno($CNX) . "|SELECT DB \n " . $_SESSION["current_file"]);
@@ -69,8 +70,7 @@ $t_sr 		= "socios_relaciones"; $t_sti 		= "socios_tipoingreso";
 	// --------------------------------------- VALOR SQL DEL MVTO.-------------------------------------------------------
 			// VALORES FIJOS
 $smf	= "idusuario, codigo_eacp, socio_afectado, docto_afectado, recibo_afectado, fecha_operacion,
-			periodo_contable, periodo_cobranza, periodo_seguimiento,
-			periodo_anual, periodo_mensual, periodo_semanal,
+			periodo_contable, periodo_cobranza, periodo_seguimiento, periodo_anual, periodo_mensual, periodo_semanal,
 			afectacion_cobranza, afectacion_contable, afectacion_estadistica,
 			afectacion_real, valor_afectacion,
 			idoperaciones_mvtos, tipo_operacion, estatus_mvto, periodo_socio,
@@ -97,23 +97,17 @@ function mifila($sql, $lafila) {
 
 	return $mival;
 }
+/**
+ * @deprecated @since 2015.01.01
+ */
 function getFila($sql, $fila) {
-	$mival = 0;
-		$reslf = mysql_query($sql, cnnGeneral());
-			if(!$reslf){
-				saveError(2,$_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "Func getFila: Depurar :" . mysql_error() . "|||Numero: " .mysql_errno() . "|||Instruccion SQL: \n ". $sql . " EN:" . $_SESSION["current_file"]);
-			}
-	$rw = mysql_fetch_array($reslf);
-		$mival = $rw[$fila];
-
-		if($mival == "" or (!isset($mival))  ) {
-			$mival = 0;
-		}
-
-	return $mival;
-	@mysql_free_result($reslf);
+	$xQL	= new MQL(); $DD = $xQL->getDataRow($sql);
+	return (isset($DD[$fila])) ? $DD[$fila] : false;
 }
 //.- -------------------- funcion para enviar sentencias SQL general. ---------------------------
+/**
+ * @deprecated @since 2015.01.01
+ */
 function db_query($sqlquery) {
 	$cnx =	cnnGeneral();
 	$resultq = mysql_unbuffered_query($sqlquery, $cnx);
@@ -127,17 +121,31 @@ function db_query($sqlquery) {
 	unset($resultq);
 }
 /*----------------------  Funciones de datos generales -------------------------- */
-function namesoc($idsocio) { return getNombreSocio($idsocio); }
-function getNombreSocio($codigo){ $xSoc = new cSocio($codigo); $xSoc->init(); return $xSoc->getNombreCompleto(); }
-function sociodom($idsocio){ $xSoc = new cSocio($idsocio); return $xSoc->getDomicilio(); }
-function domicilio($socio = 0){ $xSoc = new cSocio($socio); return $xSoc->getDomicilio(); }
-function getSocioDomicilio($socio = 0){	$xSoc = new cSocio($socio); return $xSoc->getDomicilio(); }
-function folios($idfol){ $myfol = getFolio($idfol); return $myfol; }
 /**
- * funcion que grava los ultimos folios
- * @deprecated 1.5 - 22/03/2009
+ * @deprecated @since 2015.01.01
  */
-function wfolios($idw, $sval){}
+function namesoc($idsocio) { return getNombreSocio($idsocio); }
+/**
+ * @deprecated @since 2015.01.01
+ */
+function getNombreSocio($codigo){ $xSoc = new cSocio($codigo); $xSoc->init(); return $xSoc->getNombreCompleto(); }
+/**
+ * @deprecated @since 2015.01.01
+ */
+function sociodom($idsocio){ $xSoc = new cSocio($idsocio); return $xSoc->getDomicilio(); }
+/**
+ * @deprecated @since 2015.01.01
+ */
+function domicilio($socio = 0){ $xSoc = new cSocio($socio); return $xSoc->getDomicilio(); }
+/**
+ * @deprecated @since 2015.01.01
+ */
+function getSocioDomicilio($socio = 0){	$xSoc = new cSocio($socio); return $xSoc->getDomicilio(); }
+/**
+ * @deprecated @since 2015.01.01
+ */
+function folios($idfol){ $myfol = getFolio($idfol); return $myfol; }
+
 /* ---------------------- solo para tablas de tipos ---------------------------  */
 
 //.- Funcion que devuelve un valor segun campo dado de las tablas de tipos
@@ -285,33 +293,20 @@ function updateneutral($iddocto, $idrecibo, $mvto, $periodo=0) {
 	my_query($uNSql);
 	//return $uNSql;
 }
-// funcion que devuelve el nombre del usuario o su puesto segun indice dado
+/**
+ * funcion que devuelve el nombre del usuario o su puesto segun indice dado
+ * @deprecated @since 2016.08.03
+ */
 function elusuario($eluser, $quequiere = false) {
 	if(!isset($eluser) OR $eluser == false){
 		$eluser		= getUsuarioActual();
 	}
-	/*$xUsr			= new cSystemUser($eluser);
-	$xUsr->init();*/
-	
-	settype($eluser, "string");
-	$sqlusr 		= "SELECT * FROM usuarios WHERE idusuarios=$eluser";
-	$rsusr 			= mysql_query($sqlusr, cnnGeneral());
-	$loquepedia 	="";
-	if(!$rsusr){
-		saveError(2,getUsuarioActual(), "Depurar :" . mysql_error() . "|Numero: " .mysql_errno() . "|Instruccion SQL: \n ". $sqlusr . "|EN:" . $_SESSION["current_file"]);
-	} else {
-		while ($rwu = mysql_fetch_array($rsusr)) {
-			if($quequiere == false) {
-				$loquepedia= "$rwu[4] $rwu[5] $rwu[3]";
-			} elseif ($quequiere == 3) {
-				$loquepedia= "NO AUTORIZADO";
-			} else {
-				$loquepedia= "$rwu[$quequiere]";
-			}
-		}
+	$xUsr	= new cSystemUser($eluser);
+	$nombre	= "";
+	if($xUsr->init() == true){
+		$nombre	= $xUsr->getNombreCompleto();
 	}
-	return $loquepedia;
-	@mysql_free_result($rsusr);
+	return $nombre;
 }
 function getSAFEUserInfoByName($user, $info = false){
 	$val	= false;
@@ -331,6 +326,9 @@ function getSAFEUserInfoByName($user, $info = false){
  */
 function latabla($db_tabla, $afiltrar="", $filtro="", $camposl="", $titlesl = "") {
 }
+/**
+ * @deprecated @since 2015.01.01
+ */
 function volcartabla($tabla, $index=1, $where="") {
 	$sqltr = "SELECT * FROM $tabla";
 	if ($where != "") {
@@ -439,15 +437,16 @@ function sqltabla($sqlret, $camposl="", $titlesl = "", $addon = 0, $mykey = 0, $
 }
 // Devuelve una Tasa SEGUN cantidad determinada
 function obtentasa($monto, $tipocta=10, $dias = 7, $subproducto = '0') {
+	
 	$tasa	= 0;
 	if($tipocta == CAPTACION_TIPO_VISTA){
+		$BySub		= (CAPTACION_USE_TASA_DETALLADA == true) ? " AND subproducto=$subproducto " : "";
 		$sqltasa = "SELECT tasa_efectiva
 		FROM captacion_tasas
 		WHERE modalidad_cuenta=$tipocta
 		AND $monto>=monto_mayor_a AND $monto<monto_menor_a
-		AND subproducto=$subproducto
+		$BySub
 		LIMIT 0,1";
-		//setLog($sqltasa);
 	} else {
 		$sqltasa = "SELECT tasa_efectiva
 		FROM captacion_tasas
@@ -456,6 +455,7 @@ function obtentasa($monto, $tipocta=10, $dias = 7, $subproducto = '0') {
 			AND $dias>=dias_mayor_a AND $dias< dias_menor_a
 		LIMIT 0,1";
 	}
+	
 	$tasa 	= mifila($sqltasa, "tasa_efectiva");
 	$tasa	= setNoMenorQueCero($tasa);
 	return $tasa;
@@ -927,7 +927,9 @@ function my_query($sqlMQ = "", $debug_warns = false) {
 }
 function obten_filas($sql = "") {
 	$mFilas		= array();
-		if ($sql != "" AND ( strlen($sql) > 6 ) ) {
+	$xQL		= new MQL();
+	$mFilas		= $xQL->getDataRow($sql);
+		/*if ($sql != "" AND ( strlen($sql) > 6 ) ) {
 			$rs 	= getRecordset($sql, cnnGeneral());
 			if($rs != false) {
 				$mFilas = mysql_fetch_array($rs);
@@ -937,7 +939,8 @@ function obten_filas($sql = "") {
 				saveError(2, getUsuarioActual(), "Error :$errNotice|Numero: $errNumber|SQL: ". $sql. "|" . $_SESSION["current_file"]);
 			}
 			@mysql_free_result($rs);
-		}
+		}*/
+	$xQL	= null;
 	return $mFilas;
 }
 function contrato($id, $peticion){
@@ -1039,8 +1042,9 @@ function getDatosDomicilio($socio=1, $tipo = 1){
 
 function getFMoney($mvalue = 0){
 	settype($mvalue, "float");
-	$mvalue = round($mvalue, 2);
-	$cval = number_format($mvalue, 2, '.', ',');
+	$mvalue 	= round($mvalue, 2);
+	$cval 		= number_format($mvalue, 2, '.', ',');
+	//$cval		= $mvalue;
 	return $cval;
 }
 class cMFilas{
@@ -1078,22 +1082,38 @@ class cMFilas{
 	}
 }
 class cFormula{
-	private $mEstruct = "";
-	private $mInfoF = array();
-	function __construct($aplicado_a){
-		$sql = "SELECT * FROM general_formulas WHERE aplicado_a='$aplicado_a' LIMIT 0,1";
-
-		$rs = mysql_query($sql, cnnGeneral());
-			if( !$rs ){
-				saveError(2,$_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "Depurar :" . mysql_error() . "|Numero: " .mysql_errno() . "|Instruccion SQL: \n ". $sql . "|EN:" . $_SESSION["current_file"]);
-			}
-			$this->mInfoF = mysql_fetch_array($rs);
-			$this->mEstruct = $this->mInfoF["estructura_de_la_formula"];
-			@mysql_free_result($rs);
+	private $mEstruct 			= "";
+	private $mInfoF 			= array();
+	private $mClave				= "";
+	private $mInit				= false;
+	public $SQL_MORA_X_LETRA	= "sql_mora_x_letra";
+	public $SQL_PENA_X_LETRA	= "sql_pena_x_letra"; //Sin uso
+	public $PHP_PENA_X_LETRA	= "php_pena_x_letra";
+	public $PHP_MORA_X_LETRA	= "php_mora_x_letra";
+	public $PHP_MORA_TOLE_PID	= "php_mora_tolera_pid";
+	public $PHP_INT_FLAT_MOD	= "php_interes_pago_flat_mod";
+	function __construct($aplicado_a = ""){
+		$this->mClave	= $aplicado_a;
+		if($this->mClave != ""){ $this->init($this->mClave); }
 	}
-	function setEval(){
-		eval($this->mEstruct);
+	function init($clave = ""){
+		$xCache	= new cCache();
+		$clave	= ($clave == "") ? $this->mClave : $clave;
+		$D		= $xCache->get("formula-$clave");
+		if($D === null){
+			$xQL	= new MQL();
+			$D		= $xQL->getDataRow("SELECT * FROM general_formulas WHERE aplicado_a='" . $clave . "' LIMIT 0,1");
+			$xCache->set("formula-$clave", $D);
+		}
+		if(isset($D["estructura_de_la_formula"] )){
+			$this->mInfoF	= $D;
+			$this->mEstruct	= $D["estructura_de_la_formula"];
+			$this->mInit	= true;
+			$this->mClave	= $clave;
+		}
+		return $this->mInit;
 	}
+	function setEval(){	eval($this->mEstruct);	}
 	function getFormula(){
 		return $this->mEstruct;
 	}
@@ -1109,14 +1129,16 @@ function getInfoCaptacion($cuenta){
 	$DC = obten_filas($SQL);
 	return $DC;
 }
-
+/**
+ * @deprecated @since 2015.07.01
+ * */
 function getFolio($tipo){
 	//Obtener el Ultimo Folio
 	//Sumar + 1 y Registrarlo
 	$myfol 	= 0;
 	$idfol	= $tipo;
 	$add	= true;
-
+	$xFol	= new cFolios();
 	if ($idfol ==1 OR $idfol == iDE_CREDITO ){
 		//Numero de Credito
 		$campo	= "numerocredito";
@@ -1214,8 +1236,10 @@ class cValorarFormulas{
 		$cuenta_bancaria	= setNoMenorQueCero($cuenta_bancaria);
 		//getCuentaContablePorBanco($cuenta_bancaria)
 		$QL					= new MQL();
+		$xLog				= new cCoreLog();
 		//FIXME: Verificar movimientos de variables no existentes, ejemplo $cheque
 		//Verificar validez y funcionamiento - verificado. dic 2011
+		//2015-06-29.- 
 		if($language !== false){
 			//Obtiene si el documento es de Captacion
 			$esCredito				= strpos($formula, "cartera");		
@@ -1228,8 +1252,13 @@ class cValorarFormulas{
 				$sqliCartera 		= "SELECT * FROM creditos_datos_contables WHERE numero_solicitud=$documento LIMIT 0,1";
 				/*AND numero_socio=$socio*/
 				$cartera 			= obten_filas($sqliCartera);
-				
-				$this->mMessages	.= "$socio\t$documento\tCREDITOS\tLos Datos Contables se cargan\r\n";
+				if(isset($cartera["numero_socio"])){
+					$xLog->add( "OK\t$socio\t$documento\tCREDITOS\tLos Datos Contables se cargan por el documento $documento\r\n", $xLog->DEVELOPER );
+					$cartera["contable_intereses_moratorios"]	= $cartera["moratorio_cobrado"]; 
+					//$cartera["contable_intereses_moratorios"]	= $cartera["moratorio_cobrado"];
+				} else {
+					$xLog->add( "ERROR\t$socio\t$documento\tCREDITOS\tNo existen Datos contable para el documento $documento\r\n", $xLog->DEVELOPER );
+				}
 			}
 			if(isset($esCaptacion) AND ( $esCaptacion !== false) ){
 				/**
@@ -1238,12 +1267,18 @@ class cValorarFormulas{
 				$sqliCaptacion 		= "SELECT * FROM captacion_datos_contables WHERE numero_cuenta=$documento LIMIT 0,1";
 				/*AND numero_socio=$socio*/
 				$captacion 			= obten_filas($sqliCaptacion);
-				$this->mMessages	.= "$socio\t$documento\tCAPTACION\tLos Datos Contables se cargan\r\n";
+				if(isset($captacion["numero_socio"])){
+					$xLog->add( "OK\t$socio\t$documento\tCAPTACION\tSe cargan datos del Documento $documento\r\n", $xLog->DEVELOPER);
+				} else {
+					$xLog->add( "ERROR\t$socio\t$documento\tCAPTACION\tNo existen Datos contable para el documento $documento\r\n", $xLog->DEVELOPER );
+				}				
+				
 			}
-			//setLog($formula);
-			eval($formula);
+			if(eval($formula) === false){
+				$xLog->add("$socio\t$documento\tERROR\tError en la Formula\r\n", $xLog->DEVELOPER);
+			}
 			$this->mReturn 			= $cuenta;
-			$this->mMessages		.= "$socio\t$documento\tEVALUAR\tLa Cuenta se EVALUA y queda en $cuenta\r\n";
+			$xLog->add("$socio\t$documento\tEVALUAR\tLa Cuenta se EVALUA y queda en $cuenta\r\n");
 		} else {
 			$cartera	= array();
 			$captacion	= array();
@@ -1259,7 +1294,7 @@ class cValorarFormulas{
 	 				* Obtiene Informacion para Cartera de credito
 	 				*/
 						$sqliCartera = "SELECT * FROM creditos_datos_contables WHERE numero_solicitud=$documento AND numero_socio=$socio LIMIT 0,1";
-						setLog($sqliCartera);
+						//setLog($sqliCartera);
 						$creditos = obten_filas($sqliCartera);
 						$sustituir["CREDITOS_CARTERA_VIGENTE"]  		= (isset($creditos["contable_cartera_vigente"])) ?  $creditos["contable_cartera_vigente"] : CUENTA_DE_CUADRE;
 						$sustituir["CREDITOS_CARTERA_VENCIDA"]  		= (isset($creditos["contable_cartera_vencida"])) ? $creditos["contable_cartera_vencida"] : CUENTA_DE_CUADRE;
@@ -1296,8 +1331,9 @@ class cValorarFormulas{
 			$formula	= str_replace(" ", "", $formula);
 			$cuenta		= $formula;
 			//Retorna un String para valorar
-			$this->mReturn = 		$cuenta;
+			$this->mReturn = $cuenta;
 		}
+		$this->mMessages	.= $xLog->getMessages();
 		return $this->mReturn;
 	}
 	/**
@@ -1310,13 +1346,6 @@ class cValorarFormulas{
 
 /**
  * Generar una Prepoliza de perfil
- * @param integer 	$recibo		Numero de Recibo
- * @param integer 	$tipo_mvto	Tipo de Operacion
- * @param float 	$monto		Monto de la Operacion
- * @param integer	$socio		Numero de Socio
- * @param integer 	$docto		Numero de documento
- * @param integer 	$operacion	Tipo de Operacion Contable CARGO/ABONO
- * @param integer 	$usuario	Usuario de la Operacion
  * @deprecated @since 2014.09.09
  */
 function setPolizaProforma($recibo, $tipo_mvto, $monto, $socio, $docto, $operacion = 1, $usuario = false){
@@ -1328,7 +1357,8 @@ function setPolizaProforma($recibo, $tipo_mvto, $monto, $socio, $docto, $operaci
 			$sqlI 		= "INSERT INTO contable_polizas_proforma
 								(numero_de_recibo, tipo_de_mvto, monto, socio, documento, contable_operacion, idusuario, sucursal)
 		    					VALUES($recibo, $tipo_mvto, $monto, $socio, $docto, '$operacion', $usuario, '$sucursal')";
-			my_query($sqlI);
+			$xQL		= new MQL();
+			$xQL->setRawQuery($sqlI);
 		}
 	}
 	return (MODO_DEBUG == false) ? "" : "OK\tPROFORMA\t$socio\t$docto\t$recibo\t$tipo_mvto\t$monto\r\n";
@@ -1378,26 +1408,15 @@ function getCuentaXCheque($cheque, $campo = "codigo_contable"){
 	}
 	return $cuenta;
 }
-function setUltimoCheque($banco, $cheque = 0){
-	$documento = 1;
-	if($cheque==0) {
-		//Obtiene el Cheque de un Conteo SQL
-		$sql = "SELECT numero_de_documento
-		FROM bancos_operaciones
-		WHERE cuenta_bancaria = $banco
-		ORDER BY idcontrol ASC, fecha_expedicion ASC
-		LIMIT 0,1";
-		$documento = getFila($sql, "numero_de_documento");
-		$documento = getNumeroPorCadena($documento);
-		$documento = $documento + 1;
-	} else {
-		$documento = getNumeroPorCadena($cheque);
+/**
+ * @deprecated @since 20170101
+ */
+function setUltimoCheque($CuentaBancaria, $cheque = 0){
+	$CuentaBancaria	= setNoMenorQueCero($CuentaBancaria);
+	$xCta			= new cCuentaBancaria($CuentaBancaria);
+	if($xCta->init() == true){
+		$xCta->setUltimoCheque($cheque);
 	}
-
-	$sqlD = "UPDATE bancos_cuentas SET consecutivo_actual = $documento
-	WHERE idbancos_cuentas = $banco";
-	my_query($sqlD);
-
 }
 function getUltimoCheque($banco){
 		$documento = 0;
@@ -1433,74 +1452,15 @@ function setNuevoCheque($cheque, $cuenta, $recibo, $beneficiario,  $monto,
 function setNuevoMvto($socio, $solicitud, $recibo, $fecha_operacion,
 							$monto, $tipo_operacion, $parcialidad, $observaciones,
 							$signo_afectacion = 1){
-			$sucess		= false;
-			// --------------------------------------- VALOR SQL DEL MVTO.-------------------------------------------------------
-				// VALORES FIJOS
-			$smf	= "idusuario, codigo_eacp, socio_afectado, docto_afectado, recibo_afectado, fecha_operacion, ";
-				// PERIODOS
-			$smf	.= "periodo_contable, periodo_cobranza, periodo_seguimiento, ";
-			$smf	.= "periodo_anual, periodo_mensual, periodo_semanal, ";
-				// AFECTACIONES
-			$smf	.= "afectacion_cobranza, afectacion_contable, afectacion_estadistica, ";
-			$smf	.= "afectacion_real, valor_afectacion, ";
-				// FECHAS Y TIPOS
-			$smf	.= "idoperaciones_mvtos, tipo_operacion, estatus_mvto, periodo_socio, ";
-			$smf	.= "fecha_afectacion, fecha_vcto, ";
-				// SALDOS
-			$smf	.= "saldo_anterior, saldo_actual, detalles, sucursal, tasa_asociada, dias_asociados";
-			//
-			$iduser 		= $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"];
-			$eacp 			= EACP_CLAVE;
-											// PERIODOS
-			$percont 		= EACP_PER_CONTABLE;										// Periodo Contable
-			$percbza 		= EACP_PER_COBRANZA;										// Periodo Cobranza.
-			$perseg 		= EACP_PER_SEGUIMIENTO;										// Period de Seguimiento.
-			$permens 		= date("m", strtotime($fecha_operacion) );					// Periodo mes
-			$persem 		= date("W", strtotime($fecha_operacion) );					// Periodo de dias en la semana.
-			$peranual 		= date("Y", strtotime($fecha_operacion) );					// A�o Natural.
-			$persoc 		= $parcialidad;												// periodo del Socio.
-			$estatus_mvto 	= 30;
-
-			//$signo_afectacion = 1;
-			//Obtiene la Afectacion por la afectacion el recibo
-				//$sqlTMvto 	= "SELECT afectacion_en_recibo FROM operaciones_tipos WHERE idoperaciones_tipos=$tipo_operacion LIMIT 0,1";
-				//$dFils		= obten_filas($sqlTMvto);
-				//$signo_afectacion = $dFils["afectacion_en_recibo"];
-				if(!$signo_afectacion){
-					$signo_afectacion = 1;
-				}
-
-			$fecha_vcto = sumardias($fecha_operacion, DIAS_PAGO_VARIOS);
-			$sucursal 	= getSucursal();
-
-			if($monto < 0){
-				//$signo_afectacion = -1;
-				//$monto = $monto  * -1;
-			}
-
-			$afect_cbza		= $monto;
-			$afect_seg		= $monto;
-			$afect_cont		= $monto;
-			$afect_esta		= $monto;
-			$idoperacion 	= folios(2);
-			$smv = "$iduser, '$eacp', $socio, $solicitud, $recibo, '$fecha_operacion',
-					$percont, $percbza, $perseg, $peranual, $permens, $persem,
-					$afect_cbza, $afect_cont, $afect_esta,
-					$monto, $signo_afectacion,
-					$idoperacion, $tipo_operacion, $estatus_mvto, $persoc,
-					'$fecha_operacion', '$fecha_vcto',
-					0, $monto, '$observaciones', '$sucursal', 0, 0
-					";
-			$SQl_comp = "INSERT INTO operaciones_mvtos($smf) VALUES ($smv)";
-			if($monto!=0){
-					$exec = my_query($SQl_comp);
-					if ( $exec["stat"] == false ){
-						$sucess	= false;
-					} else {
-						$sucess	= true;
-					}
-			}
-	return $sucess;
+	$xRec			= new cReciboDeOperacion(false, false, $recibo);
+	$idoperacion	= 0;
+	if($xRec->init() == true){
+		if($monto !== 0){
+			$idoperacion	= $xRec->setNuevoMvto($fecha_operacion, $monto, $tipo_operacion, $parcialidad, $observaciones, $signo_afectacion, false, $socio, $solicitud);
+		}
+	}
+	$xRec	= null;
+	return ($idoperacion >0 ) ? true: false;
 }
 
 function setNuevoRecibo($socio, $solicitud, $fecha_operacion, $parcialidad,
@@ -1594,7 +1554,9 @@ function setSociosAlMaximo(){
 			WHERE cajalocal = socios_cajalocal.idsocios_cajalocal
 			GROUP BY cajalocal)";
 	//@mysql_unbuffered_query($sql, cnnGeneral());
-	my_query($sql);
+	$xQL	= new MQL();
+	//my_query($sql);
+	return $xQL->setRawQuery($sql);
 }
 /**
  * @deprecated 1.9.42x
@@ -1739,7 +1701,8 @@ function setEliminarMvto360($mvto, $socio, $solicitud, $recibo=1){
 				AND socio_afectado=$socio
 				AND tipo_operacion=$mvto";
 	}
-	my_query($SQL_DM);
+	//my_query($SQL_DM);
+	$xQL	= new MQL(); $xQL->setRawQuery($SQL_DM);
 }
 
 function setEliminarMvto($mvto, $socio, $solicitud, $parcialidad, $recibo = 1){
@@ -1767,7 +1730,9 @@ function setEliminarMvto($mvto, $socio, $solicitud, $parcialidad, $recibo = 1){
 				AND periodo_socio=$parcialidad";
 
 	}
-	my_query($SQL_DM);
+	//setLog($SQL_DM);
+	//my_query($SQL_DM);
+	$xQL	= new MQL(); $xQL->setRawQuery($SQL_DM);
 }
 
 //SEGUIMIENTO
@@ -1780,27 +1745,28 @@ function vencer_notificaciones(){
 		SET
 		  `seguimiento_notificaciones`.`estatus_notificacion` = \"vencido\"
 		WHERE
-		  `seguimiento_notificaciones`.`fecha_vencimiento`<=CURDATE()
-		  AND `seguimiento_notificaciones`.`estatus_notificacion` = \"pendiente\"
-		  AND sucursal='$sucursal' ";
-  $x = my_query($sql);
+		  /*`seguimiento_notificaciones`.`fecha_vencimiento`<=CURDATE()
+		  AND*/ `seguimiento_notificaciones`.`estatus_notificacion` = \"pendiente\"
+		  ";
+  /*$x = my_query($sql);
     if ($x["stat"] == false){
       $msg	.= $x[SYS_MSG] . "\n";
     } else {
       $msg	.= $x["info"] . "\n";
-    }
+    }*/
 }
 function vencer_llamadas(){
   $msg		= "=================VENCIMIENTO_DE_LLAMADAS======================\n";
-  $sucursal		= getSucursal();
+  
   $sql = "UPDATE `seguimiento_llamadas` SET `seguimiento_llamadas`.`estatus_llamada`=\"vencido\"
 		WHERE
 		  `seguimiento_llamadas`.`estatus_llamada` = \"pendiente\"
-		  AND DATE_ADD(`seguimiento_llamadas`.`fecha_llamada`, INTERVAL 2  DAY) < CURDATE()
-		  AND sucursal='$sucursal'";
-  $x = my_query($sql);
-    if ($x["stat"] == false){
-      $msg	.= $x[SYS_MSG] . "\n";
+		  AND DATE_ADD(`seguimiento_llamadas`.`fecha_llamada`, INTERVAL 2  DAY) < CURDATE()";
+  $xQL	= new MQL();
+  $x 	= $xQL->setRawQuery($sql);
+  $x	= ($x === false) ? false : true;
+    if ($x == false){
+    	$msg	.= "ERROR\tAl vencer las llamadas\r\n";
     } else {
       $msg	.= date("Y-m-d H:i:s") . "\tVenciendo las Llamadas de Seguimiento Pendientes\r\n";
     }
@@ -1808,26 +1774,28 @@ function vencer_llamadas(){
 }
 function vencer_compromisos(){
   $msg		= "=================VENCIMIENTO_DE_COMPROMISOS======================\n";
-  $sucursal		= getSucursal();
+  
   $sql = "UPDATE `seguimiento_compromisos`
 		  SET
 		  `seguimiento_compromisos`.`estatus_compromiso` =\"no_cumplido\"
 		WHERE
 		  `seguimiento_compromisos`.`estatus_compromiso` = \"pendiente\"
-		  AND DATE_ADD(`seguimiento_compromisos`.`fecha_vencimiento`, INTERVAL 1  DAY) < CURDATE()
-		  AND sucursal='$sucursal'";
-  $x = my_query($sql);
-    if ($x["stat"] == false){
-      $msg	.= $x[SYS_MSG] . "\n";
-    } else {
-      $msg	.= date("Y-m-d H:i:s") . "\tVenciendo los Compromisos de Seguimiento Pendientes\r\n";
-    }
+		  AND DATE_ADD(`seguimiento_compromisos`.`fecha_vencimiento`, INTERVAL 1  DAY) < CURDATE()  ";
+  $xQL	= new MQL();
+  $x 	= $xQL->setRawQuery($sql);
+  $x	= ($x === false) ? false : true;
+  if ($x == false){
+  	$msg	.= "ERROR\tAl vencer Compromisos\r\n";
+  } else {
+    $msg	.= date("Y-m-d H:i:s") . "\tVenciendo los Compromisos de Seguimiento Pendientes\r\n";
+  }
     return $msg;
 }
 
 function clearCacheSessions(){
-  $sql = "DELETE FROM usuarios_web_connected";
-  my_query($sql);
+	$xQL	= new MQL();
+	$sql 	= "DELETE FROM usuarios_web_connected";
+	return $xQL->setRawQuery($sql);
 }
 /**
  * Congela los Saldos a peticion.

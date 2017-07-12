@@ -1,0 +1,250 @@
+.fon-menu {
+ margin-bottom : 30px;
+ position : relative;
+ z-index : 99;
+}
+.nav {
+	position : relative;
+	height : 52px;
+	-webkit-box-shadow:0 2px 3px rgba(0, 0, 0, 0.7);
+       -moz-box-shadow:0 2px 3px rgba(0, 0, 0, 0.7);
+            box-shadow:0 2px 3px rgba(0, 0, 0, 0.7);
+    background-color : #3A454B;
+}
+.nav select {
+	display : none;
+	margin : 2px auto 0;
+	/*background : #3A454B;*/
+	width : 90%;
+	cursor : pointer;
+	outline : none;
+	text-transform : capitalize;
+	padding:0px 10px;
+}
+.nav option {
+	padding: 10px 10px;
+	font-size: 14px;
+}
+.nav option:first-child {
+	display : none;
+}
+.nav ul {
+	height : 52px;
+}
+.nav ul li {
+	float : left;
+	position : relative;
+	width : 14.285%;
+}
+.nav ul li a {
+	line-height : 52px;
+	display : block;
+	font-family: 'Roboto Condensed', sans-serif;
+	font-size : 13px;
+	text-transform : uppercase;
+	text-decoration : none;
+	color : White;
+	letter-spacing : 1px;
+	text-shadow: 0px 1px 1px #243548;
+	font-weight : 400;
+	letter-spacing : 1.5px;
+	font-size : 18px!important;
+	text-transform : none;
+	text-align : center;
+	background-color : #3A454B;
+	-moz-transition:all .4s ease-in;
+    -o-transition:all .4s ease-in;
+    -webkit-transition:all .4s ease-in;
+	transition:all .4s ease-in;
+}
+.nav ul li a:hover {
+	background-color : #6CC437;
+}
+.nav ul li.current a, .nav ul li.currentpath a {
+	background-color : #33BEE5;
+}
+.nav ul li li{
+	float : none;
+	padding-right : 0px;
+	background : none;
+	border-right : 0px solid #247FCB;
+	width : 100%;
+}
+.nav ul li li a {
+	line-height : 18px;
+	background : #3A454B;
+	font-family: 'Roboto Condensed', sans-serif;
+	font-size : 13px!important;
+	border-bottom : 1px solid #45525A;
+	padding : 8px 20px;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+	white-space : nowrap;
+	color : White;
+	text-align : left!important;
+}
+.nav ul li li a:hover {
+	background : #6CC437;
+	color : White;
+}
+.nav ul li ul {
+	min-width : 150px;
+	max-width : 200px;
+	position : absolute;
+	top : 42px;
+	left : 0px;
+	z-index : 997;
+	height : auto;
+	border : 1px solid #45525A;
+	border-top:0;
+	border-bottom:0;
+	-moz-box-shadow: 1px 1px 1px  rgba(0,0,0,0.5);
+    -webkit-box-shadow: 1px 1px 1px  rgba(0,0,0,0.5);
+    box-shadow: 1px 1px 1px  rgba(0,0,0,0.5);
+    filter: progid:DXImageTransform.Microsoft.Shadow(strength = 1, direction = 135, color = '#cccccc');
+    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(strength = 1, Direction = 135, Color = '#cccccc')";
+	visibility : hidden;
+	opacity:0;
+    transition: all .3s;
+    -moz-transition: all .3s;
+    -webkit-transition: all .3s;    
+    -ms-transition: all .3s;
+    -o-transition: all .3s;
+}
+.nav ul li:hover ul {
+	visibility : visible;
+	opacity:1;
+	top:52px;
+}
+.nav ul li:hover ul li ul{ 
+    visibility : hidden;
+}
+.nav ul li:hover ul li ul{
+	left : 89%;
+	top:0px;
+    visibility : hidden;
+	opacity:0;
+}
+.nav ul li ul li:hover ul{
+	left : 99%;
+	top:0px;
+    visibility : visible;
+	opacity:1;
+}
+.nav ul li:hover ul li ul li ul{
+	left : 89%;
+	top:0px;
+    visibility : hidden;
+	opacity:0;
+}
+.nav ul li ul li ul li:hover ul{
+	left : 99%;
+	top:0px;
+    visibility : visible;
+	opacity:1;
+}
+.nav ul li:last-child:hover ul li ul{
+	left : -89%;
+	top:0px;
+}
+.nav ul li:last-child ul li:hover ul{
+	left : -99%;
+	top:0px;
+}
+.nav ul li:last-child:hover ul li ul li ul{
+	left : -89%;
+	top:0px;
+}
+.nav ul li:last-child ul li ul li:hover ul{
+	left : -99%;
+	top:0px;
+}
+.nav ul li.current li a, .nav ul li.currentpath li a {
+	color : White;
+	background-color : #3A454B;
+}
+.nav ul li.current li a:hover, .nav ul li.currentpath li a:hover {
+	color : White;
+	background-color : #6CC437;
+}
+.nav ul li li.current a, .nav ul li li.currentpath a {
+	background : #33BEE5;
+	color : White;
+}
+.nav ul li li.current a:hover, .nav ul li li.currentpath a:hover {
+	background : #6CC437;
+	color : White;
+}
+.nav ul li li.current li a, .nav ul li li.currentpath li a {
+	background : #3A454B;
+	color : White;
+}
+.nav ul li li.current li a:hover, .nav ul li li.currentpath li a:hover {
+	background : #6CC437;
+	color : White;
+}
+.nav ul li li li.current a, .nav ul li li li.currentpath a {
+	background : #33BEE5;
+	color : White;
+}
+.nav ul li li li.current li a, .nav ul li li li.currentpath li a {
+	background : #3A454B;
+	color : White;
+}
+.nav ul li li li li.current a, .nav ul li li li li.currentpath a {
+	background : #33BEE5;
+	color : White;
+}
+.ie7 .nav ul ul {
+	background-color : #22221e;
+}
+.ie7 .shadow {
+	display : block;
+	z-index : -1;
+	margin-right:-10px;
+}
+.ie7 .nav {
+	margin-right:-10px;
+}
+.ie7 .nav ul li li {
+	margin-top : -1px;
+}
+.ie7 .nav ul ul ul{
+	top : -2px;
+}
+.ie7 .nav ul li li a {
+	border : none;
+}
+.ie7 .nav ul li li li.current a, .ie7 .nav ul li li li.currentpath a {
+	margin-top:-1px;
+}
+@media only screen and (min-width: 1170px) {
+
+.nav ul li a {
+	font-size : 14px;
+}
+.nav ul li li a {
+	font-size : 13px;
+}
+}
+
+@media only screen and (max-width: 959px) {
+
+
+}
+
+@media only screen and (max-width: 767px) {
+
+.nav {
+	padding-top : 5px;
+	height : 47px;
+}
+.fon-menu {
+	background-color : #3A454B;
+}
+.nav ul {
+	display : none;
+}
+.nav select {
+	display : block;
+}
+}

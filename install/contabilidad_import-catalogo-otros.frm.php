@@ -18,6 +18,7 @@
 $xHP		= new cHPage("TR.Importar Catalogo", HP_FORM);
 $esqueleto	= "numero=1|nombre=2|naturaleza=3";
 $xT			= new cTipos();
+$xLog		= new cCoreLog();
 //C  101000000000000000             DISPONIBILIDADES                                                                                      100000000000000000             A 0 4 0 20140708 11    1    0 0    0
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -36,7 +37,7 @@ $xChk		= new cHCheckBox();
 $msg		= "";
 if($action == SYS_NINGUNO ){
 	$xFRM->OFile("idarchivo");
-	$xFRM->addHElem( $xChk->get("TR.Afectar Base de Datos", "idaplicar") );
+	$xFRM->addHElem( $xChk->get("TR.Afectar Base_de_Datos", "idaplicar") );
 	$xFRM->OText("idcolcuenta", 1, "TR.Columna Cuenta");
 	$xFRM->OText("idcolnom", 2, "TR.Columna Nombre");
 	$xFRM->OText("idcolnat", 3, "TR.Columna Tipo");
@@ -86,27 +87,26 @@ if($action == SYS_NINGUNO ){
 				$nombre		= str_replace("'", "", $nombre);
 				$nombre		= strtoupper($nombre);
 				$naturaleza	= $xFi->getV($colnat, "");
-
+				
+				$xCta		= new cCuentaContable($cuenta);
+				
 				if( ($sucess == true) AND ($action == MQL_ADD) ){
 					if(setNoMenorQueCero($cuenta) > 0){
 						$xCta		= new cCuentaContable($cuenta);
 						$xCta->add($nombre, $naturaleza, false, false, $nivel, false, false, $superior);
-						$msg		.= $xCta->getMessages(OUT_TXT);
+						$xLog->add($xCta->getMessages(), $xLog->DEVELOPER);
 					}
+				} else {
+					$xLog->add($xCta->getMessages(), $xLog->DEVELOPER);
 				}
 			} else {
-				//$msg		.= "$conteo\t===============\r\n";
+				
 			}
 			$conteo++;
 		}
 
-		$msg		.= $xFi->getMessages(OUT_TXT);
-		if(MODO_DEBUG == true){
-			$xLog		= new cFileLog();
-			$xLog->setWrite($msg);
-			$xLog->setClose();
-			$xFRM->addToolbar( $xLog->getLinkDownload("TR.Archivo del proceso", ""));
-		}
+		$xLog->add( $xFi->getMessages(OUT_TXT));
+		$xFRM->addLog($xLog->getMessages());
 	}
 }
 

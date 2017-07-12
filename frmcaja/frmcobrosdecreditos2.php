@@ -12,28 +12,24 @@
 //<=====	FIN_H
 	$iduser 		= $_SESSION["log_id"];
 //=====================================================================================================
-$xHP				= new cHPage("TR.COBROS DE prestamos.- PASO 02", HP_FORM);
-$xF					= new cFecha();
-$msg				= "";
-$socio 				= (isset($_REQUEST["idsocio"]) ) ? $_REQUEST["idsocio"] : DEFAULT_SOCIO;
-$solicitud 			= (isset($_REQUEST["idsolicitud"]) ) ? $_REQUEST["idsolicitud"] : DEFAULT_CREDITO; //$_REQUEST["idsolicitud"];
-$parcialidad 		= (isset($_REQUEST["idparcialidad"]) ) ? $_REQUEST["idparcialidad"] : 1;
+$xHP		= new cHPage("TR.COBROS DE CREDITOS .- 2", HP_FORM);
+$xF			= new cFecha();
+$html		= "";
+$msg		= "";
 
-$socio 				= (isset($_REQUEST["persona"]) ) ? $_REQUEST["persona"] : $socio;
-$solicitud 			= (isset($_REQUEST["credito"]) ) ? $_REQUEST["credito"] : $solicitud;
-$parcialidad 		= (isset($_REQUEST["periodo"]) ) ? $_REQUEST["periodo"] : $parcialidad;
 
-/*if($socio == DEFAULT_SOCIO AND $solicitud != DEFAULT_CREDITO){
-	
-}*/
-$Fecha				= parametro("idfecha-0", false);
-$Fecha				= ($Fecha == false) ? fechasys() : $xF->getFechaISO($Fecha);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$parcialidad= parametro("idparcialidad", 0, MQL_INT); $parcialidad = parametro("periodo", $parcialidad, MQL_INT); $parcialidad = parametro("parcialidad", $parcialidad, MQL_INT);
+$Fecha		= parametro("idfecha-0", false);
+$Fecha		= parametro("fecha", $Fecha);
+$Fecha		= $xF->getFechaISO($Fecha);
 
 echo $xHP->getHeader( true );
 $jsNoValido			= "<script>	jsRegresarConTemporizador({
 		url: '../index.xul.php?p=../frmcaja/frmcobrosdecreditos.php',
-		msg : 'Credito No Operable ($socio|$solicitud)' });	</script>";
-if($solicitud === DEFAULT_CREDITO){
+		msg : 'Credito No Operable ($persona|$credito)' });	</script>";
+if( setNoMenorQueCero($credito) <= DEFAULT_CREDITO){
 	exit($jsNoValido);
 }
 if(PERMITIR_EXTEMPORANEO == true){
@@ -41,82 +37,86 @@ if(PERMITIR_EXTEMPORANEO == true){
 }
 if(isset($_REQUEST["fecha"])){
 	$_SESSION[FECHA_OPERATIVA]	= $_REQUEST["fecha"];
-	$Fecha							= $_SESSION[FECHA_OPERATIVA];
+	$Fecha						= $_SESSION[FECHA_OPERATIVA];
 }
-$xCred = new cCredito($solicitud);
+$xCred = new cCredito($credito);
 $xCred->init();
-$socio	= $xCred->getClaveDePersona();
-
+$xCred->setRevisarSaldo();
+$persona			= $xCred->getClaveDePersona();
 $FechaInicial		= $xCred->getFechaDeMinistracion();
-if(CREDITO_GENERAR_DEVENGADOS_ONFLY == true){
-	$msg			.= $xCred->setReestructurarIntereses(false, $Fecha, true);
+
+if(CREDITO_GENERAR_DEVENGADOS_ONFLY == true OR $xCred->isAFinalDePlazo() == true){
+	if($xF->getInt($xCred->getFechaUltimoDePago()) <= $xF->getInt($Fecha)){
+		$msg		.= $xCred->setReestructurarIntereses(false, $Fecha, true);
+	}
 }
 
-//$dcreds 			= $xCred->getDatosDeCredito() ;
 $periocidad 		= $xCred->getPeriocidadDePago();
 $xJsBasic			= new jsBasicForm("frmProcesarPago");
 
 $xHP->addHSnip($xJsBasic->setIncludeJQuery() );
 
-
 echo $xHP->setBodyinit();
-
 
 if( $xCred->isPagable() == false ){ 
 	exit( $jsNoValido );
 } else {
-
-$oFrm		= new cHForm("frmProcesarPago", "./", "frmProcesarPago");
-
+//Style
+?><style>.formoid-default{padding-bottom:0;</style><?php
+$xFRM		= new cHForm("frmProcesarPago", "./", "frmProcesarPago");
 //selector de Cobros
-$xHCob		= new cHCobros();
-$xSelP		= new cHSelect();
 $xhBtn		= new cHButton();
-
 $btns		= "";
+
+$xFRM->setNoAcordion();
+$idnumeroplan		= $xCred->getNumeroDePlanDePagos();
+
 
 $defaultPago	= OPERACION_PAGO_COMPLETO;
 switch($periocidad){
 	case CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO:
-		$oFrm->addToolbar( $xhBtn->getBasic("TR.ABONO ORDINARIO", "jsGetPago('ao')", "dinero", "pc2", false) );
-		$oFrm->addToolbar( $xhBtn->getBasic("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1", false) );
+		$xFRM->OButton("TR.ABONOS", "jsGetPago('ao')", "dinero", "pc2");
+		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1");
 		break;
 	default:
-		$oFrm->addToolbar( $xhBtn->getBasic("TR.LETRA COMPLETA", "jsGetPago('plc')", "dinero", "pc2", false) );
-		$oFrm->addToolbar( $xhBtn->getBasic("TR.LETRA VARIABLE", "jsGetPago('pli')", "dinero", "pc3", false ) );
-		$oFrm->addToolbar( $xhBtn->getBasic("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1", false ) );
+		$xFRM->OButton("TR.LETRA COMPLETA", "jsGetPago('plc')", "dinero", "pc2");
+		$xFRM->OButton("TR.LETRA VARIABLE", "jsGetPago('pli')", "dinero", "pc3");
+		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1");
 		$defaultPago	= OPERACION_PAGO_LETRA_COMPLETA;
 		break;
 }
-$oFrm->addToolbar(  $xhBtn->getRegresar("../index.xul?p=frmcaja/frmcobrosdecreditos.php", true) );
-$oFrm->addToolbar(  $xhBtn->getBasic("TR.Recargar", "jsCargarFrame()", "refrescar", "idrefrescar", false ));
 
-if(MODO_DEBUG == true AND ($xCred->getTipoEnSistema() != CREDITO_PRODUCTO_NOMINA )){
-	$xLog	= new cFileLog(false, true);
-	$xLog->setWrite($msg);
-	$xLog->setClose();
-	$oFrm->addToolbar($xLog->getLinkDownload("Log de descargas", ""));
+if( setNoMenorQueCero($idnumeroplan) > 0) {
+	$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagos($idnumeroplan);", $xFRM->ic()->CALENDARIO1);
+	$xFRM->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($credito)", $xFRM->ic()->PREGUNTAR);
 }
+if(MODO_DEBUG == true){
+	$xFRM->addAtras();
+}
+$xFRM->addRefrescar("jsCargarFrame()");
+$xFRM->addCerrar();
+if(MODO_DEBUG == true AND ($xCred->getTipoEnSistema() != SYS_PRODUCTO_NOMINA )){ $xFRM->addLog($msg); }
 
-$xSelP->addEvent("showInCommand()", "onblur");
 $xTxt			= new cHText("idobservaciones");
+$xTxt->addEvent("jsActualizarObservacion(this)", "onchange");
+$xTxt->addEvent("jsActualizarObservacion(this)", "onblur");
 
-$html			= "";
-$oFrm->addFooterBar( "<h3>FECHA DE PAGO : [" . $xF->getFechaDDMM($Fecha) . "] NUMERO DE PARCIALIDAD: [$parcialidad]</h3>" );
-$html			.= $xCred->getFicha(false, "", false, true);
-$xHCob->setEvents("onblur='jsGetPago()'");
-$html			.=  $xHCob->get(false, "", "", false);
-$html			.= $xTxt->get("idobservaciones", "", "Observaciones");
-$html			.= "<iframe id=\"idFPrincipal\" src=\"./../principal.php\" width='100%' height=\"800px\" ></iframe>";
+$xFRM->addHElem( $xCred->getFicha(false, "", false, true) );
+$xFRM->addCobroBasico("onchange='jsGetPago()'");
+$xFRM->addObservaciones();
+$xFRM->setValidacion("idobservaciones", "jsActualizarObservacion");
+$xFRM->addSeccion("iddivpagos", $xFRM->lang("FECHA") . "&target;" . $xF->getFechaDDMM($Fecha) . "&dash;" . $xFRM->lang("PARCIALIDAD") . " &numero; $parcialidad");
+$xFRM->addHElem("<iframe id=\"idFPrincipal\" src=\"./../principal.php\" width='100%' height=\"800px\" ></iframe>");
 
-$oFrm->addHElem( $html );
-echo $oFrm->get();
+$xFRM->addHElem( $html );
+$xFRM->addJsInit("jsAsLoaded();");
+echo $xFRM->get();
 
-echo $xHP->setBodyEnd();
+
 ?>
 <script>
-var iSRC 		= "./frmprocesarpago.php?<?php echo "p=$socio|$solicitud|$parcialidad|$periocidad|" ?>";
-var ixsrc		= "./frmcobrosdecreditos2.php?<?php echo "idsocio=$socio&idsolicitud=$solicitud&idparcialidad=" ?>";
+var iSRC 		= "./frmprocesarpago.php?<?php echo "p=$persona|$credito|$parcialidad|$periocidad|" ?>";
+var ixsrc		= "./frmcobrosdecreditos2.php?<?php echo "idsocio=$persona&idsolicitud=$credito&idparcialidad=" ?>";
 var parcial		= <?php echo $parcialidad; ?>;
 var mTipoPago	= "<?php echo $defaultPago; ?>";
 var oTipoPago	= $("#idtipo_pago");
@@ -124,8 +124,11 @@ var oReciboFis	= $("#id-foliofiscal");
 var xGen		= new Gen();
 var sURI 		= "";
 var iFr 		= document.getElementById("idFPrincipal");
-$(document).ready(function(){ $("#idtipo_pago").focus(); setTimeout("jsCargarFrame()",500); });
-
+function jsAsLoaded(){
+	var mFormaPago		= oTipoPago.val();
+	sURI 				= iSRC + TESORERIA_MONTO_MAXIMO_OPERADO + "|" + mTipoPago+ "|" + mFormaPago + "|" + oReciboFis.val();
+	jsCargarFrame();
+}
 function jsRegresar(){ var g	= new Gen(); g.w({url: "frmcobrosdecreditos.php"}); }
 function jsGetPago(vTipoPago){
 	vTipoPago			= (typeof vTipoPago == "undefined") ? mTipoPago : vTipoPago;
@@ -139,18 +142,36 @@ function jsGetPago(vTipoPago){
 		monto			= TESORERIA_MONTO_MAXIMO_OPERADO;
 	}
 	if( flotante(monto) > 0) {
-		//Comando + Tipo de pago + recibo Fiscal
-		sURI 	= iSRC + monto + "|" + mTipoPago+ "|" + mFormaPago + "|" + oReciboFis.val();
-		tip("#fichadecredito", "Carga Lista!", 2000, IMG_LOADING, function(){ 	jsCargarFrame();	});
+		sURI 			= iSRC + monto + "|" + mTipoPago+ "|" + mFormaPago + "|" + oReciboFis.val();
 	} else {
 		alert("DEBE CAPTURAR UN MONTO MAYOR A CERO\nPARA QUE EL COBRO SE EFECTUE");
-		$("#idtipo_pago").focus();
+		//$("#idtipo_pago").focus();
 	}
+	jsCargarFrame();
 }
-function jsCargarFrame(){ xGen.QFrame({ id : "idFPrincipal", url : sURI }); $("#idobservaciones").focus(); }
+function jsCargarFrame(){
+	xGen.spinInit();
+	xGen.QFrame({ id : "idFPrincipal", url : sURI });
+	$("#idtipo_pago").focus(); 
+}
+function jsActualizarObservacion(){
+	if ($("#idFPrincipal").length > 0){
+		//
+		var ddoc	= document.getElementById("idFPrincipal").contentWindow.document;
+		if(ddoc.getElementById("idobservaciones")){
+			ddoc.getElementById("idobservaciones").value = $("#idobservaciones").val();
+		}
+	} else {
+		jsCargarFrame();
+	}
+	return true;
+}
+function jsEndCarga(){
+	xGen.spinEnd();
+}
 </script>
 <?php
 }
 
-$xHP->end();
+$xHP->fin();
 ?>

@@ -22,6 +22,9 @@ $relacionado= parametro("relacionado", DEFAULT_SOCIO, MQL_INT);
 $tipo		= parametro("tipo", 0, MQL_INT);
 $parentesco	= parametro("parentesco", 0, MQL_INT);
 $depende	= parametro("depende", false, MQL_BOOL);
+
+
+
 $documento	= parametro("documento", false, MQL_INT);
 
 $rs["error"]= false;

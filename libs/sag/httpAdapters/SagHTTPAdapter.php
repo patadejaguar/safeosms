@@ -173,7 +173,7 @@ abstract class SagHTTPAdapter {
       throw new SagException('setRWTimeout() expects $microseconds to be an integer >= 0.');
     }
 
-    //TODO make this better, including checking $microseconds
+    //make this better, including checking $microseconds
     //$seconds can be 0 if $microseconds > 0
     if(
       !is_int($seconds) ||

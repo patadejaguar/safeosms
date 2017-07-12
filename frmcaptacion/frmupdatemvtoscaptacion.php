@@ -1,110 +1,65 @@
 <?php
 /**
- * Editor de Movimientos de captacion [RAW]
- *
  * @author Balam Gonzalez Luis Humberto
- * @version 1.0
- * @package captacion
- * @subpackage forms
- */
+* @version 0.0.01
+* @package
+*/
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
-//=====================================================================================================
-include_once("../core/entidad.datos.php");
-include_once("../core/core.deprecated.inc.php");
-include_once("../core/core.fechas.inc.php");
-include_once("../libs/sql.inc.php");
-include_once("../core/core.config.inc.php");
-include_once("../core/core.captacion.inc.php");
-include_once("../core/core.common.inc.php");
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
 include_once("../core/core.html.inc.php");
-include_once("../core/core.config.inc.php");
-require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.EDITAR OPERACIONES DE CAPTACION", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$tab = new TinyAjaxBehavior();
+//$tab -> add(TabSetValue::getBehavior("idide", $x));
+//return $tab -> getString();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+
+$observaciones= parametro("idobservaciones");
+
+$xHP->init();
+
+$xFRM	= new cHForm("frmeditmvtos", "../frmoperaciones/operaciones.edit.frm.php");
+$xBtn	= new cHButton();
+$xSel	= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+$xSelC	= $xSel->getListaDeTiposDeOperacion("tipo");
+$xSelC->addEspOption(SYS_TODAS);
+$xSelC->setOptionSelect(SYS_TODAS);
+
+
+$xFRM->addCuentaCaptacionBasico();
+
+$xFRM->addHElem($xSelC->get(true) );
+
+$xFRM->addEnviar();
+
+echo $xFRM->get();
+
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Editar Mvtos de Captacion</title>
-</head>
-	<link href="<?php echo CSS_GENERAL_FILE; ?>" rel="stylesheet" type="text/css">
-	<?php
-	jsbasic("frmdelrecibos", "", ".");
-	?>
-<body>
-<fieldset>
-	<legend>Editar Mvtos de Captacion [v1.0.02]</legend>
-<form name="frmdelrecibos" action="frmupdatemvtoscaptacion.php" method="post">
-	<table   border='0'>
-		<tr>
-			<td>Clave de Persona</td>
-			<td><input type='text' name='idsocio' value='' onchange="envsoc();"  class='mny' size='12'></td>
-			<td>Nombre Completo</td>
-			<td><input disabled name='nombresocio' type='text' size="40"></td>
-		</tr>
-		<tr>
-			<td>Numero de cuenta de Inversi&oacute;n</td>
-			<td><input type='text' name='idcuenta' value='' onchange="envcta();" class='mny' size='12' >
-			<?php echo CTRL_GOCUENTAS; ?></td>
-			<td>Descripcion Corta</td><td><input disabled name='nombrecuenta' type='text' value='' size="40"></td>
-		</tr>
-	</table>
-	<input type='button' name='btsend' value='ENVIAR DATOS'onClick='frmSubmit();'>
-</form>
-<?php
-$iddocto = $_POST["idcuenta"];
-	if (!$iddocto) {
-		exit($msg_rec_warn . $fhtm);
-	}
-
-
-		$cCap	= new cCuentaDeCaptacion($iddocto);
-		$cCap->init();
-		echo $cCap->getFicha(true);
-
-		$sqlmvto = "SELECT
-		`operaciones_mvtos`.`idoperaciones_mvtos`   AS `codigo`,
-		`operaciones_mvtos`.`fecha_operacion`       AS `operado`,
-		`operaciones_mvtos`.`fecha_afectacion`      AS `afectado`,
-		`operaciones_mvtos`.`recibo_afectado`       AS `recibo`,
-		`operaciones_mvtos`.`tipo_operacion`        AS `operacion`,
-		`operaciones_tipos`.`descripcion_operacion` AS `descripcion`,
-		`operaciones_mvtos`.`afectacion_real`       AS `monto`,
-		`operaciones_mvtos`.`docto_afectado`
-	FROM
-		`operaciones_mvtos` `operaciones_mvtos`
-			INNER JOIN `operaciones_tipos` `operaciones_tipos`
-			ON `operaciones_mvtos`.`tipo_operacion` = `operaciones_tipos`.
-			`idoperaciones_tipos`
-	WHERE
-		(`operaciones_mvtos`.`docto_afectado` =$iddocto)
-	ORDER BY
-		`operaciones_mvtos`.`fecha_operacion`
-	";
-
-		$cEdit		= new cTabla($sqlmvto);
-		$cEdit->addTool(1);
-		$cEdit->addTool(2);
-		$cEdit->setKeyField("idoperaciones_mvtos");
-		$cEdit->Show("", false);
-
-?>
-</fieldset>
-</body>
-<script   >
-	<?php
-		echo $cEdit->getJSActions();
-	?>
-
-</script>
-</html>

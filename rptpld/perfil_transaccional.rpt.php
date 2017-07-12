@@ -89,16 +89,16 @@ $xRPT->addContent($xSoc->getFicha(true));
 //$xT->setKeyField("creditos_solicitud");
 
 $xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
-
+$xRPT->addContent( "<h3>" . $xHP->lang("PERFIL_TRANSACCIONAL") . "</h3>" );
 $xT		= new cTabla($xL->getListadoDePerfil($persona) );
 $xRPT->addContent( $xT->Show(  ) );
-if( MODO_DEBUG == true ){
-	$periodo_inicial= date("Ym", $xF->getInt($FechaInicial));
-	$periodo_final	= date("Ym", $xF->getInt($FechaFinal));	
-	$xT2	= new cTabla($xL->getAMLAcumuladoDeEgresos($periodo_inicial, $periodo_final, $persona));
+$xRPT->addContent( "<h3>" . $xHP->lang("ACUMULADO") . "</h3>" );
+//if( MODO_DEBUG == true ){
+		
+	$xT2	= new cTabla($xL->getAMLAcumuladoOperacionesRT($persona, $FechaFinal,false, false, $FechaInicial));
 	$xRPT->addContent($xT2->Show());
-}
-$xRPT->addContent( "<h3>" . $xHP->lang("Mensaje") . "</h3>" );
+//}
+$xRPT->addContent( "<h3>" . $xHP->lang("NOTAS") . "</h3>" );
 //============ Agregar HTML
 //$xRPT->addContent( $xHP->init($jsEvent) );
 //$xRPT->addContent( $xHP->end() );

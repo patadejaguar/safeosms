@@ -151,174 +151,12 @@ class cUtileriasParaCaptacion {
 		return $msg;
 	}
 	function setGenerarInteresSobreSDPM($recibo = false, $fecha_de_corte = false){
-		$sucursal	= getSucursal();
-		$xQL		= new MQL();
-		$xErC		= new cErrorCodes();
-		$xLog		= new cCoreLog();
-		$xDTb		= new cSAFETabla(TCAPTACION_CUENTAS);
-		//(`captacion_cuentas`.`sucursal` ='$sucursal') AND
-		$txtlog		= "";
-		$txtlog		.= "==========================================================================================\r\n";
-		$txtlog		.= "==========\tCALCULO DE INTERESES SOBRE SDPM DE CUENTAS A LA VISTA EN LA SUCURSAL $sucursal\r\n";
-		$txtlog		.= "==========\tRECIBO DE CALCULO $recibo\r\n";
-		$txtlog		.= "==========================================================================================\r\n";
-		$xF0					= new cFecha(0, $fecha_de_corte);
-		$fecha_de_corte			= ( $fecha_de_corte == false ) ? fechasys() : $fecha_de_corte;
+		$xF		= new cFecha();
+		$PFechaInicial	= $xF->getDiaInicial($fecha_de_corte);
+		$PFechaFinal	= $xF->getDiaFinal($fecha_de_corte);
 		
-		$dias_del_mes			= $xF0->getDiasDelMes();
-		$fecha_de_inicio		= $xF0->getDiaInicial();
-		$fecha_de_termino		= $xF0->getDiaFinal();
-		$ejer					= $xF0->anno();
-		$peri					= $xF0->mes();	
-		//(`captacion_cuentas`.`sucursal` ='$sucursal') AND
-		/**
-		* Reestructurar los Dias SDPM para los Creditos que no han tenido Movimiento
-		*/
-		//Generando el SDPM de los Credito sin movimiento o ultimo SDPM del mes
-		$SQL_LST	= $xDTb->getQueryInicial() . "
-						WHERE
-							
-							(`captacion_cuentas`.`estatus_cuenta` ='10') AND
-							(`captacion_subproductos`.`metodo_de_abono_de_interes` ='AL_FIN_DE_MES')
-							AND
-							(`captacion_cuentas`.`saldo_cuenta`>= " . A_LA_VISTA_MONTO_MINIMO . " )
-						";
-		$txtlog .= date("H:i:s") . "\t=========Cerrando las cuentas a su ultimo SDPM\r\n";
-		$txtlog .= date("H:i:s") . "\tLas Cuentas con Saldo Menor a " . A_LA_VISTA_MONTO_MINIMO . " no se Incluyen\r\n";
-		$rsUSDPM = $xQL->getDataRecord($SQL_LST);
-			foreach ($rsUSDPM as $rwUSDPM){
-				$cuenta					= $rwUSDPM["numero_cuenta"];
-				$socio					= $rwUSDPM["numero_socio"];
-				$fecha_ultimo_mvto 		= $rwUSDPM["fecha_afectacion"];
-				$saldo_actual			= $rwUSDPM["saldo_cuenta"];
-				$dias_de_sdpm			= restarfechas($fecha_de_corte, $fecha_ultimo_mvto);
-				$xCta					= new cCuentaALaVista($cuenta);
-				$xCta->init($rwUSDPM);
-				if($dias_de_sdpm > $dias_del_mes){
-					$txtlog 			.= date("H:i:s") . "\t$socio\t$cuenta\tLos dias del SDPM son de $dias_de_sdpm Mayores al del Mes $dias_del_mes, se ajustan\r\n";
-					$xFMes				= new cFecha(0, $fecha_de_corte);
-					$dias_de_sdpm 		= $xF0->setRestarFechas($fecha_de_corte, $xF0->getDiaInicial());
-				}
-				$sdpm	= $saldo_actual	* $dias_de_sdpm;
-				//Obtiene la Tasa
-				$tasa	= $xCta->getTasaAplicable(0,0, $saldo_actual);
-				//Inserta el SDPM
-
-				$sqlUS = "INSERT INTO captacion_sdpm_historico
-						(ejercicio, periodo, cuenta, fecha, dias, tasa, monto, recibo)
-	    				VALUES( $ejer, $peri, $cuenta, '$fecha_de_corte', $dias_de_sdpm, $tasa,$sdpm, $recibo)";
-				my_query($sqlUS);
-				//Actualiza la Cuenta
-				$sqlUI	= "UPDATE captacion_cuentas
-	    						SET fecha_afectacion='$fecha_de_corte', ultimo_sdpm=$sdpm
-	    						WHERE numero_cuenta=$cuenta";
-				my_query($sqlUI);
-				$txtlog .= date("H:i:s") . "\t$socio\t$cuenta\tAgregando y Actualizando el SDPM por $sdpm del $fecha_ultimo_mvto al $fecha_de_corte por $saldo_actual\r\n";
-			}
-		//considerar fecha de Apertura
-		//agregar al Recibo
-		//TODO: Actualizar esta linea
-		$SQL_Captacion	= "
-						SELECT
-							`captacion_cuentas`.*,
-							`captacion_subproductos`.*,
-				
-					`captacion_cuentas`.`numero_cuenta`                 AS `cuenta`,
-					`captacion_cuentas`.`fecha_afectacion`              AS `apertura`,
-					`captacion_cuentas`.`inversion_fecha_vcto`          AS `vencimiento`,
-					`captacion_cuentas`.`tasa_otorgada`                 AS `tasa`,
-					`captacion_cuentas`.`dias_invertidos`               AS `dias`,
-					`captacion_cuentas`.`observacion_cuenta`            AS `observaciones`,
-					`captacion_cuentas`.`saldo_cuenta` 			        AS `saldo`,
-					`captacion_subproductos`.`descripcion_subproductos` AS `subproducto`,
-												
-							SUM(`captacion_sdpm_historico`.`monto`) AS 'suma_sdpm'
-						FROM
-							`captacion_cuentas` `captacion_cuentas`
-								INNER JOIN `captacion_subproductos` `captacion_subproductos`
-								ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`.
-								`idcaptacion_subproductos`
-									INNER JOIN `captacion_sdpm_historico` `captacion_sdpm_historico`
-									ON `captacion_cuentas`.`numero_cuenta` = `captacion_sdpm_historico`.
-									`cuenta`
-						WHERE
-							
-							(`captacion_cuentas`.`estatus_cuenta` ='10') AND
-							(`captacion_subproductos`.`metodo_de_abono_de_interes` ='AL_FIN_DE_MES')
-							AND
-							(`captacion_sdpm_historico`.`fecha` >='$fecha_de_inicio')
-							AND
-							(`captacion_sdpm_historico`.`fecha` <='$fecha_de_termino')
-							AND
-							(`captacion_cuentas`.`saldo_cuenta`>=" . A_LA_VISTA_MONTO_MINIMO . ")
-						GROUP BY
-							`captacion_sdpm_historico`.`cuenta`
-							";
-		setLog($SQL_Captacion);
-		$rsCAP =  $xQL->getDataRecord($SQL_Captacion);
-		if (!$rsCAP){
-			if(MODO_DEBUG == true){
-				$txtlog .= $xQL->getMessages(); //date("H:i:s") . "\tERROR (" . mysql_errno() . ") AL EJECUTAR LA CONSULTA";
-			}
-		} else {
-			$txtlog	.= "==========================================================================================\r\n";
-			//$xT1	= new cTipos();
-			
-			foreach ($rsCAP as $rwC){
-					$cuenta					= $rwC["numero_cuenta"];
-					$socio					= $rwC["numero_socio"];
-					$apertura				= $rwC["fecha_apertura"];
-					$sumaSDPM				= $rwC["suma_sdpm"];
-					$dias_de_calc			= $dias_del_mes;
-					$promedio				= $rwC["saldo_cuenta"];
-					$modificadorDeInteres	= $rwC["algoritmo_modificador_del_interes"];
-					$modificadorDeTasa		= $rwC["algoritmo_de_tasa_incremental"];
-					$interes				= 0;
-					$producto				= $rwC["tipo_subproducto"];
-					//Si la Fecha de Apertura es Menor al Inicio de mes
-						if(strtotime($apertura) > strtotime($fecha_de_inicio)){
-							$dias_de_calc 	= restarfechas($fecha_de_termino, $apertura);
-							//Corrige el TIMESTAMP de Interes, la rotacion debe ser de al menos 24 Horas
-							if ($dias_de_calc == 0){
-								$dias_de_calc	= 1;
-							} elseif ($dias_de_calc < 0 ){
-								$txtlog			.= date("H:i:s") . "\t$socio\t$cuenta\tEROR_DIAS\t SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
-								$dias_de_calc	= 1;
-								$sumaSDPM		= $promedio;
-							}
-						}
-					$xCta		= new cCuentaALaVista($cuenta);
-					$xCta->init($rwC);
-					$promedio	= round(($sumaSDPM / $dias_de_calc), 2);
-					$tasa_nueva	= $xCta->getTasaAplicable(0, 0, $promedio);
-					$tasa		= $tasa_nueva;
-					//OK: Ejecutar Modificador de Tasa
-					eval( $modificadorDeTasa);
-					//setLog("$modificadorDeTasa");
-					$interes	= ($sumaSDPM * $tasa) / EACP_DIAS_INTERES;
-					//OK: Ejecutar Consulta de Modificador de Interes
-					eval( $modificadorDeInteres );
-					$interes	= round($interes, 2);
-					//$txtlog		.= $modificadorDeInteres;
-					
-					if($interes > 0){
-						$rsx 		= setNuevoMvto($socio, $cuenta, $recibo, $fecha_de_corte, $interes, 222,1, "CALCULO_AUTOMATICO" );
-						if($rsx == false){
-							$txtlog .= "ERROR\t$socio\t$cuenta\tInteres por $interes, tasa $tasa_nueva, Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
-						} else {
-							$txtlog .= "OK\t$socio\t$cuenta\tInteres por $interes, tasa $tasa_nueva, Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc en Rec $recibo\r\n";
-						}
-						$sqlUI	= "UPDATE captacion_cuentas
-		    						SET saldo_cuenta = (saldo_cuenta + $interes)
-		    						WHERE numero_cuenta=$cuenta AND numero_socio=$socio";
-		    						$x = my_query($sqlUI);
-					} else {
-						$txtlog .= "WARN\t$socio\t$cuenta\tNOINT\t($interes / $tasa_nueva) Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
-					}
-			}
-			
-		}
-		return $txtlog;
+		$msg	= $this->setRegenerarSDPM($PFechaInicial, $PFechaFinal, true);
+		return $msg;
 	}
 /**
  * Genera las Inversiones Automaticas
@@ -326,23 +164,27 @@ class cUtileriasParaCaptacion {
  * @param date		$fecha	Fecha de Inversión
  */
 	function inversiones_automaticas($recibo = false, $fecha = false){
-		$fecha 				= ($fecha == false) ? fechasys() : $fecha;
+		$xF					= new cFecha();
+		$fecha 				= $xF->getFechaISO($fecha);
 	 	$msg				= "=================\tINVERSIONES_AUTOMATICAS\t======================\r\n";
 	  	$msg				.= "=================\tFECHA:\t$fecha\t======================\r\n";
 	  	$msg				.= date("H:i:s") . "\tLas Cuentas con Saldo Minimo a " . INVERSION_MONTO_MINIMO . " se ignoran\r\n";
 	  	$cierre_sucursal 	= getSucursal();
 	  	$fecha_operacion	= $fecha;
-		$xTb				= new cSAFETabla(TCAPTACION_CUENTAS);
+		$xTb				= new cSQLTabla(TCAPTACION_CUENTAS);
 		$QL					= new MQL();
 		$BySucursal			= ""; //AND (`captacion_cuentas`.`sucursal` = '$cierre_sucursal') ";
 		$sql_invs 			= $xTb->getQueryInicial() . "
 						WHERE
-						  (`captacion_cuentas`.`inversion_fecha_vcto` = '$fecha')
+						  ((`captacion_cuentas`.`inversion_fecha_vcto` = '$fecha')
+						  OR
+						  (`captacion_cuentas`.`fecha_apertura` = '$fecha'))						
+						  
 						  AND
 						  (`captacion_cuentas`.`saldo_cuenta` >=" . INVERSION_MONTO_MINIMO . ") AND
 						  (`captacion_subproductos`.`metodo_de_abono_de_interes` =\"AL_VENCIMIENTO\") $BySucursal ";
 		$rs					= $QL->getDataRecord($sql_invs);
-		//setLog($sql_invs);
+		/*setLog($sql_invs);*/
 	  foreach($rs as $rw){
 	    $socio 				= $rw["numero_socio"];
 	    $cuenta 			= $rw["numero_cuenta"];
@@ -395,18 +237,20 @@ class cUtileriasParaCaptacion {
 			}
 		}
 
-		$msg	.= $cInv->getMessages("txt");
+		$msg	.= $cInv->getMessages(OUT_TXT);
 	  }
 	return $msg;
 	}
 
 	function vencer_intereses_de_inversion($recibo = false, $fecha = false){
-
+		$xF		= new cFecha();
+		$xQL	= new MQL();
+		$xLog	= new cCoreLog();
 	  //DATE_ADD(CURDATE(), INTERVAL 1 DAY)
 	  //Vencer los Intereses de las Inversiones de Ma�ana
-	  $fecha_programada 	= sumardias($fecha, 1);
+	  $fecha_programada 	= $xF->setSumarDias(1, $fecha);
 	  $sucursal				= getSucursal();
-	  $msg		= "================= VENCIMIENTO_DE_INTERESES_SOBRE_INVERSION DEL DIA $fecha_programada =========\r\n";
+	  $xLog->add("================= VENCIMIENTO_DE_INTERESES_SOBRE_INVERSION DEL DIA $fecha_programada =========\r\n");
 
 	  $SQL500 = "SELECT
 					  `operaciones_mvtos`.*
@@ -415,14 +259,14 @@ class cUtileriasParaCaptacion {
 					WHERE
 					  (`operaciones_mvtos`.`fecha_afectacion` = '$fecha_programada')
 					  AND
-					  (`operaciones_mvtos`.`tipo_operacion` = 500)
-					  AND
-					  (`operaciones_mvtos`.`sucursal`='$sucursal')";
-	  $rs = mysql_query($SQL500, cnnGeneral());
+					  (`operaciones_mvtos`.`tipo_operacion` = 500) ";
+	  
+	  $rs =  $xQL->getRecordset($SQL500);//mysql_query($SQL500, cnnGeneral());
 	    if(!$rs){
-	      $msg	.= "LA CONSULTA NO SE EJECUTO (CODE: " . mysql_errno() . ")";
+	      //$msg	.= "LA CONSULTA NO SE EJECUTO (CODE: " . mysql_errno() . ")";
 	    }
-	  while($rw = mysql_fetch_array($rs)){
+	    while($rw = $rs->fetch_assoc() ){
+	  //while($rw = mysql_fetch_array($rs)){
 	    $iddocto			= $rw["docto_afectado"];
 	    $idsocio			= $rw["socio_afectado"];
 	    $interes			= $rw["afectacion_real"];
@@ -447,13 +291,14 @@ class cUtileriasParaCaptacion {
 						"DEPOSITO_AUTOMATICO_INVERSION_CTA_$iddocto", 99,
 						$fecha, $recibo);
 				setPolizaProforma($recibo, 222, $interes, $idsocio, $cuenta_de_int, TM_ABONO);
-				$msg	.= $xIC->getMessages();
+				$xLog->add($xIC->getMessages(), $xLog->DEVELOPER);
+				$xLog->add("$idsocio\t$iddocto\tDeposito Automatico de Interes por $interes\r\n");
 	    		break;
 	    	default:
 	    		$montofinal			= $saldo + $interes;
 			    //Agregar el Movimiento, 222 == depositos de Interes
 				setNuevoMvto($idsocio, $iddocto, $recibo, $fecha_programada, $interes, 222, $periodo, "DEPOSITO_AUTOMATICO");
-				$msg	.= date("H:i:s") . "\t$idsocio\t$iddocto\tAgregando el INTERES POR DEPOSITAR por $interes\r\n";
+				$xLog->add("$idsocio\t$iddocto\tAgregando el INTERES POR DEPOSITAR por $interes\r\n");
 				setPolizaProforma($recibo, 222, $interes, $idsocio, $iddocto, TM_ABONO);
 	    		break;
 	    }
@@ -466,7 +311,8 @@ class cUtileriasParaCaptacion {
 	    //
 	    if ($isr_a_retener > 0){
 			setNuevoMvto($idsocio, $iddocto, $recibo, $fecha_programada, $isr_a_retener, 234, $periodo, "ISR_AUTOMATICO", -1);
-			$msg	.= date("H:i:s") . "\t$idsocio\t$iddocto\tAgregando el ISR por RETENER por $isr_a_retener\r\n";
+			$xLog->add("$idsocio\t$iddocto\tISR por RETENER por $isr_a_retener\r\n");
+			
 	    //Agregar la Prepoliza
 			setPolizaProforma($recibo, 222, $isr_a_retener, $idsocio, $iddocto, TM_CARGO);
 			setPolizaProforma($recibo, 234, $isr_a_retener, $idsocio, $iddocto, TM_ABONO);
@@ -481,30 +327,31 @@ class cUtileriasParaCaptacion {
 	                WHERE numero_cuenta=$iddocto
 	                  AND
 	                  numero_socio=$idsocio";
-	        $x = my_query($sqlUCta);
-	    if ($x["stat"] == false){
-	      $msg	.= $x[SYS_MSG] . "\r\n";
+	        $x 	= $xQL->setRawQuery($sqlUCta);
+	        $x	= ($x === false) ? false : true;
+	    if ($x == false){
+	    	$xLog->add("$idsocio\t$iddocto\tSe fallo al Actualizar la Cuenta de Captacion\r\n", $xLog->DEVELOPER);
 	    } else {
-	      $msg	.= date("H:i:s") . "\t$idsocio\t$iddocto\tActualizando la Cuenta a Saldo $montofinal y Fecha Afectacion $fecha_programada \r\n";
+	    	$xLog->add("$idsocio\t$iddocto\tActualizando la Cuenta a Saldo $montofinal y Fecha Afectacion $fecha_programada \r\n", $xLog->DEVELOPER);
 	    }
 	  } //fin de busqueda
+	  
 	  $SQL_U_500 = "UPDATE operaciones_mvtos SET
 			        estatus_mvto=30,
 			        docto_neutralizador = $recibo
 			        WHERE
 			          (`operaciones_mvtos`.`fecha_afectacion` = '$fecha_programada')
 			          AND
-			          (`operaciones_mvtos`.`tipo_operacion` = 500)
-			        AND
-			        (`operaciones_mvtos`.`sucursal`='$sucursal')";
-	        $x = my_query($SQL_U_500);
-	    if ($x["stat"] == false){
-	      $msg	.= $x[SYS_MSG] . "\r\n";
+			          (`operaciones_mvtos`.`tipo_operacion` = 500)";
+	        $x 	= $xQL->setRawQuery($SQL_U_500);
+	        $x	= ($x === false) ? false : true;
+	    if ($x == false){
+	    	$xLog->add("-\t-\tSe fallo al Actualizar la las Operaciones 500 con estado 30\r\n", $xLog->DEVELOPER);
 	    } else {
-	      $msg	.= date("H:i:s") . "\t\t\tActualizando el INTERES POR DEPOSITAR a 'PAGADO' (" . $x["info"] . ")\r\n";
+	    	$xLog->add("-\t-\tActualizando el INTERES POR DEPOSITAR a 'PAGADO'\r\n", $xLog->DEVELOPER);
 	    }
 
-	  return $msg;
+	  return $xLog->getMessages();
 	}
 	/**
 	 * funcion que purga la Cuentas a la Vista Menores a Cero, llevandolas a Cero
@@ -525,7 +372,7 @@ class cUtileriasParaCaptacion {
 			$cRec->setNumeroDeRecibo($xRec, true);
 			$msg		.= $cRec->getMessages("txt");
 			$contar		= 0;
-		 	 $xTb		= new cSAFETabla(TCAPTACION_CUENTAS);
+		 	 $xTb		= new cSQLTabla(TCAPTACION_CUENTAS);
 		 	 $sql		= $xTb->getQueryInicial() . "
 										WHERE
 											(
@@ -828,7 +675,7 @@ class cUtileriasParaCaptacion {
 			$msg		.= $xPCta->getMessages("txt");
 		}
 
-		$xTb		= new cSAFETabla(TCAPTACION_CUENTAS);
+		$xTb		= new cSQLTabla(TCAPTACION_CUENTAS);
 		$SqlCta 	= $xTb->getQueryInicial() .  "
 				FROM
 					`captacion_cuentas` `captacion_cuentas`
@@ -850,14 +697,17 @@ class cUtileriasParaCaptacion {
 	
 	function setRegenerarSDPM($PFechaInicial, $PFechaFinal, $GenerarInteres = true, $incluirSinSaldo = false, $NumeroCuenta = false ){
 //		$PFechaFinal		= "";
+		$NumeroCuenta	= setNoMenorQueCero($NumeroCuenta);
+		$NumeroCuenta	= ($NumeroCuenta == DEFAULT_CUENTA_CORRIENTE) ? 0 : $NumeroCuenta;
+		
 		$mBase			= 3100;
 		$xT				= new cTipos();
-		$ql				= new MQL();
+		$xQL			= new MQL();
 		$BySaldo		= ($incluirSinSaldo == false ) ? " AND captacion_cuentas.saldo_cuenta >=" . TOLERANCIA_SALDOS : "";
 		
-		$ByCuentaSDPM	= ($NumeroCuenta == false) ? "" : " AND `captacion_sdpm_historico`.`cuenta` = $NumeroCuenta ";
-		$ByCuentaMvto	= ($NumeroCuenta == false) ? "" : " AND `operaciones_mvtos`.`docto_afectado` = $NumeroCuenta ";
-		$ByCuentaCta	= ($NumeroCuenta == false) ? "" : " AND captacion_cuentas.numero_cuenta = $NumeroCuenta ";
+		$ByCuentaSDPM	= ($NumeroCuenta <= 0) ? "" : " AND `captacion_sdpm_historico`.`cuenta` = $NumeroCuenta ";
+		$ByCuentaMvto	= ($NumeroCuenta <= 0) ? "" : " AND `operaciones_mvtos`.`docto_afectado` = $NumeroCuenta ";
+		$ByCuentaCta	= ($NumeroCuenta <= 0) ? "" : " AND captacion_cuentas.numero_cuenta = $NumeroCuenta ";
 		
 		$msg			= "";
 		$msg			.= "==========================================================================================\r\n";
@@ -884,10 +734,12 @@ class cUtileriasParaCaptacion {
 								ORDER BY
 									`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
 									`operaciones_mvtos`.`fecha_operacion` ASC";
-		$rsM 				= getRecordset( $sqlM );
+		$rsM 				= $xQL->getRecordset($sqlM);// getRecordset( $sqlM );
 		$arrOps				= array();			//Array de montos de operacion
 		$arrRecs			= array();			//Array de Recibos de Operacion
-		while($rwM = mysql_fetch_array($rsM)){
+		//while ($row = $rs->fetch_assoc()) { $data[]		= $row; $this->mNumberRow++; }
+		while($rwM = $rsM->fetch_assoc() ){
+		//while($rwM = mysql_fetch_array($rsM)){
 			//clave cuenta fecha
 			$cuenta			= $rwM["docto_afectado"];
 			$fecha			= $rwM["fecha_operacion"];
@@ -899,18 +751,18 @@ class cUtileriasParaCaptacion {
 			$arrRecs[$cuenta . "-" . $fecha ]		= $rwM["recibo_afectado"];
 			//$msg					.= "WARN\t$cuenta\tAgregar " . ($rwM["afectacion_real"] * $rwM["afectacion"] ) . "\r\n";
 		}
+		$rsM->free();
 		//Eliminar periodos anteriores
 		$sqlDF				= "DELETE FROM captacion_sdpm_historico WHERE (fecha>='$PFechaInicial' AND fecha<='$PFechaFinal') $ByCuentaSDPM ";
-
-		my_query($sqlDF);
+		$xQL->setRawQuery($sqlDF);
 		//FECHAS
 		$xF					= new cFecha(0);
 		//
-		$xTbl				= new cSAFETabla( TCAPTACION_CUENTAS );
+		$xTbl				= new cSQLTabla( TCAPTACION_CUENTAS );
 		$sqlCX				= $xTbl->getQueryInicial() . " WHERE captacion_cuentas.tipo_cuenta = " . CAPTACION_TIPO_VISTA . " $BySaldo $ByCuentaCta ";
-		$rs1				= getRecordset( $sqlCX );
-		
-		while($rw1 = mysql_fetch_array($rs1) ){
+		$rs1				=  $xQL->getRecordset($sqlCX);// getRecordset( $sqlCX );
+		while($rw1 = $rs1->fetch_assoc() ){
+		//while($rw1 = mysql_fetch_array($rs1) ){
 			$socio				= $rw1["numero_socio"];
 			$cuenta				= $rw1["numero_cuenta"];
 			
@@ -948,7 +800,7 @@ class cUtileriasParaCaptacion {
 	    								VALUES( $ejercicio, $periodo, $cuenta, '$OpFecha', $diasTrans, $nuevatasa, $sdpd, $idrecibo, $socio, '$sucursal') ";
 						//si es valida la operacion, se actualizan
 						if ( ($OpFecha >= $PFechaInicial) AND ($OpFecha <= $PFechaFinal) ){
-							my_query($sqlUSPM);
+							$xQL->setRawQuery($sqlUSPM);
 							$msg		.= "$socio\t$cuenta\t+SDPM\t$ejercicio\t$periodo\t$OpFecha\t$diasTrans\t$OpMonto\t$saldoAnterior\t$sdpd\r\n";
 						} else {
 							$msg		.= "$socio\t$cuenta\t=SDPM\t$ejercicio\t$periodo\t$OpFecha\t$diasTrans\t$OpMonto\t$saldoAnterior\t$sdpd\r\n";
@@ -957,17 +809,20 @@ class cUtileriasParaCaptacion {
 						$saldoAnterior	+= $OpMonto;
 				}
 			}
-		}
+		} //end while assoc
 			//Agregar Movimientos Finales del MES.
 			//FIXME: Corregir incidencias
 			//opcional: agregar Interes
-			if ( $GenerarInteres == true){
+		if ( $GenerarInteres == true){
 				$xRec		= new cReciboDeOperacion(12, false);
 				$recibo		=  $xRec->setNuevoRecibo(DEFAULT_SOCIO, 1, $PFechaFinal, 1, 12, "REGENERAR_INTERES_SDPM_$PFechaFinal", "NA", "ninguno", "NA", DEFAULT_GRUPO);
 				$msg		.= "==========================================================================================\r\n";
 				$msg		.= "==================\tAGREGADO INTERES :: RECIBO $recibo\r\n";
 				$msg		.= "==========================================================================================\r\n";
-				$_SESSION["recibo_en_proceso"]		= $recibo;				
+				$_SESSION["recibo_en_proceso"]		= $recibo;
+				//Eliminar Intereses Anteriores
+				$sqlDM		= "DELETE FROM `operaciones_mvtos` WHERE `tipo_operacion`=" . OPERACION_CLAVE_DEP_INT . " AND `fecha_operacion`>='$PFechaInicial' AND `fecha_operacion`<='$PFechaFinal' $ByCuentaMvto ";
+				$xQL->setRawQuery($sqlDM);				
 				//sumar sdpm del mes por cuenta
 				$sqlSDPM	= "SELECT
 								`captacion_sdpm_historico`.`numero_de_socio`,
@@ -988,31 +843,50 @@ class cUtileriasParaCaptacion {
 								`captacion_sdpm_historico`.`ejercicio`,
 								`captacion_sdpm_historico`.`periodo`
 							ORDER BY
-								`captacion_sdpm_historico`.`fecha` DESC ";
-				$rsCAP 		= $ql->getDataRecord( $sqlSDPM );
-				//setLog($sqlSDPM);
+								`captacion_sdpm_historico`.`fecha` ASC ";
+				$rsCAP 		= $xQL->getDataRecord( $sqlSDPM );
+
 				foreach ($rsCAP as $rwC){
 					$socio			= $rwC["numero_de_socio"];
 					$cuenta			= $rwC["cuenta"];
 					$dias_de_calc	= $rwC["dias_transcurridos"];
 					$sumaSDPM		= $rwC["sdpm"];
 					$FechaI			= $rwC["UltimaFecha"];
+					$interes		= 0;
+
+										
 					$promedio		= $xT->cFloat(($sumaSDPM / $dias_de_calc), 2);
-					//XXX: Solucionar Tasa de Interes y hacer las rapida la consulta
-					$xCta			= new cCuentaDeCaptacion($cuenta); $xCta->init();
-					$subtipo		= $xCta->getTipoDeSubproducto();
-					$tasa_nueva		= obtentasa($promedio, CAPTACION_TIPO_VISTA, 0, $subtipo);
-					$interes		= ($sumaSDPM * $tasa_nueva) / EACP_DIAS_INTERES;
-					$interes		= $xT->cFloat($interes, 2);
+					//XXX: Solucionar Tasa de Interes y hacer rapida la consulta
+					$xCta			= new cCuentaDeCaptacion($cuenta); 
+					$xCta->init();
+					$OProd					= $xCta->OProducto();
+					$modificadorDeInteres	= $OProd->getFModificardorInteres();
+					$modificadorDeTasa		= $OProd->getFModificardorTasa();					
+					$promedio	= round(($sumaSDPM / $dias_de_calc), 2);
+					$tasa_nueva	= $xCta->getTasaAplicable(0, 0, $promedio);
+					$tasa		= $tasa_nueva;
+					//OK: Ejecutar Modificador de Tasa
+					eval( $modificadorDeTasa);
+					//setLog("$modificadorDeTasa");
+					$interes	= ($sumaSDPM * $tasa) / EACP_DIAS_INTERES;
+					//OK: Ejecutar Consulta de Modificador de Interes
+					eval( $modificadorDeInteres );
+					$interes	= round($interes, 2);
+					
+					
 					//agregar movimiento
 					if ( $interes > 0 ){
-						setNuevoMvto($socio, $cuenta, $recibo, $FechaI, $interes, 222,1, "CALCULO_AUTOMATICO_DESDE_$PFechaInicial" );
-						$msg .= "$socio\t$cuenta\tAGREGAR\tInteres por $interes, tasa $tasa_nueva, Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
+						setNuevoMvto($socio, $cuenta, $recibo, $FechaI, $interes, OPERACION_CLAVE_DEP_INT,1, "CALCULO_AUTOMATICO_DESDE_$PFechaInicial" );
+						$msg .= "$socio\t$cuenta\tAGREGAR\tIntres por $interes, tasa $tasa_nueva, Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
+						
+						$xCta->setCuandoSeActualiza(true);
+						
 					} else {
 						$msg .= "$socio\t$cuenta\tIGNORAR\tInteres por $interes, tasa $tasa_nueva, Promedio $promedio, SDPM $sumaSDPM, Dias $dias_de_calc\r\n";
 					}
 				}
-			}
+				$rsCAP		= null;
+		}
 		return $msg;
 	}
 	/**
@@ -1030,7 +904,7 @@ class cUtileriasParaCaptacion {
 	}
 	function setActualizarTasasDeInteres($cuenta = false, $todas = false, $tipo = false){
 		
-		$xDTb		= new cSAFETabla(TCAPTACION_CUENTAS);
+		$xDTb		= new cSQLTabla(TCAPTACION_CUENTAS);
 		
 		$wh			= "";
 		if($cuenta == false){
@@ -1044,6 +918,72 @@ class cUtileriasParaCaptacion {
 		$xCta		= new cCuentaDeCaptacion($cuenta);
 		$xCta->init();
 		$xCta->getTasaAplicable();
+	}
+	function setActualizarSaldos($tipo, $cuenta = 0){
+		$cuenta		= setNoMenorQueCero($cuenta);
+		$xQL		= new MQL();
+		$xLog		= new cCoreLog();
+		$EquivBase	= array(
+				CAPTACION_TIPO_VISTA	=> 3100,
+				CAPTACION_TIPO_PLAZO	=> 3200
+		);
+		$base		= $EquivBase[$tipo];
+		$ByCuenta	= ($cuenta >0 AND $cuenta != DEFAULT_CUENTA_CORRIENTE) ? " AND (`operaciones_mvtos`.`docto_afectado` =$cuenta) " : "";
+		$ByCuenta2	= ($cuenta >0 AND $cuenta != DEFAULT_CUENTA_CORRIENTE) ? " AND (`numero_cuenta` =$cuenta) " : "";
+		
+		$sql		= "SELECT
+		`operaciones_mvtos`.`docto_afectado` AS 'documento',
+		COUNT(`operaciones_mvtos`.`idoperaciones_mvtos`) AS 'operaciones',
+		SUM(`operaciones_mvtos`.`afectacion_real` *
+		`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'saldo'
+		FROM
+		`operaciones_mvtos` `operaciones_mvtos`
+		INNER JOIN `eacp_config_bases_de_integracion_miembros`
+		`eacp_config_bases_de_integracion_miembros`
+		ON `operaciones_mvtos`.`tipo_operacion` =
+		`eacp_config_bases_de_integracion_miembros`.`miembro`
+		WHERE
+			(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = " . $base . ") $ByCuenta
+			GROUP BY
+			`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+			`operaciones_mvtos`.`docto_afectado`
+			ORDER BY
+				`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+				`operaciones_mvtos`.`fecha_afectacion`,
+				`eacp_config_bases_de_integracion_miembros`.`afectacion`";
+		$rs			= $xQL->getRecordset($sql);
+		
+		$arrSdos	= array();
+		if($rs){
+			while($rw = $rs->fetch_assoc()){
+				$idcuenta			= $rw["documento"];
+				$arrSdos[$idcuenta]	= $rw["saldo"];
+			}
+			$rs->free();
+		}
+		$rs				= $xQL->getRecordset("SELECT  `numero_cuenta` FROM `captacion_cuentas` WHERE `tipo_cuenta`=$tipo $ByCuenta2");
+		$fails			= 0;
+		$readys			= 0;
+		while($rw = $rs->fetch_assoc()){
+			$idcuenta	= $rw["numero_cuenta"];
+			$saldo		= (isset($arrSdos[$idcuenta])) ? $arrSdos[$idcuenta] : 0;
+			$res		= $xQL->setRawQuery("UPDATE `captacion_cuentas` SET `saldo_cuenta`=$saldo, `saldo_conciliado`=$saldo WHERE `numero_cuenta`=$idcuenta");
+			$res		= ($res === false) ? false : true;
+			if($res == false){
+				$xLog->add("ERROR\t$idcuenta\Al Actualizar el Saldo de la Cuenta\r\n", $xLog->DEVELOPER);
+				$fails++;
+			} else {
+				$readys++;
+			}
+		}
+		$rs->free();
+		$arrSdos	= array();
+		if($fails>0){
+			$xLog->add("ERROR\tHubo $fails al Actualizar el Saldo\r\n");
+		} else {
+			$xLog->add("OK\tSe Actualizaron $readys SALDOS del Tipo $tipo\r\n");
+		}
+		return $xLog->getMessages();
 	}
 }
 ?>

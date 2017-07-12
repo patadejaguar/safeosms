@@ -1,69 +1,48 @@
 <?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../core/core.fechas.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.config.inc.php";
+$xHP		= new cHPage("TR.REPORTE DE OPERACIONES DE CREDITO", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
-$oficial = elusuario($iduser);
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Estado de Cuenta por Credito</title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body onLoad="javascript:window.print();">
-<?php echo $head_pagina ?>
-<span class="Estilo1">
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT); $credito = parametro("pb", $credito, MQL_INT);
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+$estatus 		= parametro("estado", SYS_TODAS);
+$frecuencia 	= parametro("periocidad", SYS_TODAS);
+$producto 		= parametro("convenio", SYS_TODAS);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW);
+$out 			= parametro("out", SYS_DEFAULT);
 
-<p class="bigtitle">ESTADO DE CUENTA DE CREDITOS CON TODAS SUS OPERACIONES</p>
-<hr>
-<?php
-//rptedoctacredito.php?pb=2005228&f18=yes&f19=999&f50=20052&on=1998-1-16&off=2012-1-16
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
 
-$idsolicitud 	= $_GET["solicitud"];
-$ids 			= $_GET["pb"];
-$TipoOp			= ( isset($_GET["f19"]) ) ? $_GET["f19"] : "todas";
-$FechaFinal		= ( isset($_GET["off"]) ) ? $_GET["off"] : fechasys();
-$xF				= new cFecha(0, $FechaFinal);
-$FechaInicial	= ( isset($_GET["on"]) ) ? $_GET["on"] : $xF->getDiaInicial();
+$ByTipo			= $xFil->OperacionesPorTipo($operacion);
+$ByFecha		= $xFil->OperacionesPorFecha($FechaInicial, $FechaFinal);
 
-$ByTipo			= ( $TipoOp == "todas") ? "" : " AND (`operaciones_mvtos`.`tipo_operacion` = $TipoOp) " ;
-
-	if (!$idsolicitud) {
-
-		$idsolicitud = $ids;
-		//exit($msg_rpt_exit);
-	}
-	if ((!$idsolicitud) && (!$ids)) {
-		exit($msg_rpt_exit);
-	}
-
-
-	// datos de la solicitud
-
-	$xCred		= new cCredito($idsolicitud);
-	$xCred->init();
-	echo $xCred->getFichaDeSocio();
-	echo $xCred->getFicha();
-
-	echo "<hr />";
-			$sqlmvto = "SELECT
+$sql			= "SELECT
 	`operaciones_mvtos`.`fecha_operacion`       AS `fecha`,
 	`operaciones_mvtos`.`recibo_afectado`       AS `recibo`,
 	`operaciones_recibos`.`tipo_pago`           AS `tipo_de_pago`,
@@ -83,26 +62,40 @@ FROM
 			ON `operaciones_mvtos`.`tipo_operacion` = `operaciones_tipos`.
 			`idoperaciones_tipos` 
 WHERE
-	(`operaciones_mvtos`.`docto_afectado` =$idsolicitud) 
-	AND
-	(
-	(`operaciones_mvtos`.`fecha_operacion` >='$FechaInicial')
-	AND
-	(`operaciones_mvtos`.`fecha_operacion`<='$FechaFinal' )
-	)
+	(`operaciones_mvtos`.`docto_afectado` =$credito )
+	$ByFecha
 	$ByTipo
 ORDER BY
 	`operaciones_mvtos`.`fecha_operacion`,
 	`operaciones_tipos`.`descripcion_operacion` ";
-//exit($sqlmvto);
-			$x = new cTabla($sqlmvto);
-			$x->setKeyField("idoperaciones_mvtos");
-			$x->setTdClassByType();
-			$x->setWidth();
-			echo $x->Show();
-			
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
+$xCred		= new cCredito($credito);
+if($xCred->init() == true){
+	$xRPT->addContent($xCred->getFicha(true, "", true, true));
+}
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+
+$xRPT->addContent( $xT->Show( ) );
+//============ Agregar HTML
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>
-</span>
-<?php echo getRawFooter(); ?>
-</body>
-</html>

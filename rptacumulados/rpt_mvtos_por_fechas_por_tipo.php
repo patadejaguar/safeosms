@@ -1,74 +1,56 @@
 <?php
 /**
- * @author Balam Gonzalez Luis
- * @version 1.2
- * @since 2007-06-01
- * 
- * Changes:
- * 05/05/2008 Reescritura
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
  */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-include_once "../core/entidad.datos.php";
-include_once "../core/core.deprecated.inc.php";
-include_once "../libs/sql.inc.php";
-include_once "../core/core.fechas.inc.php";
-//include_once "../libs/graph.oo.php";
-include_once "../core/core.config.inc.php";
-include_once "../libs/open_flash_chart_object.php";
-
-$oficial = elusuario($iduser);
-
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Reporte de Recuperacion en un Rango de Fechas</title>
-</head>
-<link href="../css/reporte.css" rel="stylesheet" type="text/css">
-<body onLoad="javascript:window.print();">
-<!--  -->
-<?php
-echo getRawHeader();
-/**
- * Filtrar si hay Fecha
- */
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$si_es_por_fecha 	= "";
-$Mvto 				= $_GET["f3"];
-
-$BySuc				= "";
-$mSuc				= $_GET["s"];
-
-if($mSuc!="todas"){
-	$BySuc			= " 	AND
-	(`operaciones_mvtos`.`sucursal` ='$mSuc') ";
-}
-$ByMvto				= "";
+$xHP		= new cHPage("TR.REPORTE DE OPERACIONES", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
 
-$inputG 			= $_GET["outg"];
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
 
-if ($Mvto != "todas"){
-	$ByMvto	= " AND
-				(`operaciones_mvtos`.`tipo_operacion` = $Mvto) ";
-}
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Individual
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false, MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+$ByFechas		= $xFil->OperacionesPorFecha($FechaInicial, $FechaFinal);
+$BySuc			= $xFil->OperacionesPorSucursal($sucursal);
+$ByMvto			= $xFil->OperacionesPorTipo($operacion);
 
-
-$sql = "SELECT
+$sql			= "SELECT
 	`operaciones_mvtos`.`tipo_operacion`			AS 'tipo',
 	`operaciones_tipos`.`descripcion_operacion`      AS `operacion`,
 	COUNT(`operaciones_mvtos`.`idoperaciones_mvtos`) AS `numero`,
@@ -78,10 +60,7 @@ FROM
 		INNER JOIN `operaciones_tipos` `operaciones_tipos`
 		ON `operaciones_mvtos`.`tipo_operacion` = `operaciones_tipos`.
 		`idoperaciones_tipos`
-WHERE
-	(`operaciones_mvtos`.`fecha_afectacion` >='$fecha_inicial')
-	AND
-	(`operaciones_mvtos`.`fecha_afectacion` <='$fecha_final')
+WHERE `operaciones_mvtos`.`tipo_operacion` > 0 $ByFechas
 	$BySuc
 	$ByMvto
 GROUP BY
@@ -89,107 +68,38 @@ GROUP BY
 
 HAVING 
 monto != 0 
-	ORDER BY monto DESC, numero
-	";
+	ORDER BY monto DESC, numero";
+$titulo			= "";
+$archivo		= "";
 
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xT		= new cTabla($sql, 0);
+$xT->setTipoSalida($out);
+//$xT->setPrepareChart(true, $xT->CHART_PIE);
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+$xRPT->addContent("<div id='idivchart'></div>");
+		$xCh	= new cChart("idivchart");
+		$xCh->addDataset($sql, "monto", "operacion");
+		$xCh->setProcess();
+		$xRPT->addJsCode($xCh->getJs());
+		//$xT->setEventKey("jsGoPanel");
+		//$xT->setKeyField("creditos_solicitud");
+		$xRPT->addContent( $xT->Show("", true, "idtbl"  ) );
+		//============ Agregar HTML
+		//$xRPT->addContent( $xHP->init($jsEvent) );
+		//$xRPT->addContent( $xHP->end() );
+		//$xRPT->addJsCode($xT->getJSActions(false, "idivchart"));
+
+		$xRPT->setResponse();
+		$xRPT->setSenders($senders);
+echo $xRPT->render(true);
 ?>
-<!-- -->
-<table       >
-	<thead>
-		<tr>
-			<td class="subtitle">REPORTE DE OPERACIONES ACUMULADAS EN FECHA DADA</td>
-		</tr>
-<!-- DATOS GENERALES DEL REPORTE  -->		
-		<tr>
-			<td width="60%">&nbsp;</td>
-			<td width="20%">Fecha de Elaboracion:</td>
-			<td width="20%"><?php echo fecha_larga(); ?></td>
-		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>Preparado por:</td>
-			<td><?php echo $oficial; ?></td>
-		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>Estatus</td>
-			<td><?php echo $Stat; ?></td>
-		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>Sucursal</td>
-			<td><?php echo $mSuc ; ?></td>
-		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>Fecha Inicial:</td>
-			<td><?php echo fecha_corta($fecha_inicial) ; ?></td>
-		</tr>	
-								<tr>
-			<td>&nbsp;</td>
-			<td>Fecha Final</td>
-			<td><?php echo fecha_corta($fecha_final) ; ?></td>
-		</tr>	
-	</thead>
-</table>
-<?php
-
-
-	$rs = mysql_query($sql);
-	//echo $sql; exit;
-	$gvalues 	= "";
-	$gvalues2 	= "";
-	$gnames 	= "";
-	$i 			= 0;
-	$tds 		= "";
-	$mnt 		= 0;
-	$sm 		= 0;
-	$nm 		= 0;
-
-	while ($rw = mysql_fetch_array($rs)){
-
-		$val[] = round( ($rw["monto"] / 1000) , 2);
-		$lbl[] = $rw["operacion"];
-
-	$sm += $rw["monto"];
-	$nm += $rw["numero"];
-
-	$tds = $tds . "<tr>
-	<td>" . $rw["operacion"] .  "</td>
-	<td>" . $rw["numero"] .  "</td>
-	<td class='mny'>". getFMoney($rw["monto"]) . "</td>
-	</tr>";
-		$i++;
-	}
-	//echo $gnames;
-	//echo $gvalues;
-
-
-	echo "<table width='100%'>
-	<tr>
-		<th>Tipo de Operacion</th>
-		<th>Numero de Operaciones</th>
-		<th>monto</th>
-	</tr>
-
-	$tds
-
-	<tr>
-		<td>Sumas</td>
-		<th>". getFMoney($nm) ."</th>
-		<th>". getFMoney($sm) ."</th>
-	</tr>
-	</td>";
-	$x = new SAFEChart();
-	$x->setValues($val);
-	$x->setLabels($lbl);
-	$x->setTitle("Reporte de Operaciones Acumuladas por Tipo(Miles)");
-	$mFile	= $x->Chart3DBAR(10000);
-
-
-
-open_flash_chart_object( 800, 500, $mFile, true, "../" );
-	echo getRawFooter();
-?>
-</body>
-</html>

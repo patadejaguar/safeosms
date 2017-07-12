@@ -42,20 +42,13 @@ function Common_97de3870795ecc1247287ab941d9719br($params){
  * @return string
  */
 function Common_b05dfbfaf8125673c6dc350143777ee1($params){
-	$xT			= new cTipos();
-	$solicitud 		= $xT->cInt($params);
-	$description		= "";
-
-	if(isset($solicitud) and ($solicitud != 0)){
-		
-		$xCred		= new cCredito($solicitud);
-		if( $xCred->init() == false ){
-			$description = MSG_NO_PARAM_VALID;
-		} else {
-			$description	= $xCred->getShortDescription();
-		}
-	} else {
+	$solicitud 		= setNoMenorQueCero($params);
+	$description	= "";
+	$xCred		= new cCredito($solicitud);
+	if( $xCred->init() == false ){
 		$description = MSG_NO_PARAM_VALID;
+	} else {
+		$description	= $xCred->getShortDescription();
 	}
 return $description;
 }
@@ -70,10 +63,10 @@ function Common_86d8b5015acb366cec42bf1556d8258a($strPedido){
 	$socio	= DEFAULT_SOCIO;
 	if( strpos($strPedido, STD_LITERAL_DIVISOR) !== false ){
 		$D	= explode(STD_LITERAL_DIVISOR, $strPedido);
-		$socio	= intval($D[0]);
-		$tipo	= intval($D[1]);
+		$socio	= setNoMenorQueCero($D[0]);
+		$tipo	= setNoMenorQueCero($D[1]);
 	} else {
-		$socio	= intval($strPedido);
+		$socio	= setNoMenorQueCero($strPedido);
 	}
 	switch($tipo){
 		case CREDITO_ESTADO_SOLICITADO:
@@ -264,59 +257,7 @@ function Common_c5fe0408555dbf392918c6f77a4d01b2($params){
  * @param string $params Indica los parametros a cruzar
  **/
 function Common_1fff3ce8ffd3d2dfdee69fd04ba831ac($params){
- 	$stdDiv		= STD_LITERAL_DIVISOR;
-	$DPar		= explode($stdDiv, $params, 2);
 
-	$mFecha		= new cFecha();
-
- 	//grupo
- 	$xTip					= new cTipos();
- 	//
- 	$credito				= $xTip->cInt($DPar[0]);
-	//
- 	$pagos					= $xTip->cInt($DPar[1]);
-
- 	$fecha_de_vencimiento	= $xTip->cFecha($DPar[2]);
-
- 	$dias_autorizados		= 0;
-
- 	$pagos_autorizados		= 0;
-
- 	$convenio				= 0;
-
- 	$saldo_actual			= 0;
-
- 	$parcialidad			= 0;
-
- 	$fecha_de_revision		= $mFecha->get();
-
-	$grupo					= 0;
-
-	$fecha_de_ministracion	= 0;
-
-	$contrato_corriente		= 0;
-
-
-
-	$sql = "UPDATE creditos_solicitud
-    SET
-        numero_pagos			= $pagos_autorizados,
-        fecha_vencimiento		= '$fecha_de_vencimiento',
-        pagos_autorizados		= $pagos_autorizados,
-        saldo_actual			= $saldo_actual,
-        tipo_convenio			= $convenio,
-        ultimo_periodo_afectado		= $parcialidad,
-        grupo_asociado			= $grupo,
-        fecha_ministracion		= '$fecha_de_ministracion',
-        contrato_corriente_relacionado=$contrato_corriente,
-        monto_parcialidad=$parcialidad,
-        fecha_revision='$fecha_de_revision',
-        /* tipo_de_pago= ,
-        tipo_de_calculo_de_interes=0,
-        causa_de_mora=0 */
-    WHERE
-    numero_solicitud=$credito
-";
 
 }
 

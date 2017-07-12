@@ -1,23 +1,26 @@
 /* default */
 @import "../global.css";
-
 /*@import 'http://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,greek-ext,cyrillic-ext,greek,vietnamese,cyrillic,latin-ext';*/
 .ui-corner-bottom >.fieldform {
 	width: 100% !important;
 	min-width: 100% !important;
 }
-.formoid-default{
+.formoid-default {
 	margin:0 auto;
 	background-color:#FFFFFF;
-	/*font-size:1em;*/
 	font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;
-	color:#666666;
+	color:#2E5798;
+	padding-bottom: 3em;
 }
-.formoid-default .element-select select, .formoid-default .tx4 .element-select select { width: 100%; margin-bottom: 2px; }
+.formoid-section {
+	padding-bottom: .2em;
+}
+.formoid-default .element-select select, .formoid-default .tx4 .element-select select { width: 100%; margin-bottom: 2px; min-height: 1.8em; }
 .formoid-default label.title, .formoid-default label {
 	background-color: #F5F9FD;
 	border-style: none;
 	max-width: 99%;
+	vertical-align: middle;
 }
 .formoid-default>div{
 	margin: 2px;
@@ -45,19 +48,7 @@
 }
 .formoid-default .error,
 .formoid-default .error #recaptcha_widget_div{
-  padding: 3px 14px;
-  margin: 0 8px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-  background-color: #fcf8e3;
-  border: 1px solid #fbeed5;
-  -webkit-border-radius: 4px;
-     -moz-border-radius: 4px;
-          border-radius: 4px;
 
-  color: #b94a48;
-  background-color: #f2dede;
-  border-color: #eed3d7;
-  color: #c09853;
 }
 .formoid-default .error h4 {
   color: #b94a48;
@@ -88,25 +79,26 @@
   content: "";
 }
 .formoid-default{
-	-webkit-border-radius: 4px;	
-	   -moz-border-radius: 4px;	
-			border-radius: 4px;	
+-webkit-border-radius: 4px;	
+-moz-border-radius: 4px;	
+border-radius: 4px;
+/*min-height: 320px;*/
 }
 .formoid-default div.selector,
 .formoid-default  select {
-	color: #666;
 	padding: 0.3em;
+	min-height: 1.8em;
 }
 .formoid-default h2 {
 	margin: 0.2em 0;
 }
 
 .formoid-default label {
-	font-size: 1em;
+	font-size: .96em;
 	display: block;
 	margin-bottom: 1px;
 	clear: both;
-	line-height: 1.3em;
+	line-height: 1.5em;
 }
 
 /* Global Declaration */
@@ -118,140 +110,6 @@
   margin: 0;
   padding: 0;
 }
-	
-
-
-/* SPRITES */
-
-/* Uploader */
-
-.formoid-default div.uploader {
-  /*-background-position: 0px -297px;*/
-  /*height: 28px;*/
-  width: 210px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  cursor: default;
-}
-
-.formoid-default div.uploader span.action {
-	margin-left: -1px;
-	margin-bottom: 0;
-	vertical-align: top;
-	text-align: center;
-	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
-	vertical-align: middle;
-	cursor: pointer;
-	background-color: #f5f5f5;
-	*background-color: #e6e6e6;
-	background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
-	background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
-	background-repeat: repeat-x;
-	border: 1px solid #bbbbbb;
-	*border: 0;
-	border-color: #e6e6e6 #e6e6e6 #bfbfbf;
-	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-	border-bottom-color: #a2a2a2;
-	-webkit-border-radius: 0 4px 4px 0;
-	   -moz-border-radius: 0 4px 4px 0;
-		    border-radius: 0 4px 4px 0;
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);
-	filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
-	*zoom: 1;
-	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-	   -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-		    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-		  
-	display: inline-block;
-
-	padding: 5px 12px;
-	text-align: center;
-	
-	float: left;
-	display: inline;
-	
-	overflow: hidden;
-	cursor: pointer;
-	width: 80px;
-	text-align: center;
-}
-
-.formoid-default div.uploader:hover span.action,.formoid-default div.uploader.hover span.action {
-	background-position: 0 -15px;
-	color: #333333;
-	text-decoration: none;
-	-webkit-transition: background-position 0.1s linear;
-       -moz-transition: background-position 0.1s linear;
-         -o-transition: background-position 0.1s linear;
-            transition: background-position 0.1s linear;
-	background-color: #E6E6E6;
-}
-.formoid-default div.uploader:active span.action,.formoid-default div.uploader.active span.action{
-	background-color: #E6E6E6;
-	background-image: none;
-	-webkit-box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
-       -moz-box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
-	outline: 0 none;	
-	color: #333333;
-}
-
-.formoid-default div.uploader span.filename {
-	/* change this line to adjust positioning of filename area */
-    border-color: #DDDDDD;
-	border-radius: 4px 0 0 4px;
-	
-	background-color: #FFFFFF;
-    border: 1px solid #CCCCCC;
-	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-       -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-	/*height: 20px;*/
-	
-	padding: 5px 6px;
-	margin-left: 0;
-	
-    /*transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;	*/
-	float: left;
-	display: block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	cursor: default;
-
-	color: #777;
-	width: 82px;
-	border-right: solid 1px #bbb;
-}
-
-
-.formoid-default div.uploader input {
-	opacity: 0;
-	filter: alpha(opacity:0);
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	float: right;
-	height: 25px;
-	border: none;
-	cursor: default;
-/*	width: 100%;*/
-}
-
-.formoid-default div.uploader.disabled span.action {
-	color: #aaa;
-}
-
-.formoid-default div.uploader.disabled span.filename {
-	border-color: #ddd;
-	color: #aaa;
-}
-
 
 /* Select */
 
@@ -296,15 +154,10 @@ Not advised to edit stuff below this line
   display: -moz-inline-box;
   display: inline-block;
   *display: inline;
-  /*padding: 4px 4px;*/
-  /*margin-bottom: 1px;
-  *margin-left: .1em;*/
-  color: #2F75D8; /*#666666;*/
-  text-align: center;
+  color: #2F75D8;
   font-size: 1em;
   font-weight: bold;
   font-family:inherit;
-/*  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);*/
   vertical-align: middle;
   cursor: pointer;
   background-color: #f5f5f5;
@@ -463,7 +316,7 @@ Not advised to edit stuff below this line
 	margin: 0;
 	vertical-align:middle;
 }
-.formoid-default input[type=checkbox]+span,
+/*.formoid-default input[type=checkbox]+span,
 .formoid-default input[type=radio]+span{
 	height: 1.1em;
 	margin-right:-1.1em;
@@ -475,7 +328,7 @@ Not advised to edit stuff below this line
 	
 	top:0px;
 	background:url(./check-radio-bg.png) no-repeat 0 0;
-}
+}*/
 .formoid-default input[type=checkbox]:hover+span{
 	background-position:0 -38px;
 }
@@ -518,20 +371,13 @@ Not advised to edit stuff below this line
 .formoid-default textarea {
 	width: 99%;
 	margin-bottom: 2px;
-	/*padding: 1% 1%;*/
 	padding: .33em 0em;
-	/*margin-left:-1px;*/
 	font-family:inherit;
-	font-size: 1em;
 	font-weight: normal;
+	color: #545454;
 
-	color: #777;
-	/*background-image: -ms-linear-gradient(top, #444444, #999999); /* IE10 */
-	/*filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#22000000', EndColorStr='#00FFFFFF'); /* IE6�IE9 */
-	/*background-image: -webkit-gradient(linear, left top, left bottom, from(#444444), to(#999999)); /* Saf4+, Chrome */
 	background-image: -moz-linear-gradient(top, rgba(0,0,0,0.18), rgba(0,0,0,0) 4px, rgba(0,0,0,0) ); /* FF3.6 */
 	background-image: -webkit-linear-gradient(top, rgba(0,0,0,0.18), rgba(0,0,0,0) 4px, rgba(0,0,0,0) ); /* Chrome 10+, Saf5.1+ */
-	background-image: -o-linear-gradient(top, rgba(0,0,0,0.18), rgba(0,0,0,0) 4px, rgba(0,0,0,0) ); /* Opera 11.10+ */
 	background-image: linear-gradient(top, rgba(0,0,0,0.18), rgba(0,0,0,0) 5px, rgba(0,0,0,0) );
 	border-top: solid 1px #aaa;
 	border-left: solid 1px #aaa;
@@ -541,6 +387,7 @@ Not advised to edit stuff below this line
 	-moz-border-radius: 3px;
 	border-radius: 3px;
 	outline: 0;
+	min-height: 1.8em;
 }
 
 .formoid-default input[type=text]:focus,
@@ -553,9 +400,6 @@ Not advised to edit stuff below this line
 	-moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(82, 168, 236, 0.6);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(82, 168, 236, 0.6);
 	border-color: rgba(82, 168, 236, 0.8);
-	/*background-image: -ms-linear-gradient(top, #444444, #999999); /* IE10 */
-	/*filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#22000000', EndColorStr='#00FFFFFF'); /* IE6�IE9 */
-	/*background-image: -webkit-gradient(linear, left top, left bottom, from(#444444), to(#999999)); /* Saf4+, Chrome */
 	background-image: -moz-linear-gradient(top, rgba(0,0,0,0.19), rgba(0,0,0,0) 5px, rgba(0,0,0,0) ); /* FF3.6 */
 	background-image: -webkit-linear-gradient(top, rgba(0,0,0,0.19), rgba(0,0,0,0) 5px, rgba(0,0,0,0) ); /* Chrome 10+, Saf5.1+ */
 	background-image: -o-linear-gradient(top, rgba(0,0,0,0.19), rgba(0,0,0,0) 5px, rgba(0,0,0,0) ); /* Opera 11.10+ */
@@ -612,111 +456,6 @@ Not advised to edit stuff below this line
   margin-top: 8px;
   margin-left: 0;
 }
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  display: none;
-  float: left;
-  min-width: 160px;
-  padding: 5px 0;
-  margin: 2px 0 0;
-  list-style: none;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  *border-right-width: 2px;
-  *border-bottom-width: 2px;
-  -webkit-border-radius: 6px;
-     -moz-border-radius: 6px;
-          border-radius: 6px;
-  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-     -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-          box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-  -webkit-background-clip: padding-box;
-     -moz-background-clip: padding;
-          background-clip: padding-box;
-}
-
-.dropdown-menu.pull-right {
-  right: 0;
-  left: auto;
-}
-
-.dropdown-menu .divider {
-  *width: 100%;
-  height: 1px;
-  margin: 9px 1px;
-  *margin: -5px 0 5px;
-  overflow: hidden;
-  background-color: #e5e5e5;
-  border-bottom: 1px solid #ffffff;
-}
-
-.dropdown-menu li > a {
-  display: block;
-  padding: 3px 20px;
-  clear: both;
-  font-weight: normal;
-  line-height: 1.3em;
-  color: #333333;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.dropdown-menu li > a:hover,
-.dropdown-menu li > a:focus,
-.dropdown-submenu:hover > a {
-  color: #ffffff;
-  text-decoration: none;
-  background-color: #0081c2;
-  background-image: -moz-linear-gradient(top, #0088cc, #0077b3);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#0077b3));
-  background-image: -webkit-linear-gradient(top, #0088cc, #0077b3);
-  background-image: -o-linear-gradient(top, #0088cc, #0077b3);
-  background-image: linear-gradient(to bottom, #0088cc, #0077b3);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc', endColorstr='#ff0077b3', GradientType=0);
-}
-
-.dropdown-menu .active > a,
-.dropdown-menu .active > a:hover {
-  color: #ffffff;
-  text-decoration: none;
-  background-color: #0081c2;
-  background-image: -moz-linear-gradient(top, #0088cc, #0077b3);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#0077b3));
-  background-image: -webkit-linear-gradient(top, #0088cc, #0077b3);
-  background-image: -o-linear-gradient(top, #0088cc, #0077b3);
-  background-image: linear-gradient(to bottom, #0088cc, #0077b3);
-  background-repeat: repeat-x;
-  outline: 0;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc', endColorstr='#ff0077b3', GradientType=0);
-}
-
-.dropdown-menu .disabled > a,
-.dropdown-menu .disabled > a:hover {
-  color: #999999;
-}
-
-.dropdown-menu .disabled > a:hover {
-  text-decoration: none;
-  cursor: default;
-  background-color: transparent;
-  background-image: none;
-  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
-}
-
-.open > .dropdown-menu {
-  display: block;
-}
-
-
-
-
-
 
 .alert {
   padding: 8px 35px 8px 14px;
@@ -824,7 +563,7 @@ display:block;
 float:left;
 border-right:1px solid #5d5d5d;
 border-left:2px solid #929292;
-width:162px;
+width:135px;
 height:2.75em;
 border-bottom:1px solid #575757;
 border-top:1px solid #797979;
@@ -848,17 +587,14 @@ border-top:1px solid #797979;
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
     background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
     background-color:#383838;
-    
     -moz-box-shadow: inset 0 1px 2px 2px #000;
     -webkit-box-shadow: inset 0 1px 2px 2px #000;
     box-shadow: inset 0 1px 2px 2px #000;
 }
 
 .toolnav li a {
-	color:white;
     font-weight: bold;
-    text-shadow: 0 -1px 3px #202020;
-	
+    
 	text-align:center;
 	display:block;
 	line-height:1.4em;
@@ -866,26 +602,48 @@ border-top:1px solid #797979;
 	width: 100%;
 	height: 100%;
 	cursor: pointer;
+	border-radius: 3px;
+	color:#ffffff;
+	text-shadow: 0 -1px 3px #202020;
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
-    background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);	
+    background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
 
 }
+/*Temas de Botones*/
+.toolnav li a.blue {
+	text-shadow: 0 -1px 3px #0066cc;
+	background: #2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x
+}
+.toolnav li a.orange {
+	text-shadow: 0 -1px 3px #cc0000;
+	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
+}
+.toolnav li a.green {
+	text-shadow: 0 -1px 3px #468847;
+	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
+}
+.toolnav li a.white {
+text-shadow: none; color: #901429;
+background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
+}
+.toolnav li a.red {
+color: #ffffff; text-shadow: 0 -1px 3px #510814;
+background: linear-gradient(to bottom, #901429 0%,#B5122D 100%);
+}
+.toolnav li a.dark {
+background: #001121;
+}
+.toolnav li a.yellow {
+text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
+background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
+}
+
 .toolnav li  div.noticon {
 	clear: both;
 	display: inline-block;
 	margin-left: 8px;
 	top: 4px;
 }
-/*.noticon {
-    position: relative;
-    width: 24px;
-    height: 24px;
-    top: 2px;
-    left: 2px;
-    i {
-        color: #fff;
-    }
-}*/
 .toolnav li  div.noticon i {
 	color: white;
 	text-shadow: 0 -1px 3px #202020;
@@ -922,6 +680,10 @@ border-right:1px solid #5d5d5d;
 	border-width: 2px;
 }
 
+.fieldform legend {
+    position: relative;
+    left: 25%;
+    min-width: 50%;
 
-
+}
 

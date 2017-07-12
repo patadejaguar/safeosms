@@ -44,11 +44,12 @@ function jsrsReturn($payload) {
 }
 
 function jsrsEscape($str){
-	
+  //XXX: Parchalo --- preg_replace
   // escape ampersands so special chars aren't interpreted
-  $tmp = ereg_replace( "&", "&amp;", $str );
+  
+  $tmp = str_replace( "&", "&amp;", $str );
   // escape slashes  with whacks so end tags don't interfere with return html
-  return ereg_replace( "\/" , "\\/",$tmp); 
+  return str_replace( "\/" , "\\/",$tmp); 
 }
 
 /////////////////////////////
@@ -63,10 +64,10 @@ function jsrsReturnError($str){
   
   
   // escape quotes
-  $cleanStr = ereg_replace("\'","\\'",$str);
-  
+  $cleanStr = preg_replace("\'","\\'",$str);
+  //TODO: Cambiar esta mierda
   // !!!! --- Warning -- !!!
-  $cleanStr = "jsrsError: " . ereg_replace("\"", "\\\"", $cleanStr); 
+  $cleanStr = "jsrsError: " . preg_replace("\"", "\\\"", $cleanStr); 
   print ("<html><head></head><body " 
          . "onload=\"p=document.layers?parentLayer:window.parent;p.jsrsError('" . $C . "','" . urlencode($str) . "');\">"
          . $cleanStr . "</body></html>" );

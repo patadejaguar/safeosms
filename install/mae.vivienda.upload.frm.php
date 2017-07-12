@@ -253,7 +253,7 @@ for($i=0; $i<=$lim; $i++){
 								$calle		= str_replace("CALLE", "", $calle);
 								$calle		= str_replace("SN", "NUMEROSN", $calle);
 								//limpiar calle
-								$DCalle		= split("NUMERO", $calle); //(strpos($calle, "NUMERO") === false) ? split(" ", $calle) :  split("NUMERO", $calle);
+								$DCalle		= explode("NUMERO", $calle); //(strpos($calle, "NUMERO") === false) ? split(" ", $calle) :  split("NUMERO", $calle);
 								$calle		= trim($DCalle[0]);
 								$numero		= (isset($DCalle[1])) ? trim($DCalle[1]) : "SN";
 								

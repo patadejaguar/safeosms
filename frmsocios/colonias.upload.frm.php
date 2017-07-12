@@ -22,10 +22,107 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-	$xHP			= new cHPage("TR.Carga Automatizada de Localidades");
+$xHP			= new cHPage("TR.Carga Automatizada de colonias");
+$xFi			= new cFileImporter();
+$xQL			= new MQL();
+$xLis			= new cSQLListas();
+$xF				= new cFecha();
+$xLog			= new cCoreLog();
 
-$oficial        = elusuario($iduser);
+$xT				= new cTipos();
 ini_set("max_execution_time", 600);
+
+$xHP->init();
+
+$xFRM			= new cHForm("frmcolonias", "colonias.upload.frm.php");
+
+$doc1			= (isset($_FILES["idarchivo"])) ? $_FILES["idarchivo"] : false;
+$sieliminar		= parametro("ideliminar", false, MQL_BOOL);
+
+$corregir		= parametro("idcorregir", false, MQL_BOOL);
+
+class cTmp {
+	public $CP		= 1;
+	public $NOM		= 2;
+	public $TIPO	= 3;
+	public $EDO		= 5;
+	public $MUN		= 4;
+	public $ID_EDO	= 8;
+	public $CIUDAD	= 6;
+	public $ID_MUN	= 12; 
+	/*$ncolonia		= $cT->cChar($datos[1]);
+	$tcolonia		= $cT->cChar($datos[2]);
+	$estado			= $cT->cChar($datos[4]);
+	$municipio		= $cT->cChar($datos[3]);
+	
+	$numEstado		= $cT->cInt($datos[7]);
+		
+	$ciudad			= $cT->cChar($datos[5]);*/	
+}
+$tmp			= new cTmp();
+$mFecha			= $xF->get();
+$mSucursal		= getSucursal();
+
+if($doc1 == false){
+	$xFRM->setTitle($xHP->getTitle());
+	$xFRM->OFile("idarchivo", "TR.Archivo a Importar");
+	$xFRM->OCheck("TR.Eliminar Datos", "ideliminar");
+	$xFRM->OCheck("TR.Corregir Datos", "idcorregir");
+	
+	$xFRM->addGuardar();
+} else {
+	if($sieliminar == true){
+		$xQL->setRawQuery("DELETE FROM general_colonias");
+	}
+	$xFi->setType("txt");
+	$xFi->setCharDelimiter("|");
+	$xFi->setLimitCampos(15);
+	$xFi->setToUTF8();
+	$xFi->setProbarMB();
+	if($xFi->processFile($doc1) == true){
+		$data		= $xFi->getData();
+		$conteo		= 1;
+		foreach ($data as $rows){
+			$xFi->setDataRow($rows);
+			 $cp		= $xFi->getEntero($tmp->CP);
+			 $nombre	= $xFi->getV($tmp->NOM);
+			 if($cp > 0 AND $nombre != ""){
+			 	$xCol	= new cGeneral_colonias();
+			 	$xCol->ciudad_colonia( $xFi->getV($tmp->CIUDAD, "") );
+			 	$xCol->codigo_de_estado($xFi->getEntero($tmp->ID_EDO) );
+			 	$xCol->codigo_de_municipio($xFi->getEntero($tmp->ID_MUN) );
+			 	$xCol->codigo_postal($cp);
+			 	$xCol->estado_colonia($xFi->getV($tmp->EDO, ""));
+			 	$xCol->fecha_de_revision($mFecha);
+			 	$xCol->municipio_colonia($xFi->getV($tmp->MUN, ""));
+			 	$xCol->nombre_colonia($nombre);
+			 	$xCol->sucursal($sucursal);
+			 	$xCol->tipo_colonia( $xT->setNoAcentos($rows[2]) );
+			 	$xCol->idgeneral_colonia( $xCol->query()->getLastID() );
+			 	$res = $xCol->query()->insert()->save();
+			 	if($res == false){
+			 		$xLog->add("ERROR\tAl agregar el CP $cp  -$nombre-\r\n");
+			 	} else {
+			 		$xLog->add("OK\tSe agrega el CP $cp con Nombre $nombre\r\n");
+			 	}
+			 } else {
+				$xLog->add("ERROR\tAl agregar el CP $cp -- $nombre --\r\n");
+			}
+		}
+	} else { 
+		$xLog->add($xFi->getMessages(), $xLog->DEVELOPER);
+	}
+	if($corregir == true){
+		$xQL->setRawQuery("CALL `proc_colonias_activas`");
+		$xQL->setRawQuery("CALL `sp_correcciones`()");
+	}
+	$xFRM->addLog($xLog->getMessages());
+}
+
+echo $xFRM->get();
+
+$xHP->fin();
+exit;
 
 //require_once("." . TINYAJAX_PATH . "/TinyAjax.php");
 //$jxc = new TinyAjax();
@@ -129,6 +226,10 @@ echo "<form name=\"frmConvs\" method=\"POST\" action=\"colonias.upload.frm.php?o
 						
 						$cT	= new cTipos();
 						if ($gestor) {
+							$cT->setForceClean();
+							$cT->setToUTF8();
+							$cT->setForceMayus();
+														
 							while (!feof($gestor)) {
 								$bufer			= $cT->setNoAcentos(fgets($gestor, 4096));
 								//$bufer			= stream_get_line($gestor, "\r\n");
@@ -139,6 +240,7 @@ echo "<form name=\"frmConvs\" method=\"POST\" action=\"colonias.upload.frm.php?o
 
 								$datos			= explode("|", $bufer, 16);
 								$cpostal		= $datos[0];
+
 								$ncolonia		= $cT->cChar($datos[1]);
 								$tcolonia		= $cT->cChar($datos[2]);
 								$estado			= $cT->cChar($datos[4]);
@@ -181,8 +283,9 @@ echo "<form name=\"frmConvs\" method=\"POST\" action=\"colonias.upload.frm.php?o
 								}
 							$iReg++;
 							}
+							fclose($gestor);
 						}
-						fclose ($gestor);
+						
 						$html = new cHTMLObject();
 						
 							$xlog		= new cFileLog( ("carga_batch-colonias-" . date("Ymd")), true);

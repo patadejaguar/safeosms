@@ -65,7 +65,7 @@ FROM
 			`personas_perfil_transaccional_tipos`.
 			`idpersonas_perfil_transaccional_tipos`			 
 WHERE
-	(`operaciones_recibos`.`numero_socio` =$persona)";
+	(`operaciones_recibos`.`numero_socio` =$persona) ORDER BY `operaciones_recibos`.`fecha_operacion` DESC";
 $titulo			= "";
 $archivo		= "";
 
@@ -82,24 +82,24 @@ $xT->setTipoSalida($out);
 $xT->setFootSum(array( 4 => "monto", 9 => "unidades", 10 => "equivalencia"));
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+
+
 $xRPT->setBodyMail($body);
-
-
 $xRPT->addContent($body);
 
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
 $xRPT->addContent($xSoc->getFicha(true));
-$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
+
+$xRPT->setOmitir("persona");
+$xRPT->setProcessSQL();
+
+
+//$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
 
 //$xT		= new cTabla($xL->getListadoDePerfil($persona) );
 //$xRPT->addContent( $xT->Show(  ) );
-if( MODO_DEBUG == true ){
-	$periodo_inicial= date("Ym", $xF->getInt($FechaInicial));
-	$periodo_final	= date("Ym", $xF->getInt($FechaFinal));	
-	//$xT2	= new cTabla($xL->getAMLAcumuladoDeEgresos($periodo_inicial, $periodo_final, $persona));
-	//$xRPT->addContent($xT2->Show());
-}
+
 
 //============ Agregar HTML
 //$xRPT->addContent( $xHP->init($jsEvent) );

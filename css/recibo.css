@@ -1,9 +1,5 @@
-html {
-	font-size: 10px;
-	font-family: monospace !important;
-}
 body {
-    font-family: monospace !important;
+    font: 8pt "Trebuchet MS", Arial, Helvetica, sans-serif !important;
 }
 
 .Estilo1 {

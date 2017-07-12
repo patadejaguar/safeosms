@@ -36,8 +36,10 @@ $FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $Fe
 $FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
-
-
+$extenso		= parametro("ext", false, MQL_BOOL);
+$conchecking	= parametro("condictamen", false, MQL_BOOL);
+$consistema		= parametro("consistema", false, MQL_BOOL);
+$tiporiesgo		= parametro("tipoderiesgo", false, MQL_INT);
 $titulo			= "";
 $archivo		= "";
 
@@ -54,14 +56,18 @@ $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
 
-
+$CamposExtras	= "";
+if($extenso	== true OR $consistema == true){
+	$CamposExtras	= ",`mensaje`";
+}
 //Bajo revision
 
-$sql		= $xlistas->getListadoDeAlertas(false, $FechaInicial, $FechaFinal,false, " AND `estado_en_sistema` =" . SYS_UNO);
-$xT			= new cTabla($sql);
-$xT->setTipoSalida($out);
+$sql		= $xlistas->getListadoDeAlertas($tiporiesgo, $FechaInicial, $FechaFinal,false, " AND `estado_en_sistema` =" . SYS_UNO, $CamposExtras);
+
+
 $xRPT->setSQL($sql);
-$xRPT->addContent( $xT->Show(  ) );
+$xRPT->setProcessSQL();
+
 //Descartados
 
 

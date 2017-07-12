@@ -26,7 +26,7 @@
 $xHP			= new cHPage("TR.Depositos a_la_vista");
 $xF				= new cFecha();
 $jxc 			= new TinyAjax();
-$iddocto 		= parametro("idcuenta", DEFAULT_CUENTA_CORRIENTE);
+$iddocto 		= parametro("idcuenta", 0, MQL_INT);
 $recibo			= parametro("idrecibo");
 $actload 		= "";
 $ReciboIDE		= 0;
@@ -36,7 +36,7 @@ $action			= parametro("action", SYS_NINGUNO);
 $xCaja			= new cCaja();
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	header ("location:../404.php?i=200"); }
-if ($iddocto != false){ $actload = " onload='jsImprimirRecibo();' ";	}
+if ($iddocto > 0){ $actload = " onload='jsImprimirRecibo();' ";	}
 	//
 
 function jsaGetIDE($socio, $monto, $tipo_de_pago){
@@ -75,7 +75,8 @@ $xFRM->addCobroBasico();
 $xFRM->addHElem($xDate->get("TR.Fecha"));
 $xFRM->addObservaciones();
 
-$xFRM->addJsBasico(iDE_CAPTACION);
+$xFRM->addDataTag("role", iDE_CVISTA);
+//$xFRM->addJsBasico(iDE_CAPTACION);
 $jxc ->drawJavaScript(false, true);
 } else {
 		$xT 			= new cTipos();

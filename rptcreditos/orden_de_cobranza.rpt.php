@@ -57,14 +57,14 @@ $xLoc			= new cLocal();
 $xHP->addJsFile("../js/jquery/jquery.js");
 $xHP->addJsFile("../js/general.js");
 
-$xEmp		= new cEmpresas($empresa); $xEmp->init();
-$xTPer		= new cPeriocidadDePago($periocidad); $xTPer->init();
+$xEmp			= new cEmpresas($empresa); $xEmp->init();
+$xTPer			= new cPeriocidadDePago($periocidad); $xTPer->init();
 
-if($xEmp->getEsPeriodoCerrado($periocidad, $periodo) == false){	$xHP->goToPageError(20101, $out); }
-$periodo	= $xF->semana();
-$bheader	= "";
-$title		= $xHP->getTitle() . "_" . $xEmp->getNombre() . "_" . $xTPer->getNombre() . "_$periodo";
-$xPer		= $xEmp->getOPeriodo(false, false, $idnomina);
+if($xEmp->getEsPeriodoCerrado($periocidad, $periodo, $idnomina) == false){	$xHP->goToPageError(20101, $out); }
+$periodo		= $xF->semana();
+$bheader		= "";
+$title			= $xHP->getTitle() . "_" . $xEmp->getNombre() . "_" . $xTPer->getNombre() . "_$periodo";
+$xPer			= $xEmp->getOPeriodo(false, false, $idnomina);
 
 $xRPT->setTitle($title);
 $xRPT->setOut($out);
@@ -78,7 +78,7 @@ $xRPT->setResponse();
     	$xFMT			= new cFormato( $xEmp->getIDDeFormatoDeAviso() );
     	$xFMT->setEmpresaPeriodo($empresa, $idnomina);
 		$xFMT->setProcesarVars();
-		
+		//$xFMT->setOut($out);
 	   	$xRPT->addContent( $xFMT->get() );
     	$xRPT->addContent( "<hr />" );
     	
@@ -104,7 +104,18 @@ $xRPT->setResponse();
 						   ));
      //$xT->getFieldsSum()
      $xRPT->addContent( $xT->Show() );
+     //=================== Agregar Pie de Formato ================
+     $xFMT			= new cFormato();
+     //$xFMT->setOut($out);
+     $xFMT->init($xFMT->FMT_NOMINA_ENVP);
      
+     $xFMT->setEmpresaPeriodo($empresa, $idnomina);
+     $xFMT->setProcesarVars();
+
+     $xRPT->addContent( "<hr />" );
+     $xRPT->addContent( $xFMT->get() );
+     
+     //===========================================================
     echo  $xRPT->render(true);
 
 ?>

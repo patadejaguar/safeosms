@@ -60,7 +60,7 @@ function AjaxShowEditForm($grid_id, $id_column_value)
 function AjaxSaveForm($id_column, $id_value, $grid_id, $values_string)
 {
 	$values = array();
-	$values = split("value_separator_grid", $_SESSION[$grid_id]->StripTags(trim($values_string)));
+	$values = explode("value_separator_grid", $_SESSION[$grid_id]->StripTags(trim($values_string)));
 
 	$_SESSION[$grid_id]->SaveRow($id_column, $id_value, $values);
 	$_SESSION[$grid_id]->id_row_value_edit_form = ""; //Remove inputs. 
@@ -71,7 +71,7 @@ function AjaxSaveForm($id_column, $id_value, $grid_id, $values_string)
 function AjaxSaveInsertForm($id_column, $grid_id, $values_string)
 {
 	$values = array();
-	$values = split("value_separator_grid", $_SESSION[$grid_id]->StripTags(trim($values_string)));
+	$values = explode("value_separator_grid", $_SESSION[$grid_id]->StripTags(trim($values_string)));
 
 	$_SESSION[$grid_id]->InsertRow($id_column, $values);
 

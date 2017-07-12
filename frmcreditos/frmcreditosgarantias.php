@@ -1,178 +1,110 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage();
-$xHP->setTitle($xHP->lang(array("registro", "de", "garantia", "real")));
+$xHP		= new cHPage("TR.GARANTIAS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-$jxc = new TinyAjax();
+$observaciones= parametro("idobservaciones");
+$xHP->addJTableSupport();
+$xHP->init();
 
-function JSsetDatosHeredados($socio, $form){
-	$DSocio = getDatosSocio($socio);
-	$DDom = getDatosDomicilio($socio);
-	$telefono 		= $DDom["telefono_residencial"];
-	$telefonomovil 	= $DDom["telefono_movil"];
-	$domicilio = domicilio($socio);
 
-			$tab = new TinyAjaxBehavior();
-			$tab -> add(TabSetValue::getBehavior('idTFijo', $telefono));
-			$tab -> add(TabSetValue::getBehavior('idDomicilio', $domicilio));
-			$tab -> add(TabSetValue::getBehavior('idTMovil', $telefonomovil));
 
-			$tab -> add(TabSetValue::getBehavior('idNombres', $DSocio["nombrecompleto"]));
-			$tab -> add(TabSetValue::getBehavior('idApPaterno', $DSocio["apellidopaterno"]));
-			$tab -> add(TabSetValue::getBehavior('idApMaterno', $DSocio["apellidomaterno"]));
-			$tab -> add(TabSetValue::getBehavior('idCurp', $DSocio["curp"]));
-			return $tab -> getString();
-}
-function JSsetDomicilioMismo($socio, $HDomicilio, $form){
-	if($HDomicilio == "mismo"){
-	$domicilio = domicilio($socio);
-	$DDom = getDatosDomicilio($socio);
-	$telefono = $DDom["telefono_residencial"];
-	$telefonomovil = $DDom["telefono_movil"];
-			$tab = new TinyAjaxBehavior();
-			$tab -> add(TabSetValue::getBehavior('idTFijo', $telefono));
-			$tab -> add(TabSetValue::getBehavior('idTMovil', $telefonomovil));
-			$tab -> add(TabSetValue::getBehavior('idDomicilio', $domicilio));
-			return $tab -> getString();
-	}
-}
-$jxc ->exportFunction('JSsetDatosHeredados', array('idNumeroSocio', 'frmreferencias'));
-$jxc ->exportFunction('JSsetDomicilioMismo', array('idSocioRelacionado', 'idDomicilio', 'frmreferencias'));
-$jxc ->process();
-
-$idsolicitud 			= (isset($_GET["solicitud"])) ? $_GET["solicitud"] : DEFAULT_CREDITO;
-$montovaluado			= (isset($_POST["montoval"])) ? $_POST["montoval"] : SYS_CERO;
-$doctopresentado 		= (isset($_POST["docto"])) ? $_POST["docto"] : SYS_CERO;
-
-$action				= parametro("x", SYS_NINGUNO, MQL_RAW);
-$msg				= "";
-
-/* verifica si el Numero de Solicitud exista */
-if  ($idsolicitud == DEFAULT_CREDITO) { echo JS_CLOSE; }
-$xCred				= new cCredito($idsolicitud); $xCred->init();
-$idsocio			= $xCred->getClaveDePersona();
-
-echo $xHP->getHeader(true);
-
-$xSQL			= new cSQLListas();
-?>
-<body>
-<fieldset>
-<legend>INGRESO DE GARANTIAS</legend>
-<form name="frmagarantias" action="./frmcreditosgarantias.php?solicitud=<?php echo $idsolicitud; ?>&x=<?php echo getRndKey(); ?>" method="POST">
-<table >
-<tbody>
-	<?php
-	if(PERMITIR_EXTEMPORANEO== true){ echo CTRL_FECHA_EXTEMPORANEA;	}
-
-	?>
-<tr>
-	<td>Tipo</td>
-	<td><?php
-         ctrl_select("creditos_tgarantias", "  name=\"tipogarantia\" id=\"idtipogarantia\" ");
-	?></td>
-	<td>Tipo de Valuacion</td>
-	<td><?php
-         ctrl_select("creditos_tvaluacion", " name=\"tipoval\" id=\"idtipoval\" ");
-	?></td>
-	</tr>
-	<tr>
-	<td colspan="1">Fecha de Adquisici&oacute;n</td><td><?php
-	echo ctrl_date(0, 0, "", "NACIMIENTO");
-	?></td>
-	<td>Monto Valuado</td><td><input type="number" name="montoval" value="0.00" class="mny" /></td>
-	</tr>
-		<tr>
-		<td>Descr&iacute;balo</td>
-		<td colspan="3"><input name="describelo" type="text" size="60" maxlength="200" /></td>
-	</tr>
-	<tr>
-		<td>Docto. Presentado</td>
-		<td colspan="3"><input name="docto" type="text" size="40" maxlength="200" /></td>
-	</tr>
-	<tr>
-	<td>Clave Persona Prop.</td>
-	<td><input name='idsocio' type='number' value='<?php echo $idsocio; ?>' size='12' onchange="envsoc();" class='mny' /></td>
-	<td>Nombre Propietario</td>
-	<td><input name='nombresocio' type='text' value='<?php echo getNombreSocio($idsocio); ?>' size="30" maxlength="80" /></td>
-	</tr>
-	<tr>
-	<td>Estado Fisico</td>
-	<td><?php
-			$gssql= "SELECT * FROM socios_patrimonioestatus";
-			$cEFis = new cSelect("estadofisico", "", $gssql);
-			$cEFis->setEsSql();
-			$cEFis->show(false);
-		?>
-	</td>
-	<td>Observaciones</td>
-	<td colspan="1"><input name="observaciones" type="text" size="30" maxlength="100" /></td>
-	</tr>
-	<tr>
-		<th colspan="4"><input type="button" value="GUARDAR REGISTRO" onclick="frmSubmit();" /></th>
-	</tr>
-</tbody>
-</table>
-<?php
-//jsbasic("frmagarantias", "", ".");
-$js		= new jsBasicForm("frmagarantias");
-echo $js->get();
-$nkey					= getRndKey();
-/* ------------------------------------------------------------------------------------------------*/
-if (($montovaluado>TOLERANCIA_SALDOS) and $action!=$nkey) {
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+if($credito<= DEFAULT_CREDITO){
+	$xFRM->addCreditBasico();	
+} else {
 	
-		$tipogarantia				= $_POST["tipogarantia"];
-		$fecharecibo				= fechasys();
-			if(PERMITIR_EXTEMPORANEO== true){
-				if(isset($_POST["elanno98"])){
-						$fecharecibo = $_POST["elanno98"] . "-" . $_POST["elmes98"] . "-" . $_POST["eldia98"];
-				}
-			}
-		$fechaadquisicion			= $_POST["elanno0"] ."-". $_POST["elmes0"] ."-". $_POST["eldia0"];
-		$tipovaluacion				= $_POST["tipoval"];
-		$observaciones				= $_POST["observaciones"];
-		$sociopropietario 			= $_POST["idsocio"];
-		$propietario 				= $_POST["nombresocio"];
-		$estadofisico 				= $_POST["estadofisico"];
-		$descrito 					= $_POST["describelo"];
-		
-		$xCred						= new cCredito($idsolicitud);
-		$xCred->init();
-		$xCred->addGarantiaReal($tipogarantia, $tipovaluacion, $montovaluado, $sociopropietario, $propietario, $fechaadquisicion, $doctopresentado,
-								$estadofisico, $descrito, $observaciones, $fecharecibo);
-		
-}
-?>
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$xFRM->addHElem($xCred->getFichaMini());
+	}
+	
+	$sql = $xLi->getListadoDeGarantiasReales("", $credito);
+	
+	$xFRM->addCerrar();
+	$xFRM->OHidden("credito", $credito);
+	$xFRM->OButton("TR.AGREGAR VEHICULO", "jsAddAuto()", $xFRM->ic()->VEHICULO);
+	$xFRM->OButton("TR.AGREGAR INMUEBLE", "jsAddInmueble()", $xFRM->ic()->EDIFICIO);
+	/* ===========		GRID JS		============*/
+	
+	$xHG	= new cHGrid("iddivgarantias",$xHP->getTitle());
+	
+	$xHG->setSQL($sql);
+	$xHG->addList();
+	$xHG->addKey("clave");
 
-<p class="aviso"><?php echo $msg; ?></p>
-</form>
-</fieldset>
-<?php
-
-	$sql_final = $xSQL->getListadoDeGarantiasReales("", $idsolicitud); // $sqlb17_alt . " AND solicitud_garantia=$idsolicitud ";
-	$myTab = new cTabla($sql_final);
-	$myTab-> addTool(SYS_UNO);
-	$myTab-> addTool(SYS_DOS);
-	$myTab->setKeyField("idcreditos_garantias");
-	$myTab->Show("", false);
-
-?>
-</body>
-<script  >
-	<?php
-		echo  $myTab->getJSActions();
+	$xHG->col("tipo", "TR.TIPO", "10%");
+	$xHG->col("recibido", "TR.FECHA", "10%");
+	$xHG->col("estado", "TR.ESTATUSACTIVO", "10%");
+	$xHG->col("valuacion", "TR.VALUADO", "10%");
+	$xHG->col("propietario", "TR.PROPIETARIO", "10%");
+	$xHG->col("valor", "TR.VALOR", "10%");
+	
+//	$xHG->OToolbar("TR.AGREGAR VEHICULO", "jsAddAuto()", "grid/car.png");
+//	$xHG->OToolbar("TR.AGREGAR INMUEBLE", "jsAddInmueble()", "grid/building.png");
+	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+	$xFRM->addHElem("<div id='iddivgarantias'></div>");
+	$xFRM->addJsCode( $xHG->getJs(true) );
+	echo $xFRM->get();
 	?>
-</script>
-</html>
+	<script>
+	var xG	= new Gen();
+	function jsEdit(id){
+		xG.w({url:"../frmcreditos/creditos-garantias.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivgarantias});
+	}
+	function jsAddAuto(){
+		var idcredito = $("#credito").val();
+		xG.w({url:"../frmcreditos/creditos-garantias.new.frm.php?tipo=2&credito=" +idcredito, tiny:true, callback: jsLGiddivgarantias});
+	}
+	function jsAddInmueble(){
+		var idcredito = $("#credito").val();
+		xG.w({url:"../frmcreditos/creditos-garantias.new.frm.php?tipo=1&credito=" +idcredito, tiny:true, callback: jsLGiddivgarantias});
+	}	
+	function jsDel(id){
+		xG.rmRecord({tabla:"creditos_garantias", id:id, callback:jsLGiddivgarantias});
+	}
+	</script>
+	<?php
+	
+}
+
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+
+?>

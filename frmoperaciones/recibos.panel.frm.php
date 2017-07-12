@@ -23,6 +23,7 @@ $xHP		= new cHPage("TR.Panel de Recibos");
 $jxc 		= new TinyAjax();
 $xSQL		= new cSQLListas();
 
+
 $fechaRecibo	= fechasys();
 
 function getReciboDesc($numero){
@@ -37,16 +38,7 @@ function getReciboDesc($numero){
 		return $tab -> getString();
 	}
 }
-function jsaEliminarRecibo($numero){
-	if ( setNoMenorQueCero($numero )> 0 ){
-		$oficial 	= elusuario( $_SESSION["log_id"] );
-		$cRec		= new cReciboDeOperacion(false, false, $numero);
-		$cRec->setNumeroDeRecibo($numero);
-		$cRec->setRevertir();
 
-	return  $cRec->getMessages(OUT_HTML);
-	}
-}
 
 function jsaSetTotal($recibo){
 	$xRec	= new cReciboDeOperacion(false, true, $recibo);
@@ -54,18 +46,12 @@ function jsaSetTotal($recibo){
 	$xRec->setGenerarBancos(false);
 	$xRec->setGenerarPoliza(false);
 	$xRec->setGenerarTesoreria(false);
-	$xRec->setForceUpdateSaldos(true);
-	$xRec->setFinalizarRecibo(true);
+	$xRec->setCuandoSeActualiza();
 	$msg	= "";
-	if($xRec->getOrigen() == TESORERIA_RECIBOS_ORIGEN_MIXTO OR $xRec->getOrigen() == TESORERIA_RECIBOS_ORIGEN_CRED){
-		$credito	= $xRec->getCodigoDeDocumento();
-		$xUtil		= new cUtileriasParaCreditos();
-		$msg	.= $xUtil->setCuadrarCreditosByMvtos($credito);
-	}
-	$msg	.= $xRec->getMessages(OUT_TXT);
+	$msg	.= $xRec->getMessages(OUT_HTML);
 	return  $msg;
 }
-function jsaSetFecha($recibo, $fecha, $nuevoperiodo){
+function jsaSetFecha($recibo, $fecha){
 	$xRec	= new cReciboDeOperacion(false, true, $recibo);
 	$xF		= new cFecha();
 	$fecha	= $xF->getFechaISO($fecha);
@@ -73,6 +59,15 @@ function jsaSetFecha($recibo, $fecha, $nuevoperiodo){
 	if( $xF->getInt($fecha) != $xF->getInt($xRec->getFechaDeRecibo()) ){
 		$xRec->setFecha($fecha, true);
 	}
+
+	return  $xRec->getMessages(OUT_HTML);
+}
+function jsaSetPeriodo($recibo, $nuevoperiodo){
+	$xRec	= new cReciboDeOperacion(false, true, $recibo);
+	$xF		= new cFecha();
+	
+	$xRec->init();
+	
 	if($xRec->getPeriodo() != $nuevoperiodo){
 		$xRec->setPeriodo($nuevoperiodo, true);
 	}
@@ -213,11 +208,15 @@ function jsaRegenerarPrepoliza($recibo){
 	return $xUtilCont->getMessages(OUT_HTML);
 }
 
+
+
 $jxc ->exportFunction('getReciboDesc', array('idNumeroRecibo'));
 $jxc ->exportFunction('jsaSetTotal', array('idNumeroRecibo'), '#fb_frmrecibospanel');
-$jxc ->exportFunction('jsaSetFecha', array('idNumeroRecibo', 'idfecha-100', 'idnuevoperiodo'), '#fb_frmrecibospanel');
+$jxc ->exportFunction('jsaSetFecha', array('idNumeroRecibo', 'idnuevafecha'), '#fb_frmrecibospanel');
+$jxc ->exportFunction('jsaSetPeriodo', array('idNumeroRecibo', 'idnuevoperiodo'), '#fb_frmrecibospanel');
+
 $jxc ->exportFunction('jsaSetGenerarPolizaPorRecibo', array('idNumeroRecibo'), '#fb_frmrecibospanel');
-$jxc ->exportFunction('jsaEliminarRecibo', array('idNumeroRecibo'), '#fb_frmrecibospanel');
+//$jxc ->exportFunction('jsaEliminarRecibo', array('idNumeroRecibo'), '#fb_frmrecibospanel');
 
 $jxc ->exportFunction('jsaAjustarTotal', array('idNumeroRecibo', 'idOperacion'), '#fb_frmrecibospanel');
 $jxc ->exportFunction('jsaRegenerarPrepoliza', array('idNumeroRecibo'), '#fb_frmrecibospanel');
@@ -228,8 +227,7 @@ $idrecibo 	= parametro("cNumeroRecibo", 0, MQL_INT); $idrecibo 	= parametro("rec
 
 
 $xHP->setIncludeJQueryUI();
-echo $xHP->getHeader();
-echo $xHP->setBodyinit();
+$xHP->init();
 
 $xTxt	= new cHText(); $xBtn	= new cHButton(); $xDate		= new cHDate();
 
@@ -271,25 +269,28 @@ $idrecibo		= "0";
 	$fechaRecibo	= $xRec->getFechaDeRecibo();
 	$totalRecibo	= $xRec->getTotal();
 	
+	
 	$xBtn			= new cHButton();
 	$xHNot			= new cHNotif();
 	
-	$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", "fecha", "cmdGo5");
-	$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", "actualizar", "cmdGo6");
-	$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()", "dinero", "cmdGo6");
-	$xFRM->OButton("TR.Reporte del Recibo", "jsReportRecibo($idrecibo)", "reporte", "cmdGo7");
+	$xFRM->addRefrescar();
 	
-	$xFRM->OButton("TR.Agregar Bancos", "jsAddBancos()", "bancos", "cmdGo11");
-	$xFRM->OButton("TR.Agregar Tesoreria", "jsAddTesoreria()", "dinero", "cmdGo12");
+	$xFRM->addRecibosComando($xRec->getCodigoDeRecibo(), $xRec->getURI_Formato());
 	
-	$xFRM->OButton("TR.Reimprimir Recibo", "ImprimirRecibo()", "imprimir", "cmdGo8");
-	$xFRM->OButton("TR.Editar Recibo", "actualizaRec($idrecibo)", $xFRM->ic()->EDITAR, "cmdGo9");
-	$xFRM->OButton("TR.Eliminar Recibo", "jsEliminarRecibo()", $xFRM->ic()->ELIMINAR, "cmdGo10");
+	$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", $xFRM->ic()->CALENDARIO );
+	$xFRM->OButton("TR.Cambiar PERIODO", "jsGoActualizarPeriodo()",$xFRM->ic()->CALENDARIO1 );
+	$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", $xFRM->ic()->DINERO );
+	
+	$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()",$xFRM->ic()->EJECUTAR);
+	
+	
+	$xFRM->OButton("TR.Agregar Operacion", "jsAddMvto($idrecibo)", $xFRM->ic()->OPERACION);
+	$xFRM->OButton("TR.Cambiar Banco", "jsCambiarBanco($idrecibo)", $xFRM->ic()->BANCOS);
+
 	if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE) == true ){
-		$xFRM->OButton("TR.Factura", "jsGetFactura($idrecibo)", $xFRM->ic()->EXPORTAR);
 		$xFRM->OButton("TR.Generar Poliza", "jsaSetGenerarPolizaPorRecibo()", "poliza", "cmdGo4");
 		$xFRM->OButton("TR.Generar Pre-Poliza", "jsaRegenerarPrepoliza()", $xFRM->ic()->EJECUTAR);
-	}
+	}	
 	
 	$xFRM->addHTML( $xRec->getFicha(true, "", true) );
 	
@@ -298,33 +299,36 @@ $idrecibo		= "0";
 	$xTabs		= new cHTabs();
 /* ----------------- DATOS --------------- */
 		$cEdit		= new cTabla($xSQL->getListadoDeOperaciones("", "", $idrecibo));
-		$cEdit->addTool(SYS_UNO);
-		$cEdit->addTool(SYS_DOS);
+		$cEdit->addEditar();
+		$cEdit->addEliminar();
 		$cEdit->setEventKey("jsEditClick");
 		$cEdit->setTdClassByType();
 		$cEdit->setKeyField("idoperaciones_mvtos");
+		$cEdit->OButton("TR.Copiar", "jsSetClonar(" . HP_REPLACE_ID . ")", $xFRM->ic()->EXPORTAR);
+		$cEdit->setFootSum(array(8 => "monto"));		
+		
 		$xTabs->addTab("TR.OPERACIONES", $cEdit->Show());
 		$NumOpers	= $cEdit->getRowCount();
 		
 		$cBan		= new cTabla($xSQL->getListadoDeOperacionesBancarias("", "", "", false, false, " AND `bancos_operaciones`.`recibo_relacionado` = $idrecibo "));
-		
-		//$cBan->setEventKey("idcontrol");
-		$cBan->setKeyField("idcontrol");
-		$cBan->addTool(SYS_UNO);
-		$cBan->addTool(SYS_DOS);
-		$cBan->setFootSum(array(7 => "monto"));
-		$xTabs->addTab("TR.BANCOS", $cBan->Show());
-		//Operaciones de Tesorería
-		$cTes		= new cTabla($xSQL->getListadoDeOperacionesDeTesoreria("", "", $idrecibo));
-		$cTes->addTool(SYS_UNO);
-		$cTes->addTool(SYS_DOS);
-		$xTabs->addTab("TR.TESORERIA", $cTes->Show());
+		if(MODULO_CAJA_ACTIVADO == true){
+			//$cBan->setEventKey("idcontrol");
+			$cBan->setKeyField("idcontrol");
+			$cBan->addEditar();
+			$cBan->addEliminar();
+			$cBan->setFootSum(array(7 => "monto"));
+			$xTabs->addTab("TR.BANCOS", $cBan->Show());
+			//Operaciones de Tesorería
+			$cTes		= new cTabla($xSQL->getListadoDeOperacionesDeTesoreria("", "", $idrecibo));
+			$cTes->addTool(SYS_UNO);
+			$cTes->addTool(SYS_DOS);
+			$xTabs->addTab("TR.TESORERIA", $cTes->Show());
+		}
 		//agregar contable
 		if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE) == true ){
-			$xTbl	= new cTabla("SELECT * FROM `contable_polizas_proforma` WHERE `numero_de_recibo`=$idrecibo");
-			$xTabs->addTab("TR.Pre Poliza", $xTbl->Show());
+			$xTbl	= new cTabla($xSQL->getListadoDePrepoliza($idrecibo));
+			$xTabs->addTab("TR.Forma Poliza", $xTbl->Show());
 			//poliza relacionada
-			
 			$xTbl	= new cTabla($xSQL->getListadoDePolizasContables(false, false, false,false,false, " AND (`recibo_relacionado`=$idrecibo) "));
 			$xTabs->addTab("TR.Poliza", $xTbl->Show());
 			//factura XML
@@ -334,30 +338,39 @@ $idrecibo		= "0";
 		//
 		$xFRM->addHTML($xTabs->get());
 	$xFRM->addHTML( "<input type='hidden' name='cNumeroRecibo' id='idNumeroRecibo' value='$idrecibo'>
-	<input type='hidden' name='cFechaRecibo' id='idFechaRecibo' value='$fechaRecibo'>
-	<input type='hidden' name='cTotalRecibo' id='idTotalRecibo' value='$totalRecibo'>
+	<input type='hidden' name='cFechaRecibo' id='idFechaRecibo' value='$fechaRecibo'><input type='hidden' name='cTotalRecibo' id='idTotalRecibo' value='$totalRecibo'>
 	<input type='hidden' name='cOperacion' id='idOperacion' value=''>
 	");
 	$xFRM->addFooterBar("<br/>");
 	echo $xFRM->get();
 	$recAct		=  $cEdit->getJSActions();
 	
-	
+	//ACTUALIZAR Parcialidad y Numero 1
 	$xFRM2	= new cHForm("frmajustarparc");
+	$xFRM2->setNoFormTags();
+	$xFRM2->ODate("idnuevafecha", $fechaRecibo, "TR.NUEVA FECHA");
+	
+	$xFRM2->addGuardar("jsActualizarFecha()", "jsCancelAction()");
+	echo "<div class=\"inv formoid-default\" id=\"ajustarparc\">" . $xFRM2->get(false) . "</div>";
+	
+	//ACTUALIZAR Parcialidad y Numero 2
+	$xFRM3	= new cHForm("frmajustarparc2");
+	$xFRM3->setNoFormTags();
 	//$xFRM2->addHElem( $xTxt->getNumero("idnuevototal", $totalRecibo, "TR.Nuevo Monto") );
-	$xFRM2->addHElem( $xDate->get("TR.Nueva fecha", $fechaRecibo, 100 ));
-	$xFRM2->addHElem( $xTxt->getNumero("idnuevoperiodo", $xRec->getPeriodo(), "TR.Nueva periodo") );
-	$xFRM2->addSubmit("", "jsActualizarFecha()");
-	echo "<div class=\"inv\" id=\"ajustarparc\">" . $xFRM2->get() . "</div>";
+	$xFRM3->addHElem( $xTxt->getNumero("idnuevoperiodo", $xRec->getPeriodo(), "TR.Nuevo Periodo") );
+	
+	$xFRM3->addGuardar("jsActualizarPeriodo()", "jsCancelAction()");
+	echo "<div class=\"inv formoid-default\" id=\"ajustarparc2\">" . $xFRM3->get(false) . "</div>";
+	
 }
 ?>
 </body>
 <?php
 	$jxc ->drawJavaScript(false, true);
-	$xc	= new jsBasicForm("frmrecibospanel");
+	//$xc	= new jsBasicForm("frmrecibospanel");
 	//$xc->setIncludeJQuery();
-	$xc->setNombreCtrlRecibo("cNumeroRecibo");
-	$xc->show();
+	//$xc->setNombreCtrlRecibo("cNumeroRecibo");
+	//$xc->show();
 ?>
 <script>
 <?php echo $recAct; ?>
@@ -377,28 +390,38 @@ function jsSepararLetra(){
 		console.log("No se actualizo nada");
 	}
 }
-function actualizaRec(id) {
-	var xurl 	= "../utils/frm8db7028bdcdf054882ab54f644a9d36b.php?t=operaciones_recibos&f=idoperaciones_recibos=" + id;
-	var xG	= new Gen(); xG.w({url : xurl, h : 600, W : 800, tiny : true });
-}
-function jsEliminarRecibo(){ xGen.confirmar({ msg : "Eliminar Recibo y Operaciones?\nEl cambio es permanente." , callback : jsaEliminarRecibo }); }
-function ImprimirRecibo(){ xGen.w({ url: "<?php echo $uri; ?>", h:600, w : 800}); }
-function jsGetFactura(idrec){ xRec.factura(idrec); }
+
 function jsModificarPoliza(id){ var xG	= new Gen(); xG.w({url : "../frmcontabilidad/poliza_movimientos.frm.php?codigo=" +id, h : 600, W : 800, tiny : true }); }
-function jsReportRecibo(idrec){ xRec.reporte(idrec); }
-function jsGoActualizarFecha(){ getModalTip(mobj, $("#ajustarparc"), xGen.lang(["Actualizar", "Parcialidad"]) ); }
+function jsGoActualizarFecha(){ getModalTip(mobj, $("#ajustarparc"), xGen.lang(["Actualizar", "Fecha"]) ); }
+function jsGoActualizarPeriodo(){ getModalTip(mobj, $("#ajustarparc2"), xGen.lang(["Actualizar", "Parcialidad"]) ); }
+
 function jsActualizarFecha(){
 	var idrec	= $("#idNumeroRecibo").val();
-	//var nfecha	=  window.prompt("Nueva fecha","<?php echo $fechaRecibo; ?>");
-	var sip		= confirm("Desea Actualizar la fecha del Recibo y de operaciones");
-	if(sip){
-		//$("#idFechaRecibo").val(nfecha);
-		jsaSetFecha();
-		mobj.qtip("hide");
-	}
+	xGen.confirmar({msg: "Desea Actualizar la fecha del Recibo y de operaciones", callback : jsaSetFecha });
 }
-function jsEditClick(id){ jsUp('operaciones_mvtos','idoperaciones_mvtos', id); }
-function jsAddBancos() { xGen.w({url:"../frmbancos/movimientos_bancarios.frm.php?origen=recibo&item=" + idRecibo, tiny : true}); }
-function jsAddTesoreria(){ xGen.w({url:"../frmtesoreria/tesoreria_operaciones.frm.php?origen=recibo&item=" + idRecibo, tiny:true}); }
+function jsActualizarPeriodo(){
+	var idrec	= $("#idNumeroRecibo").val();
+	xGen.confirmar({msg: "Desea Actualizar el periodo del Recibo y de operaciones", callback : jsaSetPeriodo });
+}
+function jsEditClick(id){ xG.editar({tabla:'operaciones_mvtos',id:id}); }
+function jsBuscarPoliza(idrecibo){
+	$("#idclaveactual").val(idrecibo);
+	xRec.getExistePolizaContable({
+		recibo : idrecibo,	open : true
+		});
+}
+function jsSetClonar(id){
+	xGen.w({url:"operaciones.mvtos.clon.frm.php?id="+id, tiny:true,w:400});
+}
+function jsAddMvto(idrecibo){
+	xGen.w({url:"operaciones.mvtos.add.frm.php?recibo="+idrecibo, tiny:true,w:400});
+}
+function jsCambiarBanco(id){
+	xGen.w({url:"recibos.cambiar-banco.frm.php?recibo="+id, tiny:true,w:400});
+}
+function jsCancelAction(){
+	var id  = "#" + session(Configuracion.opciones.dialogID);
+	$(id).dialog( "close" );
+}
 </script>
 </html>

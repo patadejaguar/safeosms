@@ -30,10 +30,14 @@ include_once("../core/core.html.inc.php");
 
 $oficial = elusuario($iduser);
 //=====================================================================================================
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$credito			= $_GET["c"];
-$socio				= $_GET["s"];
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+
+$fecha_inicial 		= $FechaInicial;
+$fecha_final 		= $FechaFinal;
+$socio				= $persona;
 /**
  * @var $sOrden Indica que una cadena compuesta va a pasar en vez de parametros
  * tipo compuesto socio/solicitud

@@ -1,5 +1,6 @@
 <?php
 
+date_default_timezone_set('America/Mexico_City');
 include("FacturacionModerna/FacturacionModerna.php");
 
 /***************************************************************************
@@ -29,19 +30,19 @@ function pruebaTimbrado(){
   $debug = 1;
   
   //RFC utilizado para el ambiente de pruebas
-  $rfc_emisor 			= "ESI920427886";
+  $rfc_emisor = "TCM970625MB1";
   
   //Archivos del CSD de prueba proporcionados por el SAT.
   //ver http://developers.facturacionmoderna.com/webroot/CertificadosDemo-FacturacionModerna.zip
-  $numero_certificado 	= "20001000000200000192";
-  $archivo_cer 			= "utilerias/certificados/20001000000200000192.cer";
-  $archivo_pem 			= "utilerias/certificados/20001000000200000192.key.pem";
+  $numero_certificado = "20001000000300022762";
+  $archivo_cer = "utilerias/certificados/20001000000300022762.cer";
+  $archivo_pem = "utilerias/certificados/20001000000300022762.key.pem";
   
     
   //Datos de acceso al ambiente de pruebas
-  $url_timbrado 		= "https://t1demo.facturacionmoderna.com/timbrado/wsdl";
-  $user_id 				= "UsuarioPruebasWS";
-  $user_password 		= "b9ec2afa3361a59af4b4d102d3f704eabdf097d4";
+  $url_timbrado = "https://t1demo.facturacionmoderna.com/timbrado/wsdl";
+  $user_id = "UsuarioPruebasWS";
+  $user_password = "b9ec2afa3361a59af4b4d102d3f704eabdf097d4";
 
   //generar y sellar un XML con los CSD de pruebas
   $cfdi = generarXML($rfc_emisor);
@@ -140,23 +141,15 @@ function generarXML($rfc_emisor){
 <cfdi:Emisor nombre="EMPRESA DEMO" rfc="$rfc_emisor">
   <cfdi:RegimenFiscal Regimen="No aplica"/>
 </cfdi:Emisor>
-		
 <cfdi:Receptor nombre="PUBLICO EN GENERAL" rfc="XAXX010101000"></cfdi:Receptor>
-		
 <cfdi:Conceptos>
-		
   <cfdi:Concepto cantidad="10" unidad="No aplica" noIdentificacion="00001" descripcion="Servicio de Timbrado" valorUnitario="1.00" importe="10.00">
-		
-  </cfdi:Concepto>
-		  
+  </cfdi:Concepto>  
 </cfdi:Conceptos>
-		
 <cfdi:Impuestos totalImpuestosTrasladados="1.60">
-		
   <cfdi:Traslados>
     <cfdi:Traslado impuesto="IVA" tasa="16.00" importe="1.6"></cfdi:Traslado>
   </cfdi:Traslados>
-		
 </cfdi:Impuestos>
 </cfdi:Comprobante>
 XML;

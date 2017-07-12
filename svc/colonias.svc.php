@@ -44,12 +44,13 @@ $sql 	= "SELECT
 	`general_colonias`.`codigo_postal`       AS `clavepostal`,
 	CONCAT(`tipo_colonia`, ' ', `nombre_colonia`, '(', `municipio_colonia`, ', ', `estado_colonia`, ')') AS 'nombre',
 	`general_colonias`.`codigo_de_estado`    AS `estado`,
-	`general_colonias`.`codigo_de_municipio` AS `municipio` ,
+	`general_colonias`.`codigo_de_municipio` AS `municipio`,
 	`general_colonias`.`nombre_colonia` AS `colonia`,
 	
 	`general_municipios`.`nombre_del_municipio`,
 	`general_estados`.`nombre` AS `nombre_del_estado`,
-	CONCAT(`general_colonias`.`codigo_postal`, '-', `general_colonias`.`idgeneral_colonia`) AS 'buscador'
+	CONCAT(`general_colonias`.`codigo_postal`, '-', `general_colonias`.`idgeneral_colonia`) AS 'buscador',
+	`general_colonias`.`ciudad_colonia` AS `ciudad`
 FROM
 
 	`general_municipios` `general_municipios` 

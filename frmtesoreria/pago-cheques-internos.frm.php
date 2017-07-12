@@ -26,7 +26,9 @@ function jsaSetPago($Recibo, $cuentabancaria, $monto, $fecha, $cheque){
     if( $xCta->init() == true){
     	$xCta->setNuevoCheque($cheque, $cuentabancaria, $Recibo, "", $monto, $fecha);
     	$xRec	= new cReciboDeOperacion(false, false, $Recibo);
-    	$xRec->setDatosDePago(AML_CLAVE_MONEDA_LOCAL, $monto, $cheque, TESORERIA_PAGO_CHEQUE);
+		if($xRec->init() == true){
+			$xRec->setDatosDePago(AML_CLAVE_MONEDA_LOCAL, $monto, $cheque, TESORERIA_PAGO_CHEQUE, $cuentabancaria);
+		}
     }
     //if(MODO_DEBUG == true){ setLog($xCta->getMessages()); }
 }

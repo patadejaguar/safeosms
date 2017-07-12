@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Estado de Cuenta de Intedeses ", HP_REPORT);
+$xHP		= new cHPage("TR.Estado de Cuenta de Interes ", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();

@@ -20,84 +20,75 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP					= new cHPage("TR.Historial de Saldos", HP_REPORT);
+$xHP		= new cHPage("TR.Historial de Saldos", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
 
-$oficial = elusuario($iduser);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT); $credito = parametro("pb", $credito, MQL_INT);
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$senders		= getEmails($_REQUEST);
+$out 			= parametro("out", SYS_DEFAULT);
 
-$output					= ( !isset( $_GET["out"] ) ) ? "default" : $_GET["out"];
-
-$idsolicitud 			= $_GET["pb"];		//Numero de Solicitud
-$id 					= ( !isset( $_GET["pa"] ) ) ? false : $_GET["pa"];		//Numero de Socio
-$f15 					= ( !isset( $_GET["f15"] ) ) ? false : $_GET["f15"];
-$f14 					= ( !isset( $_GET["f14"] ) ) ? false : $_GET["f14"];
-$f16 					= ( !isset( $_GET["f16"] ) ) ? false : $_GET["f16"];
-$f18 					= ( !isset( $_GET["f18"] ) ) ? false : $_GET["f18"];		//Mostrar Movimiento Especifico
-$TOperacion 			= ( !isset( $_GET["f19"] ) ) ? false : $_GET["f19"];		//Codigo de Tipo de Operacion.- Mvto Especifico
-
-$fecha_inicial 			= $_GET["on"];
-$fecha_final 			= $_GET["off"];
-
-
-$xHP->init("initComponents()");
-
-$xRPT					= new cReportes($xHP->getTitle());
-echo $xHP->getEncabezado();
-echo $xRPT->getEncabezado();
-
-$cCred	= new cCredito($idsolicitud); $cCred->init();
-//TODO: Modificar
-echo $cCred->getFicha(true, "", true, true);
-
-$sql = "SELECT
+$titulo			= "";
+$archivo		= "";
+$sql			= "SELECT
 	`creditos_sdpm_historico`.`idcreditos_sdpm_historico` AS `control`,
 	`creditos_sdpm_historico`.`numero_de_socio`,
 	`creditos_sdpm_historico`.`numero_de_credito`,
 	`creditos_sdpm_historico`.`fecha_anterior`,
 	`creditos_sdpm_historico`.`fecha_actual`,
+
+	
+	`creditos_sdpm_historico`.`estatus`,	
+	`creditos_sdpm_historico`.`tipo_de_operacion`,
 	`creditos_sdpm_historico`.`dias_transcurridos`,
-	`creditos_sdpm_historico`.`monto_calculado`,
 	`creditos_sdpm_historico`.`saldo`,
-	`creditos_sdpm_historico`.`estatus`,
-	`creditos_sdpm_historico`.`interes_normal`
+	`creditos_sdpm_historico`.`monto_calculado`,
+
+	`creditos_sdpm_historico`.`interes_normal`,
+	`creditos_sdpm_historico`.`interes_moratorio`
 FROM
 	`creditos_sdpm_historico` `creditos_sdpm_historico` 
 WHERE
-	(`creditos_sdpm_historico`.`numero_de_credito` =$idsolicitud)
+	(`creditos_sdpm_historico`.`numero_de_credito` =$credito)
 ORDER BY
-	`creditos_sdpm_historico`.`fecha_anterior` ASC
-	/*`creditos_sdpm_historico`.`fecha_actual` DESC */";
+	`creditos_sdpm_historico`.`fecha_anterior` ASC, `creditos_sdpm_historico`.`saldo` DESC";
 
-	$cTbl 	= new cTabla($sql);
-	$cTbl->setTdClassByType();
-	
-	$cTbl->setWidth();
-	$cTbl->Show("", false);
-	$TSum	= $cTbl->getFieldsSum();
-echo " <table width='100%'>
-		<tr>
-		<td />
-		<td />
-		<td />
-		<td />
-		
-		<th class='mny'>"  . getFMoney($TSum["dias_transcurridos"]) . "</th>
-		<th class='mny'>"  . getFMoney($TSum["monto_calculado"]) . "</th>
-		<th class='mny'>"  . getFMoney($TSum["saldo"]) . "</th>
-		<td />
-		<th class='mny'>"  . getFMoney($TSum["interes_normal"]) . "</th>
-		</tr>
-		</table ";
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
 
-echo $xHP->getPieDePagina();
-
-?>
-</body>
-<script  >
-<?php
-
-?>
-function initComponents(){
-	window.print();
+//============ Reporte
+$xT		= new cTabla($sql, 2);
+$xT->setTipoSalida($out);
+$xT->setFootSum(array( 
+		7 => "dias_transcurridos",
+		9 => "monto_calculado",
+		8 => "saldo",
+		10 => "interes_normal" ,
+		11 => "interes_moratorio"
+));
+$xCred		= new cCredito($credito);
+if($xCred->init() == true){
+	$xRPT->addContent($xCred->getFicha(true, "", true, true));
 }
-</script>
-</html>
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+
+$xRPT->addContent( $xT->Show( ) );
+//============ Agregar HTML
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
+?>

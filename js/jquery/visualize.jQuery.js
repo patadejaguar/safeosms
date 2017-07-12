@@ -225,9 +225,10 @@ $.fn.visualize = function(options, container){
 				        var label = $('<li class="visualize-label-pos"></li>')
 				       			.appendTo(labels)
 				        		.css({left: labelx, top: labely})
-				        		.append(labeltext);	
+				        		.append(labeltext);
+						//Luis Balam
 				        labeltext
-				        	.css('font-size', radius / 8)		
+				        	.css('font-size', parseInt((radius / 14)) )		
 				        	.css('margin-'+leftRight, -labeltext.width()/2)
 				        	.css('margin-'+topBottom, -labeltext.outerHeight()/2);
 				        	

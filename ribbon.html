@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+	content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<title>MAE DEL GOLFO S.A.P.I. DE C.V. SOFOM, ENR{matriz} -
+	S.A.F.E. V 201701</title>
+
+<link href="./css/jquery-ui/jquery-ui.css" rel="stylesheet">
+<link href="./css/formoid/formoid-default.css" rel="stylesheet">
+<link href="./css/jquery.qtip.css" rel="stylesheet">
+<link href="./css/picker/default.css" rel="stylesheet">
+<link href="./css/picker/default.date.css" rel="stylesheet">
+<link href="./css/picker/default.time.css" rel="stylesheet">
+<link href="./css/visualize.css" rel="stylesheet">
+<link href="./css/visualize-light.css" rel="stylesheet">
+<link href="./css/font-awesome.min.css" rel="stylesheet">
+<link href="./css/tinybox.css" rel="stylesheet">
+<link href="./css/amaran.min.css" rel="stylesheet">
+<link href="css/general.css" rel="stylesheet">
+<link href="css/jmenu.css" rel="stylesheet">
+<script src="./js/lang.js.php"></script>
+<script src="./js/config.js.php"></script>
+<script src="./js/jquery/jquery.js"></script>
+<script src="./js/jquery/excanvas.js"></script>
+<script src="./js/jquery/jquery.cookie.js"></script>
+<script src="./js/base64.js"></script>
+<script src="./js/jquery/all-jquery.ui.js"></script>
+<script src="./js/general.js?20170109"></script>
+<script src="./js/jquery/jquery.qtip.min.js"></script>
+<script src="./js/jquery/visualize.jQuery.js"></script>
+<script src="./js/jquery/jquery.accordion.js"></script>
+<script src="./js/picker.js"></script>
+<script src="./js/picker.date.js"></script>
+<script src="./js/picker.time.js"></script>
+<script src="./js/tinybox.js"></script>
+<script src="./js/deprecated.js"></script>
+<script src="./js/md5.js"></script>
+<script src="./js/jscrypt/aes.js"></script>
+<script src="./js/jquery/jquery.amaran.min.js"></script>
+<script src="./js/jquery/jquery.jpanelmenu.min.js"></script>
+<script src="./js/spin.min.js"></script>
+<script src="./js/moment.min.js"></script>
+<script src="./js/picker-lang/es_ES.js"></script>
+<script src="./js/dev.js"></script>
+<script src="./js/happy.js"></script>
+<script src="./js/happy.methods.js"></script>
+<script src="./js/xdate.js"></script>
+<script src="./js/xdate.i18n.js"></script>
+<script src="js/jquery/jquery.ui.js"></script>
+<script src="js/jmenu/jMenu.jquery.js"></script>
+<script src="js/tinybox.js"></script>
+<script src="./js/mexico.js"></script>
+
+
+
+	<link href="js/ribbon/ribbon.css" rel="stylesheet" type="text/css" />
+	
+
+	<script type="text/javascript" src="js/ribbon/ribbon.js"></script>
+	<script type="text/javascript" src="js/ribbon/jquery.tooltip.min.js"></script>
+	
+	
+</head>
+<style>
+html, body, object {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+#header {
+	text-align: center !important;
+}
+
+#banner {
+	right: 0;
+	bottom: 0;
+	position: fixed !important;
+}
+
+.menu-trigger {
+	right: 0;
+	top: 0;
+	position: fixed !important;
+	display: block;
+	text-shadow: 0 -1px 1px #222;
+	line-height: 1.4em;
+	color: #ffffff;
+	width: 3em;
+	background-color: #000821;
+	text-align: center;
+	font-size: 1.2em;
+	border-radius: 0 0 0 5px;
+}
+
+#wprincipal {
+	width: 100%;
+	max-width: 100%;
+}
+</style>
+<body onload="jsInitComponents();">
+	<div id='header'>
+		<ul id="ribbon">
+		
+		<span class="ribbon-window-title">Ribbon App Test</span>
+		
+		<div class="ribbon-tab" id="format-tab">
+			<span class="ribbon-title">Format</span>
+			<div class="ribbon-section">
+				<span class="section-title">Tables</span>
+				<div class="ribbon-button ribbon-button-large" id="add-table-btn">
+					<span class="button-title">Add<br/>Table</span>
+					<span class="button-help">This button will add a table to your document.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/new-table.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/new-table.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/new-table.png" />
+				</div>
+				<div class="ribbon-button ribbon-button-large" id="open-table-btn">
+					<span class="button-title">Open<br/>Table</span>
+					<span class="button-help">This button will open a table and add it to your document.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/open-table.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/open-table.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/open-table.png" />
+				</div>
+				<div class="ribbon-button ribbon-button-large disabled" id="del-table-btn">
+					<span class="button-title">Remove<br/>Table</span>
+					<span class="button-help">This button will remove the selected table from your document.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/delete-table.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/delete-table.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/delete-table.png" />
+				</div>
+			</div>
+			
+			<div class="ribbon-section">
+				<span class="section-title">Pages</span>
+				<div class="ribbon-button ribbon-button-large" id="add-page-btn">
+					<span class="button-title">Comentario largo de procesar</span>
+					<span class="button-help">This button will add a page to your document.</span>
+					<i class="fa fa-usd fa-lg"></i>
+					
+					<!-- <img class="ribbon-icon ribbon-normal" src="icons/normal/new-page.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/new-page.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/new-page.png" /> -->
+				</div>
+				<div class="ribbon-button ribbon-button-large" id="open-page-btn">
+					<span class="button-title">Open<br/>Page</span>
+					<span class="button-help">This button will open a page and add it to your document.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/open-page.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/open-page.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/open-page.png" />
+				</div>
+				<div class="ribbon-button ribbon-button-large disabled" id="del-page-btn">
+					<span class="button-title">Remove<br/>Page</span>
+					<span class="button-help">This button will remove the selected page from your document.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/delete-page.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/delete-page.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/delete-page.png" />
+				</div>
+			</div>
+			
+			
+			<div class="ribbon-section">
+				<span class="section-title">Actions</span>
+				<div class="ribbon-button ribbon-button-small" id="run-btn">
+					<span class="button-title">Run</span>
+					<span class="button-help">This button will run the program.</span>
+					<img class="ribbon-icon ribbon-normal" src="icons/normal/run.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/run.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/run.png" />
+				</div>
+				<div class="ribbon-button ribbon-button-small" id="repeat-btn">
+					<span class="button-title">Repeat</span>
+					<span class="button-help">This button will repeat something.</span>
+					<i class="fa fa-usd fa-lg"></i>
+					<!-- <img class="ribbon-icon ribbon-normal" src="icons/normal/repeat.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/repeat.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/repeat.png" /> -->
+				</div>
+				<div class="ribbon-button ribbon-button-small disabled" id="save-btn">
+					<span class="button-title">Save</span>
+					<span class="button-help">This button will save your document.</span>
+					<i class="fa fa-usd fa-lg"></i>
+					<!-- <img class="ribbon-icon ribbon-normal" src="icons/normal/save.png" />
+					<img class="ribbon-icon ribbon-hot" src="icons/hot/save.png" />
+					<img class="ribbon-icon ribbon-disabled" src="icons/disabled/save.png" /> -->
+				</div>
+			</div>
+
+		</div>
+	</div>
+	<div id='wprincipal'>
+		<iframe id="idFPrincipal" src="./utils/frm_calendar_tasks.php"
+			width='100%' height="100px"></iframe>
+	</div>
+	<div id="banner"></div>
+	<script src="../js/TinyAjax.js"></script>
+	<script>
+		var xml_request_type = "GET";
+		var use_iframe = 0;
+		var show_loading = 0;
+		var request_uri = "/index.xul.php";
+
+		//Stub for jsaGetMenu
+		function jsaGetMenu() {
+			if (jsaGetMenu.arguments.length > 0) {
+				return aj_call("jsaGetMenu", jsaGetMenu.arguments);
+			}
+
+			var aj_tmp1 = getValue("id-KeyEditable");
+
+			return aj_call("jsaGetMenu", new Array(aj_tmp1, 'navigator'), false);
+		}
+
+		//Stub for jsaGetMoneyChanges
+		function jsaGetMoneyChanges() {
+			if (jsaGetMoneyChanges.arguments.length > 0) {
+				return aj_call("jsaGetMoneyChanges",
+						jsaGetMoneyChanges.arguments);
+			}
+
+			var aj_tmp1 = getValue("idMoneyExist");
+
+			return aj_call("jsaGetMoneyChanges", new Array(aj_tmp1,
+					'idMoneyExist'), false);
+		}
+
+		function TabAlert(data) {
+			alert(data[1]);
+		}
+		function TabSetValue(data) {
+			document.getElementById(data[1]).value = decodeSpecialChars(data[2]);
+		}
+		function TabInnerHtml(data) {
+			document.getElementById(data[1]).innerHTML = decodeSpecialChars(data[2]);
+		}
+		function TabInnerHtmlAppend(data) {
+			document.getElementById(data[1]).innerHTML = document
+					.getElementById(data[1]).innerHTML
+					+ decodeSpecialChars(data[2]);
+		}
+		function TabInnerHtmlPrepend(data) {
+			document.getElementById(data[1]).innerHTML = decodeSpecialChars(data[2])
+					+ document.getElementById(data[1]).innerHTML;
+		}
+		function TabAddOption(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options[sel.options.length] = new Option(
+					decodeSpecialChars(data[3]), decodeSpecialChars(data[2]),
+					true, false);
+			if (data[4] != 0)
+				sel.selectedIndex = sel.options.length - 1;
+		}
+		function TabClearOptions(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options.length = 0;
+		}
+		function TabRemoveSelectedOption(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options[sel.options.selectedIndex] = null;
+
+		}
+
+		function aj_process2(data) {
+			var fnc = data[0];
+
+			if (fnc == 'TabAlert') {
+				TabAlert(data);
+			}
+			if (fnc == 'TabSetValue') {
+				TabSetValue(data);
+			}
+			if (fnc == 'TabInnerHtml') {
+				TabInnerHtml(data);
+			}
+			if (fnc == 'TabInnerHtmlAppend') {
+				TabInnerHtmlAppend(data);
+			}
+			if (fnc == 'TabInnerHtmlPrepend') {
+				TabInnerHtmlPrepend(data);
+			}
+			if (fnc == 'TabAddOption') {
+				TabAddOption(data);
+			}
+			if (fnc == 'TabClearOptions') {
+				TabClearOptions(data);
+			}
+			if (fnc == 'TabRemoveSelectedOption') {
+				TabRemoveSelectedOption(data);
+			}
+
+		}
+	</script>
+	<script>
+		var xG = new Gen();
+		var smenu = 42;
+		var mmob = false;
+		$(document).ready(function() {
+			if (mmob == false) {
+				$('#ribbon').ribbon();
+
+			} else {
+				smenu = 8;
+				$("#wprincipal").css("height", xG.alto());
+				jsGetMenu();
+			}
+		});
+		function setInFrame(sURI) {
+			if (typeof jPanelMenu != "undefined") {
+				jPanelMenu.close();
+			}
+			if ($("#jMenu").length > 0) {
+				$("#jMenu").trigger('mouseout');
+			}
+			xG.QFrame({
+				url : sURI,
+				id : 'idFPrincipal'
+			});
+		}
+		function jsGetMenuChilds(id) {
+			var mParent = $("#" + id).attr("data-key");
+			$("#id-KeyEditable").val(mParent);
+			jsaGetMenu();
+			jPanelMenu.off();
+			setTimeout("jsGetMenu(true)", 500);
+		}
+		function jsGetMenu(tr) {
+			if (typeof tr == "undefined") {
+				tr = false;
+			}
+			jPanelMenu = $.jPanelMenu({
+				menu : '#navmenu',
+				animated : false
+			});
+			jPanelMenu.on();
+			if (tr == true) {
+				jPanelMenu.trigger(tr);
+			}
+		}
+		function jsGetParent(parentID) {
+			window.location = "./index.xul.php?m=" + parentID;
+		}
+		function getNewTiny(mFile) {
+			if (mFile) {
+				var xG = new Gen();
+				mFile = mFile + "?";
+				xG.w({
+					url : mFile,
+					tiny : true
+				});
+			}
+		}
+
+		function getNewWindow(mFile) {
+			if (mFile) {
+				var xG = new Gen();
+				xG.w({
+					url : mFile
+				});
+			}
+
+		}
+
+		function jsGetMoneyChanges() {
+			jsaGetMoneyChanges();
+			//Mostrar el Popup
+			setTimeout("jsGetMoneyInBox()", 15000);
+		}
+		function jsGetMoneyInBox() {
+			//setTimeout("jsGetMoneyChanges()", 15000);
+		}
+		function jsEndSession() {
+		}
+		function jsInitComponents() {
+			jsGetMoneyChanges();
+			var mAlto = xG.alto() - smenu - 5;
+			$("#idFPrincipal").attr("height", mAlto);
+			if ($('#id-KeyEditable').length > 0) {
+				//setTimeout("jsGetMenu()", 500);
+			}
+		}
+	</script>
+</body>
+</html>

@@ -12,12 +12,15 @@
 //<=====	FIN_H
 //=====================================================================================================
 $xInit      = new cHPage("", HP_SERVICE );
+//$xInit->cors();
+
 $txt		= "";
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT);// $nombre	= parametro("n", $nombre);
 $nombre		= parametro("nombre"); $nombre	= parametro("n", $nombre);
 $apaterno	= parametro("apaterno"); $apaterno	= parametro("p", $apaterno);
 $amaterno	= parametro("amaterno"); $amaterno	= parametro("m", $amaterno);
 
+$out		= parametro("out", SYS_NINGUNO, MQL_RAW);
 
 $action		= "LIST";
 $ByPersona	= (setNoMenorQueCero($persona) <= DEFAULT_SOCIO) ? " codigo != " . DEFAULT_SOCIO . "" : " codigo = $persona ";
@@ -45,10 +48,11 @@ $sql 	= "SELECT
 		`socios_general`.`apellidopaterno`,
 		`socios_general`.`apellidomaterno`,
 		`socios_general`.`nombrecompleto`
-	LIMIT 0,20 ";
+	LIMIT 0,10 ";
 
 header('Content-type: application/json');
-
+//setLog($sql);
 $xSVC       = new MQLService($action, $sql);
+
 echo $xSVC->getJSON();
 ?>

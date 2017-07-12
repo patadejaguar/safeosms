@@ -12,10 +12,11 @@ class cLang {
 	private $mWords		= array(); 
 	private $onDB		= true;
 	private $mCurrLang	= "es";
-	 
+	private $mInit		= false;
 	
 	function __construct(){
 		$this->mCurrLang	= getCurrentLang();
+		$this->init();
 	}
 	
 	function getSpanish($item){
@@ -460,32 +461,11 @@ class cLang {
 		//$palabra	= "";
 		$palabra	= strtoupper($palabra);
 		$palabra	= str_replace(" ", "_", $palabra);
-		if($this->onDB == true){
-		
-			if( $this->OCache($palabra) == null){
-				$sql		= "SELECT * FROM sistema_lenguaje WHERE idioma=\"" . $this->mCurrLang ."\"AND equivalente=\"$palabra\" LIMIT 0,1 ";
-				$traduccion	= mifila($sql, "traduccion");
-				if(trim($traduccion) == "" OR trim($traduccion) == "0"){
-					$palabra					= $this->getSpanish($palabra);
-				} else {
-					$this->OCache($palabra, $traduccion);
-					//setLog("Palabra agregada de :: $traduccion ");
-					$palabra					= $traduccion;
-				}				
-
-			} else {
-				//setLog("Palabra cargada de :: " . $this->OCache($palabra) );
-				$palabra	= $this->OCache($palabra);
-			}
-		} else {
-		
-			if( $this->mCurrLang == "es"){
-				$palabra	= $this->getSpanish($palabra);
-			} else {
-				$palabra	= $this->getEnglish($palabra);
-			}
+		if($this->mInit == false){$this->init();}
+		if(isset($this->mWords[$palabra])){
+			$palabra= $this->mWords[$palabra];
 		}
-		$palabra	= cleanString($palabra);
+		//$palabra	= cleanString($palabra);
 		return $palabra;
 	}
 	function getTrad($palabra, $palabra2 = ""){
@@ -502,28 +482,44 @@ class cLang {
 		}
 		return $wrd;
 	}
-	function getWords(){
-		$wrds		= $this->OCache("listado.palabras.completas");
-		if($wrds == null){
-			$this->get("");	$wrds = $this->mWords;
-			$this->OCache("listado.palabras.completas", 	json_encode($this->mWords));
+	function init(){
+		if(isset($GLOBALS["idioma"])){
+			$this->mWords	= $GLOBALS["idioma"];
+			$this->mInit	= true;
 		} else {
-			$wrds	= json_decode($wrds);
-		}
+			$this->mWords	= json_decode($this->OCache("listado.palabras.completas"), true);
+			if($this->mWords == null){
+				$xQL		= new MQL();
+				$sql		= "SELECT * FROM sistema_lenguaje WHERE idioma=\"" . $this->mCurrLang ."\" ";
+				$rs			= $xQL->getDataRecord($sql);
+				foreach ($rs as $rw){
+					$this->mWords[$rw["equivalente"]]	= $rw["traduccion"];
+				}
+				$rs		= null;
+				$this->OCache("listado.palabras.completas", json_encode($this->mWords));
+				$this->mInit	= true;
+			}
+			$GLOBALS["idioma"]	= $this->mWords;
+			$wrds				= null;
+		}	
+		return $this->mInit;
+	}
 		
-		return $wrds;
+	function getWords(){
+		if($this->mInit == false){$this->init();}
+		return $this->mWords;
 	}
 	function getT($strTxt){
 		$txt	= trim($strTxt);
 		$finder	= substr($strTxt, 0, 3);
-		
-		if( $finder == "TR."  ){
+		switch($finder){
+			case "TR.":
 			$txt	=	"";
 			$strTxt	= substr($strTxt, 3);
 			$strTxt	= trim($this->clearSimilares($strTxt));
 			
 			if(strpos($strTxt, " ") !== false){
-			$xword	= explode(" ", $strTxt );
+				$xword	= explode(" ", $strTxt );
 				foreach ($xword as $p => $key){
 					$wrd	= trim($key);
 					$test	= "/[^a-zA-Z_]/"; //$wrd == ""
@@ -542,8 +538,13 @@ class cLang {
 			} else {
 				$txt	= $this->getTrad($strTxt);
 			}
-		
+			break;
+			case "MS.":
+				$strTxt	= substr($strTxt, 3);
+				$txt	= $this->getMensajeByTop($strTxt);
+				break;
 		}
+		
 		return trim($txt);
 	}
 	function clearSimilares($text){
@@ -594,6 +595,12 @@ class cLang {
 			$totrad[$id]	= $tra;
 		}
 		return json_encode($totrad);
+	}
+	function getMensajeByTop($topico){
+		$xQL	= new MQL();
+		$D		= $xQL->getDataRow("SELECT * FROM `sistema_mensajes` WHERE `topico`='$topico' LIMIT 0,1");
+		
+		return isset($D["mensaje"]) ? $D["mensaje"] : "";
 	}
 }
 /*

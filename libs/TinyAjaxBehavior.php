@@ -124,9 +124,9 @@ class TabSetValue extends Tab
 	protected function getScript(){
 
 		ob_start();
-
+//TODO: Modificado por patadejaguar
 		echo "function " . get_class($this) . "(data){";
-		echo " document.getElementById(data[1]).value = decodeSpecialChars(data[2]);\n}\n";
+		echo " if( document.getElementById(data[1]) ){ document.getElementById(data[1]).value = decodeSpecialChars(data[2]); }\n}\n";
 
 		return ob_get_clean();
 	}

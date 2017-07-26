@@ -944,6 +944,7 @@ function obten_filas($sql = "") {
 	return $mFilas;
 }
 function contrato($id, $peticion){
+	$id	= setNoMenorQueCero($id);
 	$sqlcontrato = "SELECT * FROM general_contratos WHERE idgeneral_contratos=$id LIMIT 0,1";
 	return mifila($sqlcontrato,$peticion);
 }

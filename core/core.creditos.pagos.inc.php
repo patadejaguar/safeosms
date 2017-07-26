@@ -1960,6 +1960,10 @@ class cPlanDePagosGenerador {
 			);
 
 			$xCred->setUpdate($arrUpdate);
+			if($xCred->getEsArrendamientoPuro() == true){
+				$xRentas	= new cLeasingRentas();
+				$xRentas->setCrearPorCredito($xCred->getClaveDeCredito());
+			}
 			$xBtn		= new cHButton();
 			//<tr><th colspan='16'>" . $xBtn->getBasic("TR.Imprimir PLAN_DE_PAGOS " . $this->mClaveDePlan, "var xC=new CredGen();xC.getImprimirPlanPagos(" . $this->mClaveDePlan . ")", $xBtn->ic()->IMPRIMIR) . "</th></tr>
 

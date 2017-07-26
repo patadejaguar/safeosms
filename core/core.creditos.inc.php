@@ -560,6 +560,9 @@ class cCredito {
 				$this->mFechaPrimeraParc 	= $xPlan->getFechaPlanPrimerPago ();
 			}
 			$this->mMessages .= $xPlan->getMessages ();
+		} else {
+			$monto_con_interes 				= $this->getMontoAutorizado() + ($this->getInteresDiariogenerado() * $this->getDiasAutorizados());
+			$PlanBody						= "<table class='plan_de_pagos'><thead><tr><th>Pago</th><th>Fecha</th><th>Monto</th></tr></thead><tbody><tr><td>Unico</td><td>" . $this->getFechaDevencimientoLegal() . "</td><td>" . getFMoney($monto_con_interes) . "</td></tr></tbody></table>";  
 		}
 		
 		return $PlanBody;
@@ -4431,10 +4434,11 @@ class cCredito {
 		return $valor;
 	}
 	function setOtrosDatos($clave, $valor) {
-		$xCat = new cCreditos_otros_datos ();
-		$xF = new cFecha ();
-		$sql = "DELETE FROM `creditos_otros_datos` WHERE `clave_de_credito`=" . $this->mNumeroCredito . " AND `clave_de_parametro`='$clave'";
-		my_query ( $sql );
+		$xCat 	= new cCreditos_otros_datos ();
+		$xF 	= new cFecha ();
+		$sql 	= "DELETE FROM `creditos_otros_datos` WHERE `clave_de_credito`=" . $this->mNumeroCredito . " AND `clave_de_parametro`='$clave'";
+		$xQL	= new MQL(); $xQL->setRawQuery($sql);
+		
 		$xCat->clave_de_credito ( $this->mNumeroCredito );
 		$xCat->clasificacion_de_parametro ( "" );
 		$xCat->clave_de_parametro ( $clave );
@@ -5925,7 +5929,7 @@ class cPlanDePagos{
 		}
 		return $ultimaletra;
 	}
-	function getVersionImpresaLeasing(){
+	function getVersionImpresaLeasing($simple = false){
 		$xLi	= new cSQLListas();
 		$sql	= $xLi->getListadoDeLeasingPlanCliente($this->mClaveDeCredito);
 
@@ -5940,6 +5944,22 @@ class cPlanDePagos{
 				4 => "iva",
 				5 => "total"
 		));
+		$xTabla->setNoFilas("TOTAL");
+		$xTabla->setColTitle("fecha", "FECHA_DE PAGO");
+		$xTabla->setColTitle("periodo", "PeriodoRenta");
+		
+		if($simple == true){
+			$xTabla->setOmitidos("deducible");
+			$xTabla->setOmitidos("nodeducible");
+			
+			$xTabla->setColTitle("total", "Monto de Renta");
+			
+			
+			
+			$xTabla->setOmitidos("iva");
+			$xTabla->setFootSum(array(2=>"total"));
+			
+		}
 		return $xTabla->Show();
 	}
 }

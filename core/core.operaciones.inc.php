@@ -705,6 +705,7 @@ class cReciboDeOperacion{
 	function setRevertir($ForzarEliminar = false){
 		$xQL			= new MQL();
 		$xLog			= new cCoreLog();
+		$ModCaptacionEn	= (MODULO_CAPTACION_ACTIVADO == true) ? true : false;
 		if($this->getTipoDeRecibo() == RECIBOS_TIPO_PLAN_DE_PAGO){
 			$xLog->add("WARN\tEliminar Plan de Pagos con Codigo " . $this->mCodigoDeRecibo ."\r\n");
 			$xLog->add("WARN\tEliminando Operaciones del Recibo " . $this->mCodigoDeRecibo ."\r\n", $xLog->DEVELOPER);
@@ -793,11 +794,13 @@ class cReciboDeOperacion{
 		                                $PAGOS_SIN_CAPITAL	= $Credito->getPagosSinCapital();
 		                                
 		                                $colocacion			= $Credito->getDatosDeCredito();
-		                                $Cuenta				= new cCuentaALaVista($docto);
-		                                if($Cuenta->init() == false){
-		                                	//$Cuenta			= new cCuentaALaVista($Credito->getNu);
-		                                }
-		                                $captacion      = $Cuenta->getDatosInArray();
+		                                if($ModCaptacionEn == true){
+			                                $Cuenta				= new cCuentaALaVista($docto);
+			                                if($Cuenta->init() == false){
+			                                	//$Cuenta			= new cCuentaALaVista($Credito->getNu);
+			                                }
+			                                $captacion      = $Cuenta->getDatosInArray();
+		                                }                   
 		                                $xLog->add("WARN\tEL Recibo es Mixto, se carga tanto Captacion como Colocacion\r\n");
 										break;
 									default:
@@ -829,7 +832,9 @@ class cReciboDeOperacion{
 						$DoctoTrabajo	= $docto;
 						if($contar >= $items){
 							//Actualizar Saldos
-							if(isset($Cuenta)){ $Cuenta->setCuandoSeActualiza(); }
+							if($ModCaptacionEn == true){
+								if(isset($Cuenta)){ $Cuenta->setCuandoSeActualiza(); }
+							}
 							if(isset($Credito)){ 
 								$Credito->setCuandoSeActualiza();
 								$xLog->add($Credito->getMessages(), $xLog->DEVELOPER);
@@ -1895,13 +1900,14 @@ class cMovimientoDeOperacion{
 		$sql		.= (setNoMenorQueCero($persona) <= DEFAULT_SOCIO) ?  "" : " AND (socio_afectado=$persona) ";
 		$sql		.= (setNoMenorQueCero($recibo) <= 0 ) ?  "" : " AND (recibo_afectado=$recibo) ";
 		$sql		.= (setNoMenorQueCero($periodo) <= 0 ) ?  "" : " AND (periodo_socio=$periodo) ";
-		$rs			= my_query($sql);
+		$xQL		= new MQL();
+		$rs			= $xQL->setRawQuery($sql);
 		
-		$sucess		= $rs[SYS_ESTADO];
+		$sucess		= ($rs === false) ? false : true;
 		if($sucess	== true ){
 			$this->mMessages	.= "OK\tUP_MVTO\tOperacion Actualizada ($persona-$credito-$recibo-$tipo-$periodo)\r\n";
 		}
-		if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_MSG]; }
+		//if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_MSG]; }
 		return $sucess;
 	}	
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }

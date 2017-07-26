@@ -35,6 +35,7 @@ $EsAdmin		= false;
 $OnEdit			= false;
 $TasaComision	= 0;
 $EsOriginador	= false;
+
 //$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
@@ -65,6 +66,10 @@ function jsaGetTasa($rac, $plazo){
 	if($xTLeas->initByPlazoRAC($plazo, $rac) == true){
 		$tab->add(TabSetValue::getBehavior("tasa_credito", $xTLeas->getTasa() ));
 		$tab->add(TabSetValue::getBehavior("comision_apertura", $xTLeas->getComisionApertura() ));
+		
+		//$tab->add(TabSetValue::getBehavior("tasa_credito", $xTLeas->getTasa() ));
+		$tab->add(TabSetValue::getBehavior("comision_apertura_mny", $xTLeas->getComisionApertura() ));
+		
 	}
 	$xEsc		= new cLeasing_escenarios();
 	$rs			= $xQL->getDataRecord("SELECT * FROM `leasing_escenarios`");
@@ -121,11 +126,16 @@ function jsaGetCostos($entidad, $precio){
 	if($tenencia > $xT->limitetenencia()->v()){
 		$tenencia	= $xT->limitetenencia()->v();
 	}
-
+	
 	$tab = new TinyAjaxBehavior();
 	$tab -> add(TabSetValue::getBehavior("monto_placas", $xT->placas()->v()));
 	$tab -> add(TabSetValue::getBehavior("monto_gestoria", $xT->cobrogestoria()->v()));
 	$tab -> add(TabSetValue::getBehavior("monto_tenencia", $tenencia));
+	
+	$tab -> add(TabSetValue::getBehavior("monto_placas_mny", getFMoney($xT->placas()->v()) ));
+	$tab -> add(TabSetValue::getBehavior("monto_gestoria_mny", getFMoney($xT->cobrogestoria()->v()) ));
+	$tab -> add(TabSetValue::getBehavior("monto_tenencia_mny", getFMoney($tenencia) ));
+	
 	//$tab -> add(TabSetValue::getBehavior("monto_notario", 0)); //Pendiente de aclarar
 
 	return $tab -> getString();
@@ -245,12 +255,13 @@ if($clave >0){
 	if($EsOriginador == false){
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
+			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
 		} else {
 			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA);
 		}
 		//Si el credito no ha sido asignado
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
-			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
+			
 		}
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
 			//Imprimir Propuesta
@@ -339,6 +350,9 @@ if($xUser->getEsOriginador() == false){
 		$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
 		//Agrega ficha de ejecutivo
 		//Agregar datos de originador y usuario
+		
+		//Bloquear los demás controles.
+		
 	}
 } else {
 	$xFRM->OHidden("oficial", $xTabla->oficial()->v());
@@ -392,6 +406,18 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 				$xFRM->OButton("TR.PLAN_DE_PAGOS CLIENTE", "jsGetPlanCliente()", $xFRM->ic()->CALENDARIO1);
 			}
 			$xFRM->addJsInit("jsDesactivarCotizacion();");
+			//============================ Agregar
+			$xFRM->addDisabledInit("tipo_rac");
+			$xFRM->addDisabledInit("marca");
+			$xFRM->addDisabledInit("tipo_uso");
+			$xFRM->addDisabledInit("segmento");
+			$xFRM->addDisabledInit("entidadfederativa");
+			$xFRM->addDisabledInit("plazo");
+			$xFRM->addDisabledInit("oficial");
+			$xFRM->addDisabledInit("originador");
+			$xFRM->addDisabledInit("suboriginador");
+			//$xFRM->addDisabledInit("");
+			//$xFRM->addDisabledInit("");
 		} else {
 			if($EsOriginador == false){
 				$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->DINERO);
@@ -525,6 +551,7 @@ if($xUser->getEsOriginador() == false){
 }
 
 $xFRM->OHidden("residuales", $xTabla->residuales()->v(), "TR.RESIDUALES");
+$xFRM->OHidden("cuota_iva", $xTabla->cuota_iva()->v());
 
 $xFRM->endSeccion();
 $xFRM->addSeccion("iddescenas", "TR.ESCENARIOS");
@@ -816,6 +843,11 @@ var mFactorRentaDep		= 1;
 var mFactorRentaProp	= 1;
 var vTasaIVA			= <?php echo TASA_IVA; ?>;
 var vCalcComXTodo		= true; //Calcular la comision por apertura por el Monto de Vehiculo sin IVA
+var mSumarIVA			= true;
+var mFactorMinAnticipo	= 0.2;
+var mFactorSeguro		= 0.03;
+var mMontoMinGtosNot	= 400;
+var vFactorIVA			= 1 / (1+vTasaIVA);
 
 function jsCalculaFinanciamiento(){
 	//Constituir Residuales.
@@ -837,6 +869,7 @@ function jsCalculaFinanciamiento(){
 	//financiado
 	var precio				= $("#precio_vehiculo").val();
 	var anticipo			= $("#monto_anticipo").val();
+
 	var accesorios			= $("#monto_accesorios").val();
 	var aliado				= $("#monto_aliado").val();
 	var garantia			= $("#monto_garantia").val();
@@ -894,7 +927,34 @@ function jsCalculaFinanciamiento(){
 	return true;
 }
 function jsCalcularEscenarios(){
+	// Calcular Minimos
+	var precio				= $("#precio_vehiculo").val();
+	var anticipo			= $("#monto_anticipo").val();
+	var minanticipo			= (precio*vFactorIVA) * mFactorMinAnticipo;
+	minanticipo				= redondear(minanticipo,2);
+	if(minanticipo > anticipo){
+		$("#monto_anticipo_mny").val( getFMoney(minanticipo) );
+		$("#monto_anticipo").val( minanticipo );
+	}
+
+
+	//jsCargarCostos
 	jsGetCostos();
+	//Calcular minimos de costos	
+	var notario				= $("#monto_notario").val();
+	if(mMontoMinGtosNot > notario){
+		$("#monto_notario_mny").val( getFMoney(mMontoMinGtosNot) );
+		$("#monto_notario").val( mMontoMinGtosNot );
+	}
+	var seguro				= $("#monto_seguro").val();
+	var minseguro			= (precio*vFactorIVA) * mFactorSeguro;
+	minseguro				= redondear(minseguro,2);
+	if(minseguro > seguro){
+		$("#monto_seguro_mny").val( getFMoney(minseguro) );
+		$("#monto_seguro").val( minseguro );		
+	}
+
+	//Todos a moneda
 	xG.aMonedaForm();
 	xG.spinInit();
 	jsCalculaFinanciamiento();
@@ -1008,7 +1068,11 @@ function jsCalcular(idx){
 
 		$("#trenta_proporcional").val(getFMoney(rp));
 		$("#renta_proporcional").val(rp);		
-		
+		//=========== IVA de Renta
+		if(mSumarIVA == true){
+			var mCuotaIva	= redondear((trenta * vTasaIVA),2);
+			$("#cuota_iva").val(mCuotaIva); setLog(mCuotaIva);
+		}
 	}
 	//Seguro
 	if(financia_seguro== true){
@@ -1092,23 +1156,23 @@ function onRefresh(){
 	window.location.reload();
 }
 function jsAgregarCredito(){
-	var idpersona	= $("#persona").val();
-	var idcredito	= $("#credito").val();
+	var idpersona			= $("#persona").val();
+	var idcredito			= $("#credito").val();
 	if(idpersona > DEFAULT_SOCIO){
-		var producto	= Configuracion.credito.productos.arrendamientopuro;//$("#producto").val();
-		var periocidad	= 30;//$("#periocidad").val(); Provisional
-		var pagos		= $("#plazo").val();
-		var monto		= $("#total_credito").val();
-		var aplicacion	= Configuracion.credito.destinos.arrendamientopuro;//$("#aplicacion").val();
-		var notas		= $("#notas").val();
+		var producto		= Configuracion.credito.productos.arrendamientopuro;//$("#producto").val();
+		var periocidad		= 30;//$("#periocidad").val(); Provisional
+		var pagos			= $("#plazo").val();
+		var monto			= $("#total_credito").val();
+		var aplicacion		= Configuracion.credito.destinos.arrendamientopuro;//$("#aplicacion").val();
+		var notas			= $("#notas").val();
 		
-		var idcontrol	= $("#idoriginacion_leasing").val();
-		var idpersona	= $("#persona").val();
-		var idcredito	= $("#credito").val();
-		var idoficial	= $("#oficial").val();
-		var tasa_tiie	= $("#tasa_tiie").val();
+		var idcontrol		= $("#idoriginacion_leasing").val();
+		var idpersona		= $("#persona").val();
+		var idcredito		= $("#credito").val();
+		var idoficial		= $("#oficial").val();
+		var tasa_tiie		= $("#tasa_tiie").val();
 		var tasa_credito	= $("#tasa_credito").val();
-		var tasa		= tasa_tiie+tasa_credito;
+		var tasa			= tasa_tiie+tasa_credito;
 		//origen 270 PRECLIENTES
 		if(idcredito <= DEFAULT_CREDITO){
 			xC.addCredito({persona: idpersona, monto: monto, producto:producto, origen:vTipoOrigen, idorigen:idcontrol, frecuencia: periocidad, pagos: pagos, destino:aplicacion, oficial:idoficial, tasa:tasa});

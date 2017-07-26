@@ -2748,13 +2748,24 @@ class cCreditosEstadisticas {
 	}
 	function getNumeroClientesConCredito(){
 		$xQL	= new MQL();
-		$sql 	= "SELECT COUNT(*) AS 'clientes' FROM `tmp_personas_estadisticas` WHERE `creditos_con_saldo`>0";
+		$sql 	= "SELECT COUNT(*) AS 'clientes' FROM `tmp_personas_estadisticas` WHERE `creditos_con_saldo`>0 ";
 		$DRow	= $xQL->getDataRow($sql);
 		$clientes	= (isset($DRow["clientes"])) ? $DRow["clientes"] : 0;
 		
 		return $clientes;
-	}	
+	}
+	function getNumeroDeAvales($credito){
+
+	}
+	function getNumeroDeFirmantes($credito){
+		$sql	= "SELECT COUNT(`idcreditos_firmantes`) AS `numero` FROM `creditos_firmantes` WHERE `credito`=$credito";
+		$xQL	= new MQL();
+		$items	= $xQL->getDataValue($sql, "numero");
+		
+		return $items;
+	}
 }
+
 
 
 class cCreditosProyecciones {

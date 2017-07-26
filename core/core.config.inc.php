@@ -117,6 +117,7 @@ define("iDE_AML", 				510);
 		//Define la Division Estandar de Cadenas en una funcion EXPLODE
 define("STD_LITERAL_DIVISOR", "@");
 define("STD_LITERAL_SEC_DIV", "^");
+define("STD_LITERAL_TER_DIV", ".-");
 define("STD_NUMERICAL_DIV", ".");	//separador de centavos
 
 		//define el Maximo de parametros en paramtros Javascript de remote script
@@ -468,6 +469,7 @@ define("OPERACION_CLAVE_PAGO_MTTO_V",		172);
 define("OPERACION_CLAVE_PAGO_TENEN_V",		171);
 define("OPERACION_CLAVE_PAGO_ACC_V",		173);
 define("OPERACION_CLAVE_PAGO_GTIAE_V",		174);
+define("OPERACION_CLAVE_PAGO_IVA_ARR",		176);
 
 //define("OPERACION_CLAVE_COMISION_CBZA",	145);
 

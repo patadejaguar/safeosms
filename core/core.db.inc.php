@@ -1120,6 +1120,13 @@ class cSQLListas {
 		//setLog($sql);
 		return $sql;
 	}
+	function getListadoDeFirmantes($credito, $persona = ""){
+		$sql = " SELECT `creditos_firmantes`.`idcreditos_firmantes`, `creditos_firmantes`.`credito`, `creditos_firmantes`.`persona`, `personas`.`nombre`,`creditos_firmantes`.`rol_firmante`
+		FROM    `creditos_firmantes` INNER JOIN `personas`  ON `creditos_firmantes`.`persona` = `personas`.`codigo`
+		WHERE   ( `creditos_firmantes`.`credito` = $credito ) ";
+		
+		return $sql;
+	}
 	function getQueryInicialDeCreditos($persona = "", $credito = "", $otros = "" ){
 		$persona	= setNoMenorQueCero($persona);
 		$credito	= setNoMenorQueCero($credito);
@@ -4346,9 +4353,13 @@ class cSQLTabla {
 			case "creditos_sic_notas":
 				$mObj	= new cCreditos_sic_notas();
 				break;
-							case "personas_documentacion":
+			case "personas_documentacion":
 				$mObj	= new cPersonas_documentacion();
 				$this->mCampoDesc = $mObj->archivo_de_documento()->get();
+				break;
+			case "creditos_firmantes":
+				$mObj	= new cCreditos_firmantes();
+				
 				break;
 			case "empresas_cobranza":
 				$mObj	= new cEmpresas_cobranza();

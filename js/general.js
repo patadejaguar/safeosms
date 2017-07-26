@@ -240,13 +240,16 @@ function session(v1,v2){
 	}
 }
 Gen.prototype.formF9key	= function(evt){
-	var key = evt.which || evt.keyCode;
-	
+	var key = evt.keyCode || evt.which;
+	key = entero(key);
 	switch(key){
 		case 120:
-			$("#btn_guardar").click();
+			//$("#btn_guardar").click();
+			break;
+		default:
 			break;
 	}
+	return true;
 }
 
 function getClientSize() {
@@ -271,6 +274,7 @@ Gen.prototype.w	= function(opts){
 	var LimAn	= mSz.width;
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var callbackF 	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var precallF 	= (typeof opts.precall == "undefined") ? function(){ return ""; } : opts.precall;
 	var url		= (typeof opts.url == "undefined") ? "" : opts.url;
 	//var args	= (typeof opts.args == "undefined") ? "" : opts.args;
 	var wd		= (typeof opts.w == "undefined") ? entero((LimAn * 0.85)) : entero(opts.w);
@@ -293,6 +297,10 @@ Gen.prototype.w	= function(opts){
 	}
 	var name	= "";
 	var specs	= "resizable=no,modal=yes,scrollbars=yes,location=no,status=no,height=" + hg + ",width=" + wd + ",top=" + tp + ",left=" + lf;
+	var oargs	= precallF();
+	
+	url			= url + oargs;
+	
 	if(tiny == false){
 		if (isBlank == true) {
 			//name = "tabshifted";
@@ -1451,6 +1459,10 @@ CredGen.prototype.getFormaGarantias	= function(idcredito){
 
 CredGen.prototype.getFormaAutorizacion	= function(idcredito){
 	var gURL = "../frmcreditos/frmcreditosautorizados.php?credito=" + idcredito;
+	var xGen	= new Gen(); xGen.w({ url : gURL, h : 800, w : 900, tiny: true });
+}
+CredGen.prototype.getListaDeFirmantes	= function(idcredito){
+	var gURL = "../frmcreditos/creditos-firmantes.frm.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 800, w : 900, tiny: true });
 }
 CredGen.prototype.getFormaMinistracion	= function(idcredito){

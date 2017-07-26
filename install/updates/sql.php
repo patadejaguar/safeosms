@@ -3281,9 +3281,54 @@ $sql["20170601"][]	= "INSERT INTO `sistema_catalogo` (`idsistema_catalogo`, `cla
 
 $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('580', 'FORM', 'CREDITOS.ARRENDAMIENTO.NO_RESIDUALES', '', '', '', '', '1')";
 
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1906', '200', 'Arrendamiento.- Contrato 1', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1906')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1907', '200', 'Arrendamiento.- Pagare Rentas', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1907')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1908', '200', 'Arrendamiento.- Carta Poder', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1908')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1909', '200', 'Arrendamiento.- Carta Factura', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1909')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1910', '200', 'Arrendamiento.- Pagare Residual', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1910')";
+$sql["20170601"][]	= "ALTER TABLE `leasing_activos` ADD COLUMN `serie_nal` VARCHAR(20) NULL DEFAULT '' COMMENT 'Serie Nacional Repuve' AFTER `baja_fecha` ";
+
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1911', '200', 'Arrendamiento.- Caratula', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1911')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1912', '200', 'Arrendamiento.- Obligados Sol', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1912')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1913', '200', 'Arrendamiento.- Depositario', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1913')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1914', '200', 'Arrendamiento.- Tabla rentas', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1914')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1915', '200', 'Arrendamiento.- Entrega', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1915')";
+
+$sql["20170601"][]	= "ALTER TABLE `personas_datos_colegiacion` ADD COLUMN `dato1` VARCHAR(40) NULL DEFAULT '' COMMENT 'vendedor' AFTER `numero_de_colegiacion` ";
+$sql["20170601"][]	= "ALTER TABLE `general_structure` CHANGE COLUMN `tab_num` `tab_num` VARCHAR(20) NULL DEFAULT '' COMMENT 'ID DE TAB' ";
+$sql["20170601"][]	= " INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('1916', '200', 'Arrendamiento.- Info Cliente', '<!-- contenido -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1916')";
+
+$sql["20170601"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `cuota_iva` DOUBLE(18,2) NULL DEFAULT '0.00' AFTER `tel` ";
+$sql["20170601"][]	= "INSERT INTO `operaciones_tipos` (`idoperaciones_tipos`, `descripcion_operacion`, `clasificacion`, `subclasificacion`, `cuenta_contable`, `descripcion`, `recibo_que_afecta`, `tipo_operacion`, `visible_reporte`, `class_efectivo`, `mvto_que_afecta`, `afectacion_en_recibo`, `afectacion_en_notificacion`, `producto_aplicable`, `constituye_fondo_automatico`, `integra_vencido`, `afectacion_en_sdpm`, `cargo_directo`, `codigo_de_valoracion`, `periocidad_afectada`, `integra_parcialidad`, `es_estadistico`, `formula_de_calculo`, `formula_de_cancelacion`, `importancia_de_neutralizacion`, `preservar_movimiento`, `tasa_iva`, `nombre_corto`, `estatus`, `precio`) VALUES('176','PAGO IVA RENTAS','0','0','\$cuenta  = CUENTA_DE_CUADRE;','PAGO IVA RENTAS','99','176','1','1','99','1','0','0','0','0','0','0','','ninguna','0','0','','','0','0','0.160','UVA RENTAS','1','0.00')";
+$sql["20170601"][]	= "INSERT INTO `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `descripcion_de_la_relacion`) VALUES ('605', '1001', '176', 'Iva de Rentas')";
+$sql["20170601"][]	= "CREATE TABLE IF NOT EXISTS `leasing_tramites_cat` ( `idleasing_tramites_cat` INT NOT NULL AUTO_INCREMENT,  `nombre_tramite` VARCHAR(50) NULL,  PRIMARY KEY (`idleasing_tramites_cat`)) ENGINE = INNODB";
+$sql["20170601"][]	= "CREATE TABLE IF NOT EXISTS  `creditos_firmantes` (  `idcreditos_firmantes` INT NOT NULL AUTO_INCREMENT,  `credito` BIGINT(20) NULL,  `persona` BIGINT(20) NULL,  `rol_firmante` VARCHAR(50) NULL,  PRIMARY KEY (`idcreditos_firmantes`)) ENGINE = INNODB";
+
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('100', 'Emplacamiento')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('101', 'Tramite de Placas')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('102', 'Reporte de Extravio')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('103', 'Reporte de Robo de Placas')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('104', 'Recuperacion del vehiculo')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('105', 'Pago de Multas')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('106', 'Pago de Sanciones')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('107', 'Solicitud de Re-expedicion de Tarjeta de Circ')";
+$sql["20170601"][]	= "INSERT INTO `leasing_tramites_cat` (`idleasing_tramites_cat`, `nombre_tramite`) VALUES ('108', 'Refrendo Vehicular')";
+
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('8005', '200', 'Ficha de Firmantes 1', '<!-- contenido -->', '', '')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('8006', '200', 'Ficha de Firmantes 2', '<!-- contenido -->', '', '')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('8007', '200', 'Ficha de Firmantes 3', '<!-- contenido -->', '', '')";
+$sql["20170601"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`,`tags`,`ruta`) VALUES ('8008', '200', 'Ficha de Firmantes 4', '<!-- contenido -->', '', '')";
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('581', 'FORM', 'CREDITOS.ARRENDAMIENTO.DIV_ANTICIPO', '', '', '', '')";
+$sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('3', 'FIAT')";
+$sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('4', 'Volkswagen')";
+$sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('5', 'Nissan')";
+$sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('6', 'Chevrolet')";
 //$sql["20170601"][]	= "";
 //$sql["20170601"][]	= "";
+
 //$sql["20170601"][]	= "";
+//$sql["20170601"][]	= "";
+
 
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){

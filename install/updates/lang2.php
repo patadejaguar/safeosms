@@ -561,7 +561,9 @@ $lang["20170601"][]	= array("RENTADEPOSITO", "Renta en Deposito", "Rent");
 $lang["20170601"][]	= array("MOTIVORECHAZO", "Motivo de Rechazo", "Rejection Reason");
 $lang["20170601"][]	= array("REAUTORIZAR", "Re-Autorizar", "New Authorize");
 $lang["20170601"][]	= array("EJERCIDO", "Ejercido", "Spent");
-
+$lang["20170601"][]	= array("SERIENAL", "N.I.V.", "N.V.I.");
+$lang["20170601"][]	= array("PERIODORENTA", "Periodo de Renta", "Rent Period");
+$lang["20170601"][]	= array("FIRMANTES", "Firmantes", "Signers");
 //$lang["20170601"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
 //$lang["20170601"][]	= array("", "", "");
 

@@ -23,8 +23,8 @@ $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
 
 function jsaGenerarPlanCliente($credito){
-	$xRentas	= new cLeasingRentas();
-	$xRentas->setCrearPorCredito($credito);
+	//$xRentas	= new cLeasingRentas();
+	//$xRentas->setCrearPorCredito($credito);
 	
 }
 $jxc ->exportFunction('jsaGenerarPlanCliente', array('credito'), "#idaviso");

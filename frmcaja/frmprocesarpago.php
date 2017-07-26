@@ -293,7 +293,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 						$arr_desglose[OPERACION_CLAVE_PAGO_TENEN_V]		= $xLeas->getCuotaTenencia() / $totalCNC;
 						$arr_desglose[OPERACION_CLAVE_PAGO_ACC_V]		= $xLeas->getCuotaAccesorios() / $totalCNC;
 						$arr_desglose[OPERACION_CLAVE_PAGO_GTIAE_V]		= $xLeas->getCuotaGtiaExtendida() / $totalCNC;
-						
+						$arr_desglose[OPERACION_CLAVE_PAGO_IVA_ARR]		= $xLeas->getCuotaIVA() / $totalCNC;
 					}
 					
 					

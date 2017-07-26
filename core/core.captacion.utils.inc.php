@@ -964,19 +964,22 @@ class cUtileriasParaCaptacion {
 		$rs				= $xQL->getRecordset("SELECT  `numero_cuenta` FROM `captacion_cuentas` WHERE `tipo_cuenta`=$tipo $ByCuenta2");
 		$fails			= 0;
 		$readys			= 0;
-		while($rw = $rs->fetch_assoc()){
-			$idcuenta	= $rw["numero_cuenta"];
-			$saldo		= (isset($arrSdos[$idcuenta])) ? $arrSdos[$idcuenta] : 0;
-			$res		= $xQL->setRawQuery("UPDATE `captacion_cuentas` SET `saldo_cuenta`=$saldo, `saldo_conciliado`=$saldo WHERE `numero_cuenta`=$idcuenta");
-			$res		= ($res === false) ? false : true;
-			if($res == false){
-				$xLog->add("ERROR\t$idcuenta\Al Actualizar el Saldo de la Cuenta\r\n", $xLog->DEVELOPER);
-				$fails++;
-			} else {
-				$readys++;
+		
+		if($rs){
+			while($rw = $rs->fetch_assoc()){
+				$idcuenta	= $rw["numero_cuenta"];
+				$saldo		= (isset($arrSdos[$idcuenta])) ? $arrSdos[$idcuenta] : 0;
+				$res		= $xQL->setRawQuery("UPDATE `captacion_cuentas` SET `saldo_cuenta`=$saldo, `saldo_conciliado`=$saldo WHERE `numero_cuenta`=$idcuenta");
+				$res		= ($res === false) ? false : true;
+				if($res == false){
+					$xLog->add("ERROR\t$idcuenta\Al Actualizar el Saldo de la Cuenta\r\n", $xLog->DEVELOPER);
+					$fails++;
+				} else {
+					$readys++;
+				}
 			}
+			$rs->free();
 		}
-		$rs->free();
 		$arrSdos	= array();
 		if($fails>0){
 			$xLog->add("ERROR\tHubo $fails al Actualizar el Saldo\r\n");

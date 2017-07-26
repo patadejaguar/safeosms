@@ -151,7 +151,7 @@ $xFRM->OText_13("factura", $xTabla->factura()->v(), "TR.FACTURA");
 $xFRM->OText("color", $xTabla->color()->v(), "TR.COLOR");
 $xFRM->OText_13("serie", $xTabla->serie()->v(), "TR.SERIE");
 $xFRM->OText_13("motor", $xTabla->motor()->v(), "TR.MOTOR");
-
+$xFRM->OText_13("serie_nal", $xTabla->serie_nal()->v(), "TR.SERIENAL");
 
 $xFRM->addCRUD($xTabla->get(), true);
 //$xFRM->addCRUDSave($xTabla->get(), $clave, true);

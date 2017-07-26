@@ -26,7 +26,7 @@ function jsaGuardarDatosBanco($credito, $banco, $cuenta, $clabe, $vencimiento, $
 	$Cat		= $xCred->OCatOtrosDatos();
 	$datobanco	= "";
 	$xBan		= new cBancos_entidades(); $xBan->setData( $xBan->query()->initByID($banco) );
-	$datobanco	= $xBan->idbancos_entidades()->v() . " | " . $xBan->nombre_de_la_entidad()->v();
+	$datobanco	= $xBan->idbancos_entidades()->v() . " " . STD_LITERAL_TER_DIV . " " . $xBan->nombre_de_la_entidad()->v();
 	$xCred->setOtrosDatos($Cat->DEPOSITO_BANCO, strtoupper($datobanco));
 	$xCred->setOtrosDatos($Cat->DEPOSITO_CTA_BANCARIA, $cuenta);
 	$xCred->setOtrosDatos($Cat->DEPOSITO_CLABE_BANCARIA, $clabe);
@@ -42,6 +42,7 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
 $xOD		= new cCreditosOtrosDatos();
+
 $xCred		= new cCredito($credito);
 
 $xHP->init();
@@ -56,9 +57,14 @@ if($xCred->init() == true){
 	//} else {
 	$xFRM->addHElem( $xSel->getListaDeTipoDeLugarDeCobro("", $xCred->getTipoDeLugarDeCobro())->get(true) );
 	//}
-	$xFRM->addHElem( $xSel->getListaDeBancos("idbanco")->get("TR.".$xOD->DEPOSITO_BANCO, true) );
-	$xFRM->OMoneda("idctabancaria", "", "TR.".$xOD->DEPOSITO_CTA_BANCARIA);
-	$xFRM->OMoneda("idctaclabe", "", "TR.".$xOD->DEPOSITO_CLABE_BANCARIA);
+	
+	$idbanco	= $xCred->getOtroDatos($xOD->DEPOSITO_BANCO);
+	$dbanco		= explode(STD_LITERAL_TER_DIV, $idbanco);
+	$idbanco	= setNoMenorQueCero($dbanco[0]);
+	
+	$xFRM->addHElem( $xSel->getListaDeBancos("idbanco", $idbanco)->get("TR.".$xOD->DEPOSITO_BANCO, true) );
+	$xFRM->OMoneda("idctabancaria", $xCred->getOtroDatos($xOD->DEPOSITO_CTA_BANCARIA), "TR.".$xOD->DEPOSITO_CTA_BANCARIA);
+	$xFRM->OMoneda("idctaclabe", $xCred->getOtroDatos($xOD->DEPOSITO_CLABE_BANCARIA), "TR.".$xOD->DEPOSITO_CLABE_BANCARIA);
 	$xFRM->ODate("idvencimiento", fechasys(), "TR.Fecha de Vencimiento");
 	$xFRM->addGuardar("jsaGuardarDatosBanco()");
 	$xFRM->OHidden("idcredito", $credito, "");
@@ -68,5 +74,13 @@ if($xCred->init() == true){
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);
+?>
+<script>
+var xG	= new Gen();
+function jsSalir(){	xG.close(); }
+session(TINYAJAX_CALLB, "jsSalir()");
+
+</script>
+<?php
 $xHP->fin();
 ?>

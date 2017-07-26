@@ -97,7 +97,8 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			$oFrm->addCreditoComandos($idsolicitud, $xCred->getEstadoActual(), $xCred->getSaldoActual());
 			
 			if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_OFICIAL_CRED){
-				$oFrm->addToolbar( $xBtn->getBasic("TR.ACTUALIZAR DATOS", "jsActualizarCredito()", "editar", "edit-credito", false )  );
+				$oFrm->OButton("TR.ACTUALIZAR DATOS", "jsActualizarCredito()", $oFrm->ic()->EDITAR, "editar-credito", "green2");
+				
 			}
 			
 			

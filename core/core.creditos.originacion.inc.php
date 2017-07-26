@@ -152,6 +152,7 @@ class cCreditosLeasing {
 	private $mCuotaMtto			= 0;
 	private $mCuotaTenencia		= 0;
 	private $mCuotaAccesorios	= 0;
+	private $mCuotaIVA			= 0;
 	private $mTasaIVA			= 0;
 	private $mTipoRAC			= 0;
 	private $mNumeroPagos		= 0;
@@ -197,6 +198,7 @@ class cCreditosLeasing {
 	private $mMontoAccesorios		= 0;
 	private $mMontoGarantiaExt		= 0;
 	private $mMontoAnticipo			= 0;
+	private $mFactorMas				= 1; 
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -259,6 +261,7 @@ class cCreditosLeasing {
 			$this->mCuotaMtto		= $xT->cuota_mtto()->v();
 			$this->mCuotaSeguro		= $xT->cuota_seguro()->v();
 			$this->mCuotaTenencia	= $xT->cuota_tenencia()->v();
+			$this->mCuotaIVA		= $xT->cuota_iva()->v();
 			$this->mTasaIVA			= $xT->tasa_iva()->v();
 			$this->mMontoSeguroFin	= ($xT->financia_seguro()->v() == 1) ? $xT->monto_seguro()->v() : 0;
 			$this->mMontoSeguroInit	= ($xT->financia_seguro()->v() == 0) ? $xT->monto_seguro()->v() : 0;
@@ -295,7 +298,12 @@ class cCreditosLeasing {
 			$this->mMontoGarantiaExt		= $xT->monto_garantia()->v();
 			//$this->mCuotaPrincipal	= $this->getCuota($mCoste, $residual);
 			//$this->mCuotaGPS		= $this->getCuota($costeGPS);
+			$xRuls							= new cReglaDeNegocio();
+			$IvaNoInc						= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_IVA_NOINC);
 			
+			if($IvaNoInc ==true){
+				$this->mFactorMas			= 1.16;
+			}
 			//$this->mArrResiduales		= 
 			$arrRes						= explode(",", $xT->residuales()->v());
 			foreach ($arrRes as $dres){
@@ -312,17 +320,26 @@ class cCreditosLeasing {
 		}
 		return $this->mInit;
 	}
-	function getMontoPlacas(){ return $this->mMontoPlacas; }
-	function getMontoNotario(){ return $this->mMontoNotario; }
-	function getMontoGestoria(){ return $this->mMontoGestoria; }
-	function getMontoDepositoGarantia(){ return $this->mMontoDepositoGarantia; }
-	function getMontoRentaProporcional(){ return $this->mMontoRentaProporcional; }
-	function getMontoComision(){ return $this->mMontoComision; }
+	function getMontoPlacas(){ return $this->mMontoPlacas*$this->mFactorMas; }
+	function getMontoNotario(){ return $this->mMontoNotario*$this->mFactorMas; }
+	function getMontoGestoria(){ return $this->mMontoGestoria*$this->mFactorMas; }
+	function getMontoDepositoGarantia(){ return $this->mMontoDepositoGarantia*$this->mFactorMas; }
+	function getMontoRentaProporcional(){ return $this->mMontoRentaProporcional*$this->mFactorMas; }
+	function getMontoComision(){ return $this->mMontoComision*$this->mFactorMas; }
+	function getMontoAnticipo($SinIva = false){ 
+		$anticipo	= ($SinIva == true) ? $this->mAnticipo : $this->mAnticipo*$this->mFactorMas;
+	 	return $anticipo;
+	}
+	function getAnticipo(){ return $this->mAnticipo*$this->mFactorMas; }
+	
+	function getMontoAccesorios(){ return $this->mMontoAccesorios*$this->mFactorMas; }
+	function getMontoGarantiaExt(){ return $this->mMontoGarantiaExt*$this->mFactorMas; }
+	
 	function getMontoVehiculo(){ return $this->mMontoVehiculo; }
 	function getMontoAliado(){ return $this->mMontoAliado; }
-	function getMontoAccesorios(){ return $this->mMontoAccesorios; }
-	function getMontoGarantiaExt(){ return $this->mMontoGarantiaExt; }
-	function getMontoAnticipo(){ return $this->mAnticipo; }
+	
+
+	
 	function getVehiculoDescripcion(){ return $this->mVehiculoDescripcion;	}
 	function getVehiculoMarca(){ return $this->mVehiculoMarca; }
 	function getVehiculoAnnio(){ return $this->mVehiculoAnnio; }
@@ -359,24 +376,31 @@ class cCreditosLeasing {
 	function getValorResidual(){ return $this->mValorResidual; }
 
 	function getFinanciamiento(){ return $this->mFinanciamiento; }
-	function getAnticipo(){ return $this->mAnticipo; }
+	
+	
+	
 	function getTasaInteres(){ return $this->mTasaInteres; }
 	function getTasaTiie(){ return $this->mTasaTIIE; }
-	function getCuotaAccesorios(){ return $this->mCuotaAccesorios; }
-	function getCuotaMtto(){ return $this->mCuotaMtto; }
-	function getCuotaSeguro(){ return $this->mCuotaSeguro; }
-	function getCuotaTenencia(){ return $this->mCuotaTenencia; }
-	function getCuotaRenta(){ return round(($this->mCuotaGPS+$this->mCuotaVehiculo),2); }
-	function getCuotasNoCapitalizadas(){ return $this->mCuotaMtto+$this->mCuotaSeguro+$this->mCuotaTenencia+$this->mCuotaAccesorios + $this->mCuotaGtiaExtendida; }
-	function getCuotaGtiaExtendida(){ return $this->mCuotaGtiaExtendida; }
+	
+	function getCuotaAccesorios(){ return $this->mCuotaAccesorios*$this->mFactorMas; }
+	function getCuotaMtto(){ return $this->mCuotaMtto*$this->mFactorMas; }
+	function getCuotaSeguro(){ return $this->mCuotaSeguro*$this->mFactorMas; }
+	function getCuotaTenencia(){ return $this->mCuotaTenencia*$this->mFactorMas; }
+	function getCuotaRenta(){ return round((($this->mCuotaGPS+$this->mCuotaVehiculo)*$this->mFactorMas),2); }
+	function getCuotaGtiaExtendida(){ return ($this->mCuotaGtiaExtendida*$this->mFactorMas); }
+	
+	function getCuotasNoCapitalizadas(){ return (($this->mCuotaMtto+$this->mCuotaSeguro+$this->mCuotaTenencia+$this->mCuotaAccesorios + $this->mCuotaGtiaExtendida)*$this->mFactorMas)+$this->mCuotaIVA; }
+	
+	function getCuotaIVA(){ return $this->mCuotaIVA; }
 	function getTotalCuota(){ 
 		$cuota	= $this->getCuotaAccesorios() + $this->getCuotaGtiaExtendida() + $this->getCuotaMtto() + $this->getCuotaRenta() + $this->getCuotaSeguro() + $this->getCuotaTenencia();
 		return $cuota;
 	}
-	function getSeguroInicial(){ return $this->mMontoSeguroInit; }
-	function getSeguroFinanciado(){ return $this->mMontoSeguroFin; }
-	function getTenenciaInicial(){ return $this->mTenenciaInicial; }
-	function getTenenciaFinanciado(){ return $this->mTenenciaFinanc; }
+	function getSeguroInicial(){ return $this->mMontoSeguroInit*$this->mFactorMas; }
+	function getSeguroFinanciado(){ return $this->mMontoSeguroFin*$this->mFactorMas; }
+	function getTenenciaInicial(){ return $this->mTenenciaInicial*$this->mFactorMas; }
+	function getTenenciaFinanciado(){ return $this->mTenenciaFinanc*$this->mFactorMas; }
+	
 	function getClaveDeOficial(){  return $this->mClaveDeOficial; }
 	function getClaveDePersona(){ return $this->mIDPersona; }
  	function getClaveDeCredito(){ return $this->mIDCredito; }
@@ -1013,7 +1037,7 @@ class cLeasingValorResidual {
 		if($this->mIDCache !== ""){
 			$xCache = new cCache();
 			$xCache->clean($this->mIDCache);
-			$idcx			= "leasing_residual-" . $this->mPlazo ."-" . $this->mTipo;
+			$idcx			= "leasing_residual-plazo-tipo-" . $this->mPlazo ."-" . $this->mTipo;
 			$xCache->clean($idcx);
 		} 
 	}
@@ -1300,7 +1324,8 @@ class cLeasingEmulaciones {
 		$TasaResidual	= setNoMenorQueCero($TasaResidual);
 		$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
 		
-		$residual	= 0;
+		
+		$residual		= 0;
 		if($xRes->initByPlazoTipo($plazo) == true){
 			$FactorIVA	= (1/(1+TASA_IVA));
 			$coste		= ($precio+$aliado);
@@ -1310,11 +1335,13 @@ class cLeasingEmulaciones {
 			if($ConIVA == false){
 				$base	= ($coste * $FactorIVA);
 			}
+			
 			if($ConAnt == false){
 				$base	= $base - $anticipo;
 			}
 			$residual	= $base * $tasa;
 		}
+		
 		$residual		= round($residual,2);
 		return $residual;
 	}
@@ -1358,8 +1385,10 @@ class cLeasingActivos {
 	private $mColor		= "";
 	private $mMotor		= "";
 	private $mPlacas	= "";
+	private $mNIV		= "";
 	private $mFactura	= "";
 	private $mMontoVEC	= 0;
+	
 	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
@@ -1394,6 +1423,8 @@ class cLeasingActivos {
 			$this->mColor		= $xT->color()->v();
 			$this->mIDProveedor	= $xT->proveedor()->v();
 			$this->mMontoVEC	= $xT->valor_venta()->v();
+			$this->mNIV			= $xT->serie_nal()->v();
+			$this->mNombre		= $xT->descripcion()->v();
 		
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
@@ -1414,6 +1445,7 @@ class cLeasingActivos {
 	function getPlacas(){ return $this->mPlacas; }
 	function getFactura(){ return $this->mFactura; }
 	function getColor(){ return $this->mColor; } 
+	function getNIV(){ return $this->mNIV; }
 	function getClaveDeProveedor(){ return $this->mIDProveedor; }
 	function initForContract($credito){
 		$xCache	= new cCache();
@@ -1703,6 +1735,58 @@ class cCreditosLineas {
 		
 		return $html;
 	}
+}
+
+
+class cLeasingTramitesCatalogo {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "leasing_tramites_cat";
+	private $mTipo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cLeasing_tramites_cat();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj		= $xT; //Cambiar
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mNombre	= $xT->nombre_tramite()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
 }
 
 ?>

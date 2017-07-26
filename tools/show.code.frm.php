@@ -78,7 +78,7 @@ $lbl			= $xNSel->getLabel();
 $xNSel->setLabel("");
 
 $xFRM->addDivSolo($lbl, $xNSel->get(false), "tx14", "tx34");
-$xFRM->OButton("TR.CODIGO", "jsGetTable()", $xFRM->ic()->EJECUTAR);
+$xFRM->OButton("TR.CODIGO", "jsGetTable()", $xFRM->ic()->EJECUTAR, "", "blue2");
 $xFRM->OText("idgrid", "iddiv", "GRID ID");
 $xFRM->OText("idform", "frm", "Nombre Formulario");
 $xFRM->OText("idfile", "", "Nombre Archivo");

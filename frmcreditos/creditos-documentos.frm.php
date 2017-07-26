@@ -38,10 +38,9 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
 $recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
-$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
-$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
-
-$observaciones= parametro("idobservaciones");
+$grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
@@ -99,15 +98,25 @@ if($credito <= DEFAULT_CREDITO){
 		$xorigen			= $xT->cSerial(3, $xorigen);
 		//Agregar Documentos segun tags
 		$sql				= "SELECT `idgeneral_contratos`,`titulo_del_contrato`,`ruta` FROM `general_contratos` WHERE (`tags` LIKE '%$xorigen%' OR `tags` LIKE '%" . SYS_TODAS .  "%') AND `estatus`='alta' AND `tipo_contrato`=" . iDE_CREDITO;
-		
 		$rs					= $xQL->getDataRecord($sql);
+		
 		foreach ($rs as $rw){
 			$url			= $rw["ruta"] . "&credito=" . $credito;
-			$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',full:true})", $xFRM->ic()->REPORTE4, "", "white");
+			$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',full:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", "white");
 		}
 
 		$pathContrato		= $xCred->getPathDelContrato();
 		$pathPagare			= $xCred->getOProductoDeCredito()->getPathPagare($credito);
+		//================== Listado de Tramites
+		if($xCred->getEsArrendamientoPuro() == true){
+			$xFRM->addSeccion("idfrmtram", "TR.ARRENDAMIENTO");
+			$xSelTram		= $xSel->getListadoGenerico("leasing_tramites_cat", "idtramite");
+			$xSelTram->setLabel("TR.TRAMITE");
+			
+			$xFRM->addHElem( $xSelTram->get(true) );
+			$xFRM->endSeccion();
+		}
+		
 		
 	} else {
 		
@@ -130,6 +139,10 @@ function printMandato(){ xGen.w({ url: "../rpt_formatos/mandato_en_creditos.rpt.
 function printpagare(){ xGen.w({ url: "<?php echo $pathPagare; ?>" }); }
 function contratocredito(){ xGen.w({ url: "<?php echo $pathContrato; ?>", full: true }); }
 function printodes(){ xGen.w({ url: "../rpt_formatos/rptordendesembolso.php?solicitud=" + idCredito }); }
+function getOArgs(){
+	str	= "&tramite=" + $("#idtramite").val();
+	return str;
+}
 </script>
 <?php
 //$jxc ->drawJavaScript(false, true);

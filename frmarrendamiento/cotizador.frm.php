@@ -20,13 +20,15 @@ $xQL			= new MQL();
 $xLi			= new cSQLListas();
 $xF				= new cFecha();
 $xCProc			= new cCreditosProceso();
-
+$xFormu			= new cFormula();
 //$xDic		= new cHDicccionarioDeTablas();
 $jxc 			= new TinyAjax();
 $xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
 $xRuls			= new cReglaDeNegocio();
 $NoUsarTIIE		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_SIN_TIIE);
 $NoUsarResidual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_NORES);
+$jsFormulaPrec	= $xFormu->init($xFormu->JS_LEAS_COT_VARS);	
+
 
 $originador		= 0;
 $suborigen		= 0;
@@ -481,28 +483,51 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->addSeccion("iddacces", "TR.ACCESORIOS");
 }
 
+if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true){
+	$xFRM->OHidden("tipo_gps", $xTabla->tipo_gps()->v() );
+} else {
+
 $xSelGPS	= $xSel->getListaDeVehiculosGPS("tipo_gps", $xTabla->tipo_gps()->v());
 $xSelGPS->addEvent("onblur", "jsaGetCostoGPS()");
 $xFRM->addHElem($xSelGPS->get(true) );
 
-
+}
 
 if($xUser->getEsOriginador() == false){
 
-	$xFRM->OMoneda2("monto_aliado", $xTabla->monto_aliado()->v(), "TR.EQUIPOALIADO");
-	$xFRM->OText("describe_aliado", $xTabla->describe_aliado()->v(), "TR.DESCRIPCION EQUIPOALIADO");
+	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true){
+		$xFRM->OHidden("monto_gps", $xTabla->monto_gps()->v());
+	} else {
+		$xFRM->OMoneda2("monto_gps", $xTabla->monto_gps()->v(), "TR.MONTO PAQUETESGPS");
+	}
+	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_aliado") == true){
+		$xFRM->OHidden("monto_aliado", $xTabla->monto_aliado()->v());
+		$xFRM->OHidden("describe_aliado", $xTabla->describe_aliado()->v());
+	} else {
+		$xFRM->OMoneda2("monto_aliado", $xTabla->monto_aliado()->v(), "TR.EQUIPOALIADO");
+		$xFRM->OText("describe_aliado", $xTabla->describe_aliado()->v(), "TR.DESCRIPCION EQUIPOALIADO");
+	}
 	
+	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_accesorios") == true){
+		
+		$xFRM->OHidden("monto_accesorios", $xTabla->monto_accesorios()->v());
+		$xFRM->OHidden("monto_tenencia", $xTabla->monto_tenencia()->v());
+		$xFRM->OHidden("monto_garantia", $xTabla->monto_garantia()->v());
+		$xFRM->OHidden("monto_mtto", $xTabla->monto_mtto()->v());
+		$xFRM->OHidden("monto_gestoria", $xTabla->monto_gestoria()->v());
+		
+	} else {
+		$xFRM->OMoneda2("monto_accesorios", $xTabla->monto_accesorios()->v(), "TR.ACCESORIOS");
+		$xFRM->OMoneda2("monto_tenencia", $xTabla->monto_tenencia()->v(), "TR.TENENCIA");
+		$xFRM->OMoneda2("monto_garantia", $xTabla->monto_garantia()->v(), "TR.GARANTIA");
+		$xFRM->OMoneda2("monto_mtto", $xTabla->monto_mtto()->v(), "TR.MTTO");
+		$xFRM->OMoneda2("monto_gestoria", $xTabla->monto_gestoria()->v(), "TR.GASTOSGESTORIA");
+	}
 	
-	$xFRM->OMoneda2("monto_accesorios", $xTabla->monto_accesorios()->v(), "TR.ACCESORIOS");
 	$xFRM->OMoneda2("monto_seguro", $xTabla->monto_seguro()->v(), "TR.AUTOSEGURO");
-	$xFRM->OMoneda2("monto_tenencia", $xTabla->monto_tenencia()->v(), "TR.TENENCIA");
-	$xFRM->OMoneda2("monto_garantia", $xTabla->monto_garantia()->v(), "TR.GARANTIA");
-	$xFRM->OMoneda2("monto_mtto", $xTabla->monto_mtto()->v(), "TR.MTTO");
-	
-	
-	$xFRM->OMoneda2("monto_gps", $xTabla->monto_gps()->v(), "TR.MONTO PAQUETESGPS");
+		
 	$xFRM->OMoneda2("monto_placas", $xTabla->monto_placas()->v(), "TR.COSTOPLACAS");
-	$xFRM->OMoneda2("monto_gestoria", $xTabla->monto_gestoria()->v(), "TR.GASTOSGESTORIA");
+	
 	$xFRM->OMoneda2("monto_notario", $xTabla->monto_notario()->v(), "TR.GASTOSNOTARIALES");
 	
 	$xFRM->ODisabledM("trenta_deposito", $xTabla->renta_deposito()->v(), "TR.RENTADEPOSITO");
@@ -510,6 +535,8 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->OHidden("renta_deposito", $xTabla->renta_deposito()->v());
 	$xFRM->ODisabledM("trenta_proporcional", $xTabla->renta_proporcional()->v(), "TR.RENTA PROPORCIONAL");
 	$xFRM->OHidden("renta_proporcional", $xTabla->renta_proporcional()->v());
+	
+	
 } else {
 	$xFRM->OHidden("monto_aliado", $xTabla->monto_aliado()->v());
 	$xFRM->OHidden("describe_aliado", $xTabla->describe_aliado()->v());
@@ -848,6 +875,10 @@ var mFactorMinAnticipo	= 0.2;
 var mFactorSeguro		= 0.03;
 var mMontoMinGtosNot	= 400;
 var vFactorIVA			= 1 / (1+vTasaIVA);
+
+<?php
+echo $jsFormulaPrec;
+?>
 
 function jsCalculaFinanciamiento(){
 	//Constituir Residuales.

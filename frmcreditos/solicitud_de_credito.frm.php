@@ -295,12 +295,12 @@ echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
 ?>
 <script>
-var wFrm 		= document.frmsolicitud;
-var mMonto		= 0;
-var xGen		= new Gen();
-var mNumPago	= $("#idnumerodepagos");
-var mTipoPago	= $("#idtipodepago");
-var mPeriocidad	= $("#idtipodepago");
+var wFrm 			= document.frmsolicitud;
+var mMonto			= 0;
+var xGen			= new Gen();
+var mNumPago		= $("#idnumerodepagos");
+var mTipoPago		= $("#idtipodepago");
+var mPeriocidad		= $("#idtipodepago");
 function jsChecarFinalDePlazo(){
 	var mNumPago	= $("#idnumerodepagos");
 	var mTipoPago	= $("#idtipodepago");

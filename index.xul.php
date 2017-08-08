@@ -12,11 +12,13 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 //<=====	FIN_H
 
 //=====================================================================================================
-
-$xHP						= new cHPage(EACP_NAME . "{" . getSucursal() . "} - S.A.F.E. V " . $version. "", HP_FORM, "", ".");
+$mTit						= EACP_NAME . "{" . getSucursal() . "} - S.A.F.E. V " . $version. "";
+$xHP						= new cHPage($mTit, HP_FORM, "", ".");
 $fecha_de_sesion			= parametro("f", fechasys());
 $MenuParent					= parametro("m", 0, MQL_INT);
-$isMobile 					= $xHP->isMobile();
+
+$isMobile					= parametro("mobile", $xHP->isMobile(), MQL_BOOL);
+
 $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
 
 
@@ -36,7 +38,7 @@ function jsaGetMoneyChanges(){
 	return  $_SESSION["money"];
 }
 function jsaGetMenu($subitems){
-	
+
 	$xMen	= new cHMenu();
 	$xMen->setID("navigator");
 	$menu	= "";
@@ -45,7 +47,8 @@ function jsaGetMenu($subitems){
 		$btn			= "";
 		if($_SESSION[SYS_CLIENT_MOB] == true){
 			$menu 		.= "<li><a onclick='var xG = new Gen(); xG.home();'><i class='fa fa-home fa-lg'></i>Inicio</a></li>";
-		}		
+		}
+		
 		$menu			.= $xMen->getItems($subitems);
 	}
 	return  $menu;
@@ -88,13 +91,16 @@ if(MODO_DEBUG == true){
 $PATHIMG 	= "images/common/";
 
 $xHP->setNoCache();
-$xHP->setNoDefaultCSS();
+//$xHP->setNoDefaultCSS();
 
-	$xHP->addCSS("css/general.css");
-	$xHP->addCSS("css/jmenu.css");
-	$xHP->addJsFile("js/jquery/jquery.ui.js");
-	$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
-	$xHP->addJsFile("js/tinybox.js");
+	//$xHP->addCSS("css/general.css");
+	
+	//$xHP->addJsFile("js/jquery/jquery.ui.js");
+	if($isMobile == false){
+		$xHP->addCSS("css/jmenu.css");
+		$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
+	}
+	//$xHP->addJsFile("js/tinybox.js");
 
 echo $xHP->getHeader();
 
@@ -112,14 +118,55 @@ echo $xHP->getHeader();
 		bottom: 0;
 		position:fixed !important;
 	}
-	.menu-trigger {
-		right: 0;
-		top: 0;
-		position:fixed !important;
-		display:block; text-shadow:0 -1px 1px #222;line-height:1.4em;color:#ffffff; width:3em; background-color:#000821;text-align:center;font-size:1.2em;border-radius:0 0 0 5px;
-	}
+
 	#wprincipal{ width: 100%; max-width: 100%;
 	}
+<?php if ($isMobile == true){ ?>
+
+#jPanelMenu-menu { font-size: 1em;overflow-y: hidden !important; background: #65a9cc; }
+#jPanelMenu-menu li a { min-height: 1.8em;}
+#jPanelMenu-menu {background:#3b3b3b;max-height: 99% !important;}
+#jPanelMenu-menu ul{border-bottom:1px solid #484848;padding:0}
+#jPanelMenu-menu li a{background:#3b3b3b;background:-o-linear-gradient(top, #3e3e3e, #383838);background:-ms-linear-gradient(top, #3e3e3e, #383838);background:-moz-linear-gradient(top, #3e3e3e, #383838);background:-webkit-gradient(linear, left top, left bottom, color-stop(0, #3e3e3e), color-stop(1, #383838));background:-webkit-linear-gradient(#3e3e3e, #383838);background:linear-gradient(top, #3e3e3e, #383838);font-family:"museo-sans","Museo Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;border-bottom:1px solid #2e2e2e;text-decoration:none;text-shadow:0 -1px 2px #222; color: white}
+#jPanelMenu-menu ul li a:hover, #jPanelMenu-menu ul li a:focus{background:#404040;background:-o-linear-gradient(top, #484848, #383838);background:-ms-linear-gradient(top, #484848, #383838);background:-moz-linear-gradient(top, #484848, #383838);background:-webkit-gradient(linear, left top, left bottom, color-stop(0, #484848), color-stop(1, #383838));background:-webkit-linear-gradient(#484848, #383838);background:linear-gradient(top, #484848, #383838); color: #F7F7F7}
+#jPanelMenu-menu li a:active{background:#363636;background:-o-linear-gradient(top, #3e3e3e, #2e2e2e);background:-ms-linear-gradient(top, #3e3e3e, #2e2e2e);background:-moz-linear-gradient(top, #3e3e3e, #2e2e2e);background:-webkit-gradient(linear, left top, left bottom, color-stop(0, #3e3e3e), color-stop(1, #2e2e2e));background:-webkit-linear-gradient(#3e3e3e, #2e2e2e);background:linear-gradient(top, #3e3e3e, #2e2e2e);-moz-box-shadow:0 2px 7px #222 inset;-webkit-box-shadow:0 2px 7px #222 inset;box-shadow:0 2px 7px #222 inset;border-top-color:#222;padding-top:0.55em;padding-bottom:0.45em}
+
+#jPanelMenu-menu ul, #jPanelMenu-menu ol{list-style:none;list-style-image:none;}
+#jPanelMenu-menu ul li a i {  padding-right: 5px; }
+
+
+#jpanel {
+ min-height: 3em; text-align: center; border-bottom: 1px solid #1b5572; box-shadow: 0 0 25px #222;  /* box-shadow:0 1px 5px rgba(34,34,34,0.5);*/
+  transform: translate3d(0px, 0px, 0px);
+
+  	background: #317ca2;
+	background: -o-linear-gradient(top, #3f94bf, #246485);
+	background: -ms-linear-gradient(top, #3f94bf, #246485);
+	background: -moz-linear-gradient(top, #3f94bf, #246485);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3f94bf),
+		color-stop(1, #246485));
+	background: -webkit-linear-gradient(#3f94bf, #246485);
+	background: linear-gradient(top, #3f94bf, #246485);
+	-moz-box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
+	-webkit-box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
+	box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
+	width: 95%;
+	max-width: none;
+	height: 3em;
+	margin: 0;
+	padding: 0 7.5%;
+	border-bottom: 1px solid #1b5572;
+	z-index: 10
+
+}
+#jpanel #menugo {
+	float: left; position: relative; color: #FFF; top: 0.25em; left: 0.25em;
+}
+#jpanel h1 { background-color: transparent !important; background-image: none;  height: 2em; }
+<?php 
+	} 
+?>
 </style>
 <body  onload="jsInitComponents();">
 <?php
@@ -134,16 +181,22 @@ if($isMobile == false ){
 	echo "<div id='wprincipal'><iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100px\" ></iframe></div>
 	<div id=\"banner\">$adsense $menu</div>";
 } else {
+	
 $xMenu->setID("navigator");
-
-$menu	= '<div class="jPanelmenu"><nav style="display: none" id="navmenu">' . $xMenu->getAll() . '</nav>
-		<input type="hidden" id="id-KeyEditable"/></div>';
-	echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
-	echo "<div id='wprincipal'>
-	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100%\" ></iframe>
+$menu	= 
+"<div id=\"jpanel\">
+	<a href=\"#menu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
+	<h1 id='htitle'>$mTit</h1>
+	
+	
+</div> <nav style=\"display: none\" id=\"navmenu\">" . $xMenu->getAll() . "</nav> ";
+echo $menu;
+	//echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
+	echo "<div id=\"wprincipal\">
+	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width=\"100%\" height=\"100%\" ></iframe>
 	</div>
-	<div id=\"banner\">$adsense $menu</div>";
-
+	<div id=\"banner\">$adsense</div>";
+	echo "<input type=\"hidden\" id=\"id-KeyEditable\" />";
 }
 
 $jxc ->drawJavaScript(false, true);
@@ -218,7 +271,7 @@ function getNewWindow(mFile){
 	}
 	<?php
 		if(MODO_DEBUG == false){
-			echo "if( window.console ) { window.console.log( '' ) }";
+			echo "if( window.console ) { window.console.log( '' ); }";
 		}
 	?>
 
@@ -236,7 +289,15 @@ function jsGetMoneyInBox(){
 function jsEndSession(){}
 function jsInitComponents(){
 	jsGetMoneyChanges();
-	var mAlto	= xG.alto()-smenu - 5;
+	var mAlto	= xG.alto()-(smenu + 5);
+	<?php if($isMobile == true){ ?>
+	var smenu2 = entero($("#htitle").css("height"));
+	
+	var mAlto2	= xG.alto()-(smenu+smenu2);
+	var mAlto	= xG.alto()-(smenu + 8 + smenu2);
+	$("#wprincipal").css("height", mAlto2);
+	
+	<?php } ?>
 	$("#idFPrincipal").attr("height", mAlto);
 	if($('#id-KeyEditable').length >0){
 		//setTimeout("jsGetMenu()", 500);

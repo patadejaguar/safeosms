@@ -1665,11 +1665,11 @@ class cHMenuItem {
 		$id				= "";
 		if(MODO_DEBUG == true AND $this->PARENT > 0){ $id = "<span>$Clave</span>"; }
 		$mCmd			= " onclick=\"$mCmd('$Archivo')\"";
-		$dKey			= "";
+		$dKey			= " ";
 		if($Tipo == "parent"){
-			$dKey		= " data-key='$Clave'";
+			$dKey		= " data-key=\"$Clave\"";
 			$mCmd		= "";
-			if($isMobile == true){ $mCmd = "onclick='jsGetMenuChilds(this.id)'"; }
+			if($isMobile == true){ $mCmd = " onclick=\"jsGetMenuChilds(this.id)\""; }
 		}
 		$menu			= "<li id=\"md_$Clave\"><a  id=\"amenu_$Clave\" $extraTags" . $dKey . $mCmd. ">$mImagen&nbsp;$Titulo&nbsp;$id</a>$html</li>\n";
 		return $menu;
@@ -1969,32 +1969,42 @@ class cHMenu {
 		return $mmenu;
 	}
 	function getItems($parent = 0){
-		$menu		= "";
 		$ConHijos 	= ($this->mIsMobile == false) ? true : false;
-		$ql			= new MQL();
 		$filter		= $this->mFilter;
-		$sql		= "SELECT * FROM `general_menu` WHERE (`general_menu`.`menu_parent` =$parent) $filter ORDER BY menu_order";
-		$rs			= $ql->getDataRecord($sql);
-		foreach($rs as $rw){
-			$Clave		= $rw["idgeneral_menu"];
-			$run		= true;
-			
-			if($this->mNumDis > 0){
-				if(in_array($Clave, $this->mDisables)){
-					$run	= false;
+		$xCache		= new cCache();
+		$idx		= ($ConHijos == false) ? "mnu-ch-$parent-" . crc32($filter) : "mnu-sm-$parent-" . crc32($filter);
+		$menu		= "";
+		$menu		= $xCache->get($idx);
+		
+		if($menu === null){
+			$sql		= "SELECT * FROM `general_menu` WHERE (`general_menu`.`menu_parent` =$parent) $filter ORDER BY menu_order";
+			$xQL		= new MQL();
+			$rs			= $xQL->getDataRecord($sql);
+			foreach($rs as $rw){
+				$Clave		= $rw["idgeneral_menu"];
+				$run		= true;
+				
+				if($this->mNumDis > 0){
+					if(in_array($Clave, $this->mDisables)){
+						$run	= false;
+					}
+				}
+				if($run == true){
+					$xItem		= new cHMenuItem($Clave, $rw);
+					$subMenu	= "";
+					if($this->mIsMobile == false){
+						if( ($xItem->TIPO == $this->PARENT) AND ($ConHijos == true) ){
+							$subMenu	= $this->getChilds($Clave);
+							$subMenu	= (trim($subMenu) == "") ? "" : "<ul>$subMenu</ul>";
+							//setLog($Clave);
+						}
+					}
+					$menu		.= $xItem->getLi($this->mIncImages, $subMenu);
 				}
 			}
-			if($run == true){
-				$xItem		= new cHMenuItem($Clave, $rw);
-				$subMenu	= "";
-				if( ($xItem->TIPO == $this->PARENT) AND ($ConHijos == true) ){
-					$subMenu	= $this->getChilds($Clave);
-					$subMenu	= (trim($subMenu) == "") ? "" : "<ul>$subMenu</ul>";
-				}
-				$menu		.= $xItem->getLi($this->mIncImages, $subMenu);
-			}
+			$rs				= null;
+			$xCache->set($idx, $menu);
 		}
-		$rs				= null;
 		return $menu;
 	}
 	function getChilds($MenuParent){

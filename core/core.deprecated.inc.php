@@ -1093,6 +1093,7 @@ class cFormula{
 	public $PHP_MORA_X_LETRA	= "php_mora_x_letra";
 	public $PHP_MORA_TOLE_PID	= "php_mora_tolera_pid";
 	public $PHP_INT_FLAT_MOD	= "php_interes_pago_flat_mod";
+	public $JS_LEAS_COT_VARS	= "js_leasing_cot_vars";
 	function __construct($aplicado_a = ""){
 		$this->mClave	= $aplicado_a;
 		if($this->mClave != ""){ $this->init($this->mClave); }

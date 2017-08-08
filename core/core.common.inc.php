@@ -2902,11 +2902,12 @@ class cSocio{
 			
 			if($tipo_de_origen == $xDO->ORIGEN_LINEA){
 				$monto_linea_credito= $this->getMontoLineaDeCredito($clave_de_origen);
+				
 			}
 			
 			
 			//Datos de los Creditos segun Productos
-			$producto_monto_maximo	= $xConv->getMontoMaximoOtorgable(); //$DConv["maximo_otorgable"];
+			$producto_monto_maximo	= $xConv->getMontoMaximoOtorgable();
 		
 			
 			

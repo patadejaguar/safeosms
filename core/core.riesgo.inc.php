@@ -280,6 +280,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_IVA_NOINC			= "CREDITOS.ARRENDAMIENTO.IVA_NO_INC";
 	public $CREDITOS_ARREND_COT_NORES			= "CREDITOS.ARRENDAMIENTO.NO_RESIDUALES";
 	public $CREDITOS_ARREND_ANT_DIV				= "CREDITOS.ARRENDAMIENTO.DIV_ANTICIPO";
+	public $CREDITOS_ARREND_FRM_DIS				= "CREDITOS.ARRENDAMIENTO.DISABLE_FLD";
 	
 	
 	public $CREDITOS_DESEMBOLSO_SIN_DESC		= "CREDITOS.DESEMBOLSO_SIN_DESCUENTOS";
@@ -388,6 +389,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_COT_NORES]			= $this->CREDITOS_ARREND_COT_NORES;
 		$arr[$this->CREDITOS_ARREND_ANT_DIV]			= $this->CREDITOS_ARREND_ANT_DIV;
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
+		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
+		//$arr[$this->]			= $this->;
 		
 		$arr[$this->RECIBOS_SIN_VERSIONIMP]				= $this->RECIBOS_SIN_VERSIONIMP;		
 		$arr[$this->RECIBOS_RPT_USE_FECHAREAL]			= $this->RECIBOS_RPT_USE_FECHAREAL;
@@ -420,6 +423,7 @@ class cReglaDeNegocio {
 	private $mValores	= null;
 	private $mCodigo	= array();
 	private $mDestPers	= array(); //Personas destinatarios
+	private $mLista		= array();
 	 
 	function __construct($evento = false){
 		$this->mEvento	= $evento;
@@ -482,20 +486,37 @@ class cReglaDeNegocio {
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function readValores(){
 		$xCache	= new cCache();
-		$rs		= $xCache->get("reglas-entidad");
-		if($rs == null){
-			$xQL	= new MQL();
-			$rs		= $xQL->getDataRecord("SELECT * FROM `entidad_reglas`");
-			$xCache->set("reglas-entidad", $rs);
-		}
-		$xRul	= new cEntidad_reglas();
-		foreach($rs as $rw){
-			$xRul->setData($rw);
-			if(isset( $this->mRead[ $xRul->nombre()->v() ] )){
-				$this->mCodigo[$xRul->nombre()->v()]	= $xRul->reglas()->v();
-				eval($xRul->reglas()->v());
-				$this->mValores[$xRul->nombre()->v()]	= ($xRul->valor()->v() == 1) ? true : false;
+		
+		$idxv	= "reglas-entidad-vals";
+		$idxc	= "reglas-entidad-cod";
+		
+		$this->mCodigo	= $xCache->get($idxc);
+		$this->mValores	= $xCache->get($idxv);
+		
+		if(!is_array($this->mCodigo) OR !is_array($this->mValores)){
+		
+			$rs		= $xCache->get("reglas-entidad");
+			if($rs == null){
+				$xQL	= new MQL();
+				$rs		= $xQL->getDataRecord("SELECT * FROM `entidad_reglas`");
+				$xCache->set("reglas-entidad", $rs);
 			}
+			$xRul		= new cEntidad_reglas();
+			
+			//setLog(getMemoriaLibre(true));
+			
+			foreach($rs as $rw){
+				$xRul->setData($rw);
+				if(isset( $this->mRead[ $xRul->nombre()->v() ] )){
+					$this->mCodigo[$xRul->nombre()->v()]	= $xRul->reglas()->v();
+					
+					//eval($xRul->reglas()->v());
+					
+					$this->mValores[$xRul->nombre()->v()]	= ($xRul->valor()->v() == 1) ? true : false;
+				}
+			}
+			$xCache->set($idxc, $this->mCodigo);
+			$xCache->set($idxv, $this->mValores);
 		}
 	}
 	/**
@@ -511,14 +532,28 @@ class cReglaDeNegocio {
 		}
 		return $val;
 	}
+	/**
+	 * Retorna el valor contenido en el campo reglas como codigo php
+	 * @param string $regla
+	 * @return string
+	 */
 	function getCodigoPorRegla($regla = null){
 		if($this->mValores == null){ $this->readValores(); }
 		$val		= "";
-		if($regla != null){
+		if($regla !== null){
 			if(isset($this->mCodigo[$regla])){ $val = $this->mCodigo[$regla]; }
 		}
 		return $val;
-	}	
+	}
+	function getArrayPorRegla($regla){
+		$lst	= $this->getCodigoPorRegla($regla);
+		return explode(",", $lst);
+	}
+	function getInArrayPorRegla($regla, $key){
+		$arr	= $this->getArrayPorRegla($regla);
+		
+		return (in_array($key, $arr)) ? true : false; 
+	}
 }
 
 class cReglasDeCalificacion {

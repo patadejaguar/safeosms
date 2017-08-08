@@ -1653,6 +1653,7 @@ class cPoliza{
 		$BodyUpdate		= "";
 		$BodyMvtos		= "";
 		$msg			= "";
+		$xQL			= new MQL();
 
 		$numero			= $this->mNumeroDePoliza;
 		$tipo			= $this->mTipoDePoliza;
@@ -1720,8 +1721,9 @@ class cPoliza{
 						AND periodo=$periodo
 						AND tipopoliza=$tipo
 						AND numeropoliza=$numero";
-				$x 		= my_query($sql);
-				$sucess	= $x["stat"];
+				$x 		= $xQL->setRawQuery($sql);
+				
+				$sucess	= ($x === false ) ? false : true;
 			}
 			//Actualizar los Movimientos
 			if ($updateFecha == true){
@@ -1930,6 +1932,7 @@ class cPoliza{
 		//if($this->mPolizaIniciada == false){ $this->init(); }
 		$xT			= new cTipos();
 		$xLogg		= new cCoreLog();
+		$xQL		= new MQL();
 		$msg		= "";
 		
 		$ejercicio 	= $this->mEjercicioPoliza;
@@ -1981,9 +1984,10 @@ class cPoliza{
 						    $monto, $diario, 1,
 						    '$concepto', '$Fecha',
 						    $cargo, $abono)";
-			$rs 		= my_query($sqli_mvto);
+			$rs 		= $xQL->setRawQuery($sqli_mvto);
+			$rs			= ($rs === false) ? false : true;
 			//setLog($sqli_mvto);
-			if($rs[SYS_ESTADO] == true){
+			if($rs == true){
 				$xLogg->add( "$NumMvto\t$cuenta\t$TipoMvto\t$cargo\t$abono\t$referencia\r\n", $xLogg->DEVELOPER);
 				$xCCont->setAfectarSaldos($TipoMvto, $monto, $periodo, $ejercicio, false);
 				//Establecer Numeracion

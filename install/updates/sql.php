@@ -3323,8 +3323,8 @@ $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nom
 $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('4', 'Volkswagen')";
 $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('5', 'Nissan')";
 $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('6', 'Chevrolet')";
-//$sql["20170601"][]	= "";
-//$sql["20170601"][]	= "";
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`) VALUES ('582', 'FORM', 'CREDITOS.ARRENDAMIENTO.DISABLE_FLD', '', '', '')";
+$sql["20170601"][]	= "INSERT INTO `general_formulas` (`aplicado_a`, `estructura_de_la_formula`, `code_type`, `description_short`) VALUES ('js_leasing_cot_vars', '', 'js', 'Variables que Cambian los valores')";
 
 //$sql["20170601"][]	= "";
 //$sql["20170601"][]	= "";

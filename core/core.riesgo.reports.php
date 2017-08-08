@@ -129,7 +129,10 @@ class cReporteBuroDeCredito_tipo {
 			$this->mInfoLinea[33]		= 0;
 		} else {
 			$this->mInfoLinea[24]		= $this->getText($xSoc->getRFC(true) );//Para Finsureste debe de ser este RFC del cliente//$this->getText($xAE->getNombreEmpresa());
-			$this->mInfoLinea[33]		= $this->getText( $xDom->getCalleConNumero() );//Para Finsureste debe de ser direccion del cliente //Hiber Tadeo Aca es direccion
+			
+			$Dom1 = ($xDom === null) ? "" : $xDom->getCalleConNumero();
+			
+			$this->mInfoLinea[33]		= $this->getText( $Dom1 );//Para Finsureste debe de ser direccion del cliente //Hiber Tadeo Aca es direccion
 		}
 		
 		//direccion 2

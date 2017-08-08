@@ -1737,8 +1737,8 @@ class cUtileriasParaCreditos{
 			$var["tesoreria_cajas_movimientos"]["P"]	="persona";
 			$var["usuarios_web_notas"]["C"]				="documento";
 			$var["usuarios_web_notas"]["P"]				="socio";
-			$var["aml_alerts"]["C"]					="documento_relacionado";
-			$var["aml_alerts"]["P"]					="persona_de_origen";			
+			$var["aml_alerts"]["C"]						="documento_relacionado";
+			$var["aml_alerts"]["P"]						="persona_de_origen";			
 			
 			//? Funciona bien?
 			//$var2["creditos_solicitud"]["C"]			="numero_solicitud";

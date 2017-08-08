@@ -105,7 +105,7 @@ function jsaGetLetrasAVencer($fecha, $producto){
 	}
 	$xT->setFootSum( $arrSum );
 	
-	$t1	.= $xT->Show();
+	$t1	= $xT->Show();
 	
 	
 	$xT2	= new cTabla($sql2, 2);

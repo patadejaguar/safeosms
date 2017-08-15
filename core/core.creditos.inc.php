@@ -1646,20 +1646,22 @@ class cCredito {
 		if ($capital <= TOLERANCIA_SALDOS) { $calcular = false;	}
 		if ($calcular == true) {
 			$xProd				= $this->getOProductoDeCredito();
+			//Si ya existe el cat no se recalcula
 			if($xProd->getCATFijo() >0){
 				$cat				= $xProd->getCATFijo();
 			} else {
+				//Agrega comision por apertura
 				$comision_apertura	= ($xProd->getTasaComisionApertura() >= 1) ? $xProd->getTasaComisionApertura() : ($capital * $xProd->getTasaComisionApertura());
 				$comision_apertura	= ($comision_apertura * ($this->getTasaIVAOtros()+ 1));
 				$capital			= $capital - $comision_apertura;
 				//Emular la letra sin IVA
-				//
 				if ($this->getPeriocidadDePago () == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) {
 					$pago 			= ($this->getMontoAutorizado() * $this->getTasaDeInteres () * $this->getDiasAutorizados()) / EACP_DIAS_INTERES;
 					$arrPagos[] 	= $pago + $this->getMontoAutorizado ();
 					$periodos 		= (360/$this->getDiasAutorizados());
 					$cat 			= $xMat->cat ( $capital, $arrPagos, $periodos,1 );
 				} else {
+					//Simula un plan de pagos
 					$xGen			= new cPlanDePagosGenerador($this->getPeriocidadDePago());
 					$xGen->setPagosAutorizados($this->getPagosAutorizados());
 					$xGen->setMontoActual($this->getMontoAutorizado());
@@ -1670,9 +1672,10 @@ class cCredito {
 					$xGen->setFechaDesembolso($this->getFechaDeMinistracion());
 					$xGen->setSoloTest(true);
 					$xGen->setTipoDePago($this->getTipoDePago());
-					$parcial 	= $xGen->getParcialidadPresumida(); //$redondeo, $idotros, $montootros, $primer_pago);
+					$parcial 	= $xGen->getParcialidadPresumida();
 					$xGen->setCompilar(false);
 					$xGen->getVersionFinal();
+					//Obtiene la tasa cat del plan calculado
 					$cat		= $xGen->getTasaCAT();
 				}
 			}

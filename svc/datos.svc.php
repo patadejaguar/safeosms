@@ -49,8 +49,19 @@ if($query !== "" OR $where !== ""){
 		}		
 	} else {
 		$sql	= base64_decode($query);
+		if($where == ""){
+			
+		} else {
+			$where	= base64_decode($where);
+			//checar si tiene where
+			if(strpos($where, "WHERE") === false){
+				$where	= " WHERE " . $where;
+			}
+			$sql	= $sql . $where;
+		}
 		
-		$sql	.= ($where == "") ? "" : " " . base64_decode($where);
+		//$sql	.= ($where == "") ? "" : " " . base64_decode($where);
+		
 		
 		//setLog($sql);
 		

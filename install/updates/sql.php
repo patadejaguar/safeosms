@@ -3325,8 +3325,11 @@ $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nom
 $sql["20170601"][]	= "INSERT INTO `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) VALUES ('6', 'Chevrolet')";
 $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`) VALUES ('582', 'FORM', 'CREDITOS.ARRENDAMIENTO.DISABLE_FLD', '', '', '')";
 $sql["20170601"][]	= "INSERT INTO `general_formulas` (`aplicado_a`, `estructura_de_la_formula`, `code_type`, `description_short`) VALUES ('js_leasing_cot_vars', '', 'js', 'Variables que Cambian los valores')";
+$sql["20170601"][]	= "ALTER TABLE `sistema_eliminados` ADD COLUMN `persona` BIGINT(20) NULL DEFAULT '0' AFTER `tiempo`";
+$sql["20170601"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('900117', 'OPERACION_COM_CON_IVA', 'Las comisiones y pagos deben llevar Impuestos')";
+$sql["20170601"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200916', 'CREDITO_FECHA_MIN_NO_EQ', 'La fecha de hoy y ministracion no son iguales')";
 
-//$sql["20170601"][]	= "";
+
 //$sql["20170601"][]	= "";
 
 

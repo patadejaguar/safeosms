@@ -93,7 +93,7 @@ $xTb->endRow();
 
 $xTb->initRow();
 $xTb->addTD("Riesgo Geografico en Actividad Economica");
-$xTb->addTD("<details><summary> Cuando una persona tiene Actividades económicas en dos o más países el riesgo se eleva</summary><p>En el caso de SAFE-OSMS el riesgo varía según el Nivel de Riesgo país, basado en el catálogo de la UIF/FAFT (Financial Action Task Force on Money Laundering) clasificado de la siguiente forma: </p>
+$xTb->addTD("<details><summary> Cuando una persona tiene Actividades economicas en dos o más países el riesgo se eleva</summary><p>En el caso de SAFE-OSMS el riesgo varía según el Nivel de Riesgo país, basado en el catálogo de la UIF/FAFT (Financial Action Task Force on Money Laundering) clasificado de la siguiente forma: </p>
    <ol><li>Países Cooperantes: Nivel Bajo.</li>
     <li>Países en Lista Grises: Nivel Medio.</li>
     <li>Países No Cooperantes: Nivel Alto.</li></ol></details>");

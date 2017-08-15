@@ -564,6 +564,7 @@ $lang["20170601"][]	= array("EJERCIDO", "Ejercido", "Spent");
 $lang["20170601"][]	= array("SERIENAL", "N.I.V.", "N.V.I.");
 $lang["20170601"][]	= array("PERIODORENTA", "Periodo de Renta", "Rent Period");
 $lang["20170601"][]	= array("FIRMANTES", "Firmantes", "Signers");
+$lang["20170601"][]	= array("FECHA_PROGRAMADA", "Agendado", "Scheduled");
 //$lang["20170601"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
 //$lang["20170601"][]	= array("", "", "");
 

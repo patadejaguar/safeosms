@@ -672,7 +672,7 @@ $xFRM->addJsInit("jsAsLoaded();");
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);
-//XXX: Verificar generación de IVA
+//XXX: Verificar generacion de IVA
 ?>
 <script>
 var Wo				= new Gen();

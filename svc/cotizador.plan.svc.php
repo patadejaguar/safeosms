@@ -15,11 +15,11 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_SERVICE);
-$xQL		= new MQL();
-$xLi		= new cSQLListas();
-$xF			= new cFecha();
-$xMath		= new cMath();
+$xHP			= new cHPage("", HP_SERVICE);
+$xQL			= new MQL();
+$xLi			= new cSQLListas();
+$xF				= new cFecha();
+$xMath			= new cMath();
 
 $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE); 

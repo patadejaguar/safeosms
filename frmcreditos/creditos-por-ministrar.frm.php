@@ -51,15 +51,19 @@ $xFRM->addCerrar();
 
 $xHG	= new cHGrid("iddivcrediaut",$xHP->getTitle());
 
-$xHG->setSQL($xLi->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_AUTORIZADO, true, false, false, false, false, false));
+$xHG->setSQL($xLi->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_AUTORIZADO, true, false, false, false, false, false, false, ", `creditos_solicitud`.`fecha_ministracion` AS `fecha_de_ministracion` "));
 $xHG->setNoPaginar();
+
+$xHG->col("fecha_de_registro", "TR.Autorizado", "10%");
+$xHG->col("fecha_de_ministracion", "TR.FECHA_PROGRAMADA", "10%");
 
 $xHG->col("codigo", "TR.CLAVE_DE_PERSONA", "10%");
 $xHG->col("nombre", "TR.NOMBRE", "20%");
 $xHG->col("numero_de_solicitud", "TR.CREDITO", "10%");
 $xHG->col("empresa", "TR.EMPLEADOR", "15%");
 
-$xHG->col("fecha_de_registro", "TR.FECHA", "10%");
+
+
 $xHG->col("monto_solicitado", "TR.MONTO", "10%", true);
 
 

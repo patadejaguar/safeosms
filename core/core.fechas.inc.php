@@ -1158,6 +1158,11 @@ class cFecha {
 	}
 	function getAnnosOperativos(){ return $this->mAnnosOperativos; }
 	function getFechaFinAnnio(){ return $this->anno() . "-12-31"; }
+	function getCompare($f2, $f1 = false){
+		$f2	= $this->getInt($f2);
+		$f1	= $this->getInt($f1);
+		return ($f2 == $f1) ? true : false;
+	}
 }
 class cFechaTrimestre {
 	private $mFechaInicial	= false;

@@ -543,6 +543,7 @@ class cLang {
 				$strTxt	= substr($strTxt, 3);
 				$txt	= $this->getMensajeByTop($strTxt);
 				break;
+
 		}
 		
 		return trim($txt);
@@ -597,10 +598,15 @@ class cLang {
 		return json_encode($totrad);
 	}
 	function getMensajeByTop($topico){
-		$xQL	= new MQL();
-		$D		= $xQL->getDataRow("SELECT * FROM `sistema_mensajes` WHERE `topico`='$topico' LIMIT 0,1");
-		
-		return isset($D["mensaje"]) ? $D["mensaje"] : "";
+		$xCache	= new cCache();
+		$wd		= $xCache->get($topico);
+		if($wd === null){
+			$xQL	= new MQL();
+			$D		= $xQL->getDataRow("SELECT * FROM `sistema_mensajes` WHERE `topico`='$topico' LIMIT 0,1");
+			$wd		= isset($D["mensaje"]) ? $D["mensaje"] : "";
+			$xCache->set($topico, $wd, $xCache->EXPIRA_UNDIA);
+		}
+		return $wd;
 	}
 }
 /*

@@ -294,6 +294,7 @@ if($procesado != SYS_AUTOMATICO){
 					WHERE
 						(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 1001) ";
 	$rs 		= $ql->getDataRecord($sqlMT);
+	
 	foreach ($rs as $rw){
 
 			$id			= $rw["miembro"];
@@ -304,24 +305,25 @@ if($procesado != SYS_AUTOMATICO){
 			if ( $rw["afectacion"] == (-1) ){	$MContable	= TM_CARGO; }
 			//Recibe
 			if($m[$id] != 0){
-			  //eliminar Mvtos
-			  if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
-			    setEliminarMvto360( $id, $socio, $solicitud, $recibo_pago);
-			    $xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
-			  } else {
-			    if($respetar_plan_pagos == true){
-			      setEliminarMvto( $id, $socio, $solicitud, $parcialidad, $recibo_pago);
-			      $xLog->add("WARN\tPARCS\tEliminar Letra $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
-			    } else {
-			      setEliminarMvto360( $id, $socio, $solicitud, $recibo_pago);
-			      $xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
-			    }
-
-			  }
-              /**
-              * Condiciona si es Ahorro
-              * 412 = 0.00;
-              **/
+				//eliminar Mvtos
+				//if($id >= 300){
+					if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
+						setEliminarMvto360( $id, $socio, $solicitud, $recibo_pago);
+						$xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
+					} else {
+				    	if($respetar_plan_pagos == true){
+				      		setEliminarMvto( $id, $socio, $solicitud, $parcialidad, $recibo_pago);
+				      		$xLog->add("WARN\tPARCS\tEliminar Letra $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
+				    	} else {
+							setEliminarMvto360( $id, $socio, $solicitud, $recibo_pago);
+							$xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
+						}
+					}
+				//}
+            	/**
+				* Condiciona si es Ahorro
+				* 412 = 0.00;
+				**/
 				if ( $id != OPERACION_CLAVE_PLAN_AHORRO ){
 					$documento	= $solicitud;
 				} else {

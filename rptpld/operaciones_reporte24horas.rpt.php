@@ -131,7 +131,7 @@ foreach($rs as $data){
 		$tipo_de_op	= $xRisk->tipo_de_operacion()->v();
 		$total		= $xRisk->monto_total_relacionado()->v();
 		$moneda		= AML_CLAVE_MONEDA_LOCAL;
-		//TODO: Agregar soporte para captación y colocación
+		//TODO: Agregar soporte para captacion y colocacion
 		switch ($tipo_de_obj){
 			case iDE_RECIBO:
 				$xRec				= new cReciboDeOperacion(false, false, $recibo);

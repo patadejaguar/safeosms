@@ -13,6 +13,7 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 $jxc 		= new TinyAjax();
 $funid 		= getClaveCifradoTemporal();
 
+
 /*function fu_76e369257240ded4b1c059cf20e8d9a4($low) {
 		$funid2 = getClaveCifradoTemporal();
 		$tab 	= new TinyAjaxBehavior();

@@ -4407,8 +4407,9 @@ class cSistema_avisos_db {
 
 }
 /*	ORM: Tabla:	sistema_eliminados	-	Generado:	[01/11/2016 11:26]	*/
+/*	ORM: Tabla:	sistema_eliminados	-	Generado:	[11/8/2017 14:10]	*/
 class cSistema_eliminados {
-	private $mCampos	= array("idsistema_eliminados" => array("N"=>"idsistema_eliminados","T"=>"INT","V"=>"","L"=>11),"tipoobjeto" => array("N"=>"tipoobjeto","T"=>"INT","V"=>"0","L"=>4),"contenido" => array("N"=>"contenido","T"=>"LONGTEXT","V"=>"","L"=>0),"idusuario" => array("N"=>"idusuario","T"=>"INT","V"=>"0","L"=>6),"tiempo" => array("N"=>"tiempo","T"=>"INT","V"=>"0","L"=>11),);
+	private $mCampos	= array("idsistema_eliminados" => array("N"=>"idsistema_eliminados","T"=>"INT","V"=>"","L"=>11),"tipoobjeto" => array("N"=>"tipoobjeto","T"=>"INT","V"=>"0","L"=>4),"contenido" => array("N"=>"contenido","T"=>"LONGTEXT","V"=>"","L"=>0),"idusuario" => array("N"=>"idusuario","T"=>"INT","V"=>"0","L"=>6),"tiempo" => array("N"=>"tiempo","T"=>"INT","V"=>"0","L"=>11),"persona" => array("N"=>"persona","T"=>"BIGINT","V"=>"0","L"=>20),);
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "sistema_eliminados";}
 	function getKey(){ return "idsistema_eliminados";}
@@ -4417,9 +4418,10 @@ class cSistema_eliminados {
 	function contenido($v = false){ if($v !== false){$this->mCampos["contenido"]["V"] =  $v; } return new MQLCampo($this->mCampos["contenido"]);}
 	function idusuario($v = false){ if($v !== false){$this->mCampos["idusuario"]["V"] =  $v; } return new MQLCampo($this->mCampos["idusuario"]);}
 	function tiempo($v = false){ if($v !== false){$this->mCampos["tiempo"]["V"] =  $v; } return new MQLCampo($this->mCampos["tiempo"]);}
+	function persona($v = false){ if($v !== false){$this->mCampos["persona"]["V"] =  $v; } return new MQLCampo($this->mCampos["persona"]);}
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	
 }
 /*	ORM: Tabla:	sistema_permisos	-	Generado:	[15/3/2017 18:38]	*/
 /*	ORM: Tabla:	sistema_permisos	-	Generado:	[16/3/2017 19:05]	*/

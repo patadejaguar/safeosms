@@ -44,8 +44,10 @@ $xHP->init("jsInitComponents()");
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xHNotif	= new cHNotif();
-$xTxt		= new cHText();
-$xTxt->setDivClass("");
+$xTxt		= new cHText(); $xTxt2	= new cHText();
+$xTxt->setDivClass(""); $xTxt2->setDivClass(""); /*$xTxt2->addEvent("jsCalcular()", "onchange");*/
+$xFRM->setValidacion("idenganche_mny", "jsCalcular");
+
 $nn			= $xTxt->getLabel("TR.NOMBRE");
 $nn2		= $xTxt->getLabel("TR.PRECIO");
 
@@ -54,9 +56,17 @@ $xFRM->setTitle($xHP->getTitle());
 //$xFRM->setFieldsetClass("fieldform frmpanel");
 $xFRM->addDivSolo($nn, $xTxt->get("idconatencion", false, " "), "tx14", "tx34");
 $xFRM->OMoneda2("idprecio", 0, "TR.PRECIO");
+$xFRM->OMoneda2("idseguro", 0, "TR.AUTOSEGURO");
+
+$xFRM->OMoneda2("idenganche", 0, "TR.ANTICIPO");
+$xFRM->OSiNo("TR.AUTOSEGURO FINANCIADO", "idfinancia");
+
+
 //$xFRM->addDivMedio($nn2, $xTxt->getDeMoneda2("idprecio"), "tx14", "tx34");
 
 $xFRM->addHElem($xSel->getListaDePeriocidadDePago("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_MENSUAL)->get(true));
+
+
 
 
 
@@ -87,6 +97,12 @@ $xTb->addTD( "-", " id='txtprecio' class='mny' " );
 $xTb->endRow();
 
 
+$xTb->initRow();
+$xTb->addTD("Seguro Financiado");
+$xTb->addTD( "-", " id='txtsegurofin' class='mny' " );
+$xTb->endRow();
+
+
 
 $xTb->initRow();
 $xTb->addTD("Enganche");
@@ -95,9 +111,12 @@ $xTb->endRow();
 
 
 $xTb->initRow();
-$xTb->addTD("Financiamiento");
-$xTb->addTD( "-", " id='txtfinanciamiento' class='mny' " );
+$xTb->addTD("Financiamiento", " class='sumas izq' ");
+$xTb->addTD( "-", " id='txtfinanciamiento' class='mny total' " );
 $xTb->endRow();
+
+
+$xTb->initRow(); $xTb->addTD("", " colspan='2' class='divisor' "); $xTb->endRow();
 
 
 $xTb->initRow();
@@ -105,6 +124,19 @@ $xTb->addTD("Comision por Apertura");
 $xTb->addTD( "-", " id='txtcomision' class='mny' " );
 $xTb->endRow();
 
+
+$xTb->initRow();
+$xTb->addTD("Pago de Seguro Inicial");
+$xTb->addTD( "-", " id='txtseguroinit' class='mny' " );
+$xTb->endRow();
+
+
+$xTb->initRow();
+$xTb->addTD("Pago Inicial", " class='sumas izq' " );
+$xTb->addTD( "-", " id='txtinicial' class='mny total' " );
+$xTb->endRow();
+
+$xTb->initRow(); $xTb->addTD("<br />", " colspan='2' class='divisor' "); $xTb->endRow();
 
 $xFRM->addHElem("<div id='idt'>"  . $xTb->get() . "</div>");
 
@@ -147,6 +179,15 @@ function jsCalcular(){
 
 	var idfrecuencia		= entero($("#idfrecuencia").val());
 	var idprecio			= flotante($("#idprecio").val());
+	var idprecioor			= flotante($("#idprecio").val());
+	
+	var idseguro			= flotante($("#idseguro").val());
+	var idfinancia			= ($("#idfinancia").val() == 1) ? true : false;
+	var idseguroinit		= 0;
+	//Actualizar el Enganche 2
+	var idenganche2			= flotante($("#idenganche_mny").val());
+	$("#idenganche").val(idenganche2);
+	
 	var idenganche			= 0;
 	var idfinanciamiento	= 0;//$("#idfinanciamiento").val();
 	var idcomision			= 0;
@@ -157,7 +198,11 @@ function jsCalcular(){
 	var idperiodos			= 0;
 	var run					= true;
 	var vIva				= 0.16;
-	
+	if(idfinancia == true){
+		idprecio			= idprecio+idseguro;
+	} else {
+		idseguroinit		= idseguro;
+	}
 	//Evaluar montos
 	//evaluar criterios por annio
 	if(idannio <= 2){
@@ -190,10 +235,19 @@ function jsCalcular(){
 	//Asignar avlores
 	$("#idtasa").val(idtasa);
 
+	if(idenganche2 > idenganche){
+		//setLog(idenganche +"---"+ idenganche2);
+		idenganche = idenganche2;
+	} else {
+		$("#idenganche").val( idenganche );
+		$("#idenganche_mny").val( getFMoney(idenganche) );
+	}
 	$("#txtenganche").html(getFMoney(idenganche));
 	$("#txtcomision").html(getFMoney(idcomision));
-	$("#txtprecio").html(getFMoney(idprecio));
-
+	$("#txtprecio").html(getFMoney(idprecioor));
+	
+	$("#txtsegurofin").html(getFMoney(idseguro));
+	$("#txtseguroinit").html(getFMoney(idseguroinit));
 		
 	//
 	//
@@ -216,14 +270,13 @@ function jsCalcular(){
 	}
 
 	$("#idpagos").val(idpagos);
-
 	//
 	idfinanciamiento	= redondear((idprecio-idenganche),2);
 
 	$("#idmonto").val(idfinanciamiento);
 	
 	$("#txtfinanciamiento").html( getFMoney(idfinanciamiento) );
-	
+	$("#txtinicial").html( getFMoney((idcomision+idseguroinit)) );
 	
 	if(run == true){
 		var cuota = xC.getCuotaDePago({capital:idfinanciamiento, tasa: idtasa, residual: 0, frecuencia: idfrecuencia, pagos: idpagos, iva: vIva});

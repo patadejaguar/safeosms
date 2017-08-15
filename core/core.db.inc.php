@@ -2943,7 +2943,7 @@ FROM
 	
 		return $sql;
 	}	
-	function getListaDeCreditosEnProceso($periodo = false, $estado = false , $Autorizados = false, $Rechazados = false, $conPeriodo = true, $FechaInicial = false, $FechaFinal = false, $SoloDatosSol = false, $persona = false){
+	function getListaDeCreditosEnProceso($periodo = false, $estado = false , $Autorizados = false, $Rechazados = false, $conPeriodo = true, $FechaInicial = false, $FechaFinal = false, $SoloDatosSol = false, $persona = false, $otrosF =""){
 		$SAut		= ($Autorizados == false) ? "" : ",	`creditos_tipo_de_autorizacion`.`descripcion_tipo_de_autorizacion` AS `tipo_de_autorizacion`,
 					`creditos_solicitud`.`fecha_autorizacion` AS `fecha_de_autorizacion`, `creditos_solicitud`.`pagos_autorizados` AS	`numero_de_pagos_autorizado`, `creditos_solicitud`.`monto_autorizado`	";
 		$ByAut		= ($Autorizados === false) ? " AND (`creditos_solicitud`.`monto_autorizado` <= 0) " : " ";
@@ -2974,16 +2974,11 @@ FROM
 					`creditos_solicitud`.`numero_solicitud` AS `numero_de_solicitud`,
 					`creditos_solicitud`.`fecha_solicitud` AS `fecha_de_registro`,
 					`creditos_solicitud`.`monto_solicitado`,
-					`creditos_solicitud`.`numero_pagos`                                AS 
-					`numero_de_pagos_solicitado`,
-					`creditos_tipoconvenio`.`descripcion_tipoconvenio`                 AS 
-					`producto`,
-					`creditos_tipo_de_pago`.`descripcion`                              AS 
-					`tipo_de_pago`,
-					`creditos_periocidadpagos`.`descripcion_periocidadpagos`           AS 
-					`periocidad_de_pago` 
-					$strEstat
- 					$SAut
+					`creditos_solicitud`.`numero_pagos`							AS `numero_de_pagos_solicitado`,
+					`creditos_tipoconvenio`.`descripcion_tipoconvenio`			AS `producto`,
+					`creditos_tipo_de_pago`.`descripcion`						AS `tipo_de_pago`,
+					`creditos_periocidadpagos`.`descripcion_periocidadpagos`	AS `periocidad_de_pago` 
+					$strEstat $SAut $otrosF
  					,`oficiales`.`nombre_completo` AS `oficial`
 				FROM
 	`creditos_solicitud` `creditos_solicitud` INNER JOIN `creditos_tipo_de_autorizacion`

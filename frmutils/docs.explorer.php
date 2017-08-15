@@ -27,7 +27,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 //$xForm	= new cFormato($forma);
 //echo $xForm->get();
-// establecer una conexión básica
+// establecer una conexion básica
 $xFTP			= new cDocumentos();
 if($xFTP->FTPConnect() == false){
 	header("location:../404.php?i=4060");

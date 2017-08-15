@@ -78,11 +78,12 @@ echo $xHP->getHeader();
 $xFRM		= new cHForm("frmministracion", "frmcreditosministracion.php");
 $xSel		= new cHSelect();
 $xTxM		= new cHText();
-
+$xNot		= new cHNotif();
 $xTxt		= new cHText();
 $jsSum		= "";
 $sum		= 0;
 $xFRM->addDataTag("role", "ministracion");
+$xFRM->setTitle($xHP->getTitle() );
 $xFRM->setNoAcordion();
 if($credito <= DEFAULT_CREDITO){
 	
@@ -106,6 +107,9 @@ if($credito <= DEFAULT_CREDITO){
 		$xFRM->setAction("clscreditosministracion.php");
 		$xFRM->addHElem($xCred->getFicha(true, "", false, true));
 		$persona=$xCred->getClaveDePersona();
+		
+		$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred($credito);", $xFRM->ic()->CALENDARIO1);
+		
 		$xFRM->OHidden("idsolicitud", $credito);
 		$xFRM->OHidden("idsocio", $persona);
 		//descuento //comisiones
@@ -114,7 +118,7 @@ if($credito <= DEFAULT_CREDITO){
 			$xFRM->OHidden("idmontocreditodescontado", 0);
 			$xFRM->OHidden("idcreditodescontado", 0);
 		} else {
-				$tt		= (TASA_IVA>0) ? "TR.DESCUENTOS IVA INCLUIDO" : "TR.DESCUENTOS";
+				$tt		= (TASA_IVA>0) ? "TR.DESCUENTOS ( CON IMPUESTO_AL_CONSUMO )" : "TR.DESCUENTOS";
 				$xFRM->addSeccion("iddivdesc", $tt);
 	
 				$xT		= new cHTabla();
@@ -172,7 +176,10 @@ if($credito <= DEFAULT_CREDITO){
 				$xFRM->addHElem($xT->get());
 				$xFRM->endSeccion();
 				$xFRM->OHidden("idsumadescuentos", $sum);
-				$xFRM->addAviso($xFRM->l()->getT("TR.Las Comisiones deben incluir IMPUESTO_AL_CONSUMO") );
+				$xFRM->addAviso($xFRM->l()->getT("MS.OPERACION_COM_CON_IVA") );
+				if($xF->getCompare(fechasys(), $xCred->getFechaDeMinistracion()) == false){
+					$xFRM->addAviso($xFRM->l()->getT("MS.CREDITO_FECHA_MIN_NO_EQ") . " : " . $xF->getFechaMediana($xCred->getFechaDeMinistracion()), "", true, $xNot->WARNING);
+				}
 			}
 			
 			
@@ -181,9 +188,11 @@ if($credito <= DEFAULT_CREDITO){
 			$xFRM->addSeccion("iddivcheque", "TR.CHEQUE");
 			$xCant		= new cCantidad($xCred->getMontoAutorizado());
 			$xFRM->addHElem($xCant->getFicha());
+			
+			$xFRM->ODate("idfechaactual", $xCred->getFechaDeMinistracion(), "TR.Fecha de otorgacion");
 			$xSelBancos	= $xSel->getListaDeCuentasBancarias("", true); $xSelBancos->addEvent("onchange", "jsGetCheque()");
 			$xFRM->addHElem( $xSelBancos->get(true) );
-			$xFRM->ODate("idfechaactual", false, "TR.Fecha de otorgacion");
+			
 			
 			$xTxM->addEvent("jsGetCheque()", "onfocus");
 			$xFRM->addHElem($xTxM->get("idnumerocheque", "", "TR.Codigo de Cheque / Numero de Transferencia") );
@@ -202,8 +211,8 @@ if($credito <= DEFAULT_CREDITO){
 			if($SinCheque == false){
 				$xFRM->setValidacion("idnumerocheque", "validacion.novacion", "Numero de cheque es obligatorio", true);
 			}
-			$xNot	= new cHNotif();
-			$xFRM->addHElem( $xNot->get($xFRM->l()->getT("TR.CANTIDAD A RECIBIR") . " : <mark id='idtotal'>" . getFMoney(($xCred->getMontoAutorizado()-$sum)) . "</mark>", "idavisopago", $xNot->WARNING) );
+			
+			$xFRM->addHElem( $xNot->get($xFRM->l()->getT("TR.CANTIDAD A RECIBIR") . " : <mark id='idtotal'>" . getFMoney(($xCred->getMontoAutorizado()-$sum)) . "</mark>", "idavisopago", $xNot->SUCCESS) );
 		}
 	}
 }

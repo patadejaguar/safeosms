@@ -67,6 +67,13 @@ $xHT		= new cHTabla();
 $xHT->addTH("TR.CAMPO");
 $xHT->addTH("TR.VALOR");
 
+if($xTabla->tipoobjeto()->v() == iDE_RECIBO){
+	
+	$idpersona	= $rsJ["numero_socio"];
+	$xQL->setRawQuery("UPDATE `sistema_eliminados` SET `persona`=$idpersona WHERE `idsistema_eliminados`=$clave");
+}
+
+
 foreach ($tit as $campo => $titulo){
 	$xHT->initRow();
 	$xHT->addTD($titulo);

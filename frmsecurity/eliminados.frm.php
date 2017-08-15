@@ -50,13 +50,14 @@ $xFRM->setTitle($xHP->getTitle());
 
 $ByUser		= ($usuario <= 0) ? "" : " WHERE `sistema_eliminados`.`idusuario` = $usuario ";
 
+
 $xHG	= new cHGrid("iddiveliminados",$xHP->getTitle());
 
 $xHG->setSQL("SELECT   `sistema_eliminados`.`idsistema_eliminados`,
          `sistema_eliminados`.`tipoobjeto`,
          `usuarios`.`nombreusuario` AS `usuario`,
          getFechaByInt(`sistema_eliminados`.`tiempo`) AS `fecha`,
-		`sistema_eliminados`.`contenido`
+		`sistema_eliminados`.`persona` AS `persona`
 		
 FROM     `sistema_eliminados` 
 INNER JOIN `usuarios`  ON `sistema_eliminados`.`idusuario` = `usuarios`.`idusuarios` $ByUser ");
@@ -65,11 +66,16 @@ $xHG->addKey("idsistema_eliminados");
 $xHG->col("tipoobjeto", "TR.OBJETO", "10%");
 $xHG->col("usuario", "TR.USUARIO", "10%");
 $xHG->col("fecha", "TR.FECHA", "10%");
+$xHG->col("persona", "TR.PERSONA", "10%");
+
 //$xHG->col("contenido", "TR.CONTENIDO", "50%");
 //$xHG->OColFunction("contenido", "TR.CONTENIDO", "50%", "jsVerContenido");
 
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsistema_eliminados +')", "edit.png");
 $xHG->OButton("TR.VER", "jsVerContenido('+ data.record.idsistema_eliminados +')", "view.png");
+$xFRM->OButton("TR.FILTRAR", "jsSetFiltro", $xFRM->ic()->FILTRO);
+$xFRM->addFecha();
+
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_eliminados +')", "delete.png");
 $xFRM->addHElem("<div id='iddiveliminados'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
@@ -77,7 +83,7 @@ echo $xFRM->get();
 ?>
 <script>
 var xG	= new Gen();
-
+var xF	= new FechaGen();
 function jsEdit(id){
 	xG.w({url:"../frmsecurity/eliminados.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiveliminados});
 }
@@ -89,6 +95,15 @@ function jsDel(id){
 }
 function jsVerContenido(id){
 	xG.w({url:"../frmsecurity/eliminados-ver.frm.php?clave=" + id, tiny:true, callback: jsLGiddiveliminados});
+}
+function jsSetFiltro(){
+	var idfecha	= xF.get($("#idfechaactual").val());
+	var str 	= " getFechaByInt(`sistema_eliminados`.`tiempo`) = '" + idfecha + "' ";
+	str			= "&w="  + base64.encode(str);
+
+	$('#iddiveliminados').jtable('destroy');
+	
+	jsLGiddiveliminados(str);
 }
 </script>
 <?php

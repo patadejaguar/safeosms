@@ -8,7 +8,11 @@ include_once($core_file_config);
 	//header("location:../install/install.php?f=" . urlencode(dirname(__FILE__) .  "/" . $core_file_config));
 //	exit();
 //}
-
+// server should keep session data for AT LEAST 1 hour
+//$safe_sesion_en_segundos=3600;
+if(isset($safe_sesion_en_segundos)){
+	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
+}
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
 $codename 								= "MarikaTachibana"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana

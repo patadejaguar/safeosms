@@ -8921,6 +8921,7 @@ class cFIcons {
 	public $CALCULAR	= "fa-calculator";
 	public $AUTORIZAR	= "fa-check-square";
 	public $FORMATO		= "fa-newspaper-o";
+	public $FILTRO		= "fa-filter";
 	public $CONTRATO	= "fa-file-word-o";
 	public $LEGAL		= "fa-legal";
 	public $ESTADO_CTA	= "fa-line-chart";

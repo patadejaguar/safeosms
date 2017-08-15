@@ -1751,6 +1751,11 @@ class cPlanDePagosGenerador {
 					$salida	.= getFMoney($final) . "\t";
 									
 				} else {
+					$css_1	= " class='mny' ";
+					$css_2	= "";
+					if($this->mSoloTest == true){
+						$css_2	= " class='der' ";
+					}
 					$salida	.= "<tr$css>";
 					$salida	.= "<td>" . $datos[SYS_NUMERO] . "</td>";
 					$salida	.= "<td>" . $xF->getFechaCorta($fecha) . "</td>";
@@ -1765,7 +1770,7 @@ class cPlanDePagosGenerador {
 					$salida	.= "<td>" . getFMoney($iva) . "</td>";
 					$salida	.= ($SumaAhorro == 0 AND $ahorro == 0) ? "": "<td>" . getFMoney($ahorro) . "</td>";
 					$salida	.= ($SumaDescto == 0 AND $bonificacion == 0) ? "" : "<td>" . getFMoney($bonificacion) . "</td>";
-					$salida	.= "<td class='mny'>" . getFMoney($total) . "</td>";
+					$salida	.= "<td$css_1>" . getFMoney($total) . "</td>";
 						
 					$salida	.= ($SumaOtros ==0 AND $otros == 0 AND $this->mMontoOtrosCargos <= 0) ? "" : "<td>" . $datos["SYS_IDOTROS"] . "</td>";
 					
@@ -1788,7 +1793,7 @@ class cPlanDePagosGenerador {
 					if($this->mSinDatosE == false){
 						$salida	.= "<td>" . getFMoney($inicial) . "</td>";
 					}
-					$salida	.= "<td>" . getFMoney($final) . "</td>";
+					$salida	.= "<td$css_2>" . getFMoney($final) . "</td>";
 					$salida	.= "</tr>";	
 				}
 				if($this->mClaveDePlan > 0 AND $guardar == true){

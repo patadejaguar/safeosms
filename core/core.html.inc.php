@@ -1210,7 +1210,7 @@ class cHForm {
 			$initTag	= "";
 			$endTag		= "";
 		}
-		$xForm = $initTag . "$txtheader $wInit
+		$xForm = $initTag . "$txtheader $wInit<div id=\"dlg\"></div>
 		" . $this->mContentForm . "		
 		" . $this->mHTML . " $wEnd $footer $endTag $footerbar
 		" . $this->mJS  . "
@@ -8769,7 +8769,9 @@ class cFormato {
 			
 			
 			$CuotaRenta		= $xCalc->getCuotaRenta($xT->precio_vehiculo()->v(), $xT->monto_anticipo()->v(), $residual, $xT->monto_aliado()->v(), $xT->monto_gps()->v());
+			
 			$CuotaSeguro	= $xCalc->getCuotaSeguro($xT->monto_seguro()->v(), $xT->financia_seguro()->v());
+			
 			$CuotaTenencia	= $xCalc->getCuotaTenencia($xT->monto_tenencia()->v(), $xT->financia_tenencia()->v());
 			$CuotaMtto		= $xCalc->getCuotaMtto($xT->monto_mtto()->v());
 			$CuotaAcc		= $xCalc->getCuotaAccesorios($xT->monto_accesorios()->v());
@@ -8779,8 +8781,9 @@ class cFormato {
 			$tasares		= $xCredOrg->getTasaResidualPzo($pzo);
 			//No Aliado
 			$CuotaAliado	= $xCalc->getCuotaAliado($xT->monto_aliado()->v());
-			$CuotaRentaNA	= $CuotaRenta - $CuotaAliado;
-			
+			$CuotaRentaNA	= $CuotaRenta - $CuotaAliado; //Porque se disminuye?
+			//setLog("$pzo -- $CuotaRenta - $CuotaAliado ");
+			//setLog("$pzo - $CuotaAcc+$CuotaMtto+$CuotaRenta+$CuotaSeguro+$CuotaTenencia");
 			$SubTotal		= $CuotaAcc+$CuotaMtto+$CuotaRenta+$CuotaSeguro+$CuotaTenencia;
 			$SubTotal		= round($SubTotal,2);
 			$total			= $SubTotal;
@@ -8933,6 +8936,8 @@ class cFIcons {
 	public $VALIDAR		= "fa-check-circle-o";
 	public $EDIFICIO	= "fa-building";
 	public $VEHICULO	= "fa-car";
+	public $TRUCK		= "fa-truck";
+	public $PLANE		= "fa-plane";
 	
 	public $AUTOMAGIC	= "fa-magic";
 	//public $CALCULAR	= "fa-superscript";

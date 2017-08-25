@@ -73,13 +73,17 @@ $xFRM->addSeccion("idactivos", "TR.ESTATUSACTIVO");
 $xT		= new cTabla($sql,1);
 $xT->setKeyTable(TUSUARIOS_REGISTRO);
 $xT->setKeyField("idusuarios");
+
 $xT->OButton("TR.Cambiar password","jsVerMiPassword(" . HP_REPLACE_ID . ")", $xFRM->ic()->PASSWORD);
 $xT->OButton("TR.Baja","jsBajaUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->BANEAR);
 $xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
 //$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
+
 $xT->setOmitidos("estatus");
+
 if($xUser->getPuedeEditarUsuarios() == true){
-	$xT->addEditar();
+	//$xT->addEditar();
+	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
 } else {
 	$xT->setOmitidos("nivel_de_acceso");
 }
@@ -112,7 +116,10 @@ WHERE `usuarios`.`estatus` ='" . SYS_USER_ESTADO_BAJA. "' $w ORDER BY `usuarios`
 	//$xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
 	$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
 	$xT->setOmitidos("estatus");
-	$xT->addEditar();
+	//$xT->addEditar();
+	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
+	
+	$xFRM->OButton("TR.AGREGAR USUARIO", "jsAgregarUsuario()", $xFRM->ic()->GRUPO);
 	
 	$xFRM->addHElem( $xT->Show() );
 	$xFRM->endSeccion();
@@ -141,8 +148,11 @@ WHERE `usuarios`.`estatus` ='" . SYS_USER_ESTADO_SUSP . "' $w ORDER BY `usuarios
 	$xT->OButton("TR.Baja","jsBajaUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->BANEAR);
 	//$xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
 	$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
+	
+	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
+	
 	$xT->setOmitidos("estatus");
-	$xT->addEditar();
+	//$xT->addEditar();
 	
 	$xFRM->addHElem( $xT->Show() );
 	$xFRM->endSeccion();
@@ -166,6 +176,14 @@ function jsAvisos(data){
 	if(data.msg !== "undefined"){
 		xG.alerta({msg:data.msg});
 	}
+}
+function jsAgregarUsuario(){
+	var xrl		= "../frmsecurity/altausuarios.frm.php?";
+	xG.w({ url: xrl, tiny : true }); 
+}
+function jsEditarUsuario(id){
+	var xrl		= "../frmsecurity/usuarios.edit.frm.php?clave=" + id;
+	xG.w({ url: xrl, tiny : true }); 
 }
 function jsVerMiPassword(id){ 
 	var xrl		= "../frmsocios/socios.usuario.frm.php?usuario=" + id;

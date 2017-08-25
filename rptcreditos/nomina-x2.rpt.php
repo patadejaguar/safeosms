@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Creditos NOMINA X2", HP_REPORT);
+$xHP		= new cHPage("TR.Creditos NOMINA NUMERO POR EMPRESA", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $xQL		= new MQL();

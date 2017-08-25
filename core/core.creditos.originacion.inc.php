@@ -133,7 +133,8 @@ class cCreditosLeasing {
 	public $TIPO_FINANCIERO	= 2;
 	
 	public $TIPO_USO_CARGA	= 200;
-
+	public $TIPO_RAC_PEQ	= 1;
+	
 	private $mClave				= false;
 	private $mObj				= null;
 	private $mInit				= false;
@@ -1243,6 +1244,7 @@ class cLeasingEmulaciones {
 	private $mCuotaAliado		= 0;
 	private $mCuotaRenta		= 0;
 	
+	
 	public $FACTOR_RENTAPROP	= 1;
 	public $FACTOR_RENTADEP		= 1;
 	//private $mCuota
@@ -1253,12 +1255,18 @@ class cLeasingEmulaciones {
 		$this->mFrecuencia	= setNoMenorQueCero($Frecuencia,0);
 	}
 	function getCuotaRenta($precio, $anticipo, $residual, $aliado = 0, $costeGPS = 0){
-		$precio		= $this->getMontoSinIva($precio);
-		$aliado		= $this->getMontoSinIva($aliado);
-		$mCoste		= ($precio+$aliado) - $anticipo;
+		//$xRuls		= new cReglaDeNegocio();
+		
+		$precio			= $this->getMontoSinIva($precio);
+		$aliado			= $this->getMontoSinIva($aliado);
+		$costeGPS		= $this->getMontoSinIva($costeGPS);
+		
+		$mCoste			= ($precio+$aliado) - $anticipo;
+		
 		$this->mCuotaPrincipal	= $this->getCuota($mCoste, $residual);
 		$this->mCuotaGPS		= $this->getCuota($costeGPS);
-		
+		//setLog($this->mPlazo . " -- "  . $this->mCuotaGPS);
+		//setLog($this->mTasaAnual . " --- " . $this->mPlazo . " $costeGPS  " . $this->mFrecuencia);
 		$this->mCuotaRenta		= round(($this->mCuotaGPS+$this->mCuotaPrincipal),2);
 		
 		return $this->mCuotaRenta;
@@ -1297,14 +1305,18 @@ class cLeasingEmulaciones {
 	}
 
 	private function getMontoSinIva($monto){
+		
+		
 		if($monto > 0){
 			$monto		= (1/(1+$this->mTasaIVA)) * $monto;
+			
 			return round($monto,2);
 		} else {
 			return 0;
 		}
 	}
 	private function getCuota($monto, $residual = 0){
+		
 		if($monto > 0){
 			$xMath		= new cMath();
 			return $xMath->getPagoLease($this->mTasaAnual, $this->mPlazo, $monto, $this->mFrecuencia, $residual);

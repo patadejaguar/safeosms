@@ -1830,9 +1830,9 @@ CredGen.prototype.getCuotaDePago	= function(opts){
 	var vResidual	= (typeof opts.residual == "undefined") ? 0 : opts.residual;
 	var vTipo		= 0;
 	vResidual		= redondear(vResidual);
-	if(vPagos == 48){
+	//if(vPagos == 36){
 		//setLog("Base : " + vCapital + " - Residual : " + vResidual + "  - Pagos : " + vPagos + " - Frecuencia : " + vFrecuencia +  " - Tasa " + vTasaAnual + " - Tasa IVA : " + vTasaIVA + " ");
-	}
+	//}
 	//conversiones
 	vTasaAnual		= flotante(vTasaAnual);
 	if(vTasaAnual <= 1){

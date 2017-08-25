@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.FLOTA", HP_FORM);
+$xHP		= new cHPage("TR.AGREGAR FIRMANTES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -35,77 +35,51 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
 $recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
-$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
-$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
 $observaciones= parametro("idobservaciones");
 
-
-$idleasing	= parametro("idleasing",0 , MQL_INT );
-
-$xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frmactivos", "./");
-$xSel		= new cHSelect();
+
+/* ===========		FORMULARIO EDICION 		============*/
+$xTabla		= new cCreditos_firmantes();
+$xTabla->setData( $xTabla->query()->initByID($clave));
+$xFRM		= new cHForm("frmfirmantes", "creditos-firmantes.frm.php?action=$action");
+
 $xFRM->setTitle($xHP->getTitle());
+$xSel		= new cHSelect();
 
-$w			= ($idleasing >0 ) ? " WHERE `leasing_activos`.`clave_leasing` = $idleasing " : "";
+if($clave <= 0){
+	$xTabla->idcreditos_firmantes("NULL");
+	$xTabla->credito($credito);
+}
 
-$xFRM->OHidden("idleasing", $idleasing);
-$xFRM->addCerrar();
 
-/* ===========		GRID JS		============*/
+$xFRM->OHidden("idcreditos_firmantes", $xTabla->idcreditos_firmantes()->v());
 
-$xHG	= new cHGrid("iddivactivos",$xHP->getTitle());
+$xFRM->OHidden("credito", $xTabla->credito()->v(), "TR.CREDITO");
 
-$xHG->setSQL("SELECT * FROM `leasing_activos` $w LIMIT 0,100");
-$xHG->addList();
-$xHG->addKey("idleasing_activos");
-$xHG->col("clave_leasing", "TR.IDLEASING", "10%");
-//$xHG->col("persona", "TR.PERSONA", "10%");
-$xHG->col("credito", "TR.CREDITO", "10%");
-$xHG->col("placas", "TR.PLACAS", "15%");
 
-$xHG->col("descripcion", "TR.DESCRIPCION", "50%");
-//$xHG->col("proveedor", "TR.PROVEEDOR", "10%");
-/*$xHG->col("fecha_compra", "TR.FECHA COMPRA", "10%");
-$xHG->col("fecha_registro", "TR.FECHA REGISTRO", "10%");
-$xHG->col("fecha_mtto", "TR.FECHA MTTO", "10%");
-$xHG->col("fecha_seguro", "TR.FECHA SEGURO", "10%");
-$xHG->col("tipo_activo", "TR.TIPO ACTIVO", "10%");
-$xHG->col("tipo_seguro", "TR.TIPO SEGURO", "10%");
-$xHG->col("tasa_depreciacion", "TR.TASA DEPRECIACION", "10%");
-$xHG->col("valor_nominal", "TR.VALOR NOMINAL", "10%");
-$xHG->col("serie", "TR.SERIE", "10%");
-$xHG->col("factura", "TR.FACTURA", "10%");
+$xFRM->addPersonaBasico("2", false, $xTabla->persona()->v(), "jsSetPersona()", "TR.FIRMANTES");
+$xFRM->OHidden("persona", $xTabla->persona()->v());
 
-$xHG->col("motor", "TR.MOTOR", "10%");
-$xHG->col("marca", "TR.MARCA", "10%");
-$xHG->col("color", "TR.COLOR", "10%");*/
+$xFRM->OText("rol_firmante", $xTabla->rol_firmante()->v(), "TR.ROL FIRMANTE");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idleasing_activos +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idleasing_activos +')", "delete.png");
-$xFRM->addHElem("<div id='iddivactivos'></div>");
-$xFRM->addJsCode( $xHG->getJs(true) );
+$xFRM->addCRUD($xTabla->get(), true);
+//$xFRM->addCRUDSave($xTabla->get(), $clave, true);
+
+
 echo $xFRM->get();
+
 ?>
 <script>
-var xG	= new Gen();
-function jsEdit(id){
-	xG.w({url:"../frmarrendamiento/leasing-activos.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivactivos});
-}
-function jsAdd(){
-	var idleasing = $("#idleasing").val();
-	xG.w({url:"../frmarrendamiento/leasing-activos.new.frm.php?idleasing=" + idleasing, tiny:true, callback: jsLGiddivactivos});
-}
-function jsDel(id){
-	xG.rmRecord({tabla:"leasing_activos", id:id, callback:jsLGiddivactivos});
+function jsSetPersona(){
+	$("#persona").val( $("#idsocio2").val() );	
 }
 </script>
 <?php
-
 
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();

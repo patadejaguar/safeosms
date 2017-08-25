@@ -49,6 +49,7 @@ class cSystemUser{
 	private $mUserType			= 0; //Tipo de Usuario en el Sistema
 	private $mCorporativo		= false;
 	private $mSucursal			= "";
+	private $mPuesto			= "";
 	//private $mClaveUser			= "";//
 	/**
 	 * Inicia la Clase
@@ -184,6 +185,7 @@ class cSystemUser{
 			$this->mCorporativo		= ($D["corporativo"] == 1) ? true : false;
 			$this->mSucursal		= $D["sucursal"];
 			$this->mUserIniciado	= true;
+			$this->mPuesto			= $D["puesto"];
 			$xCache->set($this->mIDCache, $D, $xCache->EXPIRA_UNHORA);
 		} else {
 			$this->mMessages	.= "ERROR\tError al Iniciar al usuario " .  $this->mCodeUser . "\r\n";
@@ -305,7 +307,16 @@ class cSystemUser{
 	return $rules;
 	}	
 	function setCuentaContableDeCaja($cuenta){ return $this->setUpdate("cuenta_contable_de_caja", $cuenta);	}
-	function setEsCorporativo(){ return $this->setUpdate("corporativo", "1");	}
+	function setEsCorporativo($EsCorp = true){
+		$res		= false;
+		if($EsCorp == true OR $EsCorp == 1){
+			$res 	= $this->setUpdate("corporativo", "1");
+		} else {
+			$res 	= $this->setUpdate("corporativo", "0");
+		}
+		
+		return $res;
+	}
 	function getCuentaContableDeCaja(){	return $this->mCuentaDeCaja; }	
 	function setEndSession($ByeBye = false, $onInit = false, $msg = ""){
 		$oficial 		= $this->getUserInfo();
@@ -424,6 +435,7 @@ class cSystemUser{
 		return $res;
 	}
 	function getNombreDeUsuario(){ return $this->mNombreUser;  }
+	function getPuesto(){ return $this->mPuesto; }
 	function setActualizarPorPersona(){
 		$xPer	= new cSocio($this->mClaveDePersona);
 		$ready	= false;

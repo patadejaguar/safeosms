@@ -91,7 +91,7 @@ if( setNoMenorQueCero($idnumeroplan) > 0) {
 	$xFRM->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($credito)", $xFRM->ic()->PREGUNTAR);
 }
 if(MODO_DEBUG == true){
-	$xFRM->addAtras();
+	//$xFRM->addAtras();
 }
 $xFRM->addRefrescar("jsCargarFrame()");
 $xFRM->addCerrar();

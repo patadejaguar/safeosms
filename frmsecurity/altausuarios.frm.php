@@ -78,7 +78,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		$xFRM->addGuardar();
 		/*$xFRM->OButton("TR.Baja", "jsSetBaja()", $xFRM->ic()->BLOQUEAR);*/
 		/*$xFRM->OButton("TR.Suspender", "jsSetSuspender()", $xFRM->ic()->BLOQUEAR);*/
-		$xFRM->addAtras();
+		//$xFRM->addAtras();
 		
 		$xText2	= new cHText("");
 		$xText2->setDiv13();
@@ -203,11 +203,13 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 					}			
 				}
 				$xFRM->addAvisoRegistroOK($msg);
+				$xFRM->addCerrar();
 			} else {
 				$xFRM->addAvisoRegistroError($msg);
+				$xFRM->addAtras();
 			}
 			
-			$xFRM->addAtras();
+			//
 			
 	}
 }

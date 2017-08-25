@@ -1642,26 +1642,31 @@ class cCredito {
 		$calcular 				= ($this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO or $this->getEstadoActual () == CREDITO_ESTADO_CASTIGADO) ? false : true;
 		$guardar				= true;
 		$cat 					= $this->mTasaCat;
+		//Si el cat está iniciado, no calcular
 		if($cat > 0){ $calcular = false; }
+		//Si el Credito no tiene saldo, omitir calculo
 		if ($capital <= TOLERANCIA_SALDOS) { $calcular = false;	}
+		
 		if ($calcular == true) {
 			$xProd				= $this->getOProductoDeCredito();
-			//Si ya existe el cat no se recalcula
+			//Si ya existe como dijo en el producto el cat no se recalcula
 			if($xProd->getCATFijo() >0){
 				$cat				= $xProd->getCATFijo();
 			} else {
 				//Agrega comision por apertura
 				$comision_apertura	= ($xProd->getTasaComisionApertura() >= 1) ? $xProd->getTasaComisionApertura() : ($capital * $xProd->getTasaComisionApertura());
 				$comision_apertura	= ($comision_apertura * ($this->getTasaIVAOtros()+ 1));
+				//Se debe agregar todos los descuentos
 				$capital			= $capital - $comision_apertura;
-				//Emular la letra sin IVA
+				//Si el credito es Final de Plazo Emular la letra sin IVA
 				if ($this->getPeriocidadDePago () == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) {
 					$pago 			= ($this->getMontoAutorizado() * $this->getTasaDeInteres () * $this->getDiasAutorizados()) / EACP_DIAS_INTERES;
 					$arrPagos[] 	= $pago + $this->getMontoAutorizado ();
 					$periodos 		= (360/$this->getDiasAutorizados());
+					//un pago una como periodo de pagos
 					$cat 			= $xMat->cat ( $capital, $arrPagos, $periodos,1 );
 				} else {
-					//Simula un plan de pagos
+					//Si son pagos periodicos, Simula un plan de pagos
 					$xGen			= new cPlanDePagosGenerador($this->getPeriocidadDePago());
 					$xGen->setPagosAutorizados($this->getPagosAutorizados());
 					$xGen->setMontoActual($this->getMontoAutorizado());
@@ -1672,8 +1677,11 @@ class cCredito {
 					$xGen->setFechaDesembolso($this->getFechaDeMinistracion());
 					$xGen->setSoloTest(true);
 					$xGen->setTipoDePago($this->getTipoDePago());
+					//Obtener la parcialidad presumida de pago
 					$parcial 	= $xGen->getParcialidadPresumida();
+					//Compilar el plan con las fechas
 					$xGen->setCompilar(false);
+					//Aplicar pagos y operaciones
 					$xGen->getVersionFinal();
 					//Obtiene la tasa cat del plan calculado
 					$cat		= $xGen->getTasaCAT();
@@ -4402,7 +4410,9 @@ class cCredito {
 	function getEsNomina(){
 		$res	= false;
 		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-			if($this->getClaveDeEmpresa() >0 AND $this->getClaveDeEmpresa() !== FALLBACK_CLAVE_EMPRESA AND $this->getClaveDeEmpresa() !== DEFAULT_EMPRESA){
+			$xVal	= new cReglasDeValidacion();
+			$emp	= $xVal->empresa($this->getClaveDeEmpresa());
+			if( $emp == true ){
 				$res = true;
 			}
 		} else {

@@ -351,12 +351,14 @@ function getListaSocios(msrc, evt) {
 	//var idnombrecompleto 		= $("#idnombrecompleto").val();
 	//var idapellidopaterno 		= $("#idapellidopaterno").val();
 	//var idapellidomaterno 		= $("#idapellidomaterno").val();
-	osrc						= msrc.id;
+	var osrc					= msrc.id;
+	var idnombre		 		= $("#idrazonsocial").val();
 	//if(osrc == "idapellidopaterno"){	idKey	= "apellidopaterno"; }
 	//if(osrc == "idapellidomaterno"){	idKey	= "apellidomaterno"; }
 	//var xUrl	= "../svc/personas.svc.php?n=" + idnombrecompleto + "&p=" + idapellidopaterno + "&m=" + idapellidomaterno;
-	if ((charCode >= 65 && charCode <= 90)) {
-		jsaBuscarCoincidencias();	
+	var sibusq					= (String(idnombre).length >= 4) ? true : false;
+	if ((charCode >= 65 && charCode <= 90) && sibusq == true) {
+		//jsaBuscarCoincidencias();	
 		/*if ( String(msrc.value).length >= 3 ) {
 			$("#dlBuscarPersona").empty();
 			gn.DataList({

@@ -3256,7 +3256,9 @@ $sql["20170601"][]	= "insert into `general_menu` (`idgeneral_menu`, `menu_parent
 $sql["20170601"][]	= "insert into `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_destination`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) values('99380','9999','frmcreditosministracion.php','frmcreditosministracion.php','principal','NO_DESCRIPTION','null.png','2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw','general','0','9999','false')";
 $sql["20170601"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_destination`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES('99381','9999','frmcreditoslineas.php','frmcreditoslineas.php','principal','NO_DESCRIPTION','null.png','2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw','general','0','9999','false')";
 $sql["20170601"][]	= "UPDATE `general_menu` SET `menu_file` = 'frmcreditos/creditos-lineas.frm.php' , `menu_image` = 'fa-braille' WHERE `idgeneral_menu` = '3021' ";
-$sql["20170601"][]	= "UPDATE `creditos_tipoconvenio` SET `php_monto_maximo` = '\$monto_maximo = \$monto_linea_credito;' WHERE `idcreditos_tipoconvenio` = '300'";
+
+
+//$sql["20170601"][]	= "UPDATE `creditos_tipoconvenio` SET `php_monto_maximo` = '\$monto_maximo = \$monto_linea_credito;' WHERE `idcreditos_tipoconvenio` = '300'";
 
 $sql["20170601"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_destination`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES('99382','9999','bancos_alta_a_cuentas.frm.php','bancos_alta_a_cuentas.frm.php','principal','NO_DESCRIPTION','null.png','2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw','general','0','9999','false')";
 $sql["20170601"][]	= "UPDATE `general_menu` SET `menu_title` = 'Cuentas Bancarias' , `menu_file` = 'frmbancos/lista-de-cuentas-bancarias.frm.php' , `menu_image` = 'fa-university' WHERE `idgeneral_menu` = '9002' ";
@@ -3329,10 +3331,15 @@ $sql["20170601"][]	= "ALTER TABLE `sistema_eliminados` ADD COLUMN `persona` BIGI
 $sql["20170601"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('900117', 'OPERACION_COM_CON_IVA', 'Las comisiones y pagos deben llevar Impuestos')";
 $sql["20170601"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200916', 'CREDITO_FECHA_MIN_NO_EQ', 'La fecha de hoy y ministracion no son iguales')";
 
+$sql["20170601"][]	= "UPDATE  `general_menu` SET `menu_title` = 'Lista de Usuarios' WHERE `idgeneral_menu` = '10004' ";
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('583', 'FORM', 'CREDITOS.PAGOS_LETRA_FIJA', '', '', '', '', '1')";
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('584', 'FORM', 'CREDITOS.ARRENDAMIENTO.FRM_RESIPLE', '', '', '', '', '1')";
+$sql["20170601"][]	= "UPDATE `general_estados` SET `nombre` = 'CIUDAD DE MEXICO' WHERE `clave_alfanumerica` = 'DF' ";
 
 //$sql["20170601"][]	= "";
 
 
+		
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){
 		

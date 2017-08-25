@@ -261,6 +261,16 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 
 		
 	}
+	//$oFrm->OButton("TR.PRUEBA", "jsLoadOption()", $oFrm->ic()->TAREA);
+	
+	//Cargar Controles de Arrendamiento
+	if($xCred->getEsArrendamientoPuro() == true){
+		//Agregar
+		$oFrm->OButton("TR.VER COTIZADOR", "jsGetCotizacionArrendamiento(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->PLANE);
+		$oFrm->OButton("TR.VER FLOTA", "jsGetFlota(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->TRUCK);
+	}
+	
+	
 	echo $oFrm->get();
 ?>
 <script >
@@ -269,7 +279,9 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	var idSocio		= <?php echo $idsocio; ?>;
 	var idRecibo	= <?php echo $idrecibo; ?>;
 	var xRec		= new RecGen();
-	var ogen	= new Gen();
+	var ogen		= new Gen();
+	var xG			= new Gen();
+	
 	function setNoAvales(){ siAvales = (document.getElementById("idNoAvales").checked) ? "no" : "si"; }
 	
 	function jsGoPanelRecibos(id){ xRec.panel(id); }
@@ -299,9 +311,32 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function addLlamada(mKey){ }
 	function addAviso(mKey){ }
 	function addCompromiso(mKey){ }
-	function jsCastigos(idcredito){ ogen.w({ url: '../frmcreditos/castigo_de_cartera.frm.php?credito=' + idcredito, tiny : true, h: 400, w : 600 }); }
-	function jsHistorialDeSaldos(idcredito){ogen.w({ url: '../rpt_edos_cuenta/historial_de_saldos.rpt.php?credito=' + idcredito, full : true }); }
-	function jsHistorialDeNomina(idcredito){ogen.w({ url: '../rpt_edos_cuenta/historial_de_nomina.rpt.php?credito=' + idcredito, full : true }); }
+	function jsCastigos(idcredito){ xG.w({ url: '../frmcreditos/castigo_de_cartera.frm.php?credito=' + idcredito, tiny : true, h: 400, w : 600 }); }
+	function jsHistorialDeSaldos(idcredito){xG.w({ url: '../rpt_edos_cuenta/historial_de_saldos.rpt.php?credito=' + idcredito, full : true }); }
+	function jsHistorialDeNomina(idcredito){xG.w({ url: '../rpt_edos_cuenta/historial_de_nomina.rpt.php?credito=' + idcredito, full : true }); }
+
+	function jsGetCotizacionArrendamiento(id){
+		xG.w({ url: '../frmarrendamiento/cotizador.edit.frm.php?clave=' + id, tab : true });
+	}
+	function jsGetFlota(id){
+		xG.w({url:"../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id, tab:true});
+	}
+	function jsLoadOption(){
+		
+		$("#dlg").load("../templates/base.frm.php", function() {
+		    var container = $(this);
+		    container.dialog({
+		        modal: true,
+                height: 625,
+                width: 500,
+                title: "Some title"
+		    })
+		    /*.find("form").submit(function() {
+		        container.dialog("close");
+		        return false;
+		    });*/
+		});
+	}
 </script>	
 	<?php 
 }

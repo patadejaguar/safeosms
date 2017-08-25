@@ -44,15 +44,19 @@ function jsaGetVerifyPlan($idcred){
 function jsaGetLetras($idcredito){
 	$idcred		= setNoMenorQueCero($idcredito);
 	$xF			= new cFecha();
+	$xRuls		= new cReglaDeNegocio();
+	
 	if($idcred > DEFAULT_CREDITO){
 		$xCred		= new cCredito($idcred); 
 		if($xCred->init() == true){
+			$idprox		= $xCred->getPeriodoActual()+1;
+			
 			if($xCred->getEsAfectable() == false OR $xCred->getSaldoActual() <= 0){
 				$xCred->setRevisarSaldo();
 				if(MODO_CORRECION == true){
 					$xTxt		= new cHText();
 					$xTxt->setDivClass("");
-					return $xTxt->getNumero("idparcialidad", $xCred->getPeriodoActual()+1, "TR.Numero de Parcialidad");
+					return $xTxt->getNumero("idparcialidad", $idprox, "TR.Numero de Parcialidad");
 				} else {
 					return $xCred->getMessages();
 				}			
@@ -61,38 +65,48 @@ function jsaGetLetras($idcredito){
 					//
 					$xTxt		= new cHText();
 					$xTxt->setDivClass("");
-					return $xTxt->getNumero("idparcialidad", $xCred->getPeriodoActual()+1, "TR.Numero de Parcialidad");
+					return $xTxt->getNumero("idparcialidad", $idprox, "TR.Numero de Parcialidad");
 				} else {
-					$plan		= $xCred->getNumeroDePlanDePagos();
-					if($plan != false){
-						$xPlan		= new cPlanDePagos($plan); $xPlan->init();
-						$parcs		= $xPlan->getParcsPendientes();
-						//$txt		= "";
-						$arrD		= array();
-						foreach ($parcs as $p){
-							//setLog( $p[SYS_NUMERO]. " " . $xF->getFechaDDMM($p[SYS_FECHA]) . " ". getFMoney($p[SYS_TOTAL]));
-							if( setNoMenorQueCero($p[SYS_TOTAL]) > 0){ 
-								$neto	= $p[SYS_TOTAL];
-								if($p[SYS_VARIOS] >0){
-									$neto	+= $p[SYS_VARIOS]; 
-								}
-								$arrD[$p[SYS_NUMERO]]	= $p[SYS_NUMERO]. " " . $xF->getFechaDDMM($p[SYS_FECHA]) . " ". getFMoney($neto);
-							}
-						}
-						if($xCred->getPagosSinCapital() == true){
-							if(!isset( $arrD[$xCred->getPeriodoActual()] )){
-								$arrD[$xCred->getPeriodoActual()]	= $xCred->getPeriodoActual() . " - Pagos a Capital Letra Anterior"; 
-							}
-						}						
-						$xSel		= new cHSelect();
-						$xSel->addOptions($arrD);
-						$xSel->setEnclose(false);
-						return $xSel->get("idparcialidad", "TR.Numero de Parcialidad", $xCred->getPeriodoActual()+1);
+					$LetraFija	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAGO_LETRAF);
+					
+					if($LetraFija == true){
+						$xTxt		= new cHText();
+						$xNot		= new cHNotif();
+						
+						return $xTxt->getHidden("idparcialidad", false, $idprox) . $xNot->get($idprox);
 					} else {
-						if(MODO_CORRECION == true){
-							$xTxt		= new cHText();
-							$xTxt->setDivClass("");
-							return $xTxt->getNumero("idparcialidad", $xCred->getPeriodoActual()+1, "TR.Numero de Parcialidad");
+					
+						$plan		= setNoMenorQueCero($xCred->getNumeroDePlanDePagos());
+						if($plan <= 0){
+							if(MODO_CORRECION == true){
+								$xTxt		= new cHText();
+								$xTxt->setDivClass("");
+								return $xTxt->getNumero("idparcialidad", $xCred->getPeriodoActual()+1, "TR.Numero de Parcialidad");
+							}
+						} else {
+							$xPlan		= new cPlanDePagos($plan); $xPlan->init();
+							$parcs		= $xPlan->getParcsPendientes();
+							//$txt		= "";
+							$arrD		= array();
+							foreach ($parcs as $p){
+								//setLog( $p[SYS_NUMERO]. " " . $xF->getFechaDDMM($p[SYS_FECHA]) . " ". getFMoney($p[SYS_TOTAL]));
+								if( setNoMenorQueCero($p[SYS_TOTAL]) > 0){ 
+									$neto	= $p[SYS_TOTAL];
+									if($p[SYS_VARIOS] >0){
+										$neto	+= $p[SYS_VARIOS]; 
+									}
+									$arrD[$p[SYS_NUMERO]]	= $p[SYS_NUMERO]. " " . $xF->getFechaDDMM($p[SYS_FECHA]) . " ". getFMoney($neto);
+								}
+							}
+							if($xCred->getPagosSinCapital() == true){
+								if(!isset( $arrD[$xCred->getPeriodoActual()] )){
+									$arrD[$xCred->getPeriodoActual()]	= $xCred->getPeriodoActual() . " - Pagos a Capital Letra Anterior"; 
+								}
+							}						
+							$xSel		= new cHSelect();
+							$xSel->addOptions($arrD);
+							$xSel->setEnclose(false);
+							return $xSel->get("idparcialidad", "TR.Numero de Parcialidad", $xCred->getPeriodoActual()+1);
 						}
 					}
 				}

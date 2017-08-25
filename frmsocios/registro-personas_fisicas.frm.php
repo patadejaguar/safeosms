@@ -617,15 +617,17 @@ function getListaSocios(msrc, evt) {
 	var idnombrecompleto 		= $("#idnombrecompleto").val();
 	var idapellidopaterno 		= $("#idapellidopaterno").val();
 	var idapellidomaterno 		= $("#idapellidomaterno").val();
-	osrc						= msrc.id;
+	var osrc					= msrc.id;
 	if(osrc == "idapellidopaterno"){	idKey	= "apellidopaterno"; }
 	if(osrc == "idapellidomaterno"){	idKey	= "apellidomaterno"; }
 	var xUrl	= "../svc/personas.svc.php?n=" + idnombrecompleto + "&p=" + idapellidopaterno + "&m=" + idapellidomaterno;
-	if ((charCode >= 65 && charCode <= 90)) {
-		jsaBuscarCoincidencias();
+	var sibusq					= (String(idnombrecompleto+idapellidopaterno+idapellidomaterno).length >= 7) ? true : false;
+	if ((charCode >= 65 && charCode <= 90) && sibusq == true) {
+		
+		//jsaBuscarCoincidencias();
 		//var xPer	= new PersGen();
 		//xPer.showBuscarPersonas({ paterno : idapellidopaterno, materno : idapellidomaterno, nombre : idnombrecompleto });
-		if ( String(msrc.value).length >= 3 ){
+		/*if ( String(msrc.value).length >= 3 ){
 			$("#dlBuscarPersona").empty();
 			xG.DataList({
 				url : xUrl,
@@ -633,7 +635,7 @@ function getListaSocios(msrc, evt) {
 				key : idKey,
 				label : "nombrecompleto"
 				});	
-		}
+		}*/
 	}
 }
 

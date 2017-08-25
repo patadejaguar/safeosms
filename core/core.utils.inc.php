@@ -1474,7 +1474,7 @@ class cMath {
 		
 		$P = (- $Capital * pow(1+$Tasa,$NumeroPagos) + $Residual) /	((1 + $Tasa * $Tipo)*((pow((1 + $Tasa),$NumeroPagos) - 1) / $Tasa));
 
-		return $P * (-1);
+		return round(($P * (-1)),2);
 		/*double MKCalcPayment(int NumPay, double IntRate, double NPV, double FV,
                      BOOL bStart)
 {

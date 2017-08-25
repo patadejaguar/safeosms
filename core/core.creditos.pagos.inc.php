@@ -1106,7 +1106,7 @@ class cPlanDePagosGenerador {
 		$SinAnual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_ANUAL);	//regla de negocio
 		$ConPagEs	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio
 		$ConTasa0	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PUEDEN_TASA_CERO);	//regla de negocio
-		$this->mMaximoCAT	= $this->getPeriodosAnnio($this->mPeriocidadDePago);
+		$this->mMaximoCAT	= $this->getPeriodosAnnio($this->mPeriocidadDePago);				//Obtiene el numero de periodos por cada annio
 		$xLog				= new cCoreLog();
 		$tipo				= setNoMenorQueCero($tipo_de_pago);
 		$tipo				= ($tipo <= 0 ) ? $this->mTipoDePagos : $tipo;

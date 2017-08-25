@@ -339,6 +339,7 @@ $xSelPP	= new cHSelect();//$xPP->query()->html()->select($xPP->descripcion_tipoc
 <?php 
 $oFrm7	= new cHForm("frmcambiarpers", "", "idfrmcambiarpers");
 $oFrm7->setNoFormTags();
+$oTxt->setDivClass("");
 $oFrm7->addHElem( $oTxt->getDeNombreDePersona("idnuevapersona", "", "TR.Nueva Persona") );
 $oFrm7->addGuardar("jsSetCambiarPersona()", "jsCancelarAccion()");
 echo $oFrm7->get();
@@ -372,9 +373,12 @@ echo $oFrm7->get();
 <!--  VINCULAR A EMPRESA -->
 <div class="inv formoid-default" id="divvincular">
     <?php
+    $oHSel->setDivClass("");
 	$oFrm9	= new cHForm("frmvincular", "", "idfrmvincular");
 	$oFrm9->setNoFormTags();
-	$oFrm9->addHElem( $oHSel->getListaDeEmpresas("", false, $xCred->getClaveDeEmpresa())->get($xFRM->lang("vincular", "empresa"), true ) );
+	
+	$oFrm9->addHElem( $oHSel->getListaDeEmpresas("", false, $xCred->getClaveDeEmpresa())->get("TR.EMPRESA" ) );
+	$oTxt->setDivClass("");
 	$oFrm9->addHElem( $oTxt->getDeObservaciones("idobservacionesw", "",  $xFRM->lang("observaciones")) );
 	$oFrm9->addGuardar("jsaVincularEmpresa()", "jsCancelarAccion()");
 	echo $oFrm9->get(false);
@@ -409,31 +413,36 @@ $jxc ->drawJavaScript(false, true);
 <script>
 var xGen	= new Gen();
 var ogen	= new Gen();
-var mobj	= "#avisos";
+var mobj	= "#menu-nav";
 var idCredito	= <?php echo $xCred->getNumeroDeCredito(); ?>;
 var idSocio		= <?php echo $xCred->getClaveDePersona(); ?>;
 var idRecibo	= <?php echo $idrecibo; ?>;
     
-function jsCambiarEstado(){ 				getModalTip(mobj, $("#divestatus"), xGen.lang(["Modificar", "Estado"]));   }
+function jsCambiarEstado(){ 			getModalTip(mobj, $("#divestatus"), xGen.lang(["Modificar", "Estado"]));   }
 function jsCambiarMonto(){ 				getModalTip(mobj, $("#divmontomin"), xGen.lang(["Modificar" ,"Monto", "Ministrado"]));  }
-function jsCambiarFechaMinistracion() {	getModalTip(mobj, $("#divfechamin"), xGen.lang(["Modificar", "Fecha_de",  "Ministracion"]) );  }
-function jsCambiarProducto(){ 				getModalTip(mobj, $("#divpdto"), xGen.lang(["Modificar", "Producto"]));  }
+function jsCambiarFechaMinistracion(){	getModalTip(mobj, $("#divfechamin"), xGen.lang(["Modificar", "Fecha_de",  "Ministracion"]) );  }
+function jsCambiarProducto(){ 			getModalTip(mobj, $("#divpdto"), xGen.lang(["Modificar", "Producto"]));  }
 function jsCambiarPeriocidad(){			getModalTip(mobj, $("#divperiocidad"), xGen.lang(["Modificar", "Periocidad"]));    }    
-function jsEliminarCredito(){ 				getModalTip(mobj, $("#diveliminar"), xGen.lang(["Eliminar", "Credito"]) );  }
+function jsEliminarCredito(){ 			getModalTip(mobj, $("#diveliminar"), xGen.lang(["Eliminar", "Credito"]) );  }
 function jsCambiarPersona(){			getModalTip(mobj, $("#divcabiarsoc"), xGen.lang(["Cambiar", "Persona"]) );  }
 function jsConfirmarEliminarCredito(){
 	var sip	= confirm("Esta seguro de Eliminar el credito?\nNO HAY FORMA DE DESHACERLO.");
 	if (sip){ jsaEliminarCredito(); } else { jsCancelarAccion(); }
 }
-function jsCancelarAccion(){	$(mobj).qtip("hide");	xGen.close();    }
-function jsCancelarTip(){	$(mobj).qtip("hide");    }
+function jsCancelarAccion(){ jsCancelarTip(); }
+function jsCancelarTip(){
+	var vid = session(Configuracion.opciones.dialogID);
+	$("#" + vid).dialog('close');  /*xGen.close();*/ 
+}
 function jsCambiarMontoAutorizado() {
 	var xTit	= xGen.lang( ["cambiar", "Monto", "Autorizado"] );
-	getModalTip(window, $("#divmontoautorizado"), xTit);
+	getModalTip(mobj, $("#divmontoautorizado"), xTit);
 }
-function jsVincularEmpresa() {  getModalTip(window, $("#divvincular"), xGen.lang(["vincular_a", "empresa"]));	}
+function jsVincularEmpresa() {   getModalTip(mobj, $("#divvincular"), xGen.lang(["vincular_a", "empresa"]));	}
+
 function jsTipTimer(){ setTimeout("jsReTipTimer()", 500); }
 function jsReTipTimer(){ tip(mobj, "Espere...!", 5000, false); }
+
 function jsImportarPlanDePagos(){	xGen.w({ url: '../frmcreditos/importar.plan_de_pagos.frm.php?credito=' + idCredito, tab : true }); 	}
 function regenerarPlanDePagos(){ xGen.w({ url: '../frmcreditos/frmcreditosplandepagos.php?r=1&c=' + idCredito + "&s=" + idSocio }); }
 function jsEditarPlan(mPlan){ 	xGen.w({ url: '../frmcreditos/plan_de_pagos.edicion.frm.php?activeplan=true&recibo=' + mPlan, tab:true }); }

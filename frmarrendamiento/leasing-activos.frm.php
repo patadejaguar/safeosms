@@ -53,6 +53,7 @@ $xFRM->setTitle($xHP->getTitle());
 $w			= ($idleasing >0 ) ? " WHERE `leasing_activos`.`clave_leasing` = $idleasing " : "";
 
 $xFRM->OHidden("idleasing", $idleasing);
+$xFRM->addCerrar();
 
 /* ===========		GRID JS		============*/
 

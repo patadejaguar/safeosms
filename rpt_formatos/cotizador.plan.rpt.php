@@ -35,7 +35,8 @@ if($logo == true){
 ?>
 <script>
 function importHTML(){
-	$("#idheader").html( base64.decode(session("data.head")) );
+	var hd = (session("data.head") == null) ? "" : base64.decode(session("data.head")) ;
+	$("#idheader").html( hd );
 	$("#idcalendar").html( base64.decode(session("data.plan")) );
 	window.print();
 }

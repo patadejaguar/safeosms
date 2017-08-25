@@ -410,7 +410,15 @@ if  ( $action == SYS_DOS ){
 			case $xCOrg->ORIGEN_RENOVACION:
 				$SinTipoAut	= true;
 				break;
-			
+			case $xCOrg->ORIGEN_ARRENDAMIENTO:
+				$xFRM->addDisabledInit("idmonto");
+				$xFRM->addDisabledInit("idpagos");
+				$xFRM->addDisabledInit("idperiocidad");
+				$xFRM->addDisabledInit("idtipodepago");
+				$SinTasa		= true;
+				$SinLugarPag	= true;
+				
+				break;
 		}
 		
 	} else {

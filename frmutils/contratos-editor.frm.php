@@ -58,13 +58,16 @@ $xFRM->setTitle($xHP->getTitle());
 	$xHG->col("idgeneral_contratos", "TR.CLAVE", "10%");
 	$xHG->col("titulo_del_contrato", "TR.NOMBRE", "10%");
 	//$xHG->col("tipo_contrato", "TR.TIPO CONTRATO", "10%");
-	$xHG->col("estatus", "TR.ESTATUS", "10%");
+	$xHG->col("tags", "TR.TAGS", "10%");
+	//$xHG->col("estatus", "TR.ESTATUS", "10%");
 	
 	//$xHG->col("texto_del_contrato", "TR.TEXTO DEL CONTRATO", "10%");
 	
 	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idgeneral_contratos +')", "edit.png");
 	$xHG->OButton("BAJA", "jsBaja('+ data.record.idgeneral_contratos +')", "minus.png");
+	$xHG->OButton("TR.VER", "getForma('+ data.record.idgeneral_contratos +')", "view.png");
+	
 	if(MODO_DEBUG == true){
 		$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idgeneral_contratos +')", "delete.png");
 	}

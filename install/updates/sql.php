@@ -3335,9 +3335,22 @@ $sql["20170601"][]	= "UPDATE  `general_menu` SET `menu_title` = 'Lista de Usuari
 $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('583', 'FORM', 'CREDITOS.PAGOS_LETRA_FIJA', '', '', '', '', '1')";
 $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('584', 'FORM', 'CREDITOS.ARRENDAMIENTO.FRM_RESIPLE', '', '', '', '', '1')";
 $sql["20170601"][]	= "UPDATE `general_estados` SET `nombre` = 'CIUDAD DE MEXICO' WHERE `clave_alfanumerica` = 'DF' ";
+$sql["20170601"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('1003', 'PERSONA_YA_EXISTE', 'La persona existe en el Sistema') ";
+
+$sql["20170601"][]	= "UPDATE `socios_viviendatipo` SET `descripcion_viviendatipo` = 'PARTICULAR' WHERE `idsocios_viviendatipo` = '1' ";
+$sql["20170601"][]	= "UPDATE `socios_viviendatipo` SET `descripcion_viviendatipo` = 'FISCAL' WHERE `idsocios_viviendatipo` = '2' ";
+$sql["20170601"][]	= "UPDATE `socios_viviendatipo` SET `descripcion_viviendatipo` = 'LABORAL' WHERE `idsocios_viviendatipo` = '3' ";
+$sql["20170601"][]	= "ALTER TABLE `socios_vivienda` ADD COLUMN `construye` INT(2) NULL DEFAULT '0' COMMENT 'En construccion' AFTER `clave_de_entidadfederativa` ";
+
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('585', 'SYSTEM', 'RN_USAR_REDIRECTS', '', '', '', '', '1')";
+$sql["20170601"][]	= "UPDATE `general_menu` SET `menu_title` = 'Empresas' WHERE `idgeneral_menu` = '2060' ";
+$sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('586', 'SYSTEM', 'RN_USAR_USAR_MENU_ALTER', '', '', '', '', '0')";
 
 //$sql["20170601"][]	= "";
-
+//$sql["20170601"][]	= "";
+//$sql["20170601"][]	= "";
+//$sql["20170601"][]	= "";
+//$sql["20170601"][]	= "";
 
 		
 foreach ($sql as $idx => $cnt){

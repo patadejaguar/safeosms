@@ -78,7 +78,8 @@ $xHG->setSQL($xLi->getListadoDeLeasingSolicitudes($originador, $suborigen));
 
 $xHG->addList();
 $xHG->addKey("clave");
-$xHG->col("fecha", "TR.FECHA", "10%");
+$xHG->col("clave", "TR.ID", "10%");
+$xHG->ColFecha("fecha", "TR.FECHA", "10%");
 
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
@@ -95,10 +96,11 @@ if($xUser->getEsOriginador() == true){
 
 $xHG->col("cliente", "TR.CLIENTE", "25%");
 
-$xHG->col("precio_vehiculo", "TR.PRECIO", "10%", true);
-$xHG->col("monto_anticipo", "TR.ANTICIPO", "10%", true);
+$xHG->ColMoneda("precio_vehiculo", "TR.PRECIO", "10%");
 
-$xHG->col("total_credito", "TR.CREDITO", "10%", true);
+$xHG->ColMoneda("monto_anticipo", "TR.ANTICIPO", "10%");
+
+//$xHG->col("total_credito", "TR.CREDITO", "10%", true);
 //$xHG->col("monto_directo", "TR.PAGO DIRECTO", "10%", true);
 
 /*$xHG->col("monto_aliado", "TR.EQUIPOALIADO", "10%", true);
@@ -135,6 +137,8 @@ $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 if(MODO_DEBUG){
 	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
 }
+$xHG->setOrdenar();
+
 $xFRM->addHElem("<div id='iddivleasingcreditos'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();

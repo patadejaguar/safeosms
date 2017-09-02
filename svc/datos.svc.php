@@ -20,6 +20,7 @@ $xF			= new cFecha();
 $tabla	= parametro("tabla", "", MQL_RAW);
 $clave	= parametro("clave", "", MQL_RAW);
 $query	= parametro("q", "", MQL_RAW);
+//$query	= parametro("q2", $query, MQL_RAW);
 
 
 $where	= parametro("w", "", MQL_RAW);
@@ -27,6 +28,7 @@ $out	= parametro("out", "", MQL_RAW);
 $param	= parametro("vars", "", MQL_RAW);
 $jTLim	= parametro("jtStartIndex", 0, MQL_INT);
 $jTPag	= parametro("jtPageSize", 0, MQL_INT);
+$jTSort	= parametro("jtSorting", "", MQL_RAW);
 
 $err	= false;
 $rs		= array();
@@ -81,7 +83,15 @@ if($query !== "" OR $where !== ""){
 					$sql	= preg_replace("/SELECT[\s]/", "SELECT SQL_CALC_FOUND_ROWS ", $sql);
 				}
 				
-				
+				if($jTSort !== ""){
+					if(strpos($sql, "ORDER BY") !== false){
+						
+						$sql	= preg_replace("/ORDER BY[\s]/", "ORDER BY $jTSort, ", $sql);
+					} else {
+						$sql	= preg_replace("/[\s]LIMIT/", " ORDER BY $jTSort LIMIT", $sql);
+					}
+				}
+				//setLog($sql);
 				$svc->setSQL($sql);
 			}
 		}

@@ -220,8 +220,12 @@ function aj_call(func_name, args, custom_cb) {
 			if(typeof session != "undefined"){
 				if(session("tinyajax.callback") != null){
 					var xxx1	= session("tinyajax.callback");
+					var delay	= session("tinyajax.delay");
+					if(delay == null){
+						delay	= 10;
+					}
 					session("tinyajax.callback", null);
-					setTimeout(xxx1,10);
+					setTimeout(xxx1,delay);
 				}
 			}
 			if(x.status != 200)

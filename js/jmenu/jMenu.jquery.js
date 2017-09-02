@@ -52,8 +52,8 @@
 
             $(".jMenu li").each(function() {
                 var
-                    $thisChild = $(this).find('a:first'),
-                    $allUl = $(this).find('ul');
+                    $thisChild 	= $(this).find('a:first'),
+                    $allUl 		= $(this).find('ul');
 
                 if($.jMenu._IsParent($thisChild))
                 {
@@ -84,6 +84,7 @@
                             },
                             mouseleave:function(){
                                 $.jMenu._closeList($ul);
+								
                             }
                         });
                     else
@@ -94,8 +95,11 @@
                             },
                             mouseleave:function(){
                                 $.jMenu._closeList($ul);
+								
                             }
                         });
+						
+						
                 }
             });
         },
@@ -140,7 +144,7 @@
                 function() {
                     $(this).stop(true,false).animate({paddingLeft: paddingInit + opts.paddingLeft}, 100);
                 },
-                function() {
+                function(){
                     $(this).stop(true,false).animate({paddingLeft:paddingInit}, 100);
                 }
             );

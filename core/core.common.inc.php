@@ -1563,10 +1563,18 @@ class cSocio{
 			$mdom		= $this->getDomicilio(99);
 			$elnombre 	= $this->getNombreCompleto(OUT_HTML);// $DSocio["apellidopaterno"] . " " . $DSocio["apellidomaterno"] . " " . $DSocio["nombrecompleto"];
 			if ($domicilio_extendido == false){
-				$eldom 	= (strlen(trim($mdom)) < 6) ? "" : "<tr><th class='izq'>" . $xLng->getT("TR.Domicilio") . "</th><td colspan='3'>" . htmlentities( $xT->cChar($mdom)) . "</td></tr>";
+				$eldom 	= ""; 
+				if( strlen(trim($mdom)) < 6){
+					$eldom	= "<tr><th class='izq'>" . $xLng->getT("TR.TELEFONO") . "</th><td>" . $this->getTelefonoPrincipal() . "</td><th class='izq'>" . $xLng->getT("TR.CORREO_ELECTRONICO") . "</th><td>" . $this->getCorreoElectronico() . "</td></tr>";
+				} else {
+					$eldom	= "<tr><th class='izq'>" . $xLng->getT("TR.Domicilio") . "</th><td colspan='3'>" . htmlentities( $xT->cChar($mdom)) . "</td></tr>";
+				}
+						
 			} else {
-				if( $this->getODomicilio() != null){
-					$eldom		= "<tr><td colspan='4'>". $this->getODomicilio()->getFicha($this->getTelefonoPrincipal(), false, $this->getCorreoElectronico()) . "</td></tr>";
+				if( $this->getODomicilio() == null){
+					$eldom	= "<tr><th class='izq'>" . $xLng->getT("TR.TELEFONO") . "</th><td>" . $this->getTelefonoPrincipal() . "</td><th class='izq'>" . $xLng->getT("TR.CORREO_ELECTRONICO") . "</th><td>" . $this->getCorreoElectronico() . "</td></tr>";
+				} else {
+					$eldom	= "<tr><td colspan='4'>". $this->getODomicilio()->getFicha($this->getTelefonoPrincipal(), false, $this->getCorreoElectronico()) . "</td></tr>";
 				}
 			}
 			if($simple == true){
@@ -1594,7 +1602,7 @@ class cSocio{
 					if($SinDatosFiscales === true){ $tdRFC = ""; }
 					
 				}
-				$trRFC		= (trim("$tdCurp$tdRFC") == "") ? "" :  "<tr>$tdRFC $tdCurp</tr>";
+				$trRFC			= (trim("$tdCurp$tdRFC") == "") ? "" :  "<tr>$tdRFC $tdCurp</tr>";
 				
 				if($this->mGrupoAsociado != DEFAULT_GRUPO){
 					$dG		= new cGrupo($this->mGrupoAsociado);
@@ -1637,7 +1645,7 @@ class cSocio{
 						<td>" . $this->mExtranjeroPermiso. "</td>
 				 <th class='izq'>" . $xLng->getT("TR.EXTRANJERO_VENCIMIENTO") . "</th>
 				 <td>" . $xF->getFechaMX( $this->mExtranjeroFechaFin) ."</td>
-				 </tr>";				
+				 </tr>";
 			}
 			$tdCL		= "";
 			if(SISTEMA_CAJASLOCALES_ACTIVA == true AND $simple == false){
@@ -1646,8 +1654,7 @@ class cSocio{
 				$xReg	= new cPersonasRegiones($this->getRegion());
 				$xReg->init();
 				$tdCL	= "<tr><th class='izq'>" . $xLng->getT("TR.CAJA_LOCAL") . "</th><td>" . $xCL->getNombre() . "</td>
-					<th class='izq'>" . $xLng->getT("TR.REGION") . "</th><td>" . $xReg->getNombre() . "</td>
-									</tr>";				
+					<th class='izq'>" . $xLng->getT("TR.REGION") . "</th><td>" . $xReg->getNombre() . "</td></tr>";				
 			}
 			$idinterna	= ($this->mIDInterna == "") ? "" : " / " . $this->mIDInterna;
 			$txtinterna	= ($idinterna == "") ? "" : " / " . $xLng->getT("TR.IDINTERNO");
@@ -2403,9 +2410,11 @@ class cSocio{
 		$id			= $xViv->add($calle, $numero_exterior, $numero_interior, $referencia, $telefono_fijo, $telefono_movil,
 				$TipoDeAcceso, $colonia, $tipo, $regimen, $tiempo_de_residir,
 				$principal, $codigo_postal, $clave_de_localidad, $clave_de_pais, $nombre_localidad, $nombre_municipo, $nombre_estado, $nombre_pais, false, $fecha_de_ingreso);
+		$id			= $xViv->getClaveUnica();
 		$id			= setNoMenorQueCero($id);
 		if ( $id > 0 ){
 			$this->mIDVivienda	= $id;
+			
 			$xLog->add("OK\tSe agrega la Vivienda con ID $id CP $codigo_postal y Localidad $clave_de_localidad del pais $nombre_pais\r\n");
 			//Actualiza el Dato de Domicilio del Grupo Solidario
 			if( ($this->getTipoDeIngreso() == TIPO_INGRESO_GRUPO) AND ($principal == true) ){
@@ -5459,6 +5468,8 @@ class cPersonasVivienda{
 	private $mOficial				= 0;
 	private $mRegimen				= 0;
 	private $mFirmCache				= "";
+	private $mSeConstruye			= false;
+	private $mEsPrincipal			= false;
 	
 	function __construct($persona = false, $tipo = false){
 		$this->mPersona	= setNoMenorQueCero($persona);
@@ -5502,6 +5513,10 @@ class cPersonasVivienda{
 		if($this->mFirmCache !==""){
 			$xCache->clean($this->mFirmCache);
 		}
+		//Eliminar cache de vivienda en construccion
+		$idxv	= "socios_vivienda-construye-" . $this->mPersona;
+		$xCache->clean($idxv);
+		
 	}
 	
 	function init($principal = false, $datos = false){
@@ -5559,6 +5574,8 @@ class cPersonasVivienda{
 			$this->mFechaRegistro	= $this->mOB->fecha_alta()->v();
 			$this->mOficial			= $this->mOB->idusuario()->v();
 			$this->mRegimen			= $this->mOB->tipo_regimen()->v();
+			$this->mSeConstruye		= ($this->mOB->construye()->v() <= 0) ? false : true;
+			$this->mEsPrincipal		= ( setNoMenorQueCero($this->mOB->principal()->v()) <= 0) ? false : true;
 			$this->setIDCache($this->mIDCargado);
 			$xCache->set($this->mIDCache, $this->mDatosInArray);
 			//setLog($this->mCodigoPostal);
@@ -5699,6 +5716,9 @@ class cPersonasVivienda{
 				$stat	= $xNot->get("VERIFICADO", "idstat", $xNot->SUCCESS);
 			} else {
 				$stat	= $xNot->get("NO VERIFICADO", "idstat", $xNot->WARNING);
+			}
+			if($this->getSeConstruye() == true){
+				$stat	= $stat . $xNot->get($xLng->getT("TR.ENCONSTRUCCION"), "idstat2", $xNot->SUCCESS);
 			}
 			$trExt	= "<tr>
 							<th class='izq'>" . $xLng->getT("TR.TIPO") . "</th>
@@ -6047,10 +6067,25 @@ class cPersonasVivienda{
 	function getEsActivo(){
 		return ($this->mEstadoRegistro == 0) ? false : true;
 	}
+	function getEsPrincipal(){ return $this->mEsPrincipal; }
 	function setCuandoSeActualiza(){
 		$this->setCleanCache();
 		
 	}
+	function setSeConstruye(){
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE `socios_vivienda` SET `construye`=1 WHERE `idsocios_vivienda`=" . $this->mIDCargado);
+		
+		if($res === false){
+			$res	= false;
+		} else {
+			$this->mMessages	.= "WARN\tVivienda en construccion\r\n";
+			$res	= true;
+			$this->setCuandoSeActualiza();
+		}
+		return $res;
+	}
+	function getSeConstruye(){ return $this->mSeConstruye; }
 	function getExisteID($id){
 		$id		= setNoMenorQueCero($id);
 		$xQL	= new MQL();
@@ -6061,6 +6096,20 @@ class cPersonasVivienda{
 		}
 		$xQL	= null;
 		return ($cnt>0 ) ? true : false;
+	}
+	function initByEnConstruccion(){
+		$xCache	= new cCache();
+		$idxv	= "socios_vivienda-construye-" . $this->mPersona;
+		$data	= $xCache->get($idxv);
+		if(!is_array($data)){
+			$xQL	= new MQL();
+			$sql	= "SELECT * FROM `socios_vivienda` WHERE `socio_numero`= " . $this->mPersona . " AND `estado_actual`>0 ORDER BY `construye` DESC, `fecha_alta` LIMIT 0,1";
+			$data	= $xQL->getDataRow($sql);
+			if(isset($data["idsocios_vivienda"])){
+				$this->mIDCargado	= $data["idsocios_vivienda"];
+			}
+		}
+		return $this->init(false, $data);
 	}
 }
 
@@ -6392,7 +6441,7 @@ class cPersonaActividadEconomica {
 		
 		return "<table>" . $ta . "</table>";
 	}
-	function setEmpresa($empresa, $puesto, $depto = "", $idempleado = "", $nss = 0, $ExtTelefonica = 0, $tipo_de_dispersion = 1, $fecha_de_ingreso = false ){
+	function setEmpresa($empresa, $puesto, $depto = "", $idempleado = "", $nss = 0, $ExtTelefonica = 0, $tipo_de_dispersion = 1, $fecha_de_ingreso = false, $update = false ){
 		$xF						= new cFecha();
 		//cargar datos de la empresa
 		$this->mClaveEmpresa	= $empresa;
@@ -6403,6 +6452,7 @@ class cPersonaActividadEconomica {
 		$this->mExtTelefonica	= $ExtTelefonica;
 		$this->mFechaDeIngreso	= $xF->getFechaISO($fecha_de_ingreso);
 		$this->mTipoDispersion	= $tipo_de_dispersion;
+		
 		//iniciar domicilio?
 		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
 			if($this->mClaveEmpresa != FALLBACK_CLAVE_EMPRESA AND $this->mClaveEmpresa != DEFAULT_EMPRESA){
@@ -6422,10 +6472,17 @@ class cPersonaActividadEconomica {
 							$this->mNombreDeMunicipio	= $xViv->getMunicipio();
 							$this->mNombreDeEstado		= $xViv->getEstado();
 							$this->mCodigoPostal		= $xViv->getCodigoPostal();
-							$this->mIDDomicilio			= $xViv->getClaveUnica();		
+							$this->mIDDomicilio			= $xViv->getClaveUnica();	
 						}
 					}
 				}
+			}
+			if($update == true){
+				//Guardar Cambios
+				$xQL		= new MQL();
+				$xQL->setRawQuery("UPDATE `socios_aeconomica` SET `dependencia_ae`= $empresa, `puesto`= '$puesto',`departamento_ae`='$depto',`numero_empleado`='$idempleado',`numero_de_seguridad_social`='$nss'
+								`extension_ae`='$ExtTelefonica', `fecha_de_ingreso`= '$fecha_de_ingreso', `empleado_tipo_de_dispersion`=$tipo_de_dispersion WHERE `idsocios_aeconomica`=" . $this->mIDDomicilio);
+				
 			}
 		}
 	}

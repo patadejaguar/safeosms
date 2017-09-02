@@ -729,8 +729,11 @@ class cHPage {
 		$xUsr->init();
 		return $xUsr->getNivel();
 	}
-	function isMobile(){
-		$isMobile 	= false;
+	function isMobile($isMobile = false){
+		
+		//$isMobile 	= false;
+		//$_SESSION[SYS_CLIENT_MOB]
+		if($isMobile === false){
 		$isBot 		= false;
 		$ua 		= strtolower($_SERVER['HTTP_USER_AGENT']);
 		$ac 		= (isset($_SERVER['HTTP_ACCEPT'])) ? strtolower($_SERVER['HTTP_ACCEPT']) : "";
@@ -807,6 +810,7 @@ class cHPage {
 				|| strpos($ua, 'mediobot') !== false
 				|| strpos($ua, 'chtml generic') !== false
 				|| strpos($ua, 'nokia6230i/. fast crawler') !== false;
+		}
 		return $isMobile;
 	}
 	function cors (){
@@ -1384,8 +1388,11 @@ class cHForm {
 			$this->OButton("TR.Vincular Propietarios", "var xML= new AmlGen();xML.addCuestionario($clave_de_credito)", $this->ic()->PREGUNTAR);
 		}
 		$this->addToolbar( $xBtn->getBasic("TR.AGREGAR FLUJO DE EFECTIVO", "var xP= new CredGen();xP.getFormaFlujoEfectivo($clave_de_credito)", "balance", "cmd-addflujo", false ) );
-		$this->addToolbar( $xBtn->getBasic("TR.VINCULAR AVALES", "var xP= new CredGen();xP.getVincularAvales($clave_de_credito)", "vincular", "vincular-avales" , false) );
-		$this->addToolbar( $xBtn->getBasic("TR.AGREGAR AVALES", "var xP= new CredGen();xP.getFormaAvales($clave_de_credito)", "referencias", "add-avales" , false) );
+		
+		//$this->addToolbar( $xBtn->getBasic("TR.VINCULAR AVALES", "var xP= new CredGen();xP.getVincularAvales($clave_de_credito)", "vincular", "vincular-avales" , false) );
+		//$this->addToolbar( $xBtn->getBasic("TR.AGREGAR AVALES", "var xP= new CredGen();xP.getFormaAvales($clave_de_credito)", "referencias", "add-avales" , false) );
+		$this->OButton("TR.ELEGIR AVALES", "var xP= new CredGen();xP.getElegirAvales($clave_de_credito)", $this->ic()->GRUPO, "elegir_avales", "blue");
+		
 		$this->addToolbar( $xBtn->getBasic("TR.AGREGAR GARANTIAS", "var xP= new CredGen();xP.getFormaGarantias($clave_de_credito)", "bienes", "add-garantias", false ) );
 		$this->OButton("TR.DATOS_DE_TRANSFERENCIA", "var CGen=new CredGen(); CGen.setAgregarBancos($clave_de_credito);", $this->ic()->BANCOS);
 		
@@ -2758,7 +2765,7 @@ class cHButton extends cHInput{
 	
 		return $this->get($id, false, "", $label, "", $sniptHTML);
 	}
-	function setIcon($icono, $class="fa-2x"){
+	function setIcon($icono, $class="fa-2x", $force = false){
 		$src		= "";
 		
 		if(strpos($icono, "fa-") !== false){
@@ -2776,6 +2783,9 @@ class cHButton extends cHInput{
 				}
 				$this->addHTMLCode($src);
 			}
+		}
+		if($force == true AND $src == ""){
+			$src	= "<i class=\"fa fa-ellipsis-h $class\"></i>";
 		}
 		return $src;
 	}
@@ -5133,6 +5143,7 @@ class cTabla {
 	private $mPreSQL		= "";
 	private $mNoFilas		= false;
 	private $mOpTitleFoot	= "";
+	private $mArrReplaces	= array();
 	
 	private $mFechaCorte	= false;//Fecha de Corte SQL para reportes
 	/**
@@ -5192,6 +5203,7 @@ class cTabla {
 	function setWidthTool($width){ $this->mWidthTool	= $width; }
 	function setPreSQL($sql){$this->mPreSQL=$sql;} 
 	function setOmitidos($item){$this->mOmitidos[$item] = true;}
+	function setFieldReplace($field, $mark ){ $this->mArrReplaces[$field] = $mark;  }
 	/**
 	 * Modo de salida del Archivo
 	 * @param string $tipo	Tipo de salida, XML, HTML, CSV
@@ -5319,6 +5331,7 @@ class cTabla {
 		$puedeEdit	= false;
 		$puedeDel	= false;
 		$puedeAdd	= false;
+		$numreplace = (count($this->mArrReplaces)>0) ? true : false;
 		
 		if(MODO_DEBUG == true AND isset($_SERVER["REQUEST_URI"]) AND $this->mPrepareChart == false ){
 			if(strpos($_SERVER["REQUEST_URI"], "rpt") === false AND strpos($_SERVER["REQUEST_URI"], "chart") === false){ 
@@ -5574,14 +5587,24 @@ LONGTEXT: 252
 				$t[3]			= (MODO_DEBUG == false) ? "" : $xBtn->getBasic($arrTitles[3], "var xDev=new SafeDev();xDev.recordRAW({tabla:'" . $this->mTbl .  "',id:" . $idKey . "});", $xIcs->EXPORTAR, "idcmdview$idKey", false, true ); 
 								
 				foreach ($this->mTool as $idx => $clave){ $lis .= isset($t[$clave]) ? "<li>" . $t[$clave] . "</li>" : ""; }
-				foreach ($this->mEspCMD as $idx => $cnt){$lis .= "<li>" . str_replace(HP_REPLACE_ID, $rw[$pKey], $cnt) . "</li>";}
+				foreach ($this->mEspCMD as $idx => $cnt){
+					$txt 		= "<li>" . str_replace(HP_REPLACE_ID, $rw[$pKey], $cnt) . "</li>";
+					//============= Replaces keys
+					if($numreplace == true){
+						foreach ($this->mArrReplaces as $fld => $rr){
+							$txt	= str_replace($rr, $rw[$fld], $txt);							
+						}
+					}
+					$lis .= $txt;
+				}
 				
 				$tdt		= ($lis == "") ? "" : "<ul class='$liCss'>$lis</ul>";
 				/**
 				 * Herramientas especiales
 				 */
 				foreach ($this->mEspTool as $key => $value) {
-					$DefValue 	= str_replace(HP_REPLACE_ID, $rw[$this->mKey], $value);
+					$DefValue 			= str_replace(HP_REPLACE_ID, $rw[$this->mKey], $value);
+					
 					if(isset($rw[$key])){ //El campo Existe
 						
 						if($xT->cBool($rw[$key]) == true){
@@ -6545,6 +6568,14 @@ class cFormato {
 		$xCache->clean($idc);
 		
 	}
+	function setAlta(){
+		$xCache		= new cCache();
+		$idc		= "general_contratos-" . $this->mID;
+		$xQL		= new MQL();
+		$xQL->setRawQuery("UPDATE `general_contratos` SET `estatus`='alta' WHERE `idgeneral_contratos`=" . $this->mID);
+		$xCache->clean($idc);
+		
+	}
 	function setUsuario($usuario = false){
 		$usuario									= ($usuario == false) ? getUsuarioActual() : $usuario;
 		$Usr										= new cSystemUser( $usuario );
@@ -6630,9 +6661,9 @@ class cFormato {
 			$this->mArr["variable_persona_regimen_matrimonial"]		= $xLng->getT("TR.". $cSoc->getTipoRegimenMatrimonial());
 
 			$this->mArr["variable_persona_tipo_identificacion"]		= $cSoc->getTipoDeIdentificacion();
-			$xTI	= new cPersonas_documentacion_tipos();
-			$xTI->setData($xTI->query()->initByID($cSoc->getTipoDeIdentificacion()) );
-			$this->mArr["variable_persona_tipo_identificacion"]		= $xTI->nombre_del_documento()->v();
+			
+			$xTI	= new cPersonasDocumentacionTipos($cSoc->getTipoDeIdentificacion()); $xTI->init();
+			$this->mArr["variable_persona_tipo_identificacion"]		= $xTI->getNombre();
 			
 			$this->mArr["variable_persona_clave_identificacion"]	= $cSoc->getClaveDeIdentificacion();
 			$this->mArr["variable_persona_profesion"]				= $cSoc->getTituloPersonal();
@@ -6672,6 +6703,13 @@ class cFormato {
 			if($xDomF->init() == true){
 				$this->mArr["variable_persona_domicilio_fiscal"]		= $xDomF->getDireccionBasica(true);
 			}
+			//Domicilio.- Vivienda en Construccion
+			$this->mArr["variable_persona_domicilio_construye"]			= "";
+			$xDomEC			= new cPersonasVivienda($clave_de_persona);
+			if($xDomEC->initByEnConstruccion() == true){
+				$this->mArr["variable_persona_domicilio_construye"]		= $xDomEC->getDireccionBasica(true);
+			}
+			
 			$this->mArr["variable_nombre_del_socio"] 				= $cSoc->getNombreCompleto(OUT_HTML);
 			$this->mArr["variable_persona_nombre_completo"]			= $this->mArr["variable_nombre_del_socio"];
 			$this->mArr["variable_persona_telefono_principal"]		= $cSoc->getTelefonoPrincipal();
@@ -7308,6 +7346,10 @@ class cFormato {
 			$this->mArr["aval_domicilio_localidad"] 	= "";
 			$this->mArr["aval_direccion_calle_y_numero"]= "";
 			$this->mArr["aval_direccion_estado"] 		= "";
+			$this->mArr["aval_direccion_municipio"] 	= "";
+			$this->mArr["aval_direccion_colonia"] 		= "";
+			$this->mArr["aval_direccion_codigopostal"] 	= "";
+			
 			$this->mArr["aval_direccion_completa"] 		= "";
 			$this->mArr["aval_ocupacion"] 				= "";
 			$this->mArr["aval_telefono_principal"]		= "";
@@ -7319,7 +7361,14 @@ class cFormato {
 			$this->mArr["aval_estado_civil"] 			= "";
 			$this->mArr["aval_tipo_de_relacion"] 		= "";
 			$this->mArr["aval_tipo_de_parentesco"] 		= "";
+			$this->mArr["aval_tipo_de_identificacion"] 	= "";
+			$this->mArr["aval_id_identificacion"] 		= "";
+			
 			$this->mArr["aval_porcentaje_relacionado"]	= "";
+			
+			$this->mArr["aval_nombres"] 				= "";
+			$this->mArr["aval_primer_apellido"] 		= "";
+			$this->mArr["aval_segundo_apellido"] 		= "";
 		}
 		foreach ($rs as $rows){
 			$persona	= $rows["numero_socio"];
@@ -7342,13 +7391,24 @@ class cFormato {
 					}
 				}
 				$this->mArr["variable_aval" . $itx . "_nombre_completo"] 	= $xSoc->getNombreCompleto();
+				
+				$this->mArr["variable_aval" . $itx . "_nombres"] 			= $xSoc->getNombre();
+				$this->mArr["variable_aval" . $itx . "_primer_apellido"] 	= $xSoc->getApellidoPaterno();
+				$this->mArr["variable_aval" . $itx . "_segundo_apellido"] 	= $xSoc->getApellidoMaterno();
+				
 				$this->mArr["variable_aval" . $itx . "_estado_civil"] 		= $DEstadoCivil->descripcion_estadocivil()->v();
 				$this->mArr["variable_aval" . $itx . "_id_fiscal"] 			= $xSoc->getRFC(true);
 				$this->mArr["variable_aval" . $itx . "_id_poblacional"] 	= $xSoc->getCURP(true);
 				$this->mArr["variable_aval" . $itx . "_telefono_principal"] = $xSoc->getTelefonoPrincipal();
 				$this->mArr["variable_aval" . $itx . "_email"] 				= $xSoc->getCorreoElectronico();
+				
+				$xTI	= new cPersonasDocumentacionTipos($xSoc->getTipoDeIdentificacion()); $xTI->init();
+				
 				$vars	= array(
 					"aval_nombre_completo" 			=> $xSoc->getNombreCompleto(),
+					"aval_nombres"					=> $xSoc->getNombre(),
+					"aval_primer_apellido"			=> $xSoc->getApellidoPaterno(),
+					"aval_segundo_apellido"			=> $xSoc->getApellidoMaterno(),
 					"aval_domicilio_convencional"	=> "",
 					"aval_email"					=> $xSoc->getCorreoElectronico(),
 					"aval_representante"			=> $xSoc->getNombreDelRepresentanteLegal(),
@@ -7356,17 +7416,25 @@ class cFormato {
 					"aval_domicilio_localidad" 		=> "",
 					"aval_direccion_calle_y_numero" => "",
 					"aval_direccion_estado" 		=> "",
+					
+					"aval_direccion_colonia" 		=> "",
+					"aval_direccion_municipio" 		=> "",
+					"aval_direccion_codigopostal" 	=> "",
+						
 					"aval_direccion_completa" 		=> "",
 					"aval_ocupacion" 				=> "",
 					"aval_telefono_principal"		=> $xSoc->getTelefonoPrincipal(),
 					"aval_fecha_de_nacimiento" 		=> $xF->getFechaCorta($xSoc->getFechaDeNacimiento()),
 					"aval_id_fiscal" 				=> $xSoc->getRFC(true),
 					"aval_id_poblacional" 			=> $xSoc->getCURP(true),
+					"aval_id_identificacion"		=> $xSoc->getClaveDeIdentificacion(),
+					
 					"aval_lugar_de_nacimiento" 		=> $xSoc->getLugarDeNacimiento(),
 					"aval_empresa_de_trabajo" 		=> "",
 					"aval_estado_civil" 			=> $DEstadoCivil->descripcion_estadocivil()->v(),
 					"aval_tipo_de_relacion" 		=> $xRel->getNombreRelacion(),
 					"aval_tipo_de_parentesco" 		=> $xRel->getNombreParentesco(),
+					"aval_tipo_de_identificacion" 	=> $xTI->getNombre(),
 					"aval_porcentaje_relacionado"	=> ($porcentaje * 100)
 				);
 				if($avalDom != null){
@@ -7374,6 +7442,10 @@ class cFormato {
 					$vars["aval_domicilio_localidad"] 							= $avalDom->getLocalidad(); //TODO: verificar Validez
 					$vars["aval_direccion_calle_y_numero"]						= $avalDom->getCalleConNumero();
 					$vars["aval_direccion_estado"] 								= $avalDom->getEstado(OUT_TXT);
+					$vars["aval_direccion_colonia"] 							= $avalDom->getColonia();
+					$vars["aval_direccion_municipio"] 							= $avalDom->getMunicipio();
+					$vars["aval_direccion_codigopostal"] 						= $avalDom->getCodigoPostal();
+					
 					$this->mArr["variable_aval" . $itx . "_domicilio_completo"] = $vars["aval_direccion_completa"];
 					$this->mArr["variable_aval" . $itx . "_domicilio_localidad"]= $vars["aval_domicilio_localidad"];
 					$this->mArr["variable_aval" . $itx . "_domicilio_estado"] 	= $vars["aval_direccion_estado"]; 
@@ -7466,7 +7538,9 @@ class cFormato {
 			$this->mArr["firmantes_estado_civil"] 			= "";
 			$this->mArr["firmantes_tipo_de_relacion"] 		= "";
 			$this->mArr["firmantes_tipo_de_parentesco"] 	= "";
-			
+			$this->mArr["firmantes_nombres"]				= "";
+			$this->mArr["firmantes_primer_apellido"]		= "";
+			$this->mArr["firmantes_segundo_apellido"]		= "";
 			
 		} else {
 			$idxficha		=1;
@@ -7505,8 +7579,12 @@ class cFormato {
 							"firmantes_empresa_de_trabajo" 		=> "",
 							"firmantes_estado_civil" 			=> "",
 							"firmantes_tipo_de_relacion" 		=> "",
-							"firmantes_tipo_de_parentesco" 		=> ""
+							"firmantes_tipo_de_parentesco" 		=> "",
 
+							"firmantes_nombres"					=> $xSoc->getNombre(),
+							"firmantes_primer_apellido"			=> $xSoc->getApellidoPaterno(),
+							"firmantes_segundo_apellido"		=> $xSoc->getApellidoMaterno()
+							
 					);
 					//reemplazar formato
 					
@@ -7576,19 +7654,19 @@ class cFormato {
 					),
 				
 				"variables_de_personas" => array(
-					"variable_nombre_del_socio" 			=> "Nombre de la Persona",
-					"variable_domicilio_del_socio" 			=> "Domicilio de la Persona",
-					"variable_domicilio_estado_del_socio" 	=> "Entidad Federativa  del Domicilio de la Persona",
-					"variable_ciudad_del_socio" 			=> "Ciudad de Domicilio de la Persona",
+					"variable_nombre_del_socio" 					=> "Nombre de la Persona",
+					"variable_domicilio_del_socio" 					=> "Domicilio de la Persona",
+					"variable_domicilio_estado_del_socio" 			=> "Entidad Federativa  del Domicilio de la Persona",
+					"variable_ciudad_del_socio" 					=> "Ciudad de Domicilio de la Persona",
 
-					"variable_rfc_del_socio" 				=> "RFC de la Persona",
-					"variable_curp_del_socio" => "CURP de la Persona",
-					"variable_numero_de_socio" => "Clave de Persona",
-					"variable_nombre_caja_local" => "Nombre de la Caja Local",
-					"variable_lista_de_beneficiados" => "Listado de Beneficiarios",
-					"variable_firmas_de_obligados_solidarios" => "Listado de FIRMAS de Obligados Solidarios",
-					"variable_informacion_del_socio" => "Ficha de Informacion General de la Persona",
-					"variable_nombre_de_empresa" => "Nombre de Empresa Asociada",
+					"variable_rfc_del_socio" 						=> $xL->getT("TR.PERSONA .- ID_FISCAL"),
+					"variable_curp_del_socio" 						=> "CURP de la Persona",
+					"variable_numero_de_socio" 						=> "Clave de Persona",
+					"variable_nombre_caja_local" 					=> "Nombre de la Caja Local",
+					"variable_lista_de_beneficiados" 				=> "Listado de Beneficiarios",
+					"variable_firmas_de_obligados_solidarios" 		=> "Listado de FIRMAS de Obligados Solidarios",
+					"variable_informacion_del_socio" 				=> "Ficha de Informacion General de la Persona",
+					"variable_nombre_de_empresa" 					=> "Nombre de Empresa Asociada",
 						
 
 					
@@ -7597,7 +7675,7 @@ class cFormato {
 					"variable_socio_actividad_telefono" 			=> $xL->getT("TR.Persona .- Actividad Economica.- Telefono"),
 					"variable_municipio_de_actividad_economica" 	=> $xL->getT("TR.PERSONA .- Actividad Economica.- Municipio"),
 					"variable_estado_de_actividad_economica" 		=> $xL->getT("TR.PERSONA .- Actividad Economica.- Estado"),
-					"variable_persona_lista_de_bienes"	 			=> "Balance Patrimonial",
+					"variable_persona_lista_de_bienes"	 			=> $xL->getT("TR.PERSONA .- BALANCE_PATRIMONIAL"),
 					"variable_persona_id_interna" 					=> $xL->getT("TR.PERSONA .- IDINTERNA"),
 					"variable_persona_telefono_principal"			=> $xL->getT("TR.PERSONA .- TELEFONO_PRINCIPAL"),
 					"variable_persona_identificacion_oficial"		=> $xL->getT("TR.PERSONA .- IDENTIFICACION_OFICIAL"),
@@ -7626,15 +7704,16 @@ class cFormato {
 
 					"variable_persona_domicilio_fiscal"				=> $xL->getT("TR.PERSONA .- VIVIENDA .- DOMICILIO FISCAL"),
 					"variable_persona_domicilio_convencional"		=> $xL->getT("TR.PERSONA .- VIVIENDA .- DOMICILIO CONVENCIONAL"),
+					"variable_persona_domicilio_construye"			=> $xL->getT("TR.PERSONA .- VIVIENDA .- DOMICILIO ENCONSTRUCCION"),
 						
 					"variable_ciudad_de_nacimiento_del_socio"		=> $xL->getT("TR.Persona .- Ciudad de Nacimiento"),
 					"variable_fecha_de_nacimiento_del_socio" 		=> $xL->getT("TR.Persona .- Fecha de Nacimiento"),
 					"variable_estado_civil_del_socio" 				=> $xL->getT("TR.Persona .- Estado_Civil"),
 						
-					"variable_persona_rep_legal"					=> $xL->getT("TR.PERSONA .- REPRESENTANTE_LEGAL"),
+					"variable_persona_rep_legal"					=> $xL->getT("TR.PERSONA .- LEGAL .- REPRESENTANTE_LEGAL"),
 						
-					"variable_pm_num_notaria"						=> $xL->getT("TR.PERSONA .- NUMERO NOTARIA"),
-					"variable_pm_nom_notario"						=> $xL->getT("TR.PERSONA .- NOMBRE NOTARIO")
+					"variable_pm_num_notaria"						=> $xL->getT("TR.PERSONA .- LEGAL .- NUMERO NOTARIA"),
+					"variable_pm_nom_notario"						=> $xL->getT("TR.PERSONA .- LEGAL .- NOMBRE NOTARIO")
 				),
 				"variables_de_creditos" => array(
 					"variable_informacion_del_credito" 				=> "Ficha de Informacion del Credito",
@@ -7712,6 +7791,7 @@ class cFormato {
 						"firmantes_nombre_completo" 		=> $xL->getT("TR.FIRMANTES .- NOMBRE"),
 						"firmantes_domicilio_convencional"	=> $xL->getT("TR.FIRMANTES .- VIVIENDA .- DOMICILIO CONVENCIONAL"),
 						"firmantes_email"					=> $xL->getT("TR.FIRMANTES .- CORREO_ELECTRONICO"),
+						
 						"firmantes_representante"			=> $xL->getT("TR.FIRMANTES .- REPRESENTANTE_LEGAL"),
 						"firmantes_domicilio_fiscal"		=> $xL->getT("TR.FIRMANTES .- VIVIENDA .- DOMICILIO FISCAL"),
 						"firmantes_domicilio_localidad" 	=> $xL->getT("TR.FIRMANTES .- VIVIENDA .- LOCALIDAD"),
@@ -7732,24 +7812,42 @@ class cFormato {
 						"var_firmantes_ficha_2"				=> $xL->getT("TR.FIRMANTES .- FICHA 2"),
 						"var_firmantes_ficha_3"				=> $xL->getT("TR.FIRMANTES .- FICHA 3"),
 						"var_firmantes_ficha_4"				=> $xL->getT("TR.FIRMANTES .- FICHA 4"),
+						
+						"firmantes_nombres" 				=> $xL->getT("TR.FIRMANTES .- Nombre"),
+						"firmantes_primer_apellido" 		=> $xL->getT("TR.FIRMANTES .- PRIMER_APELLIDO"),
+						"firmantes_segundo_apellido" 		=> $xL->getT("TR.FIRMANTES .- SEGUNDO_APELLIDO"),
+						"firmantes_id_poblacional"			=> $xL->getT("TR.FIRMANTES .- CURP")
 				),
 				"variables_de_avales" => array(
 						"aval_nombre_completo" 				=> $xL->getT("TR.Aval .- Nombre Completo"),
+						
+						"aval_nombres" 						=> $xL->getT("TR.Aval .- Nombre"),
+						"aval_primer_apellido" 				=> $xL->getT("TR.Aval .- PRIMER_APELLIDO"),
+						"aval_segundo_apellido" 			=> $xL->getT("TR.Aval .- SEGUNDO_APELLIDO"),
+						"aval_id_poblacional" 				=> $xL->getT("TR.Aval .- CURP"),
+						
+						
 						"aval_direccion_completa" 			=> $xL->getT("TR.Aval .- Domicilio Completo"),
 						"aval_domicilio_localidad" 			=> $xL->getT("TR.Aval .- Localidad de Domicilio"),
 						"aval_direccion_calle_y_numero"		=> $xL->getT("TR.Aval .- Calle y Numero"),
 						"aval_direccion_estado" 			=> $xL->getT("TR.Aval .- Entidad Federativa"),
+						"aval_direccion_municipio" 			=> $xL->getT("TR.Aval .- MUNICIPIO"),
+						"aval_direccion_colonia" 			=> $xL->getT("TR.Aval .- COLONIA"),
 						"aval_ocupacion" 					=> $xL->getT("TR.Aval .- Ocupacion Actual"),
 						"aval_fecha_de_nacimiento" 			=> $xL->getT("TR.Aval .- Fecha de Nacimiento"),
 						"aval_telefono_principal" 			=> $xL->getT("TR.Aval .- TELEFONO_PRINCIPAL"),
 						"aval_email" 						=> $xL->getT("TR.Aval .- CORREO_ELECTRONICO"),
 						
 						"aval_id_fiscal" 					=> $xL->getT("TR.Aval .- RFC"),
+						"aval_id_identificacion" 			=> $xL->getT("TR.Aval .- CLAVE DE IDENTIFICACION"),
+						
 						"aval_lugar_de_nacimiento" 			=> $xL->getT("TR.Aval .- Lugar de Nacimiento"),
 						"aval_empresa_de_trabajo" 			=> $xL->getT("TR.Aval .- Nombre de la Empresa Donde Labora"),
 						"aval_estado_civil" 				=> $xL->getT("TR.Aval .- Estado_Civil"),
-						"aval_tipo_de_relacion" 			=> $xL->getT("TR.Aval .- Tipo de Relacion"),
-						"aval_tipo_de_parentesco" 			=> $xL->getT("TR.Aval .- Tipo de Parentesco"),
+						"aval_tipo_de_relacion" 			=> $xL->getT("TR.Aval .- Tipo_de Relacion"),
+						"aval_tipo_de_parentesco" 			=> $xL->getT("TR.Aval .- Tipo_de Parentesco"),
+						"aval_tipo_de_identificacion" 		=> $xL->getT("TR.Aval .- Tipo_de IDENTIFICACION"),
+						
 						"aval_porcentaje_relacionado"		=> $xL->getT("TR.Aval .- Porcentaje Relacionado"),
 						"aval_domicilio_convencional"		=> $xL->getT("TR.Aval .- Domicilio Convencional"),
 						"aval_domicilio_fiscal"				=> $xL->getT("TR.Aval .- Domicilio Fiscal"),

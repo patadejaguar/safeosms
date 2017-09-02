@@ -22,6 +22,8 @@ $xRuls		= new cReglaDeNegocio();
 $xODT		= new cHDicccionarioDeTablas();
 $xLog		= new cCoreLog();
 
+$UsarRedir	= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
+
 $jsTabs		= "";
 $idempresa	= 0;
 $oficial 	= elusuario($iduser);
@@ -34,8 +36,10 @@ function jsaReVivienda($idsocio){
 			
 		$cTbl = new cTabla($xLi->getListadoDeDireccionesPorPer($idsocio));
 		$cTbl->OButton("TR.Verificar", "jsVerificar(_REPLACE_ID_)", $cTbl->ODicIcons()->SALUD);
-		$cTbl->addEditar(USUARIO_TIPO_OFICIAL_CRED);
-		$cTbl->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
+		
+		$cTbl->addEditar();
+		$cTbl->addEliminar();
+		
 		$cTbl->setKeyField("idsocios_vivienda");
 		$cTbl->setEventKey("var xPv=new PersVivGen();xPv.getVerVivienda");
 			
@@ -225,6 +229,10 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xBtn	= new cHButton();
 	$xTxt	= new cHText();
 	
+	if($UsarRedir == true){
+		$xHP->goToPageX("../utils/frmbuscarsocio.php?next=panel");
+	}
+	
 	$xFRM->setTitle( $xHP->getTitle() ); 
 	$xFRM->addPersonaBasico();
 	$xFRM->addSubmit();
@@ -290,6 +298,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xTblD->setOmitidos("archivo_de_documento");
 	$xTblD->OButton("TR.VER", "var xP=new PersGen();xP.getDocumento({id:" . HP_REPLACE_ID . "})", $xTblD->ODicIcons()->VER, "idview");
 	$xHTabs->addTab("TR.DOCUMENTOS", $xTblD->Show()); //tabs
+	
 	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
 		$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
 		
@@ -551,6 +560,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 
 	$xFRM->addAviso($xLog->getMessages(), "idavisos");
 	
+	$xFRM->addJsInit("initComponents();");
 
 	echo $xFRM->get();
 }
@@ -561,9 +571,14 @@ var mSocio		= <?php echo  ($idsocio === false) ? "0" : $idsocio; ?>;
 var xG			= new Gen();
 var xPG			= new PersGen();
 var xRec		= new RecGen();
+
+function initComponents(){
+	jsaReVivienda();
+}
+
 if (mSocio != 0) {
 
-	session(ID_PERSONA, mSocio); //Asignar Socio en Session
+session(ID_PERSONA, mSocio); //Asignar Socio en Session
 
 $(function() {
 	$( "#tab" ).tabs({

@@ -13,30 +13,26 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 
-$xHP		= new cHPage("TR.Listado de Creditos");
-$xQL		= new MQL();
+$xHP			= new cHPage("TR.Listado de Creditos");
+$xQL			= new MQL();
 
+$persona 		= (isset($_GET["i"])) ? $_GET["i"] : DEFAULT_SOCIO;
+$persona 		= (isset($_GET["socio"])) ? $_GET["socio"] : $persona;
+$persona 		= (isset($_GET["persona"])) ? $_GET["persona"] : $persona;
+$persona 		= (isset($_GET["socio"])) ? $_GET["socio"] : $persona;
 
-$oficial 	= elusuario($iduser);
-$persona 	= (isset($_GET["i"])) ? $_GET["i"] : DEFAULT_SOCIO;
-$persona 	= (isset($_GET["socio"])) ? $_GET["socio"] : $persona;
-$persona 	= (isset($_GET["persona"])) ? $_GET["persona"] : $persona;
-$persona 	= (isset($_GET["socio"])) ? $_GET["socio"] : $persona;
+$f 				= (isset($_GET["f"])) ? $_GET["f"] : false;
+$ctrl 			= (isset($_GET["control"])) ? $_GET["control"] : "idsolicitud";
 
-$f 			= (isset($_GET["f"])) ? $_GET["f"] : false;
-$ctrl 		= (isset($_GET["control"])) ? $_GET["control"] : "idsolicitud";
+$a 				= (isset($_GET["a"])) ? $_GET["a"] : "";
+$estado			= parametro("estado", SYS_TODAS, MQL_INT); $estado = parametro("tipo", $estado, MQL_INT);
 
-$a 			= (isset($_GET["a"])) ? $_GET["a"] : "";
-$estado		= parametro("estado", SYS_TODAS, MQL_INT); $estado = parametro("tipo", $estado, MQL_INT);
-//$tipos 		= (isset($_GET["tipo"])) ? $_GET["tipo"] : SYS_TODAS;
-//$tipos		= ($tipos == "todos") ? SYS_TODAS :  $tipos;
+$OtherEvent		= (isset($_GET["ev"])) ? $_GET["ev"]: "";	//Otro Evento Desatado
+$tiny 			= (isset($_GET["tinybox"])) ? true : false;
 
-$OtherEvent	= (isset($_GET["ev"])) ? $_GET["ev"]: "";	//Otro Evento Desatado
-$tiny 		= (isset($_GET["tinybox"])) ? true : false;
-
-$EventoCred	= parametro("evento", SYS_NINGUNO);
-$EventoCred	= strtolower($EventoCred);
-
+$EventoCred		= parametro("evento", SYS_NINGUNO);
+$EventoCred		= strtolower($EventoCred);
+$nextstep		= parametro("next", "", MQL_RAW);
 
 $slimit 	= "";
 if($a == ""){
@@ -65,6 +61,17 @@ switch($EventoCred){
 
 
 $xFRM		= new cHForm("frmlistacreditos");
+$xFRM->setTitle($xHP->getTitle());
+
+if($nextstep !== ""){
+	if($persona> DEFAULT_SOCIO){
+		$xSoc	= new cSocio($persona);
+		if($xSoc->init() == true){
+			$xFRM->addHElem($xSoc->getFicha(false, true, "", true));
+		}
+	}
+}
+
 $xT			= new cTabla($sql);
 $xT->setFootSum($arr);
 $xT->setEventKey("setCredito");
@@ -81,13 +88,18 @@ echo $xFRM->get();
 
 ?>
 <script>
-var msrc		= null;
+var msrc	= null;
+var next	= "<?php echo $nextstep; ?>";
+var xG		= new Gen();
 
 function setCredito(id){
 	var mopts	= {};
 	if (window.parent){ msrc = window.parent.document; }
 	if (opener){ msrc = opener.document; }
-	
+	if(next == Configuracion.rutas.panel){
+		xG.go({url: "../frmcreditos/creditos.panel.frm.php?credito=" + id});
+		return false;
+	}
 <?php
 		
 			echo "
@@ -105,11 +117,7 @@ function setCredito(id){
 			} 
 		
 ?>
-jsEnd();
-}
-function jsEnd(){
-	var xGen = new Gen();
-	xGen.close();
+	xG.close();
 }
 </script>
 <?php $xHP->fin(); ?>

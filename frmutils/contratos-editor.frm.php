@@ -33,10 +33,17 @@ function jsBajaContrato($id, $nombre){
 		$xForma->setBaja();
 	}
 }
+function jsActivarContrato($id, $nombre){
+	$xForma		= new cFormato();
+	if($xForma->init($id) == true){
+		$xForma->setAlta();
+	}
+}
 
-$jxc ->exportFunction('jsBajaContrato', array('idcontrato'), "#idaviso");
+$jxc->exportFunction('jsActivarContrato', array('idcontrato'), "#idaviso");
+$jxc->exportFunction('jsBajaContrato', array('idcontrato'), "#idaviso");
 
-$jxc ->process();
+$jxc->process();
 
 //ini_set("display_errors", "on");
 
@@ -52,7 +59,9 @@ $xFRM->setTitle($xHP->getTitle());
 	
 	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 	
-	$xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
+	$q1		= $xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
+	$xHG->setSQL("SELECT * FROM `general_contratos` WHERE `estatus`='alta' ORDER BY `titulo_del_contrato` LIMIT 0,20");
+		
 	$xHG->addList();
 	$xHG->addKey("idgeneral_contratos");
 	$xHG->col("idgeneral_contratos", "TR.CLAVE", "10%");
@@ -64,13 +73,18 @@ $xFRM->setTitle($xHP->getTitle());
 	//$xHG->col("texto_del_contrato", "TR.TEXTO DEL CONTRATO", "10%");
 	
 	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+	$xHG->OToolbar("TR.VER TODOS", "jsVerTodos()", "grid/off.png");
+	
 	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idgeneral_contratos +')", "edit.png");
-	$xHG->OButton("BAJA", "jsBaja('+ data.record.idgeneral_contratos +')", "minus.png");
+	$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idgeneral_contratos +')", "minus.png");
 	$xHG->OButton("TR.VER", "getForma('+ data.record.idgeneral_contratos +')", "view.png");
 	
 	if(MODO_DEBUG == true){
 		$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idgeneral_contratos +')", "delete.png");
 	}
+	
+	$xHG->setOrdenar();
+	
 	$xFRM->addHElem("<div id='iddiv'></div>");
 	$xFRM->addAviso("", "idaviso");
 	
@@ -80,6 +94,7 @@ $xFRM->setTitle($xHP->getTitle());
 	?>
 	<script>
 	var xG	= new Gen();
+	var q1	= "<?php echo $q1; ?>";
 	function jsEdit(id){
 		//xG.w({url:"../frm/.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiv});
 		$("#idcontrato").val(id);
@@ -95,7 +110,16 @@ $xFRM->setTitle($xHP->getTitle());
 	function jsBaja(id){
 		$("#idcontrato").val(id);
 		xG.confirmar({msg:"Confirma desactivar este Formato", callback:jsBajaContrato});
-	}	
+	}
+	function jsAlta(id){
+		$("#idcontrato").val(id);
+		xG.confirmar({msg:"Confirma Activar este Formato", callback:jsActivarContrato});
+	}
+	function jsVerTodos(){
+		var str		= "&q="  + q1;
+		$('#iddiv').jtable('destroy');
+		jsLGiddiv(str);		
+	}
 	</script>
 	<?php
 		

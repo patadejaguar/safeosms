@@ -567,7 +567,10 @@ $lang["20170601"][]	= array("FIRMANTES", "Firmantes", "Signers");
 $lang["20170601"][]	= array("FECHA_PROGRAMADA", "Agendado", "Scheduled");
 $lang["20170601"][]	= array("SEGMENTO", "Segmento", "Class");
 $lang["20170601"][]	= array("VERSION", "Descripcion", "Version");
+$lang["20170601"][]	= array("ELEGIR", "Elegir", "Select");
+$lang["20170601"][]	= array("ENCONSTRUCCION", "En Construccion", "Under Construction");
 
+//$lang["20170601"][]	= array("EXISTE", "Elegir", "Select");
 //$lang["20170601"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
 //$lang["20170601"][]	= array("", "", "");
 

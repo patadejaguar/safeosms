@@ -115,9 +115,11 @@ $xFRM->OButton("TR.Agregar PERSONA_FISICA", "jsAgregarRepLegal", $xFRM->ic()->PE
 $xFRM->addSeccion("iddatosgenerales_f", "TR.Datos generales");
 $xFRM->ODate("idfecharegistro", false,"TR.fecha de registro");
 
-
-
-$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
+if(MULTISUCURSAL == false){
+	$xFRM->OHidden("idsucursal", getSucursal());
+} else {
+	$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
+}
 
 if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
 	$xFRM->OHidden("idcajalocal", getCajaLocal());

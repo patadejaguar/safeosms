@@ -1717,42 +1717,9 @@ class cSocios_aeconomica_sector {
 }
 
 /*	ORM: Tabla:	socios_vivienda	-	Generado:	[10/2/2016 11:31]	*/
+/*	ORM: Tabla:	socios_vivienda	-	Generado:	[28/8/2017 15:18]	*/
 class cSocios_vivienda {
-	private $mCampos	= array(
-			"idsocios_vivienda" => array("N"=>"idsocios_vivienda","T"=>"INT","V"=>"","L"=>10),
-			"socio_numero" => array("N"=>"socio_numero","T"=>"BIGINT","V"=>"1","L"=>20),
-			"tipo_regimen" => array("N"=>"tipo_regimen","T"=>"INT","V"=>"99","L"=>4),
-			"calle" => array("N"=>"calle","T"=>"VARCHAR","V"=>"","L"=>60),
-			"numero_exterior" => array("N"=>"numero_exterior","T"=>"VARCHAR","V"=>"","L"=>45),
-			"numero_interior" => array("N"=>"numero_interior","T"=>"VARCHAR","V"=>"","L"=>45),
-			"colonia" => array("N"=>"colonia","T"=>"VARCHAR","V"=>"","L"=>150),
-			"localidad" => array("N"=>"localidad","T"=>"VARCHAR","V"=>"","L"=>100),
-			"estado" => array("N"=>"estado","T"=>"VARCHAR","V"=>"","L"=>100),
-			"municipio" => array("N"=>"municipio","T"=>"VARCHAR","V"=>"","L"=>100),
-			"telefono_residencial" => array("N"=>"telefono_residencial","T"=>"VARCHAR","V"=>"","L"=>20),
-			"telefono_movil" => array("N"=>"telefono_movil","T"=>"VARCHAR","V"=>"","L"=>20),
-			"tiempo_residencia" => array("N"=>"tiempo_residencia","T"=>"INT","V"=>"99","L"=>10),
-			"referencia" => array("N"=>"referencia","T"=>"VARCHAR","V"=>"","L"=>200),
-			"idusuario" => array("N"=>"idusuario","T"=>"INT","V"=>"99","L"=>4),
-			"principal" => array("N"=>"principal","T"=>"ENUM","V"=>"|0|1|","L"=>0),
-			"tipo_domicilio" => array("N"=>"tipo_domicilio","T"=>"INT","V"=>"99","L"=>4),
-			"codigo_postal" => array("N"=>"codigo_postal","T"=>"INT","V"=>"24000","L"=>11),
-			"fecha_alta" => array("N"=>"fecha_alta","T"=>"DATE","V"=>"2005-12-31","L"=>0),
-			"codigo" => array("N"=>"codigo","T"=>"BIGINT","V"=>"1","L"=>20),
-			"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"MATRIZ","L"=>20),
-			"eacp" => array("N"=>"eacp","T"=>"VARCHAR","V"=>"EN_TRAMITE","L"=>20),
-			"coordenadas_gps" => array("N"=>"coordenadas_gps","T"=>"VARCHAR","V"=>"00,00,00","L"=>20),
-			"tipo_de_acceso" => array("N"=>"tipo_de_acceso","T"=>"VARCHAR","V"=>"calle","L"=>20),
-			"fecha_de_verificacion" => array("N"=>"fecha_de_verificacion","T"=>"DATE","V"=>"2012-01-01","L"=>0),
-			"oficial_de_verificacion" => array("N"=>"oficial_de_verificacion","T"=>"INT","V"=>"1","L"=>10),
-			"estado_actual" => array("N"=>"estado_actual","T"=>"INT","V"=>"99","L"=>10),
-			"clave_de_localidad" => array("N"=>"clave_de_localidad","T"=>"INT","V"=>"","L"=>10),
-			"clave_de_pais" => array("N"=>"clave_de_pais","T"=>"VARCHAR","V"=>"MX","L"=>10),
-			"nombre_de_pais" => array("N"=>"nombre_de_pais","T"=>"VARCHAR","V"=>"Mexico","L"=>100),
-			"clave_de_municipio" => array("N"=>"clave_de_municipio","T"=>"INT","V"=>"0","L"=>6),
-			"clave_de_entidadfederativa" => array("N"=>"clave_de_entidadfederativa","T"=>"INT","V"=>"0","L"=>6),
-
-	);
+	private $mCampos	= array("idsocios_vivienda" => array("N"=>"idsocios_vivienda","T"=>"INT","V"=>"","L"=>10),"socio_numero" => array("N"=>"socio_numero","T"=>"BIGINT","V"=>"1","L"=>20),"tipo_regimen" => array("N"=>"tipo_regimen","T"=>"INT","V"=>"99","L"=>4),"calle" => array("N"=>"calle","T"=>"VARCHAR","V"=>"","L"=>60),"numero_exterior" => array("N"=>"numero_exterior","T"=>"VARCHAR","V"=>"","L"=>45),"numero_interior" => array("N"=>"numero_interior","T"=>"VARCHAR","V"=>"","L"=>45),"colonia" => array("N"=>"colonia","T"=>"VARCHAR","V"=>"","L"=>150),"localidad" => array("N"=>"localidad","T"=>"VARCHAR","V"=>"","L"=>100),"estado" => array("N"=>"estado","T"=>"VARCHAR","V"=>"","L"=>100),"municipio" => array("N"=>"municipio","T"=>"VARCHAR","V"=>"","L"=>100),"telefono_residencial" => array("N"=>"telefono_residencial","T"=>"VARCHAR","V"=>"","L"=>20),"telefono_movil" => array("N"=>"telefono_movil","T"=>"VARCHAR","V"=>"","L"=>20),"tiempo_residencia" => array("N"=>"tiempo_residencia","T"=>"INT","V"=>"99","L"=>10),"referencia" => array("N"=>"referencia","T"=>"VARCHAR","V"=>"","L"=>200),"idusuario" => array("N"=>"idusuario","T"=>"INT","V"=>"99","L"=>4),"principal" => array("N"=>"principal","T"=>"ENUM","V"=>"|0|1|","L"=>0),"tipo_domicilio" => array("N"=>"tipo_domicilio","T"=>"INT","V"=>"99","L"=>4),"codigo_postal" => array("N"=>"codigo_postal","T"=>"INT","V"=>"24000","L"=>11),"fecha_alta" => array("N"=>"fecha_alta","T"=>"DATE","V"=>"2005-12-31","L"=>0),"codigo" => array("N"=>"codigo","T"=>"BIGINT","V"=>"1","L"=>20),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"MATRIZ","L"=>20),"eacp" => array("N"=>"eacp","T"=>"VARCHAR","V"=>"EN_TRAMITE","L"=>20),"coordenadas_gps" => array("N"=>"coordenadas_gps","T"=>"VARCHAR","V"=>"00,00,00","L"=>20),"tipo_de_acceso" => array("N"=>"tipo_de_acceso","T"=>"VARCHAR","V"=>"calle","L"=>20),"fecha_de_verificacion" => array("N"=>"fecha_de_verificacion","T"=>"DATE","V"=>"2012-01-01","L"=>0),"oficial_de_verificacion" => array("N"=>"oficial_de_verificacion","T"=>"INT","V"=>"1","L"=>10),"estado_actual" => array("N"=>"estado_actual","T"=>"INT","V"=>"99","L"=>3),"clave_de_localidad" => array("N"=>"clave_de_localidad","T"=>"INT","V"=>"","L"=>10),"clave_de_pais" => array("N"=>"clave_de_pais","T"=>"VARCHAR","V"=>"MX","L"=>10),"nombre_de_pais" => array("N"=>"nombre_de_pais","T"=>"VARCHAR","V"=>"Mexico","L"=>100),"clave_de_municipio" => array("N"=>"clave_de_municipio","T"=>"INT","V"=>"0","L"=>6),"clave_de_entidadfederativa" => array("N"=>"clave_de_entidadfederativa","T"=>"INT","V"=>"0","L"=>6),"construye" => array("N"=>"construye","T"=>"INT","V"=>"0","L"=>2),);
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "socios_vivienda";}
 	function getKey(){ return "idsocios_vivienda";}
@@ -1788,10 +1755,12 @@ class cSocios_vivienda {
 	function nombre_de_pais($v = false){ if($v !== false){$this->mCampos["nombre_de_pais"]["V"] =  $v; } return new MQLCampo($this->mCampos["nombre_de_pais"]);}
 	function clave_de_municipio($v = false){ if($v !== false){$this->mCampos["clave_de_municipio"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_de_municipio"]);}
 	function clave_de_entidadfederativa($v = false){ if($v !== false){$this->mCampos["clave_de_entidadfederativa"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_de_entidadfederativa"]);}
+	function construye($v = false){ if($v !== false){$this->mCampos["construye"]["V"] =  $v; } return new MQLCampo($this->mCampos["construye"]);}
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	
 }
+
 
 /*	ORM: Tabla:	socios_baja	-	Generado:	[26/12/2014 12:56]	*/
 class cSocios_baja {

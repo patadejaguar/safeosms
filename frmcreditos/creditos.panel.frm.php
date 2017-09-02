@@ -17,7 +17,10 @@ $mSQL				= new cSQLListas();
 $xRuls				= new cReglaDeNegocio();
 $xT					= new cTipos();
 $xF					= new cFecha();
-$xHP->setIncludeJQueryUI();
+//$xHP->setIncludeJQueryUI();
+
+$UsarRedir			= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
+
 //Reglas de negocio
 //memprof_enable();
 
@@ -48,6 +51,11 @@ $oFrm->setTitle($xHP->getTitle() );
 <?php
 if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	$idsocio	= getPersonaEnSession();
+	
+	if($UsarRedir == true){
+		$xHP->goToPageX("../utils/frmbuscarsocio.php?next=credito");
+	}
+	
 	$oFrm->addCreditBasico();
 	$oFrm->addSubmit();
 	echo $oFrm->get();
@@ -144,7 +152,11 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			$cTblx->setKeyField("idoperaciones_recibos");
 			$cTblx->setTdClassByType();
 			$cTblx->setEventKey("jsGoPanelRecibos");
-			$cTblx->setFootSum(array(6 => "total"));
+			$cTblx->setOmitidos("nombre");
+			$cTblx->setOmitidos("socio");
+			$cTblx->setOmitidos("documento");
+			
+			$cTblx->setFootSum(array(3 => "total"));
 			$xHTabs->addTab("TR.RECIBOS", $cTblx->Show());
 			
 			if($xCred->isAFinalDePlazo() == false ){
@@ -181,11 +193,11 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					$HCompromisos	= $c4Tbl->Show();
 					if( $c4Tbl->getRowCount()>0){ $xHTabs->addTab("TR.COMPROMISOS" ,  $HCompromisos); }
 	
-					$cTbl 			= new cTabla($setSql,0);
+					$cTbl 				= new cTabla($setSql,0);
 					$cTbl->addTool(SYS_DOS);
 					$cTbl->setKeyField("idseguimiento_llamadas");
 					$oFrm->addHTML( $cTbl->getJSActions(true) );
-					$HLlamadas		= $cTbl->Show();
+					$HLlamadas			= $cTbl->Show();
 					if($cTbl->getRowCount()>0){ $xHTabs->addTab("TR.LLAMADAS" , $HLlamadas ); }
 	
 					$c3Tbl 				= new cTabla($setSql3, 0);
@@ -201,15 +213,20 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					//avales
 					$sqlavales 	= $mSQL->getListadoDeAvales($idsolicitud, $idsocio);
 					$xTblAv		= new cTabla($sqlavales);
-					$xTblAv->addTool(SYS_DOS);
-					$xTblAv->addTool(SYS_UNO);
+					$xTblAv->setFieldReplace("numero_socio", "_X_PERSONA_");
+					$xTblAv->OButton("TR.PANEL", "var xP=new PersGen();xP.goToPanel(_X_PERSONA_)", $xTblAv->ODicIcons()->PERSONA);
+					//$xTblAv->addEditar();
+					$xTblAv->addEliminar();
+					
 					$HAvales	= $xTblAv->Show("TR.Relacion de Avales");
 					if($xTblAv->getRowCount()>0){ $xHTabs->addTab("TR.AVALES", $HAvales); }
 					
 					$sql_final = $mSQL->getListadoDeGarantiasReales("", $idsolicitud);
 					$myTab 		= new cTabla($sql_final);
-					$myTab->addTool(SYS_UNO);
-					$myTab->addTool(SYS_DOS);
+					$myTab->addEditar();
+					$myTab->addEliminar();
+					
+
 					$myTab->setKeyField("idcreditos_garantias");
 					$HGarantias	= $myTab->Show();
 					if($myTab->getRowCount()>0){ $xHTabs->addTab("TR.GARANTIAS", $HGarantias); }	
@@ -321,22 +338,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function jsGetFlota(id){
 		xG.w({url:"../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id, tab:true});
 	}
-	function jsLoadOption(){
-		
-		$("#dlg").load("../templates/base.frm.php", function() {
-		    var container = $(this);
-		    container.dialog({
-		        modal: true,
-                height: 625,
-                width: 500,
-                title: "Some title"
-		    })
-		    /*.find("form").submit(function() {
-		        container.dialog("close");
-		        return false;
-		    });*/
-		});
-	}
+
 </script>	
 	<?php 
 }

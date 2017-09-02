@@ -77,6 +77,9 @@ $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 $xHG->OButton("TR.PANEL", "jsGoToPanel('+ data.record.clave +')", "controls.png");
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsocios_aeconomica_dependencias +')", "delete.png");
 $xFRM->addHElem("<div id='iddivempresas'></div>");
+
+$xHG->setOrdenar();
+
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
 ?>

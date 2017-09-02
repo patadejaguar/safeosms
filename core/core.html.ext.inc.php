@@ -1657,19 +1657,21 @@ class cHMenuItem {
 		if( SAFE_LANG != "ES" AND SYS_TRADUCIR_MENUS == true){ $Titulo	= $xL->getT("TR.$Titulo");	}
 			
 		$mImagen		= "";
-		if(($WithImages == true OR $isMobile == true) AND $this->PARENT > 0){
-			$xBtn			= new cHButton();
-			$mImagen		= $xBtn->setIcon($Imagen, "fa-lg");
-		}
+		
+		$xBtn			= new cHButton();
+		$mImagen		= $xBtn->setIcon($Imagen, "fa-lg", true);
+		
+		//$WithImages == true
+		
 		$mCmd			= $this->getTipoDestino($TipoDeDes);
 		$id				= "";
 		if(MODO_DEBUG == true AND $this->PARENT > 0){ $id = "<span>$Clave</span>"; }
-		$mCmd			= " onclick=\"$mCmd('$Archivo')\"";
+		$mCmd			= " onclick=\"$mCmd('$Archivo', event)\"";
 		$dKey			= " ";
 		if($Tipo == "parent"){
 			$dKey		= " data-key=\"$Clave\"";
 			$mCmd		= "";
-			if($isMobile == true){ $mCmd = " onclick=\"jsGetMenuChilds(this.id)\""; }
+			if($isMobile == true){ $mCmd = " onclick=\"jsGetMenuChilds(this.id, event)\""; }
 		}
 		$menu			= "<li id=\"md_$Clave\"><a  id=\"amenu_$Clave\" $extraTags" . $dKey . $mCmd. ">$mImagen&nbsp;$Titulo&nbsp;$id</a>$html</li>\n";
 		return $menu;
@@ -1691,20 +1693,22 @@ class cHMenuItem {
 	}
 }
 class cHGrid {
-	private $mCampos	= array();
-	private $mActions	= array();
-	private $mToolbars	= array();
-	private $mTitle		= "";
-	private $mId		= "";
-	private $mSQL		= "";
-	private $mOLang		= null;
+	private $mCampos		= array();
+	private $mActions		= array();
+	private $mToolbars		= array();
+	private $mTitle			= "";
+	private $mId			= "";
+	private $mSQL			= "";
+	private $mOLang			= null;
 	private $mPaginacion	= true;
+	private $mOrden			= false;
 	function __construct($id, $title = ""){ $xlng	= new cLang(); $this->mId	= $id; $this->mTitle	= $xlng->getT($title); }
 	function setSQL($sql){
 		$arrch		= array('/\t+/', '/\s\s+/');
 		$sql		= preg_replace($arrch, ' ', $sql);
-		
 		$this->mSQL = utf8_encode($sql);
+		
+		return base64_encode($this->mSQL);
 	}
 	private function OLang(){
 		if($this->mOLang == null){
@@ -1745,6 +1749,14 @@ class cHGrid {
 		}
 		
 	}
+	function ColMoneda($nombre, $titulo, $zsize){
+		$titulo	= $this->OLang()->getT($titulo);
+		$this->mCampos[$nombre] = array ("title" => $titulo, "width" => $zsize, "format" => "getFMoney(data.record.$nombre)");
+	}
+	function ColFecha($nombre, $titulo, $zsize){
+		$titulo	= $this->OLang()->getT($titulo);
+		$this->mCampos[$nombre] = array ("title" => $titulo, "width" => $zsize, "type" => "date", "displayFormat" => "dd/mm/yy");
+	}
 	function OColFunction($nombre, $titulo, $zsize, $funcion = ""){
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
 	
@@ -1772,11 +1784,15 @@ class cHGrid {
 		//$xBtn->setProperty("class", "jtable-command-button");
 		$titulo	= $this->OLang()->getT($titulo);
 
-		$btn = $xImg->get24($icono, " onclick=\"$evento;return false\" alt=\"$titulo\" class=\"jtable-command-button\" style=\"width:2em;height:2em\" ");
+		$btn = $xImg->get24($icono, " onclick=\"$evento;return false\" alt=\"$titulo\" title=\"$titulo\" class=\"jtable-command-button\" style=\"width:2em;height:2em\" ");
 		//<i class=\"fa fa-user fa-lg\"></i>
 		//$btn 	= "<button class=\"jtable-command-button\" onclick=\"$evento;return false\">$titulo</button>";
 		//$btn 	= "<image src=\"../images/edit.png\" onclick=\"$evento;return false\" />";
-		$this->mCampos[$titulo] = array ("title" => '', "width" => $size, "button" => $btn, "listClass" => "jtable-command-column");
+		
+		$titulo	= setLimpiarCadena($titulo);
+		
+		
+		$this->mCampos[$titulo] = array ("title" => '', "width" => $size, "button" => $btn, "listClass" => "jtable-command-column", "sorting" => "false", "edit" => "false", "create" => "false");
 
 		/*if(isset($this->mCampos[$nombre])){
 			$btn = $this->mCampos[$nombre]["display"] . $btn;
@@ -1807,6 +1823,8 @@ class cHGrid {
 	function getJs($init = false, $enclose = false){
 		$flds		= "";
 		$tbars		= "";
+		$sorting	= ($this->mOrden == true) ? " sorting : true, " : "";
+		
 		foreach ($this->mCampos as $campos => $items){
 			$flds	.= ($flds == "") ? "$campos : {" : ",$campos : {";
 			foreach ($items as $props => $vals){
@@ -1845,7 +1863,7 @@ class cHGrid {
 		/*sorting: true,*/
 		$str		.= "$('#" . $this->mId . "').jtable({
         title: '" . $this->mTitle . "',$pg
-        actions: { $acts }, selecting:true,tableId:'tbl_" . $this->mId . "',
+        actions: { $acts }, selecting:true,$sorting tableId:'tbl_" . $this->mId . "',
         fields: { $flds }$tbars });\n $('#". $this->mId . "').jtable('load'); ";
 		$str		= "$sinit\nfunction jsLG" . $this->mId . "(str){\nstr =(typeof str == 'undefined') ? '' : str;\n$str\n}";
 		return ($enclose == false) ? $str: "<script>$str</script>";
@@ -1856,6 +1874,7 @@ class cHGrid {
 	}
 	function getDiv(){ return "<div id='" . $this->mId  . "'></div>"; }
 	function setNoPaginar(){ $this->mPaginacion= false; }
+	function setOrdenar(){ $this->mOrden	= true;	}
 }
 class cHMenu {
 	private $mType		= "html";
@@ -1934,8 +1953,6 @@ class cHMenu {
 		$mmenu			= null;
 		$xCache			= new cCache();
 		$idcache		= ($ConHijos == true) ? "menu.childs.$pUSRNivel"  : "menu.normal.$pUSRNivel";
-		
-		$disCaptacion	= array(8000 => true, 1030 => true, 1020 => true );
 		
 		if($xCache->isReady() == true){
 			$mmenu		= $xCache->get($idcache);

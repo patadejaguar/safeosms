@@ -19,6 +19,22 @@ include_once("../core/core.lang.inc.php");
 
 //header($_SERVER['SERVER_PROTOCOL'].' 304 Not Modified');
 header("Content-type:text/javascript");
-$xLng		= new cLang();
-echo "var jsonWords = " . json_encode( $xLng->getWords() ) . ";";
+$xCache		= new cCache();
+$idx		= "idx-lang-gen";
+$lng		= $xCache->get($idx);
+if($lng === null){
+	$xLng	= new cLang();
+	$arr	= $xLng->getWords();
+	//mensajes
+	$xQL	= new MQL();
+	//$sql	= "";
+	$rs		= $xQL->getRecordset("SELECT * FROM `sistema_mensajes` ");
+	while($rw = $rs->fetch_assoc()){
+		$arr[$rw["topico"]] = $rw["mensaje"];
+	}
+	$lng	= "var jsonWords = " . json_encode( $arr ) . ";";
+	
+	$xCache->set($idx, $lng, $xCache->EXPIRA_UNDIA);
+}
+echo $lng;
 ?>

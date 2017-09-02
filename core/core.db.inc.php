@@ -3522,8 +3522,8 @@ FROM
 		`numero_exterior`, ' ', `numero_interior`, ' Col. ',
 		`colonia`, ', ', `localidad`, ', ', estado)
 		AS 'domicilio',
-		getBooleanMX(socios_vivienda.principal) AS 'principal'
-		FROM socios_vivienda WHERE socio_numero=$persona $ByTipo $ByEstat ";
+		getBooleanMX(socios_vivienda.principal) AS 'principal', `socios_viviendatipo`.`descripcion_viviendatipo` AS `tipo`
+		FROM `socios_vivienda` INNER JOIN `socios_viviendatipo`  ON `socios_vivienda`.`tipo_domicilio` = `socios_viviendatipo`.`idsocios_viviendatipo` WHERE socio_numero=$persona $ByTipo $ByEstat ";
 		
 		return $sql;
 	}
@@ -3697,7 +3697,7 @@ FROM
 		INNER JOIN `leasing_originadores`  ON `originacion_leasing`.`originador` = `leasing_originadores`.`idleasing_originadores` 
 		INNER JOIN `vehiculos_segmento`  ON `originacion_leasing`.`segmento` = `vehiculos_segmento`.`idvehiculos_segmento` 
 		INNER JOIN `vehiculos_gps`  ON `originacion_leasing`.`tipo_gps` = `vehiculos_gps`.`idvehiculos_gps`
-		WHERE `originacion_leasing`.`idoriginacion_leasing` > 0 $ByOriginador $BySub";
+		WHERE `originacion_leasing`.`idoriginacion_leasing` > 0 $ByOriginador $BySub ORDER BY `originacion_leasing`.`fecha_origen`, `originacion_leasing`.`idoriginacion_leasing`";
 		
 		//setLog($sql);
 		return $sql;

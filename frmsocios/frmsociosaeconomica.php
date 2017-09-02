@@ -155,6 +155,8 @@ $xTxt6	= new cHText();
 $xSel	= new cHSelect();
 $xHSel	= new cHSelect();
 $xTxtE 	= new cHText();
+$xVals	= new  cReglasDeValidacion();
+
 $xTxtE->setDivClass("");
 
 $xHP->init("initComponents()");
@@ -203,6 +205,8 @@ $pais				= parametro("idpais", EACP_CLAVE_DE_PAIS, MQL_RAW);
 $iddescribe			= parametro("iddescripcionactividad");
 $loaded				= false;
 $nombreestado		= "";
+$tipodevivienda		= parametro("tipodevivienda", PERSONAS_TIPO_DOM_FISCAL, MQL_INT);
+
 
 //Agregar
 if(setNoMenorQueCero($persona) > DEFAULT_SOCIO){
@@ -248,9 +252,12 @@ if(setNoMenorQueCero($persona) > DEFAULT_SOCIO){
 						$xLog->add("WARN\tNombre de Entidad Federativa por ID\r\n", $xLog->DEVELOPER);
 					}
 					if($SinDomicilio == false){
-
+						//si es empresa
+						if($xVals->empresa($empresa) == true OR $TratarComoSalarios == true){
+							$tipodevivienda	= PERSONAS_TIPO_DOM_LABORAL;
+						}
 						$success	= $xSoc->addVivienda($calle, $nexterior, $cp, "", $idreferencias, $telefono_ae, "", 
-								false, PERSONAS_REG_VIV_NINGUNO, PERSONAS_TIPO_DOM_LABORAL, $antiguedad_ae, 
+								false, PERSONAS_REG_VIV_NINGUNO, $tipodevivienda, $antiguedad_ae, 
 								$nombrecolonia, PERSONAS_TIPO_ACCESO_CALLE, "",	$idlocalidad, $pais, 
 								"",$nombreestado, $nombremunicipio, $nombrelocalidad, $fecha_ingreso);
 						if($success == false){
@@ -266,7 +273,7 @@ if(setNoMenorQueCero($persona) > DEFAULT_SOCIO){
 				if($success == true){
 					
 					$xAE			= new cPersonaActividadEconomica($xSoc->getCodigo());
-					if($empresa != FALLBACK_CLAVE_EMPRESA OR $TratarComoSalarios == true){
+					if($xVals->empresa($empresa) == true OR $TratarComoSalarios == true){
 						$xAE->setEmpresa($empresa, $puesto, $departamento_ae, $numero_empleado, $nss, $extension_ae, $tipodispersion, $fecha_ingreso);
 						$xLog->add("WARN\tSe Actualizan datos de la Empresa\r\n", $xLog->DEVELOPER);
 					}
@@ -275,6 +282,7 @@ if(setNoMenorQueCero($persona) > DEFAULT_SOCIO){
 						$xLog->add("WARN\tSe Actualizan el Domicilio Vinculado\r\n", $xLog->DEVELOPER);
 					}
 					$success	= $xAE->add($tipo_ae, $montoper_ae, $antiguedad_ae, $nombre_ae, $cp, $telefono_ae, $idlocalidad, $nombrelocalidad, $nombremunicipio, $nombreestado, $empleoanterior, $iddescribe);
+					
 					$xLog->add( $xAE->getMessages());
 				}
 			$xFRM->setResultado($success);

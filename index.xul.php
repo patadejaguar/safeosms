@@ -12,12 +12,17 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 //<=====	FIN_H
 
 //=====================================================================================================
-$mTit						= EACP_NAME . "{" . getSucursal() . "} - S.A.F.E. V " . $version. "";
+//$mTit						= EACP_NAME . " .- {" . getSucursal() . "} - S.A.F.E. V " . $version. "";
+$mTit						= EACP_NAME;
 $xHP						= new cHPage($mTit, HP_FORM, "", ".");
+$xRuls						= new cReglaDeNegocio();
+
 $fecha_de_sesion			= parametro("f", fechasys());
 $MenuParent					= parametro("m", 0, MQL_INT);
 
-$isMobile					= parametro("mobile", $xHP->isMobile(), MQL_BOOL);
+$usarMenuAlt				= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_MENU_ALT);
+
+$isMobile					= parametro("mobile", $xHP->isMobile($usarMenuAlt), MQL_BOOL);
 
 $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
 
@@ -42,7 +47,9 @@ function jsaGetMenu($subitems){
 	$xMen	= new cHMenu();
 	$xMen->setID("navigator");
 	$menu	= "";
+	
 	$xMen->setIsMobile($_SESSION[SYS_CLIENT_MOB]);
+	
 	if($subitems > 0){
 		$btn			= "";
 		if($_SESSION[SYS_CLIENT_MOB] == true){
@@ -97,8 +104,12 @@ $xHP->setNoCache();
 	
 	//$xHP->addJsFile("js/jquery/jquery.ui.js");
 	if($isMobile == false){
-		$xHP->addCSS("css/jmenu.css");
-		$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
+		//$xHP->addCSS("css/jmenu.css");
+		//$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
+		
+		$xHP->addCSS("css/jquery.mmenu.all.css");
+		$xHP->addJsFile("js/jquery.mmenu.all.js");
+		
 	}
 	//$xHP->addJsFile("js/tinybox.js");
 
@@ -121,6 +132,8 @@ echo $xHP->getHeader();
 
 	#wprincipal{ width: 100%; max-width: 100%;
 	}
+	
+	
 <?php if ($isMobile == true){ ?>
 
 #jPanelMenu-menu { font-size: 1em;overflow-y: hidden !important; background: #65a9cc; }
@@ -136,10 +149,17 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 #jPanelMenu-menu ul li a i {  padding-right: 5px; }
 
 
-#jpanel {
- min-height: 3em; text-align: center; border-bottom: 1px solid #1b5572; box-shadow: 0 0 25px #222;  /* box-shadow:0 1px 5px rgba(34,34,34,0.5);*/
-  transform: translate3d(0px, 0px, 0px);
 
+
+
+<?php 
+	} 
+?>
+
+#jpanel {
+	min-height: 2.7em;
+ 	text-align: center; border-bottom: 1px solid #1b5572; box-shadow: 0 0 25px #222;  /* box-shadow:0 1px 5px rgba(34,34,34,0.5);*/
+	transform: translate3d(0px, 0px, 0px);
   	background: #317ca2;
 	background: -o-linear-gradient(top, #3f94bf, #246485);
 	background: -ms-linear-gradient(top, #3f94bf, #246485);
@@ -151,11 +171,11 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 	-moz-box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
 	-webkit-box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
 	box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
-	width: 95%;
+	width: 100%; /*95%*/
 	max-width: none;
-	height: 3em;
+	height: 2.7em;
 	margin: 0;
-	padding: 0 7.5%;
+	/*padding: 0 7.5%;*/
 	border-bottom: 1px solid #1b5572;
 	z-index: 10
 
@@ -164,9 +184,8 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 	float: left; position: relative; color: #FFF; top: 0.25em; left: 0.25em;
 }
 #jpanel h1 { background-color: transparent !important; background-image: none;  height: 2em; }
-<?php 
-	} 
-?>
+
+
 </style>
 <body  onload="jsInitComponents();">
 <?php
@@ -177,9 +196,29 @@ $xMenu->setIsMobile($isMobile);
 $menu		= "";
 
 if($isMobile == false ){
-	echo "<div id='header'>" . $xMenu->getAll() . "</div>";
+	
+	/*echo "<div id='header'>" . $xMenu->getAll() . "</div>";
 	echo "<div id='wprincipal'><iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100px\" ></iframe></div>
-	<div id=\"banner\">$adsense $menu</div>";
+	<div id=\"banner\">$adsense $menu</div>";*/
+
+	$menu	=
+	"<div id=\"jpanel\">
+
+	<a href=\"#navmenu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
+
+	<h1 id='htitle'>$mTit</h1>
+
+	</div>
+ 
+	<nav id=\"navmenu\">" . $xMenu->getAll() . "</nav> ";
+	echo $menu;
+	
+	echo "<div id=\"wprincipal\">
+	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width=\"100%\" height=\"100%\" ></iframe>
+	</div>
+	<div id=\"banner\">$adsense</div>";
+	echo "<input type=\"hidden\" id=\"id-KeyEditable\" />";
+	
 } else {
 	
 $xMenu->setID("navigator");
@@ -187,8 +226,6 @@ $menu	=
 "<div id=\"jpanel\">
 	<a href=\"#menu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
 	<h1 id='htitle'>$mTit</h1>
-	
-	
 </div> <nav style=\"display: none\" id=\"navmenu\">" . $xMenu->getAll() . "</nav> ";
 echo $menu;
 	//echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
@@ -205,24 +242,27 @@ $jxc ->drawJavaScript(false, true);
 var xG 		= new Gen();
 var smenu	= 42;
 var mmob	= <?php echo ($isMobile == false) ? 'false': 'true'; ?>;
+
 $(document).ready(function(){
 	if(mmob == false){
-	    $("#jMenu").jMenu({
-	      ulWidth : '200px',
-	      effects : {
-	        effectSpeedOpen : 200,
-	        effectSpeedClose : 200,
-	        effectTypeOpen : 'show',
-	        effectTypeClose : 'hide',
-	        effectOpen : 'slide',
-	        effectClose : 'slide'
-	      },
-	      TimeBeforeOpening : 200,
-	      TimeBeforeClosing : 20,
-	      animatedText : true,
-	      paddingLeft: 1,
-	      openClick : true
-	    });
+
+		$(function() {
+			$('nav#navmenu').mmenu({
+				navbar : {
+				title : 'Menu'
+			},
+			navbars	: [
+				{
+					position	: 'top',
+					content		: [ 'breadcrumbs', 'close' ]
+				}
+			],
+			onClick : {
+				close : true
+			}
+			});
+		});
+		
 
 	} else {
 		smenu	= 8;
@@ -230,34 +270,42 @@ $(document).ready(function(){
 		jsGetMenu();
 	}
 });
-function setInFrame(sURI){
-	if(typeof jPanelMenu != "undefined"){
-		jPanelMenu.close();
-	}
-	if( $("#jMenu").length >0){
-		$("#jMenu").trigger('mouseout');
-	}	
+
+function setInFrame(sURI, evt){
+
+	setCloseM1();
+	
 	xG.QFrame({ url : sURI, id : 'idFPrincipal' });
 }
 function jsGetMenuChilds(id){
 	var mParent	= $("#" + id).attr("data-key");
 	$("#id-KeyEditable").val(mParent);
+	
+	session(Configuracion.variables.tinyajax.delay,500);
+	session(Configuracion.variables.tinyajax.callback, "jsGetMenu(true)");
+	
 	jsaGetMenu();
 	jPanelMenu.off();
-	setTimeout("jsGetMenu(true)", 500);
+	
+	
+	
 }
+
 function jsGetMenu(tr){
 	if(typeof tr == "undefined"){ tr = false; }
 	jPanelMenu = $.jPanelMenu({
 		menu: '#navmenu',
-		animated: false
+		animated: false,
+		closeOnContentClick : false
 	});
 	jPanelMenu.on();
-	if(tr == true){jPanelMenu.trigger(tr);}
+	if(tr == true){ jPanelMenu.trigger(tr); }
 }
 function jsGetParent(parentID){	window.location = "./index.xul.php?m=" + parentID;}
 function getNewTiny(mFile){
+	
 	if(mFile){
+		setCloseM1();
 		var xG	= new Gen();
 		mFile	= mFile + "?";
 		xG.w({url: mFile, tiny : true});
@@ -266,6 +314,7 @@ function getNewTiny(mFile){
 
 function getNewWindow(mFile){
 	if(mFile){
+		setCloseM1();
 		var xG	= new Gen();
 		xG.w({url: mFile});
 	}
@@ -277,7 +326,16 @@ function getNewWindow(mFile){
 
 
 }
-
+function setCloseM1(){ 
+	if(mmob == false){
+		var API = $("#navmenu").data( "mmenu" );
+		API.close();
+	} else {
+		if($("#navigator").length >0){
+			jPanelMenu.close();
+		}
+	}
+}
 function jsGetMoneyChanges(){
 	jsaGetMoneyChanges();
 	//Mostrar el Popup
@@ -291,7 +349,7 @@ function jsInitComponents(){
 	jsGetMoneyChanges();
 	var mAlto	= xG.alto()-(smenu + 5);
 	<?php if($isMobile == true){ ?>
-	var smenu2 = entero($("#htitle").css("height"));
+	var smenu2	= entero($("#htitle").css("height"));
 	
 	var mAlto2	= xG.alto()-(smenu+smenu2);
 	var mAlto	= xG.alto()-(smenu + 8 + smenu2);

@@ -65,7 +65,7 @@ $xHG->addList();
 $xHG->addKey("idsistema_eliminados");
 $xHG->col("tipoobjeto", "TR.OBJETO", "10%");
 $xHG->col("usuario", "TR.USUARIO", "10%");
-$xHG->col("fecha", "TR.FECHA", "10%");
+$xHG->ColFecha("fecha", "TR.FECHA", "10%");
 $xHG->col("persona", "TR.PERSONA", "10%");
 
 //$xHG->col("contenido", "TR.CONTENIDO", "50%");
@@ -76,6 +76,7 @@ $xHG->OButton("TR.VER", "jsVerContenido('+ data.record.idsistema_eliminados +')"
 $xFRM->OButton("TR.FILTRAR", "jsSetFiltro", $xFRM->ic()->FILTRO);
 $xFRM->addFecha();
 
+$xHG->setOrdenar();
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_eliminados +')", "delete.png");
 $xFRM->addHElem("<div id='iddiveliminados'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );

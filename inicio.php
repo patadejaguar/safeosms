@@ -319,7 +319,10 @@ $analitycs
     <h3>" . EACP_NAME . "</h3>
     <h4>" . SAFE_FIRM . "</h4>
         <input name=\"u$funid\" id=\"k$funid\" type=\"text\" placeholder=\"Usuario\" autofocus required>   
-        <input name=\"p$funid\" id=\"t$funid\" type=\"password\" required onblur='this.value=nv(this.value);return false;' placeholder=\"Password\"  >
+        <input name=\"p$funid\" id=\"t$funid\" type=\"password\" required 
+		autocomplete='off'
+		onchange='this.value=nv(this.value);return false;'
+		placeholder=\"Password\"  >
         <select id='idsucursal' name='idsucursal'>$txt</select>
     </fieldset>
     <fieldset id=\"actions\">
@@ -340,6 +343,8 @@ $analitycs
 <script>
 var semilla = "<?php echo $funid; ?>";
 window.localStorage.clear();
+
+
 function validar_nav() {
 	var isGecko 	= true;
 	var intIndex	= navigator.userAgent.indexOf("Gecko/");
@@ -357,9 +362,10 @@ function validar_nav() {
 	}
 }
 function nv(str){
+
 	str	= Aes.Ctr.encrypt(str, semilla, 256)
 	str	= base64.encode(str);
-	console.log(str);
+	
 	return str;
 }
 </script>

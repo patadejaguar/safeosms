@@ -33,8 +33,15 @@ function jsaMarkPrincipal($id){
 	if($xViv->init() == true){ $xViv->setPrincipal(); }
 	return $xViv->getMessages();
 }
+function jsaMarkSeConstruye($id){
+	$xViv	= new cPersonasVivienda();
+	$xViv->setID($id);
+	if($xViv->init() == true){ $xViv->setSeConstruye(); }
+	return $xViv->getMessages();
+}
 $jxc ->exportFunction('jsaMarkInactive', array('id'), "#idaviso");
 $jxc ->exportFunction('jsaMarkPrincipal', array('id'), "#idaviso");
+$jxc ->exportFunction('jsaMarkSeConstruye', array('id'), "#idaviso");
 $jxc ->process();
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
@@ -64,7 +71,16 @@ if($clave>0){
 		$xFRM->addAviso("", "idaviso");
 		$xFRM->OHidden("id", $clave);
 		$xFRM->OButton("TR.MARCARCOMO INACTIVA", "jsaMarkInactive()", $xFRM->ic()->DESCARTAR, "", "red");
-		$xFRM->OButton("TR.MARCARCOMO PRINCIPAL", "jsaMarkPrincipal()", $xFRM->ic()->VALIDAR, "", "blue");
+		if($xViv->getEsPrincipal() == false){
+			$xFRM->OButton("TR.MARCARCOMO PRINCIPAL", "jsaMarkPrincipal()", $xFRM->ic()->VALIDAR, "", "green");
+		}
+		
+		
+		if($xViv->getSeConstruye() == true){
+			
+		} else {
+			$xFRM->OButton("TR.MARCARCOMO ENCONSTRUCCION", "jsaMarkSeConstruye()", $xFRM->ic()->VALIDAR, "", "yellow");
+		}
 	}
 } else {
 	$xFRM->addCerrar();

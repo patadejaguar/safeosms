@@ -45,6 +45,10 @@ function setCadenaVal($valor, $largo=0){
 	
 	return $xT->cChar($valor);
 }
+function setLimpiarCadena($str){
+	$str	= preg_replace("/[^a-zA-Z0-9]/", "", $str);
+	return $str;
+}
 function getIncludes($extPath = "..", $mTipoObj = HP_FORM){
 	$extPath	= ($extPath == "") ? "." : $extPath;
 	

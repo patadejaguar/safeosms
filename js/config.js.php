@@ -149,6 +149,17 @@ var Configuracion = {
 	},
 	opciones : {
 		dialogID : "dialog.id"
+	},
+	rutas : {
+		credito : "credito",
+		panel : "panel",
+		persona : "persona"
+	},
+	variables : {
+		tinyajax : {
+			callback : "tinyajax.callback",
+			delay : "tinyajax.delay"
+		}
 	}
 }
 

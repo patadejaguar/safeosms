@@ -44,6 +44,8 @@ $cpostal				= parametro("idcodigopostal", false, MQL_INT);
 $identidadfederativa 	= parametro("identidadfederativa", EACP_CLAVE_NUM_ENTIDADFED);
 
 $VivExtranjera			= parametro("esextranjero", false, MQL_BOOL);
+$seconstruye			= parametro("idconstruye", false, MQL_BOOL);
+
 $nombre_pais			= "";
 $nombre_estado			= "";
 
@@ -123,6 +125,12 @@ if($action != SYS_NINGUNO){
 		$ready				= $xSoc->addVivienda($calle, $nexterior, $cpostal, $ninterior,	$referencia, $tresidencial, $tmovil,
 				$principal, $regimen, $tdomicilio, $tiempo,
 				$colonia, $tipo_acceso, "", $idlocalidad, $pais, $nombre_pais, $nombre_estado, $nombremunicipio, $nombrelocalidad);
+		if($ready == true AND $seconstruye == true){
+			$xViv			= new cPersonasVivienda();
+			$xViv->setID($xSoc->getIDDeVivienda());
+			if($xViv->init() == true){ $xViv->setSeConstruye(); }
+		}
+		
 		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);
 	}
 	$xFRM->setResultado($ready, $xLog->getMessages(), $xLog->getMessages());
@@ -194,7 +202,9 @@ if($action != SYS_NINGUNO){
 	$xFRM->addHElem( $xTxt->getNumero("idtelefono2", "", "TR.TELEFONO_MOVIL") );
 	
 	$xFRM->addObservaciones();
-	$xFRM->addHElem( $xChk->get("TR.Domicilio Principal?", "idprincipal") );
+	$xFRM->addHElem( $xChk->get("TR.Domicilio Principal ?", "idprincipal") );
+	$xFRM->addHElem( $xChk->get("TR.Domicilio ENCONSTRUCCION ?", "idconstruye") );
+	
 	
 	$xFRM->addFootElement("<input type='hidden' id='idcolonia' name='idcolonia' value='' />");
 	$xFRM->addFootElement("<input type='hidden' id='idsocio' name='idsocio' value='$persona' />");

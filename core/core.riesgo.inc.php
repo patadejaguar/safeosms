@@ -315,6 +315,9 @@ class cReglasDeNegocioLista {
 	public $VAL_NO_PERSONA_FALTA_ACT_ECONOM		= "OMITE.PERSONA_FALTA_ACT_ECONOM";
 	public $VAL_NO_PERSONA_FALLA_ACT_ECONOM		= "OMITE.PERSONA_FALLA_ACT_ECONOM";
 	
+	public $RN_USAR_REDIRECTS					= "RN_USAR_REDIRECTS";
+	public $RN_USAR_MENU_ALT					= "RN_USAR_USAR_MENU_ALTER";
+	
 	function getInArray(){
 		$arr	= array();
 		//eventos
@@ -413,6 +416,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->VAL_NO_PERSONA_FALTA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALTA_ACT_ECONOM;
 		$arr[$this->VAL_NO_PERSONA_FALLA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALLA_ACT_ECONOM;
 		$arr[$this->PERSONAS_OPERAR_ALTO_R]				= $this->PERSONAS_OPERAR_ALTO_R;
+		$arr[$this->RN_USAR_REDIRECTS]					= $this->RN_USAR_REDIRECTS;
+		$arr[$this->RN_USAR_MENU_ALT]					= $this->RN_USAR_MENU_ALT;
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->AML_AUTOENVIAR_RMS]					= $this->AML_AUTOENVIAR_RMS;

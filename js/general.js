@@ -241,7 +241,7 @@ function session(v1,v2){
 }
 Gen.prototype.formF9key	= function(evt){
 	var key = evt.keyCode || evt.which;
-	key = entero(key);
+	key 	= entero(key);
 	switch(key){
 		case 120:
 			//$("#btn_guardar").click();
@@ -1439,14 +1439,32 @@ CredGen.prototype.getImprimirReciboDeDesembolso	= function(idcredito){
 	var sURL = '../rpt_formatos/recibo_de_prestamo.rpt.php?credito=' + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 800, full:true });
 }
+CredGen.prototype.getElegirAvales	= function(idcredito){
+	//var aURL 	= "../frmcreditos/frmcreditosavales.php?s=" + idcredito;
+	//var aURL 	= "../frmsocios/registro-personas_fisicas.frm.php?iddocumentorelacionado=" + idcredito + "&relaciones=" + iDE_CREDITO + "";
+	//var xGen	= new Gen(); xGen.w({ url : aURL, h : 780, w : 860, tab: true });
+	/*$("#dlg").load("../frmcreditos/elegir-avales.frm.php", function() {
+	    var container = $(this);
+	    container.dialog({
+	        modal: true,
+			height: 625,
+			width: 500
+	    })
+	});*/
+	var xG		= new Gen();
+	var self	= this;
+	var xsi		= function(){ self.getVincularAvales(idcredito); }
+	var xno		= function(){ self.getFormaAvales(idcredito); }
+	xG.confirmar({msg: "¿ PERSONA_YA_EXISTE ?", callback: xsi, cancelar: xno});
+}
 CredGen.prototype.getFormaAvales	= function(idcredito){
 	//var aURL 	= "../frmcreditos/frmcreditosavales.php?s=" + idcredito;
 	var aURL 	= "../frmsocios/registro-personas_fisicas.frm.php?iddocumentorelacionado=" + idcredito + "&relaciones=" + iDE_CREDITO + "";
-	var xGen	= new Gen(); xGen.w({ url : aURL, h : 780, w : 860, tiny: true });
+	var xGen	= new Gen(); xGen.w({ url : aURL, h : 780, w : 860, tab: true });
 }
 CredGen.prototype.getVincularAvales	= function(idcredito){
 	var aURL 	= "../frmcreditos/vincular.avales.frm.php?credito=" + idcredito;
-	var xGen	= new Gen(); xGen.w({ url : aURL, h : 640, w : 800, tiny: true });
+	var xGen	= new Gen(); xGen.w({ url : aURL, h : 640, w : 800, tab: true });
 }
 CredGen.prototype.getFormaFlujoEfectivo	= function(idcredito){
 	var xURL 	= "../frmcreditos/frmcreditosflujoefvo.php?credito=" + idcredito;

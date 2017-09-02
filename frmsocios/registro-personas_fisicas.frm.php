@@ -180,8 +180,13 @@ if(setNoMenorQueCero($con_relacion) > 0){
 if($tipo_de_ingreso == DEFAULT_TIPO_INGRESO){
 	$xFRM->ODate("idfecharegistro", $fecha,"TR.fecha de registro");
 }
-if($desde_sucursal == false){
-	$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
+if($desde_sucursal === false){
+	if(MULTISUCURSAL == false){
+		$xFRM->OHidden("idsucursal", getSucursal());
+	} else {
+		$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
+	}
+	
 } else {
 	$xFRM->OHidden("idsucursal", $desde_sucursal, "");
 }

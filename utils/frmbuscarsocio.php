@@ -19,18 +19,21 @@ $xRuls	= new cReglaDeNegocio();
 $msg	= "";
 $jxc 	= new TinyAjax();
 
-$persona	= (isset($_GET["i"])) ? $_GET["i"] : false;		//CLAVE
-$f 			= (isset($_GET["f"])) ? $_GET["f"] : false;		//form dependiente
-$buscarPor	= (isset($_GET["o"])) ? $_GET["o"] : PERSONAS_BUSCAR_POR;		//tipo de busqueda: n = nombre, c = curp, r = rfc, s = socio, nf = Nombre con FORM
+$persona			= (isset($_GET["i"])) ? $_GET["i"] : false;		//CLAVE
+$f 					= (isset($_GET["f"])) ? $_GET["f"] : false;		//form dependiente
+$buscarPor			= (isset($_GET["o"])) ? $_GET["o"] : PERSONAS_BUSCAR_POR;		//tipo de busqueda: n = nombre, c = curp, r = rfc, s = socio, nf = Nombre con FORM
+
+$nextstep			= parametro("next", "", MQL_RAW);
 
 $tipo_de_ingreso	= parametro("idtipodeingreso", 0, MQL_INT); $tipo_de_ingreso	= parametro("tipodeingreso", $tipo_de_ingreso, MQL_INT); $tipo_de_ingreso	= parametro("tipoingreso", $tipo_de_ingreso, MQL_INT);
 
-$OtherEvent	= parametro("ev", "", MQL_RAW);	//Otro Evento Desatado
-$OtherEvent	= parametro("callback", "", MQL_RAW);
-$control	= parametro("control", "idsocio", MQL_RAW);
+$OtherEvent			= parametro("ev", "", MQL_RAW);	//Otro Evento Desatado
+$OtherEvent			= parametro("callback", $OtherEvent, MQL_RAW);
 
-$tiny 		= (isset($_GET["tinybox"])) ? true : false;
-$BuscarConID= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);		//regla de negocio
+$control			= parametro("control", "idsocio", MQL_RAW);
+
+$tiny 				= (isset($_GET["tinybox"])) ? true : false;
+$BuscarConID		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);		//regla de negocio
 /*if($OtherEvent != ""){
 	$OtherEvent	= ($tiny == true) ? "window.parent.$OtherEvent;" : "opener.$OtherEvent;";
 }*/
@@ -116,7 +119,10 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 		$table_s->setEventKey("setSocio");
 		//$table_s->setRowCSS("codigo", "center");
 		$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCreds();");
-		$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+		if(MODULO_CAPTACION_ACTIVADO == true){
+			$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+		}
+		$table_s->setWithMetaData();
 		
 		$strTbls .= $table_s->Show();
 	} else {
@@ -216,7 +222,11 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 				$table_s->OButton("TR.Relacion", "jsGetRelaciones(" . HP_REPLACE_ID . ")", "fa-group");
 				//Codigo inicial PHP:: Asignar valor
 				$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCreds();");
-				$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+				if(MODULO_CAPTACION_ACTIVADO == true){
+					$table_s->addEspTool("\$xS=new cHPersona(_REPLACE_ID_);PHP:: \$xS->getNotifNumCtas();");
+				}
+				$table_s->setWithMetaData();
+				
 				$strTbls .= $table_s->Show();
 			}
 			//setLog($sqllike);
@@ -289,6 +299,8 @@ var mFecha	= "<?php echo fechasys(); ?>";
 var xG		= new Gen();
 var xP		= new PersGen();
 var idsoc	= "<?php echo $control; ?>";
+var next	= "<?php echo $nextstep; ?>";
+
 function jsGetPersonasByKey(msrc){
 	var mstr	= new String( msrc.value );
 	if (mstr.length >= 4){ jsShowSocios(); }  /*Busqueda por TXT*/
@@ -298,16 +310,27 @@ function jsGetPersonasByKey2(msrc){
 	if (mstr.length >= 2) { jsShowSocios();	} /*Busqueda por ID*/
 }
 function setSocio(id){
-	var msrc	= null;	
+	var msrc	= null;
+	var dd		= xG.getMetadata("#tr-socios_general-" + id);
 	$("#idsocio").val(id);
+
+	if(next == Configuracion.rutas.credito){
+		xG.go({url: "../utils/frmscreditos_.php?next=panel&persona=" + id});
+		return false;
+	}
+	if(next == Configuracion.rutas.panel){
+		xG.go({url: "../frmsocios/socios.panel.frm.php?persona=" + id});
+		return false;
+	}
+	
 	jsaSetSocioEnSession();
 	if (window.parent){ msrc = window.parent.document; }
 	if (opener){ msrc = opener.document; }
 	if(msrc == null){} else {
 	<?php
-	if($OtherEvent != ""){
-		echo "if(msrc.$OtherEvent != \"undefined\"){ msrc.$OtherEvent(id); }";
-	} else {
+		if($OtherEvent != ""){
+			echo "if(msrc.$OtherEvent != \"undefined\"){ msrc.$OtherEvent(id); }";
+		} else {
 	?>		
 		if(msrc.getElementById(idsoc)){
 			oid			=  msrc.getElementById(idsoc);
@@ -315,38 +338,22 @@ function setSocio(id){
 			oid.focus();
 			oid.select();
 			session(ID_PERSONA, id);
-			if(typeof msrc.jsSetNombreSocio != "undefined"){ msrc.jsSetNombreSocio(); }
+			
+			
+			if(msrc.getElementById("nombresocio")){
+				var nn = $.trim(dd["nombres"] +  " " + dd["apellido_paterno"] + " " + dd["apellido_materno"]);
+				msrc.getElementById("nombresocio").value = nn; 
+
+			} else {
+				if(typeof msrc.jsSetNombreSocio != "undefined"){ msrc.jsSetNombreSocio(); }
+			}
 			xG.close();		
 		} else {
 			//ir al panel de control
 			xP.goToPanel(id, false);
 		}
 	<?php
-	}
-
-		/*if($tiny == true) {
-			echo "
-			window.parent.document.$f.idsocio.value 	= id;
-			window.parent.document.$f.idsocio.focus();
-			window.parent.document.$f.idsocio.select();
-			if(typeof window.parent.jsSetNombreSocio != \"undefined\"){
-				window.parent.jsSetNombreSocio();
-			}
-			$OtherEvent
-			window.parent.TINY.box.hide();
-			";
-		} else if( $f !== false ){
-			echo "
-			opener.document.$f.idsocio.value 	= id;
-			opener.document.$f.idsocio.focus();
-			opener.document.$f.idsocio.select();
-			if(typeof opener.jsSetNombreSocio != \"undefined\"){
-				opener.jsSetNombreSocio();
-			}
-			$OtherEvent
-			window.close();
-			";
-		}*/
+		}
 	?>
 	}
 }

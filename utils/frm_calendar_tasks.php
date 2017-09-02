@@ -266,7 +266,10 @@ $xFRM->setTitle($xHP->getTitle());
 //} 
 
 $xFRM->OButton("TR.Tareas", "jsGetInformes()", "tarea", "idtareas");
-$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas");
+
+if(MODULO_AML_ACTIVADO == true){
+	$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas");
+}
 
 if($xUsr->getNivel() != USUARIO_TIPO_OFICIAL_AML  OR (MODO_DEBUG == true) ){
 $xCEs	= new cCreditosEstadisticas();
@@ -428,16 +431,19 @@ $xChart			= new cChart("idivchart");
 
 
 $xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO);
-$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA);
+
+$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "", "blue");
+
 $xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA);
 $xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO);
 $xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
+
 if(getUsuarioActual(SYS_USER_NIVEL)>USUARIO_TIPO_OFICIAL_CRED){
 	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
 }
 $idpersona	= $xUsr->getClaveDePersona();
 
-$xFRM->OButton("TR.VER MI USUARIO", "jsVerMiPassword($iduser)", $xFRM->ic()->PASSWORD);
+$xFRM->OButton("TR.VER MI USUARIO", "jsVerMiPassword($iduser)", $xFRM->ic()->PASSWORD, "", "white");
 $xFRM->OButton("TR.Salir", "var xG = new Gen(); xG.salir()", $xFRM->ic()->SALIR);
 
 //$xFRM->addSeccion("idmastareas", "TR.Tareas");

@@ -20,6 +20,9 @@ $xF			= new cFecha();
 $tabla		= parametro("tabla", null, MQL_RAW);
 $clave		= parametro("id", null, MQL_RAW);
 $content	= parametro("content", "", MQL_RAW);
+
+$arrT		= array("originacion_leasing");
+
 //rm = eliminar
 //save = actualizar
 //add = guardar
@@ -47,8 +50,12 @@ if($tabla != null AND $clave != null){
 		$txtde	= null;
 		$antes	= null;
 		$despues= null;
+		if(in_array($tabla, $arrT)){
+			//setError($tabla);
+		} else {
+			$xLog->guardar($xLog->OCat()->EDICION_RAW);
+		}
 		
-		$xLog->guardar($xLog->OCat()->EDICION_RAW);
 		$xCache				= new cCache();
 		$xCache->clean("$tabla-$clave");
 		

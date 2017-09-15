@@ -60,38 +60,42 @@ if($credito <= DEFAULT_CREDITO){
 		$persona	= $xCred->getClaveDePersona();
 		$xFRM->addCerrar();
 		$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-		if($xCred->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO){
-			$xFRM->OButton("TR.IMPRIMIR PAGARE", "printpagare()", "dinero", "view-pagare");
-			$xFRM->OButton("TR.CONTRATO", "contratocredito()", "imprimir", "print-contrato");
-			$xFRM->OButton("TR.CARATULA", "var xC=new CredGen();xC.getImprimirCaratula($credito)", $xFRM->ic()->FORMATO);
-			
-		}
 		
-		switch($xCred->getEstadoActual()){
-			case CREDITO_ESTADO_AUTORIZADO:
-				$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-				$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
-				$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
-				$xFRM->OButton("TR.ORDEN_DE_DESEMBOLSO", "printodes()", "imprimir", "print-order");
-				$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
-				$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
-				break;
-			case CREDITO_ESTADO_SOLICITADO:
-				$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-				$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
-				$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
-				$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
-				break;
-			default :
-
+		if($xCred->getEsArrendamientoPuro() == false){
+			
+			if($xCred->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO){
+				$xFRM->OButton("TR.IMPRIMIR PAGARE", "printpagare()", "dinero", "view-pagare");
+				$xFRM->OButton("TR.CONTRATO", "contratocredito()", "imprimir", "print-contrato");
+				$xFRM->OButton("TR.CARATULA", "var xC=new CredGen();xC.getImprimirCaratula($credito)", $xFRM->ic()->FORMATO);
 				
-				if($xCred->getSaldoActual()<=0){
-					$xFRM->OButton("TR.CARTA_FINIQUITO", "var xC=new CredGen(); xC.getFormatoFiniquito($credito)", $xFRM->ic()->LEGAL);
-				}
-				$xFRM->OButton("TR.ESTADO_DE_CUENTA Intereses", "getEstadoDeCuentaIntereses($credito)", $xFRM->ic()->COBROS, "estado-cta2");
-				$recibo		= $xCred->getNumeroReciboDeMinistracion();
-				$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
-				break;
+			}
+			
+			switch($xCred->getEstadoActual()){
+				case CREDITO_ESTADO_AUTORIZADO:
+					$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
+					$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
+					$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
+					$xFRM->OButton("TR.ORDEN_DE_DESEMBOLSO", "printodes()", "imprimir", "print-order");
+					$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
+					$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
+					break;
+				case CREDITO_ESTADO_SOLICITADO:
+					$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
+					$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
+					$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
+					$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
+					break;
+				default :
+	
+					
+					if($xCred->getSaldoActual()<=0){
+						$xFRM->OButton("TR.CARTA_FINIQUITO", "var xC=new CredGen(); xC.getFormatoFiniquito($credito)", $xFRM->ic()->LEGAL);
+					}
+					$xFRM->OButton("TR.ESTADO_DE_CUENTA Intereses", "getEstadoDeCuentaIntereses($credito)", $xFRM->ic()->COBROS, "estado-cta2");
+					$recibo		= $xCred->getNumeroReciboDeMinistracion();
+					$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
+					break;
+			}
 		}
 		$xorigen			= $xCred->getTipoDeOrigen();
 		$xT					= new cTipos();

@@ -302,13 +302,14 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
 		$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
 		
-		$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", "documentos", "idvalidadoc" );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.validar perfil_transaccional", "jsaValidarPerfilT()", "perfil", "validaperfil", false ) );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.validar riesgo", "jsaValidarRiesgo()", "riesgo", "validariesgo", false ) );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", "riesgo", "actualizarriesgo", false ) );
+		$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
+		$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
+		$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
+
+		$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
 		
-		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS);
-		///$xFRM->OButton("TR.Consulta en PEPS", "var xAML = new AmlGen(); xAML.getConsultaPEPS($idsocio)", $xFRM->ic()->REGISTROS);
+		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
+
 		
 		$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
 		$jsTabs	.= ",\n selected: 6\n";
@@ -465,14 +466,14 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if((MODO_CORRECION == true OR MODO_MIGRACION == true OR MODO_DEBUG == true) OR (getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_GERENTE) ){
 		$xStats	= new cPersonasEstadisticas($idsocio);
 		$xStats->initDatosDeCredito(true);
-		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR);
+		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR, "cmdbajapersona", "orange");
 		if($xStats->getTotalCompromisos()== 0){
-			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR);
+			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 		} else {
 			//$xFRM->addAviso(, "", true, "warning");
 			$xLog->add("WARN\tLa persona tiene " . $xStats->getTotalCompromisos() . " Contratos Activos, no se debe eliminar\r\n");
 			if(MODO_DEBUG == true){
-				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR);
+				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 			}
 		}
 		

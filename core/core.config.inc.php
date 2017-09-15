@@ -10,13 +10,11 @@ include_once($core_file_config);
 //}
 // server should keep session data for AT LEAST 1 hour
 //$safe_sesion_en_segundos=3600;
-if(isset($safe_sesion_en_segundos)){
-	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
-}
+
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "MarikaTachibana"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana
-$version 								= "201706";
+$codename 								= "D.M.C."; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana
+$version 								= "201709";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
@@ -160,6 +158,7 @@ define("ADMIN_MAIL_STORAGE",       		(bool) $xC->get("email_almacenar_en_db", "f
 define("NOMINA_MAIL",                  	$xC->get("email_de_nominas", "software@grupopadio.com.mx", MMOD_SISTEMA) );
 define("EACP_MAIL",                    	$xC->get("email_de_la_entidad", "", MMOD_SISTEMA) );
 define("ARCHIVO_MAIL",                  $xC->get("email_del_archivo", ADMIN_MAIL, MMOD_SISTEMA) );
+
 define("TASK_USR",                     	$xC->get("usuario_de_trabajos_automaticos", "", MMOD_SISTEMA) );
 define("ADMIN_MAIL_PWD",                $xC->get("password_del_email_del_administrador", "", MMOD_SISTEMA) );
 
@@ -1128,6 +1127,11 @@ define("USUARIO_TIPO_ORIGINADOR", 					3);
 //============================================ HUERFANOS ===================================================================
 define("CAPTACION_IMPUESTOS_A_DEPOSITOS_ACTIVO",        (bool) $xC->get("impuestos_a_depositos_activo", "false", MMOD_CAPTACION) );
 define("TESORERIA_FORZAR_SESSION", 	(bool) $xC->get("forzar_sesiones_de_caja", "true", MMOD_TESORERIA));
+
+//============================================ MANEJO DE SESIONES ==========================================================
+$safe_sesion_en_segundos		= $xC->get("tiempo_expira_sesiones", "3600", MMOD_SISTEMA);
+	
+ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
 
 
 

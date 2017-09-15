@@ -191,6 +191,7 @@ class cCredito {
 	private $mValorResidual			= 0;
 	private $mEsLeasingPuro			= false;
 	private $mRespetaPlan			= true;
+	
 	                                   // protected $mOtrosParams = array();
 	                                   // protected $mSaldoAtrasado = 0;
 	function __construct($numero_de_credito = false, $numero_de_socio = false) {
@@ -337,6 +338,7 @@ class cCredito {
 				$this->mTotalPlanExig			= $xMontos->getTotalPlanExigible();
 				$this->mTotalPlanPend			= $xMontos->getTotalPlanPend();
 				$this->mMontoBonificado			= $xMontos->getBonificaciones();
+				$this->mOMonto					= $xMontos;
 			}
 			if ($this->mEmpresa != FALLBACK_CLAVE_EMPRESA) {
 				$xEmp = new cEmpresas ( $this->mEmpresa );
@@ -1171,6 +1173,29 @@ class cCredito {
 				$xReg->add($xReg->CRED_FALLA_DEST);				
 			}
 			//Validar Periodo de Credito
+			
+			if($this->getEsArrendamientoPuro() == true){
+				$xCredOrg	= new cCreditosLeasing($this->getClaveDeOrigen());
+				if($xCredOrg->init() == true){
+					$xReg->add($xReg->CRED_FALLA_O_ARR, true);
+					
+				} else {
+					$xReg->add($xReg->CRED_FALLA_O_ARR);
+					$this->mValidacionERRS++;
+					$xLog->add ("ERROR\tLa Cotizacion de Arrendamiento no existe\r\n" );
+				}
+				//Validar vehiculo
+				
+				$xAct	= new cLeasingActivos();
+				if($xAct->initForContract($this->getClaveDeCredito()) == true){
+					$xReg->add($xReg->CRED_ARRED_NOACT, true);
+				} else {
+					$xReg->add($xReg->CRED_ARRED_NOACT);
+					$this->mValidacionERRS++;
+					$xLog->add ("ERROR\tEl Activo y/o Vehiculo no existe\r\n" );
+				}
+			}
+			
 		} else {
 			$xLog->add ("ERROR\tError al Iniciar a la Persona\r\n" );
 			$xLog->add ( $xSoc->getMessages (), $xLog->DEVELOPER );
@@ -2395,6 +2420,9 @@ class cCredito {
 		$ContratoCorriente 	= setNoMenorQueCero ( $ContratoCorriente );
 		$ContratoCorriente 	= ($ContratoCorriente <= 0) ? CTA_GLOBAL_CORRIENTE : $ContratoCorriente;
 		$persona_asociada 	= ($persona_asociada == false) ? $xSoc->getClaveDeEmpresa () : $persona_asociada;
+		$persona_asociada	= setNoMenorQueCero($persona_asociada);
+		$persona_asociada	= ($persona_asociada > 0) ? $persona_asociada : FALLBACK_CLAVE_EMPRESA;
+		
 		$GrupoAsociado 		= setNoMenorQueCero ( $GrupoAsociado );
 		$GrupoAsociado 		= ($GrupoAsociado <= 0) ? DEFAULT_GRUPO : $GrupoAsociado;
 		$TipoDeAutorizacion = setNoMenorQueCero ( $TipoDeAutorizacion );
@@ -3546,7 +3574,7 @@ class cCredito {
 		}
 		return $this->mOIntereses;
 	}
-	private function getOMontos(){
+	function getOMontos(){
 		if($this->mOIntereses == null){
 			$this->mOIntereses	= new cCreditosMontos($this->mNumeroCredito);
 			$this->mOIntereses->init();
@@ -4649,6 +4677,7 @@ class cCredito {
 				$xMontos->setCargosYPenas(0,0);
 				$xMontos->setMontosCapital(false, 0, false);
 				$xMontos->setTotales(0,0);
+				
 				if(($ActualGasto+$ActualBonif) !== 0){
 					$arrUpdate		= array("bonificaciones" => 0, "gastoscbza" => 0);
 					$this->setUpdate($arrUpdate, true);
@@ -4701,7 +4730,7 @@ class cCredito {
 					
 					if($this->isAFinalDePlazo() == false){
 						if($xOp->initAcumOpsPlan($fecha) == true){
-							$xMontos->setTotales($xOp->getTotalPlanExigible(), $xOp->getTotalPlanPend() );
+							$xMontos->setTotales($xOp->getTotalPlanExigible(), $xOp->getTotalPlanPend(), $xOp->getTotalPendInts() );
 							$xMontos->setCuandoSeActualiza();
 						}
 					}
@@ -4724,6 +4753,7 @@ class cCredito {
 		}
 		return $this->mObjDatosOrigen;
 	}
+	
 	function getDiasRemanente($Fecha = false){
 		
 		if($this->isPagable() == true){

@@ -336,7 +336,7 @@ if($action == SYS_NINGUNO){
 	$cDE 			= $xSel->getListaDeEmpresas("iddependencia", false, $empresa);
 	$cDE->addEvent("onblur", "jsGetDatosEmpresa");
 	
-	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+	if(PERSONAS_CONTROLAR_POR_EMPRESA == true AND $xSoc->getEsPersonaFisica() == true){
 		$xFRM->addHElem($cDE->get("TR.Empresa Relacionada", true) );
 	} else {
 		$xFRM->OHidden("iddependencia", DEFAULT_EMPRESA);
@@ -430,11 +430,15 @@ if($SinDomicilio == false){
 	$xCP	= new cHText();
 	if(PERSONAS_VIVIENDA_MANUAL == true){
 		$xFRM->OMoneda("idcodigopostal", $cp, "TR.codigo_postal");
+		//$xFRM->OCodigoPostal("idcodigopostal", $cp);
 	} else {
+		//$xFRM->OCodigoPostal("idcodigopostal", $cp);
 		$xFRM->OMoneda("idcodigopostal", $cp, "TR.codigo_postal");
 	}
 	$xFRM->OButton("TR.BUSCAR COLONIA", "var xD=new DomGen();xD.getBuscarColonias()", $xFRM->ic()->BUSCAR);
+	
 	$xFRM->setValidacion("idcodigopostal","validacion.codigopostal", "", true);
+	
 	$xFRM->addHElem( $xTx3->getDeNombreDeColonia("idnombrecolonia", $nombrecolonia, "TR.Colonia" ) );
 	
 
@@ -485,7 +489,6 @@ function jsSetDomicilioPrevio(){
 		xG.verDiv("idviviendadatos", true);
 		$("#idnombreacceso").val("");
 		$("#idnumeroexterior").val("");
-		
 	}	
 }
 function jsGetDatosEmpresa(){

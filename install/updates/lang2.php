@@ -569,10 +569,13 @@ $lang["20170601"][]	= array("SEGMENTO", "Segmento", "Class");
 $lang["20170601"][]	= array("VERSION", "Descripcion", "Version");
 $lang["20170601"][]	= array("ELEGIR", "Elegir", "Select");
 $lang["20170601"][]	= array("ENCONSTRUCCION", "En Construccion", "Under Construction");
-
-//$lang["20170601"][]	= array("EXISTE", "Elegir", "Select");
-//$lang["20170601"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
-//$lang["20170601"][]	= array("", "", "");
+$lang["20170901"][]	= array("PRIMERARENTA", "Primera Renta", "First Rent");
+$lang["20170901"][]	= array("ANTICIPORENTA", "Rentas Anticipadas", "Anticipated Rental");
+$lang["20170901"][]	= array("TASARESIDUAL", "Tasa Residual", "Residual rate");
+$lang["20170901"][]	= array("SOLICITUDINGRESO", "Solicitud de Ingreso", "Request Form");
+//$lang["20170901"][]	= array("EXISTE", "Elegir", "Select");
+//$lang["20170901"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
+//$lang["20170901"][]	= array("", "", "");
 
 
 header('Content-type: application/json');

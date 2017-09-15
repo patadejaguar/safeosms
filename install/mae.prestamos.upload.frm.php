@@ -396,6 +396,7 @@ if(isset($usrFiles[$i])==true){
 		echo "<p class='aviso'>EL TIPO DE ARCHIVO DE " . $usrFiles[$i]['name'] . "(" .$mExt . ") NO SE ACEPTA</p>";
 	}
 	$xFRM->addLog($xLog->getMessages());
+	$xFRM->addCerrar();
 } //end valid file
 
 } //end action

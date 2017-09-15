@@ -68,6 +68,9 @@ $xTabla->setData( $xTabla->query()->initByID($clave));
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
+
+$xFRM->addCerrar();
+
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivleasingcreditos",$xHP->getTitle());
@@ -115,9 +118,10 @@ $xHG->OColFunction("proceso", "TR.ETAPA", "15%", "jsQuePaso");
 //Editar
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 
+
+
 if($xUser->getEsOriginador() == false){
-	//
-	
+	$xHG->OButton("TR.ADMINISTRAR", "jsEdit2('+ data.record.clave +')", "unlocked.png");
 } else {
 	if($EsAdmin == true){
 		//Cancelar
@@ -148,6 +152,9 @@ echo $xFRM->get();
 var xG	= new Gen();
 function jsEdit(id){
 	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?clave=" + id, tab:true, callback: jsLGiddivleasingcreditos});
+}
+function jsEdit2(id){
+	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?olvidar=true&clave=" + id, tab:true, callback: jsLGiddivleasingcreditos});
 }
 function jsAdd(){
 	xG.w({url:"../frmarrendamiento/cotizador.frm.php?", tab:true, callback: jsLGiddivleasingcreditos});

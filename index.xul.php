@@ -287,8 +287,6 @@ function jsGetMenuChilds(id){
 	jsaGetMenu();
 	jPanelMenu.off();
 	
-	
-	
 }
 
 function jsGetMenu(tr){

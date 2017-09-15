@@ -3346,11 +3346,91 @@ $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `context
 $sql["20170601"][]	= "UPDATE `general_menu` SET `menu_title` = 'Empresas' WHERE `idgeneral_menu` = '2060' ";
 $sql["20170601"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('586', 'SYSTEM', 'RN_USAR_USAR_MENU_ALTER', '', '', '', '', '0')";
 
-//$sql["20170601"][]	= "";
-//$sql["20170601"][]	= "";
-//$sql["20170601"][]	= "";
-//$sql["20170601"][]	= "";
-//$sql["20170601"][]	= "";
+
+
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-cubes' WHERE `idgeneral_menu` = '1010'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_title` = 'Empleadores' WHERE `idgeneral_menu` = '2052'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-share' WHERE `idgeneral_menu` = '1067'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-reply' WHERE `idgeneral_menu` = '1063'";
+
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-user-circle-o' WHERE `idgeneral_menu` = '2001'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-users' WHERE `idgeneral_menu` = '20002'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-user' WHERE `idgeneral_menu` = '2003'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-cubes' WHERE `idgeneral_menu` = '20100'";
+
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '3040'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-id-card' WHERE `idgeneral_menu` = '3002'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-calendar' WHERE `idgeneral_menu` = '3004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-address-card-o' WHERE `idgeneral_menu` = '3001'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '10000'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '10000' WHERE `idgeneral_menu` = '10000'";
+
+$sql["20170901"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `vecs` VARCHAR(60) NULL DEFAULT '' AFTER `cuota_iva`, ADD COLUMN `tasas` VARCHAR(60) NULL DEFAULT '' COMMENT 'tasas modificadas' AFTER `vecs`";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '3040'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-id-card' WHERE `idgeneral_menu` = '3002'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-calendar' WHERE `idgeneral_menu` = '3004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-address-card-o' WHERE `idgeneral_menu` = '3001'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '10000'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '10000' WHERE `idgeneral_menu` = '10000'";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200917', 'CREDITO_FALLA_ORG', 'El Credito no tiene Origen Valido')";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200918', 'CREDITO_FALLA_O_ARR', 'La cotizacion de Arrendamiento no existe!.')";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200919', 'CRED_ARRED_NOACT', 'El Activo y/o vehiculo no existe!.')";
+$sql["20170901"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `montoajuste` DOUBLE(18,2) NULL DEFAULT '0' AFTER `tasas`";
+$sql["20170901"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('587', 'SYSTEM', 'CREDITOS.ARRENDAMIENTO.AJUSTESERVS', '', '', '6000', '')";
+$sql["20170901"][]	= "ALTER TABLE `creditos_montos` ADD COLUMN `ints_tot_calc` DOUBLE(16,2) NULL DEFAULT '0.00' AFTER `sdo_exig_act`";
+$sql["20170901"][]	= "INSERT INTO `vehiculos_usos` (`idvehiculos_usos`, `descripcion_uso`, `limitededucible`) VALUES ('201', 'Utilitario', '1000000000.00')";
+
+$sql["20170901"][]	= "DELETE FROM vehiculos_marcas";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('1','Acura')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('2','Alfa Romeo')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('3','Audi')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('4','Benz Camiones')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('5','Bmw')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('6','Buick')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('7','Cadillac')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('8','Chevrolet')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('9','Chrysler')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('10','Dodge')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('11','Faw')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('12','Ferrari')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('13','Fiat')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('14','Ford')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('15','Foton')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('16','General Motors')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('17','Hino')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('18','Honda')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('19','Hyundai')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('20','Infiniti')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('21','International')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('22','Isuzu')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('23','Jaguar')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('24','Jeep')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('25','Land Rover')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('26','Lexus')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('27','Lincoln')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('28','Maserati')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('29','Mazda')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('30','Mercedes Benz')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('31','Mercury')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('32','Mini')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('33','Mitsubishi')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('34','Nissan')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('35','Peugeot')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('36','Pontiac')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('37','Porsche')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('38','Renault')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('39','Saab')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('40','Seat')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('41','Smart')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('42','Subaru')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('43','Suzuki')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('44','Toyota')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('45','Volkswagen')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('46','Volvo')";
+$sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('99','Marca fuera de catalogo')";
+$sql["20170901"][]	= "ALTER TABLE  `originacion_leasing` CHANGE COLUMN `mail` `mail` VARCHAR(50) NULL DEFAULT '' ";
+
+//$sql["20170901"][]	= "";
 
 		
 foreach ($sql as $idx => $cnt){

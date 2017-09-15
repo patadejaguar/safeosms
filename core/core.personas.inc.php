@@ -1619,4 +1619,58 @@ class cPersonasMoralesDatosExt {
 	function getNombreNotario(){ return$this->mNombreNotario; }
 }
 
+
+
+class cPersonasEstadoCivil {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "socios_estadocivil";
+	private $mTipo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cSocios_estadocivil();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj		= $xT; //Cambiar
+			$this->mClave	= $data[$xT->getKey()];
+			
+			$this->mNombre	= $xT->descripcion_estadocivil()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
+}
+
 ?>

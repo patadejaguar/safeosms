@@ -96,7 +96,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 		} else {
 			$oFrm->addHElem( $xCred->getFichaDeSocio(true) );
 			$oFrm->addHElem( $xCred->getFicha(true, "", true) );
-			$oFrm->OButton("TR.Panel de Persona", "var xP=new PersGen();xP.goToPanel($idsocio)", $oFrm->ic()->PERSONA);
+			$oFrm->OButton("TR.Panel de Persona", "var xP=new PersGen();xP.goToPanel($idsocio)", $oFrm->ic()->PERSONA, "irpanelpersona", "persona");
 			$codigo_de_oficial	=  $xCred->getClaveDeOficialDeCredito();
 			if(MODO_DEBUG == true){
 				$oFrm->addToolbar($xBtn->getBasic("TR.EDICION_AVANZADA", "jsActualizarCreditoRAW()", "aviso", "edit-credito2", false ));
@@ -208,7 +208,8 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					if($CargarEstado == true){
 						$xHTabs->addTab("TR.ESTATUS", $DEstatus );
 					}
-					$txtValidacion	= $xCred->setVerificarValidez(OUT_HTML);
+					$txtValidacion		= $xCred->setVerificarValidez(OUT_HTML);
+					
 					$xHTabs->addTab("TR.VALIDACION", $xNot->get( $txtValidacion, "idmsgval"));
 					//avales
 					$sqlavales 	= $mSQL->getListadoDeAvales($idsolicitud, $idsocio);

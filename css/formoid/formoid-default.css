@@ -640,19 +640,17 @@ background: #001121;
 text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
-
-
 .toolnav li a.whiteblue {
 text-shadow: none; color: #0080E3;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
 
-.toolnav li a.blue2 {
+/*.toolnav li a.blue2 {
 text-shadow: 0 -1px 3px #0066cc; color: #FFF;
 background: linear-gradient(top,#4387fd,#4683ea)
 
-}
+}*/
 
 .toolnav li a.gray2 {
 text-shadow: none; color: #252B29;
@@ -665,6 +663,15 @@ text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
 background: #56C4FF;
 }
 
+.toolnav li a.persona {
+text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
+background: #4464AF;
+}
+.toolnav li a.credito {
+	text-shadow: 0 -1px 3px #468847;
+	background: #257433;
+	
+}
 .toolnav li a.green2 {
 text-shadow: 0 1px 0 rgba(0,0,0,0.2); color: #fff;
 background: #1b926c;

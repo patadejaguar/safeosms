@@ -4484,6 +4484,7 @@ class cSystemPatch {
 		$ql			= new MQL();
 		$xConf		= new cConfiguration();
 		$localver	= $xConf->get("safe_osms_database_version");
+		
 		//Actualiza la configuracion
 		//if($force == true){			$xConf->set("safe_osms_database_version", $version);		}
 		if(FORCE_UPDATES_ON_BOOT == true OR $force == true){
@@ -4573,6 +4574,8 @@ class cSystemPatch {
 				} else {
 					$this->mMessages .= "OK\tSe aplicaron Vistas y funciones...\r\n";
 				}
+			} else {
+			    $upt     = false;
 			}
 			//ejecutar Mensajes
 			$this->mMessages	.= $ql->getMessages(OUT_TXT);		

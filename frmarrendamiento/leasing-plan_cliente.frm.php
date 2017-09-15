@@ -23,9 +23,9 @@ $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
 
 function jsaGenerarPlanCliente($credito){
-	//$xRentas	= new cLeasingRentas();
-	//$xRentas->setCrearPorCredito($credito);
-	
+	$xRentas	= new cLeasingRentas();
+	$xRentas->setCrearPorCredito($credito);
+	return $xRentas->getMessages(OUT_HTML);
 }
 $jxc ->exportFunction('jsaGenerarPlanCliente', array('credito'), "#idaviso");
 $jxc ->process();
@@ -41,6 +41,7 @@ $xHP->init();
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
+
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 $xFRM->addAviso("", "idaviso");

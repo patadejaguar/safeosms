@@ -28,13 +28,22 @@ $xRuls			= new cReglaDeNegocio();
 $NoUsarTIIE		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_SIN_TIIE);
 $NoUsarResidual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_NORES);
 $AunMasSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_RSIMPLE);
+$ArrAjustes		= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_AJUSTM);
+
+$OlvidarTodo	= parametro("olvidar", false, MQL_BOOL);
+$Nuevo			= parametro("nuevo", false, MQL_BOOL);
+
+if($OlvidarTodo == true){
+	$AunMasSimple	= ($AunMasSimple == true) ? false : true;
+	$xHP->setTitle("TR.COTIZADOR .- ADMINISTRADOR");
+}
 
 $xFormu->init($xFormu->JS_LEAS_COT_VARS);	
 $jsFormulaPrec	= $xFormu->getFormula();
 
 $originador		= 0;
 $suborigen		= 0;
-$oficial		= 0;
+$oficial		= getUsuarioActual();
 $EsAdmin		= false;
 $OnEdit			= false;
 $TasaComision	= 0;
@@ -44,15 +53,15 @@ $EsOriginador	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
 	if($xOrg->initByIDUsuario($xUser->getID()) == true){
-		$originador	= $xOrg->getOriginador();
-		$suborigen	= $xOrg->getSubOriginador();
+		$originador				= $xOrg->getOriginador();
+		$suborigen				= $xOrg->getSubOriginador();
 		if($xOrg->getEsAdmin() == true){
 			$EsAdmin			= true;
 		}
 		if($xOrg->getEsActivo() == false){
 			$xHP->goToPageError(403);
 		}
-		$xOrg	= new cLeasingOriginadores($originador);
+		$xOrg				= new cLeasingOriginadores($originador);
 		if($xOrg->init() == true){
 			$TasaComision	= $xOrg->getTasaComision();
 		}
@@ -61,40 +70,58 @@ if($xUser->getEsOriginador() == true){
 } else {
 	$oficial	= $xUser->getID();
 }
-function jsaGetTasa($rac, $plazo){
-	$xQL	= new MQL();
-	
+function jsaGetTasa($rac, $plazo, $clave, $olvidar, $nuevo){
 	$tab 	= new TinyAjaxBehavior();
-
 	$xTLeas	= new cLeasingTasas();
-	if($xTLeas->initByPlazoRAC($plazo, $rac) == true){
-		$tab->add(TabSetValue::getBehavior("tasa_credito", $xTLeas->getTasa() ));
-		$tab->add(TabSetValue::getBehavior("comision_apertura", $xTLeas->getComisionApertura() ));
-		//$tab->add(TabSetValue::getBehavior("tasa_credito", $xTLeas->getTasa() ));
-		$tab->add(TabSetValue::getBehavior("comision_apertura_mny", $xTLeas->getComisionApertura() ));
+	$xEsc	= new cLeasingEscenarios();
+	
+	if($clave > 0 AND $nuevo == 0){
+		$xLeas		= new cCreditosLeasing($clave);
+		$xLeas->init();
 		
-	}
-	$xEsc		= new cLeasing_escenarios();
-	$rs			= $xQL->getDataRecord("SELECT * FROM `leasing_escenarios`");
-	foreach ($rs as $rw){
-		$xEsc->setData($rw);
-		$idx	= $xEsc->plazo()->v();
-		$xTLeas	= new cLeasingTasas();
-		if($xTLeas->initByPlazoRAC($idx, $rac) == true){
-			$tab->add(TabSetValue::getBehavior("tasa_credito_$idx", $xTLeas->getTasa() ));
+		$rs			= $xEsc->getAll();
+		foreach ($rs as $rw){
+			$xEsc->init($rw);
+			$idx	= $xEsc->getPlazo();
+			$tab->add(TabSetValue::getBehavior("tasa_credito_$idx", $xLeas->getTasaInteres( $xEsc->getPlazo() ) ));
+			$tab->add(TabSetValue::getBehavior("tasavec_$idx", $xLeas->getTasaVec( $xEsc->getPlazo() ) ));
 		}
+		
+	} else {
+		
+		if($xTLeas->initByPlazoRAC($plazo, $rac) == true){
+			
+			$tab->add(TabSetValue::getBehavior("tasa_credito", $xTLeas->getTasa() ));
+			$tab->add(TabSetValue::getBehavior("comision_apertura", $xTLeas->getComisionApertura() ));
+			$tab->add(TabSetValue::getBehavior("comision_apertura_mny", $xTLeas->getComisionApertura() ));
+			$tab->add(TabSetValue::getBehavior("tasa_compra", $xTLeas->getTasaVEC() ));
+			
+		}
+		
+		$rs			= $xEsc->getAll();
+		foreach ($rs as $rw){
+			$xEsc->init($rw);
+			$idx	= $xEsc->getPlazo();
+			if($xTLeas->initByPlazoRAC($idx, $rac) == true){
+				$tab->add(TabSetValue::getBehavior("tasa_credito_$idx", $xTLeas->getTasa() ));
+				$tab->add(TabSetValue::getBehavior("tasavec_$idx", $xTLeas->getTasaVEC() ));
+				
+			}
+			
+		}
+
 	}
 	return $tab->getString();
 }
-function jsaGetComision($originador){
+function jsaGetComision($originador, $clave, $olvidar, $nuevo){
 	$xOrg	= new cLeasingOriginadores($originador);
 	$tasa	= 0;
-	if($xOrg->init()){
+	if($xOrg->init() ){
 		$tasa = $xOrg->getTasaComision();
 	}
 	return $tasa;
 }
-function jsaGetCostoGPS($plazo, $plan, $montogps){
+function jsaGetCostoGPS($plazo, $plan, $montogps, $clave, $olvidar, $nuevo){
 	
 	$xQL	= new MQL();
 	//"#tasa_credito"
@@ -103,7 +130,6 @@ function jsaGetCostoGPS($plazo, $plan, $montogps){
 	$xGPS	= new cLeasingGPSCosteo();
 	if($xGPS->initByPlazoTipo($plazo, $plan) == true){
 		$monto	= $xGPS->getMonto();
-		
 		$monto	= ($monto >= $montogps) ? $monto : $montogps;
 		
 		$tab->add(TabSetValue::getBehavior("monto_gps", $monto ));
@@ -125,10 +151,10 @@ function jsaGetCostoGPS($plazo, $plan, $montogps){
 	}
 	return $tab->getString();
 }
-function jsaGetCostos($entidad, $precio){
-	$sql	= "SELECT * FROM `vehiculos_tenencia` WHERE `entidadfederativa`=$entidad LIMIT 0,1";
-	$xQL	= new MQL();
-	$xT		= new cVehiculos_tenencia();
+function jsaGetCostos($entidad, $precio, $clave, $olvidar, $nuevo){
+	$sql		= "SELECT * FROM `vehiculos_tenencia` WHERE `entidadfederativa`=$entidad LIMIT 0,1";
+	$xQL		= new MQL();
+	$xT			= new cVehiculos_tenencia();
 	$xT->setData($xQL->getDataRow($sql));
 
 	$tenencia	= $precio  * ($xT->tenencia()->v()/100);
@@ -138,6 +164,7 @@ function jsaGetCostos($entidad, $precio){
 	}
 	
 	$tab = new TinyAjaxBehavior();
+	
 	$tab -> add(TabSetValue::getBehavior("monto_placas", $xT->placas()->v()));
 	$tab -> add(TabSetValue::getBehavior("monto_gestoria", $xT->cobrogestoria()->v()));
 	$tab -> add(TabSetValue::getBehavior("monto_tenencia", $tenencia));
@@ -150,23 +177,64 @@ function jsaGetCostos($entidad, $precio){
 
 	return $tab -> getString();
 }
-function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo){
+function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave, $olvidar, $nuevo, $rac){
 	$xEmul		= new cLeasingEmulaciones($plazo, 0 ,0);
-	$xEsc		= new cLeasing_escenarios();
+	$xEsc		= new cLeasingEscenarios();
 	$tab 		= new TinyAjaxBehavior();
 	$xQL		= new MQL();
 	$tasares	= 0;
 	$DRes		= explode(",", $residuales, 10);
 	$NRes		= count($DRes);
+	$NRes		= ($nuevo == 1) ? 0  : $NRes;
+	$rs			= $xEsc->getAll();
 	
-	
+	foreach ($rs as $rw){
+		$xEsc->init($rw);
+		$idx		= $xEsc->getPlazo();
+		$tasavec	= 0;
+		$valorvec	= 0;
+		
+		if($clave <= 0){
+			$valorvec		= $xEmul->getValorDeVenta($precio, $anticipo, $tasavec, $idx, $aliado, $rac);
+		} else {
+			$xLeas	= new cCreditosLeasing($clave);
+			if($xLeas->init()){
+				$valorvec	= $xLeas->getValorDeVenta($idx);
+			}
+			
+		}
+		$tab->add(TabSetValue::getBehavior("valorvec_$idx", $valorvec ));
+	}
 	if($NRes <= 0){
-		$rs			= $xQL->getDataRecord("SELECT * FROM `leasing_escenarios`");
+		$rs			= $xEsc->getAll();
 		foreach ($rs as $rw){
-			$xEsc->setData($rw);
-			$idx	= $xEsc->plazo()->v();
-			$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, false, $anticipo);
+			$xEsc->init($rw);
+			$idx		= $xEsc->getPlazo();
+			$tr			= false;
+			//$tasavec	= 0;
+			if($clave > 0){
+				$xLeas	= new cCreditosLeasing($clave);
+				if($xLeas->init()){
+					$tr			= $xLeas->getTasaResidualPzo($idx);
+					//$tasavec	= $xLeas->getTasaVec($idx);
+				}
+				
+			}
+			if($nuevo == 1){
+				if($tr <= 0){
+					$xRes	= new cLeasingValorResidual();
+					if($xRes->initByPlazoTipo($idx)== true){
+						$tr	= $xRes->getPorcientoResidual();
+					}
+				}
+			}
+			
+			
+			$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, $tr, $anticipo);
+			
+			$tab->add(TabSetValue::getBehavior("tasaresidual_$idx", $tr ));
 			$tab->add(TabSetValue::getBehavior("residual_$idx", $res ));
+			
 			if($idx == $plazo){
 				$tab->add(TabSetValue::getBehavior("monto_residual", $res ));
 			}
@@ -177,8 +245,14 @@ function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo){
 			$PRes	= setNoMenorQueCero($DTasa[0]);
 			$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
 			$TRes	= setNoMenorQueCero($TRes);
+			
 			$res 	= $xEmul->getValorResidual($precio, $aliado, $PRes, $TRes, $anticipo);
 			$tab->add(TabSetValue::getBehavior("residual_$PRes", $res ));
+			
+			//setError($TRes);
+			
+			//$tab->add(TabSetValue::getBehavior("tasaresidual_$PRes", $TRes ));
+			
 			if($PRes == $plazo){
 				$tab->add(TabSetValue::getBehavior("monto_residual", $res ));
 			}
@@ -194,11 +268,13 @@ function jsaAsociar($idpersona, $idcontrol){
 	}
 	return $xP->getMessages();
 }
-$jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo'));
-$jxc ->exportFunction('jsaGetComision', array('originador'), "#comision_originador");
-$jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps'));
-$jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehiculo'));
-$jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo'));
+
+$jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo', 'idoriginacion_leasing', 'idolvidar', 'idnuevo'));
+$jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo'), "#comision_originador");
+$jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps','idoriginacion_leasing','idolvidar', 'idnuevo'));
+$jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehiculo','idoriginacion_leasing', 'idolvidar', 'idnuevo'));
+$jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac'));
+
 $jxc ->exportFunction('jsaAsociar', array('persona', 'idoriginacion_leasing'), "#idavisos");
 
 $jxc ->process();
@@ -214,14 +290,13 @@ $recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $re
 $empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
 $grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
 $ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
-
 $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
 $xFRM		= new cHForm("frmcotizacion", "./", "frmcotizacion");
 $xSel		= new cHSelect();
-//$xTxt		= new cHText();
+
 
 $xFRM->setTitle($xHP->getTitle());
 
@@ -232,7 +307,7 @@ if($clave>0){
 $xFRM->setNoAcordion();// $xFRM->setIsWizard();
 
 $xTabla		= new cOriginacion_leasing();
-$xLeas		= new cCreditosLeasing();
+$xLeas		= new cCreditosLeasing($clave);
 $xMon		= new cTesoreriaMonedas("TIIE"); $xMon->init();
 
 $valorTIIE	= ($NoUsarTIIE == true) ? 0 : $xMon->getValor();
@@ -255,6 +330,8 @@ $xTabla->paso_proceso($xCProc->PASO_REGISTRADO);
 $xTabla->estatus(SYS_UNO);
 $xTabla->domicilia(SYS_UNO);
 $xTabla->tipo_rac($xLeas->TIPO_RAC_PEQ);
+$xTabla->montoajuste(0);
+
 
 //=======================  Datos para Creditos Editados.
 if($clave >0){
@@ -268,10 +345,10 @@ if($clave >0){
 	//Si el Usuario no es Originador
 	if($EsOriginador == false){
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
-			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
-			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
+			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdagregarpersona", "persona");
+			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA, "cmdvincularpersona", "persona");
 		} else {
-			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA);
+			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA, "cmdverpersona", "persona");
 		}
 		//Si el credito no ha sido asignado
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
@@ -313,8 +390,9 @@ $xFRM->OHidden("cuota_garantia", $xTabla->cuota_garantia()->v());
 $xFRM->OHidden("paso_proceso", $xTabla->paso_proceso()->v());
 $xFRM->OHidden("usuario", $xTabla->usuario()->v());
 $xFRM->OHidden("tipo_leasing", $xTabla->tipo_leasing()->v());
+
 $xFRM->OHidden("tasa_iva", $xTabla->tasa_iva()->v());
-$xFRM->OHidden("tasa_compra", $xTabla->tasa_compra()->v());
+
 
 
 $xFRM->OHidden("monto_directo", $xTabla->monto_directo()->v());
@@ -323,9 +401,9 @@ $xFRM->OHidden("monto_residual", $xTabla->monto_residual()->v());
 $xFRM->OHidden("cuota_vehiculo", $xTabla->cuota_vehiculo()->v());
 $xFRM->OHidden("cuota_aliado", $xTabla->cuota_aliado()->v());
 
-
 $xFRM->OHidden("monto_comision", $xTabla->monto_comision()->v());
 $xFRM->OHidden("monto_originador", $xTabla->monto_originador()->v());
+
 $xFRM->OHidden("estatus", $xTabla->estatus()->v());
 
 
@@ -353,9 +431,7 @@ if($xUser->getEsOriginador() == false){
 		$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
 		//Agrega ficha de ejecutivo
 		//Agregar datos de originador y usuario
-		
 		//Bloquear los demás controles.
-		
 	}
 } else {
 	$xFRM->OHidden("oficial", $xTabla->oficial()->v());
@@ -367,6 +443,11 @@ if($xUser->getEsOriginador() == false){
 	}
 	$xFRM->OHidden("comision_originador", $xTabla->comision_originador()->v());
 	$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
+	//$xFRM->addHElem( $xUser->getFicha() );
+	$xUsrOrg	= new cLeasingUsuarios($xTabla->suboriginador()->v());
+	if($xUsrOrg->init() == true){
+		$xFRM->addHElem( $xUsrOrg->getFicha() );
+	}
 }
 
 
@@ -379,6 +460,7 @@ $xFRM->addSeccion("iddcliente", "TR.DATOS DEL CLIENTE");
 
 $xFRM->OHidden("persona", $xTabla->persona()->v());
 $xFRM->OHidden("credito",$xTabla->credito()->v());
+
 if($xTabla->persona()->v() > DEFAULT_SOCIO){
 	$xSoc	= new cSocio($xTabla->persona()->v());
 	if($xSoc->init() == true){
@@ -398,7 +480,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 		if($xCred->init() == true){
 			$xFRM->addHElem($xCred->getFicha());
 			if($EsOriginador == false){
-				$xFRM->OButton("TR.VER CREDITO", "jsVerCredito()", $xFRM->ic()->CREDITO);
+				$xFRM->OButton("TR.VER CREDITO", "jsVerCredito()", $xFRM->ic()->CREDITO, "", "credito");
 				$xFRM->OButton("TR.DATOS_DE_TRANSFERENCIA", "var cGen=new CredGen();cGen.setAgregarBancos(" .$xTabla->credito()->v() . ");", $xFRM->ic()->BANCOS);
 				//Validar Si existe Dato del Vehiculo
 				$xArr	= new cCreditosLeasing($clave);
@@ -410,6 +492,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 			}
 			$xFRM->addJsInit("jsDesactivarCotizacion();");
 			//============================ Agregar
+			
 			$xFRM->addDisabledInit("tipo_rac");
 			$xFRM->addDisabledInit("marca");
 			$xFRM->addDisabledInit("tipo_uso");
@@ -419,6 +502,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 			$xFRM->addDisabledInit("oficial");
 			$xFRM->addDisabledInit("originador");
 			$xFRM->addDisabledInit("suboriginador");
+			
 			//$xFRM->addDisabledInit("");
 			//$xFRM->addDisabledInit("");
 		} else {
@@ -433,6 +517,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 	}
 } else {
 	$xFRM->OText("nombre_cliente", $xTabla->nombre_cliente()->v(), "TR.NOMBRE CLIENTE");
+	$xFRM->setValidacion("nombre_cliente", $xFRM->VALIDARVACIO, "", true);
 }
 $xFRM->OText("nombre_atn", $xTabla->nombre_atn()->v(), "TR.NOMBRE ATN");
 //--- 25/Mayo/2017
@@ -444,6 +529,7 @@ $xFRM->OMail("mail", $xTabla->mail()->v(), "TR.CORREO_ELECTRONICO");
 $xSelRac	= $xSel->getListaDeLeasingRAC("tipo_rac", $xTabla->tipo_rac()->v());
 $xSelRac->addEvent("onblur", "jsaGetTasa()");
 $xSelRac->addEvent("onchange", "jsaGetTasa()");
+
 if($EsOriginador == true){
 	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_rac") == true){
 		$xFRM->OHidden("tipo_rac", $xTabla->tipo_rac()->v());
@@ -459,6 +545,13 @@ if($PersonaCargado == false){
 } else {
 	$xFRM->OHidden("es_moral", $xTabla->es_moral()->v());
 }
+//======================== Tasa de Compra
+if($OlvidarTodo == true){
+	$xFRM->OMoneda("tasa_compra", $xTabla->tasa_compra()->v(), "TR.TASAVEC");
+} else {
+	$xFRM->OHidden("tasa_compra", $xTabla->tasa_compra()->v());
+}
+
 $xFRM->endSeccion();
 //========================================= VEHICULO ====================================
 $xFRM->addSeccion("iddvehi", "TR.DATOS DEL VEHICULO");
@@ -471,12 +564,18 @@ $xFRM->addHElem($xSel->getListaDeVehiculosSegmentos("segmento", $xTabla->segment
 
 
 $xFRM->OText_13("modelo", $xTabla->modelo()->v(), "TR.VERSION");
+$xFRM->setValidacion("modelo", $xFRM->VALIDARVACIO, "", true);
+
 $xFRM->OText_13("annio", $xTabla->annio()->v(), "TR.ANNIO");
 
 
 $xFRM->OMoneda2("precio_vehiculo", $xTabla->precio_vehiculo()->v(), "TR.PRECIO VEHICULO");
+if($AunMasSimple == true AND $EsOriginador == true){
+	$xFRM->OHidden("monto_anticipo", $xTabla->monto_anticipo()->v());
+} else {
+	$xFRM->OMoneda2("monto_anticipo", $xTabla->monto_anticipo()->v(), "TR.ANTICIPORENTA");
+}
 
-$xFRM->OMoneda2("monto_anticipo", $xTabla->monto_anticipo()->v(), "TR.MONTO ANTICIPO");
 
 $xSelEntidad	= $xSel->getListaDeEntidadesFed("entidadfederativa", true, $xTabla->entidadfederativa()->v());
 $xSelEntidad->addEvent("onblur", "jsaGetCostos()");
@@ -495,7 +594,7 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->addSeccion("iddacces", "TR.ACCESORIOS");
 }
 
-if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true){
+if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true) AND $OlvidarTodo == false){
 	$xFRM->OHidden("tipo_gps", $xTabla->tipo_gps()->v() );
 } else {
 
@@ -507,12 +606,12 @@ $xFRM->addHElem($xSelGPS->get(true) );
 
 if($xUser->getEsOriginador() == false){
 
-	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true){
+	if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true) AND $OlvidarTodo == false){
 		$xFRM->OHidden("monto_gps", $xTabla->monto_gps()->v());
 	} else {
 		$xFRM->OMoneda2("monto_gps", $xTabla->monto_gps()->v(), "TR.MONTO PAQUETESGPS");
 	}
-	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_aliado") == true){
+	if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_aliado") == true) AND $OlvidarTodo == false){
 		$xFRM->OHidden("monto_aliado", $xTabla->monto_aliado()->v());
 		$xFRM->OHidden("describe_aliado", $xTabla->describe_aliado()->v());
 	} else {
@@ -520,7 +619,7 @@ if($xUser->getEsOriginador() == false){
 		$xFRM->OText("describe_aliado", $xTabla->describe_aliado()->v(), "TR.DESCRIPCION EQUIPOALIADO");
 	}
 	
-	if($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_accesorios") == true){
+	if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "monto_accesorios") == true) AND $OlvidarTodo == false){
 		
 		$xFRM->OHidden("monto_accesorios", $xTabla->monto_accesorios()->v());
 		$xFRM->OHidden("monto_tenencia", $xTabla->monto_tenencia()->v());
@@ -535,20 +634,43 @@ if($xUser->getEsOriginador() == false){
 		$xFRM->OMoneda2("monto_mtto", $xTabla->monto_mtto()->v(), "TR.MTTO");
 		$xFRM->OMoneda2("monto_gestoria", $xTabla->monto_gestoria()->v(), "TR.GASTOSGESTORIA");
 	}
+	//================== Ajuste de Servicio
+	$xSelS		= new cHSelect();
+	$xSelS->setDivClass("tx4 tx18 green");
 	
+	if(count($ArrAjustes)>0){
+		$arr		= array();
+		$arr["0"]	= SYS_NINGUNO;
+		foreach ($ArrAjustes as $idx => $idm){
+			$arr[$idm] = getFMoney($idm);		}
+		$xSelS->addOptions($arr);
+		
+		$xFRM->addHElem( $xSelS->get("montoajuste", "TR.SERVICIOS", $xTabla->montoajuste()->v()) );
+		
+	} else {
+		$xFRM->OHidden("montoajuste", $xTabla->montoajuste()->v());
+	}
+	//==================
 	$xFRM->OMoneda2("monto_seguro", $xTabla->monto_seguro()->v(), "TR.AUTOSEGURO");
 		
 	$xFRM->OMoneda2("monto_placas", $xTabla->monto_placas()->v(), "TR.COSTOPLACAS");
 	
 	$xFRM->OMoneda2("monto_notario", $xTabla->monto_notario()->v(), "TR.GASTOSNOTARIALES");
 	
-	$xFRM->ODisabledM("trenta_deposito", $xTabla->renta_deposito()->v(), "TR.RENTADEPOSITO");
-	
-	$xFRM->OHidden("renta_deposito", $xTabla->renta_deposito()->v());
-	$xFRM->ODisabledM("trenta_proporcional", $xTabla->renta_proporcional()->v(), "TR.RENTA PROPORCIONAL");
-	
-	$xFRM->OHidden("renta_proporcional", $xTabla->renta_proporcional()->v());
-	
+	if($OlvidarTodo == true){
+		
+		$xFRM->OMoneda2("renta_deposito", $xTabla->renta_deposito()->v(), "TR.RENTADEPOSITO");
+		$xFRM->OMoneda2("renta_proporcional", $xTabla->renta_proporcional()->v(), "TR.PRIMERARENTA");
+		
+		$xFRM->OHidden("trenta_deposito", $xTabla->renta_deposito()->v());
+		$xFRM->OHidden("trenta_proporcional", $xTabla->renta_proporcional()->v());
+		
+	} else {
+		$xFRM->ODisabledM("trenta_deposito", $xTabla->renta_deposito()->v(), "TR.RENTADEPOSITO");
+		$xFRM->OHidden("renta_deposito", $xTabla->renta_deposito()->v());
+		$xFRM->ODisabledM("trenta_proporcional", $xTabla->renta_proporcional()->v(), "TR.PRIMERARENTA");
+		$xFRM->OHidden("renta_proporcional", $xTabla->renta_proporcional()->v());
+	}
 	
 } else {
 	$xFRM->OHidden("monto_aliado", $xTabla->monto_aliado()->v());
@@ -592,11 +714,28 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->OHidden("domicilia", $xTabla->domicilia()->v());
 }
 
-$xFRM->OHidden("residuales", $xTabla->residuales()->v(), "TR.RESIDUALES");
+//setLog($xTabla->residuales()->v());
+
+
 $xFRM->OHidden("cuota_iva", $xTabla->cuota_iva()->v());
 
 $xFRM->endSeccion();
 $xFRM->addSeccion("iddescenas", "TR.ESCENARIOS");
+if($OlvidarTodo == true){
+	$xFRM->OHidden("idolvidar", "1");
+} else {
+	$xFRM->OHidden("idolvidar", "0");
+}
+
+if($Nuevo == true){
+	$xFRM->OHidden("idnuevo", "1");
+} else {
+	$xFRM->OHidden("idnuevo", "0");
+}
+
+$xFRM->OHidden("vecs", $xTabla->vecs()->v());
+$xFRM->OHidden("tasas", $xTabla->tasas()->v());
+$xFRM->OHidden("residuales", $xTabla->residuales()->v());
 
 //================= No usar residuales
 
@@ -625,9 +764,15 @@ foreach ($rs as $rw){
 
 	$xEsc->setData($rw);
 	$idx	= $xEsc->plazo()->v();
-	$xFRM->OHidden("tasa_credito_$idx", 0);
+	
 	$xFRM->OHidden("residual_$idx", 0);
+	$xFRM->OHidden("valorvec_$idx", 0);
 	$xFRM->OHidden("monto_gps_$idx", 0);
+	
+	if($OlvidarTodo == false){
+		$xFRM->OHidden("tasa_credito_$idx", $xLeas->getTasaInteres($idx));
+		$xFRM->OHidden("tasavec_$idx", $xLeas->getTasaVec($idx));
+	}
 	
 	$tt		.= "<th>" . $xEsc->descripcion_escenario()->v() . "</th>";
 }
@@ -635,8 +780,40 @@ $tt		.= "</tr>";
 
 //==== ================================================ Residual
 $tt		.= "<tr>";
-$tt		.= "<th>" . $xFRM->getT("TR.RESIDUAL") . "</th>";
-$jsVRes	= "";
+
+if($OlvidarTodo == true){
+	//==================================================== Tasas de Credito
+	$tt		.= "<tr>";
+	$tt		.= "<th>" . $xFRM->getT("TR.TASA INTERES") . "</th>";
+	foreach ($rs as $rw){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("");
+		$xTxt->addEvent("jsActualizaResiduales", "onchange");
+		
+		$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
+		$tt		.= "<td>" . $xTxt->getDeMoneda("tasa_credito_$idx", "", $xLeas->getTasaInteres($idx)) . "</td>";
+	}
+	$tt		.= "</tr>";
+	
+	//==================================================== Tasas de Vecs
+	$tt		.= "<tr>";
+	$tt		.= "<th>" . $xFRM->getT("TR.TASAVEC") . "</th>";
+	foreach ($rs as $rw){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("");
+		$xTxt->addEvent("jsActualizaResiduales", "onchange");
+		
+		$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
+		$tt		.= "<td>" . $xTxt->getDeMoneda("tasavec_$idx", "", $xLeas->getTasaVec($idx)) . "</td>";
+	}
+	$tt		.= "</tr>";
+}
+
+
+$tt		.= "<th>" . $xFRM->getT("TR.TASARESIDUAL") . "</th>";
+$jsVRes	= "";//Js de vlores residuales
+$jsVTas	= "";//Js de Tasas
+$jsVVecs	= "";//Js de Residuales
 
 foreach ($rs as $rw){
 	$xEsc->setData($rw);
@@ -646,35 +823,54 @@ foreach ($rs as $rw){
 	$li		= setNoMenorQueCero($D["porciento_residual"]);
 	$ls		= setNoMenorQueCero($D["porciento_final"]);
 
-	if($li == $ls){
-		//Agregar control de solo lectura
-		$tt		.= "<td class='tit'>$li</td>";
-		$xFRM->OHidden("tasaresidual_$idx", $li);
+	if($OlvidarTodo == true){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("");
+		$xTxt->addEvent("jsActualizaResiduales", "onchange");
+		
+		//setLog("674.- " . $xLeas->getTasaResidualPzo($idx));
+		
+		$tt		.= "<td>" . $xTxt->getDeMoneda("tasaresidual_$idx", "", $xLeas->getTasaResidualPzo($idx)) . "</td>";
+		
+		
 	} else {
 	
-		if($ls <= $li){ $ls	= $li + 20;	}
-		$arrOpts= array();
+		if($li == $ls){
+			//Agregar control de solo lectura
+			$tr		= $xLeas->getTasaResidualPzo($idx);
+			
+			$tt		.= "<td class='tit' id='tasaresidual-$idx'>$tr</td>";
+			$xFRM->OHidden("tasaresidual_$idx", $tr);
+		} else {
 		
-		for($ii = $li; $ii <= $ls;){
-			$arrOpts[$ii] = round($ii,2) . " %";
-			$ii = $ii + 5;
-		}
-		$xHS->setDivClass("");
-		$xHS->addOptions($arrOpts);
-		$xHS->setDefault($xLeas->getTasaResidualPzo($idx));
-		$xHS->addEvent("jsActualizaResiduales", "onchange");
-		
-		if($xUser->getEsOriginador() == true){
-			if($NoUsarResidual == true){
-				$xFRM->addDisabledInit("tasaresidual_$idx");
+			if($ls <= $li){ $ls	= $li + 20;	}
+			$arrOpts= array();
+			
+			for($ii = $li; $ii <= $ls;){
+				$arrOpts[$ii] = round($ii,2) . " %";
+				$ii = $ii + 5;
 			}
-		}
+			$xHS->setDivClass("");
+			$xHS->addOptions($arrOpts);
+			$xHS->setDefault($xLeas->getTasaResidualPzo($idx));
+			$xHS->addEvent("jsActualizaResiduales", "onchange");
+			
+			if($xUser->getEsOriginador() == true){
+				if($NoUsarResidual == true){
+					$xFRM->addDisabledInit("tasaresidual_$idx");
+				}
+			}
+			
+			$tt		.= "<th>" . $xHS->get("tasaresidual_$idx") . "</th>";
 		
-		$tt		.= "<th>" . $xHS->get("tasaresidual_$idx") . "</th>";
-	
+		}
 	}
 	//Suma JS
 	$jsVRes	.= ($jsVRes == "") ? "'$idx-' + $(\"#tasaresidual_$idx\").val()" : " + ',$idx-' + $(\"#tasaresidual_$idx\").val()";
+	//Suma Tasa Vecs
+	$jsVVecs.= ($jsVVecs == "") ? "'$idx-' + $(\"#tasavec_$idx\").val()" : " + ',$idx-' + $(\"#tasavec_$idx\").val()";
+	//Tasa Ints
+	$jsVTas	.= ($jsVTas == "") ? "'$idx-' + $(\"#tasa_credito_$idx\").val()" : " + ',$idx-' + $(\"#tasa_credito_$idx\").val()";
 }
 $tt		.= "</tr>";
 
@@ -769,12 +965,23 @@ $tt		.= "</tr>";
 
 
 //==================================================== Valor Residual
+if($EsOriginador == false){
+	$tt		.= "<tr class='tr-plan'>";
+	$tt		.= "<th>" . $xFRM->getT("TR.VALORRESIDUAL") . "</th>";
+	foreach ($rs as $rw){
+		$xEsc->setData($rw);
+		$idx	= $xEsc->plazo()->v();
+		$tt		.= "<td class='mny' id='residual-$idx'></td>";
+	}
+	$tt		.= "</tr>";
+}
+
 $tt		.= "<tr class='tr-plan'>";
-$tt		.= "<th>" . $xFRM->getT("TR.VALORRESIDUAL") . "</th>";
+$tt		.= "<th>" . $xFRM->getT("TR.VEC") . "</th>";
 foreach ($rs as $rw){
 	$xEsc->setData($rw);
 	$idx	= $xEsc->plazo()->v();
-	$tt		.= "<td class='mny' id='residual-$idx'></td>";
+	$tt		.= "<td class='mny' id='valorvec-$idx'></td>";
 }
 $tt		.= "</tr>";
 
@@ -789,15 +996,28 @@ foreach ($rs as $rw){
  
  
 //==================================================== Tasas de Interes
+if($EsOriginador == false){
+	$tt		.= "<tr>";
+	$tt		.= "<th>" . $xFRM->getT("TR.TASA_ANUALIZADA") . "</th>";
+	foreach ($rs as $rw){
+	 	$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
+	 	$tt		.= "<td class='mny' id='tasa_credito-$idx'></td>";
+	}
+	$tt		.= "</tr>";
 
-$tt		.= "<tr>";
-$tt		.= "<th>" . $xFRM->getT("TR.TASA_ANUALIZADA") . "</th>";
-foreach ($rs as $rw){
- 	$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
- 	$tt		.= "<td class='mny' id='tasa_credito-$idx'></td>";
+//==================================================== Tasas de Vec
+
+	$tt		.= "<tr>";
+	$tt		.= "<th>" . $xFRM->getT("TR.TASAVEC") . "</th>";
+	foreach ($rs as $rw){
+		$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
+		$tvc	= $xLeas->getTasaVec($idx);
+		
+		$tt		.= "<td class='mny' id='tasavec-$idx'>" . $tvc . "</td>";
+	}
+	$tt		.= "</tr>";
+
 }
-$tt		.= "</tr>";
-
 //==================================================== Aliado
 /*$tt		.= "<tr>";
  $tt		.= "<th>" . $xFRM->getT("TR.EQUIPOALIADO") . "</th>";
@@ -825,7 +1045,7 @@ $xFRM->addAviso("", "idavisos");
 $paso		= $xTabla->paso_proceso()->v();
 if($clave > 0){
 	//Iniciar Calculo
-	$xFRM->addJsInit("jsCalcularEscenarios();");
+	$xFRM->addJsInit("jsInitEdit();");
 	if($xTabla->persona()->v() > DEFAULT_SOCIO){
 		if($xTabla->credito()->v() > DEFAULT_CREDITO){
 			$xCred	= new cCredito($xTabla->credito()->v());
@@ -838,7 +1058,7 @@ if($clave > 0){
 			$paso	= $xCProc->PASO_CON_PERSONA;
 		}
 	} else {
-		if($xTabla->oficial()->v() > 0 ){
+		if($xTabla->oficial()->v() > 0 AND ($xTabla->oficial()->v() != $xTabla->suboriginador()->v()) ){
 			$paso	= $xCProc->PASO_CON_OFICIAL;
 		} else {
 			$paso	= $xCProc->PASO_ATENDIDO;
@@ -851,12 +1071,15 @@ if($clave > 0){
 	
 	
 	//Actualizar
+	$xLeas->setPaso($paso);
 	
-	$xQL->setRawQuery("UPDATE `originacion_leasing` SET `paso_proceso`=$paso WHERE `idoriginacion_leasing`=$clave");
-	$xFRM->addCerrar();
+	
+	//$xFRM->addCerrar();
 }
 
-
+if($Nuevo == true){
+	$xFRM->addJsInit("jsInitNew();");
+}
 
 
 echo $xFRM->get();
@@ -880,11 +1103,17 @@ var mSumarIVA			= true;
 var mFactorMinAnticipo	= 0.2;
 var mFactorSeguro		= 0.03;
 var mMontoMinGtosNot	= 400;
-
+var mOlvidar			= <?php echo ($OlvidarTodo == true) ? "true" : "false"; ?>;
 
 <?php
 echo $jsFormulaPrec;
 ?>
+function jsInitEdit(){
+	setTimeout(jsCalcularEscenarios,500);
+}
+function jsInitNew(){
+	setTimeout(jsActualizaResiduales,1000);
+}
 function jsCargarPrecio(v){
 	jsActualizaResiduales();
 	jsaGetTasa();
@@ -977,28 +1206,31 @@ function jsCalcularEscenarios(){
 	var anticipo			= $("#monto_anticipo").val();
 	var minanticipo			= (precio*vFactorIVA) * mFactorMinAnticipo;
 	minanticipo				= redondear(minanticipo,2);
-	if(minanticipo > anticipo){
-		$("#monto_anticipo_mny").val( getFMoney(minanticipo) );
-		$("#monto_anticipo").val( minanticipo );
-	}
+	
+	if(mOlvidar == false){
+		
+		if(minanticipo > anticipo){
+			$("#monto_anticipo_mny").val( getFMoney(minanticipo) );
+			$("#monto_anticipo").val( minanticipo );
+		}
 
-
-	//jsCargarCostos
-	jsGetCostos();
-	//Calcular minimos de costos	
-	var notario				= $("#monto_notario").val();
-	if(mMontoMinGtosNot > notario){
-		$("#monto_notario_mny").val( getFMoney(mMontoMinGtosNot) );
-		$("#monto_notario").val( mMontoMinGtosNot );
+	
+		//jsCargarCostos
+		jsGetCostos();
+		//Calcular minimos de costos	
+		var notario				= $("#monto_notario").val();
+		if(mMontoMinGtosNot > notario){
+			$("#monto_notario_mny").val( getFMoney(mMontoMinGtosNot) );
+			$("#monto_notario").val( mMontoMinGtosNot );
+		}
+		var seguro				= $("#monto_seguro").val();
+		var minseguro			= (precio*vFactorIVA) * mFactorSeguro;
+		minseguro				= redondear(minseguro,2);
+		if(minseguro > seguro){
+			$("#monto_seguro_mny").val( getFMoney(minseguro) );
+			$("#monto_seguro").val( minseguro );		
+		}
 	}
-	var seguro				= $("#monto_seguro").val();
-	var minseguro			= (precio*vFactorIVA) * mFactorSeguro;
-	minseguro				= redondear(minseguro,2);
-	if(minseguro > seguro){
-		$("#monto_seguro_mny").val( getFMoney(minseguro) );
-		$("#monto_seguro").val( minseguro );		
-	}
-
 	//Todos a moneda
 	xG.aMonedaForm();
 	xG.spinInit();
@@ -1015,18 +1247,31 @@ function jsCalcularEscenariosII(){
 		//jsCalcularEscenarios();
 		
 	} else {	
-			//==================== Asignar Costos GPS al Valor 
-			$("#monto_gps-12").html( getFMoney($("#monto_gps_12").val()) );
-			$("#monto_gps-24").html( getFMoney($("#monto_gps_24").val()) );
-			$("#monto_gps-36").html( getFMoney($("#monto_gps_36").val()) );
-			$("#monto_gps-48").html( getFMoney($("#monto_gps_48").val()) );
-			$("#monto_gps-60").html( getFMoney($("#monto_gps_60").val()) );
-			//== Mostrar Tasa de Interes
-			$("#tasa_credito-12").html( getFMoney($("#tasa_credito_12").val()) );
-			$("#tasa_credito-24").html( getFMoney($("#tasa_credito_24").val()) );
-			$("#tasa_credito-36").html( getFMoney($("#tasa_credito_36").val()) );
-			$("#tasa_credito-48").html( getFMoney($("#tasa_credito_48").val()) );
-			$("#tasa_credito-60").html( getFMoney($("#tasa_credito_60").val()) );			
+		//==================== Asignar Costos GPS al Valor 
+		$("#monto_gps-12").html( getFMoney($("#monto_gps_12").val()) );
+		$("#monto_gps-24").html( getFMoney($("#monto_gps_24").val()) );
+		$("#monto_gps-36").html( getFMoney($("#monto_gps_36").val()) );
+		$("#monto_gps-48").html( getFMoney($("#monto_gps_48").val()) );
+		$("#monto_gps-60").html( getFMoney($("#monto_gps_60").val()) );
+		//== Mostrar Tasa de Interes
+		$("#tasa_credito-12").html( getFTasa($("#tasa_credito_12").val()) );
+		$("#tasa_credito-24").html( getFTasa($("#tasa_credito_24").val()) );
+		$("#tasa_credito-36").html( getFTasa($("#tasa_credito_36").val()) );
+		$("#tasa_credito-48").html( getFTasa($("#tasa_credito_48").val()) );
+		$("#tasa_credito-60").html( getFTasa($("#tasa_credito_60").val()) );
+		//== Mostrar Tasa Vec
+		$("#tasavec-12").html( getFTasa($("#tasavec_12").val()) );
+		$("#tasavec-24").html( getFTasa($("#tasavec_24").val()) );
+		$("#tasavec-36").html( getFTasa($("#tasavec_36").val()) );
+		$("#tasavec-48").html( getFTasa($("#tasavec_48").val()) );
+		$("#tasavec-60").html( getFTasa($("#tasavec_60").val()) );
+		//== Mostrar Tasa res
+		$("#tasaresidual-12").html( getFTasa($("#tasaresidual_12").val()) );
+		$("#tasaresidual-24").html( getFTasa($("#tasaresidual_24").val()) );
+		$("#tasaresidual-36").html( getFTasa($("#tasaresidual_36").val()) );
+		$("#tasaresidual-48").html( getFTasa($("#tasaresidual_48").val()) );
+		$("#tasaresidual-60").html( getFTasa($("#tasaresidual_60").val()) );	
+				
 			//====================
 			jsCalcular(12);
 			jsCalcular(24);
@@ -1045,6 +1290,7 @@ function xLog(msg){
 	var idx	= entero( $("#plazo").val() );
 	if(mkPzo == idx){
 		setLog(msg);
+		console.log(msg);
 	}
 }
 function jsCalcular(idx){
@@ -1065,6 +1311,8 @@ function jsCalcular(idx){
 	idtasa					= (idtasa+tasatiie);
 	//setLog("Tasa de plazo " + idx +  " a " + idtasa + "%");
 	var residual			= $("#residual_" + idx).val();
+	var valorvec			= $("#valorvec_" + idx).val();
+	
 	var idiva				= $("#tasa_iva").val();
 	var idfrecuencia		= 30;
 	
@@ -1078,6 +1326,7 @@ function jsCalcular(idx){
 	//Coste
 	var vAnticipo			= flotante($("#monto_anticipo").val());
 	var vCoste				= (precio+aliado) - vAnticipo;
+	
 	xLog(idx + " . - Precio Vehiculo : " + precio);
 	xLog(idx + " . - Monto Aliado : " + aliado);
 	xLog(idx + " . - Anticipo : " + vAnticipo);
@@ -1115,6 +1364,7 @@ function jsCalcular(idx){
 	//renta Calculada
 	xLog(idx + " . - Coste : " + vCoste);
 	xLog(idx + " . - Valor Residual : " + residual);
+	xLog(idx + " . - Valor VEC : " + valorvec);
 	xLog(idx + " . - Tasa de Interes : " + idtasa);
 	
 	var cc1				= xC.getCuotaDePago({capital:vCoste, tasa: idtasa, residual: residual, frecuencia: idfrecuencia, pagos: idpagos, iva: 0});
@@ -1133,11 +1383,25 @@ function jsCalcular(idx){
 	if(idx == vPzoElegido){
 		var rd	= getVConIVA(trenta) * mFactorRentaDep;
 		var rp	= trenta * mFactorRentaProp;
-		$("#trenta_deposito").val(getFMoney(rd));
-		$("#renta_deposito").val(rd);
+		var rda	= flotante($("#renta_deposito").val());
+		var rpa	= flotante($("#renta_proporcional").val());
 
-		$("#trenta_proporcional").val(getFMoney(rp));
-		$("#renta_proporcional").val(rp);		
+		if(mOlvidar == true){
+			if(rd < rda){
+				$("#trenta_deposito").val(getFMoney(rd));
+				$("#renta_deposito").val(rd);
+			}
+			if(rp < rpa){
+				$("#trenta_proporcional").val(getFMoney(rp));
+				$("#renta_proporcional").val(rp);
+			}
+		} else {
+			$("#trenta_deposito").val(getFMoney(rd));
+			$("#renta_deposito").val(rd);
+			$("#trenta_proporcional").val(getFMoney(rp));
+			$("#renta_proporcional").val(rp);
+		}
+
 		//=========== IVA de Renta
 		if(mSumarIVA == true){
 			var mCuotaIva	= redondear((trenta * vTasaIVA),2);
@@ -1206,6 +1470,7 @@ function jsCalcular(idx){
 	
 	$("#comision-" + idx).html(getFMoney(monto_comision));
 	$("#residual-" + idx).html(getFMoney(residual));
+	$("#valorvec-" + idx).html(getFMoney(valorvec));
 
 }
 function getVConIVA(monto){
@@ -1302,16 +1567,20 @@ function jsDesactivarCotizacion(){
 	xG.soloLeerForma(false, false);
 }
 function jsActualizaResiduales(){
-	var xx = <?php  echo $jsVRes; ?>;
+	var xx 	= <?php  echo $jsVRes; ?>;
+	var yy	= <?php  echo $jsVTas; ?>;
+	var ww	= <?php  echo $jsVVecs; ?>;
+
+	$("#vecs").val(ww);
+	$("#tasas").val(yy);
 	$("#residuales").val(xx);
+	
 }
 
 function jsGetPlanCliente(){
 	var idcredito	= $("#credito").val();
 	xG.w({url:"../frmarrendamiento/leasing-plan_cliente.frm.php?credito=" + idcredito, tab:true});
 }
-
-
 function jsAgregarDocumentos(){
 	var idcontrol	= $("#idoriginacion_leasing").val();
 	xG.addDocuments(vTipoOrigen, idcontrol);
@@ -1332,7 +1601,7 @@ function jsGetCostos(){
 function jsRegistroGuardado(d){
 	var xid	= entero(d.id);
 	if(xid > 0){
-		xG.go({url: "../frmarrendamiento/cotizador.edit.frm.php?clave=" + xid});
+		xG.go({url: "../frmarrendamiento/cotizador.edit.frm.php?nuevo=true&clave=" + xid});
 	}
 }
 function jsEditarBonos(){

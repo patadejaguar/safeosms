@@ -253,19 +253,18 @@ Gen.prototype.formF9key	= function(evt){
 }
 
 function getClientSize() {
-  var width = 0, height = 0;
-
-  if(typeof(window.innerWidth) == 'number') {
-        width 	= window.innerWidth;
-        height 	= window.innerHeight;
-  } else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
-        width 	= document.documentElement.clientWidth;
-        height	= document.documentElement.clientHeight;
-  } else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
-        width 	= document.body.clientWidth;
-        height	= document.body.clientHeight;
-  }
-  return {width: width, height: height};
+	var width = 0, height = 0;
+	if(typeof(window.innerWidth) == 'number') {
+		width 	= window.innerWidth;
+		height 	= window.innerHeight;
+	} else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
+		width 	= document.documentElement.clientWidth;
+		height	= document.documentElement.clientHeight;
+	} else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+		width 	= document.body.clientWidth;
+		height	= document.body.clientHeight;
+	}
+	return {width: width, height: height};
 }
 
 Gen.prototype.w	= function(opts){
@@ -733,6 +732,7 @@ Number.prototype.formatMoney = function(c, d, t){
 };
 function getInMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
 function getFMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
+function getFTasa(vF){ return "% " + getFMoney(vF); }
 function NativoFloat(vF) {
 		if (SEPARADOR_DECIMAL != DIV_DEC) {
 			var v	= new Number(vF);
@@ -1035,16 +1035,20 @@ Gen.prototype.DataList	= function(opts){
 	} else {
 		$.getJSON( vURL, function( data ) {
 			var str     = "";
+			var cnt		= 0;
 			//var fin		
 			$.each( data, function( key, val ) {
 				//$("#" + id).append("<option value='" + val[mKey] + "' label='" + val[Lab] + "' >");
 				//setLog(val);
 				str += "<option value='" + val[mKey] + "' label='" + val[Lab] + "' >" + val[Lab] + "</option >" ;
 				if (PreSave != ""){ session(PreSave + val[mKey], JSON.stringify(val));	}	//guardar en stored
+				cnt++;
 			});
 			$("#" + id).empty();
 			$("#" + id).append(str);
-			self.Cache({clave:idxC, set: str});
+			if(cnt > 0){
+				self.Cache({clave:idxC, set: str});
+			}
 		});
 	}
 }
@@ -1229,26 +1233,30 @@ Gen.prototype.save	= function(opts){
 	var mURL	= "../svc/save.svc.php?tabla=" + tbl + "&id=" +  id + "&" + content;
 	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
 	//if (si) {
-		$.getJSON( mURL, function( data ) {
-			  //var str     = "";
-			  if (data.error == true) {
-				tt.alerta({msg:data.message, nivel:"error"});
-			  } else {
-				tt.alerta({msg:data.message, nivel:"ok"});
-				if(nclos == true){
-					var idFC = function(){ tt.close(); }
-					setTimeout(idFC,1000);
-				} else {
-					if(evt != null){
-						//Deshabilitar Guardado
-						var src = evt.target || evt.srcElement;
-						$('#' +  src.id).css('pointer-events', 'none');
+	setTimeout(function(){
+		var si		= tt.happy();
+		if (si == true){
+			$.getJSON( mURL, function( data ) {
+				  //var str     = "";
+				  if (data.error == true) {
+					tt.alerta({msg:data.message, nivel:"error"});
+				  } else {
+					tt.alerta({msg:data.message, nivel:"ok"});
+					if(nclos == true){
+						var idFC = function(){ tt.close(); }
+						setTimeout(idFC,1000);
+					} else {
+						if(evt != null){
+							//Deshabilitar Guardado
+							var src = evt.target || evt.srcElement;
+							$('#' +  src.id).css('pointer-events', 'none');
+						}
 					}
+				 }
 				}
-			  }
-			}
-		);		
-	//}
+			);
+		}
+	},2000);
 }
 Gen.prototype.crudAdd	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -1259,7 +1267,7 @@ Gen.prototype.crudAdd	= function(opts){
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close; //Cerrar
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
 	//var content	= (typeof opts.content == "undefined") ? "" : opts.content;
-	var tt		= this;
+	var tt			= this;
 	$.cookie.json 	= true;
 	//Guardar Accion: jsAccionPostGuardarRegistro
 	//Actualizar las formas de Moneda
@@ -1268,37 +1276,42 @@ Gen.prototype.crudAdd	= function(opts){
 	var sargs	= $("#" + id).serialize();
 	tbl			= (tbl == "") ? $("#" + id).attr("data-tabla") : tbl;
 	var mURL	= "../svc/add.svc.php?tabla=" + tbl + "&ix=0&" + sargs;
-	tt.spinInit();
-	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
-	//if (si) {
-		$.getJSON( mURL, function( data ) {
-			  //var str     = "";
-			  if (data.error == true) {
-				tt.spinEnd();
-				tt.alerta({msg:data.message});
-			  } else {
-				tt.spinEnd();
-				tt.alerta({msg:data.message, nivel:"ok"});
-				//$("#tr-" + tbl + "-" + id).empty();
-				//setTimeout(callB,10);
-				try {
-					callB(data);
-				} catch (e) {
-						
-				}
-				if(nclos == true){
-					tt.close();
-				} else {
-					if(evt != null){
-						//Deshabilitar Guardado
-						var src = evt.target || evt.srcElement;
-						$('#' +  src.id).css('pointer-events', 'none');
+	//console.log(new Date().getTime());
+	setTimeout(function(){
+		var si		= tt.happy();
+		//console.log(new Date().getTime());
+		if (si == true){
+			tt.spinInit();
+			$.getJSON( mURL, function( data ) {
+				  //var str     = "";
+				  if (data.error == true) {
+					tt.spinEnd();
+					tt.alerta({msg:data.message});
+				  } else {
+					tt.spinEnd();
+					tt.alerta({msg:data.message, nivel:"ok"});
+					//$("#tr-" + tbl + "-" + id).empty();
+					//setTimeout(callB,10);
+					try {
+						callB(data);
+					} catch (e) {
+							
 					}
+					if(nclos == true){
+						tt.close();
+					} else {
+						if(evt != null){
+							//Deshabilitar Guardado
+							var src = evt.target || evt.srcElement;
+							$('#' +  src.id).css('pointer-events', 'none');
+						}
+					}
+				  }
 				}
-			  }
-			}
-		);		
-	//}
+			);
+		}
+	
+	},2000);
 }
 Gen.prototype.rmRecord	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -2933,6 +2946,7 @@ DomGen.prototype.setColoniasXCP = function (obj){
 		var mAsignar	= function (objs){
 			//{"codigo":"380006","clavepostal":"24026","nombre":"Colonia Granjas(Campeche, Campeche)","estado":"4","municipio":"2","colonia":"Granjas","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE"
 			if ($("#idcp_" + obj.id).length >0) { $("#idcp_" + obj.id).val(objs.codigo); }
+			
 			//if ($("#iddescripcion" + obj.id).length >0) { $("#iddescripcion" + obj.id).val( decodeEntities( objs.nombre) ); }
 			if ($("#identidadfederativa").length >0) { $("#identidadfederativa").val(objs.estado); }
 			if ($("#idmunicipio").length >0) { $("#idmunicipio").val(objs.municipio); }
@@ -3472,22 +3486,31 @@ var validacion = {
 			var ok		= false;
 			var xPais	= ($("#idpais").length > 0) ? $("#idpais").val() : EACP_CLAVE_DE_PAIS;
 			var xCP		= ($("#idcodigopostal").length > 0) ? entero($("#idcodigopostal").val()) : entero(v);
+			
 			var xVal	= new ValidGen();
 			var xG		= new Gen();
 			var ccnt	= {};
 			var isLoad	= false;
+			
 			var postCP 	= function(obj){
-				xG.spinInit();
-				ccnt	= obj;
-				if(typeof jsaGetMunicipios != "undefined"){ jsaGetMunicipios();	}
-				if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades(); }
-				setTimeout(postpostCP, 1000);
+				//setLog(typeof obj.record_0);
+				if(typeof obj.record_0 == "undefined"){
+					xG.alerta({msg: "EL CODIGO_POSTAL NO EXISTE", type: "error"});
+				} else {
+					xG.spinInit();
+					ccnt	= obj;
+					if(typeof jsaGetMunicipios != "undefined"){ jsaGetMunicipios();	}
+					if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades(); }
+					setTimeout(postpostCP, 1000);
+				}
 			};
+			
 			var postpostCP 	= function(){
 				var xG		= new Gen();
 				
 				for(mob in ccnt){
 					var m		= ccnt[mob];
+					
 					if (flotante(m.estado) > 0) {
 						//{"codigo":"380004","clavepostal":"24026","nombre":"Fraccionamiento","estado":"4","municipio":"2",
 						//"colonia":"Viveros","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE","buscador":"24026-380004"}
@@ -3520,6 +3543,7 @@ var validacion = {
 				if(xPais == EACP_CLAVE_DE_PAIS && xCP != session(ID_CP_ACTUAL)){
 					
 					session(ID_CP_ACTUAL, xCP);
+					
 					if(xCP > 0 && isLoad == false){
 						xG.pajax({
 							url : "../svc/colonias.svc.php?limit=1&cp=" + xCP,

@@ -50,6 +50,8 @@ $senders		= getEmails($_REQUEST);
 
 $xFMT			= new cFormato($formato);
 //$xFMT->setCredito($credito);
+//$xFMT->init();
+
 $xFMT->setOriginacionLeasing($clave);
 
 $xFMT->setProcesarVars();

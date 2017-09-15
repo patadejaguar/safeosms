@@ -772,6 +772,7 @@ class cSocio{
 	private $mValidacionERRS		= 0;
 	private $mValidacionWARNS		= 0;
 	private $mIDInterna				= "";
+	private $mIDPersonaRepLegal		= 0;
 	
 	function __construct($codigo_de_socio, $init = false){
 
@@ -964,13 +965,13 @@ class cSocio{
 		return  $xH->Out($Direccion, $this->mOutFormat);
 	}
 	/**
-	 * Obtiene el Nombre completo del Socio
-	 * @return array		Nombre del Socio
+	 * Obtiene el Nombre completo con Apellidos
+	 * @return string Nombre de la Persona
 	 */
 	function getNombreCompleto($out = false){
 		$out	= ($out == false) ? $this->mOutFormat : $out;
-		$xH	= new cHObject();
-		$n	 = (trim($this->mNombre . " " .$this->mApPaterno . " " . $this->mApMaterno));
+		$xH		= new cHObject();
+		$n	 	= (trim($this->mNombre . " " .$this->mApPaterno . " " . $this->mApMaterno));
 		return $xH->Out($n, $out);
 	}
 	function getNombre(){ return $this->mNombre;	}
@@ -1734,10 +1735,12 @@ class cSocio{
 		$xRels	= new cPersonasRelaciones(false, $this->getCodigo());
 		if($xRels->initRelacionPorTipo(PERSONAS_REL_REP_LEGAL) == true){
 			$nombre	= $xRels->getNombreDelRelacionado();
-			//$tdCurp		= "<th class='izq'>" . $xRels->getNombreRelacion() . "</th><td>" .  . "</td>";
+			$this->mIDPersonaRepLegal	= $xRels->getCodigoDePersona();
 		}
 		return $nombre;
 	}
+	function getClaveDePersonalRepLegal(){ return $this->mIDPersonaRepLegal; }
+	
 	function getValidacion($out = OUT_TXT, $corregir = false){
 		$txt		= "";
 		$cTipo		= new cTipos();
@@ -2862,11 +2865,13 @@ class cSocio{
 					}
 				}
 			}
-			//Validar si existe el periodo
-			if($xPC->getExistePeriodoPorFecha($fecha_de_solicitud) == false){
-				$sucess			= false;
-				$xLog->add("ERROR\t$socio\tLa Fecha $fecha_de_solicitud No hay periodo para la fecha\r\n");				
-			}
+			if(CREDITO_CONTROLAR_POR_PERIODOS == true){
+				//Validar si existe el periodo
+				if($xPC->getExistePeriodoPorFecha($fecha_de_solicitud) == false){
+					$sucess			= false;
+					$xLog->add("ERROR\t$socio\tLa Fecha $fecha_de_solicitud No hay periodo para la fecha\r\n");				
+				}
+			} 
 		}
 		
 		if( $convenio <= 0 ){
@@ -5006,6 +5011,7 @@ class cPersonasRelaciones {
 	private $mMessages				= "";
 	private $mNombreDelRelacionado	= "";
 	private $mClaveDePersona		= null;
+	private $mClavePersonaRel		= 0;
 	public $CONSANGUINIDAD_NINGUNA	= 99;
 	public $ESTADO_ACTIVO			= 10;
 	private $mTelefonoFijo			= 0;
@@ -5044,6 +5050,8 @@ class cPersonasRelaciones {
 			$this->mApellidoMaterno			= $xRel->apellido_materno()->v();
 			$this->mApellidoPaterno			= $xRel->apellido_paterno()->v();
 			$this->mFechaDeNacimiento		= $xRel->fecha_nacimiento()->v();
+			$this->mClavePersonaRel			= $xRel->socio_relacionado()->v();
+			
 			$this->mNombreDelRelacionado	= trim($xRel->nombres()->v() . " " . $xRel->apellido_paterno()->v() . " " . $xRel->apellido_materno() ->v());
 			$this->mInit		= true;
 		}
@@ -5062,6 +5070,8 @@ class cPersonasRelaciones {
 	function getNombreDelRelacionado(){ return $this->mNombreDelRelacionado; }
 	//function addRelacion(){
 	function getCodigoDePersona(){ return $this->mClaveDePersona; }
+	function getCodigoDePersonaRelacionado(){ return $this->mClavePersonaRel; }
+	
 	function getDomicilio(){return $this->mDireccion; }
 	
 	function addRelacion($numero_de_socio = FALLBACK_CLAVE_DE_PERSONA, $tipo_de_relacion = DEFAULT_TIPO_RELACION, $consanguinidad = DEFAULT_TIPO_CONSANGUINIDAD,

@@ -121,6 +121,9 @@ if($action != SYS_NINGUNO){
 	if(trim($calle) == "" OR trim($nexterior) == ""){
 		$xLog->add("ERROR\tEl domicilio debe tener al menos CALLE/ACCESO/DIRECCION y un NUMERO\r\n");
 	} else {
+		if(MODULO_AML_ACTIVADO == false AND $idlocalidad<= 0){
+			$idlocalidad	= $xLoc->DomicilioLocalidadClave();
+		}
 
 		$ready				= $xSoc->addVivienda($calle, $nexterior, $cpostal, $ninterior,	$referencia, $tresidencial, $tmovil,
 				$principal, $regimen, $tdomicilio, $tiempo,

@@ -28,6 +28,7 @@ h4, h3, h2, table, p {
 }
 h1,h2,h3,h4{
 	text-align: center;
+	line-height: 150% !important;
 }
    caption {
        text-align: left;
@@ -41,8 +42,8 @@ th, td, p{
 	text-indent: 0;
 }
 body, html {
-	font: <?php echo CSS_TFUENTE_CONTRATOS;?>pt "Trebuchet MS", Arial, Helvetica, sans-serif !important;
-	line-height: 1.1em !important;
+	font: <?php echo CSS_TFUENTE_CONTRATOS;?>pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;
+	line-height: 125% !important;
 	font-stretch: condensed;
 }
 th {

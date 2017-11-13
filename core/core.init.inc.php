@@ -1792,13 +1792,12 @@ class cSAFEData{
 		if ( $sucursal == false ){
 			$sucursal	= getSucursal();
 		}
+		$xQL		= new MQL();
 		//Actualiza root y usuario de Impotacion a la sucursal.
-		$sqlUsrs = "UPDATE t_03f996214fba4a1d05a68b18fece8e71
+		$sqlUsrs 	= "UPDATE t_03f996214fba4a1d05a68b18fece8e71
 				    SET sucursal='$sucursal'
-				    WHERE  (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%root%')
-				    OR
-				    (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%IMPORT%') ";
-		my_query($sqlUsrs);
+				    WHERE  (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%root%') OR (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%IMPORT%') ";
+		$xQL->setRawQuery($sqlUsrs);
 		$xTab		= new cSQLTabla();
 		$arrT		= $xTab->getTablasConOperaciones();
 		
@@ -1948,7 +1947,7 @@ class cSAFEData{
 		$sqlT[]	= "UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `codigo_de_persona` = '99999' WHERE `idusuarios` != '99'";
 		$sqlT[]	= "INSERT INTO `bancos_cuentas` (`idbancos_cuentas`, `descripcion_cuenta`, `fecha_de_apertura`, `estatus_actual`, `consecutivo_actual`, `saldo_actual`, `codigo_contable`, `entidad_bancaria`) VALUES ('12000', 'BANCO DE PRUEBA', '$ff', 'activo', '00001', '100000', '110215', '50')";
 
-		$sqlT[]	= "INSERT INTO `creditos_periodos` (`idcreditos_periodos`, `descripcion_periodos`, `fecha_inicial`, `fecha_final`, `fecha_reunion`) VALUES ('201799', 'Periodo General', '2017-01-01', '2017-12-31', '2017-12-31');";
+		$sqlT[]	= "INSERT INTO `creditos_periodos` (`idcreditos_periodos`, `descripcion_periodos`, `fecha_inicial`, `fecha_final`, `fecha_reunion`) VALUES ('" . $xF->anno() . "99', 'Periodo General', '" . $xF->getFechaInicialDelAnno() . "', '" . $xF->anno() . "-12-31', '" . $xF->anno() . "-12-31');";
 		
 		//$sqlT[]	= "";
 		$xQL	= new MQL();
@@ -2986,17 +2985,59 @@ class cBases{
 	private $mCodigoDeBase	= false;
 	private $mAMembers		= false;
 	private $mMessages		= "";
+	private $mTipo			= "";
+	private $mInit			= false;
+	private $mIDCache		= "";
+	private $mTabla			= "eacp_config_bases_de_integracion";
+	private $mClave			= false;
+	
 	public $BASE_CREDITOS_ESTADO_CUENTA	= 1000;
+	public $BASE_MVTOS_ELIMINAR			= 10019;
+	public $BASE_MVTOS_RECIBO			= 1001;
+	
 	public $BASE_ESTADO_APORTACIONES	= 101;
 	public $BASE_IVA_OTROS				= 7013;
-	private $mInit						= false;
-	function __construct($codigo = false){ $this->mCodigoDeBase	= setNoMenorQueCero($codigo);	}
-	function init(){
+	
+	function __construct($codigo = false){ $this->setClave($codigo); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cEacp_config_bases_de_integracion();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave			= $xT->codigo_de_base()->v();
+			$this->mCodigoDeBase	= $this->mClave;
+			$this->mTipo			= $xT->tipo_de_base()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit			= true;
+			$xT 					= null;
+		}
+		
 		if($this->mCodigoDeBase>0){
 			$this->getMembers_InArray();
 		}
+		return $this->mInit;
 	}
-	function setClave($codigo){ $this->mCodigoDeBase	= $codigo;	}
+	function setClave($codigo = false){ 
+		$this->mCodigoDeBase	= setNoMenorQueCero($codigo);
+		$this->mClave			= $this->mCodigoDeBase;
+		$this->setIDCache($this->mClave);
+	}
 	function getMembers_InArray($ConAfectacion = false, $base = false){
 		$xCache			= new cCache();
 		$base			= setNoMenorQueCero($base);
@@ -3037,6 +3078,7 @@ class cBases{
 		}
 		return $stat;
 	}
+	function getEsDeOperaciones(){ return ($this->mTipo == "de_operaciones") ? true : false; }
 	/**
 	 * Funcion que retorna una base de mvtos clasificado en socio@document
 	 * @param	string	$AndWhere		Se refiere a los Filtros extras en la clausula WHERE
@@ -3103,5 +3145,29 @@ class cBases{
 		return $str;
 	}
 	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function addMember($clave, $afecta = 1,$subclase = 0, $descripcion = ''){
+		$res	= true;
+		$xQL	= new MQL();
+		$base	= $this->mCodigoDeBase;
+		$existe	= $xQL->getDataValue("SELECT COUNT(*) AS 'items' FROM `eacp_config_bases_de_integracion_miembros` WHERE `miembro`=$clave AND `codigo_de_base`=$base", "items");
+		if($existe > 0){
+			$this->mMessages	.= "WARN\tEl Item existe ( $base - $clave ) \r\n";
+			$res	= false;
+		} else {
+			$res	= $xQL->setRawQuery("INSERT INTO `eacp_config_bases_de_integracion_miembros`(`codigo_de_base`,`miembro`,`afectacion`,`descripcion_de_la_relacion`,`subclasificacion`) VALUES ($base, $clave, $afecta, '$descripcion', $subclase)");
+			$res	= ($res === false) ? false : true;
+			//setLog("INSERT INTO `eacp_config_bases_de_integracion_miembros`(`codigo_de_base`,`miembro`,`afectacion`,`descripcion_de_la_relacion`,`subclasificacion`) VALUES ($base, $clave, $afecta, '$descripcion', $subclase)");
+		}
+		if($res == true){
+			$this->setCuandoSeActualiza();
+		}
+		return $res;
+	}
+	private function setCuandoSeActualiza(){
+		$xCache		= new cCache();
+		$base		= $this->mCodigoDeBase;
+		$xCache->clean("base-arr-ca-id-$base");
+		$xCache->clean("base-arr-sa-$base");
+	}
 }
 ?>

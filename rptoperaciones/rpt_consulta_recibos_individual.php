@@ -71,6 +71,7 @@ if( $xRec->init() == true){
 	$cEdit		= new cTabla($xL->getListadoDeOperaciones("", "", $recibo));
 	$documento	= $xRec->getCodigoDeDocumento();
 	$cEdit->setTipoSalida($out);
+	$cEdit->setFootSum(array(8 => "monto"));
 	$xRPT->addContent($cEdit->Show("TR.Operaciones") );
 	
 	$cTes		= new cTabla($xL->getListadoDeOperacionesDeTesoreria("", "", $recibo));

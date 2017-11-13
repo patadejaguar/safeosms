@@ -122,6 +122,7 @@ if($action == SYS_NINGUNO) {
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_aviso2", $diasaviso2, "TR.Dias de Aviso") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_nomina2", $diasnomina2, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_pago2", $diaspago2, "TR.Dias de Pago") );
+		
 		$xFRM->addHTML( $xTabs->get() );
 	}
 	

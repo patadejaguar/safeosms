@@ -90,7 +90,7 @@ function getSIPAKALPermissions($mFile){
 	if(isset($_REQUEST)){
 		
 		if(isset($_REQUEST["ctx"])){
-			$init = $xUsr->initByCTX($_REQUEST["ctx"]);
+			$init 		= $xUsr->initByCTX($_REQUEST["ctx"]);
 			if($init === false){
 				$xLog->add("No existe el Usuario por Contexto\r\n");
 				$salir	= true;

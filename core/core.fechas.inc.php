@@ -259,22 +259,19 @@ class cFecha {
 	private $mLimitByMonths = array ();
 	private $mIncludeNameDay = false;
 	private $mFormat = "ISO";
-	private $mArrFormat = array (
-			"ISO" => "Y-m-d",
-			"ES_MX" => "d-m-Y" 
-	);
-	private $mEvents = array ();
-	private $mEventsValue = array ();
+	private $mArrFormat 		= array( "ISO" => "Y-m-d", "ES_MX" => "d-m-Y");
+	private $mEvents 			= array();
+	private $mEventsValue 		= array();
 	/**
 	 * Variable que define si la fecha es inhabil
 	 * 
 	 * @var boolean
 	 */
-	private $mIsInhabil = false;
-	private $mDiasDelMes = "1";
-	private $mAnnosOperativos = 5;
-	private $mAnnoMaximo = 2029;
-	private $mMessages = "";
+	private $mIsHabil 			= false;
+	private $mDiasDelMes 		= "1";
+	private $mAnnosOperativos 	= 5;
+	private $mAnnoMaximo 		= 2029;
+	private $mMessages 			= "";
 	/**
 	 * funcion constructora
 	 * 
@@ -763,14 +760,16 @@ class cFecha {
 		for($i = 0; $i <= 5; $i ++) {
 			$dia_en_la_semana = date ( "l", strtotime ( $fecha_no_festiva ) );
 			if (array_key_exists ( $dia_en_la_semana, $dias_no_laborables )) {
-				$fecha_no_festiva = date ( "Y-m-d", strtotime ( "$fecha_no_festiva" . $Operador . "1 day" ) );
+				$fecha_no_festiva 	= date ( "Y-m-d", strtotime ( "$fecha_no_festiva" . $Operador . "1 day" ) );
 			} else {
+				$this->mIsHabil		= true;
 				// Salir del bucle
 				break;
 			}
 		}
 		return $fecha_no_festiva;
 	}
+	function getEsHabil(){ return $this->mIsHabil; }
 	function getFechaMediana($dateme = false) {
 		$this->set ( $dateme );
 		$comp = $this->dia () . " DE " . $this->getMesNombre () . " DE " . $this->anno ();
@@ -1083,7 +1082,9 @@ class cFecha {
 			// $this->setFechaPorQuincena($i);
 			$options [$i] = $this->getMesNombre ( $this->anno () . "-$i-01" ) . "/" . $this->anno ();
 		}
-		return new cHSelect ( $id, $options );
+		$xSel	= new cHSelect ( $id, $options );
+		
+		return $xSel;
 	}
 	function getInt($fecha = false) {
 		$fecha = ($fecha == false) ? $this->get () : $fecha;

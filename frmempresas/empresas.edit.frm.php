@@ -153,7 +153,7 @@ if($action == SYS_NINGUNO) {
 		
 	$xFRM->OTasa("idcomision", $xOEmp->comision_por_encargo()->v(), "TR.Comision_por_Encargo");
 	$xFRM->OTasa("tasa", $xOEmp->tasa_preferente()->v(), "TR.TASA PREFERENTE");
-	$xFRM->OSiNo("TR.ESTATUS", "estatus", $xOEmp->estatus()->v());
+	$xFRM->OSiNo("TR.ESTATUSACTIVO", "estatus", $xOEmp->estatus()->v());
 	$xFRM->addSubmit();
 	$xFRM->addJsInit("jsInitComponents();");
 } else {

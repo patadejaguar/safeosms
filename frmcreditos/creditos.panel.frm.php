@@ -161,7 +161,12 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			
 			if($xCred->isAFinalDePlazo() == false ){
 				//$oFrm->addToolbar($xBtn->getBasic("TR.GENERAR PLAN_DE_PAGOS", "regenerarPlanDePagos()", "reporte", "generar-plan", false ) );
-				$oFrm->OButton("TR.Generar PLAN_DE_PAGOS", "var xC=new CredGen();xC.getFormaPlanPagos($idsolicitud)", $oFrm->ic()->CALCULAR);
+				if($xCred->getEsAfectable() == true OR $xCred->getEstadoActual() == CREDITO_ESTADO_AUTORIZADO){
+					$oFrm->OButton("TR.Generar PLAN_DE_PAGOS", "var xC=new CredGen();xC.getFormaPlanPagos($idsolicitud)", $oFrm->ic()->CALCULAR);
+				} else {
+					$oFrm->OButton("TR.SIMULAR PLAN_DE_PAGOS", "var xC=new CredGen();xC.getFormaSimPlanPagos($idsolicitud)", $oFrm->ic()->CALCULAR);
+				}
+				
 				$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
 				if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
 					//$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
@@ -284,7 +289,8 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	//Cargar Controles de Arrendamiento
 	if($xCred->getEsArrendamientoPuro() == true){
 		//Agregar
-		$oFrm->OButton("TR.VER COTIZADOR", "jsGetCotizacionArrendamiento(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->PLANE);
+		$oFrm->OButton("TR.VER COTIZADOR", "jsGetCotizacionArrendamiento(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->VEHICULO);
+		$oFrm->OButton("TR.VER COTIZACION", "jsGetCotizacionArrendamientoRPT(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->REPORTE);
 		$oFrm->OButton("TR.VER FLOTA", "jsGetFlota(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->TRUCK);
 	}
 	
@@ -335,6 +341,9 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 
 	function jsGetCotizacionArrendamiento(id){
 		xG.w({ url: '../frmarrendamiento/cotizador.edit.frm.php?clave=' + id, tab : true });
+	}
+	function jsGetCotizacionArrendamientoRPT(id){
+		xG.w({ url: '../rpt_formatos/leasing-cotizacion.rpt.php?clave=' + id, tab : true });
 	}
 	function jsGetFlota(id){
 		xG.w({url:"../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id, tab:true});

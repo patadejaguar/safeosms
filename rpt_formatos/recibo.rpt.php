@@ -25,17 +25,22 @@ $xHP		= new cHPage("", HP_RECIBO);
 $recibo		= parametro("idrecibo", 0, MQL_INT); $recibo		= parametro("r", $recibo, MQL_INT); $recibo		= parametro("recibo", $recibo, MQL_INT);
 $formato	= parametro("forma", 400, MQL_INT);
 $sinTes		= parametro("notesoreria", false, MQL_BOOL);
-
+$out		= parametro("out", SYS_DEFAULT, MQL_STRING);		
+$out		= strtolower($out);
+$xRuls		= new cReglaDeNegocio();
 //Agregado para hacer Backups
 
 $senders		= getEmails($_REQUEST);
 //end add
+$useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
 
-
-
+if($formato == 400 AND $useAlt == true){
+	$formato	= 402;
+}
 
 $xFMT		= new cHFormatoRecibo($recibo, $formato);
 $xFMT->setIgnorarTesoreria($sinTes);
+$xFMT->setOut($out);
 $items		= setNoMenorQueCero(RECIBOS_POR_HOJA);
 
 $txt		= $xFMT->render();
@@ -71,22 +76,33 @@ if($xFMT->isInit() === false){
 		echo $cnt;
 	} else {
 
-		$xHP->init();
-		if($items>1){
-			$xFMT	= new cHFormatoRecibo($recibo, $formato);
-			$xFMT->setIgnorarTesoreria($sinTes);
-			$txtNP	= $xFMT->render(false);
-			for($i = 1; $i <= $items; $i++){
-				if($i == $items){
-					echo $txt;
-				} else {
-					echo $txtNP;
-				}		
-			}
+		if($out == OUT_TXT){
+			header('Content-type: text/plain');
+			echo $txt;
 		} else {
-			echo $txt;	
+		
+			$xHP->init();
+			
+			if($items>1){
+				$xFMT	= new cHFormatoRecibo($recibo, $formato);
+				
+				$xFMT->setIgnorarTesoreria($sinTes);
+				$xFMT->setOut($out);
+				
+				$txtNP	= $xFMT->render(false);
+				for($i = 1; $i <= $items; $i++){
+					if($i == $items){
+						echo $txt;
+					} else {
+						echo $txtNP;
+					}		
+				}
+			} else {
+				echo $txt;	
+			}
+			
+			$xHP->fin();
 		}
-		$xHP->fin();
 	}
 }
 

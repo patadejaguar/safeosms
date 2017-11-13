@@ -101,7 +101,14 @@ if($Individual == true){
 			$credito	= $rw["numero_solicitud"];
 			$xCred		= new cCredito($credito);
 			if($xCred->init() == true){
+				$xProd		= $xCred->getOProductoDeCredito();
+				$emulado	= false;		//Estado de Cuenta Emulado
+				if($xProd->getOOtrosParametros() !== null){
+					$val		= $xProd->getOOtrosParametros()->get($xProd->getOOtrosParametros()->ESTADOCUENTA_EMUL);
+					$emulado	= (setNoMenorQueCero($val)>0) ? true : false;
+				}
 				
+				$xRPT->addContent($xFMT->setCreditoParsearEstadoDeCuenta($credito, $simple, $emulado, $xCred->getMontoDeParcialidad()) );
 			}			
 		}		
 	}

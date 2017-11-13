@@ -20,9 +20,21 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
-//$jxc = new TinyAjax();
-//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-//$jxc ->process();
+$jxc 		= new TinyAjax();
+
+
+function jsaRevalidar($idcredito){
+	$xCred	= new cCredito($idcredito);
+	$msg	= "";
+	if($xCred->init() == true){
+		$msg	= $xCred->setVerificarValidez(OUT_HTML);
+	}
+	return $msg;
+}
+$jxc ->exportFunction('jsaRevalidar', array('idcredito'), "#idmsg");
+
+
+$jxc ->process();
 $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -38,18 +50,23 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
-$xSel		= new cHSelect();
-$xT			= new cHTabla();
+$xFRM			= new cHForm("frm", "./");
+$xSel			= new cHSelect();
+$xT				= new cHTabla();
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addJsBasico();
 if($credito <= DEFAULT_CREDITO){
 	$xFRM->addCreditBasico();
 	$xFRM->addSubmit();
 } else {
+	$xFRM->addCerrar();
 	
 	$xCred	= new cCredito($credito);
+	
+	$xFRM->OHidden("idcredito", $credito);
+	
 	if($xCred->init() == true){
+		$xFRM->OButton("TR.REVALIDAR", "jsaRevalidar()", $xFRM->ic()->VALIDAR);
 		//titulos
 		$xT->initRow();
 		$xT->addTH("TR.TIPO");
@@ -88,6 +105,9 @@ if($credito <= DEFAULT_CREDITO){
 			$xT->addTD($img, $prop);
 			$xT->endRow();
 		}
+		
+		$xFRM->addAviso("", "idmsg");
+		
 	} else {
 		$xFRM->addAvisoRegistroOK();
 	}
@@ -101,6 +121,6 @@ if($credito <= DEFAULT_CREDITO){
 $xFRM->addHTML($xT->get());
 echo $xFRM->get();
 
-//$jxc ->drawJavaScript(false, true);
+$jxc ->drawJavaScript(false, true);
 $xHP->fin();
 ?>

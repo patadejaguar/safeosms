@@ -38,6 +38,8 @@ $oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
 $operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
 //$operacion		= parametro("f3", $operacion, MQL_INT);
 $forma_de_pago	= parametro("tipodepago", SYS_TODAS, MQL_RAW);
+$estadisticos	= parametro("estadisticos", false, MQL_BOOL);
+
 //===========  Individual
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -45,7 +47,8 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
 //===========  General
-$out 			= parametro("out", SYS_DEFAULT);
+$out 			= parametro("out", SYS_DEFAULT); $out	= strtolower($out);
+
 $FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
 $FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
@@ -55,7 +58,11 @@ $ByPersona		= $xL->OFiltro()->OperacionesPorPersona($persona);
 $BySucursal		= $xL->OFiltro()->RecibosPorSucursal($sucursal);
 $ByOperacion	= $xL->OFiltro()->OperacionesPorTipo($operacion);
 $ByPago			= $xL->OFiltro()->RecibosPorTipoDePago($forma_de_pago);
-$fmt			= ($output != OUT_EXCEL ) ? "getFechaMX" : ""; 
+$ByEstad		= ($estadisticos == true) ? $xFil->RecibosNoEstadisticos() : "";
+
+
+
+$fmt			= ($out != OUT_EXCEL ) ? "getFechaMX" : ""; 
 
 $sql			= "SELECT
 				operaciones_mvtos.sucursal,
@@ -64,28 +71,26 @@ $sql			= "SELECT
 				CONCAT(socios_general.apellidopaterno, ' ', socios_general.apellidomaterno, ' ',socios_general.nombrecompleto) AS
 				'nombre_completo',
 				operaciones_tipos.descripcion_operacion 	AS 'tipo_de_operacion',
-				$fmt(operaciones_mvtos.fecha_afectacion) 			AS 'fecha',
+				$fmt(operaciones_mvtos.fecha_afectacion) 	AS 'fecha',
 				`operaciones_mvtos`.`idoperaciones_mvtos`	AS `operacion`,
 				`operaciones_mvtos`.`recibo_afectado`   	AS `recibo`,
 				`operaciones_recibos`.`recibo_fiscal`   	AS `fiscal`,
 				operaciones_mvtos.docto_afectado 			AS 'documento',
 				operaciones_mvtos.afectacion_real			AS 'monto',
 				operaciones_mvtos.detalles 					AS 'observaciones'
-				FROM
-				`socios_general` `socios_general`
-				INNER JOIN `operaciones_mvtos` `operaciones_mvtos`
-				ON `socios_general`.`codigo` = `operaciones_mvtos`.`socio_afectado`
-					INNER JOIN `operaciones_recibos` `operaciones_recibos`
-					ON `operaciones_recibos`.`idoperaciones_recibos` =
-					`operaciones_mvtos`.`recibo_afectado`
-						INNER JOIN `operaciones_tipos` `operaciones_tipos`
-						ON `operaciones_tipos`.`idoperaciones_tipos` =
-						`operaciones_mvtos`.`tipo_operacion`
+
+FROM     `operaciones_mvtos` 
+INNER JOIN `socios_general`  ON `operaciones_mvtos`.`socio_afectado` = `socios_general`.`codigo` 
+INNER JOIN `operaciones_recibos`  ON `operaciones_mvtos`.`recibo_afectado` = `operaciones_recibos`.`idoperaciones_recibos` 
+INNER JOIN `operaciones_tipos`  ON `operaciones_tipos`.`idoperaciones_tipos` = `operaciones_mvtos`.`tipo_operacion` 
+INNER JOIN `operaciones_recibostipo`  ON `operaciones_recibostipo`.`idoperaciones_recibostipo` = `operaciones_recibos`.`tipo_docto` 
+
 				WHERE operaciones_mvtos.fecha_afectacion>='$FechaInicial' AND operaciones_mvtos.fecha_afectacion<='$FechaFinal'
 					$ByPersona
 					$BySucursal
 					$ByOperacion
 					$ByPago
+					$ByEstad
 			ORDER BY
 				`operaciones_mvtos`.`sucursal`,
 				`operaciones_recibos`.`fecha_operacion`,
@@ -103,11 +108,17 @@ $xRPT->setTitle($xHP->getTitle());
 $xT		= new cTabla($sql, 2);
 $xT->setTipoSalida($out);
 
+//exit($sql);
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
 $xRPT->addCampoSuma("monto");
+$xRPT->addCampoContar("recibo");
+
+if(MULTISUCURSAL == false){
+	$xRPT->setOmitir("sucursal");
+}
 $xRPT->setProcessSQL();
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");

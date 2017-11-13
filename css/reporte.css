@@ -1,9 +1,9 @@
 html {
-	font: 8pt "Trebuchet MS", Arial, Helvetica, sans-serif !important;
+	font: 8pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;
 }
 body {
 	font-stretch: extra-condensed;
-	text-transform: uppercase;
+	/*text-transform: uppercase;*/
 }
 .bigtitle, .title {
 	text-align: center;
@@ -110,7 +110,9 @@ fieldset {
 	color: #800000;
 	text-align: right;
 }
-
+.izq {
+	text-align: right;
+}
 .subt {
 	color: #800000;
 	font-variant: small-caps;

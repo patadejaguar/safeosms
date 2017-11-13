@@ -31,8 +31,13 @@ $email				= strtolower($email);
 $tipoorigen			= parametro("tipoorigen",0, MQL_INT);
 $claveorigen		= parametro("claveorigen",0, MQL_INT);
 $tipo_de_ingreso	= parametro("idtipodeingreso", DEFAULT_TIPO_INGRESO, MQL_INT); $tipo_de_ingreso	= parametro("tipodeingreso", $tipo_de_ingreso, MQL_INT); $tipo_de_ingreso	= parametro("tipoingreso", $tipo_de_ingreso, MQL_INT);
+
+$desde_sucursal		= parametro("idsucursal", getSucursal(), MQL_RAW); $desde_sucursal		= parametro("sucursal", $desde_sucursal, MQL_RAW);
+$SinSucursal		= parametro("sinsucursal", false, MQL_BOOL);
+
 $ConRepresentante	= true;
 $ConDatosFIEL		= true;
+$ConDatosActa		= true;
 
 //con domicilio y tipo de domicilio
 function jsaGetMunicipios($estado, $pais, $cp){
@@ -115,10 +120,10 @@ $xFRM->OButton("TR.Agregar PERSONA_FISICA", "jsAgregarRepLegal", $xFRM->ic()->PE
 $xFRM->addSeccion("iddatosgenerales_f", "TR.Datos generales");
 $xFRM->ODate("idfecharegistro", false,"TR.fecha de registro");
 
-if(MULTISUCURSAL == false){
-	$xFRM->OHidden("idsucursal", getSucursal());
+if(MULTISUCURSAL == false OR $SinSucursal == true){
+	$xFRM->OHidden("idsucursal", $desde_sucursal);
 } else {
-	$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeSucursales("", $desde_sucursal)->get(true) );
 }
 
 if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
@@ -128,14 +133,17 @@ if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
 	$xFRM->addHElem( $xSel->getListaDeRegionDePersonas("", getRegion() )->get(true));
 }
 if($tipo_de_ingreso <= 0 OR $tipo_de_ingreso == DEFAULT_TIPO_INGRESO OR $tipo_de_ingreso == FALLBACK_PERSONAS_TIPO_ING){
+	
 	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("", PERSONAS_ES_MORAL, $tipo_de_ingreso)->get("TR.tipo de persona", true) );
+	
 } else {
 	$xFRM->OHidden("idtipodeingreso", $tipo_de_ingreso);
-	switch ($tipo_de_ingreso){
-		case $xTipoI->TIPO_PROVEEDOR:
-			$ConDatosFIEL		= false;
-			$ConRepresentante	= false;
-			break;
+	if($tipo_de_ingreso == $xTipoI->TIPO_PROVEEDOR OR $tipo_de_ingreso == $xTipoI->TIPO_GRUPO OR $tipo_de_ingreso == $xTipoI->TIPO_USUARIOS OR $tipo_de_ingreso == $xTipoI->TIPO_OTROS){
+		$ConDatosFIEL		= false;
+		$ConRepresentante	= false;
+		$ConDatosActa		= false;
+	} else {
+		
 	}
 }
 $xFRM->OHidden("idfigurajuridica", PERSONAS_FIGURA_MORAL, "");
@@ -192,20 +200,27 @@ if(MODULO_AML_ACTIVADO == true){
 $xFRM->addObservaciones();
 $xFRM->endSeccion();
 //========================================================================== Acta constitutiva
-$xFRM->addSeccion("idddacta", "TR.ACTACONSTITUTIVA");
-//$sFJ		= $xSel->getListaDeTipoDeIdentificacion("", PERSONAS_ES_MORAL);
-//$xFRM->addHElem( $sFJ->get(true) );
-$xFRM->OHidden("idtipoidentificacion", PERSONAS_TIPO_IDENT_MORAL);
-
-$xFRM->OText_13("idnumerodocumento","", "TR.idescritura");
-$xFRM->setValidacion("idnumerodocumento", "validacion.novacio", "Necesita un Documento de Identificacion", true);
-
-$xFRM->ODate("idfechanacimiento", false,"TR.fecha constitucion");
-
-$xFRM->OText("idnotarioconst", "", "TR.NOMBRE NOTARIO constitucion");
-$xFRM->OText_13("ididnotariaconts", "", "TR.Numero NOTARIA Constitucion");
-$xFRM->OText_13("idfolioconst", "", "TR.IDREGISTROPUB");
-$xFRM->endSeccion();
+if($ConDatosActa == false){
+	$xFRM->OHidden("idtipoidentificacion", PERSONAS_TIPO_IDENT_MORAL);
+	$xFRM->OHidden("idfechanacimiento", fechasys());
+	$xFRM->OHidden("idnumerodocumento","NA");
+	
+} else {
+	$xFRM->addSeccion("idddacta", "TR.ACTACONSTITUTIVA");
+	//$sFJ		= $xSel->getListaDeTipoDeIdentificacion("", PERSONAS_ES_MORAL);
+	//$xFRM->addHElem( $sFJ->get(true) );
+	$xFRM->OHidden("idtipoidentificacion", PERSONAS_TIPO_IDENT_MORAL);
+	
+	$xFRM->OText_13("idnumerodocumento","", "TR.idescritura");
+	$xFRM->setValidacion("idnumerodocumento", "validacion.novacio", "Necesita un Documento de Identificacion", true);
+	
+	$xFRM->ODate("idfechanacimiento", false,"TR.fecha constitucion");
+	
+	$xFRM->OText("idnotarioconst", "", "TR.NOMBRE NOTARIO constitucion");
+	$xFRM->OText_13("ididnotariaconst", "", "TR.Numero NOTARIA Constitucion");
+	$xFRM->OText_13("idfolioconst", "", "TR.IDREGISTROPUB");
+	$xFRM->endSeccion();
+}
 //========================================================================== rep legal
 if($ConRepresentante == true){
 	$xFRM->addSeccion("iddreplegal", "TR.Representante_Legal");

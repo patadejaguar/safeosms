@@ -1554,6 +1554,7 @@ class cAMLAlertas {
 	private $mFechaEnvioRMS	= 0;
 	private $mTabla			= "aml_alerts";
 	private $mIDCache		= "";
+	private $mDescripcion   = "";
 	
 			
 	function __construct($id = false){
@@ -1593,9 +1594,10 @@ class cAMLAlertas {
 				$this->mUsuario			= $this->mObj->usuario()->v();
 				$this->mOficial			= $this->mObj->persona_de_destino()->v();//Persona de destino es ID de Oficial de cumplimiento
 				$this->mOficialDeChecking	= $this->mObj->usuario_checking()->v();
-				$this->mEsRiesgo		= ($this->mObj->resultado_de_checking()->v() <= 0) ? false : true;
-				$this->mEnviadoRMS		= ($this->mObj->envio_rms()->v() > 0 ) ? true : false;
-				$this->mFechaEnvioRMS	= $xF->getFechaByInt($this->mObj->envio_rms()->v());
+				$this->mEsRiesgo		    = ($this->mObj->resultado_de_checking()->v() <= 0) ? false : true;
+				$this->mEnviadoRMS		    = ($this->mObj->envio_rms()->v() > 0 ) ? true : false;
+				$this->mFechaEnvioRMS	    = $xF->getFechaByInt($this->mObj->envio_rms()->v());
+				$this->mDescripcion         = $this->mObj->mensaje()->v(OUT_TXT);
 				//$this->mTipoOperacion	= $this->mObj->tipo_de_operacion()->v();
 				
 				$this->setIDCache($this->mCodigo);
@@ -1610,7 +1612,21 @@ class cAMLAlertas {
 	function getTipoDeAlerta(){ return $this->mObj->tipo_de_aviso()->v(); }
 	function getNivelDeRiesgo(){ return $this->mObj->riesgo_calificado()->v(); }
 	function getDocumento(){ return $this->mObj->documento_relacionado()->v(); }
-	function getTipoDeDocto(){ return $this->mObj->tipo_de_documento()->v(); }
+	function getTipoDeDocto(){ return $this->mTipoDocumento; }
+	function getCredito(){
+	    $docto    = 0;
+	    if($this->getTipoDeDocto() == iDE_CREDITO){
+	        $docto    = $this->getDocumento();
+	    }
+	    return $docto;
+	}
+	function getRecibo(){
+	    $recibo    = 0;
+	    if($this->getTipoDeDocto() == iDE_RECIBO){
+	        $recibo    = $this->getDocumento();
+	    }
+	    return $recibo;
+	}
 	function getHora(){ return $this->mObj->hora_de_proceso()->v(); }
 	function getTercero(){ return $this->mObj->tercero_relacionado()->v(); }
 	//function getInstrumento(){ return $this->mObj->()->v(); }
@@ -1688,7 +1704,7 @@ class cAMLAlertas {
 		return $res;
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
-	function getDescripcion(){  return $this->mObj->mensaje()->v(OUT_TXT); }
+	function getDescripcion(){  return $this->mDescripcion; }
 	
 	function getFechaEnvio(){return $this->mFechaEnvio; }
 	function getFechaOrigen(){return $this->mFechaOrigen; }

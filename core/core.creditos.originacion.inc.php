@@ -1209,6 +1209,7 @@ class cCreditosDatosDeOrigen {
 		$credito		= setNoMenorQueCero($credito);
 		$credito		= ($credito <= DEFAULT_CREDITO) ? $this->mCredito : $credito;
 		$this->mCredito	= $credito;
+		$data			= false;
 		if($credito > DEFAULT_CREDITO){
 			$xCache		= new cCache();
 			$data		= $xCache->get("creditos_datos_originacion-credito-" . $this->mCredito);

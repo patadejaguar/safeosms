@@ -173,6 +173,8 @@ class cPlanDePagosGenerador {
 	private $mAjusteSobreInt	= false;
 	private $mMontoCapAjust		= 0;
 	private $mSinDatosE			= false;
+	private $mConDiasInhabiles	= false;
+	
 	//private $mParcialidadPres	= 0;
 	//private $mTipoEnSistema		= false;
 	//private $mFechaPrimerPago	= false;
@@ -185,6 +187,9 @@ class cPlanDePagosGenerador {
 		$this->mTasaDeIVAOtros			= TASA_IVA;
 		$this->mTipoDePlanDePago		= 1;//Dias en que Pagara. 1= PAGOS EN DIAS PREESTABLECIDOS
 		$this->mPagosPlanos				= PLAN_DE_PAGOS_PLANO;
+		if(WORK_IN_SUNDAY == true){
+			$this->mConDiasInhabiles	= true;
+		}
 	}
 	private function setDiasPorPeriocidad($periocidad){
 		$periocidad				= setNoMenorQueCero($periocidad);
@@ -280,9 +285,9 @@ class cPlanDePagosGenerador {
 			if($xCred->getFechaPrimeraParc() == $this->mFechaFail OR $xF->getInt($xCred->getFechaPrimeraParc()) <= $xF->getInt( $xCred->getFechaDeMinistracion() ) ){
 				$this->mFechaPrimerPago	= $this->getFechaDePago($xCred->getFechaDeMinistracion(), 0);
 			}
-			$DDias				= array();
-			
-			$xEmp				= new cEmpresas($idemp);
+			$DDias						= array();
+			$this->mConDiasInhabiles	= true;
+			$xEmp						= new cEmpresas($idemp);
 			if($xEmp->init() == true AND $idemp != DEFAULT_EMPRESA){ 
 				$DDias = $xEmp->getDiasDeNomina($xCred->getPeriocidadDePago());
 				$this->mDiaDeAbono1	= isset($DDias[0]) ? setNoMenorQueCero($DDias[0]) : $this->mDiaDeAbono1;
@@ -1439,11 +1444,11 @@ class cPlanDePagosGenerador {
 				$idotros		= $datos["SYS_IDOTROS"];
 				$DHistorico		= $datos;
 				$total_pago		= (isset($datos["TOTAL_PAGADO"])) ? $datos["TOTAL_PAGADO"] : 0;
-				$fecha			= $xF->getDiaHabil($datos[SYS_FECHA]);	//1
-				$fecha			= $xF->getDiaHabil($fecha);				//2
-				$fecha			= $xF->getDiaHabil($fecha);				//3
-				$fecha			= $xF->getDiaHabil($fecha);				//4
-				$fecha			= $xF->getDiaHabil($fecha); 			//5
+				
+				$fecha			= $this->getDiaHabil($datos[SYS_FECHA]);
+				
+				
+				
 				$idxanual		= $this->mCredito ."-$indice-" . OPERACION_CLAVE_ANUALIDAD_C;
 				$idxcap			= $this->mCredito ."-$indice-" . OPERACION_CLAVE_PAGO_CAPITAL;
 				$anualidad		= (isset($_SESSION[$idxanual])) ? $_SESSION[$idxanual] : 0;
@@ -2056,6 +2061,20 @@ class cPlanDePagosGenerador {
 	}
 	function setAnticipo($anticipo){ $this->mAnticipo = $anticipo; }
 	function setValorResidual($valor){ $this->mValorResidual = $valor; }
+	private function getDiaHabil($fecha){
+		$fecha	= $fecha;
+		$xF		= new cFecha();
+		if($this->mConDiasInhabiles == false){
+			for($i=1;$i<=5;$i++){
+				$fecha	= $xF->getDiaHabil($fecha);
+				if($xF->getEsHabil() == true){
+					$i	= 100;
+					break;
+				}
+			}
+		}
+		return $fecha;
+	}
 }
 
 class cCreditoValidador {

@@ -970,7 +970,7 @@ class cCredito {
 	 * @param string $put salida html:txt
 	 * @return string de validación
 	 */
-	function setVerificarValidez($out = OUT_TXT) {
+	function setVerificarValidez($out = OUT_TXT, $PasoCredito = false) {
 		$msgIncidencias 	= "";
 		$mReportar 			= false;
 		$arrEquivalencias 	= array (
@@ -980,13 +980,14 @@ class cCredito {
 				"tipo_autorizacion" => "tipo_autorizacion",
 				"tipo_credito" 		=> "tipo_de_credito" 
 		);
-		$xF 			= new cFecha ();
-		$OConv 			= $this->getOProductoDeCredito ();
-		$DConv 			= $OConv->getDatosInArray ();
-		$DCred 			= $this->getDatosDeCredito ();
-		$xLog 			= new cCoreLog ();
+		$xF 			= new cFecha();
+		$OConv 			= $this->getOProductoDeCredito();
+		$DConv 			= $OConv->getDatosInArray();
+		$DCred 			= $this->getDatosDeCredito();
+		$xLog 			= new cCoreLog();
+		$xPasos			= new cCreditosProceso();
 		$valido 		= true;
-		$xSoc 			= new cSocio ( $this->getClaveDePersona () );
+		$xSoc 			= new cSocio($this->getClaveDePersona());
 		$salvarReglas	= true;
 		$xReg			= new cReglasDeCalificacion();
 		$xReg->setCredito($this->getClaveDeCredito());
@@ -1096,6 +1097,9 @@ class cCredito {
 				} else {
 					$xReg->add($xReg->CRED_FALTA_AVALES, true);
 				}
+			} else {
+				$xReg->add($xReg->CRED_FALTA_AVALES, true);
+				$xLog->add( "OK\tNo aplica avalaes( $NumAvales ) para el producto " . $OConv->getNombre() .  " \r\n", $xLog->DEVELOPER );
 			}
 			//Resguardo de Garantia
 			$RazonGarantia		= $OConv->getRazonGarantia();
@@ -1182,7 +1186,7 @@ class cCredito {
 				} else {
 					$xReg->add($xReg->CRED_FALLA_O_ARR);
 					$this->mValidacionERRS++;
-					$xLog->add ("ERROR\tLa Cotizacion de Arrendamiento no existe\r\n" );
+					$xLog->add("ERROR\tLa Cotizacion de Arrendamiento no existe\r\n" );
 				}
 				//Validar vehiculo
 				
@@ -1192,10 +1196,50 @@ class cCredito {
 				} else {
 					$xReg->add($xReg->CRED_ARRED_NOACT);
 					$this->mValidacionERRS++;
-					$xLog->add ("ERROR\tEl Activo y/o Vehiculo no existe\r\n" );
+					$xLog->add("ERROR\tEl Activo y/o Vehiculo no existe\r\n");
 				}
 			}
-			
+			$RazonGtiaLiq			= $OConv->getTasaDeGarantiaLiquida();
+			if(MODULO_CAPTACION_ACTIVADO == true AND $RazonGtiaLiq > 0){
+				if($this->getEstadoActual() == CREDITO_ESTADO_AUTORIZADO){
+					$MontoGtiaLiq	= round(($this->getMontoAutorizado() * $RazonGtiaLiq),2);
+					
+					if(GARANTIA_LIQUIDA_EN_CAPTACION == true){
+						$cuentas		= $xSoc->getContarDoctos(iDE_CAPTACION,false, false, CAPTACION_PRODUCTO_GARANTIALIQ);
+						if($cuentas <= 0){
+							$xReg->add($xReg->CRED_FALTA_GTIALIQ);
+							$this->mValidacionERRS++;
+							$xLog->add("ERROR\tFalta la Garantia Liquida\r\n");
+						} else {
+							$xVista	= new cCuentaALaVista(false);
+							$res	= $xVista->initCuentaPorProducto($this->getClaveDePersona(), CAPTACION_PRODUCTO_GARANTIALIQ);
+							if($res == false){
+								$xReg->add($xReg->CRED_FALTA_GTIALIQ);
+								$this->mValidacionERRS++;
+								$xLog->add("ERROR\tFalta la Garantia Liquida\r\n");
+							} else {
+								$LoQueHay	= $xVista->getSaldoActual();
+								if($LoQueHay < $MontoGtiaLiq ){
+									$xReg->add($xReg->CRED_FALTA_GTIALIQ, true);
+									$xReg->add($xReg->CRED_FALLA_GTIALIQ);
+									$this->mValidacionERRS++;
+									$xLog->add("ERROR\tGarantia Liquida Insuficiente\r\n");
+								} else {
+									$xReg->add($xReg->CRED_FALLA_GTIALIQ, true);
+									$xReg->add($xReg->CRED_FALTA_GTIALIQ, true);
+								}
+							}
+						}
+					} else {
+						//Sumar Operaciones de garantia Liquida
+						
+					}
+					//$xCapta			= new cCuentaDeCaptacion(false)
+				}
+				//Otros de captacion
+				
+				
+			}
 		} else {
 			$xLog->add ("ERROR\tError al Iniciar a la Persona\r\n" );
 			$xLog->add ( $xSoc->getMessages (), $xLog->DEVELOPER );
@@ -2365,6 +2409,12 @@ class cCredito {
 			$porcentaje = (setNoMenorQueCero ( $MontoAvalado ) > 0 and setNoMenorQueCero ( $this->mMontoAutorizado ) > 0) ? round ( ($MontoAvalado / $this->mMontoAutorizado), 2 ) : $this->mMontoAutorizado;
 			$fecha 		= fechasys();
 			$rs			= $xSoc->addRelacion ( $AvalNumeroSocio, $TipoDeAval, $Consanguinidad, $Dependiente, $Observaciones, $MontoAvalado, $porcentaje, $fecha, $this->mNumeroCredito );
+			if($rs === false){
+				$this->mMessages .= "ERROR\tError en alta de Aval Vinculado $AvalNumeroSocio\r\n";
+			} else {
+				$this->mMessages	.= "OK\tAval Codigo $AvalNumeroSocio agregado al credito " . $this->mNumeroCredito . "\r\n";
+				$this->setCuandoSeActualiza();
+			}
 		$this->mMessages .= ($rs == true) ? "OK\tAval Codigo $AvalNumeroSocio agregado al credito " . $this->mNumeroCredito . "\r\n" : "ERROR\tError en alta de Aval\r\n";
 		} else {
 			$rs			= false;
@@ -3157,19 +3207,37 @@ class cCredito {
 		return $xLog->getMessages();
 	}
 	function setCambiarMontoAutorizado($monto, $force = false) {
-		$msg = "";
-		$success = true;
-		if ($this->getEstadoActual () !== CREDITO_ESTADO_AUTORIZADO) {
-			$msg .= "ERROR\tNo se puede cambiar un credito con Estado diferente, Use Cambiar Monto Ministrado\r\n";
+		$msg 		= "";
+		$success 	= true;
+		if ($this->getEstadoActual() !== CREDITO_ESTADO_AUTORIZADO) {
+			$msg 	.= "ERROR\tNo se puede cambiar un credito con Estado diferente, Use Cambiar Monto Ministrado\r\n";
 			$success = false;
 		}
-		$success = ($force == true) ? true : $success;
+		$success 	= ($force == true) ? true : $success;
 		if ($success == true) {
-			$this->setUpdate ( array (
-					"monto_autorizado" => $monto 
-			) );
+			$arr	= array ("monto_autorizado" => $monto);
+			if($this->getEsArrendamientoPuro() == true){
+				$arr["monto_solicitado"]		= $monto;
+			}
+			$this->setUpdate( $arr );
 			
-			$msg .= "SUCCESS\tCambio de Monto Autorizado aplicado a $monto\r\n";
+			$msg 	.= "SUCCESS\tCambio de Monto Autorizado aplicado a $monto\r\n";
+		}
+		return $msg;
+	}
+	function setCambiarMontoSolicitado($monto, $force = false) {
+		$msg 		= "";
+		$success 	= true;
+		if ($this->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO) {
+			$msg 	.= "ERROR\tNo se puede cambiar un credito con Estado diferente, Use Cambiar Monto Ministrado\r\n";
+			$success = false;
+		}
+		$success 	= ($force == true) ? true : $success;
+		if ($success == true) {
+			$arr	= array ("monto_solicitado" => $monto);
+			$this->setUpdate( $arr );
+			
+			$msg 	.= "SUCCESS\tCambio de Monto Solicitado aplicado a $monto\r\n";
 		}
 		return $msg;
 	}
@@ -3543,10 +3611,10 @@ class cCredito {
 	function getOProductoDeCredito($TipoDeConvenio = false) {
 		$TipoDeConvenio = setNoMenorQueCero ( $TipoDeConvenio );
 		$TipoDeConvenio = ($TipoDeConvenio <= 0) ? $this->getClaveDeProducto () : $TipoDeConvenio;
-		if($this->mOProducto == null){
+		if($this->mOProducto === null){
 			$this->mOProducto = new cProductoDeCredito( $TipoDeConvenio );
 			if($this->mOProducto->init() == false){
-				$this->mMessages .= $this->mOProducto->getMessages ();
+				//$this->mMessages .= $this->mOProducto->getMessages ();
 				//setLog("Error Producto $TipoDeConvenio");
 			}
 		}
@@ -4805,6 +4873,10 @@ class cCredito {
 		$dias	= setNoMenorQueCero($dias);
 		return  $dias;
 	}
+	function setTasaDeMora($tasa){
+		$aParam	= array("tasa_moratorio"=> $tasa);
+		$this->setUpdate($aParam);
+	}
 } // END CLASS
 
 
@@ -4836,6 +4908,16 @@ class cPeriodoDeCredito {
 	function __construct($codigo = false){
 		$codigo			= setNoMenorQueCero($codigo);
 		$this->mCode	= ($codigo <= 0) ? EACP_PER_SOLICITUDES : $codigo ;
+		if(CREDITO_CONTROLAR_POR_PERIODOS == false){
+			$xQL		= new MQL();
+			$items		= $xQL->getDataValue("SELECT COUNT(*) AS `items` FROM `creditos_periodos` WHERE `idcreditos_periodos`=", "items");
+			if($items <= 0){
+				$xF		= new cFecha();
+				$fi		= $xF->getFechaInicialDelAnno();
+				$ff		= $xF->getFechaFinAnnio();
+				$this->add($fi, $ff, false, $ff, 'PERIODO_GENERAL-' . $this->mCode, $this->mCode);
+			}
+		}
 	}
 	function init($data = false){
 		$sqlI	= "SELECT * FROM creditos_periodos WHERE idcreditos_periodos = " . $this->mCode . " LIMIT 0,1 ";
@@ -4860,7 +4942,9 @@ class cPeriodoDeCredito {
 		$sql	= "INSERT INTO creditos_periodos(idcreditos_periodos, descripcion_periodos, fecha_inicial, fecha_final, fecha_reunion, periodo_responsable) 
     			VALUES($codigo, '$descripcion', '$fecha_inicial', '$fecha_final', '$fecha_reunion', $responsable) ";
 		$xQL	= new MQL();
-		$xQL->setRawQuery($sql);
+		$res	= $xQL->setRawQuery($sql);
+		return ($res === false) ? false : true;
+		
 	}
 	/**
 	 * Modifica el periodo de Credito Actual
@@ -4904,6 +4988,7 @@ class cPeriodoDeCredito {
 		if ($this->mInit == false) { $this->init (); }
 		$fecha_final 	= $this->getFechaFinal ();
 		$this->mMessages .= "WARN\tLa Fecha del periodo es $fecha_final, fecha comparada es $fecha\r\n";
+		
 		return ($xF->getInt ( $fecha ) > $xF->getInt ( $fecha_final )) ? false : true;
 	}
 	function getMessages($put = OUT_TXT) { $xH = new cHObject (); return $xH->Out ( $this->mMessages, $put );	}
@@ -5974,6 +6059,8 @@ class cPlanDePagos{
 	}
 	function getVersionImpresaLeasing($simple = false){
 		$xLi	= new cSQLListas();
+		
+		
 		$sql	= $xLi->getListadoDeLeasingPlanCliente($this->mClaveDeCredito);
 
 		$xTabla	= new cTabla($sql);
@@ -5981,21 +6068,24 @@ class cPlanDePagos{
 		$xTabla->setOmitidos("idleasing");
 		$xTabla->setOmitidos("credito");
 		$xTabla->setOmitidos("pagos");
+		
 		$xTabla->setFootSum(array(
 				2 => "deducible",
 				3 => "nodeducible",
 				4 => "iva",
 				5 => "total"
 		));
+		
 		$xTabla->setNoFilas("TOTAL");
+		
 		$xTabla->setColTitle("fecha", "FECHA_DE PAGO");
-		$xTabla->setColTitle("periodo", "PeriodoRenta");
+		$xTabla->setColTitle("periodo", "PLANPERIODORENTA");
 		
 		if($simple == true){
 			$xTabla->setOmitidos("deducible");
 			$xTabla->setOmitidos("nodeducible");
 			
-			$xTabla->setColTitle("total", "Monto de Renta");
+			$xTabla->setColTitle("total", "PLANMONTORENTA");
 			
 			
 			
@@ -6026,6 +6116,8 @@ class cProductoDeCredito {
 	private $mNombre				= "";
 	private $mDOtrosCargos			= array();
 	private $mDOtrosCargosParcs		= array();
+	private $mDOtrosCargosPRaw		= array();
+	
 	private $mSumaOtrosCargosP		= 0;
 	private $mClaveDecaratula		= 0;
 	private $mNumeroDeAvales		= 0;
@@ -6378,6 +6470,8 @@ class cProductoDeCredito {
 			//Sumar Cargos en Letras y COnvertirlos en porcentaje
 			$xcgo						= $this->mDOtrosCargosParcs;
 			$this->mSumaOtrosCargosP	= $sumaL;
+			$this->mDOtrosCargosPRaw	= $this->mDOtrosCargosParcs;
+			
 			foreach ($xcgo as $idx => $vv){
 				$this->mDOtrosCargosParcs[$idx]	= round( ($vv/$sumaL), 3 );
 				//setLog("CARGO $idx A " . $this->mDOtrosCargosParcs[$idx]);
@@ -6393,8 +6487,17 @@ class cProductoDeCredito {
 			$this->mInitOCargos			= true;
 		}
 	}
+	/**
+	 * Obtiene una lista en Array de los otros cargos sin ningun tipo de transformacion
+	 * @return array
+	 */
 	function getListaOtrosCargos(){ return $this->mDOtrosCargos;}
+	/**
+	 * 
+	 * @return array
+	 */
 	function getListaOtrosCargosEnParcs(){ return $this->mDOtrosCargosParcs;}
+	function getListaOtrosCargosEnParcsRaw(){ return $this->mDOtrosCargosPRaw;}
 	function getSumaOtrosCargosEnParcs(){ return $this->mSumaOtrosCargosP; }
 	function getEsGrupal(){ return ($this->mTipoDeIntegracion ==3) ? true : false; }
 	function getCATFijo(){
@@ -6438,6 +6541,7 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 	public $TASA_FIJA					= "TASA_FIJA";
 	
 	public $ESTADOCUENTA_EMUL			= "ESTADO_CUENTA_EMULADO";
+	public $PAGOS_EN_DOMINGO			= "ACEPTAR_PAGOS_EN_DOMINGO";
 
 	private $mDatos						= array();
 	private $mProducto					= false;
@@ -6511,6 +6615,8 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 		$arr[$this->CAT_FIJO] 						= $this->CAT_FIJO;
 		$arr[$this->TASA_FIJA] 						= $this->TASA_FIJA;
 		$arr[$this->ESTADOCUENTA_EMUL] 				= $this->ESTADOCUENTA_EMUL;
+		$arr[$this->PAGOS_EN_DOMINGO] 				= $this->PAGOS_EN_DOMINGO;
+		
 		//$arr[$this->] = $this->;
 		//$arr[$this->] = $this->;
 		return $arr;

@@ -30,6 +30,8 @@ $NoUsarResidual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT
 $AunMasSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_RSIMPLE);
 $ArrAjustes		= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_AJUSTM);
 
+$itemsNoVer		= "cmdImprimirPropuesta,comision_originador,tasa_compra";
+
 $OlvidarTodo	= parametro("olvidar", false, MQL_BOOL);
 $Nuevo			= parametro("nuevo", false, MQL_BOOL);
 
@@ -48,6 +50,7 @@ $EsAdmin		= false;
 $OnEdit			= false;
 $TasaComision	= 0;
 $EsOriginador	= false;
+$EsAdministrado	= false;
 
 //$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
@@ -269,6 +272,20 @@ function jsaAsociar($idpersona, $idcontrol){
 	return $xP->getMessages();
 }
 
+function jsaActualizarCredito($credito, $montosolicitado){
+	$montosolicitado	= setNoMenorQueCero($montosolicitado);
+	
+	if($montosolicitado > 0){
+		$xCred		= new cCredito($credito);
+		$msg		= "";
+		if($xCred->init() == true){
+			$msg	.= $xCred->setCambiarMontoSolicitado($montosolicitado, true);
+			$msg	.= $xCred->setCambiarMontoAutorizado($montosolicitado, true);
+		}
+		$msg		.= $xCred->getMessages();
+		return $msg;
+	}
+}
 $jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo', 'idoriginacion_leasing', 'idolvidar', 'idnuevo'));
 $jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo'), "#comision_originador");
 $jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps','idoriginacion_leasing','idolvidar', 'idnuevo'));
@@ -276,6 +293,7 @@ $jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehicul
 $jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac'));
 
 $jxc ->exportFunction('jsaAsociar', array('persona', 'idoriginacion_leasing'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarCredito', array('credito', 'total_credito'), "#idavisos");
 
 $jxc ->process();
 
@@ -301,7 +319,7 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
 if($clave>0){
-	$xFRM->OButton("TR.CALCULAR", "jsCalcularEscenarios()", $xFRM->ic()->CALCULAR);
+	$xFRM->OButton("TR.CALCULAR / GUARDAR", "jsCalcularEscenarios()", $xFRM->ic()->CALCULAR, "btn_calcular", "green");
 }
 
 $xFRM->setNoAcordion();// $xFRM->setIsWizard();
@@ -331,7 +349,7 @@ $xTabla->estatus(SYS_UNO);
 $xTabla->domicilia(SYS_UNO);
 $xTabla->tipo_rac($xLeas->TIPO_RAC_PEQ);
 $xTabla->montoajuste(0);
-
+$xTabla->administrado(SYS_CERO);
 
 //=======================  Datos para Creditos Editados.
 if($clave >0){
@@ -346,7 +364,7 @@ if($clave >0){
 	if($EsOriginador == false){
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdagregarpersona", "persona");
-			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA, "cmdvincularpersona", "persona");
+
 		} else {
 			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA, "cmdverpersona", "persona");
 		}
@@ -356,12 +374,16 @@ if($clave >0){
 		}
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
 			//Imprimir Propuesta
-			$xFRM->OButton("TR.IMPRIMIR PROPUESTA", "var xC=new CredGen();xC.getLeasingPropuesta($clave)", $xFRM->ic()->IMPRIMIR);
+			$xFRM->OButton("TR.IMPRIMIR PROPUESTA", "var xC=new CredGen();xC.getLeasingPropuesta($clave)", $xFRM->ic()->IMPRIMIR, "cmdImprimirPropuesta");
 		}
 	} else {
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			//$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
 		}
+	}
+	//Si es Administrado
+	if($xTabla->administrado()->v() == SYS_UNO){
+		$EsAdministrado	= true;
 	}
 	//Iniciar $xleas
 	$xLeas	= new cCreditosLeasing($clave);
@@ -419,10 +441,16 @@ if($xUser->getEsOriginador() == false){
 		}
 		$xFRM->addHElem($xSelOrg->get(true) );
 		$xFRM->addHElem($xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v())->get(true) );
+
 		
-		$xFRM->OMoneda("comision_originador", $xTabla->comision_originador()->v(), "TR.COMISION ORIGINADOR");
-		$xFRM->OMoneda2("comision_apertura", $xTabla->comision_apertura()->v(), "TR.COMISION_POR_APERTURA");
-	//$xFRM->setValidacion("comision_originador", "jsGetComision");
+		if($OnEdit == false){
+			$xFRM->OHidden("comision_originador", $xTabla->comision_originador()->v());
+			$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
+		} else {
+			$xFRM->OMoneda("comision_originador", $xTabla->comision_originador()->v(), "TR.COMISION ORIGINADOR");
+			$xFRM->OMoneda2("comision_apertura", $xTabla->comision_apertura()->v(), "TR.COMISION_POR_APERTURA");
+		}
+		
 	} else {
 		$xFRM->OHidden("oficial", $xTabla->oficial()->v());
 		$xFRM->OHidden("originador", $xTabla->originador()->v());
@@ -472,6 +500,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 		} else {
 			$xTabla->es_moral(SYS_CERO);
 		}
+		$itemsNoVer	.= ",mail,tel";
 	}
 	$xFRM->OHidden("nombre_cliente", $xTabla->nombre_cliente()->v());
 	//Vinculo de Credito
@@ -490,21 +519,24 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 				//======================== Plan Cliente
 				$xFRM->OButton("TR.PLAN_DE_PAGOS CLIENTE", "jsGetPlanCliente()", $xFRM->ic()->CALENDARIO1);
 			}
-			$xFRM->addJsInit("jsDesactivarCotizacion();");
-			//============================ Agregar
-			
-			$xFRM->addDisabledInit("tipo_rac");
-			$xFRM->addDisabledInit("marca");
-			$xFRM->addDisabledInit("tipo_uso");
-			$xFRM->addDisabledInit("segmento");
-			$xFRM->addDisabledInit("entidadfederativa");
-			$xFRM->addDisabledInit("plazo");
-			$xFRM->addDisabledInit("oficial");
-			$xFRM->addDisabledInit("originador");
-			$xFRM->addDisabledInit("suboriginador");
-			
+			if($xCred->getEsAfectable() == true){
+				
+				$xFRM->addJsInit("jsDesactivarCotizacion();");
+				//============================ Agregar
+				$xFRM->addDisabledInit("tipo_rac");
+				$xFRM->addDisabledInit("marca");
+				$xFRM->addDisabledInit("tipo_uso");
+				$xFRM->addDisabledInit("segmento");
+				$xFRM->addDisabledInit("entidadfederativa");
+				$xFRM->addDisabledInit("plazo");
+				$xFRM->addDisabledInit("oficial");
+				$xFRM->addDisabledInit("originador");
+				$xFRM->addDisabledInit("suboriginador");
+				$itemsNoVer	.= ",iddopts";
+			}
 			//$xFRM->addDisabledInit("");
 			//$xFRM->addDisabledInit("");
+			
 		} else {
 			if($EsOriginador == false){
 				$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->DINERO);
@@ -548,6 +580,7 @@ if($PersonaCargado == false){
 //======================== Tasa de Compra
 if($OlvidarTodo == true){
 	$xFRM->OMoneda("tasa_compra", $xTabla->tasa_compra()->v(), "TR.TASAVEC");
+	$xFRM->setValidacion("tasa_compra", "jsActualizaResiduales", true);
 } else {
 	$xFRM->OHidden("tasa_compra", $xTabla->tasa_compra()->v());
 }
@@ -570,6 +603,8 @@ $xFRM->OText_13("annio", $xTabla->annio()->v(), "TR.ANNIO");
 
 
 $xFRM->OMoneda2("precio_vehiculo", $xTabla->precio_vehiculo()->v(), "TR.PRECIO VEHICULO");
+
+
 if($AunMasSimple == true AND $EsOriginador == true){
 	$xFRM->OHidden("monto_anticipo", $xTabla->monto_anticipo()->v());
 } else {
@@ -723,6 +758,7 @@ $xFRM->endSeccion();
 $xFRM->addSeccion("iddescenas", "TR.ESCENARIOS");
 if($OlvidarTodo == true){
 	$xFRM->OHidden("idolvidar", "1");
+	$xFRM->OHidden("administrado", SYS_UNO);
 } else {
 	$xFRM->OHidden("idolvidar", "0");
 }
@@ -742,7 +778,7 @@ $xFRM->OHidden("residuales", $xTabla->residuales()->v());
 
 
 //validaciones de recalculo
-$xFRM->setValidacion("precio_vehiculo_mny", "jsCargarPrecio");
+$xFRM->setValidacion("precio_vehiculo_mny", "jsCargarPrecio", "El precio no debe ser menor al Anticipo", true);
 
 if($OnEdit == false){
 	$xFRM->addCRUD($xTabla->get(), false, "jsRegistroGuardado");
@@ -1031,6 +1067,7 @@ if($EsOriginador == false){
 
 
 
+
 $tt		.= "</table>";
 
 $xFRM->addHElem($tt);
@@ -1064,6 +1101,7 @@ if($clave > 0){
 			$paso	= $xCProc->PASO_ATENDIDO;
 		}
 	}
+
 	//Editar Bonos
 	$xFRM->OButton("TR.BONOS", "jsEditarBonos()", $xFRM->ic()->DINERO);
 	
@@ -1078,9 +1116,14 @@ if($clave > 0){
 }
 
 if($Nuevo == true){
-	$xFRM->addJsInit("jsInitNew();");
+	$xFRM->addJsInit("setTimeout(jsActualizaResiduales,1000);");
 }
-
+if($OnEdit == false){
+	$xFRM->addJsInit("jsInitNew();");
+	
+} else {
+	$itemsNoVer	.= ",btn_guardar";
+}
 
 echo $xFRM->get();
 $jsOnEdit		= ($clave>0) ? "true": "false";
@@ -1104,22 +1147,56 @@ var mFactorMinAnticipo	= 0.2;
 var mFactorSeguro		= 0.03;
 var mMontoMinGtosNot	= 400;
 var mOlvidar			= <?php echo ($OlvidarTodo == true) ? "true" : "false"; ?>;
+var vReloadID			= "v1.reload.this.form";
+var mAdministrado		= <?php echo ($EsAdministrado == true) ? "true" : "false"; ?>;
 
 <?php
+
 echo $jsFormulaPrec;
+
 ?>
+
+window.onfocus 			= function() {
+	if(session(vReloadID) !== null){
+		if(session(vReloadID) == "1"){
+			location.reload();
+			session(vReloadID, "0"); 
+		}
+	}
+};
 function jsInitEdit(){
+	jsHidenItems();
 	setTimeout(jsCalcularEscenarios,500);
 }
 function jsInitNew(){
-	setTimeout(jsActualizaResiduales,1000);
+	jsHidenItems();
+	xG.verDiv("iddescenas");
+}
+function jsHidenItems(){
+	var mNoVerItems	= String("<?php echo $itemsNoVer; ?>").split(",");
+	var arrayLength = mNoVerItems.length;
+	for (var i = 0; i < arrayLength; i++) {
+		var idx	= mNoVerItems[i];
+		xG.ver(idx);
+	}
 }
 function jsCargarPrecio(v){
+	$("#precio_vehiculo").val( flotante( $("#precio_vehiculo_mny").val() ) );
+
 	jsActualizaResiduales();
 	jsaGetTasa();
 	jsaGetCostoGPS();
 	jsGetCostos();
 	jsaGetResidual();
+
+	jsCalcularEscenarios();
+	
+	v	= flotante(v);
+	$("#monto_anticipo").val( flotante( $("#monto_anticipo_mny").val() ) );
+	var ant = $("#monto_anticipo").val(); 
+	if(v <= ant){
+		return false;
+	}
 	return validacion.nozero(v);
 }
 function jsCalculaFinanciamiento(){
@@ -1200,14 +1277,16 @@ function jsCalculaFinanciamiento(){
 	
 	return true;
 }
+
 function jsCalcularEscenarios(){
 	// Calcular Minimos
 	var precio				= $("#precio_vehiculo").val();
-	var anticipo			= $("#monto_anticipo").val();
+	var anticipo			= (onEdit == true) ? $("#monto_anticipo").val() : 0;
 	var minanticipo			= (precio*vFactorIVA) * mFactorMinAnticipo;
 	minanticipo				= redondear(minanticipo,2);
-	
-	if(mOlvidar == false){
+	var idcotiza			= $("#idoriginacion_leasing").val();
+
+	if(mOlvidar == false && mAdministrado == false){
 		
 		if(minanticipo > anticipo){
 			$("#monto_anticipo_mny").val( getFMoney(minanticipo) );
@@ -1218,12 +1297,12 @@ function jsCalcularEscenarios(){
 		//jsCargarCostos
 		jsGetCostos();
 		//Calcular minimos de costos	
-		var notario				= $("#monto_notario").val();
+		var notario				= (onEdit == true) ? $("#monto_notario").val() : 0;
 		if(mMontoMinGtosNot > notario){
 			$("#monto_notario_mny").val( getFMoney(mMontoMinGtosNot) );
 			$("#monto_notario").val( mMontoMinGtosNot );
 		}
-		var seguro				= $("#monto_seguro").val();
+		var seguro				= (onEdit == true) ? $("#monto_seguro").val() : 0;
 		var minseguro			= (precio*vFactorIVA) * mFactorSeguro;
 		minseguro				= redondear(minseguro,2);
 		if(minseguro > seguro){
@@ -1233,13 +1312,20 @@ function jsCalcularEscenarios(){
 	}
 	//Todos a moneda
 	xG.aMonedaForm();
-	xG.spinInit();
-	jsCalculaFinanciamiento();
-	setTimeout(jsCalcularEscenariosII,2000);
+
+	if(onEdit == true){
+		xG.spinInit();
+		jsCalculaFinanciamiento();
+		
+		if( ($("#frmcotizacion").attr("data-mod") == "true") && idcotiza > 0){
+			xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id : idcotiza, nomsg: true});
+		}
+		setTimeout(jsCalcularEscenariosII,2000);
+	}
 }
 
 function jsCalcularEscenariosII(){
-	var idsolicitud	= $("#idoriginacion_leasing").val();
+	var idcotiza	= $("#idoriginacion_leasing").val();
 	var idtr		= flotante($("#tasa_credito_12").val());
 	if(idtr <=0){
 		xG.alerta({msg:"No hay tasa para los Plazos " + idtr});
@@ -1279,11 +1365,14 @@ function jsCalcularEscenariosII(){
 			jsCalcular(48);	
 			jsCalcular(60);
 			
-		xG.spinEnd();
+		
 		//Actualizar el Programa
-		if(entero(idsolicitud)>0){
-			xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idsolicitud});
+		if(entero(idcotiza)>0){
+			xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idcotiza, nomsg: true});
+			jsaActualizarCredito();
 		}
+
+		xG.spinEnd();
 	}
 }
 function xLog(msg){
@@ -1386,7 +1475,7 @@ function jsCalcular(idx){
 		var rda	= flotante($("#renta_deposito").val());
 		var rpa	= flotante($("#renta_proporcional").val());
 
-		if(mOlvidar == true){
+		if(mOlvidar == true || mAdministrado == true){
 			if(rd < rda){
 				$("#trenta_deposito").val(getFMoney(rd));
 				$("#renta_deposito").val(rd);
@@ -1472,6 +1561,7 @@ function jsCalcular(idx){
 	$("#residual-" + idx).html(getFMoney(residual));
 	$("#valorvec-" + idx).html(getFMoney(valorvec));
 
+	return true;
 }
 function getVConIVA(monto){
 	var FIVA	= (1 + vTasaIVA);
@@ -1517,6 +1607,7 @@ function jsAgregarCredito(){
 		//origen 270 PRECLIENTES
 		if(idcredito <= DEFAULT_CREDITO){
 			xC.addCredito({persona: idpersona, monto: monto, producto:producto, origen:vTipoOrigen, idorigen:idcontrol, frecuencia: periocidad, pagos: pagos, destino:aplicacion, oficial:idoficial, tasa:tasa});
+			session(vReloadID, "1");
 		} else {
 			xG.alerta({msg: "El Credito ya existe"});
 		}		
@@ -1525,6 +1616,9 @@ function jsAgregarCredito(){
 	}
 }
 function jsAgregarPersona(){
+	xG.confirmar({ msg:"¿ PERSONA_YA_EXISTE ?", callback: jsVincularPersona, cancelar: jsAgregarPersonaNueva});
+}
+function jsAgregarPersonaNueva(){
 	var idpersona	= $("#persona").val();
 	var idcredito	= $("#credito").val();
 	var es_moral	= $("#es_moral").val();
@@ -1566,15 +1660,30 @@ function jsAgregarDatosVehiculo(){
 function jsDesactivarCotizacion(){
 	xG.soloLeerForma(false, false);
 }
-function jsActualizaResiduales(){
+function jsActualizaResiduales(vDesde){
+	
+	vDesde	= (typeof vDesde == "undefined") ? 0 : vDesde;
+	
+	var pzo	= $("#plazo").val()
+
 	var xx 	= <?php  echo $jsVRes; ?>;
 	var yy	= <?php  echo $jsVTas; ?>;
 	var ww	= <?php  echo $jsVVecs; ?>;
 
+	if(vDesde > 0){ //Se origina desde el Control de tasa_compra
+		$("#tasavec_" + pzo).val(vDesde);
+	} else {
+		$("#tasa_compra").val( $("#tasavec_" + pzo).val() );
+		$("#tasa_credito").val( $("#tasa_credito_" + pzo).val() );
+		
+		//console.log("SIN el control");
+	}
+	//Actualizar
+	
 	$("#vecs").val(ww);
 	$("#tasas").val(yy);
 	$("#residuales").val(xx);
-	
+	return true;
 }
 
 function jsGetPlanCliente(){

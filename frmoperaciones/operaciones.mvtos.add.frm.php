@@ -19,7 +19,7 @@ $xHP		= new cHPage("TR.AGREGAR OPERACION", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
-$xDic		= new cHDicccionarioDeTablas();
+//$xDic		= new cHDicccionarioDeTablas();
 $xSel		= new cHSelect();
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -38,37 +38,193 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 $observaciones= parametro("idobservaciones");
 
 
-$tipo		= parametro("idtipo", false, MQL_INT);
-$periodo	= parametro("idperiodo", 0, MQL_INT);
+$tipo		= parametro("idtipo", OPERACION_CLAVE_PAGO_CAPITAL, MQL_INT); $tipo = parametro("tipo", $tipo, MQL_INT);
+$periodo	= parametro("idperiodo", 0, MQL_INT); $periodo	= parametro("periodo", $periodo, MQL_INT);$periodo	= parametro("parcialidad", $periodo, MQL_INT);
+
+$echale         = parametro("echale", false, MQL_BOOL);
+$cuadre			= parametro("cuadre", false, MQL_BOOL);
+
+
 $xHP->init();
 $xFRM		= new cHForm("frm", "operaciones.mvtos.add.frm.php?action=" . MQL_ADD);
-$xOP	= new cOperaciones_mvtos();
-
+$xOP		= new cOperaciones_mvtos();
+$xFRM->setTitle($xHP->getTitle() );
 //$xFRM->addJsBasico();
 if($action == SYS_NINGUNO){
 	$xFRM->OHidden("idrecibo", $recibo);
 	$xRec	= new cReciboDeOperacion(false, false, $recibo);
 	
 	if($xRec->init() == true){	
-		$xFRM->addHElem( $xSel->getListaDeTiposDeOperacion("idtipo", OPERACION_CLAVE_PAGO_CAPITAL)->get(true) );
+		$xSelOps		= $xSel->getListaDeTiposDeOperacion("idtipo", $tipo, false, false, true);
+		if($echale == true){
+			$arrSi		= array(OPERACION_CLAVE_PAGO_MORA => OPERACION_CLAVE_PAGO_MORA, 146 => 146, 156 => 156, 148 => 148);
+			
+			$xSelOps->show();
+			
+			$lop		= $xSelOps->getOptions();
+			foreach ($lop as $iop => $txtop){
+				if(!isset($arrSi[$iop])){
+					$xSelOps->setEliminarOption($iop);
+				}
+			}
+		}
+		$xFRM->addHElem( $xSelOps->get(true) );
 		$xFRM->OMoneda("idperiodo", $xRec->getPeriodo(), "TR.PERIODO");
-		$xFRM->addMonto(0);
+		$xFRM->addMonto($monto);
 		$xFRM->addObservaciones();
 		$xFRM->addGuardar();
 	} else {
 		$xFRM->addCerrar();
 	}
 	
+	
+	if($echale == true ){
+	    $xCred  = new cCredito($xRec->getCodigoDeDocumento());
+	    $xFRM->OHidden("echale", "true");
+	    
+	    if($xCred->init() == true){
+	        $OProducto      = $xCred->getOProductoDeCredito();
+	        $OProducto->initOtrosCargos($xCred->getFechaDeMinistracion(), $xCred->getMontoAutorizado());
+	        $arr_desglose	= $OProducto->getListaOtrosCargosEnParcsRaw();
+	        $base           = $xCred->getMontoAutorizado();
+	        $pagos          = $xCred->getPagosAutorizados();
+	        $mtotal         = 0;
+	        $dd				= $xQL->getDataRecord("SELECT `tipo_operacion`,`afectacion_real` FROM `operaciones_mvtos` WHERE `recibo_afectado`=$recibo");
+	        $mivamo			= 0;//Monto Mora
+	        $existeMora		= false;
+	        
+	        foreach($dd as $rw){
+	            $idop      = $rw["tipo_operacion"];
+	            $xmonto    = $rw["afectacion_real"];
+	            $xTipo     = new cTipoDeOperacion($idop);
+	            $xTipo->init();
+	            if(isset($arr_desglose[$idop])){
+	                $nn        = $xTipo->getNombre();
+	                $omonto    = round(((($base*$arr_desglose[$idop])/100) / $pagos),2);
+	                //$xFRM->addAviso("HAY $nn -- " . getFMoney($xmonto), "addn_$idop", false, "error"); setError($omonto);
+	                if(round($xmonto,2) >= round($omonto,2)){
+	                	$xFRM->addAviso("ELIMINAR $nn : " . getFMoney($xmonto), "addn_$idop", false, "error");
+	                	unset($arr_desglose[$idop]);
+	                } else {
+	                	$pres						= (($xmonto*$pagos) / $base)*100;
+	                	$depa						= $arr_desglose[$idop];
+	                	$relog						= ($depa-$pres);
+	                	//setLog($relog);
+	                	$arr_desglose[$idop]		= $relog;
+	                }
+	            }
+	            if($idop == OPERACION_CLAVE_PAGO_IVA_OTROS AND $existeMora == false){
+	                $mivamo        = round(($xmonto/TASA_IVA),2);
+	            }
+	            if($idop == OPERACION_CLAVE_PAGO_MORA){
+	                $mivamo			= 0;//Monto Mora
+	                $existeMora		= true;
+	                
+	            }
+	        }
+            if($mivamo>0){
+            	
+                $arr_desglose[OPERACION_CLAVE_PAGO_MORA]    = $mivamo;
+            }
+	        foreach ($arr_desglose as $idx=> $vv){
+	            $xTipo     = new cTipoDeOperacion($idx);
+	            $xTipo->init();
+	            $nn        = $xTipo->getNombre();
+	            if($idx == OPERACION_CLAVE_PAGO_MORA){
+	                $mmonto		= round($vv,2);
+	            } else {
+	               $mmonto    = round((($base*$vv) / $pagos),2);
+	               
+	            }
+	            $xFRM->addAviso("AGREGAR $nn ($vv) : " . getFMoney($mmonto), "adds_$idx");
+	            $mtotal       += $mmonto;
+	            
+	        }
+	        $xFRM->addAviso("TOTAL : " . getFMoney($mtotal), "idxto", false, "warning");
+	        $xFRM->addAviso("PAGOS : " . $xCred->getPagosAutorizados(), "idxtos", false, "success");
+	        $xFRM->addAviso("CREDITO : " . $xCred->getMontoAutorizado(), "idxtons", false, "success");
+	        $xFRM->addAviso("FACTOR : " .  getFMoney( ( ( ($monto*$pagos)/$base)* 100) ) . "%", "idxtons", false, "success");
+	    }
+	} else {
+		$xCred  = new cCredito($xRec->getCodigoDeDocumento());
+		if($xCred->init() == true){
+			$OProducto      = $xCred->getOProductoDeCredito();
+			$OProducto->initOtrosCargos($xCred->getFechaDeMinistracion(), $xCred->getMontoAutorizado());
+			$arr_desglose	= $OProducto->getListaOtrosCargosEnParcsRaw();
+			$base           = $xCred->getMontoAutorizado();
+			$pagos          = $xCred->getPagosAutorizados();
+			$mtotal         = 0;
+			$dd				= $xQL->getDataRecord("SELECT `tipo_operacion`,`afectacion_real` FROM `operaciones_mvtos` WHERE `recibo_afectado`=$recibo");
+			$mivamo			= 0;//Monto Mora
+			$existeMora		= false;
+			
+			foreach($dd as $rw){
+				$idop      = $rw["tipo_operacion"];
+				$xmonto    = $rw["afectacion_real"];
+				$xTipo     = new cTipoDeOperacion($idop);
+				$xTipo->init();
+				if(isset($arr_desglose[$idop])){
+					$nn        = $xTipo->getNombre();
+					$omonto    = round(((($base*$arr_desglose[$idop])/100) / $pagos),2);
+					//$xFRM->addAviso("HAY $nn -- " . getFMoney($xmonto), "addn_$idop", false, "error"); setError($omonto);
+					if(round($xmonto,2) >= round($omonto,2)){
+						$xFRM->addAviso("ELIMINAR $nn : " . getFMoney($xmonto), "addn_$idop", false, "error");
+						unset($arr_desglose[$idop]);
+					} else {
+						$pres						= (($xmonto*$pagos) / $base)*100;
+						$depa						= $arr_desglose[$idop];
+						$relog						= ($depa-$pres);
+						//setLog($relog);
+						$arr_desglose[$idop]		= $relog;
+					}
+				}
+				if($idop == OPERACION_CLAVE_PAGO_IVA_OTROS AND $existeMora == false){
+					$mivamo        = round(($xmonto/TASA_IVA),2);
+				}
+				if($idop == OPERACION_CLAVE_PAGO_MORA){
+					$mivamo			= 0;//Monto Mora
+					$existeMora		= true;
+					
+				}
+			}
+			if($mivamo>0){
+				
+				$arr_desglose[OPERACION_CLAVE_PAGO_MORA]    = $mivamo;
+			}
+			foreach ($arr_desglose as $idx=> $vv){
+				$xTipo     = new cTipoDeOperacion($idx);
+				$xTipo->init();
+				$nn        = $xTipo->getNombre();
+				if($idx == OPERACION_CLAVE_PAGO_MORA){
+					$mmonto		= round($vv,2);
+				} else {
+					$mmonto    = round((($base*$vv) / $pagos),2);
+					
+				}
+				$xFRM->addAviso("AGREGAR $nn ($vv) : " . getFMoney($mmonto), "adds_$idx");
+				$mtotal       += $mmonto;
+				
+			}
+			$xFRM->addAviso("TOTAL : " . getFMoney($mtotal), "idxto", false, "warning");
+			$xFRM->addAviso("PAGOS : " . $xCred->getPagosAutorizados(), "idxtos", false, "success");
+			$xFRM->addAviso("CREDITO : " . $xCred->getMontoAutorizado(), "idxtons", false, "success");
+			$xFRM->addAviso("FACTOR : " .  getFMoney( ( ( ($monto*$pagos)/$base)* 100) ) . "%", "idxtons", false, "success");
+		}
+	}
 } else {
 	$xRec	= new cReciboDeOperacion(false, false, $recibo);
 	$ready	= false;
 	if($xRec->init() == true){
 		$id	= $xRec->setNuevoMvto($xRec->getFechaDeRecibo(), $monto, $tipo, $periodo, $observaciones);
-		$xRec->setForceUpdateSaldos(true);
-		$xRec->setFinalizarRecibo(true);
+		
+		if($echale == false){ //Si no es echale
+		    $xRec->setForceUpdateSaldos(true);
+		    $xRec->setFinalizarRecibo(true);
+		}
+		
 		$ready	= ($id >0) ? true: false;
 		$xFRM->addLog($xRec->getMessages());
-		$xFRM->addCerrar("", 3);
+		$xFRM->addCerrar("", 2);
 	} else {
 		$xFRM->addAtras();
 	}

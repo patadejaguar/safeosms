@@ -90,7 +90,9 @@ function jsaGetLetrasAVencer($fecha, $producto){
 	FROM     `creditos_solicitud`
 	INNER JOIN `socios`  ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`
 	INNER JOIN `creditos_a_final_de_plazo`  ON `creditos_solicitud`.`numero_solicitud` = `creditos_a_final_de_plazo`.`credito`
-	WHERE    ( `creditos_solicitud`.`saldo_actual` >" . TOLERANCIA_SALDOS . " )	AND (DATE_FORMAT(`fecha_ministracion`, '%d')=DATE_FORMAT('$fecha', '%d'))";
+	WHERE    ( `creditos_solicitud`.`saldo_actual` >" . TOLERANCIA_SALDOS . " )	AND (DATE_FORMAT(`fecha_ministracion`, '%d')=DATE_FORMAT('$fecha', '%d'))
+
+	";
 	
 	//$sql	= "$sql UNION $sql2";
 	//setLog($sql);
@@ -172,8 +174,13 @@ function jsaGetRecibosEmitidos($fecha){
 	$otros	= (MODO_DEBUG == true) ? "" : "";
 	
 	$sql	= $xL->getListadoDeRecibos("", "", "", $fecha, $fecha, $otros);
+	//setLog($sql);
+	
 	$xT		= new cTabla($sql); 
 	$xT->setEventKey("jsGetPanelRecibo");
+	$xT->setFootSum(array(
+		6 => "total"	
+	));
 	return $xT->Show();
 }
 

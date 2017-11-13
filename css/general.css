@@ -620,12 +620,11 @@ ol.rounded-list a:before{
 	line-height: 1.3em;
 	border: .3em solid #fff;
 	text-align: center;
-	font-weight: bold;
 	border-radius: 1.5em;
 	transition: all .3s ease-out;
 }
 .inv {
-    text-align: center; max-width: 31em; display: none; min-width: 10em !important;
+    text-align: center; display: none; min-width: 10em !important; max-width: 99.9%;
     position : relative;
 }
 #jsrs1, #jsrs2 { display: none; }
@@ -1491,4 +1490,7 @@ and (min-width : 1561px) {
 	
 	.tx18 { width: 12.2% !important; display: inline-block; }
 	
+}
+#frameless .tclose {
+	right: 6px !important;
 }

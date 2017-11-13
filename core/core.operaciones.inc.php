@@ -77,6 +77,9 @@ class cReciboDeOperacion{
 	private $mOPersona				= null;
 	private $mOUsuario				= null;			//Usuario
 	private $mOTipoRecibo			= null;
+	private $mOCredito				= null;
+	private $mOCuentaCaptacion		= null;
+	
 	private $mTipoOrigenAML			= 0;
 	private $mClavePersonAsoc		= false;
 	private $mOFactura				= null;
@@ -86,6 +89,11 @@ class cReciboDeOperacion{
 	private $mIDCache				= "";
 	private $mSaldoHistorico		= 0;
 	private $mAfectaEnCaja			= false;
+	
+	public $ORIGEN_CAPTACION		= "captacion";
+	public $ORIGEN_COLOCACION		= "colocacion";
+	public $ORIGEN_MIXTO			= "mixto";
+	public $ORIGEN_OTROS			= "otros";
 	
 	function __construct($tipo = false, $solo_por_docto	= false, $recibo = false){
 		if ($tipo == false){
@@ -180,6 +188,7 @@ class cReciboDeOperacion{
 				
 				$this->mPathToFormato		= $DR["path_formato"];
 				$this->mOrigen				= $DR["origen"];
+				
 				$this->mIndiceOrigen		= $DR["indice_origen"];
 					
 				$this->mDatosByArray		= $DR;
@@ -197,6 +206,11 @@ class cReciboDeOperacion{
 				$this->setIDcache($ORec->idoperaciones_recibos()->v());
 				$xCache->set($this->mIDCache, $DR);
 				unset($DR);
+				
+				if(MODULO_CAPTACION_ACTIVADO == false AND $this->mOrigen == $this->ORIGEN_MIXTO){
+					$this->mOrigen		= $this->ORIGEN_COLOCACION;
+				}
+				
 				$this->mReciboIniciado		= true;
 			} else {
 				$this->mMessages			.= "ERROR\tRecibo no encontrado # $recibo\r\n";
@@ -1422,7 +1436,7 @@ class cReciboDeOperacion{
 		if($this->mTipoDePago == SYS_NINGUNO OR $this->mTipoDePago == TESORERIA_COBRO_NINGUNO OR $this->mTipoDePago == TESORERIA_PAGO_NINGUNO){
 			$this->mMessages	.= "WARN\tNo pagable " . $this->mTipoDePago . "\r\n";
 			$pagable = false;
-		} 
+		}
 		return $pagable;
 	}
 	function getOTipoRecibo(){
@@ -1647,10 +1661,10 @@ class cReciboDeOperacion{
 		//setLog($OTipo->getAfectacionEnEfvo());
 		switch($OTipo->getAfectacionEnEfvo()){
 			case SYS_ENTRADAS:
-				$xCa	= $this->getOCaja();
-				$pagado	= $xCa->getReciboEnCorte($this->mCodigoDeRecibo);
-				
+				$xCa		= $this->getOCaja();
+				$pagado		= $xCa->getReciboEnCorte($this->mCodigoDeRecibo);
 				$PorOperar	= setNoMenorQueCero($this->getTotal() - $pagado);
+				
 				break;
 			case SYS_SALIDAS:
 				switch ($this->getTipoDePago()){
@@ -1742,6 +1756,7 @@ class cReciboDeOperacion{
 				}
 				break;
 		}
+		return true;
 	}
 	function setMontoHistorico($monto){
 		$xQL	= new MQL();
@@ -1757,6 +1772,17 @@ class cReciboDeOperacion{
 		}
 		return $this->mAfectaEnCaja;
 	}
+	function getEsDeCredito(){
+		$res		= false;
+		if($this->mOrigen == $this->ORIGEN_COLOCACION){
+			$res	= true;
+		} else {
+			//TODO: 2017-10-19 Actualizar Funciones para obtener otro tipo de origenes
+		}
+		return $res;
+	}
+	//function getOCuentaCaptacion(){}
+	//function getOCredito(){}
 }
 
 class cMovimientoDeOperacion{
@@ -2519,6 +2545,12 @@ class cTesoreriaTiposDePagoCobro {
 	private $mTable		= "";
 	private $mEquivCont	= 0;
 	private $mTipoAML	= 0;
+	
+	public $INGRESO_EFECTIVO	= "efectivo";
+	public $INGRESO_TDEBITO		= "tarj.debito.ingreso";
+	public $INGRESO_TCREDITO	= "tarj.credito.ingreso";
+	
+	
 	function __construct($clave = false){ $this->mClave	= strtolower($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){return $this->mIDCache; }
 	function setIDCache($clave = ""){

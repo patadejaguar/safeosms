@@ -39,9 +39,11 @@ if($xUsr->initSession($usuario, $password) === true){
 	header ("location:$index");
 
 } else {
-	//$xLog->add("Datos Incorrectos para el Usuario $usuario\r\n");
-	//$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
+	$xLog	= new cCoreLog();
+	$xLog->add("Datos Incorrectos para el Usuario $usuario\r\n");
+	$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
+	$msg	= "Credenciales incorrectas para iniciar sesion. " . $xUsr->getMessages();
 	
-	$xUsr->setEndSession(true, true, $xUsr->getMessages());
+	$xUsr->setEndSession(true, true, $msg);
 }
 ?>

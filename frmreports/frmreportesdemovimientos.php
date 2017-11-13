@@ -17,8 +17,8 @@ $xHP		= new cHPage("TR.Reportes de Operaciones");
 $xHP->init();
 
 $xChk		= new cHCheckBox();
+$xB			= new cPanelDeReportes(iDE_OPERACION, "general_operaciones");
 
-$xB	= new cPanelDeReportes(iDE_OPERACION, "general_operaciones");
 $xB->setTitle( $xHP->getTitle() );
 $xB->setConOperacion();
 $xB->setConRecibos();
@@ -28,8 +28,11 @@ $xB->addOpciones($xB->OPTS_CREDSNOSTAT);
 $xB->addOpciones($xB->OPTS_NOUSUARIOS);
 $xB->addOficialDeCredito();
 $xB->addListadDeCuentasBancarias();
-$xB->addHTML( $xChk->get("TR.Omitir Estadisticos", "estadisticos") );
+$xB->addHTML( $xChk->get("TR.Omitir Estadisticos", "estadisticos", true) );
 $xB->addjsVars("estadisticos", "estadisticos", true);
+
+
+
 echo $xB->get();
 echo $xB->getJs(true);
 $xHP->fin();

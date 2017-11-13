@@ -19,7 +19,7 @@
 //=====================================================================================================
 $xHP		= new cHPage("", HP_RECIBO);
 
-$xHP->init();
+
 
 $formato	= parametro("forma", 400, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -29,6 +29,12 @@ $xForma						= new cFormato($formato);
 $xForma->setCredito($credito);
 
 $xForma->setProcesarVars();
+
+
+
+$xHP->setTitle($xForma->getTitulo());
+$xHP->init();
+
 
 echo $xForma->get();
 

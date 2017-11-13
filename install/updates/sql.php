@@ -2,6 +2,7 @@
 $sql				= array();
 $sqlMenu			= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_type`, `menu_order`) VALUES ";
 $version			= (isset($_REQUEST["version"])) ? intval($_REQUEST["version"]) : 0;
+$out				= (isset($_REQUEST["out"])) ? intval($_REQUEST["out"]) : "json";
 
 $sql["20140601"][]	= "$sqlMenu ('18554', '18550', 'Carga de Catalogo Contable', 'install/contabilidad_importar-catalogo.frm.php', 'command', '18562') ";
 $sql["20140601"][]	= "UPDATE `general_menu` SET `menu_rules` = '99@ro,15@ro,14@ro,15@ro,14@ro,13@ro,12@ro,11@ro,10@ro,9@ro,8@ro,7@ro,6@ro,5@ro,4@ro,3@ro,2@ro' WHERE `idgeneral_menu` = '11021' ";
@@ -2921,6 +2922,8 @@ $sql["20170105"][]	= "ALTER TABLE `personas_documentacion_tipos` ADD COLUMN `vig
 $sql["20170105"][]	= "ALTER TABLE `personas_documentacion_tipos` ADD COLUMN `checklist` VARCHAR(20) NULL DEFAULT '' COMMENT 'relacion con checklist' AFTER `almacen`";
 $sql["20170105"][]	= "ALTER TABLE `personas_documentacion_tipos` CHANGE COLUMN `clave_de_control` `clave_de_control` INT(11) NOT NULL AUTO_INCREMENT COMMENT '' ";
 
+
+$sql["20170106"][]	= "UPDATE `socios_relacionestipos` SET `descripcion_larga` = SUBSTRING(`descripcion_larga`, 0, 79)";
 $sql["20170106"][]	= "ALTER TABLE `socios_relacionestipos` CHANGE COLUMN `idsocios_relacionestipos` `idsocios_relacionestipos` INT(4) UNSIGNED NOT NULL AUTO_INCREMENT  ,CHANGE COLUMN `descripcion_larga` `descripcion_larga` VARCHAR(80) NULL DEFAULT ''  ,CHANGE COLUMN `requiere_domicilio` `requiere_domicilio` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `requiere_actividadeconomica` `requiere_actividadeconomica` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `requiere_validacion` `requiere_validacion` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `tiene_vinculo_patrimonial` `tiene_vinculo_patrimonial` INT(2) NULL DEFAULT '0' , ADD COLUMN `tags` VARCHAR(50) NULL DEFAULT '' COMMENT 'tags de filtros' AFTER `checar_aml`";
 $sql["20170106"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES (20515, 2050, 'Catalogo Tipos de Relacion', 'frmsocios/catalogo-tipos-relacion.frm.php', 'Catalogo Tipos de Relacion', 'fa-list', 'command', '20515', '20515', 'true') ";
 $sql["20170106"][]	= "ALTER TABLE `general_contratos` ADD COLUMN `tags` VARCHAR(40) NULL DEFAULT '' COMMENT 'etiquetas de clasificacion' AFTER `texto_del_contrato`";
@@ -3087,7 +3090,7 @@ $sql["20170302"][]	= "ALTER TABLE `creditos_origenflujo` ADD INDEX `idxcofe` (`i
 $sql["20170302"][]	= "ALTER TABLE `creditos_flujoefvo` DROP PRIMARY KEY,ADD PRIMARY KEY (`idcreditos_flujoefvo`), ADD INDEX `idxfe` (`solicitud_flujo` ASC, `tipo_flujo` ASC, `origen_flujo` ASC, `periocidad_flujo` ASC, `idcreditos_flujoefvo` ASC, `socio_flujo` ASC)";
 
 $sql["20170401"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_destination`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('20101', '20100', 'Edicion Masiva de Personas', 'frmsocios/personas-editar-masivo.frm.php', 'principal', 'Edicion batch de personas', 'fa-object-group', '3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,41@rw,71@rw', 'command', '2011', '20101', 'true')";
-$sql["2017401"][]	= "INSERT INTO `socios_tipoingreso` (`idsocios_tipoingreso`, `descripcion_tipoingreso`, `descripcion_detallada`, `estado`) VALUES ('99', 'DESCONOCIDO', 'Tipo de Ingreso no Asignado', '0')";
+$sql["20170401"][]	= "INSERT INTO `socios_tipoingreso` (`idsocios_tipoingreso`, `descripcion_tipoingreso`, `descripcion_detallada`, `estado`) VALUES ('99', 'DESCONOCIDO', 'Tipo de Ingreso no Asignado', '0')";
 
 
 
@@ -3430,8 +3433,174 @@ $sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nom
 $sql["20170901"][]	= "insert into `vehiculos_marcas` (`idvehiculos_marcas`, `nombre_marca`) values('99','Marca fuera de catalogo')";
 $sql["20170901"][]	= "ALTER TABLE  `originacion_leasing` CHANGE COLUMN `mail` `mail` VARCHAR(50) NULL DEFAULT '' ";
 
-//$sql["20170901"][]	= "";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('510111', 'ALERTA_ENVIADO_RMS', 'La Alerta se envio al RMS')";
+$sql["20170901"][]	= "UPDATE `general_structure` SET `control` = 'hidden' WHERE `tabla`='socios_aecomica' AND `campo`='localidad_ae' ";
+$sql["20170901"][]	= "UPDATE `general_structure` SET `control` = 'hidden' WHERE `tabla`='socios_aecomica' AND `campo`='municipio_ae' ";
+$sql["20170901"][]	= "UPDATE `general_structure` SET `control` = 'hidden' WHERE `tabla`='socios_aecomica' AND `campo`='estado_ae' ";
+$sql["20170901"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('588', 'SYSTEM', 'PERSONAS.LISTA.IDENTIFICA_IFE', '', '', '210,2201', '', '1')";
+$sql["20170901"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('8009', '200', 'Ficha de Firmantes', '<!-- contenido -->')";
+$sql["20170901"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('8010', '200', 'Ficha de Avales 5', '<!-- contenido -->')";
 
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Ficha de Avales 1' WHERE `idgeneral_contratos` = '8001'";
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Ficha de Avales 2' WHERE `idgeneral_contratos` = '8002'";
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Ficha de Avales 3' WHERE `idgeneral_contratos` = '8003'";
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Ficha de Avales 4' WHERE `idgeneral_contratos` = '8004'";
+$sql["20170901"][]	= "ALTER TABLE `general_menu` CHANGE COLUMN `menu_rules` `menu_rules` VARCHAR(200) NULL DEFAULT '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw' ";
+$sql["20170901"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('11035', '11030', 'Cuadre de Recibos', 'frmoperaciones/recibos-cuadre.frm.php', 'Cuadre de Operaciones', 'fa-balance-scale', '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw', 'command', '11035', '11035', 'true')";
+$sql["20170901"][]	= "ALTER TABLE `captacion_cuentas` CHANGE COLUMN `eacp` `eacp` VARCHAR(15) NOT NULL DEFAULT '' ";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200920', 'CREDITO_FALTA_GTIALIQ', 'La Garantia Liquida debe existir')";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('200921', 'CREDITO_FALLA_GTIALIQ', 'La Garantia Liquida debe ser Insuficiente')";
+$sql["20170901"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('1084', '1080', 'Garantia Liquida', 'frmcreditos/creditos.garantia-liquida.frm.php', 'Cobro de Garantia Liquida', 'fa-bookmark', '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw', 'command', '1084', '1084', 'true'); ";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-money' WHERE `idgeneral_menu` = '1083'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-money' WHERE `idgeneral_menu` = '1081'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-minus-square' WHERE `idgeneral_menu` = '1082'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_description` = 'Cobro de Comisiones a Creditos' WHERE `idgeneral_menu` = '1082'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-plus-square' WHERE `idgeneral_menu` = '1083'"; 
+
+
+
+$sql["20170901"][]	= "INSERT INTO `operaciones_tipos` (`idoperaciones_tipos`, `descripcion_operacion`, `clasificacion`, `subclasificacion`, `cuenta_contable`, `descripcion`, `recibo_que_afecta`, `tipo_operacion`, `visible_reporte`, `class_efectivo`, `mvto_que_afecta`, `afectacion_en_recibo`, `afectacion_en_notificacion`, `producto_aplicable`, `constituye_fondo_automatico`, `integra_vencido`, `afectacion_en_sdpm`, `cargo_directo`, `codigo_de_valoracion`, `periocidad_afectada`, `integra_parcialidad`, `es_estadistico`, `formula_de_calculo`, `formula_de_cancelacion`, `importancia_de_neutralizacion`, `preservar_movimiento`, `tasa_iva`, `nombre_corto`, `estatus`, `precio`) VALUES ('177', 'PAGO DE GTOS LEGALES', '0', '0', '\$cuenta = \"\";', '', '99', '147', '1', '1', '99', '0', '0', '0', '0', '1', '0', '0', '', 'ninguna', '0', '0', '', '', '0', '0', '0.160', 'PAGO GTOS LEGAL', '1', '0.00')";
+
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('606','2002','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('607','7003','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('608','10000','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('609','10001','177','1.0000','PAGO GTOS LEGALES','10001')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('610','1000','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('611','30200','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('612','15000','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('613','11000','177','1.0000','PAGO GTOS LEGALES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('614','1001','177','1.0000','PAGO GTOS LEGALES','0')";
+
+$sql["20170901"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('8011', '200', 'Ficha de Avales 6', '<!-- contenido -->')";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_rules` = '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,31@rw,41@rw,71@rw,81@rw,99@rw' WHERE `menu_rules` = '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw'";
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<table class=\'firma\'>\r\n<tr>\r\n <td>LA ACREDITADA.</td>\r\n<tr>\r\n</tr>\r\n <td>\r\n  <br /><br /><br />\r\n  ________________________\r\n </td>\r\n<tr>\r\n</tr>\r\n <td>var_persona_declara_completo</td>\r\n</tr>\r\n</table>' WHERE `idgeneral_contratos` = '13001'";
+$sql["20170901"][]	= "ALTER TABLE `socios_relaciones` CHANGE COLUMN `eacp` `eacp` VARCHAR(15) NULL DEFAULT 'EN_TRAMITE' ";
+$sql["20170901"][]	= "INSERT INTO `eacp_config_bases_de_integracion` (`codigo_de_base`, `descripcion`, `tipo_de_base`) VALUES ('10019', 'OPERACIONES.- ELIMINABLES', 'de_operaciones')";
+
+
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('616','10019','410','1.0000','PARCIALIDAD.- CAPITAL PACTADO','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('617','10019','411','1.0000','PARCIALIDAD.- INTERES PACTADO','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('618','10019','412','1.0000','PARCIALIDAD.- AHORRO PACTADO','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values ('619','10019','413','1.0000','IVA POR INTERES PACTADO','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('620','10019','414','1.0000','PARC CARGOS DESGLOSADOS','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('621','10019','415','1.0000','INT. DEV. EN PERS S/PARC. NO PAG. PZO DE GRAC','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('622','10019','420','1.0000','INT. DEV. NORMAL DEVENGADO','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('623','10019','421','1.0000','INT. DEV. NORMAL EN PZO DE GRACIA','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('624','10019','431','1.0000','INT. DEV. MOR. EN PZO DE GRACIA','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('625','10019','432','1.0000','INT. DEV. MOR. S/CARTERA VENCIDA','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('626','10019','433','1.0000','INT. DEV. MOR. POR PERS. EN PARC. NO PAG','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('627','10019','434','1.0000','INT. DEV. MOR. S/CARTERA VENC.','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('628','10019','600','1.0000','CARGO DE COMISIONES VARIAS','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('629','10019','601','1.0000','CARGO DE COMISION X SEGUIMIENTO','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('630','10019','801','-1.0000','BON. SOBRE INT. MORATORIOS','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('631','10019','802','-1.0000','BON. SOBRE INT. DEVENGADOS','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('632','10019','803','-1.0000','BON. DE GASTOS DEL ABOGADO','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('633','10019','1005','1.0000','CARGOS DE INTERESES EXTRAORDINARIOS','1')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('634','10019','1201','1.0000','CARGO IVA POR INTERESES COBRADOS','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('635','10019','1202','1.0000','CARGO IVA POR OTROS CARGOS Y COMISIONES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('636','10019','1203','1.0000','CARGO IVA PENDIENTE DE COBRO POR INTERESES','0')";
+$sql["20170901"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('637','10019','1204','1.0000','CARGO IVA PENDIENTE DE COBRO POR OTROS CARGOS','0')";
+$sql["20170901"][]	= "ALTER TABLE `general_menu` CHANGE COLUMN `menu_title` `menu_title` VARCHAR(45) NULL DEFAULT '' ,CHANGE COLUMN `menu_description` `menu_description` VARCHAR(150) NULL DEFAULT '' ";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('creditos-letras-de-pago.rpt.php')";
+$sql["20170901"][]	= "INSERT INTO `general_reports` (`idgeneral_reports`, `descripcion_reports`, `aplica`, `idreport`, `explicacion`, `order_index`) VALUES ('../rptcreditos/creditos-letras-de-pago.rpt.php?', 'Creditos.- Letras Pendiente de Pago', 'general_creditos', '10009', 'Muestra todas las letras pendiente de pago por producto y fecha de pago', '10009')";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('900118', 'OPERACION_INMUTABLE', 'Esta operacion no se puede cambiar.') ";
+$sql["20170901"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('402', '500', 'Ticket POS', '<!-- Contenido -->')";
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `texto_del_contrato` = 'Financiera XX\r\nDomicilio X por Y, Colonia n\r\nvariable_tipo_de_recibo\r\n========================================\r\nRecibo : variable_numero_de_recibo\r\nvariable_docto_fecha_larga_actual \r\n========================================\r\n[variable_numero_de_socio]variable_nombre_del_socio\r\n========================================\r\n---concepto_del_movimiento|monto_del_movimiento---\r\n========================================\r\nTotal : variable_monto_del_recibo\r\nSon: (variable_monto_del_recibo_en_letras)\r\n========================================\r\nNotas: variable_observacion_del_recibo\r\nPago: variable_datos_del_pago\r\n========================================\r\nCajero: variable_nombre_del_cajero\r\nTiempo: variable_marca_de_tiempo\r\n' WHERE `idgeneral_contratos` = '402' ";
+$sql["20170901"][]	= "UPDATE `eacp_config_bases_de_integracion_miembros` SET `subclasificacion` = '10001' WHERE `ideacp_config_bases_de_integracion_miembros` = '581'";
+$sql["20170901"][]	= "UPDATE `eacp_config_bases_de_integracion_miembros` SET `subclasificacion` = '10001' WHERE `ideacp_config_bases_de_integracion_miembros` = '573'";
+$sql["20170901"][]	= "UPDATE `eacp_config_bases_de_integracion_miembros` SET `subclasificacion` = '10001' WHERE `ideacp_config_bases_de_integracion_miembros` = '549'";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('operaciones_tipos.edit.frm.php')";
+$sql["20170901"][]	= "ALTER TABLE `eacp_config_bases_de_integracion` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `tipo_de_base` ";
+$sql["20170901"][]	= "INSERT INTO `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `descripcion_de_la_relacion`) VALUES ('638', '7003', '177', 'GASTOS LEGALES')";
+$sql["20170901"][]	= "INSERT INTO `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `descripcion_de_la_relacion`) VALUES ('639', '7013', '177', 'GASTOS LEGALES')";
+$sql["20170901"][]	= "INSERT INTO `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `descripcion_de_la_relacion`, `subclasificacion`) VALUES ('640', '10001', '177', 'GASTOS LEGALES', '10001')";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_image` = 'fa-list-alt' , `menu_help_id` = '20512' WHERE `idgeneral_menu` = '20512'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_description` = 'Administracion de Paises' , `menu_image` = 'fa-list-alt' WHERE `idgeneral_menu` = '2058'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' WHERE `idgeneral_menu` = '2056'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_image` = 'fa-list-alt' WHERE `idgeneral_menu` = '20513'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_image` = 'fa-list-alt' WHERE `idgeneral_menu` = '20514'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-list-alt' WHERE `idgeneral_menu` = '20521'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-list-alt' WHERE `idgeneral_menu` = '2051'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `descripcion_larga` = SUBSTRING(`descripcion_larga`, 0, 79)";
+$sql["20170901"][]	= "ALTER TABLE `socios_relacionestipos` CHANGE COLUMN `idsocios_relacionestipos` `idsocios_relacionestipos` INT(4) UNSIGNED NOT NULL AUTO_INCREMENT  ,CHANGE COLUMN `descripcion_larga` `descripcion_larga` VARCHAR(80) NULL DEFAULT ''  ,CHANGE COLUMN `requiere_domicilio` `requiere_domicilio` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `requiere_actividadeconomica` `requiere_actividadeconomica` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `requiere_validacion` `requiere_validacion` INT(2) NULL DEFAULT '0'  ,CHANGE COLUMN `tiene_vinculo_patrimonial` `tiene_vinculo_patrimonial` INT(2) NULL DEFAULT '0' , ADD COLUMN `tags` VARCHAR(50) NULL DEFAULT '' COMMENT 'tags de filtros' AFTER `checar_aml`";
+$sql["20170901"][]	= "INSERT INTO `socios_tipoingreso` (`idsocios_tipoingreso`, `descripcion_tipoingreso`, `descripcion_detallada`, `estado`) VALUES ('99', 'DESCONOCIDO', 'Tipo de Ingreso no Asignado', '0')";
+$sql["20170901"][]	= "ALTER TABLE `socios_tipoingreso` CHANGE COLUMN `idsocios_tipoingreso` `idsocios_tipoingreso` INT(5) UNSIGNED NOT NULL AUTO_INCREMENT";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pf' WHERE `idsocios_relacionestipos` = '3'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pf' WHERE `idsocios_relacionestipos` = '11'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'todas' WHERE `idsocios_relacionestipos` = '12'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pf' WHERE `idsocios_relacionestipos` = '13'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pm' WHERE `idsocios_relacionestipos` = '14'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pf' WHERE `idsocios_relacionestipos` = '21'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'todas' WHERE `idsocios_relacionestipos` = '22'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'todas' WHERE `idsocios_relacionestipos` = '23'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pf' WHERE `idsocios_relacionestipos` = '70'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pm' WHERE `idsocios_relacionestipos` = '96'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pm' WHERE `idsocios_relacionestipos` = '97'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'pm' WHERE `idsocios_relacionestipos` = '98'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'todas' WHERE `idsocios_relacionestipos` = '551'";
+$sql["20170901"][]	= "UPDATE `socios_relacionestipos` SET `tags` = 'todas' WHERE `idsocios_relacionestipos` = '552'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_file` = 'frmsocios/lista_pagos_por_membresia.frm.php' WHERE `idgeneral_menu` = '7024' ";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('pagos_por_membresia.edit.frm.php')";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('pagos_por_membresia.new.frm.php')";
+//$sql["20170901"][]	= "SELECT setNuevoPermisoX('pagos_por_membresia.frm.php')";
+$sql["20170901"][]	= "INSERT INTO `personas_membresia_tipo` (`idpersonas_membresia_tipo`, `descripcion_membresia_tipo`) VALUES ('2', 'AFILIACION SECUNDARIA')";
+$sql["20170901"][]	= "UPDATE `entidad_pagos_perfil` SET `periocidad`=365 WHERE `periocidad`=360 ";
+$sql["20170901"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('589', 'REPORT', 'RECIBOS.USAR_TICKETS', '', '', '', '')";
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('900119', 'CUOTA_CONFIRMA_ACTUAL', '¿ Desea Actualizar los compromisos para esta Cuota ?')";
+$sql["20170901"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `nombre_utilerias`, `descripcion_utileria`) VALUES ('8204', 'Personas.- Eliminar personas que no existen en Importacion', '')";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' , `menu_title` = 'Recibos y Operaciones' , `menu_image` = 'fa-tasks' , `menu_help_id` = '11030' WHERE `idgeneral_menu` = '11030'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-pencil-square' WHERE `idgeneral_menu` = '11033'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-pencil-square' , `menu_help_id` = '11034' WHERE `idgeneral_menu` = '11034'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_description` = 'Panel de Control de recibos' , `menu_image` = 'fa-tasks' , `menu_help_id` = '11032' WHERE `idgeneral_menu` = '11032'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-list-alt' , `menu_help_id` = '11031' WHERE `idgeneral_menu` = '11031'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_help_id` = '11033' WHERE `idgeneral_menu` = '11033'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_description` = 'Recibo de Captura General' , `menu_image` = 'fa-align-justify' , `menu_help_id` = '11036' WHERE `idgeneral_menu` = '11036'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_description` = 'Reimpresion de Recibos' , `menu_image` = 'fa-print' , `menu_help_id` = '11037' WHERE `idgeneral_menu` = '11037'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' , `menu_description` = 'Buscar Recibos' , `menu_image` = 'fa-search' , `menu_help_id` = '11038' WHERE `idgeneral_menu` = '11038'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_title` = 'Editar Mvtos. de Personas' , `menu_description` = 'Editas Mvtos. de Personas' , `menu_image` = 'fa-user-plus' , `menu_help_id` = '11039' WHERE `idgeneral_menu` = '11039'"; 
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '11030' , `menu_title` = 'Tipos de Operacion' , `menu_description` = 'Tipos de Operacion' , `menu_image` = 'fa-cog' , `menu_help_id` = '3035' WHERE `idgeneral_menu` = '3035' ";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('bases_de_sistema.new.frm.php')";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('index.alt.php')";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('corte-por-cajeros-global.rpt.php')";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-search' WHERE `idgeneral_menu` = '2004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-search' WHERE `idgeneral_menu` = '2006'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_destination` = 'principal' WHERE `idgeneral_menu` = '2004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-window-close-o' WHERE `idgeneral_menu` = '15020'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-question-circle' WHERE `idgeneral_menu` = '15001'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-info' WHERE `idgeneral_menu` = '15010'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '2006'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_help_id` = '2004' WHERE `idgeneral_menu` = '2004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '1800' WHERE `idgeneral_menu` = '2006'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' , `menu_help_id` = '2006' WHERE `idgeneral_menu` = '2006'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' , `menu_image` = 'fa-search' , `menu_help_id` = '2008' WHERE `idgeneral_menu` = '2008'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_parent` = '0' WHERE `idgeneral_menu` = '2004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '7000' WHERE `idgeneral_menu` = '7000'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '8002' , `menu_help_id` = '7000' WHERE `idgeneral_menu` = '7000'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '15001' WHERE `idgeneral_menu` = '2006'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '15002' WHERE `idgeneral_menu` = '2004'";
+$sql["20170901"][]	= "UPDATE `general_menu` SET `menu_order` = '15003' WHERE `idgeneral_menu` = '2008'";
+$sql["20170901"][]	= "INSERT INTO `general_reports` (`idgeneral_reports`, `descripcion_reports`, `aplica`, `idreport`, `explicacion`, `order_index`) VALUES ('../rpttesoreria/corte-por-cajeros-global.rpt.php?', 'Reporte Global de Cajeros', 'caja_tesoreria', '11103', 'Reporte de Operaciones y Tipo de pago por Cajero', '5')";
+
+$sql["20170901"][]	= "UPDATE `general_contratos` SET `texto_del_contrato` = '<table style=\"max-width:56mm\">\r\n<tr><td>\r\nvariable_nombre_de_la_entidad<br />\r\nvariable_domicilio_de_la_entidad\r\n</td></tr>\r\n<tr><td>\r\nvariable_tipo_de_recibo<br/>\r\n========================================\r\n</td></tr>\r\n\r\n<tr><td>\r\nRecibo : variable_numero_de_recibo\r\n</td></tr>\r\n<tr><td>\r\nvariable_docto_fecha_larga_actual <br/>\r\n========================================\r\n</td></tr>\r\n<tr><td>\r\n[variable_numero_de_socio]variable_nombre_del_socio<br/>\r\n========================================\r\n</td></tr>\r\n\r\n<tr><td>\r\n---concepto_del_movimiento|monto_del_movimiento---\r\n</td></tr>\r\n\r\n<tr><td>\r\n========================================<br/>\r\nTotal : variable_monto_del_recibo\r\n</td></tr>\r\n\r\n<tr><td>\r\nSon: (variable_monto_del_recibo_en_letras)<br/>\r\n========================================\r\n</td></tr>\r\n\r\n<tr><td>\r\nNotas: variable_observacion_del_recibo\r\n</td></tr>\r\n\r\n<tr><td>\r\nPago: variable_datos_del_pago<br/>\r\n========================================\r\n</td></tr>\r\n\r\n<tr><td>\r\nCajero: variable_nombre_del_cajero<br/>\r\nTiempo: variable_marca_de_tiempo\r\n</td></tr>\r\n\r\n</table>\r\n' WHERE `idgeneral_contratos` = '402'";
+
+$sql["20170901"][]	= "CALL proc_lenguaje_cambiar_palabras('Persona Juridica', 'Persona Moral')";
+$sql["20170901"][]	= "CALL proc_lenguaje_cambiar_palabras('Juridica', 'Moral')";
+$sql["20170901"][]	= "ALTER TABLE `empresas_operaciones` ADD COLUMN `unid` VARCHAR(20) NULL DEFAULT '' COMMENT 'id relacionado' AFTER `fecha_final`";
+$sql["20170901"][]	= "UPDATE `empresas_operaciones` SET `unid`=CONCAT(DATE_FORMAT(`fecha_final`, '%Y'), '-', `clave_de_empresa`, '-',`periocidad`, '-', `periodo_marcado`) WHERE `unid`=''";
+$sql["20170901"][]	= "ALTER TABLE `operaciones_recibos` ADD COLUMN `tiempo` INT(11) NULL DEFAULT '0' AFTER `montohist` ";
+$sql["20170901"][]	= "ALTER TABLE `tesoreria_tipos_de_pago` ADD COLUMN `admitidos` VARCHAR(200) NULL DEFAULT '2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw' AFTER `eq_contable`";
+$sql["20170901"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `administrado` INT(2) NULL DEFAULT '0' COMMENT 'Está o No Administrado' AFTER `montoajuste`";
+$sql["20170901"][]	= "ALTER TABLE `vehiculos_gps_costeo` ADD INDEX `idxbb` (`tipo_de_gps` ASC, `frecuencia` ASC, `limite_inferior` ASC, `limite_superior` ASC, `idvehiculos_gps_costeo` ASC)";
+$sql["20170901"][]	= "ALTER TABLE `leasing_residual` ADD INDEX `outdx` (`frecuencia` ASC, `limite_inferior` ASC, `limite_superior` ASC, `idleasing_residual` ASC)";
+$sql["20170901"][]	= "ALTER TABLE `general_estados` ADD INDEX `idvc` (`clave_numerica` ASC, `clave_alfanumerica` ASC, `clave_en_sic` ASC, `idgeneral_estados` ASC)";
+$sql["20170901"][]	= "ALTER TABLE `vehiculos_marcas` ADD INDEX `idbc` (`idvehiculos_marcas` ASC) ";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('vincular.personas.frm.php')";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('referencias.del.svc.php')";
+$sql["20170901"][]	= "INSERT INTO  `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2002', 'CONFIRMA_BAJA', '¿ Confirma la Baja de este Registro ?')";
+//$sql["20170901"][]	= "";
+//$sql["20170901"][]	= "";
+//$sql["20170901"][]	= "";
+//
 		
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){
@@ -3440,6 +3609,17 @@ foreach ($sql as $idx => $cnt){
 		unset($sql["$idx"]);
 	}
 }
-header('Content-type: application/json');
-echo json_encode($sql);
+if($out == "sql"){
+	header('Content-type: plain/text');
+	foreach ($sql as $idx => $cnt){
+		foreach ($cnt as $subidx => $msql){
+			echo "$msql;\r\n";
+		}
+	}
+} else {
+	header('Content-type: application/json');
+	echo json_encode($sql);
+}
+
+
 ?>

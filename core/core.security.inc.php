@@ -50,6 +50,7 @@ class cSystemUser{
 	private $mCorporativo		= false;
 	private $mSucursal			= "";
 	private $mPuesto			= "";
+	
 	//private $mClaveUser			= "";//
 	/**
 	 * Inicia la Clase
@@ -195,6 +196,7 @@ class cSystemUser{
 		return $this->mUserIniciado;
 	}
 	function getID(){ return $this->mID; }
+	function getIDParaRegla(){ return $this->mNivel . "@rw"; }
 	function getComparePassword($md5txt){
 		$md5txt	= $md5txt;
 		$pwd	= $this->mPWD;
@@ -390,7 +392,7 @@ class cSystemUser{
 		$res	= false;
 		$xQL	= new MQL();
 		$ctx	= strtolower($ctx);
-		
+		$saveLog= true;
 		//setLog($sql);
 		$xCache	= new cCache();
 		$cid	= "ctx-$ctx";
@@ -412,7 +414,9 @@ class cSystemUser{
 			
 			$DCTX	= $xCache->get($cid);
 			if(!is_array($DCTX)){
-				$DCTX	= $xQL->getDataRow($sql);
+				$DCTX		= $xQL->getDataRow($sql);
+			} else {
+				$saveLog	= false;
 			}
 			if(isset($DCTX["idusuarios"])){
 				$this->mTypeById 	= true;
@@ -426,7 +430,7 @@ class cSystemUser{
 				$pass				= $DCTX["f_34023acbff254d34664f94c3e08d836e"];
 				//$pass				= $xSVC->getEncryptData($pass);
 				
-				$this->initSession($usr, "", $pass);
+				$this->initSession($usr, "", $pass, $saveLog);
 				$xCache->set($cid, $DCTX, $xCache->EXPIRA_5MIN);
 				$res				= true;
 				$this->init();
@@ -531,7 +535,7 @@ class cSystemUser{
 		}
 		return  $connected;
 	}
-	function initSession($user, $password, $RawPass = ""){
+	function initSession($user, $password, $RawPass = "", $saveLog = true){
 		$mKey	= getClaveCifradoTemporal();
 		$res	= false;
 		$xSVC	= new MQLService("", "");
@@ -597,12 +601,17 @@ class cSystemUser{
 				$res			= false;
 			}
 			if($res == true){
+				
 				$xLog->add("El usuario $nuser ha iniciado con exito.\r\n");
 			}
+		} else {
+			$xLog->add("Usuario Desconocido.\r\n");
 		}
 		$this->mMessages		.= $xLog->getMessages(); 
 		$tt		= ($res == false) ? $xLog->OCat()->ERROR_LOGIN : $xLog->OCat()->SUCCESS_LOGIN;
-		$xLog->guardar($tt);
+		if($saveLog == true){
+			$xLog->guardar($tt);
+		}
 		return $res;
 	}
 	function getFechaExpira(){ return $this->mFechaExpira; }
@@ -662,6 +671,15 @@ class cSystemUser{
 	}
 	function getTipoEnSistema(){
 		return ($this->mUserType <= 0) ? $this->mNivel : $this->mUserType;
+	}
+	function getSucursalAccede(){
+		$sucursal			= getSucursal();
+		if(OPERACION_LIBERAR_SUCURSALES == false){
+			if($this->getEsCorporativo() == false){
+				$sucursal	= $this->getSucursal();
+			}
+		}
+		return $sucursal;
 	}
 }
 class cSystemUserRulesList {

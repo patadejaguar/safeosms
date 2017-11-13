@@ -4,10 +4,11 @@ define("SAFE_OS", 	$OS);
 $core_file_config		= "core.config.os.$OS.inc.php";
 include_once($core_file_config);
 
-//if( include_once($core_file_config) == false){
-	//header("location:../install/install.php?f=" . urlencode(dirname(__FILE__) .  "/" . $core_file_config));
-//	exit();
-//}
+
+
+if(isset($safe_sesion_en_segundos)){
+	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
+}
 // server should keep session data for AT LEAST 1 hour
 //$safe_sesion_en_segundos=3600;
 
@@ -489,7 +490,11 @@ define("RECIBOS_TIPO_RETIRO_VISTA",		4);
 define("RECIBOS_TIPO_TERCEROS",		20);
 define("RECIBOS_TIPO_OINGRESOS",		99);
 define("RECIBOS_TIPO_OEGRESOS",		98);
+
+define("RECIBOS_TIPO_PAGOSPENDS",		22);
+
 define("RECIBOS_TIPO_CARGOSPENDS",		97);
+
 define("RECIBOS_TIPO_BONIFPENDS",		96);
 define("RECIBOS_TIPO_CIERRE",		12);
 define("RECIBOS_TIPO_PAGOCARGOS",		22);
@@ -901,7 +906,7 @@ define("FECHA_INICIO_OPERACIONES_SISTEMA",	$fecha_de_inicio_operaciones) ; //tru
 //Define URL para Actualizaciones
 define("URL_UPDATES",                           $xC->get("url_de_actualizaciones_automaticas", SVC_REMOTE_HOST, MMOD_SISTEMA) );
 //define si la garantia liquida es usada por captacion o una cuenta aparte, ajena a captacion
-define("GARANTIA_LIQUIDA_EN_CAPTACION", 		$xC->get("utilizar_garantia_liquida_en_captacion", true, MMOD_CAPTACION) );
+define("GARANTIA_LIQUIDA_EN_CAPTACION", 		$xC->get("utilizar_garantia_liquida_en_captacion", "true", MMOD_CAPTACION) );
 //============================================ LAVADO DE DINERO.- MINIMO
 define("VALOR_ACTUAL_DOLAR",                          $xC->get("precio_del_dolar", 15, MMOD_AML) );
 //define("MONTO_MINIMO_OPERACIONES_RELEVANTES",   $xC->get("monto_minimo_para_reportar_operaciones", 10000, MMOD_AML) );
@@ -1129,9 +1134,10 @@ define("CAPTACION_IMPUESTOS_A_DEPOSITOS_ACTIVO",        (bool) $xC->get("impuest
 define("TESORERIA_FORZAR_SESSION", 	(bool) $xC->get("forzar_sesiones_de_caja", "true", MMOD_TESORERIA));
 
 //============================================ MANEJO DE SESIONES ==========================================================
-$safe_sesion_en_segundos		= $xC->get("tiempo_expira_sesiones", "3600", MMOD_SISTEMA);
-	
-ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
+if(!isset($safe_sesion_en_segundos)){
+	$safe_sesion_en_segundos		= $xC->get("tiempo_expira_sesiones", "3600", MMOD_SISTEMA);
+	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
+}
 
 
 

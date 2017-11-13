@@ -244,8 +244,8 @@ class cCajaLocal{
 			$xCL		= new cSocios_cajalocal();
 			$numero		= $xCL->query()->getLastID()+1;
 		}
-		$xCP		= new cDomiciliosColonias();
-		$idcp		= $xCP->getClavePorCodigoPostal($codigo_postal);
+		$xCP			= new cDomiciliosColonias();
+		$idcp			= $xCP->getClavePorCodigoPostal($codigo_postal);
 		if($idcp > 0){
 			$localidad	= ($localidad == "") ? $xCP->getNombreLocalidad() : $localidad;
 			$municipio	= ($municipio == "") ? $xCP->getNombreMunicipio() : $municipio;
@@ -254,8 +254,14 @@ class cCajaLocal{
 		$sql = "INSERT INTO socios_cajalocal
 		(idsocios_cajalocal, descripcion_cajalocal, ultimosocio, region, sucursal, codigo_postal, localidad, estado, municipio, `clave_de_centro`)
 		VALUES($numero, '$nombre', $ultimo_socio, $region, '$sucursal', $codigo_postal, '$localidad', '$estado', '$municipio','$numero')";
-		$res	= $xQL->setRawQuery($sql);
-		return ($res == false) ? false : true;
+		$res			= $xQL->setRawQuery($sql);
+		$rs				= true;
+		if($res === false){
+			$rs			= false;
+		} else {
+			$this->mNumeroDeCaja	= $numero;
+		}
+		return $rs;
 	}
 	function edit($nombre, $region = false, $sucursal = "",	$codigo_postal = false, $localidad = "", $estado = "", $municipio = "" ){
 		$xQL			= new MQL();
@@ -353,6 +359,7 @@ class cCajaLocal{
 		}
 		return $msg;		
 	}
+	function getClave(){ return $this->mNumeroDeCaja; }
 }
 /**
  * Clase manejo de información de la sucursal
@@ -670,7 +677,7 @@ class cSucursal{
 			$xSuc->query()->update()->save($this->mClave);
 		}
 	}	
-	
+
 }
 /**
 *	Clase de Funciones sobre socios
@@ -1020,7 +1027,15 @@ class cSocio{
 	function getNumeroDeCajaLocal(){ return $this->mCajaLocal; }
 	function getCodigo(){ return $this->mCodigo;}
 	function getClaveDePersona(){ return $this->mCodigo; }
-	function getClaveDeIFE(){ $ife = ( $this->mTipoDeIdent == 1) ? $this->mNumeroDeIdent : "" ; return $ife;	}
+	function getClaveDeIFE(){
+		$xRuls	= new cReglaDeNegocio();
+		$arr	= $xRuls->getArrayPorRegla($xRuls->reglas()->PERSONAS_IDENT_INE_LISTA);
+		$ife	= "";
+		if(in_array($this->mTipoDeIdent, $arr)){
+			$ife	= $this->mNumeroDeIdent;
+		}
+		return $ife;	
+	}
 	function getTipoDeIdentificacion(){ return $this->mTipoDeIdent; }
 	function getClaveDeIdentificacion(){ return $this->mNumeroDeIdent; }
 	function getIDInterna(){ return $this->mIDInterna; }
@@ -1334,7 +1349,7 @@ class cSocio{
 
 	/**
 	 * funcion que genera un codigo html con el listado de obligados solidarios
-	 * @param $style		Estilo de muestra ficha/firma
+	 * @param $style string		Estilo de muestra ficha/firma
 	 * @return string		Codigo HTML del listado de Obligados Solidarios solidarios/avales
 	 * @deprecated @since 2016.02.01
 	 */
@@ -1737,6 +1752,7 @@ class cSocio{
 			$nombre	= $xRels->getNombreDelRelacionado();
 			$this->mIDPersonaRepLegal	= $xRels->getCodigoDePersona();
 		}
+		
 		return $nombre;
 	}
 	function getClaveDePersonalRepLegal(){ return $this->mIDPersonaRepLegal; }
@@ -2505,9 +2521,9 @@ class cSocio{
 		}
 		return $this->addRelacion($relacionado, $tipo, DEFAULT_TIPO_CONSANGUINIDAD, false, "", $monto, 1, false, $documento);
 	}
-	function addRelacion($numero_de_socio = FALLBACK_CLAVE_DE_PERSONA, $tipo_de_relacion = DEFAULT_TIPO_RELACION, $consanguinidad = DEFAULT_TIPO_CONSANGUINIDAD,
+	function addRelacion($numero_de_socio = FALLBACK_CLAVE_DE_PERSONA, $tipo_de_relacion = 0, $consanguinidad = 0,
 			$depende = 0, $observaciones = "", $monto_relacionado = 0, $porcentaje_relacionado = 1, $fecha_de_alta = false, $documento = false){
-		$xRel	= new cPersonasRelaciones(0, $this->mCodigo);
+		$xRel	    = new cPersonasRelaciones(0, $this->mCodigo);
 		$success	= $xRel->addRelacion($numero_de_socio, $tipo_de_relacion, $consanguinidad,$depende, $observaciones, $monto_relacionado,
 				 $porcentaje_relacionado, $fecha_de_alta, $documento);
 		if($success == true){ $this->setCuandoSeActualiza();	}
@@ -3102,34 +3118,41 @@ class cSocio{
 		$this->mMessages	.= $xLog->getMessages();
 		return $id;
 	}
-	function getContarDoctos( $tipo_de_docto, $subtipo = false, $codigo = false){
+	function getContarDoctos( $tipo_de_docto, $subtipo = false, $codigo = false, $subsubtipo = false){
 		$socio			= $this->mCodigo;
 		$existentes		= 0;
 		$codigo			= setNoMenorQueCero($codigo);
+		$subtipo		= setNoMenorQueCero($subtipo);
+		$codigo			= setNoMenorQueCero($codigo);
+		$subsubtipo		= setNoMenorQueCero($subsubtipo);
+		
+		$xQL			= new MQL();
+		$xVals			= new cReglasDeValidacion();
 		//checar
 		if ($codigo <= DEFAULT_CREDITO){
 			switch ($tipo_de_docto){
 				case iDE_CREDITO:
-					$ByTipo		= ( $subtipo == false ) ? "" : " AND (`creditos_solicitud`.`tipo_convenio` =$subtipo) ";
-					$ByID		= ( $codigo == false ) ? "" : " AND (`creditos_solicitud`.numero_solicitud = $codigo) ";
+					$ByTipo		= ( $subtipo <= 0 ) ? "" : " AND (`creditos_solicitud`.`tipo_convenio` =$subtipo) ";
+					$ByID		= ( $xVals->credito($codigo) == false ) ? "" : " AND (`creditos_solicitud`.numero_solicitud = $codigo) ";
 					$socio		= $this->mCodigo;
 					$sql		= "SELECT COUNT(numero_solicitud) AS 'existentes' FROM creditos_solicitud WHERE  numero_socio = $socio $ByTipo $ByID ";
-					$existentes	= mifila($sql, "existentes");
+					$existentes	= $xQL->getDataValue($sql, "existentes");
 					break;
 				//obtiene una cuenta de captacion 10 vista 20 inversion
 				case iDE_CAPTACION:
-					$ByTipo		= ( $subtipo == false ) ? "" : " AND (`captacion_cuentas`.`tipo_cuenta` =$subtipo) ";
-					$ByID		= ( $codigo == false ) ? "" : " AND (`captacion_cuentas`.`numero_cuenta` =$codigo)  ";
+					$ByTipo		= ( $subtipo <= 0 ) ? "" : " AND (`captacion_cuentas`.`tipo_cuenta` =$subtipo) ";
+					$BySubTipo	= ($subsubtipo <= 0) ? "" : " AND (`captacion_cuentas`.`tipo_subproducto` =$subsubtipo) ";
+					$ByID		= ( $xVals->cuenta($codigo) == false ) ? "" : " AND (`captacion_cuentas`.`numero_cuenta` =$codigo)  ";
 					$sql		= "SELECT COUNT(`captacion_cuentas`.`numero_socio`) AS `existentes` FROM
-									`captacion_cuentas` `captacion_cuentas` WHERE (`captacion_cuentas`.`numero_socio` = $socio) $ByTipo $ByID ";
-					$existentes	= mifila($sql, "existentes");
+									`captacion_cuentas` `captacion_cuentas` WHERE (`captacion_cuentas`.`numero_socio` = $socio) $ByTipo $ByID $BySubTipo ";
+					$existentes	= $xQL->getDataValue($sql, "existentes");
 					break;
 				default:
 					break;
 			}
 		} else {
 			$sql		= "SELECT( SELECT COUNT(*) FROM creditos_solicitud WHERE numero_solicitud=$codigo ) + (SELECT COUNT(*) FROM `captacion_cuentas` WHERE `numero_cuenta`=$codigo) AS 'existentes'";
-			$existentes	= mifila($sql, "existentes");
+			$existentes	= $xQL->getDataValue($sql, "existentes");
 		}
 		return $existentes;
 	}
@@ -3262,6 +3285,16 @@ class cSocio{
 		$xB		= new cBases(BASE_ES_PERSONA_MORAL);
 		$this->mMessages	.= (MODO_DEBUG ==  true) ? "WARN\tPERSONALIDAD LEGAL " . $this->mTipoFiguraJu . "\r\n" : "";
 		return ($xB->getIsMember($this->mTipoFiguraJu) == false) ? true : false;
+	}
+	function setEsPersonaFisica(){
+		$res = $this->setUpdate(array(
+			"personalidad_juridica" => PERSONAS_FIGURA_FISICA	
+		));
+	}
+	function setEsPersonaMoral(){
+		$res = $this->setUpdate(array(
+				"personalidad_juridica" => PERSONAS_FIGURA_MORAL
+		));
 	}
 	function getEsPersonaPoliticamenteExpuesta(){
 		$rs			= false;
@@ -4032,7 +4065,8 @@ class cSocio{
 		$sqlU		= "UPDATE `personas_morales_anx` SET `activo` = " . SYS_CERO . ",`fecha_de_baja`='$FechaReg' WHERE `persona`= $persona ";
 		$xQL->setRawQuery($sqlU);
 		//Agregar el registro Nuevo.
-		$rs 		= $xQL->setRawQuery($sql);
+		$res 		= $xQL->setRawQuery($sql);
+		return ($res === false) ? false : true;
 	}
 	function getOEventos(){
 		$mEvt	= new cPersonasProceso();
@@ -4051,6 +4085,8 @@ class cPersonasTipoDeIngreso{
 	public $TIPO_GRUPO			= 300;
 	public $TIPO_PROVEEDOR		= 905;
 	public $TIPO_RELACION		= 500;
+	public $TIPO_OTROS			= 900;
+	public $TIPO_USUARIOS		= 800;
 	
  	function __construct($tipo_de_ingreso){
  		$this->mTipoDeIngreso	= setNoMenorQueCero( $tipo_de_ingreso );
@@ -4441,12 +4477,13 @@ ultimo_periodo_enviado, fecha_de_envio,
 				<td>"  . $this->mClave . "</td>
 				<th>Nombre</th>
 				<td>" . $cEmp->descripcion_dependencia()->v() . "</td>
+				<th>Telefono</th>
+				<td>" . $cEmp->telefono()->v() . "</td>
 			</tr>
 			<tr>
 				<th>Domicilio</th>
-				<td>"  . $cEmp->domicilio_completo()->v() . "</td>
-				<th>Telefono</th>
-				<td>" . $cEmp->telefono()->v() . "</td>
+				<td colspan='5'>"  . $cEmp->domicilio_completo()->v() . "</td>
+				
 			</tr>
 		</table>";
 		
@@ -5014,6 +5051,7 @@ class cPersonasRelaciones {
 	private $mClavePersonaRel		= 0;
 	public $CONSANGUINIDAD_NINGUNA	= 99;
 	public $ESTADO_ACTIVO			= 10;
+	public $ESTADO_INACTIVO			= 20;
 	private $mTelefonoFijo			= 0;
 	private $mTelefonoMovil			= 0;
 	private $mDireccion				= "";
@@ -5025,7 +5063,8 @@ class cPersonasRelaciones {
 	function __construct($id , $persona){
 		$xF							= new cFecha();
 		$this->mFechaDeNacimiento	= $xF->get(); 
-		$this->mID					= setNoMenorQueCero($id); $this->mPersona = $persona;
+		$this->mID					= setNoMenorQueCero($id);
+		$this->mPersona 			= setNoMenorQueCero( $persona );
 	}
 	function init($data = false){
 		if(is_array($data)){
@@ -5071,10 +5110,14 @@ class cPersonasRelaciones {
 	//function addRelacion(){
 	function getCodigoDePersona(){ return $this->mClaveDePersona; }
 	function getCodigoDePersonaRelacionado(){ return $this->mClavePersonaRel; }
-	
+	function setDarDeBaja($fecha = false){
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE `socios_relaciones` SET `estatus`='" . $this->ESTADO_INACTIVO . "' WHERE `idsocios_relaciones`=" . $this->mID);
+		return ($res === false) ? false : true;
+	}
 	function getDomicilio(){return $this->mDireccion; }
 	
-	function addRelacion($numero_de_socio = FALLBACK_CLAVE_DE_PERSONA, $tipo_de_relacion = DEFAULT_TIPO_RELACION, $consanguinidad = DEFAULT_TIPO_CONSANGUINIDAD,
+	function addRelacion($numero_de_socio = FALLBACK_CLAVE_DE_PERSONA, $tipo_de_relacion = 0, $consanguinidad = 0,
 			$depende = 0, $observaciones = "", $monto_relacionado = 0, $porcentaje_relacionado = 1, $fecha_de_alta = false, $documento = false){
 		$xSocRel			= new cSocio($numero_de_socio);
 		$xT					= new cTipos();
@@ -5088,6 +5131,13 @@ class cPersonasRelaciones {
 		$domicilio 			= $this->mDireccion;
 		$ocupacion			= "";
 		$curp				= "";
+		
+		$tipo_de_relacion	= setNoMenorQueCero($tipo_de_relacion);
+		$tipo_de_relacion	= ($tipo_de_relacion <= 0) ? DEFAULT_TIPO_RELACION : $tipo_de_relacion;
+		
+		$consanguinidad		= setNoMenorQueCero($consanguinidad);
+		$consanguinidad		= ($consanguinidad <= 0) ? DEFAULT_TIPO_CONSANGUINIDAD : $consanguinidad;
+		
 		$fecha_de_nacimiento= $this->mFechaDeNacimiento;
 		if($xSocRel->init() == true){
 			
@@ -5156,33 +5206,47 @@ class cPersonasRelaciones {
 		$xRel->telefono_movil($telefono_movil);
 		$xRel->telefono_residencia($telefono_fijo);
 		$xRel->tipo_relacion($tipo_de_relacion);
-		$id		= $xRel->query()->getLastID();
+		$id		     = $xRel->query()->getLastID();
 		$xRel->idsocios_relaciones($id);
-		$success	= $xRel->query()->insert()->save();
-		$this->mID	= ($success == false) ? $this->mID : $id;
+		$success      = $xRel->query()->insert()->save();
+		$this->mID    = ($success == false) ? $this->mID : $id;
+		$unica_x_per  = false;  
 
 		if($success == true){
 			//agregar modificaciones de Grupo
 			switch ($tipo_de_relacion){
+			    case PERSONAS_REL_TUTOR_LEGAL:
+			        $unica_x_per     = true;
+			        break;
+			    case PERSONAS_REL_REP_LEGAL:
+			        $unica_x_per     = true;
+			        break;
 				case GRUPO_CLAVE_INTEGRANTE:
 					$xPer	= new cSocio($numero_de_socio);
 					$xPer->setUpdate( array("grupo_solidario" => "$socio_relacionado") );
+					$unica_x_per     = true;
 					break;
 				case GRUPO_CLAVE_PRESIDENTA:
 					$xGr	= new cGrupo($socio_relacionado);
-					$xGr->setUpdate( array("representante_numerosocio" => "$numero_de_socio",
-							"representante_nombrecompleto" => "$apellido_paterno $apellido_materno $nombres") );
+					$xGr->setUpdate( array("representante_numerosocio" => "$numero_de_socio", "representante_nombrecompleto" => "$apellido_paterno $apellido_materno $nombres") );
 					$xPer	= new cSocio($numero_de_socio);
 					$xPer->setUpdate( array("grupo_solidario" => "$socio_relacionado") );
+					$unica_x_per     = true;
 					break;
 				case GRUPO_CLAVE_VOCAL:
-					$xGr	= new cGrupo($socio_relacionado);
-					$xGr->setUpdate( array("vocalvigilancia_numerosocio" => "$numero_de_socio",
-							"vocalvigilancia_nombrecompleto" => "$apellido_paterno $apellido_materno $nombres") );
-					$xPer	= new cSocio($numero_de_socio);
+					$xGr	         = new cGrupo($socio_relacionado);
+					$xGr->setUpdate( array("vocalvigilancia_numerosocio" => "$numero_de_socio","vocalvigilancia_nombrecompleto" => "$apellido_paterno $apellido_materno $nombres") );
+					$xPer	         = new cSocio($numero_de_socio);
 					$xPer->setUpdate( array("grupo_solidario" => "$socio_relacionado") );
+					$unica_x_per     = true;
 					break;
 			}
+			//Limpiar ID Unicos
+			if($unica_x_per == true){
+			    $xQL     = new MQL();
+			    $xQL->setRawQuery("UPDATE `socios_relaciones` SET `estatus`='" . $this->ESTADO_INACTIVO . "' WHERE `socio_relacionado`=$socio_relacionado AND `tipo_relacion`=$tipo_de_relacion AND `numero_socio`!= $numero_de_socio");
+			}
+			
 			//Agregar relación Inversa
 		} else {
 			//$this->mMessages	.= "ERROR\tError al guardar la relacion\r\n";
@@ -6248,6 +6312,9 @@ class cPersonaActividadEconomica {
 				$this->mTipoDispersion		= $this->mOB->empleado_tipo_de_dispersion()->v();
 				$this->mFechaDeIngreso		= $this->mOB->fecha_de_ingreso()->v();
 				$this->mDescripcion			= $this->mOB->descripcion()->v();
+				if(trim($this->mDescripcion) == ""){
+					$this->mDescripcion		= $this->mPuesto;
+				}
 				$this->mClaveDeActAML		= $this->mOB->tipo_aeconomica()->v();
 				$this->mClaveDeActSCIAN		= $this->mOB->clave_scian()->v();
 				$this->mSectorEconomico		= $this->mOB->sector_economico()->v();
@@ -6759,7 +6826,22 @@ class cPersonaActividadEconomica {
 	}
 	function getClaveActividadAML(){ return $this->mClaveDeActAML; }
 	function getClaveActividadSCIAN(){ return $this->mClaveDeActSCIAN; }
-	function getDescripcionAct(){return $this->mDescripcion;}
+	function getDescripcionAct($force = false){
+		$txt	= $this->mDescripcion;
+		if($txt == "" AND $force == true){
+			$idscian	= $this->mClaveDeActSCIAN;
+			$idaml		= $this->mClaveDeActAML;
+			$xASCIAN	= new cPersonaActividadEconSCIAN($idscian);
+			
+			if($xASCIAN->init() == true){
+				$txt	= $xASCIAN->getNombre();
+			} else {
+				//$xAAML	= new cPersonaActividadEconomica($idaml);
+				
+			}
+			
+		}
+		return $txt;}
 	function getIDDeActividad(){ return $this->mIDCargado; }
 	function setActualizarDescripcion($describe){
 		

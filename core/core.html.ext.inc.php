@@ -2082,6 +2082,8 @@ class cHTablaDic {
 		$xTbl		= new cHTabla("idtblrels");$xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText(); $xText->setDivClass(""); $xChk->setDivClass("");
 		$xBtn		= new cHButton();
 		$xRuls		= new cReglaDeNegocio();
+		$xRels		= new cPersonasRelaciones(false, false);
+		
 		$xUl		= new cHUl("idtools", "ul", "tags blue");
 		
 		$RelsSAct	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_SOLOACTIV);		//regla de negocio
@@ -2097,7 +2099,7 @@ class cHTablaDic {
 			$xTbl->addTD($xHSel->getListaDeTiposDeParentesco()->get("")  );
 			$xTbl->addTD($xChk->get("TR.es dependiente_economico", "dependiente") );
 		} else {
-			$xTbl->addTD( $xText->getHidden("idtipodeparentesco", 99) );
+			$xTbl->addTD( $xText->getHidden("idtipodeparentesco", $xRels->CONSANGUINIDAD_NINGUNA) );
 		}
 		$xTbl->addRaw("<td class='toolbar-24'>". $xUl->get() . "</td>" );
 		$xTbl->endRow();

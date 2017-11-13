@@ -71,6 +71,8 @@ if($query !== "" OR $where !== ""){
 			$sql	= str_replace("?", $param, $sql);
 		}
 		
+		
+		
 		$svc	= new MQLService("list", $sql);
 		if($out == $svc->JTABLE){
 			if($jTPag > 0){
@@ -80,7 +82,7 @@ if($query !== "" OR $where !== ""){
 					} else {
 						$sql 	= $sql . " LIMIT $jTLim,$jTPag";
 					}
-					$sql	= preg_replace("/SELECT[\s]/", "SELECT SQL_CALC_FOUND_ROWS ", $sql);
+					$sql	= preg_replace("/SELECT[\s]/", "SELECT SQL_CALC_FOUND_ROWS ", $sql, 1);
 				}
 				
 				if($jTSort !== ""){

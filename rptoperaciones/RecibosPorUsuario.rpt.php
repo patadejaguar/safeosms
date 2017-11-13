@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$oficial 		= elusuario($iduser);
+
 //=====================================================================================================
 $xHP			= new cHPage("TR.Reporte de Recibos", HP_REPORT);
 $xL			= new cSQLListas();
@@ -21,30 +21,30 @@ $query		= new MQL();
 $xFil		= new cSQLFiltros();
 
 
-$tipo_pago			= (isset($_GET["tipodepago"])) ? $_GET["tipodepago"] : SYS_TODAS;
-$tipo_de_recibo		= (isset($_GET["tipoderecibo"]) ) ? $_GET["tipoderecibo"] : SYS_TODAS;
-$oficial 			= (isset($_REQUEST["usuario"])) ? $_REQUEST["usuario"] : SYS_TODAS;
-$tipo_de_recibo		= parametro("tiporecibo", $tipo_de_recibo, MQL_INT);
 
-$mx 			= (isset($_GET["mx"])) ? true : false;
-if($mx == true){
-	$fechaInicial	= (isset($_GET["on"])) ? $xF->getFechaISO( $_GET["on"]) : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal		= (isset($_GET["off"])) ? $xF->getFechaISO( $_GET["off"]) : fechasys();
-} else {
-	$fechaInicial	= (isset($_GET["on"])) ? $_GET["on"] : FECHA_INICIO_OPERACIONES_SISTEMA;
-	$fechaFinal		= (isset($_GET["off"])) ? $_GET["off"] : fechasys();
-}
-$ByOperacion		= "";
+$TipoDePago		= parametro("tipodepago", SYS_TODAS, MQL_RAW); $TipoDePago	= parametro("formadepago", $TipoDePago, MQL_RAW); $TipoDePago	= parametro("pago", $TipoDePago, MQL_RAW);
+$TipoDeRecibo	= parametro("tipoderecibo", 0, MQL_INT); $TipoDeRecibo = parametro("tiporecibo", $TipoDeRecibo, MQL_INT);
 
-$es_por_oficial		= ($oficial != SYS_TODAS) ? " AND (`usuarios`.`idusuarios`  = $oficial ) " : "";
 
-$empresa			= parametro("empresa", SYS_TODAS, MQL_INT);
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$cajero 		= parametro("f3", 0, MQL_INT); $cajero = parametro("cajero", $cajero, MQL_INT); $cajero = parametro("usuarios", $cajero, MQL_INT);
 
-$ByTipoPago			= $xFil->RecibosPorTipoDePago($tipo_pago);// ($tipo_pago != SYS_TODAS) ? " AND (`operaciones_recibos`.`tipo_pago` ='$tipo_pago') " : "";
-$ByTRecibo			= $xFil->RecibosPorTipo($tipo_de_recibo);
-$ByEmpresa			= $xFil->RecibosPorPersonaAsociada($empresa);
+$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
 
-$out 				= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
+$estadisticos	= parametro("estadisticos", false, MQL_BOOL);
+
+
+$ByTipoPago		= $xFil->RecibosPorTipoDePago($TipoDePago);
+$ByTRecibo		= $xFil->RecibosPorTipo($TipoDeRecibo);
+$ByEmpresa		= $xFil->RecibosPorPersonaAsociada($empresa);
+$ByUsuario		= $xFil->RecibosPorCajero($cajero);
+$ByFecha		= $xFil->RecibosPorFecha($FechaInicial, $FechaFinal);	
+$ByEstad		= ($estadisticos == true) ? $xFil->RecibosNoEstadisticos() : "";
+
+$titulo			= $xHP->getTitle();
+$archivo		= $xHP->getTitle();
 
 
 	$setSql = "SELECT
@@ -71,39 +71,53 @@ $out 				= (isset($_GET["out"])) ? $_GET["out"] : SYS_DEFAULT;
 					INNER JOIN `usuarios` `usuarios` 
 					ON `operaciones_recibos`.`idusuario` = `usuarios`.`idusuarios`
 				
-	WHERE 
-		operaciones_recibos.fecha_operacion>='$fechaInicial'
-		AND operaciones_recibos.fecha_operacion<='$fechaFinal'
-		$es_por_oficial
+	WHERE  `operaciones_recibos`.`idoperaciones_recibos` > 0
+		$ByFecha
+		$ByUsuario
 		$ByTipoPago
 		$ByTRecibo
 		$ByEmpresa
+		$ByEstad
 	ORDER BY
 		`operaciones_recibos`.`fecha_operacion`,
 		`operaciones_recibos`.`tipo_pago`,
 		`usuarios`.`idusuarios`,
 		`operaciones_recibos`.`numero_socio`
-		/*operaciones_recibos.tipo_docto*/
 	";
+
+
 //exit($setSql);
 
 
+$xRpt	= new cReportes($xHP->getTitle());
+$xRpt->setOut($out);
 
-if($out == OUT_EXCEL){
-	$xXls	= new cHExcel();
-	$xXls->convertTable($setSql, $xHP->getTitle());
-} else {
-	$xRpt	= new cReportes($xHP->getTitle());
-	$xRpt->setOut($out);
-	//$cTbl 	= new cTabla($setSql);
-	
-	$xRpt->addContent( $xRpt->getEncabezado($xHP->getTitle(), $fechaInicial, $fechaFinal, $oficial ) );
-	//$cTbl->setTdClassByType();
-	$xRpt->setSQL($setSql);
-	$xRpt->addCampoSuma("total");
-	$xRpt->setProcessSQL();
-	//$xRpt->addContent($html)
-	echo $xRpt->render(true);
+if($cajero >0){
+	$xCaj			= new cSystemUser($cajero);
+	if($xCaj->init() == true){
+		$titulo		= $titulo . " / " . $xCaj->getNombreCompleto();
+	}
+	$xRpt->setOmitir("usuario");
 }
+
+if ( $empresa >0 AND $empresa != DEFAULT_EMPRESA AND $empresa != FALLBACK_CLAVE_EMPRESA ){
+	$xEmp			= new cEmpresas($empresa); $xEmp->init();
+
+}
+
+
+$xRpt->setTitle($titulo);
+
+$xRpt->addContent( $xRpt->getEncabezado($titulo, $fechaInicial, $fechaFinal, $oficial ) );
+
+$xRpt->setSQL($setSql);
+$xRpt->addCampoSuma("total");
+$xRpt->addCampoContar("numero");
+
+$xRpt->setProcessSQL();
+
+
+echo $xRpt->render(true);
+
 
 ?>

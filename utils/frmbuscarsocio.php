@@ -10,7 +10,6 @@
 	if($permiso === false){		header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP	= new cHPage("TR.Buscar Personas", HP_FORM);
 $xQL	= new MQL();

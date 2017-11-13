@@ -59,10 +59,11 @@ function jsSetOficialDeSeguimiento($strOrden){
 	$oficial		= $DOrden[1];
 	saveError(11, $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "Asignacion del Credito $solicitud al Oficial $oficial desde Modulo Directo" );
 	
-	$sql = "UPDATE creditos_solicitud
+	/*$sql = "UPDATE creditos_solicitud
     		SET oficial_credito=$oficial, oficial_seguimiento=$oficial
     		WHERE numero_solicitud=$solicitud";
-    		my_query($sql);
+    		my_query($sql);*/
+	
     		return "Se ha Asignado el Credito $solicitud al Oficial #$oficial";
 
 }

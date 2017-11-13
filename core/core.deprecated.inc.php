@@ -1695,13 +1695,13 @@ function setEliminarMvto360($mvto, $socio, $solicitud, $recibo=1){
 				estatus_mvto=99, docto_neutralizador=$recibo
 				WHERE socio_afectado=$socio
 				AND docto_afectado=$solicitud
-				AND tipo_operacion=$mvto
+				AND tipo_operacion=$mvto AND `recibo_afectado`!=$recibo 
 				";
 	} else {
 	$SQL_DM = "DELETE FROM operaciones_mvtos
 				WHERE docto_afectado=$solicitud
 				AND socio_afectado=$socio
-				AND tipo_operacion=$mvto";
+				AND tipo_operacion=$mvto AND `recibo_afectado`!=$recibo ";
 	}
 	//my_query($SQL_DM);
 	$xQL	= new MQL(); $xQL->setRawQuery($SQL_DM);
@@ -1722,14 +1722,14 @@ function setEliminarMvto($mvto, $socio, $solicitud, $parcialidad, $recibo = 1){
 				WHERE socio_afectado=$socio
 				AND docto_afectado=$solicitud
 				AND tipo_operacion=$mvto
-				AND periodo_socio=$parcialidad
+				AND periodo_socio=$parcialidad AND `recibo_afectado`!=$recibo 
 				";
 	} else {
 	$SQL_DM = "DELETE FROM operaciones_mvtos
 				WHERE docto_afectado=$solicitud
 				AND socio_afectado=$socio
 				AND tipo_operacion=$mvto
-				AND periodo_socio=$parcialidad";
+				AND periodo_socio=$parcialidad AND `recibo_afectado`!=$recibo  ";
 
 	}
 	//setLog($SQL_DM);
@@ -1805,28 +1805,32 @@ function clearCacheSessions(){
  * @return string Mensajes del proceso
  */
 function CongelarSaldos($recibo = false, $fecha = false){
+	$xF			= new cFecha();
+	$fecha		= $xF->getFechaISO($fecha);
+	$xQL		= new MQL();
+	
 	if ( $fecha == false ) {
 		$fecha	= fechasys();
 	}
 	$msg	= "";
 
 	$q_con_cred = "UPDATE creditos_solicitud SET saldo_conciliado=saldo_actual, fecha_conciliada=fecha_ultimo_mvto";
-	$x = my_query($q_con_cred);
+	$x 		= $xQL->setRawQuery($q_con_cred);
 
-		if ($x["stat"] == false){
-			$msg	.= $x[SYS_MSG] . "\n";
-		} else {
-			$msg	.= date("Y-m-d H:i:s") . "\tSE HAN ACTUALIZADO LOS SALDOS CONCILIADOS DE CREDITOS \r\n";
-		}
+	if ($x === false){
+		$msg	.= $x[SYS_MSG] . "\n";
+	} else {
+		$msg	.= date("Y-m-d H:i:s") . "\tSE HAN ACTUALIZADO LOS SALDOS CONCILIADOS DE CREDITOS \r\n";
+	}
 	$q_con_cap = "UPDATE captacion_cuentas SET saldo_conciliado=saldo_cuenta, fecha_conciliada=fecha_afectacion ";
-	$x = my_query($q_con_cap);
+	$x 		= $xQL->setRawQuery($q_con_cap);
 
-		if ($x["stat"] == false){
-			$msg	.= $x[SYS_MSG] . "\r\n";
-		} else {
-			$msg	.= date("Y-m-d H:i:s") . "\tSE HAN ACTUALIZADO LOS SALDOS CONCILIADOS DE CAPTACION \r\n";
-		}
-		return $msg;
+	if ($x === false){
+		$msg	.= $x[SYS_MSG] . "\r\n";
+	} else {
+		$msg	.= date("Y-m-d H:i:s") . "\tSE HAN ACTUALIZADO LOS SALDOS CONCILIADOS DE CAPTACION \r\n";
+	}
+	return $msg;
 }
 
 

@@ -15,13 +15,17 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.SUCURSAL", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xLoc		= new cLocal();
+$xValid		= new cTiposLimpiadores();
 
-$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+
+
+
+
 
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -30,11 +34,21 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$clave 			= parametro("codigo_sucursal", null, MQL_RAW);
+
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$clave 			= parametro("codigo_sucursal", null, MQL_RAW); $clave = parametro("id", $clave, MQL_RAW);
+$clave			= $xValid->cleanSucursal($clave);
+
+
 $xTabla			= new cGeneral_sucursales();
-if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
+
+if($clave !== ""){
+	$xTabla->setData( $xTabla->query()->initByID($clave));
+}
 $xTabla->setData($_REQUEST);
-$clave			= parametro("id", null, MQL_RAW);
+
+
+
 $persona		= parametro("idsocio", $xTabla->clave_de_persona()->v(), MQL_INT);
 $gerente		= parametro("gerente_sucursal", $xTabla->gerente_sucursal()->v(), MQL_INT);
 $cumplimiento	= parametro("titular_de_cumplimiento", $xTabla->titular_de_seguimiento()->v(), MQL_INT);
@@ -54,13 +68,19 @@ if($clave == null){
 	if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
 }
 $xFRM	= new cHForm("frmgeneral_sucursales", "sucursales.frm.php?action=$step");
+$xFRM->setTitle($xHP->getTitle());
 
 
 if($action == MQL_ADD){		//Agregar
-	$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
-	if($clave != null){
+	//$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
+	
+	
+	
+	if($clave !== ""){
 		$xTabla->setData( $xTabla->query()->initByID($clave));
 		$xTabla->setData($_REQUEST);
+		$xTabla->codigo_sucursal( $clave );
+		
 		//modificar la parte de personas asociadas
 		$xTabla->gerente_sucursal($gerente);
 		$xTabla->titular_de_cumplimiento($cumplimiento);
@@ -91,12 +111,38 @@ if($action == MQL_ADD){		//Agregar
 		$xFRM->addAvisoRegistroOK();
 		$xFRM->addCerrar();
 	}
+	//Agregar nueva Caja Local
+	
+	
+	if(SISTEMA_CAJASLOCALES_ACTIVA == false){
+		$numcl	= $xTabla->clave_numerica()->v();
+		$xCL	= new cCajaLocal();
+		$xCL->add($xTabla->nombre_sucursal()->v(), $numcl, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
+		//Actualizar la Sucursal a donde debe ser Caja Local
+		$idcl	= $xCL->getClave();
+		$xQL->setRawQuery("UPDATE `general_sucursales` SET `caja_local_residente`=$idcl WHERE `codigo_sucursal`='$clave'");
+	} else {
+		//compara la sucursal de la caja local con la sucursal nueva
+		$xCL	= new cCajaLocal($xTabla->caja_local_residente()->v());
+		if($xCL->init() == true){
+			if($xCL->getSucursal() !== $clave){
+				$xCL	= new cCajaLocal();
+				$xCL->add($xTabla->nombre_sucursal()->v(), false, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
+				//Actualizar la Sucursal a donde debe ser Caja Local
+				$idcl	= $xCL->getClave();
+				$xQL->setRawQuery("UPDATE `general_sucursales` SET `caja_local_residente`=$idcl WHERE `codigo_sucursal`='$clave'");
+			}
+			
+		}
+	}
 } else if($action == MQL_MOD){		//Modificar
 	//iniciar
-	$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
-	if($clave != null){
+	//$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
+	
+	if($clave !== ""){
 		$xTabla->setData( $xTabla->query()->initByID($clave));
 		$xTabla->setData($_REQUEST);
+		$xTabla->codigo_sucursal( $clave );
 		//modificar la parte de personas asociadas
 		$xTabla->gerente_sucursal($gerente);
 		$xTabla->titular_de_cumplimiento($cumplimiento);
@@ -131,7 +177,14 @@ if($action == MQL_ADD){		//Agregar
 } else {
 	$xFRM->addGuardar();
 	$xFRM->addPersonaBasico("", false, $xTabla->clave_de_persona()->v(), "", "TR.Persona Vinculada");
-	$xFRM->OText("codigo_sucursal", $xTabla->codigo_sucursal()->v(), "TR.codigo sucursal");
+	if($step == MQL_MOD){
+		$xFRM->ODisabled_13("idxsucursal", $xTabla->codigo_sucursal()->v(), "TR.codigo sucursal");
+		$xFRM->OHidden("codigo_sucursal", $clave);
+		
+	} else {
+		$xFRM->OText("codigo_sucursal", $xTabla->codigo_sucursal()->v(), "TR.codigo sucursal");
+	}
+	
 	$xFRM->OText("nombre_sucursal", $xTabla->nombre_sucursal()->v(), "TR.nombre de sucursal");
 	$xFRM->OMoneda("clave_numerica", $xTabla->clave_numerica()->v(), "TR.clave en numero");
 	//$xFRM->OMoneda("caja_local_residente", , "TR.caja_local", );
@@ -145,14 +198,18 @@ if($action == MQL_ADD){		//Agregar
 	$xFRM->addHElem( $xSel->getListaDeHoras("hora_de_fin_de_operaciones", $xTabla->hora_de_fin_de_operaciones()->v(), true)->get("TR.hora cierre de operaciones", true));
 	$xFRM->addHElem($xSel->getListaDeCentroDeCostoCont("centro_de_costo", $xTabla->centro_de_costo()->v())->get(true));
 	
+	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNueva()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
 	
-	
-	if($step != MQL_MOD){
+	if($step !== MQL_MOD){
 		//Lista de Sucursales
 		$xT	= new cTabla($xLi->getListadoDeSucursales());
 		$xT->setEventKey("jsModificar");
 		$xFRM->addHTML( $xT->Show() );
 	}	
+	
+	$xFRM->OHidden("mail", EACP_MAIL);
+	$xFRM->OHidden("tel", EACP_TELEFONO_PRINCIPAL);
+	
 }
 
 
@@ -160,9 +217,24 @@ echo $xFRM->get();
 ?>
 <script>
 var xG	= new Gen();
+var xP	= new PersGen();
+
+
 function jsModificar(sucursal){
 	xG.go({url: "frmtipos/sucursales.frm.php?id=" + sucursal})
 }
+
+function jsAgregarPersonaNueva(){
+	
+	
+	var tel			= $("#tel").val();
+	var mail		= $("#mail").val();
+	var nombres		= $("#nombre_sucursal").val();
+
+	xP.goToAgregarMorales({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.otros,telefono:tel,email:mail});
+}
+
+
 </script>
 <?php
 //$jxc ->drawJavaScript(false, true);

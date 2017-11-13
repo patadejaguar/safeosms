@@ -55,7 +55,13 @@ if($action == SYS_CERO){
 	$xTxtF->setDivClass("");
 	//$xTxtF->setProperty("class", "")
 	$xFRM->OFile("idnuevoarchivo","", "TR.Cargar Documento");
-	$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
+	
+	$items	= count($xDoc->FTPListFiles());
+	if($items>0){
+		$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
+	} else {
+		$xFRM->OHidden("nombrearchivo", "");
+	}
 	$xFRM->endSeccion();
 	$xFRM->addSeccion("iddotros", "TR.DATOS");
 	$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType)->get(true) );
@@ -84,9 +90,9 @@ if($action == SYS_CERO){
 	//if($doc1 !== false){
 		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $nombrearchivo, $pagina, $observaciones, $fechacarga, $archivonuevo, $fechavenc);
 		if($ready == true){
-			$xFRM->addAvisoRegistroOK();
+			$xFRM->addAvisoRegistroOK($xSoc->getMessages());
 		} else {
-			$xFRM->addAvisoRegistroError();
+			$xFRM->addAvisoRegistroError($xSoc->getMessages());
 		}
 	}
 	//if(MODO_DEBUG == true){ $xFRM->addLog($xSoc->getMessages(OUT_TXT) ); }

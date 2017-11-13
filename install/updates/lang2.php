@@ -505,7 +505,7 @@ $lang["20161109"][]	= array("BAJA", "Baja/Cancelacion", "Inactive");
 
 
 $lang["20161120"][]	= array("CHEQUEO", "Chequeo", "Check");
-$lang["20161120"][]	= array("PROBABILIDAD", "Probabilidad", "probability");
+$lang["20161120"][]	= array("PROBABILIDAD", "Probabilidad", "Probability");
 $lang["20161120"][]	= array("CONSECUENCIA", "Consecuencia", "Consequence");
 $lang["20161120"][]	= array("DEFINE", "Define", "Define");
 $lang["20161120"][]	= array("PARAISOFISCAL", "Paraiso Fiscal", "Tax Haven");
@@ -573,6 +573,19 @@ $lang["20170901"][]	= array("PRIMERARENTA", "Primera Renta", "First Rent");
 $lang["20170901"][]	= array("ANTICIPORENTA", "Rentas Anticipadas", "Anticipated Rental");
 $lang["20170901"][]	= array("TASARESIDUAL", "Tasa Residual", "Residual rate");
 $lang["20170901"][]	= array("SOLICITUDINGRESO", "Solicitud de Ingreso", "Request Form");
+
+$lang["20170901"][]	= array("PLANPERIODORENTA", "Pago", "PAGO");
+$lang["20170901"][]	= array("PLANMONTORENTA", "Monto a Pagar", "Total");
+
+$lang["20170901"][]	= array("PAGOSHOY", "Cobranza del dia", "Collections");
+$lang["20170901"][]	= array("PAGOSATRASADOS", "Pagos Vencidos", "Collections");
+$lang["20170901"][]	= array("BASES", "Bases", "Base");
+$lang["20170901"][]	= array("EACP", "Microfinanciera", "Microfinance I");
+$lang["20170901"][]	= array("PERFILPAGO", "Perfil de Pago", "Payment Profile");
+$lang["20170901"][]	= array("PLANCUOTAS", "Plan de Cuotas", "Quota Plan");
+$lang["20170901"][]	= array("ITEM", "Item", "Item");
+$lang["20170901"][]	= array("PERIODOEMPRESA", "Periodo", "Period");
+
 //$lang["20170901"][]	= array("EXISTE", "Elegir", "Select");
 //$lang["20170901"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
 //$lang["20170901"][]	= array("", "", "");

@@ -48,7 +48,7 @@ $empresa	= parametro("empresa", $empresa, MQL_INT); $empresa	= parametro("idempr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmempresaspanel", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
@@ -67,10 +67,11 @@ if($xEmp->init() == true){
 	//========================== Tabla de periodos para empresas
 	$xTPeriodo	= new cTabla($xLi->getListadoDePeriodoPorEmpresa($empresa) );
 	$xTPeriodo->setTdClassByType();
-	
-	$xTPeriodo->setEventKey("var xG = new EmpGen(); xG.getOrdenDeCobranza");
 	$xTPeriodo->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
 	$xTPeriodo->addEditar(USUARIO_TIPO_CAJERO);
+	$xTPeriodo->setColTitle("periodo", "PERIODOEMPRESA" );
+	$xTPeriodo->setOmitidos("periocidad");
+	$xTPeriodo->setUsarNullPorCero();
 	
 	$xTCreds->setTdClassByType(); $xTPers->setTdClassByType(); $xTAhorro->setTdClassByType();
 	$xTPers->setWidthTool("200px");
@@ -79,6 +80,49 @@ if($xEmp->init() == true){
 		$xTPers->addEspTool($xModAhorro);
 	}
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+		//=================== Envios
+		
+		$xTPerE	= new cTabla($xLi->getListadoDePeriodoPorEmpresaMix($empresa,1, true) );
+		
+		$xTPerE->setTdClassByType();
+		$xTPerE->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+		$xTPerE->addEditar(USUARIO_TIPO_CAJERO);
+		$xTPerE->setOmitidos("periocidad");
+		$xTPerE->setOmitidos("fecha_de_cobro");
+		$xTPerE->setColTitle("periodo", "PERIODOEMPRESA" );
+		$xTPerE->setOmitidos("unid");
+		//$xTPerE->addSubQuery($xLi->getListadoDePeriodoPorEmpresaMix($empresa,-1), "unid", "Pago en {{fecha_de_operacion}} por {{saldo}} : {{observaciones}}");
+		
+		$xTPerE->setUsarNullPorCero();
+		
+		$xHTPer	= $xTPerE->Show();
+		$xT2->addTab("TR.ENVIOS", $xHTPer);
+		
+		//=================== Cobros
+		
+		$xTPerP	= new cTabla($xLi->getListadoDePeriodoPorEmpresaMix($empresa,-1) );
+		
+		$xTPerP->setTdClassByType();
+		$xTPerP->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+		$xTPerP->addEditar(USUARIO_TIPO_CAJERO);
+		$xTPerP->setOmitidos("periocidad");
+		$xTPerP->setOmitidos("saldo");
+		$xTPerP->setOmitidos("unid");
+		
+		$xTPerP->setOmitidos("fecha_de_cobro");
+		$xTPerP->setColTitle("periodo", "PERIODOEMPRESA" );
+		
+		$xTPerP->setUsarNullPorCero();
+		
+		$xHPPer	= $xTPerP->Show();
+		
+		$xT2->addTab("TR.PAGOS", $xHPPer);
+		
+
+		$xT2->addTab("TR.Periodos de Empresa", $xTPeriodo->Show());
+		
+		
+		
 		$xT2->addTab("TR.Empleados", $xTPers->Show());
 		$xTCreds->setFootSum(array(8 => "saldo"));
 		$xT2->addTab("TR.Creditos por empresa", $xTCreds->Show());
@@ -86,20 +130,26 @@ if($xEmp->init() == true){
 			//Ahorro por Empresa
 			$xT2->addTab("TR.Ahorro por empresa", $xTAhorro->Show());
 		}
-		$xT2->addTab("TR.Periodos de Empresa", $xTPeriodo->Show());
+		
 	}
 	//$xHTabs->addTab("TR.empresa $empresa", $xT2->get() ); //tab4
-	//== reporte de pagos
-	$xT		= new cTabla($xLi->getListadoDePresupuestoPorPagar($xEmp->getClaveDePersona()));
-	$xT->setFootSum(array(
-			10 => "monto_de_cheque"
-	));
-	$xT2->addTab("TR.Pagos Pendientes", $xT->Show());
-	$xFRM->addHElem( $xT2->get() ); //tab4
 	
-	$xFRM->OButton("TR.Cedula de Ahorro", "jsGetCedulaDeAhorro()", $xFRM->ic()->AHORRO);
-	$xFRM->OButton("TR.Orden de Ahorro", "jsGetEmpresaCaptacion()", $xFRM->ic()->TAREA);
-	$xFRM->OButton("TR.Excel de Ahorro", "jsCedulaAhorroExcel()", $xFRM->ic()->EXCEL);
+	if(PERSONAS_CONTROLAR_POR_APORTS == true){
+		//== reporte de pagos pendientes por comisiones
+		$xT		= new cTabla($xLi->getListadoDePresupuestoPorPagar($xEmp->getClaveDePersona()));
+		$xT->setFootSum(array(
+				10 => "monto_de_cheque"
+		));
+		$xT2->addTab("TR.Comisiones Pendientes", $xT->Show());
+	}
+	
+	$xFRM->addHElem( $xT2->get() );
+	
+	if(MODULO_CAPTACION_ACTIVADO == true){
+		$xFRM->OButton("TR.Cedula de Ahorro", "jsGetCedulaDeAhorro()", $xFRM->ic()->AHORRO);
+		$xFRM->OButton("TR.Orden de Ahorro", "jsGetEmpresaCaptacion()", $xFRM->ic()->TAREA);
+		$xFRM->OButton("TR.Excel de Ahorro", "jsCedulaAhorroExcel()", $xFRM->ic()->EXCEL);
+	}
 	$xFRM->OButton("TR.Actualizar Empresa", "jsaActualizarEmpresa()", $xFRM->ic()->EJECUTAR);
 	$xFRM->OHidden("idempresa", $empresa);
 	$xFRM->OHidden("idsocio", $xEmp->getClaveDePersona()); $xFRM->OHidden("idmodificado", ""); $xFRM->OHidden("idcantidad", "0");

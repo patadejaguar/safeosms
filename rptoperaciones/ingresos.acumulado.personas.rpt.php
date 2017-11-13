@@ -113,8 +113,7 @@ ORDER BY
 	`listado_de_ingresos`.`nombre`
 	";*/
 
-$sql	= "
-SELECT
+$sql	= "SELECT
 	$mrkEmpresa
 	`listado_de_ingresos`.`codigo`,
 	`listado_de_ingresos`.`nombre`,

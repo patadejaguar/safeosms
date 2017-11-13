@@ -25,7 +25,7 @@ $xHP				= new cHPage("Cobros de Credito");
 $xSQL				= new cSQLListas();
 $xT					= new cTipos();
 $xF					= new cFecha();
-$ql					= new MQL();
+$xQL					= new MQL();
 $xLog				= new cCoreLog();
 
 $params 			= $_GET["p"];
@@ -33,6 +33,8 @@ $procesado			= (isset($_REQUEST["procesar"])) ? $_REQUEST["procesar"] : SYS_NORM
 $pempresa			= parametro("periodoempresa", 0, MQL_INT);// (isset($_REQUEST["periodoempresa"])) ? $_REQUEST["periodoempresa"] : "";
 $sumaoperaciones	= parametro("idtotaloperaciones", 0, MQL_FLOAT);
 $montodesglose		= parametro("idplandesglose", 0, MQL_FLOAT);
+$xBase				= new cBases();
+
 
 $DPar 				= explode("|", $params);
 ini_set("max_execution_time", 180);
@@ -76,7 +78,7 @@ if($procesado == SYS_AUTOMATICO){
 	//7 = fecha
 	$SRC["cobservaciones"]	= "($pempresa.$periocidad)L.$parcialidad:" . $xCred->getPagosAutorizados();
 	//cargar credito y datos de la parcialidad
-	$rs						= $ql->getDataRecord($xSQL->getConceptosDePago($solicitud, $socio, $parcialidad));
+	$rs						= $xQL->getDataRecord($xSQL->getConceptosDePago($solicitud, $socio, $parcialidad));
 	//setLog($xSQL->getConceptosDePago($solicitud, $socio, $parcialidad));
 	//$msg					.= "SQL\t" . $xSQL->getConceptosDePago($solicitud, $socio, $parcialidad) . "\r\n";
 	$curOps					= 0;
@@ -254,7 +256,7 @@ $sqlDTemp		= "SELECT
 						AND
 						(`operaciones_recibos`.`docto_afectado` = $solicitud )
 						AND
-						(`operaciones_recibos`.`tipo_docto` = 22)
+						(`operaciones_recibos`.`tipo_docto` = " . RECIBOS_TIPO_PAGOSPENDS . ")
 						AND
 						(`operaciones_mvtos`.`periodo_socio` = $parcialidad )
 					GROUP BY
@@ -265,12 +267,12 @@ $sqlDTemp		= "SELECT
 						`operaciones_mvtos`.`recibo_afectado`,
 						`operaciones_recibos`.`tipo_docto`
 	";
-	$rsTDel		= $ql->getDataRecord($sqlDTemp);
+	$rsTDel		= $xQL->getDataRecord($sqlDTemp);
 
 	foreach ( $rsTDel as $rw ){
-		$recibo		= $rw["recibo"];
-		$xRTmp		= new cReciboDeOperacion(22, false, $recibo);
-		$xRTmp->setNumeroDeRecibo($recibo);
+		$reciboP		= $rw["recibo"];
+		$xRTmp		= new cReciboDeOperacion(RECIBOS_TIPO_PAGOSPENDS, false, $reciboP);
+		$xRTmp->setNumeroDeRecibo($reciboP);
 		$xRTmp->setRevertir();
 	}
 
@@ -283,7 +285,8 @@ if($procesado != SYS_AUTOMATICO){
 	$p			= array();
 
 //============================ Obtener valor de Movimientos =================================
-
+	$xB2		= new cBases($xBase->BASE_MVTOS_ELIMINAR);
+	$xB2->init();
 	$sqlMT		= "SELECT
 						`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
 						`eacp_config_bases_de_integracion_miembros`.`miembro`,
@@ -292,8 +295,8 @@ if($procesado != SYS_AUTOMATICO){
 					FROM
 						`eacp_config_bases_de_integracion_miembros`
 					WHERE
-						(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 1001) ";
-	$rs 		= $ql->getDataRecord($sqlMT);
+						(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = " . $xBase->BASE_MVTOS_RECIBO . ") ";
+	$rs 		= $xQL->getDataRecord($sqlMT);
 	
 	foreach ($rs as $rw){
 
@@ -301,12 +304,16 @@ if($procesado != SYS_AUTOMATICO){
 			$MContable	= TM_ABONO;
 			$m[$id] 	= (isset($SRC["c-$id"]) ) ? $SRC["c-$id"] : 0;
 			$p[$id]		= (isset($SRC["p-$id"]) ) ? $SRC["p-$id"] : 0;
+			$mextra		= $m[$id];
+			$pextra		= $p[$id];
 			//Modificar el Movimiento en caso de ser negativo
 			if ( $rw["afectacion"] == (-1) ){	$MContable	= TM_CARGO; }
 			//Recibe
 			if($m[$id] != 0){
 				//eliminar Mvtos
-				//if($id >= 300){
+				if($xB2->getIsMember($id) == true){
+					//Eliminar
+					
 					if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
 						setEliminarMvto360( $id, $socio, $solicitud, $recibo_pago);
 						$xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
@@ -319,7 +326,11 @@ if($procesado != SYS_AUTOMATICO){
 							$xLog->add("WARN\tPARCS\tEliminar 360 $id, $socio, $solicitud, $parcialidad, $recibo_pago\r\n", $xLog->DEVELOPER);
 						}
 					}
-				//}
+				} else {
+					$total_pendientes += setNoMenorQueCero($pextra);
+					//setLog("$id $total_pendientes ---- > $mextra ---- pendiente $pextra ");
+				}
+				
             	/**
 				* Condiciona si es Ahorro
 				* 412 = 0.00;
@@ -369,17 +380,18 @@ if($xCred->isAFinalDePlazo() == false ){
 		$dxplan				= $xCred->getDatosDelPlanDePagos();
 		$xPlan				= setNoMenorQueCero($xCred->getNumeroDePlanDePagos());
 	
-		$xRec				= new cReciboDeOperacion(22, true);
+		$xRecP				= new cReciboDeOperacion(RECIBOS_TIPO_PAGOSPENDS, true);
 		if ( $xPlan <= 0){
-			$recibo_pendientes	= $xRec->setNuevoRecibo($socio, $solicitud, $fecha_operacion, $parcialidad, false, $mobserva, "", "ninguno", "NA", $grupo, false, "",0, $empresa, $parcialidad);
-			$xRec->setNumeroDeRecibo( $recibo_pendientes );
-			$xRec->init();
+			$recibo_pendientes	= $xRecP->setNuevoRecibo($socio, $solicitud, $fecha_operacion, $parcialidad, false, $mobserva, "", "ninguno", "NA", $grupo, false, "",0, $empresa, $parcialidad);
+			$xRecP->setNumeroDeRecibo( $recibo_pendientes );
+			$xRecP->init();
 		} else {
 			$recibo_pendientes	= $xPlan;
-			$xRec->setNumeroDeRecibo( $recibo_pendientes );
-			$xRec->init($dxplan);
+			$xRecP->setNumeroDeRecibo( $recibo_pendientes );
+			$xRecP->init($dxplan);
 		}
 		//recorre los pendientes
+		
 		//--29Dic2014
 		foreach( $p as $clave_operacion => $monto_pendiente ){
 			//===================================================================================== Fecha : 03 de Marzo 2015
@@ -391,25 +403,26 @@ if($xCred->isAFinalDePlazo() == false ){
 				if(($clave_operacion == OPERACION_CLAVE_PLAN_INTERES) AND ($monto_pendiente > 0) AND ($tasa_iva >0) ){
 					//agregar Interes
 					$iva_pendiente		= $monto_pendiente * $tasa_iva;
-					$xRec->setNuevoMvto($fecha_de_pendiente, $iva_pendiente, OPERACION_CLAVE_PLAN_IVA, $parcialidad, $mobserva );
+					$xRecP->setNuevoMvto($fecha_de_pendiente, $iva_pendiente, OPERACION_CLAVE_PLAN_IVA, $parcialidad, $mobserva );
 					$total_pendientes	+= $iva_pendiente;
 				}
-				$xRec->setNuevoMvto($fecha_de_pendiente, $monto_pendiente, $clave_operacion, $parcialidad, $mobserva );
+				$xRecP->setNuevoMvto($fecha_de_pendiente, $monto_pendiente, $clave_operacion, $parcialidad, $mobserva );
 				$total_pendientes	+= $monto_pendiente;
 			}
 		}
 		//setLog("Total $total_pendientes ");
-		//Arreglo para no Emilinar el Recibo de pendientes
+		//Arreglo para no Eliminar el Recibo de pendientes
 		if ( $recibo_pendientes != $xPlan ){
-			$xRec->init();
-			$xRec->setSumaDeRecibo($total_pendientes);
-			$xRec->setFinalizarRecibo(true);
-			$xLog->add($xRec->getMessages(OUT_TXT), $xLog->DEVELOPER);
+			$xLog->add("WARN\tPLAN_DIF\tTotal Pendientes a $total_pendientes\r\n");
+			$xRecP->init();
+			$xRecP->setSumaDeRecibo($total_pendientes);
+			$xRecP->setFinalizarRecibo(true);
+			$xLog->add($xRecP->getMessages(OUT_TXT), $xLog->DEVELOPER);
 		}
 		//la Parcialidad se resetea a la anterior
 		if ( $total_pendientes > TOLERANCIA_SALDOS ){
 			$nueva_parcialidad	= $parcialidad - 1;
-			$xLog->add("WARN\tPARC_REST\tParcialidad regresada de $parcialidad a $nueva_parcialidad\r\n");
+			$xLog->add("WARN\tPARC_REST\tParcialidad regresada de $parcialidad a $nueva_parcialidad por pendientes $total_pendientes\r\n");
 		}
 	}
 }
@@ -504,28 +517,31 @@ $SQLX = "SELECT * FROM captacion_cuentas WHERE numero_cuenta = $contrato_captaci
 	$dias_mes				= date("j", strtotime($fecha_operacion));
 
 	$diastrans 				= restarfechas($fecha_operacion, $fecha_ultima);
-	if(($diastrans<0) OR ($diastrans>$dias_mes)){
-		$diastrans = restarfechas($fecha_operacion, date("Y-m", strtotime($fecha_operacion)) . "-01");
+	if(($diastrans < 0) OR ($diastrans>$dias_mes)){
+		$diastrans 			= restarfechas($fecha_operacion, date("Y-m", strtotime($fecha_operacion)) . "-01");
 	}
-	if ($diastrans>0){
-			$monto_sdpm = $saldo_cuenta * $diastrans;
+	if ($diastrans > 0){
+		$monto_sdpm 		= $saldo_cuenta * $diastrans;
 	}
 		//Guarda los datos del SDPM
 		$ejer 		= date("Y", strtotime($fecha_operacion));
 		$peri 		= date("m", strtotime($fecha_operacion));
+		
+		
 		$sqlUS 		= "INSERT INTO captacion_sdpm_historico
 							(ejercicio, periodo, cuenta, fecha, dias, tasa, monto, recibo)
 		    				VALUES( $ejer, $peri,$contrato_captacion, '$fecha_operacion',
-		    				$diastrans, $tasa, $monto_sdpm, $recibo_pago)";
-					my_query($sqlUS);
+		    				$diastrans, $tasa, $monto_sdpm, $recibo_pago) ";
 		$xLog->add("WARN\tAHORRO\t$socio\t$contrato_captacion\tAgregando y Actualizando el SDPM por $monto_sdpm del $fecha_ultima al $fecha_operacion agregando al saldo $baseM220\r\n", $xLog->DEVELOPER);
 		//Afectar el Saldo de la Cuenta de Captacion
 		$sqlUAh 	= "UPDATE captacion_cuentas
                             SET  fecha_afectacion='$fecha_operacion',
                             saldo_cuenta=(saldo_cuenta +($baseM220)),
-                            ultimo_sdpm=$monto_sdpm
-                            WHERE numero_cuenta=$contrato_captacion";
-		my_query($sqlUAh);
+                            ultimo_sdpm=$monto_sdpm WHERE numero_cuenta=$contrato_captacion ";
+		
+		$xQL->setRawQuery($sqlUAh);
+		$xQL->setRawQuery($sqlUS);
+		
 }
 
 //**************************************************************************************
@@ -663,7 +679,7 @@ if($capital!=0){
 //-------------------------------- ELIMINAR EL RECIBO DE PENDIENTES ------------------------
 //Si los Pendientes son CERO y el Numero de Recibo es diferente al dePendientes
 if ( ($total_pendientes	<= TOLERANCIA_SALDOS) AND ($recibo_pendientes != $xPlan) ){
-	$cRP 			= new cReciboDeOperacion( 22, true, $recibo_pendientes);
+	$cRP 			= new cReciboDeOperacion( RECIBOS_TIPO_PAGOSPENDS, true, $recibo_pendientes);
 	if($cRP->init() == true){
 		$cRP->setRevertir();
 		$xLog->add("========\tEliminando Recibo de Pendientes\t==========\r\n", $xLog->DEVELOPER);

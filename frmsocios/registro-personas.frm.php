@@ -94,7 +94,7 @@ $idfoliospoder			= parametro("idfoliospoder", "");
 
 $idnotarioconst			= parametro("idnotarioconst", "");
 $idnotariaconst			= parametro("ididnotariaconst", "");
-$idfoliosconst			= parametro("idfoliosconst", "");
+$idfoliosconst			= parametro("idfolioconst", "");
 //====== Datos de Origen
 $tipoorigen				= parametro("tipoorigen",0, MQL_INT);
 $claveorigen			= parametro("claveorigen",0, MQL_INT);
@@ -120,6 +120,8 @@ if($xTipoRels->init() == true){
 $xFRM->addCerrar();
 $xFRM->addAtras();
 $xFRM->setNoAcordion();
+$xFRM->setTitle($xHP->getTitle());
+
 //===================== Corregir CURP
 if(trim($idcurp) == "" AND $idtipoidentificacion == PERSONAS_CLAVE_ID_POBLACIONAL){
 	if(trim($idnumerodocumento)!= ""){$idcurp = $idnumerodocumento;}
@@ -215,7 +217,11 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 					}
 					$xLog->add($xGrupo->getMessages(), $xLog->DEVELOPER);
 				}
-			}			
+			}
+			//======= Agregar Datos de Constitucion
+			if($xSoc->getEsPersonaFisica() == false){
+				$xSoc->setDatosPersonasMorales($idfoliosconst, $idnumerodocumento, $idfechanacimiento, $idnotarioconst, $idnotariaconst, $idpoder, $fechapoder, $idnotariopoder, $idnotariapoder);
+			}
 			//Agregar Domicilio si existe
 			$persona		= $xSoc->getCodigo();
 			$xFRM->addHElem( $xSoc->getFicha() );
@@ -396,6 +402,8 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 			if($omitirAML == false){ $xSoc->setAMLAutoActualizarNivelRiesgo(); }
 			
 		}
+		//=================================== IR AL PANEL DE PERSONA
+		$xHP->goToPageX("../frmsocios/socios.panel.frm.php?persona=$persona");
 		//agregar Relacion
 
 		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);

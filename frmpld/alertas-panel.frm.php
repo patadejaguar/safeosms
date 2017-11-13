@@ -58,6 +58,8 @@ if($xAlert->init() == true){
 	
 	if($xAlert->getEsEnviadoRMS() == false){
 		$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR);
+	} else {
+	    $xFRM->addAviso($xFRM->getT("MS.ALERTA_ENVIADO_RMS"), "", false, "warning");
 	}
 	
 	$xFRM->addHElem($xAlert->getFicha());
@@ -65,7 +67,7 @@ if($xAlert->init() == true){
 	
 }
 
-
+$xFRM->OHidden("idalerta", $clave);
 
 echo $xFRM->get();
 
@@ -83,7 +85,10 @@ function jsEnviarRMS(id){
 	xG.svc({url:"send-to-rms.svc.php?clave=" + id, callback: jsResultEnviarRMS});
 }
 function jsResultEnviarRMS(obj){
+	
+	var id = $("#idalerta").val();
 	xG.alerta({msg: obj.message });
+	xG.go({url: "../frmpld/alertas-panel.frm.php?clave=" + id });
 }
 </script>
 <?php

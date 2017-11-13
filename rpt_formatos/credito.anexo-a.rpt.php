@@ -32,6 +32,7 @@ echo $xHP->init();
 	$numero_de_socio	= $xCred->getClaveDePersona();
 
 	$xForma						= new cFormato($formato);
+	
 	$xForma->setCredito($idsolicitud, $DCred);
 	$xForma->setProcesarVars();
 	

@@ -15,6 +15,7 @@
 $xHP		= new cHPage("TR.Envios de Cobranza", HP_FORM);
 $jxc 		= new TinyAjax();
 $xCaja		= new cCaja();
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
@@ -224,6 +225,7 @@ $xFRM		= new cHForm("frmcbza", "", "idsumacbza");
 $xBtnN		= new cHButton();
 $xSel		= new cHSelect();
 $xBTN4		= new cHButton();
+
 $xFRM->setTitle($xHP->getTitle());
 
 $xFRM->OButton("TR.Obtener Listado", "jsGetCobranza()", "refrescar", "idgetcbza") ;
@@ -240,16 +242,31 @@ $xFRM->OButton("TR.Ver en PDF", "getReporteEnPDF()", $xFRM->ic()->PDF, "idverrep
 
 
 $xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
-$xSemp	= $xSel->getListaDeEmpresas("", true);
+
+$xSemp		= $xSel->getListaDeEmpresasConCreditosActivos("", true);
+
 $xSemp->addEvent("onblur", "jsResetCbza();jsCargarDatosIniciales();");
 
-$xFRM->addHElem( $xSemp->get(true) );
+if($empresa>0){
+	$xEmp	= new cEmpresas($empresa);
+	if($xEmp->init() == true){
+		$xFRM->addHElem($xEmp->getFicha());
+		$xFRM->OHidden("idcodigodeempresas", $empresa);
+	} else {
+		$xFRM->addHElem( $xSemp->get(true) );
+	}
+} else {
+	$xFRM->addHElem( $xSemp->get(true) );
+}
+
+
 
 $xSPer	= $xSel->getListaDePeriocidadDePago();
 $xSPer->addEvent("onblur", "jsaGetDatosEmpresa()");
 $xSPer->addEvent("onchange", "jsaGetDatosEmpresa()");
-
 $xFRM->addHElem( $xSPer->get(true));
+
+
 $xFRM->addHElem('<div class="tx4" id="divperiodo"><label for="idperiodo">Periodo</label><input type="number" id="idperiodo" onchange="jsInitPeriodo()" onblur="jsInitPeriodo()" />	</div>');
 
 $xFRM->addHElem('<div class="tx4"><label for="idvariacion">Variaci&oacute;n</label>

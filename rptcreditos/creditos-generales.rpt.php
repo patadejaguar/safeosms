@@ -99,7 +99,7 @@ $setSql	= "SELECT
 	`creditos_solicitud`.`monto_autorizado`                            	AS `monto_original`,
 	`creditos_solicitud`.`saldo_actual`                                	AS `saldo_capital`,
 	$saldo_migrado
-	`oficiales`.`nombre_corto` AS	`oficial`
+	`oficiales`.`nombre_corto` AS	`oficial`, `creditos_solicitud`.`monto_parcialidad`
 	
 FROM
 	`creditos_solicitud` `creditos_solicitud` 
@@ -212,10 +212,12 @@ if($es_por_convenio !== "" AND $FProducto !== ""){
 }
 $xRPT->addCampoSuma("monto_original");
 $xRPT->addCampoSuma("saldo_capital");
+$xRPT->addCampoSuma("monto_parcialidad");
 if(MODO_MIGRACION == true){
 	$xRPT->addCampoSuma("migrado");
 }
 $xRPT->addCampoContar("credito");
+
 if($otros == false){
 	$xRPT->setOmitir("sucursal");
 	$xRPT->setOmitir("fecha_de_vencimiento_calculado");

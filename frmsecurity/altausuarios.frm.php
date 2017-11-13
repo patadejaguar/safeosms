@@ -120,6 +120,9 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		
 		$xFRM->OCheck("TR.CORPORATIVO", "corporativo");
 		
+		
+		$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNueva()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
+		
 			
 		$xFRM->addHTML("<p class='aviso' id='thAction'>$msg</p>");
 		$xFRM->addHTML('<input type="hidden" id="idUsuario" name="idUsuario" />');
@@ -220,6 +223,8 @@ $jxc ->drawJavaScript(false, true);
 ?>
 <script  >
 var xG	= new Gen();
+var xP	= new PersGen();
+
 function getValidaNombre(){
 	
 }
@@ -267,6 +272,17 @@ function jsSetSuspender(){
 	var si	= confirm("DESEA SUSPENDER A ESTE USUARIO?");
 	if(si){ jsaSetSuspension(); }
 }
+
+function jsAgregarPersonaNueva(){
+	
+	
+	var tel			= "";
+	var mail		= "";
+	var nombres		= $("#nombre_sucursal").val();
+
+	xP.goToAgregarFisicas({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.usuario,telefono:tel,email:mail, otros : "&sinsucursal=true"});
+}
+
 </script>
 <?php 
 $xHP->fin();

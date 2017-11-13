@@ -35,7 +35,7 @@ $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = par
 $monto		= parametro("monto",0, MQL_FLOAT);
 $producto	= parametro("producto",DEFAULT_TIPO_CONVENIO, MQL_INT);
 $idorigen	= parametro("idorigen",1, MQL_INT);
-$origen		= parametro("origen",1, MQL_INT); //Tipo de Origen
+$tipoorigen		= parametro("origen",1, MQL_INT); //Tipo de Origen
 
 $fecha		= parametro("fecha", fechasys(), MQL_DATE);
 $pagos		= parametro("pagos", 1, MQL_INT);
@@ -85,12 +85,18 @@ function jsaGetPerfilDePersona($persona){
 		}
 		
 	}
-	if($pagos > 1){
-		$tab -> add(TabSetValue::getBehavior('idnumerodepagos', $pagos ));
+	if($monto>0){
+		if($pagos > 1){
+			$tab -> add(TabSetValue::getBehavior('idnumerodepagos', $pagos ));
+		}
+		$xProd		= new cProductoDeCredito($producto);
+		if($xProd->init() == true){
+			$tab -> add(TabSetValue::getBehavior('idproducto', $producto ));
+		}
+		$tab -> add(TabSetValue::getBehavior('idperiocidad', $periocidad ));
+		
+		$tab -> add(TabSetValue::getBehavior('idmonto', $monto ));
 	}
-	$tab -> add(TabSetValue::getBehavior('idproducto', $producto ));
-	$tab -> add(TabSetValue::getBehavior('idperiocidad', $periocidad ));
-	$tab -> add(TabSetValue::getBehavior('idmonto', $monto ));
 	return $tab->getString();	
 }
 function jsaGetPerfilDeProducto($producto,$periocidad,  $pagos){
@@ -118,7 +124,8 @@ function jsaValidarCredito($socio){
 		
 	} else {
 		$xBtn	= new cHButton();
-		return $xBtn->getBasic("TR.guardar credito", "jsFormularioValidado()", "guardar", "idvalidarok", false); 
+		$xBtn->setBClass("blue");
+		return $xBtn->getBasic("TR.GUARDAR SOLICITUD", "jsFormularioValidado()", $xBtn->ic()->GUARDAR, "idvalidarok", false); 
 	}
 }
 
@@ -141,10 +148,10 @@ $xFRM->setAction("solicitud_de_credito.2.frm.php", true);
 
 //========== Origen
 $xFRM->OHidden("idorigen", $idorigen);
-$xFRM->OHidden("origen", $origen);
+$xFRM->OHidden("origen", $tipoorigen);
 $xFRM->OHidden("tasa", $tasa);
 //-- Manejar origen
-if($origen == $xCred->ORIGEN_ARRENDAMIENTO){
+if($tipoorigen == $xCred->ORIGEN_ARRENDAMIENTO){
 	$xArr	= new cCreditosLeasing($idorigen);
 	if($xArr->init() == true){
 		if($xArr->getDomicilia() == true){
@@ -157,7 +164,7 @@ if($origen == $xCred->ORIGEN_ARRENDAMIENTO){
 //===========
 $xFRM->setTitle( $xHP->getTitle() );
 $xFRM->setNoAcordion();
-if($ConOrigen == true AND ($idorigen == 1 OR $origen == 1)){
+if($ConOrigen == true AND ($idorigen == 1 OR $tipoorigen == 1)){
 	echo JS_CLOSE;
 	$ready		= false;
 	$xFRM->addAvisoRegistroError("TR.Requiere un ORIGEN_DE_CREDITO");
@@ -206,15 +213,15 @@ if($ready == true){
 	$xFRM->addHElem( $xSel->getListaDeTipoDeLugarDeCobro("", $TipoCobro)->get(true) );
 	//}
 	
-	if($origen == $xCred->ORIGEN_ARRENDAMIENTO AND $pagos > 0){
+	if($tipoorigen == $xCred->ORIGEN_ARRENDAMIENTO AND $pagos > 0){
 		$xFRM->ODisabled_13("idnumerodepagos", $pagos, "TR.Numero de pagos");
-	} else if ($origen == $xCred->ORIGEN_LINEAS AND $pagos > 0){
+	} else if ($tipoorigen == $xCred->ORIGEN_LINEAS AND $pagos > 0){
 		$xFRM->ODisabled_13("idnumerodepagos", $pagos, "TR.Numero de pagos");
 	} else {
 		$xFRM->OMoneda("idnumerodepagos", $pagos, "TR.Numero de pagos");
 	}
 	
-	if($SinFinalPlazo == true OR ($origen == $xCred->ORIGEN_ARRENDAMIENTO AND $pagos > 0) ){
+	if($SinFinalPlazo == true OR ($tipoorigen == $xCred->ORIGEN_ARRENDAMIENTO AND $pagos > 0) ){
 		$xFRM->OHidden("idFechaVencimiento", fechasys());
 	} else {
 		$xFRM->ODate("idFechaVencimiento", false, "TR.Fecha de Vencimiento");
@@ -254,7 +261,11 @@ if($ready == true){
 	//====================================== cuestionario
 	$xFRM->addSeccion("didivdivision", "TR.CUESTIONARIO");
 	//si es credito renovado
-	$xFRM->OCheck("TR.Es Credito Renovado", "idrenovado");
+	if($tipoorigen == $xCred->ORIGEN_ARRENDAMIENTO AND $idorigen > 0){
+		$xFRM->OHidden("idrenovado", "false");
+	} else {
+		$xFRM->OCheck("TR.Es Credito Renovado", "idrenovado");
+	}
 	if(MODULO_AML_ACTIVADO == true){
 		$xFRM->OCheck("TR.PREGUNTA_AML_CREDITO_2", "idpropietario");
 		$xFRM->OCheck("TR.PREGUNTA_AML_CREDITO_1", "idproveedor");
@@ -267,10 +278,10 @@ if($ready == true){
 	$xFRM->endSeccion();
 		
 	$xFRM->addCerrar();
-	$xFRM->OButton("TR.Validar Credito", "jsValidarCredito()", "checar", "idcheck");
+	$xFRM->OButton("TR.Validar Credito", "jsValidarCredito()", $xFRM->ic()->CHECAR, "idcheck", "green");
 	$xFRM->addToolbar("<span id='creditoaprobado'></span>");
 	
-	if($origen == $xCred->ORIGEN_ARRENDAMIENTO AND $idorigen > 0){
+	if($tipoorigen == $xCred->ORIGEN_ARRENDAMIENTO AND $idorigen > 0){
 		$xFRM->addDisabledInit("iddestinodecredito");
 		$xFRM->addDisabledInit("idtipolugarcobro");
 		$xFRM->addDisabledInit("idtipodepago");
@@ -278,7 +289,7 @@ if($ready == true){
 		$xFRM->addDisabledInit("idperiocidad");
 	}
 	
-	if($origen == $xCred->ORIGEN_LINEAS AND $idorigen > 0){
+	if($tipoorigen == $xCred->ORIGEN_LINEAS AND $idorigen > 0){
 		//$xFRM->addDisabledInit("iddestinodecredito");
 		//$xFRM->addDisabledInit("idtipolugarcobro");
 		$xFRM->addDisabledInit("idtipodepago");

@@ -105,7 +105,7 @@ $xRPT->setTitle($titulo);
 									`operaciones_recibostipo`.
 									`idoperaciones_recibostipo`*/
 $sql			= $xLi->getListadoDeIngresos($FechaInicial, $FechaFinal, $TipoDePago, $empresa, $producto, false, $otros);
-
+//setLog($sql);
 $body		= $xRPT->getEncabezado($titulo, $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);

@@ -13,7 +13,7 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 
 //=====================================================================================================
 //$mTit						= EACP_NAME . " .- {" . getSucursal() . "} - S.A.F.E. V " . $version. "";
-$mTit						= EACP_NAME;
+$mTit						= EACP_NAME . " - " . getSucursal();
 $xHP						= new cHPage($mTit, HP_FORM, "", ".");
 $xRuls						= new cReglaDeNegocio();
 
@@ -286,8 +286,6 @@ function jsGetMenuChilds(id){
 	
 	jsaGetMenu();
 	jPanelMenu.off();
-	
-	
 	
 }
 

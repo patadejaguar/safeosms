@@ -48,7 +48,7 @@ $xFRM->setTitle($xHP->getTitle());
 $xSel			= new cHSelect();
 $msg			= "";
 $xFRM->addSeccion("idopt", "TR.Opciones");
-$xFRM->addHElem($xSel->getListaDeProductosDeCredito()->get(true) );
+$xFRM->addHElem($xSel->getListaDeProductosDeCredito("", false, true)->get(true) );
 $xSEstat		= $xSel->getListaDeEstadosDeCredito();
 $xSEstat->addEspOption(SYS_TODAS, SYS_TODAS);
 $xSEstat->setOptionSelect(SYS_TODAS);
@@ -61,6 +61,12 @@ $xFRM->addHElem( $xSPer->get(true));
 $xFRM->endSeccion();
 $xFRM->addSeccion("idofi", "TR.AGREGAR A");
 $xFRM->addHElem($xSel->getListaDeOficiales("", SYS_USER_ESTADO_ACTIVO)->get(true) );
+
+$xChk	= new cHCheckBox();
+$xChk->addEvent("jsMarkAll()", "onchange");
+$xFRM->addHElem($xChk->get("TR.TODOS", "idmarktodos"));
+
+
 $xFRM->endSeccion();
 $xFRM->addSeccion("idlista", "TR.LISTA DE CREDITOS");
 $xFRM->addHTML("<div id='id-listado-de-creditos'></div>");
@@ -91,20 +97,28 @@ function jsSetOficial(){
 function jsEchoMsg(msg){ xGen.alerta({msg:msg}); }
 function jsMarkAll(){
 	var isLims 			= Frm.elements.length - 1;
-	var vOficial		= Frm.cOficial.value;
+	var isP				= $("#idmarktodos").prop("checked");
+	
 	for(i=0; i<=isLims; i++){
 		var mTyp 	= Frm.elements[i].getAttribute("type");
 		var mID 	= Frm.elements[i].getAttribute("id");
+		
 		//Verificar si es mayor a cero o no nulo
 		if ( (mID!=null) && (mID.indexOf("chk@")!= -1) && (mTyp == "checkbox") ) {
-			if ( document.getElementById(mID).checked) {
+			if(isP == true){
+				document.getElementById(mID).checked	= true;
+			} else {
+				document.getElementById(mID).checked	= false;
+			}
+			/*if (document.getElementById(mID).checked){
 				document.getElementById(mID).checked = false;
 			} else {
 				document.getElementById(mID).checked = true;
-			}
+			}*/
 		}
 	}
 }
+
 function jsCargarArchivo(){	xGen.w({ url : "../frmseguimiento/creditos_oficiales.upload.frm.php?", tiny : true, w: 800 }); }
 </script>
 <?php

@@ -128,8 +128,42 @@ function jsaGetLetrasAVencerTodas($fecha = false){
 	return $xT->Show();
 }
 
+function jsaGetLetrasVencidas($fecha){
+	$xD		= new cFecha();
+	$xL		= new cSQLListas();
+	$fecha 	= $xD->getFechaISO($fecha);
+	$xFil	= new cSQLFiltros();
+	
+	$BySaldo		= $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">");
+	//Agregar seguimiento
+	$BySaldo		= $BySaldo . $xFil->CreditosProductosPorSeguimiento(0);
+	$sql			= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, false, false);
+	
+	$xT				= new cTabla($sql, 2);
+	
+	$xT->setWithMetaData();
+	$xT->setOmitidos("capital");
+	$xT->setOmitidos("interes");
+	$xT->setOmitidos("iva");
+	$xT->setOmitidos("otros");
+	$xT->setOmitidos("monto_ministrado");
+	
+	$xT->setOmitidos("moratorio");
+	$xT->setOmitidos("iva_moratorio");
+	$xT->setOmitidos("total");
+	
+	$xT->setTitulo("letra_original", "TR.TOTAL");
+	
+	$xT->setEventKey("jsCargarCredito2");
+	
+	return $xT->Show( );
+}
+
+
 $jxc ->exportFunction('jsaGetVerifyPlan', array("idsolicitud"), "#aviso");
 $jxc ->exportFunction('jsaGetLetrasAVencerTodas', array("idfecha-0"), "#lst");
+$jxc ->exportFunction('jsaGetLetrasVencidas', array("idfecha-0"), "#lst2");
+
 $jxc ->exportFunction('jsaGetVerifyPlan', array("idsolicitud"), "#aviso");
 $jxc ->exportFunction('jsaGetLetras', array("idsolicitud"), "#divparcialidad");
 
@@ -167,10 +201,17 @@ $xFRM->addDivSolo($xTxt->get("idparcialidad", "", "TR.Numero de Parcialidad", ""
 $xDate->addEvents("onblur=\"initComponents()\" onchange=\"initComponents()\" ");
 
 $xFRM->addHTML("<div id='lst' class='inv'></div>");
+$xFRM->addHTML("<div id='lst2' class='inv'></div>");
+
+
 
 $xFRM->addSubmit("", "setFrmSubmit()");
 
-$xFRM->addToolbar($xBtn->getBasic("TR.Letras Pendientes", "jsObtenerLetras()", "ejecutar", "cmdGetLetras", false));
+$xFRM->OButton("TR.PAGOSHOY", "jsObtenerLetras()", $xFRM->ic()->EJECUTAR, "idgetletraspendientes", "white");
+$xFRM->OButton("TR.PAGOSATRASADOS", "jsObtenerLetras2()", $xFRM->ic()->EJECUTAR, "idgetletrasatrasadas", "red");
+
+//$xFRM->addToolbar($xBtn->getBasic("TR.Letras Pendientes", "jsObtenerLetras()", "ejecutar", "cmdGetLetras", false));
+
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
 	$xFRM->addToolbar($xBtn->getBasic("TR.panel_de_control_de", "jsGoPanel()", "panel", "idgetpanel", false));
 }
@@ -248,12 +289,26 @@ function jsCargarCredito(credito){
 	jsCancelarAccion();
 	$("#idsocio").val(mObj.codigo);
 	$("#idsolicitud").val(mObj.credito);
+	$("#nombresocio").val(mObj.nombre);
 	jsaGetLetras();jsaGetVerifyPlan();
 	//TODO: Modificar
 	$("#idparcialidad").val(entero(mObj.periodo));
-	//frmSubmit(false);
-	//envsoc(); envsol();// envparc();
 }
+
+function jsCargarCredito2(credito){
+	var id 		= "#tr-creditos_letras_del_dia-" + credito;
+	var mObj	= processMetaData(id);
+
+	jsCancelarAccion();
+	$("#idsocio").val(mObj.persona);
+	$("#idsolicitud").val(mObj.credito);
+	$("#nombresocio").val(mObj.nombre);
+	jsaGetLetras();jsaGetVerifyPlan();
+	//TODO: Modificar
+	$("#idparcialidad").val(entero(mObj.periodo));
+}
+
+
 function getSetLetra(){}
 function jsGetLetras(){	jsObtenerLetras(); }
 function jsEvaluarSalida(evt){
@@ -262,9 +317,12 @@ function jsEvaluarSalida(evt){
 function jsObtenerLetras(){
 	jsaGetLetrasAVencerTodas();
 	Wo.winTip({ element : "#idfecha-0",  content : $("#lst"), title: Wo.lang(["letras"]) });
-	//getModalTip(window, $("#lst"), Wo.lang(["letras"]));
 }
-function jsCancelarAccion(){	$("#idfecha-0").qtip("hide");    }
+function jsObtenerLetras2(){
+	jsaGetLetrasVencidas();
+	Wo.winTip({ element : "#idfecha-0",  content : $("#lst2"), title: Wo.lang(["letras"]) });
+}
+function jsCancelarAccion(){	xG.closeTip();    }
 function jsGetMemos(){
 	var idp	= $("#idsocio").val();
 	var idc	= $("#idsolicitud").val();

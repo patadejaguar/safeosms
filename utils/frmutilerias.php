@@ -1662,6 +1662,50 @@ $xHP->init();
 					$xQL->setRawQuery($isql);
 				}
 				break;
+			case 8204:
+				//Purga Creditos que no existen en TEMp
+				$xQL		= new MQL();
+				$xLog		= new cCoreLog();
+				//crear un array de Creditos
+				$rs			= $xQL->getRecordset("SELECT * FROM `creditos_solicitud` WHERE `numero_socio` > 10001 AND (SELECT COUNT(`field_id1`) FROM `general_tmp` WHERE `general_tmp`.`field_id1`= `creditos_solicitud`.`numero_socio` ) <= 0");
+				while( $rw = $rs->fetch_assoc() ){
+					$xCred	= new cCredito($rw["numero_solicitud"]);
+					if($xCred->init($rw) == true){
+						$xCred->setDelete();
+					}
+					$xLog->add($xCred->getMessages(), $xLog->DEVELOPER);
+				}
+				$rs->free();
+				$sql		= "SELECT * FROM `captacion_cuentas` WHERE `numero_socio` > 10001 AND (SELECT COUNT(`field_id1`) FROM `general_tmp` WHERE `general_tmp`.`field_id1`= `captacion_cuentas`.`numero_socio` ) <= 0";
+				if(MODULO_CAPTACION_ACTIVADO == false){
+					$sql	= "SELECT * FROM `captacion_cuentas` WHERE `numero_socio` > 10001";
+				}
+				$rs			= $xQL->getRecordset($sql);
+				while( $rw = $rs->fetch_assoc() ){
+					$xCta	= new cCuentaDeCaptacion($rw["numero_cuenta"]);
+					if($xCta->init($rw) == true){
+						$xCta->setDelete();
+					}
+					$xLog->add($xCta->getMessages(), $xLog->DEVELOPER);
+				}
+				$rs->free();
+				
+				$msg	.= $xLog->getMessages();
+				
+				/*$xTmp	= new cGeneral_tmp();
+				$xQL	= new MQL();
+				$rs		= $xQL->getRecordset("SELECT * FROM general_tmp");
+				while( $rw = $rs->fetch_assoc() ){
+					$xTmp->setData($rw);
+					$persona	= $xTmp->field_id1()->v();
+					
+				}
+				
+				*/
+				
+				
+				
+				break;
 		}
 
 		if ( $command != false ){

@@ -86,7 +86,10 @@ if( setNoMenorQueCero($credito) > DEFAULT_CREDITO){
 	$NivelDeRiesgo			= $xCred->getNiVelDeRiesgo();
 	$TipoDePeriocidad		= $xCred->getPeriocidadDePago();
 	$TipoDePago				= $xCred->getTipoDePago();
-	$TasaDeInteres	        = $xCred->getTasaDeInteres();
+	$TasaDeInteres	        = $xCred->getTasaDeInteres()*100;
+	$TasaDeMora				= $xCred->getTasaDeMora()*100;
+	
+	
 	$fecha_de_ministracion	= $xCred->getFechaDeMinistracion();
 	$fecha_de_autorizacion	= $xCred->getFechaDeAutorizacion();	
 }
@@ -101,6 +104,7 @@ function jsaGetDatos($solicitud){
 		$monto			= $xCred->monto_solicitado()->v();
 		$periocidad		= $xCred->periocidad_de_pago()->v();
 		$tasa			= $xCred->tasa_interes()->v();
+		$tasamora		= $xCred->tasa_moratorio()->v();
 		
 		$xF				= new cFecha();
 		$xT				= new cTipos();
@@ -109,6 +113,7 @@ function jsaGetDatos($solicitud){
 			$tab -> add(TabSetvalue::getBehavior('idpagos', $pagos));
 			$tab -> add(TabSetvalue::getBehavior('idmonto', $monto));
 			$tab -> add(TabSetvalue::getBehavior('idtasa', $tasa*100));
+			$tab -> add(TabSetvalue::getBehavior('idtasamora', $tasamora*100));
 			$tab -> add(TabSetvalue::getBehavior('idperiocidad', $periocidad));
 			$tab -> add(TabSetvalue::getBehavior('idtipodepago', $xCred->tipo_de_pago()->v()));
 			//Fechas de ministracion
@@ -250,6 +255,8 @@ if  ( $action == SYS_DOS ){
 	
 		$TipoDeAutorizacion	    = parametro("idtipodeautorizacion", $xCred->getTipoDeAutorizacion(), MQL_INT);
 		$TasaDeInteres	        = parametro("idtasa", 0, MQL_FLOAT);
+		$TasaDeMora	  		    = parametro("idtasamora", 0, MQL_FLOAT);
+		
 		$avisos					= "";
 		$fecha1					= parametro("idfecha1", $xCred->getFechaDeAutorizacion(), MQL_DATE);
 		$fecha2					= parametro("idfecha2", $xCred->getFechaDeMinistracion(), MQL_DATE);
@@ -262,7 +269,7 @@ if  ( $action == SYS_DOS ){
 			$TasaDeInteres		= ($TasaDeInteres <=0) ? ($xCred->getTasaDeInteres()*100) : $TasaDeInteres;
 		}
 		if($TasaDeInteres > 1){	$TasaDeInteres = ($TasaDeInteres/100); }
-				
+		if($TasaDeMora > 1){	$TasaDeMora = ($TasaDeMora/100); }
 	
 		/* verifica si el credito ya ha sido autorizado */
 		$ds_sol 				= $xCred->getDatosDeCredito();
@@ -338,6 +345,7 @@ if  ( $action == SYS_DOS ){
 			$sucess	= $xCred->setAutorizado($idmonto, $idpagos, $periocidad, $TipoDeAutorizacion, $fechaaut, $idautorizacion,
 					$idtipodepago, $fecha_ministracion_propuesta, $idnivelderiesgo, $diasaut, $fechavcto,
 					$estatusactual, $sdoactual, $intdev, $fechaultmvto, $TasaDeInteres, $TipoDeLugarDeCobro, $TipoDeDispersion);
+			
 			if($sucess == true){
 				/* si es Credito de Grupos solidarios, Actualiza los Mvtos de Otorgacion */
 				if( $OConv->getEsProductoDeGrupos() == true) {
@@ -353,6 +361,11 @@ if  ( $action == SYS_DOS ){
 					$msg	.= $xPlan->getMessages();
 				}
 				$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", $xFRM->ic()->CALCULAR);
+				
+				//Actualizar Tasa de Mora
+				if($TasaDeMora>0){
+					$xCred->setTasaDeMora($TasaDeMora);
+				}
 			}
 		}
 		$msg		.= $xCred->getMessages();
@@ -438,10 +451,13 @@ if  ( $action == SYS_DOS ){
 	$xFRM->OMoneda("idpagos",  $pagos_autorizados, "TR.Pagos Autorizados" );
 	$xFRM->OMoneda("idmonto", $monto_autorizado, "TR.Monto Autorizado");
 	$xFRM->setValidacion("idmonto", "jsEvaluateMonto");
+	
 	if($SinTasa == true){
 		$xFRM->OHidden("idtasa", $TasaDeInteres);
+		$xFRM->OHidden("idtasamora", $TasaDeMora);
 	} else {
 		$xFRM->OMoneda("idtasa", $TasaDeInteres, "TR.Tasa Autorizada");
+		$xFRM->OMoneda("idtasamora", $TasaDeMora, "TR.Tasa Mora");
 	}
 	
 	$xFRM->addHElem( $xSel->getListaDePeriocidadDePago("", $TipoDePeriocidad)->get(true) );

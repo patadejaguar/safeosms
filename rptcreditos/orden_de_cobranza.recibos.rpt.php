@@ -36,10 +36,10 @@ $fechaFinal		= $xF->getFechaISO($fechaFinal);
 $fechaInicial	= $xF->getFechaISO($fechaInicial);
 
 $idnomina		= parametro("nomina", 0, MQL_INT);
-if($idnomina >0 AND $empresa <= 0){
+if($idnomina > 0 AND $empresa <= 0){
 	$xPer	= new cEmpresasCobranzaPeriodos($idnomina);
 	if($xPer->init() == true){
-		$empresa	= $xPer->getClaveDeEmpresa();
+		$empresa		= $xPer->getClaveDeEmpresa();
 		$fechaInicial	= $xPer->getFechaInicial();
 		$fechaFinal		= $xPer->getFechaFinal();
 		$periocidad		= $xPer->getFrecuencia();

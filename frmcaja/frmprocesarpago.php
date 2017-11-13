@@ -35,8 +35,10 @@ function jsaActualizarLetra($persona, $credito, $letra, $monto){
 			$xPlan->setOperarCapital($NLetra, "+$monto");
 		}
 	}
+	return true;
 }
 function jsaAmortizarLetras($persona, $credito, $letra, $amortizable){
+	return true;
 }
 function getLetras($total){ return ($total > 0) ? "(" . convertirletras($total) . ")" : ""; }
 //Agrega parametros para cobros especiales
@@ -301,7 +303,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 					//Solo aceptar Tasas
 					//setLog("TIP $MTipo");
 				}
-				if($MTipo == OPERACION_CLAVE_PLAN_INTERES){
+				if($MTipo == OPERACION_CLAVE_PLAN_INTERES AND $monto > 0){
 					if($xCred->getPagosSinCapital() == true AND ($xF->getInt($fecha_operacion)< $xF->getInt($fecha_de_pago)) ){
 						$interes_calculado = ( $interes_normal_devengado - $interes_normal_pagado ) + $interes_normal_calculado;
 						//Si el interes es mayor a lo calculado y es pago total y es pago solo interes
@@ -375,7 +377,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 					<th>$MTipo</th>
 					<td>$title</td>
 					<th>
-						<input type=\"text\" name=\"c-$MTipo\" id=\"id-$MTipo\" value=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);chPendiente('id-$MTipo');\" />
+						<input type=\"text\" name=\"c-$MTipo\" id=\"id-$MTipo\" value=\"$monto\" data-original=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
 						<input type=\"hidden\" name=\"p-$MTipo\" id=\"idp-$MTipo\" value=\"$pendiente\" class='mny' />
 					</th>
 				</tr>";
@@ -414,12 +416,13 @@ $rsm =  $ql->getDataRecord($SQLBody);
 				$monto					= number_format($monto, 2, '.', '');
 
 				$xLog->add("WARN\t$idx\tADD\tAgregar Concepto por $monto\r\n", $xLog->DEVELOPER);
-				/*<input type=\"hidden\" name=\"p-moroso\" id=\"idp-moroso\" value=\"$pendiente\"/>*/
+				
 				$tds = $tds . "
 			<tr>
 				<th>$idx</th>
 				<td class='notice'>" . $xTipoOp->getNombre() . "$nnote</td>
-								<th><input type=\"text\" name=\"c-$idx\" id=\"id-$idx\" value=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
+								<th><input type=\"text\" name=\"c-$idx\" id=\"id-$idx\" value=\"$monto\" data-original=\"$monto\" data-nomod=\"1\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
+									<input type=\"hidden\" name=\"p-$idx\" id=\"idp-$idx\" value=\"0\"/>
 								</th>
 								</tr>";
 			}
@@ -445,12 +448,13 @@ $rsm =  $ql->getDataRecord($SQLBody);
 				$base_iva_intereses 	+= $monto;
 				$total			+= $monto;
 				$monto					= number_format($monto, 2, '.', '');
-				/*<input type=\"hidden\" name=\"p-moroso\" id=\"idp-moroso\" value=\"$pendiente\"/>*/
+				
 			$tds = $tds . "
 			<tr>
 				<th>141</th>
 				<td class='error'>" . $xLng->getT("TR.INTERESES MORATORIO") . "</td>
-				<th><input type=\"text\" name=\"c-moroso\" id=\"id-moroso\" value=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
+				<th><input type=\"text\" name=\"c-moroso\" id=\"id-moroso\" value=\"$monto\" data-original=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
+					<input type=\"hidden\" name=\"p-moroso\" id=\"idp-moroso\" value=\"0\"/>
 				</th>
 			</tr>";
 			}
@@ -474,7 +478,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 			<tr>
 				<th>140</th>
 				<td class='notice'>" . $xLng->getT("TR.INTERESES NORMAL") . "</td>
-				<th><input type=\"text\" name=\"c-corriente\" id=\"id-corriente\" value=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);chPendiente('id-corriente');\" />
+				<th><input type=\"text\" name=\"c-corriente\" id=\"id-corriente\" value=\"$monto\" data-original=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
 				<input type=\"hidden\" name=\"p-corriente\" id=\"idp-corriente\" value=\"$pendiente\"/></th>
 			</tr>";
 			}
@@ -500,7 +504,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 			<tr>
 				<th>$idx</th>
 				<td class='notice'>" . $xLng->getT("TR.PENAS_POR_ATRASOS") . "</td>
-							<th><input type=\"text\" name=\"c-$idx\" id=\"id-$idx\" value=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);chPendiente('id-corriente');\" />
+							<th><input type=\"text\" name=\"c-$idx\" id=\"id-$idx\" value=\"$monto\"  data-original=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
 							<input type=\"hidden\" name=\"p-$idx\" id=\"idp-$idx\" value=\"$pendiente\"/></th>
 							</tr>";
 			}
@@ -525,7 +529,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 				$monto			= number_format($monto, 2, '.', '');
 				$tds 		= $tds . "<tr><th></th>
 				<td>" . $xLng->getT("TR.IVA por INTERESES") . "</td>
-				<th><input type=\"text\" name=\"c-ivaintereses\" id=\"id-ivaintereses\" value=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);chPendiente('id-ivaintereses');\" />
+				<th><input type=\"text\" name=\"c-ivaintereses\" id=\"id-ivaintereses\" value=\"$monto\" data-original=\"$monto\" class='mny'  onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
 				<input type=\"hidden\" name=\"p-ivaintereses\" id=\"idp-ivaintereses\" value=\"$pendiente\" class='mny' /></th>
 			</tr>";
 			}
@@ -552,7 +556,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 //==========================================================================
 				$tds = $tds . "<tr>
 				<th></th><td>" . $xLng->getT("TR.IVA POR OTROS CONCEPTOS") . "</td>
-				<th><input type=\"text\" name=\"c-ivaotros\" id=\"id-ivaotros\" value=\"$monto\" class='mny' onchange=\"jsEval(this);chPendiente('id-ivaotros');\" />
+				<th><input type=\"text\" name=\"c-ivaotros\" id=\"id-ivaotros\" value=\"$monto\" data-original=\"$monto\" class='mny' onchange=\"jsEval(this);\" />
 				<input type=\"hidden\" name=\"p-ivaotros\" id=\"idp-ivaotros\" value=\"$pendiente\" class='mny' /></th></tr>";
 			}
 
@@ -601,13 +605,13 @@ if($monto_capital_operado > 0 and $monto_a_operar > 0){
 	} else {
 		$tds .= "<tr><th>120</th>
 		<td class='warning'>" . $xLng->getT("TR.MONTO DE CAPITAL DIRECTO") . "</td>
-		<th><input type=\"text\" name=\"c-capital\" id=\"id-capital\" value=\"$monto\" class='mny' onchange=\"jsEval(this);\"  /></th></tr>";
+		<th><input type=\"text\" name=\"c-capital\" id=\"id-capital\" value=\"$monto\" data-original=\"$monto\" class='mny' onchange=\"jsEval(this);\"  /></th></tr>";
 	}
 }
 if($gastos_de_cobranza_calculado > 0){
 	$gastos_de_cobranza_calculado	= number_format($gastos_de_cobranza_calculado, 2, '.', '');
 	$tds 	.= "<tr><th>600</th><td>" . $xLng->getT("TR.GASTOS DE COBRANZA") . "</td>
-		<th><input type=\"text\" name=\"c-$claveCbza\" id=\"id-$claveCbza\" value=\"$gastos_de_cobranza_calculado\" class='mny' onchange=\"jsEval(this);\"  /></th></tr>";
+		<th><input type=\"text\" name=\"c-$claveCbza\" id=\"id-$claveCbza\" value=\"$gastos_de_cobranza_calculado\" data-original=\"$gastos_de_cobranza_calculado\" class='mny' onchange=\"jsEval(this);\"  /></th></tr>";
 }
 
 //Sql de especiales
@@ -717,17 +721,7 @@ var aIvaCalculado 	= new Array("id-ivaintereses", "id-ivaotros", "id-413", "id-1
 var aCapital 		= new Array("id-410", "id-capital");
 var xG				= new Gen();
 //No es efectivo, no causa IVA
-function chPendiente(idTrat){
-	var kID		= String(idTrat).split("-", 2);
-	var mID 	= kID[1];
-	var mGetID 	= document.getElementById(idTrat);
-	var remMny 	= redondear(mMny) - redondear(mGetID.value);
-	if (document.getElementById("idp-" + mID)) {
-		var mSetID 	= document.getElementById("idp-" + mID);
-		mSetID.value 	= redondear((flotante(mSetID.value) + flotante(remMny)), 2);
-		setLog("El pendiente de cobro queda en " +  mSetID.value);
-	}
-}
+
 function pushMny(evt){
 	mMny 		= evt.target.value; 
 	var idevt	= evt.target.id;
@@ -939,10 +933,26 @@ function addEspMvto(id, OpValue, vTitle){
 function initComponents(){ setTimeout("getTotal()", 1000); }
 function getEdoCtaCredito(){ Wo.w({url: "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + mCredito}); }
 function jsEval(origen){
+
 	var org		= origen;
 	var idR		= String(org.id).replace("id-", "");
 	var mAju	= 0;
 	var mTasa	= 0;
+	var dsrc	= new String($(origen).attr("id")).split("-");
+	var vorg	= flotante($(origen).attr("data-original"));
+	var nomod	= (typeof $(origen).attr("data-nomod") == "undefined") ? false : true;
+	var morg	= flotante($(origen).val());
+	var psrc	= "idp-" + dsrc[1];
+	
+	if(document.getElementById(psrc)){
+		if(nomod ==  true){
+			xG.alerta( { msg: "OPERACION_INMUTABLE" } );
+			$(origen).val( redondear(vorg) );
+		} else {
+			var nnm	= redondear((vorg - morg),2);
+			$("#" + psrc).val(nnm);
+		}
+	}
 	//Bonificaciones
 	if ( BaseGravados.indexOf( idR + "--1.0000") != -1 ) {
 		if (flotante(org.value) > 0) {
@@ -978,7 +988,8 @@ function jsEval(origen){
 	if(mAju != 0 && mTasa != 0){
 		var mFactIva	= 1 / (1+flotante(mTasa));
 		
-		if (desdeAjuste == true) {
+		if (desdeAjuste == true){
+			
 		} else {
 			var si2 	= confirm("DESEA SEPARAR EL IVA EN ESTE MONTO?\nQUEDARIA EN " + redondear(org.value * mFactIva));
 			if (si2) { org.value	= redondear(org.value * mFactIva);  }

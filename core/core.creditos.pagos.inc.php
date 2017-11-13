@@ -173,6 +173,8 @@ class cPlanDePagosGenerador {
 	private $mAjusteSobreInt	= false;
 	private $mMontoCapAjust		= 0;
 	private $mSinDatosE			= false;
+	private $mConDiasInhabiles	= false;
+	
 	//private $mParcialidadPres	= 0;
 	//private $mTipoEnSistema		= false;
 	//private $mFechaPrimerPago	= false;
@@ -185,6 +187,9 @@ class cPlanDePagosGenerador {
 		$this->mTasaDeIVAOtros			= TASA_IVA;
 		$this->mTipoDePlanDePago		= 1;//Dias en que Pagara. 1= PAGOS EN DIAS PREESTABLECIDOS
 		$this->mPagosPlanos				= PLAN_DE_PAGOS_PLANO;
+		if(WORK_IN_SUNDAY == true){
+			$this->mConDiasInhabiles	= true;
+		}
 	}
 	private function setDiasPorPeriocidad($periocidad){
 		$periocidad				= setNoMenorQueCero($periocidad);
@@ -280,9 +285,9 @@ class cPlanDePagosGenerador {
 			if($xCred->getFechaPrimeraParc() == $this->mFechaFail OR $xF->getInt($xCred->getFechaPrimeraParc()) <= $xF->getInt( $xCred->getFechaDeMinistracion() ) ){
 				$this->mFechaPrimerPago	= $this->getFechaDePago($xCred->getFechaDeMinistracion(), 0);
 			}
-			$DDias				= array();
-			
-			$xEmp				= new cEmpresas($idemp);
+			$DDias						= array();
+			$this->mConDiasInhabiles	= true;
+			$xEmp						= new cEmpresas($idemp);
 			if($xEmp->init() == true AND $idemp != DEFAULT_EMPRESA){ 
 				$DDias = $xEmp->getDiasDeNomina($xCred->getPeriocidadDePago());
 				$this->mDiaDeAbono1	= isset($DDias[0]) ? setNoMenorQueCero($DDias[0]) : $this->mDiaDeAbono1;
@@ -1439,11 +1444,11 @@ class cPlanDePagosGenerador {
 				$idotros		= $datos["SYS_IDOTROS"];
 				$DHistorico		= $datos;
 				$total_pago		= (isset($datos["TOTAL_PAGADO"])) ? $datos["TOTAL_PAGADO"] : 0;
-				$fecha			= $xF->getDiaHabil($datos[SYS_FECHA]);	//1
-				$fecha			= $xF->getDiaHabil($fecha);				//2
-				$fecha			= $xF->getDiaHabil($fecha);				//3
-				$fecha			= $xF->getDiaHabil($fecha);				//4
-				$fecha			= $xF->getDiaHabil($fecha); 			//5
+				
+				$fecha			= $this->getDiaHabil($datos[SYS_FECHA]);
+				
+				
+				
 				$idxanual		= $this->mCredito ."-$indice-" . OPERACION_CLAVE_ANUALIDAD_C;
 				$idxcap			= $this->mCredito ."-$indice-" . OPERACION_CLAVE_PAGO_CAPITAL;
 				$anualidad		= (isset($_SESSION[$idxanual])) ? $_SESSION[$idxanual] : 0;
@@ -1909,7 +1914,9 @@ class cPlanDePagosGenerador {
 			$tfoot	.= "<th>" . "</th>"; //descuento
 		}
 		//(((($SumaIVA+$SumaInteres)/$SumaCapital)*100)/$this->mPagosAutorizados)
-		$tfoot	.= "<th>" . getFMoney(($SumaAhorro+$SumaCapital-$SumaDescto+$SumaInteres+$SumaIVA+$SumaOtros))  . "</th>"; //total
+		$TotalPlan	= ($SumaAhorro+$SumaCapital-$SumaDescto+$SumaInteres+$SumaIVA+$SumaOtros);
+		
+		$tfoot	.= "<th>" . getFMoney($TotalPlan)  . "</th>"; //total
 		//calcular CAT
 		$xMat 					= new cMath();
 		$cat 					= $xMat->cat( $this->mMontoAutorizado, $this->mArrSinIVA, $this->mPagosAutorizados, $this->mMaximoCAT );
@@ -1968,6 +1975,10 @@ class cPlanDePagosGenerador {
 			if($xCred->getEsArrendamientoPuro() == true){
 				$xRentas	= new cLeasingRentas();
 				$xRentas->setCrearPorCredito($xCred->getClaveDeCredito());
+			}
+			$xMontos	= new cCreditosMontos($this->mCredito);
+			if($xMontos->init() == true){
+				$xMontos->setTotales(false,$TotalPlan, $SumaInteres);
 			}
 			$xBtn		= new cHButton();
 			//<tr><th colspan='16'>" . $xBtn->getBasic("TR.Imprimir PLAN_DE_PAGOS " . $this->mClaveDePlan, "var xC=new CredGen();xC.getImprimirPlanPagos(" . $this->mClaveDePlan . ")", $xBtn->ic()->IMPRIMIR) . "</th></tr>
@@ -2050,6 +2061,20 @@ class cPlanDePagosGenerador {
 	}
 	function setAnticipo($anticipo){ $this->mAnticipo = $anticipo; }
 	function setValorResidual($valor){ $this->mValorResidual = $valor; }
+	private function getDiaHabil($fecha){
+		$fecha	= $fecha;
+		$xF		= new cFecha();
+		if($this->mConDiasInhabiles == false){
+			for($i=1;$i<=5;$i++){
+				$fecha	= $xF->getDiaHabil($fecha);
+				if($xF->getEsHabil() == true){
+					$i	= 100;
+					break;
+				}
+			}
+		}
+		return $fecha;
+	}
 }
 
 class cCreditoValidador {
@@ -2087,7 +2112,7 @@ class cCreditosMontos {
 	private $mObj						= null;
 	private $mTotalPlanPend				= 0;
 	private $mTotalPlanExige			= 0;	
-	
+	private $mTotalIntCalc				= 0;
 	private $mTotalDispuesto			= 0;
 	function __construct($credito = false){
 		$this->mCredito	= setNoMenorQueCero($credito);
@@ -2168,6 +2193,7 @@ class cCreditosMontos {
 	function getCapitalPendiente(){return $this->mCapitalPendiente;}
 	function getInteresMoratorioPendiente(){ return $this->mInteresMoratorioDevengado + $this->mInteresMoratorioCorriente;	}
 	function getInteresNormalPendiente(){ return $this->mInteresNormalCorriente + $this->mInteresNormalDevengado; }
+	function getInteresNormalCalculado(){ return $this->mTotalIntCalc; }
 	function getPenasPorPagar(){return $this->mPenasPorPagar;}
 	function getCargosCbzaXPag(){ return $this->mCargosCbzaPorPag; }
 	function getTotalDispuesto(){return $this->mTotalDispuesto; }
@@ -2216,6 +2242,7 @@ class cCreditosMontos {
 				$this->mTotalPlanExige				= $xMM->sdo_exig_act()->v();
 				$this->mBonificaciones				= $xMM->bonificaciones()->v();
 				$this->mCredito						= $xMM->clave_de_credito()->v();
+				$this->mTotalIntCalc				= $xMM->ints_tot_calc()->v();
 				$this->mInit						= true;
 				$this->setIDCache($this->mCredito);
 				$xCache->set($this->mIDCache, $rw);
@@ -2323,7 +2350,7 @@ class cCreditosMontos {
 			}
 		}
 	}
-	function setTotales($TotalExigibleAct = false, $TotalExigibleFut = false){
+	function setTotales($TotalExigibleAct = false, $TotalExigibleFut = false, $TotalIntsFut = false){
 		$actualizar		= false;
 		if($this->mObj == null){ $this->init(); }
 		if($this->mInit == true){
@@ -2339,6 +2366,13 @@ class cCreditosMontos {
 				if($this->mObj->sdo_exig_fut()->isEqualF($TotalExigibleFut) == false){
 					$TotalExigibleFut	= setNoMenorQueCero($TotalExigibleFut);
 					$this->mObj->sdo_exig_fut($TotalExigibleFut);
+					$actualizar			= true;
+				}
+			}
+			if($TotalIntsFut !== false){
+				if($this->mObj->ints_tot_calc()->isEqualF($TotalIntsFut) == false){
+					$TotalIntsFut		= setNoMenorQueCero($TotalIntsFut);
+					$this->mObj->ints_tot_calc($TotalIntsFut);
 					$actualizar			= true;
 				}
 			}
@@ -3032,6 +3066,8 @@ class cCreditosOperaciones {
 	private $mTotalDesembolso	= 0;
 	private $mTotalAbonos		= 0;
 	private $mTotalPendiente	= 0;
+	private $mTotalPendInts		= 0;
+	
 	private $mTotalBonInt		= 0;
 	private $mTotalBonMora		= 0;
 	private $mTotalBonOtros		= 0;
@@ -3112,6 +3148,7 @@ class cCreditosOperaciones {
 			$this->mTotalAbonos		= setNoMenorQueCero($DD["abonos"]);
 			$this->mTotalDispuesto	= setNoMenorQueCero($DD["disposicion"]);
 			$this->mTotalPendiente	= setNoMenorQueCero($DD["pendiente"]);
+			$this->mTotalPendInts	= setNoMenorQueCero($DD["pendiente_interes"]);
 			$this->mProximaLetraC	= setNoMenorQueCero($DD["letra_capital"]);
 			$this->mProximaLetraI	= setNoMenorQueCero($DD["letra_interes"]);
 			$this->mUltimaLetraC	= setNoMenorQueCero($DD["letra_capital_u"]);
@@ -3128,6 +3165,7 @@ class cCreditosOperaciones {
 	function getTotalAbonos(){ return $this->mTotalAbonos; }
 	function getTotalDispuesto(){ return $this->mTotalDispuesto; }
 	function getTotalPendiente(){ return $this->mTotalPendiente; }
+	function getTotalPendInts(){ return $this->mTotalPendInts; }
 	function getProxLetraCap(){ return $this->mProximaLetraC; }
 	function getProxLetraInt(){ return $this->mProximaLetraI; }
 	function getUltLetraCap(){ return $this->mUltimaLetraC; }

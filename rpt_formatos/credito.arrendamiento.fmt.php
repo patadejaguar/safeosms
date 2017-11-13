@@ -29,7 +29,7 @@ $idtramite		= parametro("tramite",0, MQL_INT);
 $xHP->addCSS("../css/contrato.css.php");
 
 
-$xHP->init();
+
 
 
 	$xFecha				= new cFecha();
@@ -38,6 +38,9 @@ $xHP->init();
 	$xForma				= new cFormato($formato);
 	$xForma->init();
 	$xForma->setOut($out);
+
+	$xHP->setTitle($xForma->getTitulo());
+	$xHP->init();
 	
 	if($idtramite > 0){ //Carta Poder
 		$xCatT			= new cLeasingTramitesCatalogo($idtramite);

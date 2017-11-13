@@ -26,16 +26,11 @@ $xDic		= new cHDicccionarioDeTablas();
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
-$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
-$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
-$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
-$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
-$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-$observaciones= parametro("idobservaciones");
+
+$todas			= parametro("todas", false, MQL_BOOL); $todas = parametro("todos", $todas, MQL_BOOL);
+
 $xHP->addJTableSupport();
 $xHP->init();
 
@@ -45,23 +40,17 @@ $xFRM	= new cHForm("frmempresas", "empresas.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
-/*	$mtbl = new cTabla($xLi->getListadoDeEmpresas(false, false, false));
-	$mtbl->setKeyField("idsocios_aeconomica_dependencias");
-	$mtbl->OButton("TR.Editar", "var xEmp = new EmpGen(); xEmp.setActualizarDatos(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
-	$mtbl->OButton("TR.Panel", "jsGoToPanel(" . HP_REPLACE_ID . ")", $xFRM->ic()->EJECUTAR);
-	$mtbl->setWithMetaData();
-	$xFRM->addHTML( $mtbl->Show() );
-	
-	*/
-//$xFRM->OButton("TR.AGREGAR", "var xEmp = new EmpGen(); xEmp.setAgregar()", $xFRM->ic()->AGREGAR);
-
-//$xFRM->OButton("TR.AGREGAR", "jsAdd()", $xFRM->ic()->AGREGAR);
 
 $xFRM->addCerrar();
 
 $xHG	= new cHGrid("iddivempresas",$xHP->getTitle());
 
-$xHG->setSQL($xLi->getListadoDeEmpresas(false, false, false));
+if($todas == true){
+	$xHG->setSQL($xLi->getListadoDeEmpresas(false, false, false));
+} else {
+	$xHG->setSQL($xLi->getListadoDeEmpresasConCreditos(false, false, false));
+}
+
 $xHG->addList();
 
 		
@@ -69,7 +58,11 @@ $xHG->addKey("clave");
 $xHG->col("clave_de_persona", "TR.CLAVE_DE_PERSONA", "10%");
 $xHG->col("alias", "TR.NOMBRE_CORTO", "20%");
 $xHG->col("nombre", "TR.NOMBRE", "40%");
-$xHG->col("telefono", "TR.TELEFONO", "10%");
+if($todas == true){
+	$xHG->col("telefono", "TR.TELEFONO", "10%");
+} else {
+	$xHG->col("creditos", "TR.CREDITOS", "10%");
+}
 //$xHG->col("", "TR.", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
@@ -81,6 +74,9 @@ $xFRM->addHElem("<div id='iddivempresas'></div>");
 $xHG->setOrdenar();
 
 $xFRM->addJsCode( $xHG->getJs(true) );
+
+$xFRM->OButton("TR.VER TODO", "jsGoTodas()", $xFRM->ic()->ADELANTE);
+
 echo $xFRM->get();
 ?>
 <script>
@@ -98,11 +94,11 @@ function jsDel(id){
 function jsGoToPanel(id){
 	xEmp.goToPanel(id);
 }
+function jsGoTodas(){
+	xG.go({url: "../frmempresas/empresas.frm.php?todas=true" });
+}
 </script>
 <?php
-	
-
-
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();
 

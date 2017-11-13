@@ -226,10 +226,26 @@ class cCaja{
 	 * @param integer $recibo
 	 */
 	function getReciboEnCorte($recibo){
+		$monto			= 0;
+		$run			= true;
 		//elegir el tipo de recibo, buscar en los lugares adecuados
-		
-		$sql	= "SELECT pagado  FROM tesoreria_recibos_pagados WHERE recibo = $recibo";
-		return mifila($sql, "pagado");
+		$xRec			= new cReciboDeOperacion(false, false, $recibo);
+		if($xRec->init() == true){
+			$xQL		= new MQL();
+			$credito	= $xRec->getCodigoDeDocumento();
+			$sql		= "SELECT  COUNT(`idempresas_cobranza`) AS `items` FROM `empresas_cobranza` WHERE `recibo`=$recibo AND `clave_de_credito`=$credito";
+			$items		= $xQL->getDataValue($sql, "items");
+			if($items > 0){
+				$monto	= $xRec->getTotal();
+				$run	= false;
+			}
+		}
+		if($run == true) {
+			$xQL	= new MQL();
+			$sql	= "SELECT pagado  FROM tesoreria_recibos_pagados WHERE recibo = $recibo";
+			$monto	= $xQL->getDataValue($sql, "pagado");
+		}
+		return $monto;
 	}
 	function setCobroEfectivo($recibo, $MontoRecibido, $MontoOperado = 0, $notas = "", $fecha = false, $Moneda = AML_CLAVE_MONEDA_LOCAL, $MontoOriginal = 0){
 		return $this->addOperacion($recibo, TESORERIA_COBRO_EFECTIVO, $MontoRecibido, $MontoOperado, 0,FALLBACK_CLAVE_DE_BANCO, 
@@ -1073,7 +1089,7 @@ class cTesoreriaMonedas {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mTable		= "tesoreria_monedas";
 	private $mValor		= 0;
 	function __construct($clave = ""){ 
 		$this->mClave	= $clave; 

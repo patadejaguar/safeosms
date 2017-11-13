@@ -739,6 +739,8 @@ class cCuentaDeCaptacion {
 	protected $mFechaDeApertura			= false;
 	protected $mOProducto				= null;
 	private $mTable						= "captacion_cuentas";
+	public $ORIGEN_COMUN				= 1;
+	public $ORIGEN_CRED					= 4;
 	
 	function __construct($numero_de_cuenta, $socio = 0, $dias_invertidos = 0, $tasa = false, $fecha = false){
 		
@@ -1063,9 +1065,10 @@ class cCuentaDeCaptacion {
 		$msg	= "===========\tELIMINADO LA CUENTA " . $this->mNumeroCuenta . "\r\n";
 		$cuenta	= $this->mNumeroCuenta;
 		$socio	= $this->mSocioTitular;
+		$xQL	= new MQL();
 			//Cuenta
 			$SQLDCuenta 	= "DELETE FROM captacion_cuentas WHERE numero_cuenta = $cuenta AND numero_socio = $socio ";
-			$x = my_query($SQLDCuenta);
+			$x = $xQL->setRawQuery($SQLDCuenta);
 
 			if ($x["stat"] == false ){
 				$msg	.= date("H:i:s") . "\tERROR\t" . $x["error"] . "\r\n";
@@ -1083,7 +1086,7 @@ class cCuentaDeCaptacion {
 			}*/
 			//sdpm
 			$SQLD_SDPM 	= "DELETE FROM captacion_sdpm_historico WHERE cuenta =  $cuenta ";
-			$x = my_query($SQLD_SDPM);
+			$x = $xQL->setRawQuery($SQLD_SDPM);
 
 			if ($x["stat"] == false ){
 				$msg	.= date("H:i:s") . "\tERROR\t" . $x["error"] . "\r\n";
@@ -1093,7 +1096,7 @@ class cCuentaDeCaptacion {
 
 			//Movimientos
 			$SQLDOpes	= "DELETE FROM operaciones_mvtos WHERE docto_afectado = $cuenta AND socio_afectado = $socio ";
-			$x = my_query($SQLDOpes);
+			$x = $xQL->setRawQuery($SQLDOpes);
 			if ($x["stat"] == false ){
 				$msg	.= date("H:i:s") . "\tERROR\t" . $x["error"] . "\r\n";
 			} else {
@@ -1101,7 +1104,7 @@ class cCuentaDeCaptacion {
 			}
 
 			$SQLDRecs	= "DELETE FROM operaciones_recibos WHERE docto_afectado = $cuenta AND numero_socio = $socio ";
-			$x = my_query($SQLDRecs);
+			$x = $xQL->setRawQuery($SQLDRecs);
 			if ($x["stat"] == false ){
 				$msg	.= date("H:i:s") . "\tERROR\t" . $x["error"] . "\r\n";
 			} else {
@@ -1112,7 +1115,7 @@ class cCuentaDeCaptacion {
 			$SQLDCC	= "UPDATE creditos_solicitud
 						SET contrato_corriente_relacionado = " . CTA_GLOBAL_CORRIENTE . "
 						WHERE contrato_corriente_relacionado = $cuenta ";
-			$x = my_query($SQLDCC);
+			$x = $xQL->setRawQuery($SQLDCC);
 			if ($x["stat"] == false ){
 				$msg	.= date("H:i:s") . "\tERROR\t" . $x["error"] . "\r\n";
 			} else {
@@ -1713,6 +1716,8 @@ class cCuentaDeCaptacion {
 		//Limpiar Cache
 		$xCache			= new cCache();
 		$xCache->clean($this->mTable . "-" . $this->getClaveDeCuenta());
+		$xCache->clean($this->mTable . "-by-p-" . $this->mSocioTitular . "-t-" . $this->mSubProducto . "-s-" . false);
+		$xCache->clean($this->mTable . "-by-p-" . $this->mSocioTitular . "-t-" . $this->mSubProducto . "-s-" . true);
 	}
 	function OProducto(){
 		if($this->mOProducto == null){
@@ -1720,6 +1725,28 @@ class cCuentaDeCaptacion {
 			$this->mOProducto->init();
 		}
 		return $this->mOProducto;
+	}
+	function initCuentaPorProducto($persona, $producto, $saldo = false){
+		$xCache	= new cCache();
+		$idx	= $this->mTable . "-by-p-$persona-t-$producto-s-$saldo";
+		$D		= $xCache->get($idx);
+		if(!is_array($D)){
+			$xQL		= new MQL();
+			$sql		= "SELECT * FROM `captacion_cuentas` WHERE `numero_socio`=$persona AND `tipo_subproducto`=$producto ORDER BY `fecha_apertura` DESC LIMIT 0,1";
+			if($saldo == true){
+				$sql	= "SELECT * FROM `captacion_cuentas` WHERE `numero_socio`=$persona AND `tipo_subproducto`=$producto AND `saldo_cuenta`>0 ORDER BY `fecha_apertura` DESC LIMIT 0,1";
+			}
+			$D			= $xQL->getDataRow($sql);
+			
+		}
+		if(isset($D["numero_socio"])){
+			$this->mNumeroCuenta	= $D["numero_cuenta"];
+			$this->mTipoDeCuenta	= $D["tipo_cuenta"];
+			$this->mSubProducto		= $D["tipo_subproducto"];
+			$this->mSocioTitular	= $D["numero_socio"];
+			$xCache->set($idx, $D);
+		}
+		return $this->init($D);
 	}
 }
 

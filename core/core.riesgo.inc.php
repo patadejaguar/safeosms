@@ -246,6 +246,7 @@ class cReglasDeNegocioLista {
 	public $PERSONAS_BUSQUEDA_IDINT				= "PERSONAS.BUSQUEDA.ID_INTERNA";
 	public $PERSONAS_USAR_DATO_ACCIDENTE		= "PERSONAS.USAR.DATOS_DE_ACCIDENTE";
 	public $PERSONAS_CHECKLIST_DINA				= "PERSONAS.USAR.CHECKLIST_DINAMICO";
+	public $PERSONAS_IDENT_INE_LISTA			= "PERSONAS.LISTA.IDENTIFICA_IFE";
 	
 	public $PERSONAS_ACTIVIDAD_EC_SIMPLE		= "PERSONAS.ACTIVIDAD_ECONOMICA.SIMPLE";
 	public $PERSONAS_ACTIVIDAD_EC_ASALARIADO	= "PERSONAS.ACTIVIDAD_ECONOMICA.COMO_SALARIOS";
@@ -282,6 +283,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_COT_RSIMPLE			= "CREDITOS.ARRENDAMIENTO.FRM_RESIPLE";
 	public $CREDITOS_ARREND_ANT_DIV				= "CREDITOS.ARRENDAMIENTO.DIV_ANTICIPO";
 	public $CREDITOS_ARREND_FRM_DIS				= "CREDITOS.ARRENDAMIENTO.DISABLE_FLD";
+	public $CREDITOS_ARREND_AJUSTM				= "CREDITOS.ARRENDAMIENTO.AJUSTESERVS";
 	
 	
 	public $CREDITOS_DESEMBOLSO_SIN_DESC		= "CREDITOS.DESEMBOLSO_SIN_DESCUENTOS";
@@ -305,6 +307,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_PAGO_LETRAF				= "CREDITOS.PAGOS_LETRA_FIJA";
 	
 	public $RECIBOS_SIN_VERSIONIMP				= "RECIBOS.SIN_VERSION_IMPRESA";
+	public $RECIBOS_USE_TICKETS					= "RECIBOS.USAR_TICKETS";
 	public $RECIBOS_RPT_USE_FECHAREAL			= "RECIBOS.REPORTE.USAR.FECHA_REAL";
 	
 	public $RECIBOS_ELIM_USE_BACK				= "RECIBOS.AL.ELIMINAR.BACKUP_IMP";
@@ -395,7 +398,7 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_COT_NORES]			= $this->CREDITOS_ARREND_COT_NORES;
 		$arr[$this->CREDITOS_ARREND_ANT_DIV]			= $this->CREDITOS_ARREND_ANT_DIV;
 		$arr[$this->CREDITOS_ARREND_COT_RSIMPLE]		= $this->CREDITOS_ARREND_COT_RSIMPLE;
-		//$arr[$this->]			= $this->;
+		$arr[$this->CREDITOS_ARREND_AJUSTM]				= $this->CREDITOS_ARREND_AJUSTM;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
@@ -406,9 +409,11 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_SIN_VERSIONIMP]				= $this->RECIBOS_SIN_VERSIONIMP;		
 		$arr[$this->RECIBOS_RPT_USE_FECHAREAL]			= $this->RECIBOS_RPT_USE_FECHAREAL;
 		$arr[$this->RECIBOS_ELIM_USE_BACK]				= $this->RECIBOS_ELIM_USE_BACK;
-		
+		$arr[$this->RECIBOS_USE_TICKETS]				= $this->RECIBOS_USE_TICKETS;
 		//$arr[$this->]			= $this->;
 		$arr[$this->PERSONAS_RELS_SIN_DOM]				= $this->PERSONAS_RELS_SIN_DOM;
+		$arr[$this->PERSONAS_IDENT_INE_LISTA]			= $this->PERSONAS_IDENT_INE_LISTA;
+		
 		$arr[$this->CREDITOS_PUEDEN_TASA_CERO]			= $this->CREDITOS_PUEDEN_TASA_CERO;
 		$arr[$this->PERSONAS_USAR_DATO_ACCIDENTE]		= $this->PERSONAS_USAR_DATO_ACCIDENTE;
 		//$arr[$this->]			= $this->;
@@ -502,17 +507,19 @@ class cReglaDeNegocio {
 		
 		$idxv	= "reglas-entidad-vals";
 		$idxc	= "reglas-entidad-cod";
+		$idv	= "reglas-entidad";
 		
 		$this->mCodigo	= $xCache->get($idxc);
 		$this->mValores	= $xCache->get($idxv);
 		
 		if(!is_array($this->mCodigo) OR !is_array($this->mValores)){
 		
-			$rs		= $xCache->get("reglas-entidad");
-			if($rs == null){
+			$rs			= $xCache->get($idv);
+			if(!is_array($rs)){
 				$xQL	= new MQL();
 				$rs		= $xQL->getDataRecord("SELECT * FROM `entidad_reglas`");
-				$xCache->set("reglas-entidad", $rs);
+				//setLog($rs);
+				$xCache->set($idv, $rs);
 			}
 			$xRul		= new cEntidad_reglas();
 			
@@ -596,9 +603,12 @@ class cReglasDeCalificacion {
 	public $CRED_FALLA_PAGMAX	= "CREDITO_FALLA_PAGOMIN";
 	public $CRED_FALLA_PAGMIN	= "CREDITO_FALLA_PAGOMAX";
 	public $CRED_FALLA_DEST		= "CREDITO_FALLA_DESTINO";
+	
 	public $CRED_FALLA_DESTIVA	= "CREDITO_FALLA_DESTINO_IVA";
 	public $CRED_FALLA_FPERIODO	= "CREDITO_FALLA_FECHA_PERIODO";
 	public $CRED_FALTA_FPERIODO	= "CREDITO_FALTA_PERIODO";
+	public $CRED_FALTA_GTIALIQ	= "CREDITO_FALTA_GTIALIQ";
+	public $CRED_FALLA_GTIALIQ	= "CREDITO_FALLA_GTIALIQ";
 	
 	public $CRED_FALLA_PERSONA	= "CREDITO_FALLA_PERSONA";
 	
@@ -620,6 +630,13 @@ class cReglasDeCalificacion {
 	//public $PERS_FALLA_AML2		= "PERSONA_FALLA_AML2";
 	public $PERS_FALTA_DEXT		= "PERSONA_FALTA_DEXTRA";
 	public $PERS_DOMCP_VALID	= "PERSONA_DOM_CP_VALIDO";
+	
+	
+	public $CRED_FALLA_ORG		= "CREDITO_FALLA_ORG";
+	public $CRED_FALLA_O_ARR	= "CREDITO_FALLA_O_ARR";
+	
+	
+	public $CRED_ARRED_NOACT	= "CRED_ARRED_NOACT";
 	
 	//public $ESPERA_REG_HEAVY	= 5; //Tiempo de espera en reglas pesadas
 	//public $ESPERA_REG_NORM		= 1; //Tiempo de espera en reglas Normales

@@ -77,7 +77,8 @@ $xT->setWithMetaData();
 /*$xT->setRowCSS("monto", "mnyres");
 $xT->setColTitle("monto", "Monto de Retencion");*/
 
-
+$xFRM->OButton("TR.CEDULA DE COBRANZA", "var xG = new EmpGen(); xG.getOrdenDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
+$xFRM->OButton("TR.RECIBOS", "var xG = new EmpGen(); xG.getPreRecibosDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
 
 $xT->setKeyField("numero_solicitud");
 $xT->setKeyTable("creditos_solicitud");
@@ -183,6 +184,8 @@ function jsEliminarOperacion(id){
 	var clave	= obj.clave;
 	xG.rmRecord({tabla: "empresas_cobranza", id:clave});
 }
+
+
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

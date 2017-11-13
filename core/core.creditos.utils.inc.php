@@ -1591,15 +1591,17 @@ class cUtileriasParaCreditos{
 								$socio		 	= $rw["numero_socio"];
 								$credito	 	= $rw["numero_solicitud"];
 								$saldo_actual	= $rw["saldo_actual"];
-								//Se inicializa una nueva instancia de crédito
-								$cCredito 		= new cCredito($credito, $socio);
-								//y se neutralizara con su valor absoluto.
-								$cCredito->init($rw);
-								$cCredito->setReciboDeOperacion($xRec);
-								//Generar un abono a Capital
-								$cCredito->setAbonoCapital($saldo_actual);
-								$msg	.= "$socio\t$credito\tEliminando el saldo de $saldo_actual\r\n";
-								$msg	.=  $cCredito->getMessages("txt");
+								if($saldo_actual !== 0){
+									//Se inicializa una nueva instancia de crédito
+									$cCredito 		= new cCredito($credito, $socio);
+									//y se neutralizara con su valor absoluto.
+									$cCredito->init($rw);
+									$cCredito->setReciboDeOperacion($xRec);
+									//Generar un abono a Capital
+									$cCredito->setAbonoCapital($saldo_actual);
+									$msg	.= "$socio\t$credito\tEliminando el saldo de $saldo_actual\r\n";
+									$msg	.=  $cCredito->getMessages("txt");
+								}
 						}
                         $cRec->setFinalizarRecibo(true);
 
@@ -2087,8 +2089,8 @@ class cSQLFiltros {
 		return $ByTipo;
 	}
 	function OperacionesPorFecha($FechaInicial = false, $FechaFinal = false){
-		$ByFecha	= ($FechaInicial == false) ? "" : " AND (`operaciones_mvtos`.`fecha_operacion` >='$FechaInicial') ";
-		$ByFecha	.= ($FechaFinal == false) ? "" : " AND	(`operaciones_mvtos`.`fecha_operacion`<='$FechaFinal' ) ";
+		$ByFecha	= ($FechaInicial === false) ? "" : " AND (`operaciones_mvtos`.`fecha_operacion` >='$FechaInicial') ";
+		$ByFecha	.= ($FechaFinal === false) ? "" : " AND	(`operaciones_mvtos`.`fecha_operacion`<='$FechaFinal' ) ";
 		return $ByFecha;
 	}
 	//----------------- Bancos
@@ -2248,7 +2250,8 @@ class cSQLFiltros {
 		}
 	
 		return $filtro;
-	}	
+	}
+	
 	function RecibosPorPersonaAsociada($persona = false){
 		$persona	= setNoMenorQueCero($persona);
 		$ByTipo		= ($persona > 0) ? " AND (`operaciones_recibos`.`persona_asociada`= $persona)" : "";
@@ -2262,6 +2265,10 @@ class cSQLFiltros {
 	function RecibosPorSucursal($sucursal = ""){
 		$ByTipo		= ($this->getEsCadenaDeTipoInvalida($sucursal) == true) ? "": " AND (`operaciones_recibos`.`sucursal`= '$sucursal')";
 		return $ByTipo;
+	}
+	function RecibosNoEstadisticos(){
+		$filtro	= " AND (`operaciones_recibostipo`.`afectacion_en_flujo_efvo`  != 'ninguna')";
+		return $filtro;
 	}
 	private function getEsCadenaDeTipoInvalida($v){
 		$v	= strtolower($v);
@@ -2286,7 +2293,17 @@ class cSQLFiltros {
 		$ByTipo		= ($this->getEsCadenaDeTipoInvalida($sucursal) == true) ? "" : " AND (`socios_general`.`sucursal` = '$sucursal' ) ";
 		return $ByTipo;
 	}
-	
+	function PersonasPorSucursalAut(){
+		$By		= "";
+		if(OPERACION_LIBERAR_SUCURSALES == false){
+			$xUsr		= new cSystemUser();
+			if($xUsr->getEsCorporativo() == false){
+				$sucursal	= $xUsr->getSucursalAccede();
+				$By			= " AND (`socios_general`.`sucursal`='" . $sucursal . "') ";
+			}
+		}
+		return $By;
+	}
 	function CatalogoContPorNiveles($NivelInicial, $NivelFinal = false, $operador = "="){
 		$NivelInicial	= setNoMenorQueCero($NivelInicial);
 		$NivelFinal		= setNoMenorQueCero($NivelFinal);
@@ -2301,6 +2318,17 @@ class cSQLFiltros {
 		$By		= "";
 		if($caja > 0){
 			$By	= " AND (`personas`.`numero_caja_local`=$caja) ";
+		}
+		return $By;
+	}
+	function VPersonasPorSucursalAut(){
+		$By		= "";
+		if(OPERACION_LIBERAR_SUCURSALES == false){
+			$xUsr		= new cSystemUser();
+			if($xUsr->getEsCorporativo() == false){
+				$sucursal	= $xUsr->getSucursalAccede();
+				$By			= " AND (`personas`.`sucursal`='" . $sucursal . "') ";
+			}
 		}
 		return $By;
 	}
@@ -2320,7 +2348,18 @@ class cSQLFiltros {
 		}
 		return $By;
 	}
-
+	function VSociosPorSucursalAut(){
+		$By		= "";
+		if(OPERACION_LIBERAR_SUCURSALES == false){
+			$xUsr		= new cSystemUser();
+			if($xUsr->getEsCorporativo() == false){
+				$sucursal	= $xUsr->getSucursalAccede();
+				$By			= " AND (`socios`.`sucursal`='" . $sucursal . "') ";
+			}
+		}
+		return $By;
+	}
+	
 	function LogPorFecha($FechaInicial, $FechaFinal = false){
 		$filtro		= "";
 		$xF			= new cFecha();

@@ -1824,6 +1824,13 @@ class cTiposLimpiadores {
 	
 		return $dev;
 	}
+	function cleanSucursal($s){
+		$s		= $this->cleanString($s);
+		$s		= str_replace(" ", "", $s);
+		$s		= strtolower($s);
+		$s		= substr($s, 0,9);
+		return $s;
+	}
 }
 
 class cDocumentos {
@@ -2213,8 +2220,11 @@ class cReglasDeValidacion  {
 		if($clave <= FALLBACK_CLAVE_DE_DOCTO OR $clave == DEFAULT_CUENTA_CORRIENTE){ $ready = false; }
 		return $ready;
 	}
-	function credito(){
-		
+	function credito($clave = false){
+		$clave	= setNoMenorQueCero($clave);
+		$ready	= true;
+		if($clave <= FALLBACK_CLAVE_DE_DOCTO OR $clave == DEFAULT_CREDITO OR $clave == FALLBACK_CLAVE_DE_CREDITO){ $ready = false; }
+		return $ready;
 	}
 }
 

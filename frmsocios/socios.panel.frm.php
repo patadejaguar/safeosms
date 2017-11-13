@@ -65,25 +65,36 @@ function jsaReRelaciones($idsocio){
 	
 	$sqlL		= new cSQLListas();
 	$cBenef		= new cTabla($sqlL->getListadoDeRelacionesPersonales($idsocio));
-	$cBenef->addEditar(USUARIO_TIPO_OFICIAL_CRED);
-	$cBenef->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
 	
+	//$cBenef->addEditar();
+	$cBenef->OButton("TR.BAJA", "var xRP=new PersRelGen();xRP.setBajaRelacion(" . HP_REPLACE_ID . ")", $cBenef->ODicIcons()->BAJA);
+	//$cBenef->addEliminar();
+	$cBenef->setFieldReplace("clave_de_persona", "_X_PERSONA_");
+	$cBenef->OButton("TR.PANEL", "var xP=new PersGen();xP.goToPanel(_X_PERSONA_)", $cBenef->ODicIcons()->PERSONA);
+	$cBenef->setOmitidos("domicilio");
+	$cBenef->setOmitidos("curp");
 	$cBenef->setKeyField("idsocios_relaciones");
 	
 	$xLi	= new cSQLListas();
 	$xT		= new cTabla($xLi->getListadoDeReferenciasBancarias($idsocio));
 	$xT2	= new cTabla($xLi->getListadoDeReferenciasComerciales($idsocio));
+	
 	$xT->setKeyTable("socios_relaciones");
+	$xT->addEliminar();
+	
 	$xT2->setKeyTable("socios_relaciones");
-	$xT2->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
-	$xT->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
-	$cBenef->setOmitidos("domicilio");
-	$cBenef->setOmitidos("curp");
-
+	$xT2->addEliminar();
+	
+	
+	
 	$TBen	= $cBenef->Show("TR.REFERENCIAS_PERSONALES");
-	$TBen	= ($cBenef->getRowCount() <=0) ? "" : $TBen ; 
+	$TBen	= ($cBenef->getRowCount() <=0) ? "" : $TBen ;
+	
+	
 	$TBan	= $xT->Show("TR.REFERENCIAS_BANCARIAS");
+	
 	$TBan	= ($xT->getRowCount() <=  0) ? "" : $TBan;
+	
 	$TCom	= $xT2->Show("TR.REFERENCIAS_COMERCIALES");
 	$TCom	= ($xT2->getRowCount() <= 0) ? "" : $TCom;
 	
@@ -195,6 +206,16 @@ function jsaActualizarUsuario($idusuario){
 	$xUser->setActualizarPorPersona();
 	return $xUser->getMessages(OUT_HTML);
 }
+function jsaCambiarFiguraJuridica($idpersona){
+	$xSoc	= new cSocio($idpersona);
+	if($xSoc->init() == true){
+		if($xSoc->getEsPersonaFisica() == false){
+			$xSoc->setEsPersonaFisica();
+		} else {
+			$xSoc->setEsPersonaMoral();
+		}
+	}
+}
 $jxc ->exportFunction('jsaRePatrimonio', array('idsocio' ), "#tab-patrimonio");
 $jxc ->exportFunction('jsaReActividadE', array('idsocio' ), "#tab-actividad");
 $jxc ->exportFunction('jsaReRelaciones', array('idsocio' ), "#tab-relaciones");
@@ -203,6 +224,7 @@ $jxc ->exportFunction('jsaReVivienda', array('idsocio' ), "#tab-domicilio");
 $jxc ->exportFunction('jsaValidarDocumentacion', array('idsocio' ), "#idavisos");
 $jxc ->exportFunction('jsaValidarRiesgo', array('idsocio' ), "#idavisos");
 $jxc ->exportFunction('jsaValidarPerfilTransaccional', array('idsocio' ), "#idavisos");
+$jxc ->exportFunction('jsaCambiarFiguraJuridica', array('idsocio'), "#idavisos");
 
 $jxc ->exportFunction('jsaAddDescuento', array('idsocio', 'iddescuento'), "#idavisos");
 //$jxc ->exportFunction('jsaAddDescuentoDesdeEmpresa', array('idmodificado', 'idcantidad'), "#idavisos");
@@ -233,7 +255,8 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xHP->goToPageX("../utils/frmbuscarsocio.php?next=panel");
 	}
 	
-	$xFRM->setTitle( $xHP->getTitle() ); 
+	$xFRM->setTitle( $xHP->getTitle() );
+	
 	$xFRM->addPersonaBasico();
 	$xFRM->addSubmit();
 	
@@ -249,6 +272,9 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM		= new cHForm("extrasocios", "");
 	$xHSel		= new cHSelect();
 	$xNotif		= new cHNotif();
+	
+	$xFRM->setTitle( $xHP->getTitle() );
+	
 	$xFRM->OButton("TR.Recargar", "jsRecargar()", $xFRM->ic()->RECARGAR, "", "blue");
 	$xFRM->addHElem( $xSoc->getFicha(true) );
 
@@ -302,16 +328,21 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
 		$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
 		
-		$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", "documentos", "idvalidadoc" );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.validar perfil_transaccional", "jsaValidarPerfilT()", "perfil", "validaperfil", false ) );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.validar riesgo", "jsaValidarRiesgo()", "riesgo", "validariesgo", false ) );
-		$xFRM->addToolbar( $xBtn->getBasic("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", "riesgo", "actualizarriesgo", false ) );
+		$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
+		$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
+		$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
+
+		$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
 		
-		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS);
-		///$xFRM->OButton("TR.Consulta en PEPS", "var xAML = new AmlGen(); xAML.getConsultaPEPS($idsocio)", $xFRM->ic()->REGISTROS);
+		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
+
 		
 		$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
 		$jsTabs	.= ",\n selected: 6\n";
+	}
+	//========================== Datos de personas Morales.
+	if($xSoc->getEsPersonaFisica() == false){
+		$xFRM->OButton("TR.DATOS PERSONA_MORAL", "var xP=new PersGen();xP.goToDatosPM($idsocio, true)", $xFRM->ic()->EMPRESA, "cmddatospm", "blue2");
 	}
 	//Arbol de relaciones y perfil transaccional
 	if(MODULO_AML_ACTIVADO == true){
@@ -460,19 +491,29 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if(MODO_DEBUG == true){
 		$xHTabs->addTab("TR.Validacion", $xSoc->getValidacion(OUT_HTML));
 		$xFRM->OButton("TR.Reporte SIC", "jsGetCirculoDeCredito()", $xBtn->ic()->REPORTE);
+		
+		//Acciones de Correccion
+		if($xSoc->getEsPersonaFisica() == false){
+			$xFRM->OButton("TR.CAMBIAR A PERSONA_FISICA", "jsaCambiarFiguraJuridica()", $xFRM->ic()->EXPORTAR, "", "red");
+		} else {
+			$xFRM->OButton("TR.CAMBIAR A PERSONA_MORAL", "jsaCambiarFiguraJuridica()", $xFRM->ic()->EXPORTAR, "", "red" );
+		}
+		
+		
+		
 	}
 	
 	if((MODO_CORRECION == true OR MODO_MIGRACION == true OR MODO_DEBUG == true) OR (getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_GERENTE) ){
 		$xStats	= new cPersonasEstadisticas($idsocio);
 		$xStats->initDatosDeCredito(true);
-		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR);
+		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR, "cmdbajapersona", "orange");
 		if($xStats->getTotalCompromisos()== 0){
-			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR);
+			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 		} else {
 			//$xFRM->addAviso(, "", true, "warning");
 			$xLog->add("WARN\tLa persona tiene " . $xStats->getTotalCompromisos() . " Contratos Activos, no se debe eliminar\r\n");
 			if(MODO_DEBUG == true){
-				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR);
+				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 			}
 		}
 		

@@ -1110,14 +1110,22 @@ class cPersonasViviendaRegimen {
 }
 
 class cEntidadPerfilDePagos {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mNombre	= "";
-	private $mMessages	= "";
-	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTable			= "";
 	private $mTipoMembresia	= 0;
+	private $mFechaAplica	= false;
+	private $mTipoOperacion	= 0;
+	private $mMonto			= 0;
+	public $PERFIL_ACTIVO	= 1;
+	private $mPeriocidad	= 0;
+	private $mPrioridad		= 0;
+	private $mRotacion		= "";
+	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
 	function setIDCache($clave = 0){
@@ -1144,15 +1152,27 @@ class cEntidadPerfilDePagos {
 		}
 		if(isset($data[$xT->getKey()])){
 			$xT->setData($data);
-			$this->mObj		= $xT; //Cambiar
-			$this->mClave	= $data[$xT->getKey()];
+			$this->mObj				= $xT; //Cambiar
+			$this->mClave			= $data[$xT->getKey()];
+			$this->mTipoMembresia	= $xT->tipo_de_membresia()->v();
+			$this->mTipoOperacion	= $xT->tipo_de_operacion()->v();
+			$this->mFechaAplica		= $xT->fecha_de_aplicacion()->v();
+			$this->mMonto			= $xT->monto()->v();
+			$this->mPeriocidad		= $xT->periocidad()->v();
+			$this->mPrioridad		= $xT->prioridad()->v();
+			$this->mRotacion		= $xT->rotacion()->v();
+			
 			$this->setIDCache($this->mClave);
+			
+			
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit	= true;
 			$xT 			= null;
 		}
 		return $this->mInit;
 	}
+	function getTipoOperacion(){ return $this->mTipoOperacion; }
+	
 	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
@@ -1182,6 +1202,75 @@ class cEntidadPerfilDePagos {
 			}
 		}
 		return $data;
+	}
+	function setActualizarConcepto(){
+		$xQL		= new MQL();
+		$xLog		= new cCoreLog();
+		
+		$membresia	= $this->mTipoMembresia;
+		$operacion	= $this->mTipoOperacion;
+		$fecha		= $this->mFechaAplica;
+		$monto		= $this->mMonto;
+		$rs			= $xQL->getRecordset("SELECT * FROM `personas_datos_colegiacion` WHERE`tipo_de_afiliacion`=$membresia ");
+		$finalizador= 0;
+		
+		$xPerfil	= new cPersonas_pagos_perfil();
+		$exitos		= 0;
+		$fallas		= 0;
+		$exitosN	= 0;
+		$fallasN	= 0;
+		
+		while($rw = $rs->fetch_assoc()){
+			
+			$persona	= $rw["clave_de_persona"];
+			$dd			= $xQL->getDataRow("SELECT * FROM `personas_pagos_perfil` WHERE `membresia`=$membresia AND `clave_de_persona`=$persona AND `tipo_de_operacion`=$operacion LIMIT 0,1");
+			if( isset($dd["idpersonas_pagos_perfil"]) ){
+				$xPerfil->setData($dd);
+				$idKey	= $xPerfil->idpersonas_pagos_perfil()->v();
+				
+				$xPerfil->monto($monto);
+				$xPerfil->fecha_de_aplicacion($fecha);
+				$xPerfil->rotacion($this->mRotacion);
+				if($xPerfil->query()->update()->save($idKey) === false){
+					//$xLog->add("ERROR\tACTUALIZAR\tAportacion persona $persona con ID $idKey\r\n", $xLog->DEVELOPER);
+					$fallas++;
+				} else {
+					//$xLog->add("OK\tACTUALIZAR\tAportacion persona $persona con ID $idKey\r\n", $xLog->DEVELOPER);
+					$exitos++;
+				}
+			} else {
+				$xPerfil->idpersonas_pagos_perfil("NULL");
+				$xPerfil->clave_de_persona($persona);
+				$xPerfil->estatus($this->PERFIL_ACTIVO);
+				$xPerfil->fecha_de_aplicacion($fecha);
+				$xPerfil->finalizador($finalizador);
+				$xPerfil->membresia($membresia);
+				$xPerfil->monto($monto);
+				$xPerfil->periocidad($this->mPeriocidad);
+				$xPerfil->prioridad($this->mPrioridad);
+				$xPerfil->rotacion($this->mRotacion);
+				$xPerfil->tipo_de_operacion($operacion);
+				
+				if($xPerfil->query()->insert()->save() === false){
+					//$xLog->add("ERROR\tNUEVO\tAportacion persona $persona operacion $operacion \r\n", $xLog->DEVELOPER);
+					$fallasN++;
+				} else {
+					//$xLog->add("OK\tNUEVO\tAportacion persona $persona operacion $operacion \r\n", $xLog->DEVELOPER);
+					$exitosN++;
+				}
+			}
+			//$id		= 
+			//$xPCol	= new cPersonasPerfilDePagos();
+			
+		}
+		$rs->free();
+		
+		$xLog->add("NUEVOS : Exitos $exitosN y Fallas $fallasN - Actualizaciones : Exitos $exitos y Fallas $fallas\r\n");
+		$this->mMessages	.= $xLog->getMessages();
+		return true;
+	}
+	function setActualizarCalendario($ejercicio, $periodo){
+		
 	}
 }
 class cPersonasPerfilDePagos {
@@ -1565,6 +1654,12 @@ class cPersonasMoralesDatosExt {
 	private $mNumeroNotaria		= "";
 	private $mNombreNotario		= "";
 	
+	private $mPoderFolio		= "";
+	private $mPoderNotario		= "";
+	private $mPoderNotaria		= "";
+	private $mPoderFecha		= false;
+	private $mIDRegistroPublico	= "";
+	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -1593,6 +1688,12 @@ class cPersonasMoralesDatosExt {
 			$this->mNombreNotario		= $xT->nombre_notario()->v();
 			$this->mNombre				= $xT->idregistro_publico()->v();
 			
+			$this->mPoderFolio			= $xT->idpoder_representante()->v();
+			$this->mPoderNotaria		= $xT->notaria_poder()->v();
+			$this->mPoderNotario		= $xT->notario_poder()->v();
+			$this->mPoderFecha			= $xT->fechapoder_representante()->v();
+			$this->mIDRegistroPublico	= $xT->idregistro_publico()->v();
+			
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit	= true;
@@ -1609,14 +1710,74 @@ class cPersonasMoralesDatosExt {
 	function add(){}
 	function initByPersona($persona){
 		$xQL	= new MQL();
-		$data	= $xQL->getDataRow("SELECT * FROM  `personas_morales_anx` WHERE `persona`=$persona LIMIT 0,1");
+		$data	= $xQL->getDataRow("SELECT * FROM  `personas_morales_anx` WHERE `persona`=$persona AND `activo`=1 LIMIT 0,1");
 		
 		return $this->init($data);
 	}
 	function getFechaConstitucion(){ return $this->mFechaConstitucion; }
 	function getActaCosntitucion(){ return $this->mActaConstitucion; }
+	function getActaConstitucion(){ return $this->mActaConstitucion; }
 	function getNumeroNotaria(){ return $this->mNumeroNotaria; }
 	function getNombreNotario(){ return$this->mNombreNotario; }
+	function getPoderClave(){ return $this->mPoderFolio; }
+	function getPoderNotario(){ return $this->mPoderNotario; }
+	function getPoderNotaria(){ return $this->mPoderNotaria; }
+	function getPoderFecha(){ return $this->mPoderFecha; }
+	function getIDRegistroPublico(){ return $this->mIDRegistroPublico; }
+}
+
+
+
+class cPersonasEstadoCivil {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "socios_estadocivil";
+	private $mTipo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cSocios_estadocivil();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj		= $xT; //Cambiar
+			$this->mClave	= $data[$xT->getKey()];
+			
+			$this->mNombre	= $xT->descripcion_estadocivil()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
 }
 
 ?>

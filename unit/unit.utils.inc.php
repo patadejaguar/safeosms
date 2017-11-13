@@ -1,5 +1,6 @@
 <?php
-echo memory_get_peak_usage();
+
+/*echo memory_get_peak_usage();
 echo "<br>";
 echo ini_get("memory_limit");
 $txt	= "";
@@ -7,7 +8,7 @@ for($i =0; $i<=100000; $i++){
 	$txt	.= "1000 Bytesmmm\r\n";
 }
 echo "<br>";
-echo memory_get_usage();
+echo memory_get_usage();*/
 
 function unit_RestarFechas($el_restado, $por_restar){
 	$fecha1 = strtotime($el_restado);

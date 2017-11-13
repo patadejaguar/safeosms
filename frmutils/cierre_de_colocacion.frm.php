@@ -71,12 +71,15 @@ include_once("../core/core.html.inc.php");
 	$messages 		.= $xDB->setLowerSucursal();
 	$xQL->setRawQuery("SET @fecha_de_corte='$fechaop';");
 	//reconstruir db de pagos
+	
+	$xQL->setRawQuery("CALL `proc_crear_id_opempresas` ");			//Crea ID unico de operacion con empresas
 	$xQL->setRawQuery("CALL `proc_historial_de_pagos` ");
 	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`()");
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`()");		//una vez por mes
 	$xQL->setRawQuery("CALL `proc_personas_extranjeras`()");		//personas extranjeras
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_totales`()");		//Abonos totales en tmp
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_parciales`()");	//Abonos mes y tipo columna
+	$xQL->setRawQuery("CALL `proc_creds_prox_letras`()");			//Abonos mes y tipo columna
 	
 	$xCUtils		= new cUtileriasParaCreditos();
 	

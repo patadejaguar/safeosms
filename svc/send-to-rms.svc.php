@@ -90,7 +90,12 @@ $sqlL3	= "INSERT INTO `risk_scoring` (`id`, `scoring_method`, `calculated_risk`,
 //print_r($params);
 
 $estatus	= "New";
-$describe	= $xAlert->getDescripcion();
+
+//Tipo de Docs
+
+$describe	=  $xAlert->getPersonaDeOrigen() . " - RECIBO : " . $xAlert->getRecibo() . " - " . $xAlert->getDescripcion();
+
+
 $regulation	= 9;//PLD
 $location	= 2;//Corporativo
 $origen		= 2;//1.- Gente; 2.- Proceso; 3.- Sistema; 4.- Externo

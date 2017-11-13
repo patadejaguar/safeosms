@@ -182,7 +182,7 @@ $messages		= "";
 		try{
 			$messages	.= "BACKUP\tRespaldo a la fecha " .$xF->getFechaDDMM() . "\r\n";
 			$xDB->setCheckDatabase();
-			$messages	.= $xSys->setBackupDB_WithMail();			
+			$messages	.= $xSys->setBackupDB_WithMail();		
 		} catch (Exception $e){
 			$messages	.= "ERROR\tNo se genera el Respaldo a la fecha " .$xF->getFechaDDMM() . "\r\n";
 		}
@@ -192,6 +192,7 @@ $messages		= "";
 	//cerrar el log
 	$xLog->setWrite($messages);
 	$xLog->setClose();
+	
 	if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre del Sistema"); }
 
 	//

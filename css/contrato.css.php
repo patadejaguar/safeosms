@@ -28,6 +28,7 @@ h4, h3, h2, table, p {
 }
 h1,h2,h3,h4{
 	text-align: center;
+	line-height: 150% !important;
 }
    caption {
        text-align: left;
@@ -41,8 +42,8 @@ th, td, p{
 	text-indent: 0;
 }
 body, html {
-	font: <?php echo CSS_TFUENTE_CONTRATOS;?>pt "Trebuchet MS", Arial, Helvetica, sans-serif !important;
-	line-height: 1.1em !important;
+	font: <?php echo CSS_TFUENTE_CONTRATOS;?>pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;
+	line-height: 125% !important;
 	font-stretch: condensed;
 }
 th {
@@ -76,3 +77,29 @@ table {
     margin-top: -3em;
     } 
 }
+
+
+ul.a {list-style-type: circle;}
+ul.b {list-style-type: disc;}
+ul.c {list-style-type: square;}
+
+ol.d {list-style-type: armenian;}
+ol.e {list-style-type: cjk-ideographic;}
+ol.f {list-style-type: decimal;}
+ol.g {list-style-type: decimal-leading-zero;}
+ol.h {list-style-type: georgian;}
+ol.i {list-style-type: hebrew;}
+ol.j {list-style-type: hiragana;}
+ol.k {list-style-type: hiragana-iroha;}
+ol.l {list-style-type: katakana;}
+ol.m {list-style-type: katakana-iroha;}
+ol.n {list-style-type: lower-alpha;}
+ol.o {list-style-type: lower-greek;}
+ol.p {list-style-type: lower-latin;}
+ol.q {list-style-type: lower-roman;}
+ol.r {list-style-type: upper-alpha;}
+ol.s {list-style-type: upper-latin;}
+ol.t {list-style-type: upper-roman;}
+ol.u {list-style-type: none;}
+ol.v {list-style-type: inherit;}
+

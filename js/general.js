@@ -19,6 +19,8 @@ var CredGen		= function(){};
 var PersGen		= function(){};
 var PersAEGen	= function(){};
 var PersVivGen	= function(){};
+var PersRelGen	= function(){};
+
 var CaptGen		= function(){};
 var RecGen		= function(){};
 var TesGen		= function(){};
@@ -75,6 +77,19 @@ Gen.prototype.isKey	= function(opts){
 	}
 	return isKeyCode;
 }
+Gen.prototype.isKeyEdit	= function(opts){
+	var isA			= false;
+	var charCode 	= 0;
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	if (typeof opts.evt != "undefined" ) {
+		charCode = ( opts.evt.charCode) ? opts.evt.charCode : ((opts.evt.which) ? opts.evt.which : opts.evt.keyCode);
+		if ((charCode >= 48 && charCode <= 57)||(charCode >= 96 && charCode <= 105)||(charCode >= 65 && charCode <= 90)||(charCode ==8)||(charCode ==46) ){
+			isA		= true;
+		}
+	}
+
+	return isA;
+}
 Gen.prototype.winOrigen		= function(){
 	dsrc	= null;
 	if (window.parent){ dsrc = window.parent.document; }
@@ -121,7 +136,7 @@ Gen.prototype.getLog	= function(opts){
 		contentType	: "json",
 		success		: function(rs){
 			if (typeof rs.message != "undefined") {
-				if ($.trim(rs.message) != "") {
+				if ($.trim(rs.message) !== "") {
 					callback(rs.message);
 					setLog(rs.message);
 				}
@@ -193,6 +208,24 @@ Gen.prototype.verDiv	= function(id, ver){
 		$("#" + id).css("display", "inline-block");
 	}
 }
+Gen.prototype.ver	= function(id, ver){
+	ver			= (typeof ver == "undefined") ? false : ver;
+	var self	= this;
+	var mObj	= $("#" + id);
+	if(mObj.is("div")){
+		self.verDiv(id,ver);
+	}
+	if(mObj.is("input")){
+		self.verControl(id,ver);
+	}
+	if(mObj.is("a")){
+		if(ver == false){
+			$("#" + id).parent().css("display", "none");
+		} else {
+			$("#" + id).parent().css("display", "inline-block");
+		}
+	}	
+}
 Gen.prototype.aMonedaForm = function(){
 	var aMny 		= $( ":input[class=mny]" );
 	$.each( aMny, function( key, val ) {
@@ -205,7 +238,7 @@ Gen.prototype.aMonedaForm = function(){
 			$(idxd).val( vv );
 			$(idxo).val( getFMoney(vv));
 		}
-	});	
+	});
 }
 Gen.prototype.aMoneda	= function(opts){
 	var charCode 	= 0;
@@ -253,19 +286,18 @@ Gen.prototype.formF9key	= function(evt){
 }
 
 function getClientSize() {
-  var width = 0, height = 0;
-
-  if(typeof(window.innerWidth) == 'number') {
-        width 	= window.innerWidth;
-        height 	= window.innerHeight;
-  } else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
-        width 	= document.documentElement.clientWidth;
-        height	= document.documentElement.clientHeight;
-  } else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
-        width 	= document.body.clientWidth;
-        height	= document.body.clientHeight;
-  }
-  return {width: width, height: height};
+	var width = 0, height = 0;
+	if(typeof(window.innerWidth) == 'number') {
+		width 	= window.innerWidth;
+		height 	= window.innerHeight;
+	} else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
+		width 	= document.documentElement.clientWidth;
+		height	= document.documentElement.clientHeight;
+	} else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+		width 	= document.body.clientWidth;
+		height	= document.body.clientHeight;
+	}
+	return {width: width, height: height};
 }
 
 Gen.prototype.w	= function(opts){
@@ -318,6 +350,7 @@ Gen.prototype.w	= function(opts){
 		}
 	} else {
 		if (otags == true) { url	= url + "&tinybox=true"; }
+		if(wd > 1120){ wd = 1120; }
 		TINY.box.show({iframe: url ,boxid:'frameless', width:wd, height:hg, fixed:false, maskid:'bluemask',maskopacity:40,closejs: callbackF });
         $('html,body').animate({ scrollTop: 0 }, 700);
 	}
@@ -469,39 +502,21 @@ Gen.prototype.winTip 	= function (opts){
 	opts = (typeof opts == "undefined" ) ? {} : opts;
 	var id		= (typeof opts.element == "undefined") ? window : opts.element;
 	var msg		= (typeof opts.content == "undefined") ? "" : opts.content;
-	msg		= (typeof opts.msg == "undefined") ? msg : opts.msg;
+	msg			= (typeof opts.msg == "undefined") ? msg : opts.msg;
 
 	var delay	= (typeof opts.delay == "undefined") ? 4000 : opts.delay;
 	var mTitle	= (typeof opts.title == "undefined") ? "Window" : opts.title;
-	$(id).qtip({
-		content: {
-			text: msg,
-			title: {
-				text: mTitle,
-				button: true
-			}
-		},
-		position: {
-			my: "top left", // Use the corner...top
-			at: "bottom center" // ...and opposite corner bottom
-		},
-		show: {
-			//event: false, // Don't specify a show event...
-			ready: true, // ... but show the tooltip when ready,
-			solo : true,
-			event : false
-			/*show : "focus",
-			hide : "blur"*/
-		},
-		style: {
-			classes: 'ui-tooltip-shadow ui-tooltip-tipped'
-		},
-		events: {
-			render: function(event, api) {
-				//setTimeout(api.hide, 1000); // Hide after 1 second
-			}
-		}
-	});
+	var content	= (typeof opts.content == "undefined") ? false : opts.content;
+	var self	= this;
+	
+	var xG		= new Gen();
+	var w		= entero((xG.ancho()/2));
+	
+	//var content  = $(id).closest("form");
+	session(Configuracion.opciones.dialogID, content.attr("id"));
+	
+	content.dialog({resizable: false,height: "auto", width: w, modal: true, title: mTitle, position: ['center', 20] });
+	
 }
 Gen.prototype.inputMD5	= function(evt){ evt.value	= hex_md5(evt.value); }
 Gen.prototype.disTime 	= function (id, mTime){
@@ -582,32 +597,7 @@ Gen.prototype.notify	= function(opts){
   var n = new Notification(theTitle,options);*/
 }
 //=================================================================
-function tipSuggest(id, msg){
-	$(id).qtip({
-		content: {
-			text: msg
-		},
-		position: {
-			my: "top center", // Use the corner...top
-			at: "bottom center" // ...and opposite corner bottom
-		},
-		show: {
-			//event: false, // Don't specify a show event...
-			ready: true, // ... but show the tooltip when ready,
-			solo : true,
-			show : "focus",
-			hide : "blur"
-		},
-		style: {
-			classes: 'ui-tooltip-shadow ui-tooltip-tipped'
-		},
-		events: {
-			render: function(event, api) {
-				//setTimeout(api.hide, 1000); // Hide after 1 second
-			}
-		}
-	});
-}
+function tipSuggest(id, msg){ alert("deprecated"); }
 //function markItem(id){ ;  }
 Gen.prototype.markTR	= function(opts){
 	opts 		= (typeof opts == "undefined" ) ? {} : opts;
@@ -665,61 +655,9 @@ Gen.prototype.onlyreadInput	= function(id){
 	}
 }
 
-function tipList(id, msg, title){
-	title	= (typeof title == "undefined") ? "" : title;
-	$(id).qtip({
-		content: {
-			text: msg,
-			title: {
-				text: title,
-				button: true
-			}
-		},
+function tipList(id, msg, title){ alert("deprecated"); }
+function tipMsg(id, msg){ alert("deprecated"); }
 
-		position: {
-			my: "top left", // Use the corner...top
-			at: "bottom center" // ...and opposite corner botton
-		},
-		show: {
-			event: false, // Don't specify a show event...
-			ready: true, // ... but show the tooltip when ready,
-			solo : true
-		},
-		hide: false,
-		style: {
-			classes: 'ui-tooltip-shadow ui-tooltip-tipped'
-		},
-		events: {
-			render: function(event, api) {
-				//setTimeout(api.hide, 5500); // Hide after 1 second
-			}
-		}
-	});
-}
-function tipMsg(id, msg){
-	$(id).qtip({
-		content: {
-			text: msg
-		},
-		position: {
-			my: "center", // Use the corner...top
-			at: "center" // ...and opposite corner botton
-		},
-		show: {
-			event: false, // Don't specify a show event...
-			ready: true, // ... but show the tooltip when ready,
-			solo : true
-		},
-		style: {
-			classes: 'ui-tooltip-shadow ui-tooltip-green'
-		},
-		events: {
-			render: function(event, api) {
-				setTimeout(api.hide, 2500); // Hide after 1 second
-			}
-		}
-	});
-}
 function getModalTip(element, content, title){
 	title	= (typeof title == "undefined") ? "" : title;
 	var xG	= new Gen(); var w= entero((xG.ancho()/2));
@@ -733,6 +671,7 @@ Number.prototype.formatMoney = function(c, d, t){
 };
 function getInMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
 function getFMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
+function getFTasa(vF){ return "% " + getFMoney(vF); }
 function NativoFloat(vF) {
 		if (SEPARADOR_DECIMAL != DIV_DEC) {
 			var v	= new Number(vF);
@@ -832,17 +771,19 @@ if (typeof jQuery != "undefined") {
 			  confirm: function(message, title, onTrue, onFalse) {
 				jQuery("<div></div>").dialog({
 				   // Remove the closing 'X' from the dialog
-				   open: function(event, ui) { jQuery(".ui-dialog-titlebar-close").hide(); }, 
+				   open: function(event, ui) {
+						//jQuery(".ui-dialog-titlebar-close").hide();
+					}, 
 						buttons: {
 							"Si": function() {
 								jQuery(this).dialog("close");
-								//onCompleted(sender, true);
+								
 								setTimeout(onTrue,1);
 								return true;
 							},
 							"No": function() {
 								jQuery(this).dialog("close");
-								//onCompleted(sender, false);
+								
 								setTimeout(onFalse,1);
 								return false;
 							}
@@ -982,20 +923,28 @@ Gen.prototype.QList	= function(opts){
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var id		= (typeof opts.id == "undefined") ? null : opts.id;
 	var Func	= (typeof opts.func == "undefined") ? "console.log" : opts.func;
+	//Func		= (typeof opts.callback == "undefined") ? Func : opts.callback;
+	
 	var vURL	= (typeof opts.url == "undefined") ? "" : opts.url;
 
 	var mKey	= (typeof opts.key == "undefined") ? "" : opts.key;
 	var Lab		= (typeof opts.label == "undefined") ? "" : opts.label;
+	var tit		= (typeof opts.title == "undefined") ? "" : opts.title;
 
 	$.cookie.json 	= true;
 	var mURL	= SVC_REMOTE_HOST;
+	var self	= this;
 
 	$.getJSON( vURL, function( data ) {
 		  var str     = "";
 		  $.each( data, function( key, val ) {
 		    str += "<li><a onclick=\""  + Func + "(" + val[mKey] + ")\">" + val[Lab] + "</a></li>";
 		  });
-		  tipList("#" + id, "<ol class=\"rounded-list\">" + str + "</ol>");
+		  str		= "<ol class=\"rounded-list\">" + str + "</ol>";
+		  
+		  $("#dlg").html(str);
+		  
+		  self.winTip({content : $("#dlg"), title:tit });
 		});
 }
 Gen.prototype.DataList	= function(opts){
@@ -1035,33 +984,38 @@ Gen.prototype.DataList	= function(opts){
 	} else {
 		$.getJSON( vURL, function( data ) {
 			var str     = "";
+			var cnt		= 0;
 			//var fin		
 			$.each( data, function( key, val ) {
 				//$("#" + id).append("<option value='" + val[mKey] + "' label='" + val[Lab] + "' >");
 				//setLog(val);
 				str += "<option value='" + val[mKey] + "' label='" + val[Lab] + "' >" + val[Lab] + "</option >" ;
 				if (PreSave != ""){ session(PreSave + val[mKey], JSON.stringify(val));	}	//guardar en stored
+				cnt++;
 			});
 			$("#" + id).empty();
 			$("#" + id).append(str);
-			self.Cache({clave:idxC, set: str});
+			if(cnt > 0){
+				self.Cache({clave:idxC, set: str});
+			}
 		});
 	}
 }
 Gen.prototype.closeTip	= function(obj){
-	if (typeof obj != "undefined") {
-		if (typeof obj.parentNode != "undefined") {
-			var xObj	= obj.parentNode;
-			$(xObj).empty();
-			$(xObj).css("display", "none");
-		}
-	}	
+	//jQuery(this).dialog("close");
+	//session(Configuracion.opciones.dialogID, content.attr("id"));
+	if(session(Configuracion.opciones.dialogID) !== null){
+		var idxm	= session(Configuracion.opciones.dialogID);
+		jQuery($("#"+idxm)).dialog("close");
+	}
+	
 }
 Gen.prototype.close	= function(opts){
 	//DroidError("Query " + this.getIn() + oper);
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var frm			= (typeof opts.form == "undefined") ? "" : opts.form;
+	var currFrm		= (typeof opts.actualform == "undefined") ? "" : opts.actualform;
 	var control		= (typeof opts.control == "undefined") ? null : opts.control;
 	var extra		= (typeof opts.extra == "undefined") ? "" : opts.extra;
 	var value		= (typeof opts.value == "undefined") ? "" : opts.value;
@@ -1071,35 +1025,45 @@ Gen.prototype.close	= function(opts){
 	var closeOpen	= false;
 	var process		= false;
 	var self		= this;
-	if (vURL == "") {
-		if (window.parent){
-			if (typeof window.parent.TINY != "undefined"){ closeTiny = true; src = window.parent.document; }
-		} else {
-			this.error({ msg : "No tiene ventana modal..."});
+	var crun		= true;
+	
+	if(currFrm !== ""){
+		if( $("#"+currFrm).attr("data-mod") == "true"){
+			var sipo	= confirm("El Formulario tiene Cambios\n¿Desea Salir sin Guardar?");
+			crun		= (sipo == true) ? true : false;
 		}
-		if (opener){
-			closeOpen	= true;
-			src		= opener.document;
-		} else {
-			this.error({ msg : "No es ventana abierta..."});
-		}
-		if ( frm != "" && control != null) {
-			if (value != "") {
-				src.frm.control.value	= value;
-			}
-			src.frm.control.focus();
-			src.frm.control.select();
-			process	= true;
-		}
-		if (closeTiny == true){ process	= true;  try { window.parent.TINY.box.hide(); } catch(e){ process = false; };	}
-		if (closeOpen == true ){ process = true; window.close(); if(!window.closed){ process = false; }; setLog("Ma xx");  }
-	} else {
-		//Checar TODO: Inicio Limpio @todo
-		top.location	= (vURL);
-		process 		= true;
 	}
-	//try {$(window).qtip("hide");} catch(e){}
-	if (process == false) { self.go(); }
+	if(crun == true){
+		if (vURL == "") {
+			if (window.parent){
+				if (typeof window.parent.TINY != "undefined"){ closeTiny = true; src = window.parent.document; }
+			} else {
+				this.error({ msg : "No tiene ventana modal..."});
+			}
+			if (opener){
+				closeOpen	= true;
+				src		= opener.document;
+			} else {
+				this.error({ msg : "No es ventana abierta..."});
+			}
+			if ( frm != "" && control != null) {
+				if (value != "") {
+					src.frm.control.value	= value;
+				}
+				src.frm.control.focus();
+				src.frm.control.select();
+				process	= true;
+			}
+			if (closeTiny == true){ process	= true;  try { window.parent.TINY.box.hide(); } catch(e){ process = false; };	}
+			if (closeOpen == true ){ process = true; window.close(); if(!window.closed){ process = false; }; setLog("Ma xx");  }
+		} else {
+			//Checar TODO: Inicio Limpio @todo
+			top.location	= (vURL);
+			process 		= true;
+		}
+		//try {$(window).qtip("hide");} catch(e){}
+		if (process == false) { self.go(); }
+	} //end run
 }
 Gen.prototype.go 	= function (opts){
 	opts = (typeof opts == "undefined" ) ? {} : opts;
@@ -1217,6 +1181,8 @@ Gen.prototype.save	= function(opts){
 	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close;
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
+	var noMsg	= (typeof opts.nomsg == "undefined") ? false : opts.nomsg;
+	
 	var tt		= this;
 	$.cookie.json 	= true;
 	//Guardar Accion: jsAccionPostGuardarRegistro
@@ -1229,26 +1195,37 @@ Gen.prototype.save	= function(opts){
 	var mURL	= "../svc/save.svc.php?tabla=" + tbl + "&id=" +  id + "&" + content;
 	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
 	//if (si) {
-		$.getJSON( mURL, function( data ) {
-			  //var str     = "";
-			  if (data.error == true) {
-				tt.alerta({msg:data.message, nivel:"error"});
-			  } else {
-				tt.alerta({msg:data.message, nivel:"ok"});
-				if(nclos == true){
-					var idFC = function(){ tt.close(); }
-					setTimeout(idFC,1000);
-				} else {
-					if(evt != null){
-						//Deshabilitar Guardado
-						var src = evt.target || evt.srcElement;
-						$('#' +  src.id).css('pointer-events', 'none');
+	setTimeout(function(){
+		var si		= tt.happy();
+		if (si == true){
+			$.getJSON( mURL, function( data ) {
+				  //var str     = "";
+				  if (data.error == true) {
+					tt.alerta({msg:data.message, nivel:"error"});
+				  } else {
+					if(noMsg == false){
+						tt.alerta({msg:data.message, nivel:"ok"});
 					}
+					//Neutralizar Avisos de Cambios
+					if(idform != ""){
+						$("#" + idform).attr("data-mod", "false");
+					}
+					//
+					if(nclos == true){
+						var idFC = function(){ tt.close(); }
+						setTimeout(idFC,1000);
+					} else {
+						if(evt != null){
+							//Deshabilitar Guardado
+							var src = evt.target || evt.srcElement;
+							$('#' +  src.id).css('pointer-events', 'none');
+						}
+					}
+				 }
 				}
-			  }
-			}
-		);		
-	//}
+			);
+		}
+	},2000);
 }
 Gen.prototype.crudAdd	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -1259,7 +1236,7 @@ Gen.prototype.crudAdd	= function(opts){
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close; //Cerrar
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
 	//var content	= (typeof opts.content == "undefined") ? "" : opts.content;
-	var tt		= this;
+	var tt			= this;
 	$.cookie.json 	= true;
 	//Guardar Accion: jsAccionPostGuardarRegistro
 	//Actualizar las formas de Moneda
@@ -1268,37 +1245,42 @@ Gen.prototype.crudAdd	= function(opts){
 	var sargs	= $("#" + id).serialize();
 	tbl			= (tbl == "") ? $("#" + id).attr("data-tabla") : tbl;
 	var mURL	= "../svc/add.svc.php?tabla=" + tbl + "&ix=0&" + sargs;
-	tt.spinInit();
-	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
-	//if (si) {
-		$.getJSON( mURL, function( data ) {
-			  //var str     = "";
-			  if (data.error == true) {
-				tt.spinEnd();
-				tt.alerta({msg:data.message});
-			  } else {
-				tt.spinEnd();
-				tt.alerta({msg:data.message, nivel:"ok"});
-				//$("#tr-" + tbl + "-" + id).empty();
-				//setTimeout(callB,10);
-				try {
-					callB(data);
-				} catch (e) {
-						
-				}
-				if(nclos == true){
-					tt.close();
-				} else {
-					if(evt != null){
-						//Deshabilitar Guardado
-						var src = evt.target || evt.srcElement;
-						$('#' +  src.id).css('pointer-events', 'none');
+	//console.log(new Date().getTime());
+	setTimeout(function(){
+		var si		= tt.happy();
+		//console.log(new Date().getTime());
+		if (si == true){
+			tt.spinInit();
+			$.getJSON( mURL, function( data ) {
+				  //var str     = "";
+				  if (data.error == true) {
+					tt.spinEnd();
+					tt.alerta({msg:data.message});
+				  } else {
+					tt.spinEnd();
+					tt.alerta({msg:data.message, nivel:"ok"});
+					//$("#tr-" + tbl + "-" + id).empty();
+					//setTimeout(callB,10);
+					try {
+						callB(data);
+					} catch (e) {
+							
 					}
+					if(nclos == true){
+						tt.close();
+					} else {
+						if(evt != null){
+							//Deshabilitar Guardado
+							var src = evt.target || evt.srcElement;
+							$('#' +  src.id).css('pointer-events', 'none');
+						}
+					}
+				  }
 				}
-			  }
-			}
-		);		
-	//}
+			);
+		}
+	
+	},2000);
 }
 Gen.prototype.rmRecord	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -1492,6 +1474,10 @@ CredGen.prototype.getFormaPlanPagos	= function(idCredito){
 	var gURL = "../frmcreditos/plan_de_pagos.frm.php?credito=" + idCredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, tab:true });
 }
+CredGen.prototype.getFormaSimPlanPagos	= function(idCredito){
+	var gURL = "../frmcreditos/creditos.proyeccion.frm.php?credito=" + idCredito;
+	var xGen	= new Gen(); xGen.w({ url : gURL, tiny:true, w:640, h:640 });
+}
 
 CredGen.prototype.getImprimirPlanPagos	= function(idrecibo, incluirAvales){
 	incluirAvales = (typeof incluirAvales == "undefined") ? "no" : "si";
@@ -1538,7 +1524,7 @@ CredGen.prototype.goToCobrosDeCredito	= function(opts){
 	var idcredito	= (typeof opts.credito == "undefined") ? 0 : opts.credito;
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var gURL 		= "../frmcaja/frmcobrosdecreditos2.php?credito=" + idcredito + "&periodo=" + periodo;
-	var xGen 		= new Gen(); xGen.w({ url : gURL, h : 900, w : 900 });
+	var xGen 		= new Gen(); xGen.w({ url : gURL, h : 600, w : 900, callback : jscall, tab:true });
 }
 CredGen.prototype.getListarCreditos = function(idpersona){
     var thisF 		= this;
@@ -1914,7 +1900,10 @@ PersGen.prototype.goToAgregarFisicas	= function(opts){
 	var nombrecomp	= (typeof opts.nombrecompleto == "undefined") ? "" : "&nombrecompleto=" + opts.nombrecompleto;
 	var tipoorigen	= (typeof opts.tipoorigen == "undefined") ? "" : "&tipoorigen=" + opts.tipoorigen;
 	var claveorigen	= (typeof opts.claveorigen == "undefined") ? "" : "&claveorigen=" + opts.claveorigen;
-	var sURL 		= '../frmsocios/registro-personas_fisicas.frm.php?' + rfc + curp + email + tel + app1 + app2 + nombre + nombrecomp + tipoorigen + claveorigen + otros;
+	var tipoingreso	= (typeof opts.tipoingreso == "undefined") ? "" : "&tipoingreso=" + opts.tipoingreso;
+	var sucursal	= (typeof opts.sucursal == "undefined") ? "" : "&sinsucursal=true&sucursal=" + opts.sucursal;
+	
+	var sURL 		= '../frmsocios/registro-personas_fisicas.frm.php?' + rfc + curp + email + tel + app1 + app2 + nombre + nombrecomp + tipoorigen + claveorigen + otros + tipoingreso + sucursal;
 	var xGen		= new Gen(); xGen.w({ url : sURL, tab:true, callback : callback });
 }
 PersGen.prototype.goToAgregarMorales	= function(opts){
@@ -1926,8 +1915,11 @@ PersGen.prototype.goToAgregarMorales	= function(opts){
 	var tel			= (typeof opts.telefono == "undefined") ? "" : "&telefono=" + opts.telefono;
 	var nombre		= (typeof opts.nombre == "undefined") ? "" : "&nombre=" + opts.nombre;
 	var tipoorigen	= (typeof opts.tipoorigen == "undefined") ? "" : "&tipoorigen=" + opts.tipoorigen;
-	var claveorigen	= (typeof opts.claveorigen == "undefined") ? "" : "&claveorigen=" + opts.claveorigen;	
-	var sURL 		= '../frmsocios/registro-personas_morales.frm.php?' + rfc + email + tel + nombre + tipoorigen + claveorigen + otros;
+	var tipoingreso	= (typeof opts.tipoingreso == "undefined") ? "" : "&tipoingreso=" + opts.tipoingreso;
+	var claveorigen	= (typeof opts.claveorigen == "undefined") ? "" : "&claveorigen=" + opts.claveorigen;
+	var sucursal	= (typeof opts.sucursal == "undefined") ? "" : "&sinsucursal=true&sucursal=" + opts.sucursal;
+	
+	var sURL 		= '../frmsocios/registro-personas_morales.frm.php?' + rfc + email + tel + nombre + tipoorigen + claveorigen + otros + tipoingreso + sucursal;
 	var xGen		= new Gen(); xGen.w({ url : sURL, tab : true });
 }
 PersGen.prototype.goToAgregarFisicasRelacion	= function(opts){
@@ -1936,7 +1928,11 @@ PersGen.prototype.goToAgregarFisicasRelacion	= function(opts){
 	var otros		= (typeof opts.otros == "undefined") ? "" : opts.otros;
 	this.goToAgregarFisicas({ otros : "domicilio=true&idtipodeingreso="  +  TIPO_INGRESO_RELACION + otros, callback : callback });
 }
-
+PersGen.prototype.goToDatosPM	= function(idpersona, tiny){
+	tiny		= (typeof tiny == "undefined") ? false : tiny;
+	var sURL 	= '../frmsocios/personas.datos-pjuridicas.frm.php?socio=' + idpersona;
+	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 780, tiny : tiny, tab:true });
+}
 PersGen.prototype.goToPanel	= function(idpersona, tiny){
 	tiny		= (typeof tiny == "undefined") ? false : tiny;
 	var sURL 	= '../frmsocios/socios.panel.frm.php?socio=' + idpersona;
@@ -1974,6 +1970,23 @@ PersGen.prototype.getVerVivienda		= function(idpersona){
 	var URIL = "../frmsocios/personas-vivienda.panel.frm.php?persona=" + idpersona;
 	var xG	= new Gen(); xG.w({ url: URIL, tiny : true });
 }
+PersGen.prototype.setAgregarRelacionesSN		= function(idpersona){
+	var xG			= new Gen();
+	var self 		= this;//setAgregarRelaciones
+	var siExisteP	= function(){
+		self.setVincularRelaciones(idpersona);
+	}
+	var noExisteP	= function(){
+		self.setAgregarRelaciones(idpersona);
+	}
+	xG.confirmar({msg: "¿ PERSONA_YA_EXISTE ?", callback : siExisteP, cancelar : noExisteP});
+}
+PersGen.prototype.setVincularRelaciones		= function(idpersona){
+	//var URIL = "../frmsocios/referencias.directas.frm.php?socio=" + idpersona;
+	var mcallback	= (typeof onCloseVentanaRelaciones == "undefined") ? function(){} : onCloseVentanaRelaciones;
+	var URIL = "../frmsocios/vincular.personas.frm.php?nacimiento=false&legal=false&idpersonarelacionado=" + idpersona + "&relaciones=" + iDE_SOCIO;
+	var xG	= new Gen(); xG.w({ url: URIL, tiny : true, callback: mcallback });
+}
 PersGen.prototype.setAgregarRelaciones		= function(idpersona){
 	//var URIL = "../frmsocios/referencias.directas.frm.php?socio=" + idpersona;
 	var mcallback	= (typeof onCloseVentanaRelaciones == "undefined") ? function(){} : onCloseVentanaRelaciones;
@@ -2004,6 +2017,7 @@ PersGen.prototype.setAgregarOtrasReferencias	= function(idpersona){
 	var srUp = "../frmsocios/personas.otras-referencias.frm.php?persona=" + idpersona;
 	var xG	= new Gen(); xG.w({ url: srUp, tiny : true });
 }
+
 PersGen.prototype.getFormaBusqueda	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var control	= (typeof opts.control == "undefined") ? "idsocio" : opts.control;
@@ -2448,6 +2462,13 @@ PersVivGen.prototype.getVerVivienda		= function(id){
 	var URIL = "../frmsocios/personas-vivienda.panel.frm.php?clave=" + id;
 	var xG	= new Gen(); xG.w({ url: URIL, tiny : true, h:480, w:640 });
 }
+PersRelGen.prototype.setBajaRelacion		= function(id){
+	var xG	= new Gen();
+	var siBaja	= function(){
+		xG.svc({url: "referencias.del.svc.php?id=" + id});
+	}
+	xG.confirmar({msg: "CONFIRMA_BAJA", callback: siBaja});
+}
 //--------------------------- INIT CAPTACION
 CaptGen.prototype.goToPanel	= function(idcuenta){
 	var gURL = "../frmcaptacion/cuentas.panel.frm.php?cuenta=" + idcuenta;
@@ -2681,6 +2702,28 @@ RecGen.prototype.getReporteEmitidos			= function(opts){
 	var xGen	= new Gen(); xGen.w({ url: URL, h:800, w : 800});
 }
 
+RecGen.prototype.addOperacion			= function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var idmonto		= (typeof opts.monto == "undefined" ) ? "" : "&monto=" + opts.monto;
+	var idtipo		= (typeof opts.tipo == "undefined" ) ? "" : "&tipo=" + opts.tipo;
+	var idperiodo	= (typeof opts.periodo == "undefined" ) ? "" : "&periodo=" + opts.periodo;
+	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	
+	var xG			= new Gen();
+	
+	xG.svc({url: "operaciones.svc.php?cmd=" + MQL_ADD + "" + idrec + idmonto + idtipo + idperiodo, callback: callB});
+}
+RecGen.prototype.setCuadrar			= function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var idmonto		= (typeof opts.monto == "undefined" ) ? "" : "&monto=" + opts.monto;
+	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	
+	var xG			= new Gen();
+	
+	xG.svc({url: "recibos.svc.php?cmd=cuadrar" + idrec + idmonto, callback: callB});
+}
 //------------------------ END RECIBOS
 Gen.prototype.salir		= function (opts){ top.location=("../salir.php"); }
 Gen.prototype.tipModal	= function (opts){
@@ -2783,7 +2826,8 @@ TesGen.prototype.setAgregarPago	= function(opts){
 }
 //------------------------------------------------------------------ Empresas
 EmpGen.prototype.getCedulaAhorro = function(id){ var gn	= new Gen(); gn.w({ url : "../rptempresas/incidencias_de_captacion.rpt.php?empresa=" + id }); }
-EmpGen.prototype.getOrdenDeCobranza = function(idnom){ var xg = new Gen(); xg.w({ url : "../rptcreditos/orden_de_cobranza.rpt.php?nomina=" + idnom, w : 800, h : 600 }); }
+EmpGen.prototype.getOrdenDeCobranza = function(idnom){ var xg = new Gen(); xg.w({ url : "../rptcreditos/orden_de_cobranza.rpt.php?nomina=" + idnom, full:true }); }
+EmpGen.prototype.getPreRecibosDeCobranza = function(idnom){ var xg = new Gen(); xg.w({ url : "../rptcreditos/orden_de_cobranza.recibos.rpt.php?nomina=" + idnom, full:true }); }
 EmpGen.prototype.getEstadoDeCuenta = function(id){ var xg = new Gen(); xg.w({ url : "../rptempresas/empresas.movimientos.rpt.php?empresa=" + id, w : 800, h : 600 }); }
 EmpGen.prototype.setActualizarDatos = function(id){ var gn	= new Gen(); gn.w({ url : "../frmsocios/agregar-empresas.frm.php?step=update&empresa=" + id, tiny : true }); }
 EmpGen.prototype.getTablaDeCobranza = function(idnom){ var xg = new Gen(); xg.w({ url : "../frmcreditos/tabla_de_cobranza.frm.php?nomina=" + idnom, w : 800, h : 600, tab : true }); }
@@ -2933,6 +2977,7 @@ DomGen.prototype.setColoniasXCP = function (obj){
 		var mAsignar	= function (objs){
 			//{"codigo":"380006","clavepostal":"24026","nombre":"Colonia Granjas(Campeche, Campeche)","estado":"4","municipio":"2","colonia":"Granjas","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE"
 			if ($("#idcp_" + obj.id).length >0) { $("#idcp_" + obj.id).val(objs.codigo); }
+			
 			//if ($("#iddescripcion" + obj.id).length >0) { $("#iddescripcion" + obj.id).val( decodeEntities( objs.nombre) ); }
 			if ($("#identidadfederativa").length >0) { $("#identidadfederativa").val(objs.estado); }
 			if ($("#idmunicipio").length >0) { $("#idmunicipio").val(objs.municipio); }
@@ -3472,22 +3517,31 @@ var validacion = {
 			var ok		= false;
 			var xPais	= ($("#idpais").length > 0) ? $("#idpais").val() : EACP_CLAVE_DE_PAIS;
 			var xCP		= ($("#idcodigopostal").length > 0) ? entero($("#idcodigopostal").val()) : entero(v);
+			
 			var xVal	= new ValidGen();
 			var xG		= new Gen();
 			var ccnt	= {};
 			var isLoad	= false;
+			
 			var postCP 	= function(obj){
-				xG.spinInit();
-				ccnt	= obj;
-				if(typeof jsaGetMunicipios != "undefined"){ jsaGetMunicipios();	}
-				if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades(); }
-				setTimeout(postpostCP, 1000);
+				//setLog(typeof obj.record_0);
+				if(typeof obj.record_0 == "undefined"){
+					xG.alerta({msg: "EL CODIGO_POSTAL NO EXISTE", type: "error"});
+				} else {
+					xG.spinInit();
+					ccnt	= obj;
+					if(typeof jsaGetMunicipios != "undefined"){ jsaGetMunicipios();	}
+					if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades(); }
+					setTimeout(postpostCP, 1000);
+				}
 			};
+			
 			var postpostCP 	= function(){
 				var xG		= new Gen();
 				
 				for(mob in ccnt){
 					var m		= ccnt[mob];
+					
 					if (flotante(m.estado) > 0) {
 						//{"codigo":"380004","clavepostal":"24026","nombre":"Fraccionamiento","estado":"4","municipio":"2",
 						//"colonia":"Viveros","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE","buscador":"24026-380004"}
@@ -3520,6 +3574,7 @@ var validacion = {
 				if(xPais == EACP_CLAVE_DE_PAIS && xCP != session(ID_CP_ACTUAL)){
 					
 					session(ID_CP_ACTUAL, xCP);
+					
 					if(xCP > 0 && isLoad == false){
 						xG.pajax({
 							url : "../svc/colonias.svc.php?limit=1&cp=" + xCP,

@@ -214,8 +214,6 @@ devnull {
 
 /* ------------------------------------------------------------------------------ */
 td {
-	 
-	/*background-color: #F1F1F1;*/
 	color: #000000;
 	font-size: .9em !important;
 	height: 2em;
@@ -274,7 +272,7 @@ td.row_2 {
 td.nombrecuenta {
 	color: Blue;
 	font-weight: lighter;
-	/* width: 75%	 */
+	
 	}
 
 td.cal_1 {
@@ -292,19 +290,24 @@ td.day_1 {
 	background-color: #FFFFC8;
 	margin: 0px;
 	text-indent: 0px;
-	vertical-align: middle; /*text-align: center;*/
+	vertical-align: middle;
 	word-spacing: 0px; }
 
 td.day_2 {
 	background-color: #FFF1E3;
 	margin: 0px;
 	text-indent: 0px;
-	vertical-align: middle; /* 	text-align: center;*/
+	vertical-align: middle;
 	word-spacing: 0px; }
 	
 td.mark { background-color: #AAC3F0; }
 
-td.cPanel { background: #FFF8DC; /* 	border: medium inset Navy; */ }
+td.cPanel {
+	background: #ffffe0;
+	border-color: #C8C8C8;
+	border-style: solid;
+	border-width: 1px;
+}
 td.strech {
 	background-color: transparent;
 	font-stretch: condensed;
@@ -617,12 +620,11 @@ ol.rounded-list a:before{
 	line-height: 1.3em;
 	border: .3em solid #fff;
 	text-align: center;
-	font-weight: bold;
 	border-radius: 1.5em;
 	transition: all .3s ease-out;
 }
 .inv {
-    text-align: center; max-width: 31em; display: none; min-width: 10em !important;
+    text-align: center; display: none; min-width: 10em !important; max-width: 99.9%;
     position : relative;
 }
 #jsrs1, #jsrs2 { display: none; }
@@ -1488,4 +1490,7 @@ and (min-width : 1561px) {
 	
 	.tx18 { width: 12.2% !important; display: inline-block; }
 	
+}
+#frameless .tclose {
+	right: 6px !important;
 }

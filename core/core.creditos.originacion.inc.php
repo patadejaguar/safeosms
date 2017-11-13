@@ -135,6 +135,7 @@ class cCreditosLeasing {
 	public $TIPO_USO_CARGA	= 200;
 	public $TIPO_RAC_PEQ	= 1;
 	
+	
 	private $mClave				= false;
 	private $mObj				= null;
 	private $mInit				= false;
@@ -182,6 +183,9 @@ class cCreditosLeasing {
 	private $mIDVehiculoVinculado	= 0;
 	private $mEsMoral				= false;
 	private $mArrResiduales			= array();
+	private $mArrTasas				= array();
+	private $mArrVecs				= array();
+	
 	private $mFechaCreacion			= false;
 	private $mCuotaVehiculo			= 0;
 	private $mCuotaGPS				= 0;
@@ -199,7 +203,10 @@ class cCreditosLeasing {
 	private $mMontoAccesorios		= 0;
 	private $mMontoGarantiaExt		= 0;
 	private $mMontoAnticipo			= 0;
-	private $mFactorMas				= 1; 
+	private $mFactorMas				= 1;
+	private $mTasaVec				= 0;
+	private $mMontoAjuste			= 0;
+	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -297,6 +304,7 @@ class cCreditosLeasing {
 			$this->mMontoAliado				= $xT->monto_aliado()->v();
 			$this->mMontoAccesorios			= $xT->monto_accesorios()->v();
 			$this->mMontoGarantiaExt		= $xT->monto_garantia()->v();
+			$this->mMontoAjuste				= $xT->montoajuste()->v();
 			//$this->mCuotaPrincipal	= $this->getCuota($mCoste, $residual);
 			//$this->mCuotaGPS		= $this->getCuota($costeGPS);
 			$xRuls							= new cReglaDeNegocio();
@@ -306,14 +314,33 @@ class cCreditosLeasing {
 				$this->mFactorMas			= 1.16;
 			}
 			//$this->mArrResiduales		= 
+			//setLog("309.- ". $xT->residuales()->v());
 			$arrRes						= explode(",", $xT->residuales()->v());
 			foreach ($arrRes as $dres){
 				$DTasa	= explode("-", $dres);
 				$PRes	= setNoMenorQueCero($DTasa[0]);
 				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
 				$TRes	= setNoMenorQueCero($TRes);
+				
 				$this->mArrResiduales[$PRes]	= $TRes;
 			}
+			$arrVecs						= explode(",", $xT->vecs()->v());
+			foreach ($arrVecs as $vres){
+				$DTasa	= explode("-", $vres);
+				$PRes	= setNoMenorQueCero($DTasa[0]);
+				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
+				$TRes	= setNoMenorQueCero($TRes);
+				$this->mArrVecs[$PRes]			= $TRes;
+			}
+			$arrTas						= explode(",", $xT->tasas()->v());
+			foreach ($arrTas as $tres){
+				$DTasa	= explode("-", $tres);
+				$PRes	= setNoMenorQueCero($DTasa[0]);
+				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
+				$TRes	= setNoMenorQueCero($TRes);
+				$this->mArrTasas[$PRes]			= $TRes;
+			}
+			
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit	= true;
@@ -364,6 +391,9 @@ class cCreditosLeasing {
 		$persona	= setNoMenorQueCero($persona);
 		$xQL		= new MQL();
 		$xQL->setRawQuery("UPDATE `originacion_leasing` SET `persona`=$persona WHERE `idoriginacion_leasing`=" . $this->mClave);
+		$xCP		= new cCreditosProceso();
+		$this->setPaso($xCP->PASO_CON_PERSONA);
+		
 		$xQL		= null;
 		$this->setCuandoSeActualiza();
 	}
@@ -371,6 +401,8 @@ class cCreditosLeasing {
 		$credito	= setNoMenorQueCero($credito);
 		$xQL		= new MQL();
 		$xQL->setRawQuery("UPDATE `originacion_leasing` SET `credito`=$credito WHERE `idoriginacion_leasing`=" . $this->mClave);
+		$xCP		= new cCreditosProceso();
+		$this->setPaso($xCP->PASO_CON_CREDITO);
 		$xQL		= null;
 		$this->setCuandoSeActualiza();
 	}
@@ -379,8 +411,19 @@ class cCreditosLeasing {
 	function getFinanciamiento(){ return $this->mFinanciamiento; }
 	
 	
-	
-	function getTasaInteres(){ return $this->mTasaInteres; }
+	function getTasaVec($plazo = false){
+		$plazo	= setNoMenorQueCero($plazo);
+		$tasa	= isset($this->mArrVecs[$plazo]) ? $this->mArrVecs[$plazo] : $this->mTasaVec;
+		return $tasa;
+	}
+	function getTasaInteres($plazo = false){
+		$plazo	= setNoMenorQueCero($plazo);
+		$tasa	= $this->mTasaInteres;
+		if($plazo > 0){
+			$tasa	= isset($this->mArrTasas[$plazo]) ? $this->mArrTasas[$plazo] : $this->mTasaInteres;
+		}
+		return $tasa;
+	}
 	function getTasaTiie(){ return $this->mTasaTIIE; }
 	
 	function getCuotaAccesorios(){ return $this->mCuotaAccesorios*$this->mFactorMas; }
@@ -423,7 +466,7 @@ class cCreditosLeasing {
 		return $this->mIDVehiculoVinculado;
 	}
 	function getTasaResidualPzo($plazo, $periodicidad = 30){
-		$residual	= 0;
+		$residual		= 0;
 		if(isset($this->mArrResiduales[$plazo])){
 			$residual	= $this->mArrResiduales[$plazo];
 		}
@@ -433,10 +476,14 @@ class cCreditosLeasing {
 	function getFechaCreacion(){ return $this->mFechaCreacion; }
 	function getEsDeCarga(){ return $this->mEsDeCarga; }
 	function getTipoDeRAC(){ return $this->mTipoRAC;	}
+	function getMontoAjuste(){ return $this->mMontoAjuste; }
 	function getMontoDeducible($monto = 0){
-		
+		$montodeducible	= setNoMenorQueCero(CREDITO_LEASING_LIMITE_DED);
 		$monto			= ($monto <= 0) ? $this->getTotalCuota() : $monto;
-		$deducible		= ($this->mEsDeCarga == true ) ? $monto : CREDITO_LEASING_LIMITE_DED;
+		$deducible		= ($this->mEsDeCarga == true ) ? $monto : $montodeducible;
+		if($montodeducible <= 0){
+			//$deducible	= $this->getMontoAjuste();
+		}
 		if($deducible > $monto){
 			$deducible	= $monto;
 		}
@@ -448,12 +495,16 @@ class cCreditosLeasing {
 		$factoIVA	= 1 / (1+$this->mTasaIVA);
 		$plazo		= setNoMenorQueCero($plazo);
 		$plazo		= ($plazo <= 0) ? $this->mNumeroPagos : $plazo;
-		
-		if($xTasa->initByPlazoRAC($plazo, $this->mTipoRAC) == true){
-			$valor_sin_iva		= ($this->mMontoVehiculo + $this->mMontoAliado) * $factoIVA;
-			$base				= $valor_sin_iva - $this->mAnticipo;
-			$monto				= round(($base * ($xTasa->getTasaVEC()/100) ),2);
+		$tasavec	= $this->getTasaVec($plazo);
+		if($tasavec <= 0){
+			if($xTasa->initByPlazoRAC($plazo, $this->mTipoRAC) == true){
+				$tasavec		= $xTasa->getTasaVEC();
+			}
 		}
+		$valor_sin_iva		= ($this->mMontoVehiculo + $this->mMontoAliado) * $factoIVA;
+		$base				= $valor_sin_iva - $this->mAnticipo;
+		$monto				= round(($base * ($tasavec/100) ),2);
+		
 		return $monto;
 	}
 	function getMOI(){
@@ -465,7 +516,11 @@ class cCreditosLeasing {
 		
 		return round($tfinanciado,2);
 	}
-
+	function setPaso($paso){
+		$clave	= $this->mClave;
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE `originacion_leasing` SET `paso_proceso`=$paso WHERE `idoriginacion_leasing`=$clave");
+	}
 }
 class cLeasingBonos {
 	private $mClave			= false;
@@ -665,6 +720,7 @@ class cLeasingUsuarios {
 	private $mEsActivo			= false;
 	private $mEsAdmin			= false;
 	private $mMail				= "";
+	private $mOOriginador		= null;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -753,7 +809,25 @@ class cLeasingUsuarios {
 		return ($res === false) ? false : true;
 	}
 	function add(){}
-
+	function getFicha(){
+		$xHT			= new cHTabla("idfichausrorg_" . $this->getClave(), "ficha" );
+		$xLng			= new cLang();
+		$xHT->initRow();
+		$nmoriginador	= $this->getOOriginador()->getNombre();
+		$xHT->addTD($xLng->getT("TR.NOMBRE"), " class='title cPanel' ");
+		$xHT->addTD($this->getNombre());
+		$xHT->addTD($xLng->getT("TR.ORIGINADOR"), " class='title cPanel' ");
+		$xHT->addTD($nmoriginador);
+		$xHT->endRow();
+		return $xHT->get();
+	}
+	function getOOriginador(){
+		if($this->mOOriginador == null){
+			$this->mOOriginador	= new cLeasingOriginadores($this->getOriginador());
+			$this->mOOriginador->init();
+		}
+		return $this->mOOriginador;
+	}
 }
 
 class cLeasingTasas {
@@ -1135,6 +1209,7 @@ class cCreditosDatosDeOrigen {
 		$credito		= setNoMenorQueCero($credito);
 		$credito		= ($credito <= DEFAULT_CREDITO) ? $this->mCredito : $credito;
 		$this->mCredito	= $credito;
+		$data			= false;
 		if($credito > DEFAULT_CREDITO){
 			$xCache		= new cCache();
 			$data		= $xCache->get("creditos_datos_originacion-credito-" . $this->mCredito);
@@ -1334,11 +1409,13 @@ class cLeasingEmulaciones {
 		$plazo		= setNoMenorQueCero($plazo);
 		$plazo		= ($plazo <= 0) ? $this->mPlazo : $plazo;
 		$TasaResidual	= setNoMenorQueCero($TasaResidual);
-		$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
+		
 		
 		
 		$residual		= 0;
 		if($xRes->initByPlazoTipo($plazo) == true){
+			$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
+			
 			$FactorIVA	= (1/(1+TASA_IVA));
 			$coste		= ($precio+$aliado);
 			$base		= $coste;
@@ -1375,6 +1452,23 @@ class cLeasingEmulaciones {
 		$CUOTA_RENTA	= $CUOTA_RENTA * $this->FACTOR_RENTAPROP;
 		$CUOTA_RENTA	= $CUOTA_RENTA * (1+$this->mTasaIVA);
 		return $CUOTA_RENTA;
+	}
+	function getValorDeVenta($PrecioVehiculo, $Anticipo = 0, $TasaVec = 0, $plazo = 0, $MontoAliado = 0, $TipoRac = false){
+		//
+		$monto		= 0;
+		$factorIVA	= 1 / (1+TASA_IVA);
+		$plazo		= ($plazo <= 0) ? $this->mPlazo : $plazo;
+		if($TasaVec <= 0){
+			$xTasa		= new cLeasingTasas();
+			if($xTasa->initByPlazoRAC($plazo, $TipoRac) == true){
+				$TasaVec	= $xTasa->getTasaVEC();
+			}
+		}
+		$valor_sin_iva		= ($PrecioVehiculo + $MontoAliado) * $factorIVA;
+		$base				= $valor_sin_iva - $Anticipo;
+		$monto				= round(($base * ($TasaVec/100) ),2);
+
+		return $monto;
 	}
 }
 
@@ -1584,7 +1678,11 @@ class cLeasingRentas {
 						
 						$deducible		= $xLeasing->getMontoDeducible($letratotal);
 						$nodeducible	= setNoMenorQueCero(($letratotal - $deducible));
-						
+						if($xLeasing->getMontoAjuste()>0){
+							
+							$nodeducible	= $xLeasing->getMontoAjuste();
+							$deducible		= setNoMenorQueCero(($letratotal - $nodeducible));
+						}
 						$ivadeducible	= $deducible * $tasaiva;
 						$ivaotros		= $nodeducible * $tasaiva;
 						
@@ -1800,5 +1898,68 @@ class cLeasingTramitesCatalogo {
 	function add(){}
 	
 }
+
+
+
+
+class cLeasingEscenarios {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "leasing_escenarios";
+	private $mTipo		= 0;
+	private $mPlazo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache	= new cCache();
+		$xT		= new cLeasing_escenarios();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			$this->mObj		= $xT; //Cambiar
+			$this->mClave	= $data[$xT->getKey()];
+			
+			$this->mPlazo	= $xT->plazo()->v();
+			
+			$this->setIDCache($this->mClave);
+			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function getAll(){
+		$xQL	= new MQL();
+		//$xEsc	= new cLeasing_escenarios();
+		$rs		= $xQL->getDataRecord("SELECT * FROM `leasing_escenarios`");
+		return $rs;
+	}
+	function getPlazo(){ return $this->mPlazo; }
+}
+
 
 ?>

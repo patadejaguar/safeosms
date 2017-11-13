@@ -19,8 +19,14 @@ $xF					= new cFecha();
 $xRuls				= new cReglaDeNegocio();
 
 $jscallback			= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$tipo_de_ingreso	= parametro("idtipodeingreso", DEFAULT_TIPO_INGRESO, MQL_INT);
-$desde_sucursal		= parametro("idsucursal", false, MQL_RAW);
+//$tipo_de_ingreso	= parametro("idtipodeingreso", DEFAULT_TIPO_INGRESO, MQL_INT);
+$tipo_de_ingreso	= parametro("idtipodeingreso", DEFAULT_TIPO_INGRESO, MQL_INT); $tipo_de_ingreso	= parametro("tipodeingreso", $tipo_de_ingreso, MQL_INT); $tipo_de_ingreso	= parametro("tipoingreso", $tipo_de_ingreso, MQL_INT);
+
+$desde_sucursal		= parametro("idsucursal", getSucursal(), MQL_RAW); $desde_sucursal		= parametro("sucursal", $desde_sucursal, MQL_RAW);
+$SinSucursal		= parametro("sinsucursal", false, MQL_BOOL);
+$conempresa			= parametro("conempresa", true, MQL_BOOL);
+
+
 $con_domicilio		= parametro("domicilio", false, MQL_BOOL);
 $con_relacion		= parametro("relaciones", false, MQL_INT);
 $con_actividad		= parametro("actividad", false, MQL_BOOL);
@@ -69,6 +75,26 @@ $userNoDNI			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DNI_INGRE
 $RelsSinDom			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_SIN_DOM);
 $RN_NoValidarCurp	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_NO_VALIDAR_DNI);
 $useDatosAccidente	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DATO_ACCIDENTE);
+$UsarIDInterno		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);
+
+$xTI				= new cPersonasTipoDeIngreso(false);
+
+switch ($tipo_de_ingreso){
+	case $xTI->TIPO_OTROS:
+		
+		break;
+	case $xTI->TIPO_USUARIOS:
+		$RN_NoValidarCurp	= true;
+		$EsSimple			= true;
+		$SinDatosFiscales	= true;
+		$SinRegimenMat		= true;
+		$SinDatoPoblacional	= true;
+		$con_legal			= false;
+		$conempresa			= false;
+		
+		break;
+}
+
 
 //REGLA: PERSONAS_FILTRAR_CAJASLO
 //con domicilio y tipo de domicilio
@@ -152,24 +178,55 @@ $xFRM->setNoAcordion();
 if($action == SYS_NINGUNO){	$xFRM->addGuardar("jsCheck()"); }
 //=========================================== AVALES
 if(setNoMenorQueCero($con_relacion) > 0){
-	$xHSel	= new cHSelect(); 
-	$tipoRe	= "";
+	$xHSel					= new cHSelect(); 
+	$tipoRe					= "";
+	$xTxtSelPersonas		= "";
 	if( setNoMenorQueCero($persona_rel) <= 0 ){
 		if($con_relacion == iDE_CREDITO){
 			$xDoc			= new cCredito($documento_rel); $xDoc->init();
 			$persona_rel	= $xDoc->getClaveDePersona();
 			$tipoRe			= PERSONAS_REL_CLASE_AVAL;
 		}
+		$xTxtSelPersonas	= $xSel->getListaDeTiposDeRelaciones("", $tipoRe, false, true)->get(true);
 		//TODO: Iniciar cuenta de captacion
+	} else {
+		if($persona_rel > DEFAULT_SOCIO){
+			$xSoc			= new cSocio($persona_rel);
+			if($xSoc->init() == true){
+				if($xSoc->getEsPersonaFisica() == true){
+					$xTxtSelPersonas 	= $xSel->getListaDeTiposDeRelaciones2("", $tipoRe, true)->get(true);
+				} else {
+					$xTxtSelPersonas 	= $xSel->getListaDeTiposDeRelaciones2("", $tipoRe, false)->get(true);
+				}
+				$desde_sucursal			= $xSoc->getSucursal();		//Heredar Sucursal de Relacion
+			}
+		}
 	}
 	$tipo_de_ingreso	= TIPO_INGRESO_RELACION;
 	$con_domicilio		= ($RelsSinDom == true) ? false : true;
 	$con_actividad		= true;
-	$desde_sucursal		= getSucursal();
 	
-	$xFRM->addHElem( $xSel->getListaDeTiposDeRelaciones("", $tipoRe, false, true)->get(true) );
-	$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco()->get(true)  );
-	$xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
+	
+	$xFRM->addHElem( $xTxtSelPersonas );
+	
+	if($persona_rel > DEFAULT_SOCIO){
+		$xSoc			= new cSocio($persona_rel);
+		if($xSoc->init() == true){
+			if($xSoc->getEsPersonaFisica() == true){
+				$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco()->get(true)  );
+				$xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
+			} else {
+				$xFRM->OHidden("idtipodeparentesco", DEFAULT_TIPO_CONSANGUINIDAD);
+				$xFRM->OHidden("dependiente", "false");
+			}
+			$desde_sucursal			= $xSoc->getSucursal();			//Heredar Sucursal de Relacion
+		}
+	} else {
+		$xFRM->addHElem( $xHSel->getListaDeTiposDeParentesco()->get(true)  );
+		$xFRM->addHElem( $xChk->get("TR.es dependiente_economico", "dependiente") );
+	}
+
+	
 	
 	$xFRM->OHidden("iddocumentorelacionado", $documento_rel, "");
 	$xFRM->OHidden("idpersonarelacionado", $persona_rel, "");
@@ -180,16 +237,13 @@ if(setNoMenorQueCero($con_relacion) > 0){
 if($tipo_de_ingreso == DEFAULT_TIPO_INGRESO){
 	$xFRM->ODate("idfecharegistro", $fecha,"TR.fecha de registro");
 }
-if($desde_sucursal === false){
-	if(MULTISUCURSAL == false){
-		$xFRM->OHidden("idsucursal", getSucursal());
-	} else {
-		$xFRM->addHElem( $xSel->getListaDeSucursales()->get(true) );
-	}
-	
+if(MULTISUCURSAL == false OR $SinSucursal == true ){
+	$xFRM->OHidden("idsucursal", $desde_sucursal);
 } else {
-	$xFRM->OHidden("idsucursal", $desde_sucursal, "");
+	$xFRM->addHElem( $xSel->getListaDeSucursales("", $desde_sucursal)->get(true) );
 }
+
+
 if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
 	$xFRM->OHidden("idcajalocal", getCajaLocal());
 } else {
@@ -225,7 +279,12 @@ if($zclass == true){
 	$xFRM->addHElem( $xSel->getListaDePersonasZClass()->get(true));
 }
 //Agregar ID Interna
-$xFRM->OText_13("idinterno", "", "TR.IDINTERNO");
+if($UsarIDInterno == false){
+	$xFRM->OHidden("idinterno", "");
+} else {
+	$xFRM->OText_13("idinterno", "", "TR.IDINTERNO");
+}
+
 //============================================== Datos Generales
 $xFRM->addSeccion("iddivgeneral", "TR.DATOS_GENERALES");
 $xFRM->OHidden("idfigurajuridica", PERSONAS_FIGURA_FISICA, "");
@@ -381,7 +440,11 @@ if($tipo_de_ingreso == TIPO_INGRESO_RELACION){ //sinfie
 		if(MODULO_CAPTACION_ACTIVADO == true){
 			$xFRM->OMoneda("iddescuento", 0, "TR.Descuento Deseado");
 		}
-		$xFRM->addHElem( $xSel->getListaDeEmpresas("idempresa")->get(true) );
+		if($conempresa == true){
+			$xFRM->addHElem( $xSel->getListaDeEmpresas("idempresa")->get(true) );
+		} else {
+			$xFRM->OHidden("idempresa", FALLBACK_CLAVE_EMPRESA);
+		}
 	}
 	if(PERSONAS_CONTROLAR_POR_GRUPO == true){
 		$xFRM->addGrupoBasico();
@@ -431,10 +494,9 @@ if($con_domicilio == true){
 		$xTxtE->setDivClass("");
 		$xFRM->addDivSolo($xSel->getListaDeTiposDeAcceso()->get(false), $xTxtE->getNormal("idnombreacceso", "", "TR.Nombre del Acceso"), "tx14", "tx34" );
 		$xFRM->setValidacion("idnombreacceso", "validacion.calle", "TR.Obligatorio nombre de Acceso", true);
-	}	
-	$xFRM->addHElem( $xTxt->getNormal("idnumeroexterior", "", "TR.Numero_Exterior") );
-	
-	$xFRM->addHElem( $xTxt->getNormal("idnumerointerior", "", "TR.Numero_Interior") );
+	}
+	$xFRM->OText_13("idnumeroexterior", "", "TR.Numero_Exterior");
+	$xFRM->OText_13("idnumerointerior", "", "TR.Numero_Interior");
 	$xFRM->addHElem( $xTx3->getDeNombreDeColonia("idnombrecolonia", EACP_COLONIA, "TR.Colonia" ) );
 	
 	if(PERSONAS_VIVIENDA_MANUAL == true){

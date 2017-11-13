@@ -108,6 +108,10 @@ $strA	= $xB->getMembers_InString(false, BASE_ES_PERSONA_MORAL);
 echo "var ARR_FIGURA_MORAL		= new Array($strA);\n";
 echo "var SYS_UUID_TMP		= '" . getClaveCifradoTemporal() . "';\n";
 
+
+echo "var MQL_ADD		= '" . MQL_ADD . "';\n";
+echo "var MQL_DEL		= '" . MQL_DEL . "';\n";
+
 ?>
 var Configuracion = {
 	credito : {
@@ -159,6 +163,12 @@ var Configuracion = {
 		tinyajax : {
 			callback : "tinyajax.callback",
 			delay : "tinyajax.delay"
+		}
+	},
+	personas : {
+		tipoingreso : {
+			otros : 900,
+			usuario : 800
 		}
 	}
 }

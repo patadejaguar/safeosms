@@ -56,7 +56,7 @@ $xHP->init();
 
 $xFRM		= new cHForm("frm", "./");
 $xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText();
-$msg		= "";
+
 $xFRM->addPersonaBasico();
 $xFRM->addGuardar("jsVincularAval()");
 
@@ -76,8 +76,8 @@ $jxc ->drawJavaScript(false, true);
 <script>
 var xG	= new Gen();
 function jsVincularAval(){
+	session(TINYAJAX_CALLB, "jsClose()");
 	jsaVincularAval();
-	setTimeout("jsClose()",2500);
 }
 function jsClose(){ xG.close(); }
 </script>

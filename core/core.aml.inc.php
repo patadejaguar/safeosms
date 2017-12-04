@@ -213,6 +213,7 @@ class cAMLPersonas {
 	private $mNacionalidad		= "";
 	private $mDataBusqueda		= array();
 	private $mURLConsulta		= "";
+	
 	public $TIPO_PEPS			= "PEPS";
 	public $TIPO_BLOQ			= "BLOQUEADOS";
 	public $RIESGO_BAJO			= 10;
@@ -610,10 +611,15 @@ class cAMLPersonas {
 		$primerapellido		= ($primerapellido == "") ? $AlterApp1 : $primerapellido;
 		$segundoapellido	= ($segundoapellido == "") ? $AlterApp2 : $segundoapellido;
 		$xProv				= new cAMLListasProveedores();
+		
 		$result				= $xProv->getConsultaInterna($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
+		
 		if($useGWS == true AND $result == false){
 			$result			= $xProv->getConsultaGWS($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
 		}
+		
+		$this->mMessages	.= $xProv->getMessages();
+		
 		return $result;
 	}
 	function getBuscarEnListaPEP($nombre = "", $primerapellido = "", $segundoapellido = ""){
@@ -1555,6 +1561,9 @@ class cAMLAlertas {
 	private $mTabla			= "aml_alerts";
 	private $mIDCache		= "";
 	private $mDescripcion   = "";
+	private $mNivelRiesgo	= 0;
+	private $mHoraProceso	= "";
+	private $mIsChecked		= false;
 	
 			
 	function __construct($id = false){
@@ -1562,56 +1571,87 @@ class cAMLAlertas {
 		$this->setIDCache($this->mCodigo);
 	}
 	function init(){
-		$this->mObj		= new cAml_alerts();
+		$xT				= new cAml_alerts();
+		$inCache		= true;
 		$xF				= new cFecha();
 		$xCache			= new cCache();
 		
 		if($this->mCodigo > 0){
 			$data			= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
-				$xQL	= new MQL();
-				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $this->mObj->getKey() . "`=". $this->mCodigo . " LIMIT 0,1");
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mCodigo . " LIMIT 0,1");
+				$inCache	= false;
 			}
-			//$this->mObj->query()->initByID($this->mCodigo);
 			
-			if(isset($data["clave_de_control"])){
-				$this->mObj->setData( $data );
-				$this->mIsInit			= true;
-				$this->mCodigo			= $this->mObj->clave_de_control()->v();
-				$this->mFechaOrigen		= $xF->getFechaByInt($this->mObj->fecha_de_origen()->v());
-				$this->mFechaChecking	= $xF->getFechaByInt($this->mObj->fecha_de_checking()->v());
+			
+			if(isset($data[$xT->CLAVE_DE_CONTROL])){
 				
-				$this->mFechaRegistro	= $xF->getFechaByInt($this->mObj->fecha_de_registro()->v());
-				$this->mFechaEnvio		= $xF->getFechaByInt($this->mObj->fecha_de_checking()->v());
-				$this->mNotasChecking	= $this->mObj->notas_de_checking()->v();
-				$this->mNotasSistema	= $this->mObj->mensaje()->v();
+				$this->mIsInit			= true;
+				$this->mCodigo			= $data[$xT->CLAVE_DE_CONTROL];
+				
+				if($inCache == false){
+					//Datos Auxiliares
+					$data["enviado.a.rms"]			= (setNoMenorQueCero($data[$xT->ENVIO_RMS]) >0 ) ? 1 : 0;
+					$data["checado.actual"]			= (setNoMenorQueCero($data[$xT->FECHA_DE_CHECKING]) > 0 ) ? 1 : 0;
+					$data[$xT->FECHA_DE_ORIGEN]		= $xF->getFechaByInt($data[$xT->FECHA_DE_ORIGEN]);
+					$data[$xT->FECHA_DE_CHECKING]	= $xF->getFechaByInt($data[$xT->FECHA_DE_CHECKING]);
+					$data[$xT->FECHA_DE_REGISTRO]	= $xF->getFechaByInt($data[$xT->FECHA_DE_REGISTRO]);
+					$data[$xT->ENVIO_RMS]			= $xF->getFechaByInt($data[$xT->ENVIO_RMS]);
+					
+				}
+				$torms						= $data["enviado.a.rms"];
+				$tochk						= $data["checado.actual"];
+					
+				
+				
+				$this->mFechaOrigen			= $data[$xT->FECHA_DE_ORIGEN];
+				$this->mFechaChecking		= $data[$xT->FECHA_DE_CHECKING];
+				
+				$this->mFechaRegistro		= $data[$xT->FECHA_DE_REGISTRO];
+				$this->mFechaEnvio			= $this->mFechaChecking;
+				
+				$this->mNotasChecking		= $data[$xT->NOTAS_DE_CHECKING];
+				$this->mNotasSistema		= $data[$xT->MENSAJE];
 
-				$this->mPersona			= $this->mObj->persona_de_origen()->v();
-				$this->mDocumento		= $this->mObj->documento_relacionado()->v();
-				$this->mTercero			= $this->mObj->tercero_relacionado()->v();
-				$this->mTipo			= $this->mObj->tipo_de_aviso()->v();
-				$this->mTipoDocumento	= $this->mObj->tipo_de_documento()->v();
-				$this->mUsuario			= $this->mObj->usuario()->v();
-				$this->mOficial			= $this->mObj->persona_de_destino()->v();//Persona de destino es ID de Oficial de cumplimiento
-				$this->mOficialDeChecking	= $this->mObj->usuario_checking()->v();
-				$this->mEsRiesgo		    = ($this->mObj->resultado_de_checking()->v() <= 0) ? false : true;
-				$this->mEnviadoRMS		    = ($this->mObj->envio_rms()->v() > 0 ) ? true : false;
-				$this->mFechaEnvioRMS	    = $xF->getFechaByInt($this->mObj->envio_rms()->v());
-				$this->mDescripcion         = $this->mObj->mensaje()->v(OUT_TXT);
+				$this->mPersona				= $data[$xT->PERSONA_DE_ORIGEN];
+				$this->mDocumento			= $data[$xT->DOCUMENTO_RELACIONADO];
+				$this->mTercero				= $data[$xT->TERCERO_RELACIONADO];
+				$this->mTipo				= $data[$xT->TIPO_DE_AVISO];
+				$this->mTipoDocumento		= $data[$xT->TIPO_DE_DOCUMENTO];
+				$this->mUsuario				= $data[$xT->USUARIO];
+				$this->mOficial				= $data[$xT->PERSONA_DE_DESTINO];//Persona de destino es ID de Oficial de cumplimiento
+				$this->mOficialDeChecking	= $data[$xT->USUARIO_CHECKING];
+				
+				$this->mEsRiesgo		    = ($data[$xT->RESULTADO_DE_CHECKING]<= 0) ? false : true;
+				$this->mEnviadoRMS		    = ($torms > 0 ) ? true : false;
+				$this->mIsChecked			= ($tochk > 0) ? true : false;
+				$this->mFechaEnvioRMS	    = $data[$xT->ENVIO_RMS];
+				$this->mDescripcion         = $this->mNotasSistema;
+				$this->mNivelRiesgo			= $data[$xT->RIESGO_CALIFICADO];
+				$this->mHoraProceso			= $data[$xT->HORA_DE_PROCESO];
 				//$this->mTipoOperacion	= $this->mObj->tipo_de_operacion()->v();
 				
+				
+				$this->mObj		= $xT;
+				$this->mObj->setData( $data );
 				$this->setIDCache($this->mCodigo);
-				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+				if($inCache == false){
+					$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+				}
+			} else {
+				$this->mObj					= $xT;
 			}
 		}
+		
 		return $this->mIsInit;
 	}
-	function getPersonaDeOrigen(){ return $this->mObj->persona_de_origen()->v(); }
-	function getPersonDeDestino(){ $this->mObj->persona_de_destino()->v(); }
-	function getPersonaDeDestino(){ $this->mObj->persona_de_destino()->v(); }
-	function getTipoDeAlerta(){ return $this->mObj->tipo_de_aviso()->v(); }
-	function getNivelDeRiesgo(){ return $this->mObj->riesgo_calificado()->v(); }
-	function getDocumento(){ return $this->mObj->documento_relacionado()->v(); }
+	function getPersonaDeOrigen(){ return $this->mPersona; }
+	function getPersonDeDestino(){ $this->mOficial; }
+	function getPersonaDeDestino(){ $this->mOficial; }
+	function getTipoDeAlerta(){ return $this->mTipo; }
+	function getNivelDeRiesgo(){ return $this->mNivelRiesgo; }
+	function getDocumento(){ return $this->mDocumento; }
 	function getTipoDeDocto(){ return $this->mTipoDocumento; }
 	function getCredito(){
 	    $docto    = 0;
@@ -1627,10 +1667,11 @@ class cAMLAlertas {
 	    }
 	    return $recibo;
 	}
-	function getHora(){ return $this->mObj->hora_de_proceso()->v(); }
-	function getTercero(){ return $this->mObj->tercero_relacionado()->v(); }
+	function getHora(){ return $this->mHoraProceso; }
+	function getTercero(){ return $this->mTercero; }
+	function getIsChecked(){ return $this->mIsChecked; }
 	//function getInstrumento(){ return $this->mObj->()->v(); }
-	function getMensajes(){ return $this->mObj->mensaje()->v(OUT_TXT); }
+	function getMensajes(){ return $this->mNotasSistema; }
 	
 	function setConfirmaAlerta($notas = "", $fecha = false, $inmediato = false){
 		if($this->mObj == null){ $this->init(); }
@@ -1744,7 +1785,8 @@ class cAMLAlertas {
 		$html	.= "<tr><th colspan='4'>" . $xLng->getT("TR.MENSAJE DEL SISTEMA") . "</th></tr>";
 		$html	.= "<tr><td colspan='4'>" . $xNot->get($notas, "", $xNot->NOTICE) . "</td></tr>";
 		//---- Datos del checking
-		if($this->mObj->fecha_de_checking()->v() >0 ){
+		
+		if($this->getIsChecked() == true ){
 			$xUsr	= new cOficial($this->getOficialDeChecking()); $xUsr->init();
 			
 			$html	.= "<tr><th>" . $xLng->getT("TR.FECHA_DE CHEQUEO"). "</th><td>" . $this->getFechaChecking() . "</td>";
@@ -1790,6 +1832,12 @@ class cAMLAlertas {
 		$this->mIDCache	= $this->mTabla . "-" . $clave;
 	}
 	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function setActMensajesDelSistema($txt){
+		$xQL	= new MQL();
+		$id		= $this->mCodigo;
+		$xQL->setRawQuery("UPDATE `aml_alerts` SET `mensaje`='$txt' WHERE `clave_de_control`=$id ");
+		$this->setCuandoSeActualiza();
+	}
 }
 
 
@@ -1999,23 +2047,32 @@ class cUtileriasParaAML {
 }
 
 class cAMLEstadisticas{
-	function __construct(){}
-	function getNumeroAlertasPendientes(){
-		$xQL	= new MQL();
-		//$xLs	= new cSQLListas();
-		$DD		= $xQL->getDataRow("SELECT COUNT(*) AS 'numero' FROM `aml_alerts` WHERE `estado_en_sistema`=0");
+	//private $mCacheData		= array();
+	//private $mIDCacheData	= "aml.cache.estadisticas";
+	
+	function __construct(){
 		
-		//
-		//SELECT COUNT(*) AS 'numero' FROM `aml_alerts` WHERE `estado_en_sistema`=1
+	}
+	function getNumeroAlertasPendientes(){
+		$idx	= "aml.alertas.pendientes";
+		$xCache	= new cCache();
+		$DD		= $xCache->get($idx);
+		if(!is_array($DD)){
+			$xQL	= new MQL();
+			$DD		= $xQL->getDataRow("SELECT COUNT(*) AS 'numero' FROM `aml_alerts` WHERE `estado_en_sistema`=0");
+			$xCache->set($idx, $DD, $xCache->EXPIRA_UNHORA);
+		}
 		return setNoMenorQueCero($DD["numero"]);
 	}
 	function getNumeroRiesgosPorReportar(){
-		$xQL	= new MQL();
-		//$xLs	= new cSQLListas();
-		$DD		= $xQL->getDataRow("SELECT COUNT(*) AS 'numero' FROM `aml_risk_register` WHERE (`estado_de_envio` =0) AND (`fecha_de_checking` =0) ");
-			
-		//
-		//SELECT COUNT(*) AS 'numero' FROM `aml_alerts` WHERE `estado_en_sistema`=1
+		$idx	= "aml.alertas.areportar";
+		$xCache	= new cCache();
+		$DD		= $xCache->get($idx);
+		if(!is_array($DD)){
+			$xQL	= new MQL();
+			$DD		= $xQL->getDataRow("SELECT COUNT(*) AS 'numero' FROM `aml_risk_register` WHERE (`estado_de_envio` =0) AND (`fecha_de_checking` =0) ");
+			$xCache->set($idx, $DD, $xCache->EXPIRA_UNHORA);
+		}
 		return setNoMenorQueCero($DD["numero"]);
 	}		
 }
@@ -2102,8 +2159,10 @@ class cPersonasConsultaEnListas {
 		}
 		if(isset($data[$xT->getKey()])){
 			$xT->setData($data);
-			$this->mObj		= $xT; //Cambiar
+			
 			$this->mClave	= $data[$xT->getKey()];
+			
+			$this->mObj		= $xT; //Cambiar
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit	= true;
@@ -2140,6 +2199,8 @@ class cPersonasConsultaEnListas {
 		$xT->url($url);
 		$this->mClave	= $xT->query()->getLastInsertID();
 		$res	= $xT->query()->insert()->save();
+		
+		return ($res === false) ? false : true;
 	}
 
 }
@@ -2178,12 +2239,13 @@ class cAMLListaNegraInterna {
 		$res		= false;
 		if($persona > 0){
 			$xCache	= new cCache();
-			$data	= $xCache->get("aml_listanegra_int" . "-persona-" . $this->mClaveDePersona);
+			$idx 	= "aml_listanegra_int" . "-persona-" . $this->mClaveDePersona;
+			$data	= $xCache->get($idx);
 			if(!is_array($data)){
 				$xQL	= new MQL();
 				$data	= $xQL->getDataRow("SELECT * FROM `aml_listanegra_int` WHERE `persona`=". $this->mClaveDePersona . " AND `estatus`=1 LIMIT 0,1");
 				if(isset($data["persona"])){
-					$xCache->set("aml_listanegra_int" . "-persona-" . $this->mClaveDePersona, $data);
+					$xCache->set($idx, $data);
 				}
 			}
 			$res	= $this->init($data);
@@ -2385,10 +2447,11 @@ class cAMLListasProveedores {
 	private $mURLConsulta		= "";
 	private $mItems				= 0;
 	private $mIDGuardado		= 0;
-	
+	private $mNoGuardar			= false;
 	function __construct(){
 		
 	}
+	function setNoGuardar(){ $this->mNoGuardar	= true; }
 	function getDataBusqueda(){ return $this->mDataBusqueda; }
 	function getConsultaGWS($nombre, $PrimerApellido = "", $SegundoApellido = "", $persona = false){
 		$nombre				= setCadenaVal($nombre);
@@ -2457,7 +2520,9 @@ class cAMLListasProveedores {
 					$subobj["curp"]				= "";
 					$dd							= base64_encode(json_encode($subobj));
 					$nombre 					= $subobj["nombres"] . " ". $subobj["primerapellido"] . " ". $subobj["segundoapellido"];
-					$xPList->add($persona, $nombre, $tipo, $xPList->PROV_GWS, $urlQ, false, $dd);
+					if($this->mNoGuardar == false){
+						$xPList->add($persona, $nombre, $tipo, $xPList->PROV_GWS, $urlQ, false, $dd);
+					}
 					//"clasificacion":"PEP","cargo":"Presidente Constitucional de los Estados Unidos Mexicanos","ciudad":"Cd. de M\u00e9xico",
 					//"institucion":"Oficina de la Presidencia de la Rep\u00fablica.",
 					//"observaciones":"Periodo: 2012-2018. Lugar y fecha de nacimiento: 20 de julio de 1966 en Atlacomulco, Estado de M\u00e9xico; 
@@ -2558,7 +2623,9 @@ class cAMLListasProveedores {
 				$dd			= base64_encode(json_encode($subobj));
 
 				$nombre 	= $subobj["nombres"] . " ". $subobj["primerapellido"] . " ". $subobj["segundoapellido"];
-				$xPList->add($persona, $nombre, $tipo, $proveedor, $mURL, false, $dd);
+				if($this->mNoGuardar == false){
+					$xPList->add($persona, $nombre, $tipo, $proveedor, $mURL, false, $dd);
+				}
 				$this->mDataBusqueda[]	= $subobj;
 				//}
 				//{"codigo":"16145","primerapellido":"CALLE","segundoapellido":"QUIROS","nombres":" LUIS SANTIAGO","curp":"SDNTK-16145","tipo":"metaphone"}
@@ -2566,7 +2633,9 @@ class cAMLListasProveedores {
 				//setLog( $subobj->primerapellido );
 				//foreach ($subobj as $cls){
 				//}
-				$xLog->add( "Coincide:\t" . $subobj["curp"] . " : Coincidencia " . $subobj["primerapellido"] . " ". $subobj["segundoapellido"] . " " . $subobj["nombres"] . " encontrado con  " . $subobj["tipo"] . "\r\n");
+				$nombre		= setCadenaVal($nombre);
+				
+				$xLog->add( "Coincide:\t" . $subobj["curp"] . " : Coincidencia $nombre encontrado con  " . $subobj["tipo"] . "\r\n");
 			}
 		}
 		//setLog("NUMERO DE ITEMS $items");
@@ -2597,6 +2666,7 @@ class cAMLListasProveedores {
 		$xLog->guardar($xLog->OCat()->PERSONA_NO_EN_LISTA, $persona);
 	}
 }
+
 
 class cAMLRiesgoProducto {
 	private $mClave		= false;

@@ -2727,7 +2727,7 @@ FROM
 		ORDER BY `socios_aeconomica_dependencias`.`estatus` DESC, `socios_aeconomica_dependencias`.`nombre_corto`";
 		return $sql;
 	}
-	function getListadoDeEmpresasConCreditos($clave	= false, $persona	= false, $incluirFallback = true){
+	function getListadoDeEmpresasConCreditos($clave	= false, $persona	= false, $incluirFallback = true, $otros = ""){
 		$clave		= setNoMenorQueCero($clave);
 		$persona	= setNoMenorQueCero($persona);
 		$ByClave	= ($clave > DEFAULT_EMPRESA) ? " AND (`socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias` = $clave) " : "";
@@ -2743,7 +2743,7 @@ FROM
 		FROM
 			`creditos_solicitud` INNER JOIN `socios_aeconomica_dependencias`  ON `creditos_solicitud`.`persona_asociada` = `socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias`
 		WHERE
-			( `creditos_solicitud`.`saldo_actual` > " . TOLERANCIA_SALDOS . " ) $ByFallback $ByClave $ByPersona
+			( `creditos_solicitud`.`saldo_actual` > " . TOLERANCIA_SALDOS . " ) $ByFallback $ByClave $ByPersona $otros
 		GROUP BY persona_asociada
 		ORDER BY `socios_aeconomica_dependencias`.`estatus` DESC, `socios_aeconomica_dependencias`.`nombre_corto`";
 		return $sql;
@@ -3661,7 +3661,7 @@ FROM
 		INNER JOIN `entidad_niveles_de_riesgo`  ON `aml_listanegra_int`.`riesgo` = `entidad_niveles_de_riesgo`.`clave_de_nivel` 
 		INNER JOIN `socios_general`  ON `aml_listanegra_int`.`persona` = `socios_general`.`codigo` 
 		INNER JOIN `aml_risk_types`  ON `aml_listanegra_int`.`idmotivo` = `aml_risk_types`.`clave_de_control` 
-		INNER JOIN `usuarios`  ON `aml_listanegra_int`.`idusuario` = `usuarios`.`idusuarios` WHERE `aml_listanegra_int`.`persona` > 0 $ByPersona ";
+		INNER JOIN `usuarios`  ON `aml_listanegra_int`.`idusuario` = `usuarios`.`idusuarios` WHERE (`aml_listanegra_int`.`persona`) > 0 $ByPersona ";
 	
 		return $sql;
 	}
@@ -3885,6 +3885,7 @@ FROM
 		INNER JOIN `bancos_entidades`  ON `bancos_cuentas`.`entidad_bancaria` = `bancos_entidades`.`idbancos_entidades` ";
 		return $sql;
 	}
+	//function getListadoDeConsultasListasPLD($persona = false){	}
 }
 
 
@@ -4742,7 +4743,8 @@ class cSystemPatch {
 	function setAplicarScripts(){
 		$archivo_vistas	= "xx.vistas.sql";
 		$archivo_funcs	= "xx.functions.sql";
-		
+		$FKeyVistas		= "vvophctb4lqlih9";
+		$FKeyFuncts		= "ehyutpzihekm7uy";
 		//Archivo Scian
 		//$archivo_scian	= "";
 		
@@ -4750,8 +4752,8 @@ class cSystemPatch {
 		if(is_file(PATH_TMP . $archivo_vistas)){ unlink(PATH_TMP . $archivo_vistas);	}
 		if(is_file(PATH_TMP . $archivo_funcs)){	unlink(PATH_TMP . $archivo_funcs);	}
 		
-		$apVista		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_vistas . " https://www.dropbox.com/s/vvophctb4lqlih9/$archivo_vistas");
-		$apFuncs		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_funcs . " https://www.dropbox.com/s/ehyutpzihekm7uy/$archivo_funcs");
+		$apVista		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_vistas . " https://www.dropbox.com/s/$FKeyVistas/$archivo_vistas?dl=1");
+		$apFuncs		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_funcs . " https://www.dropbox.com/s/$FKeyFuncts/$archivo_funcs?dl=1");
 		$res			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_vistas);
 		$res 			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_funcs);
 		return $res;
@@ -4781,6 +4783,7 @@ class MQLCampo {
 			$this->mNombre		= $this->mDatos["N"];
 			//if(!isset($this->mEquivalencias[ $this->mTipoSQL ])){ setLog($this->mDatos); }
 		}
+		unset($mql);
 	}
 	function getTipo(){ return $this->mTipoPHP; }
 	function getTipoSQL(){ return $this->mTipoSQL; }
@@ -4874,6 +4877,24 @@ class MQLCampo {
 		$val2	= $this->cleanNumber($this->v(),2);
 		return ($val2 == $value) ? true : false;
 	}
+	
+	public function cleanup() {
+		//cleanup everything from attributes
+		foreach (get_class_vars(__CLASS__) as $clsVar => $_) {
+			unset($this->$clsVar);
+		}
+		
+		//cleanup all objects inside data array
+		/*if (is_array($this->_data)) {
+			foreach ($this->_data as $value) {
+				if (is_object($value) && method_exists($value, 'cleanUp')) {
+					$value->cleanUp();
+				}
+			}
+		}*/
+	}
+
+	
 }
 
 class MQL {
@@ -5262,6 +5283,24 @@ class MQL {
 		return $items;
 	}
 	function setCall($proc){ $this->setRawQuery("CALL `$proc`()");	}
+	public function cleanup() {
+		//cleanup everything from attributes
+		foreach (get_class_vars(__CLASS__) as $clsVar => $_) {
+			unset($this->$clsVar);
+		}
+		
+		//cleanup all objects inside data array
+		if (is_array($this->_data)) {
+			foreach ($this->_data as $value) {
+				if (is_object($value) && method_exists($value, 'cleanUp')) {
+					$value->cleanUp();
+				}
+			}
+		}
+	}
+	public function __destruct(){
+		//$this->cleanup();
+	}
 }
 class MQLInsert {
 	private $mDatos				= array();

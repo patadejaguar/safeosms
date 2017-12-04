@@ -14,6 +14,9 @@ include_once("../core/go.login.inc.php");
 include_once("../core/core.error.inc.php");
 include_once("../core/core.html.inc.php");
 include_once("../core/core.init.inc.php");
+
+@include_once("../libs/dompdf/autoload.inc.php");
+
 $theFile					= __FILE__;
 $permiso					= getSIPAKALPermissions($theFile);
 if($permiso === false){		header ("location:../404.php?i=999");	}
@@ -29,11 +32,10 @@ $out		= parametro("out", SYS_DEFAULT, MQL_STRING);
 $out		= strtolower($out);
 $xRuls		= new cReglaDeNegocio();
 //Agregado para hacer Backups
-
 $senders		= getEmails($_REQUEST);
 //end add
 $useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
-
+//================
 if($formato == 400 AND $useAlt == true){
 	$formato	= 402;
 }
@@ -48,17 +50,21 @@ if($xFMT->isInit() === false){
 	$xHP->goToPageError(2011);	
 } else {
 	if(count($senders) >= 1){
-		$xOH	= new cHObject();
+		$xOH		= new cHObject();
 		
-		$html	= $xHP->getHeader() . $txt . "</body></html>";
-		$title	= $xOH->getTitulize("RECIBO-$recibo");
-		$dompdf = new DOMPDF();
-		$dompdf->load_html($html);
-		$dompdf->set_paper("letter", "portrait" );
+		$html		= $xHP->getHeader() . $txt . "</body></html>";
+		$title		= $xOH->getTitulize("RECIBO-$recibo");
+
+		
+		$dompdf 		= new Dompdf\Dompdf();
+		$dompdf->loadHtml($html);
+		$dompdf->setPaper("letter", "portrait" );
+		
 		$dompdf->render();
 		
-		$archivo	= PATH_TMP . "" . $title . ".pdf";
+		$archivo		= PATH_TMP . "" . $title . ".pdf";
 		$output 		= $dompdf->output();
+		
 		file_put_contents($archivo, $output);
 		$output			= null;
 		$body			= "RESPALDO DEL RECIBO $recibo";

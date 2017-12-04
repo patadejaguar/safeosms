@@ -742,6 +742,8 @@ class cCuentaDeCaptacion {
 	public $ORIGEN_COMUN				= 1;
 	public $ORIGEN_CRED					= 4;
 	
+	public $TITULO_NINGUNO				= 99;
+	
 	function __construct($numero_de_cuenta, $socio = 0, $dias_invertidos = 0, $tasa = false, $fecha = false){
 		
 		$this->mNumeroCuenta 			= setNoMenorQueCero($numero_de_cuenta);
@@ -771,6 +773,8 @@ class cCuentaDeCaptacion {
 	}
 	function init($ArrayInicial =  false, $force = false){
 		$xDTb		= new cSQLTabla(TCAPTACION_CUENTAS);
+		$xLog		= new cCoreLog();
+
 		//Datos de la cuenta
 		$SqlCta =  $xDTb->getQueryInicial() . "
 				WHERE
@@ -778,7 +782,7 @@ class cCuentaDeCaptacion {
 				LIMIT 0,1 ";
 			if ( $ArrayInicial != false AND is_array($ArrayInicial) ){
 				$DC		= $ArrayInicial;
-				$this->mMessages					.= "DATOS\tCarga de Datos Externa\r\n";
+				$xLog->add("DATOS\tCarga de Datos Externa\r\n", $xLog->DEVELOPER);
 			} else {
 				$DC		= obten_filas($SqlCta);
 			}
@@ -806,26 +810,28 @@ class cCuentaDeCaptacion {
 				$this->mFechaDeApertura				= $DC["fecha_apertura"];
 				$this->mTasaGat						= $DC["tasa_gat"];
 				$this->mNombreMancomunados			.= (trim($DC["nombre_mancomunado2"]) == "") ? "" : " & " . $DC["nombre_mancomunado2"];
-				$this->mMessages					.= "WARN\tD.FVENC\tLa fecha de Vencimiento es " . $this->mFechaVencimiento . "\r\n";
+				
 				
 				//Inicia el Nuevo Saldo como el Anterior
 				$this->mNuevoSaldo					= $this->mSaldoAnterior;
 				$this->mDatosCuentaByArray			= $DC;
 				if ( $this->mTipoDeCuenta == CAPTACION_TIPO_PLAZO ){
+					$xLog->add("WARN\tD.FVENC\tLa fecha de Vencimiento es " . $this->mFechaVencimiento . "\r\n");
 					$this->mOperacionDeposito		= 221;
 					$this->mOperacionRetiro			= 231;
 				} else {
 					$this->mOperacionDeposito		= 220;
 					$this->mOperacionRetiro			= 230;
 				}
-				$this->mMessages					.= "WARN\tD.OP\tEl Tipo de Operacion para RETIRO ES " . $this->mOperacionRetiro . ", y para DEPOSITO es " . $this->mOperacionDeposito . "\r\n";
+				$xLog->add("WARN\tD.OP\tEl Tipo de Operacion para RETIRO ES " . $this->mOperacionRetiro . ", y para DEPOSITO es " . $this->mOperacionDeposito . "\r\n", $xLog->DEVELOPER);
 				$this->mCuentaIniciada				= (isset($DC["numero_socio"])) ? true : false;
 				$this->mInit						= $this->mCuentaIniciada;
 				unset ($DC);
 			}
-		
+		$this->mMessages							.= $xLog->getMessages();
 		return $this->mCuentaIniciada;
 	}
+	function getTipoDeCuenta(){ return $this->mTipoDeCuenta; }
 	function getClaveDePersona(){ return $this->mSocioTitular; }
 	function getNumeroDeCuenta(){ return $this->mNumeroCuenta; }
 	function getClaveDeCuenta(){ return $this->mNumeroCuenta; }
@@ -1623,8 +1629,10 @@ class cCuentaDeCaptacion {
 		eval( $this->mModificadorTasa );
 		return $tasa;
 	}
-	function setTraspaso($CuentaDestino, $TipoDestino, $observaciones = "", $monto = false){
-		
+	function setTraspaso($CuentaDestino, $TipoDestino, $observaciones = "", $monto = false, $fechaOperacion = false){
+		$xF				= new cFecha();
+		$xLog			= new cCoreLog();
+		$res			= true;
 		if( $this->mCuentaIniciada == false ){
 			$this->init();
 		}
@@ -1632,13 +1640,13 @@ class cCuentaDeCaptacion {
 		$socio			= $this->mSocioTitular;
 		$saldoOrigen	= $this->mSaldoActual;
 		
-		$fechaOperacion	= fechasys();
+		$fechaOperacion	= $xF->getFechaISO($fechaOperacion);
 		$tipoPago		= TESORERIA_COBRO_NINGUNO;
 		$cheque			= "NA";
 		$reciboFiscal	= "";
-		$tipoDocumento	= 9;
-		$msg			= "";		
-
+		$tipoDocumento	= RECIBOS_TIPO_TRASPCTAS;
+		$xCDestino		= new cCuentaDeCaptacion($CuentaDestino);
+		
 		if ($TipoDestino == CAPTACION_TIPO_PLAZO ){
 			$xCDestino	= new cCuentaInversionPlazoFijo($CuentaDestino, $socio);
 		} else {
@@ -1648,7 +1656,8 @@ class cCuentaDeCaptacion {
 					
 		
 		if ( $monto > $saldoOrigen ){
-			$msg			.= "ERROR\tEl Monto a Retirar $monto es mayor al saldo de Origen $saldoOrigen \r\n";
+			$xLog->add("ERROR\tEl Monto a Retirar $monto es mayor al saldo de Origen $saldoOrigen \r\n");
+			$res		= false;
 		} else {
 			//Crear el Recibo
 			$xRec			= new cReciboDeOperacion($tipoDocumento);
@@ -1665,13 +1674,18 @@ class cCuentaDeCaptacion {
 			
 			$xCDestino->setReciboDeOperacion($ReciboTrasp);
 			
-			$this->setRetiro($monto, $cheque, $tipoPago, $reciboFiscal, $observaciones, DEFAULT_GRUPO, $fechaOperacion, $ReciboTrasp);
-			$xCDestino->setDeposito($monto, $cheque, $tipoPago, $reciboFiscal, $observaciones, DEFAULT_GRUPO, $fechaOperacion, $ReciboTrasp);
-			
+			$res1	= $this->setRetiro($monto, $cheque, $tipoPago, $reciboFiscal, $observaciones, DEFAULT_GRUPO, $fechaOperacion, $ReciboTrasp);
+			$res2	= $xCDestino->setDeposito($monto, $cheque, $tipoPago, $reciboFiscal, $observaciones, DEFAULT_GRUPO, $fechaOperacion, $ReciboTrasp);
+			if($res1 <= 0 OR $res2 <= 0){
+				$xLog->add("ERROR\tAlguno de los Recibos ha faltado de registrar ( Retiro : $res1 - Deposito : $res2 )\r\n");
+				$res	= false;
+			}
 			$xRec->setFinalizarRecibo(true);
-			$msg			.= $xRec->getMessages("txt");
+			$xLog->add($xRec->getMessages(), $xLog->DEVELOPER);
 		}
-		return $msg;
+		$this->mMessages	.= $xLog->getMessages();
+		
+		return $res;
 	}
 	function getReciboDeOperacion(){
 		return $this->mReciboDeOperacion;
@@ -1795,33 +1809,40 @@ class cCaptacionProducto {
 		}
 	}
 	function init(){
-		$xCache				= new cCache();
-		$idc				= "captacion_subproductos-" . $this->mClave;
-		$data				= $xCache->get($idc);
-		$this->mObj			= new cCaptacion_subproductos();
+		$xCache		= new cCache();
+		$idc		= "captacion_subproductos-" . $this->mClave;
+		$data		= $xCache->get($idc);
+		$xT			= new cCaptacion_subproductos();
+		$inCache	= true;
+		
 		if(!is_array($data)){
-			$data			= $this->mObj->query()->initByID($this->mClave);
+			$data			= $xT->query()->initByID($this->mClave);
+			$inCache		= false;
 		}
-		if(isset($data["idcaptacion_subproductos"])){
+		if(isset($data[$xT->IDCAPTACION_SUBPRODUCTOS])){
+			if($inCache == false){
+				$data[$xT->DESTINO_DEL_INTERES]	= strtoupper($data[$xT->DESTINO_DEL_INTERES]);
+			}
+			$this->mClase		= $data[$xT->TIPO_DE_CUENTA];
+			$this->mDestinoInt	= $data[$xT->DESTINO_DEL_INTERES];
+			$this->mFModInteres	= $data[$xT->ALGORITMO_MODIFICADOR_DEL_INTERES];//$this->mObj->algoritmo_modificador_del_interes()->v(OUT_TXT);
+			$this->mFModTasa	= $data[$xT->ALGORITMO_DE_TASA_INCREMENTAL];//$this->mObj->algoritmo_de_tasa_incremental()->v(OUT_TXT);
+			$this->mTipoDePdto	= $data[$xT->TIPO_DE_CUENTA];//$this->mObj->tipo_de_cuenta()->v();
+			
+			$this->mObj			= $xT;
 			$this->mObj->setData( $data );
-			$this->mClase		= $this->mObj->tipo_de_cuenta()->v();
-			$this->mDestinoInt	= strtoupper($this->mObj->destino_del_interes()->v());
-			$this->mFModInteres	= $this->mObj->algoritmo_modificador_del_interes()->v(OUT_TXT);
-			$this->mFModTasa	= $this->mObj->algoritmo_de_tasa_incremental()->v(OUT_TXT);
-			$this->mTipoDePdto	= $this->mObj->tipo_de_cuenta()->v();
+			
 			$this->mInit		= true;
-			$xCache->set($idc, $data, $xCache->EXPIRA_MEDHORA);
+			if($inCache == false){
+				$xCache->set($idc, $data, $xCache->EXPIRA_MEDHORA);
+			}
 		}
 		return $this->mInit;
 	}
 	function getClase(){ return $this->mClase; }
 	function getDestinoInteres(){ return $this->mDestinoInt; }
-	function getFModificardorTasa(){
-		
-	}
-	function getFModificardorInteres(){
-		
-	}
+	function getFModificardorTasa(){ return $this->mFModTasa; }
+	function getFModificardorInteres(){  return $this->mFModInteres; }
 	function getListaDeDias($events = false){
 		$selDias	= "";
 		$xLn		= new cLang();

@@ -182,6 +182,8 @@ class cErrorCodes {
 	public $NOMINA_GUARDADA		= 20103;
 	public $NOMINA_ELIMINADA	= 20104;
 	public $NOMINA_ENVIO_DUP	= 20105;
+	public $USUARIO_NUEVO		= 901;
+	
 	
 }
 

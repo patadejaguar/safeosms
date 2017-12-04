@@ -1073,12 +1073,20 @@ class cTesoreriaEstadisticas {
 		
 	}
 	function getNumeroCajasAbiertas(){
-		$xli		= new cSQLListas();
-		$sqlSc		= $xli->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA);
-		$xQL		= new MQL();
-		$rs			= $xQL->getDataRecord($sqlSc);
-		$rs			= null;
-		return $xQL->getNumberOfRows();		
+		
+		$xCache		= new cCache();
+		$idx		= "tesoreria.estadisticas.caja";
+		$numero		= $xCache->get($idx);
+		if($numero === null){
+			$xli		= new cSQLListas();
+			$sqlSc		= $xli->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA);
+			$xQL		= new MQL();
+			$rs			= $xQL->getDataRecord($sqlSc);
+			$rs			= null;
+			$numero		= $xQL->getNumberOfRows();
+			$xCache->set($idx, $numero, $xCache->EXPIRA_MEDHORA);
+		}
+		return $numero;
 	}
 }
 

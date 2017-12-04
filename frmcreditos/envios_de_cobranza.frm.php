@@ -16,6 +16,9 @@ $xHP		= new cHPage("TR.Envios de Cobranza", HP_FORM);
 $jxc 		= new TinyAjax();
 $xCaja		= new cCaja();
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$frecuencia = parametro("periocidad", SYS_TODAS, MQL_INT); $frecuencia 	= parametro("frecuencia", $frecuencia, MQL_INT);
+
+$conEmpresa	= false;
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
@@ -39,9 +42,14 @@ function jsaInitPeriodo($empresa, $periocidad, $periodo){
 	$xEmp				= new cEmpresas($empresa); $xEmp->init();
 	$tab 				= new TinyAjaxBehavior();
 	$DPer				= $xEmp->getOPeriodo($periocidad);
+	$xPers				= new cEmpresasCobranzaPeriodos();
+	$xPers->initByDatos($empresa, $periocidad, $periodo, false);
+	
 	$empPeriodo			= $xEmp->getPeriodo();
+	
 	if($periodo > $empPeriodo){
 		$fechaInicial	= $xEmp->getFechaDeAviso($periocidad, false, $periodo, $periodo + 1);
+		//setError($fechaInicial);
 	} else {
 		$dias_dif		= setNoMenorQueCero($periodo - $empPeriodo );
 		$starD			= ($periocidad * $dias_dif) + 1;
@@ -244,6 +252,7 @@ $xFRM->OButton("TR.Ver en PDF", "getReporteEnPDF()", $xFRM->ic()->PDF, "idverrep
 $xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
 
 $xSemp		= $xSel->getListaDeEmpresasConCreditosActivos("", true);
+$xSPer		= $xSel->getListaDePeriocidadDePago("", $frecuencia);
 
 $xSemp->addEvent("onblur", "jsResetCbza();jsCargarDatosIniciales();");
 
@@ -252,6 +261,7 @@ if($empresa>0){
 	if($xEmp->init() == true){
 		$xFRM->addHElem($xEmp->getFicha());
 		$xFRM->OHidden("idcodigodeempresas", $empresa);
+		$xFRM->addJsInit("jsaGetDatosEmpresa();");
 	} else {
 		$xFRM->addHElem( $xSemp->get(true) );
 	}
@@ -261,20 +271,20 @@ if($empresa>0){
 
 
 
-$xSPer	= $xSel->getListaDePeriocidadDePago();
 $xSPer->addEvent("onblur", "jsaGetDatosEmpresa()");
 $xSPer->addEvent("onchange", "jsaGetDatosEmpresa()");
 $xFRM->addHElem( $xSPer->get(true));
 
 
-$xFRM->addHElem('<div class="tx4" id="divperiodo"><label for="idperiodo">Periodo</label><input type="number" id="idperiodo" onchange="jsInitPeriodo()" onblur="jsInitPeriodo()" />	</div>');
+$xFRM->addHElem('<div class="tx4 tx18 red" id="divperiodo"><label for="idperiodo">Periodo</label><input type="number" id="idperiodo" onfocus="jsInitPeriodoGaia()" onblur="jsInitPeriodoGaia()" />	</div>');
 
-$xFRM->addHElem('<div class="tx4"><label for="idvariacion">Variaci&oacute;n</label>
+$xFRM->addHElem('<div class="tx4 tx18 orange"><label for="idvariacion">Variaci&oacute;n</label>
 	    <select id="idvariacion" name="idvariacion" onchange="jsGetCobranza()">
 		<option value="-2">[-2]Dos Periodos Atras</option><option value="-1">[-1]Un Periodo Atras</option><option value="0" selected="selected">Periodo Actual</option>
 		<option value="1">[+1]Un Periodo Adelante</option><option value="2">[+2]Dos Periodos Adelante</option><option value="3">[+3]Tres Periodos Adelante</option>
 	    </select>
 	</div>');
+$HFecha->setDivClass("tx14 tx18 green");
 
 $xFRM->addHElem( $HFecha->get("TR.Fecha_Inicial", false, 10) );
 $xFRM->addHElem( $HFecha->get("TR.Fecha_Final", false, 11) );
@@ -339,7 +349,37 @@ var numOriginal		= 0;
 var currNomina		= 0;
 
 var nominaFinal		= false;
-function jsInitPeriodo(){ jsaInitPeriodo(); }
+
+function jsInitPeriodoGaia(){
+	var idp			= entero($("#idperiocidad").val());
+	if(jsGetEsManejable(idp) === true){
+		session(TINYAJAX_CALLB, "jsInitPeriodo()");
+		xG.spinInit();
+		jsaGetDatosEmpresa();
+	} else {
+		jsInitPeriodo();
+	}
+}
+
+function jsInitPeriodo(){
+	jsaInitPeriodo();
+}
+function jsGetEsManejable(idp){
+	var is	= false;
+	if(idp == Configuracion.credito.periocidad.semanal){
+		is	= true;
+	}
+	if(idp == Configuracion.credito.periocidad.quincenal){
+		is	= true;
+	}	
+	if(idp == Configuracion.credito.periocidad.catorcenal){
+		is	= true;
+	}
+	if(idp == Configuracion.credito.periocidad.mensual){
+		is	= true;
+	}
+	return is;
+}
 function jsSetCobranza(){ getModalTip(idFortips2, $("#itesofe"), "Datos del Pago"); }
 function jsCargarDatosIniciales(){	currNomina = 0; jsaInitEmpresa(); setTimeout("jsaGetDatosEmpresa()",500);	}
 function jsCancelLockPeriodo(){ $(idFortips).qtip("hide"); }

@@ -586,9 +586,15 @@ $lang["20170901"][]	= array("PLANCUOTAS", "Plan de Cuotas", "Quota Plan");
 $lang["20170901"][]	= array("ITEM", "Item", "Item");
 $lang["20170901"][]	= array("PERIODOEMPRESA", "Periodo", "Period");
 
-//$lang["20170901"][]	= array("EXISTE", "Elegir", "Select");
-//$lang["20170901"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
-//$lang["20170901"][]	= array("", "", "");
+//$lang["20171101"][]	= array("EXISTE", "Elegir", "Select");
+//$lang["20171101"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
+//$lang["20171101"][]	= array("", "", "");
+//$lang["20171101"][]	= array("", "", "");
+//$lang["20171101"][]	= array("", "", "");
+//$lang["20171101"][]	= array("", "", "");
+$lang["20171101"][]	= array("COMPLETAR", "Completar", "Fill");
+$lang["20171101"][]	= array("INACTIVO", "Inactivo", "Disabled");
+$lang["20171101"][]	= array("FILTRO", "Filtro", "Filter");
 
 
 header('Content-type: application/json');

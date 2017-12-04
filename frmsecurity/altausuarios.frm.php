@@ -133,6 +133,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		//O = ALta , 1=Update
 		$contrasenna			= parametro("idContrasenna", "", MQL_RAW);
 		$tam_pass				= strlen($contrasenna);
+		$rawpass				= $contrasenna;
 		//$contrasenna 			= trim(md5(substr($contrasenna,0,20)));
 		$idusuario 				= parametro("idUsuario", "", MQL_INT);// ( isset($_POST["idUsuario"])  ) ? $_POST["idUsuario"] : 0;
 		$clavedepersona			= parametro("idsocio", DEFAULT_SOCIO, MQL_INT);
@@ -195,14 +196,29 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 						$xUsr->setNivelAcceso($nivelacceso);
 					}
 				} else {
-					$FechaDeExpiracion	=$xF->setSumarDias(EXPIRE_PASSWORDS_IN_DAYS, $xF->get());
+					$FechaDeExpiracion	= $xF->setSumarDias(EXPIRE_PASSWORDS_IN_DAYS, $xF->get());
+					
 					$xUsr->add($nombreusuario, $contrasenna, $nivelacceso,"", "", "", $puesto, $FechaDeExpiracion, "", "", $sucursal, false, $clavedepersona);
+					
 					if($xUsr->init() == true){
 						$xUsr->setActualizarPorPersona();
 						$xUsr->setCuentaContableDeCaja($cuentacontable);
 						if($corporativo == true){
 							$xUsr->setEsCorporativo();
 						}
+						$xNot	= new cNotificaciones();
+						
+						$arr	= array(
+								"var_dirijido_a" 		=> $xUsr->getNombreCompleto(),
+								"var_url_action" 		=> SAFE_HOST_URL . "index.xul.php?ctx=" . $xUsr->getCTX(),
+								"var_title_url_action" 	=> "Ingresar al Sistema",
+								"var_parrafo_inicio" 	=> "Se le notifica que ha sido dado de Alta en el Sistema",
+								"var_parrafo_fin" 		=> "Credenciales de Acceso: <br />Usuario: " . $xUsr->getNombreDeUsuario() . "<br />Contrase&ntilde;a: $rawpass",
+								"var_parrafo_despedida" => "Gracias."
+						);
+						
+						$xNot->sendMailTemplate("Nueva Cuenta Activada", $xUsr->getCorreoElectronico(), $arr);
+						
 					}			
 				}
 				$xFRM->addAvisoRegistroOK($msg);

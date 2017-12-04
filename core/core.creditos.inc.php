@@ -236,7 +236,7 @@ class cCredito {
 		if ( !is_array ( $DCredito )) {
 			
 			$DCredito	= $xCache->get($this->mIDCacheCredito);
-			if ( !is_array ( $DCredito )) {
+			if ( !is_array ( $DCredito ) AND $idcredito > 0 ) {
 				$xSTb 		= new cSQLTabla ( TCREDITOS_REGISTRO );
 				$sql 		= $xSTb->getQueryInicial () . " WHERE	(`creditos_solicitud`.`numero_solicitud` =" . $idcredito . ") $WithSocio LIMIT 0,1";			
 				$DCredito 	= obten_filas ( $sql );
@@ -2270,6 +2270,21 @@ class cCredito {
 				}
 				$CRecibo->setFinalizarRecibo ( true );
 				$xLog->add( $CRecibo->getMessages(), $xLog->DEVELOPER );
+				
+				
+				$xOrg		= new cCreditosDatosDeOrigen(false, $this->getClaveDeCredito());
+				
+				switch($this->getTipoDeOrigen()){
+					case $xOrg->ORIGEN_ARRENDAMIENTO:
+						$xLeas	= new cCreditosLeasing($this->getClaveDeOrigen());
+						if($xLeas->init() == true){
+							$xPaso	= new cCreditosProceso();
+							$xLeas->setPaso($xPaso->PASO_VIGENTE);
+							
+						}
+						break;
+				}
+				
 			} else {
 				$xLog->add("ERROR\tEl Monto ($monto) a Otorgar deber ser Mayor a 0\r\n");
 			}
@@ -2665,6 +2680,7 @@ class cCredito {
 					$xLeas	= new cCreditosLeasing($id_de_origen);
 					if($xLeas->init() == true){
 						$xLeas->setCredito($NumeroDeCredito);
+						
 					}
 				break;
 			}
@@ -2901,7 +2917,19 @@ class cCredito {
 		);
 		
 		if($ready == true){
-			$ready 	= $this->setUpdate ( $arrUpdate );
+			$ready 		= $this->setUpdate ( $arrUpdate );
+			$xOrg		= new cCreditosDatosDeOrigen(false, $this->getClaveDeCredito());
+			
+			switch($this->getTipoDeOrigen()){
+				case $xOrg->ORIGEN_ARRENDAMIENTO:
+					$xLeas	= new cCreditosLeasing($this->getClaveDeOrigen());
+					if($xLeas->init() == true){
+						$xPaso	= new cCreditosProceso();
+						$xLeas->setPaso($xPaso->PASO_AUTORIZADO);
+						
+					}
+					break;
+			}
 		} else {
 			$this->mMessages	.= "ERROR\tNo se Autoriza el Credito \r\n";
 		}

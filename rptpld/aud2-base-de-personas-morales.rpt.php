@@ -64,7 +64,8 @@ $DRiesgo		= $xCats->initPorTabla(TCATALOGOS_GRADO_RIESGO);
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
 $sql		= $xL->getInicialDePersonas() . " WHERE `fechaalta`<='$FechaFinal' AND (`personalidad_juridica` = 2 OR `personalidad_juridica` = 5)";
-$rs			= $query->getDataRecord($sql);
+//$rs			= $query->getDataRecord($sql);
+$rs			= $query->getRecordset($sql);
 
 $xRPT->setSQL($sql);
 $xTa		= new cHTabla();
@@ -97,11 +98,19 @@ $xTa->addTH("Monto Maximo de Operaciones");
 
 $xTa->endRow();
 
+
+
 $xT			= new cFileImporter();
 
-foreach ($rs as $rows){
-	$xDSoc->setData($rows);
-	$codigo_de_socio	= $xDSoc->codigo()->v();
+while($rows = $rs->fetch_assoc() ){
+	
+
+//foreach ($rs as $rows){
+	
+	//$xDSoc->setData($rows);
+	//$codigo_de_socio	= $xDSoc->codigo()->v();
+	$codigo_de_socio	= $rows["codigo"];
+	
 	$xSoc				= new cSocio($codigo_de_socio);
 	$xSoc->init($rows);
 	$xSoc->getOEstats()->initDatosDeCredito(true);
@@ -180,11 +189,10 @@ foreach ($rs as $rows){
 		$xTa->endRow();
 	}
 }
+
+$rs->free();
+
 $xRPT->addContent( $xTa->get() );
-//$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
-//============ Agregar HTML
-//$xRPT->addContent( $xHP->init($jsEvent) );
-//$xRPT->addContent( $xHP->end() );
 
 
 $xRPT->setResponse();

@@ -4,8 +4,6 @@ define("SAFE_OS", 	$OS);
 $core_file_config		= "core.config.os.$OS.inc.php";
 include_once($core_file_config);
 
-
-
 if(isset($safe_sesion_en_segundos)){
 	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
 }
@@ -14,8 +12,8 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "D.M.C."; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana
-$version 								= "201709";
+$codename 								= "Nidia"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201711";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
@@ -498,7 +496,7 @@ define("RECIBOS_TIPO_CARGOSPENDS",		97);
 define("RECIBOS_TIPO_BONIFPENDS",		96);
 define("RECIBOS_TIPO_CIERRE",		12);
 define("RECIBOS_TIPO_PAGOCARGOS",		22);
-
+define("RECIBOS_TIPO_TRASPCTAS",		9);
 
 define("RECIBOS_ORIGEN_COLOCACION",		"colocacion");
 define("RECIBOS_ORIGEN_CAPTACION",		"captacion");
@@ -1228,7 +1226,7 @@ class cConfiguration {
 		$this->mArrConfig	= $xCache->get($this->mIDCache);
 		if(!is_array($this->mArrConfig)){
 			if($this->cnx()){
-				$rs			= $this->cnx()->query("SELECT `nombre_del_parametro`,`valor_del_parametro` FROM `entidad_configuracion`");
+				$rs			= $this->cnx()->query("SELECT SQL_CACHE `nombre_del_parametro`,`valor_del_parametro` FROM `entidad_configuracion`");
 				while($rw	= $rs->fetch_assoc()){
 					$id		= $rw["nombre_del_parametro"];
 					$val	= trim($rw["valor_del_parametro"]);
@@ -1287,6 +1285,7 @@ define ("MQL_FLOAT", "float");
 define ("MQL_BOOL", "boolean");
 define ("MQL_RAW", "raw");
 define ("MQL_DATE", "date");
+define ("MQL_ARR_INT", "array.int");
 
 define ("MQL_ADD", "insert");
 define ("MQL_MOD", "update");
@@ -1298,8 +1297,6 @@ define ("MQL_USER", USR_DB);
 define ("MQL_PASS", PWD_DB);
 define ("MQL_SERVER", WORK_HOST);
 define ("MQL_DB", MY_DB_IN);
-
-
 
 //TABLAS
 define("TCAPTACION_CUENTAS", "captacion_cuentas");
@@ -1400,6 +1397,41 @@ function getClaveCifradoTemporal(){
 	}
 	return $clave;
 }
+function getUsarCache(){
+	$CACHE_ERRS		= 0;
+	$cnx			= null;
+	$idx			= "cache.error.count";
+	if(isset($_SESSION)){
+		$CACHE_ERRS	= ( isset($_SESSION[$idx]) ) ? $_SESSION[$idx] : 0;
+		if (!class_exists('Memcache')) {
+			$CACHE_ERRS++;
+		}
+	}
+	
+	if($CACHE_ERRS <= 0){
+		if(isset($GLOBALS["cnx.memcache"])){
+			$cnx		= $GLOBALS["cnx.memcache"];
+		} else {
+			$cnx		= new Memcache();
+			if(!$cnx->pconnect('127.0.0.1', 11211)){
+				$cnx	= null;
+				$CACHE_ERRS++;
+				if(isset($_SESSION)){
+					$_SESSION[$idx]	= $CACHE_ERRS;
+				}
+			} else {
+				$CACHE_ERRS	= 0;
+				//syslog(E_ERROR, "Cache Activo!");
+				if(isset($_SESSION)){
+					$_SESSION[$idx]	= 0;
+				}
+				$GLOBALS["cnx.memcache"]	= $cnx;
+			}
+			
+		}
+	}
+	return $cnx;
+}
 
 class cCache {
 	private $mCacheEnable	= true;
@@ -1410,14 +1442,15 @@ class cCache {
 	public $EXPIRA_UNDIA	= 86400;
 	public $EXPIRA_MEDDIA	= 43200;
 	private $mCnn			= null;
+	private $mGID_Errors	= "cache.error.count";
 
 	function __construct(){
-		$this->mCacheEnable		=	$this->setInSession($this->mCacheEnable);
+		//$this->mCacheEnable		=	$this->setInSession();
 	}
 	function set($clave, $v1, $expira = 180){
 		$res	= false;
 		
-		if($this->mCacheEnable == true){
+		if($this->isReady() == true){
 			$clave	= MY_DB_IN . "-" . $clave;
 			$res	= $this->cnn()->set($clave, $v1, false, $expira);
 		}
@@ -1427,7 +1460,7 @@ class cCache {
 	function get($clave){
 		$val	= null;
 		
-		if($this->mCacheEnable == true){
+		if($this->isReady() == true){
 			$clave	= MY_DB_IN . "-" . $clave;
 			$val	= $this->cnn()->get($clave);
 			$val	= ($val === false) ? null : $val;
@@ -1435,30 +1468,16 @@ class cCache {
 		return $val;
 	}
 	function cnn(){
-
+		$this->mCnn	= getUsarCache();
 		if($this->mCnn === null){
-			if(isset($GLOBALS["CACHECNX"])){
-				$this->mCnn				= $GLOBALS["CACHECNX"];
-				$this->mCacheEnable		= true;
-			} else {
-				$this->mCnn				= new Memcache;
-				if(!$this->mCnn->pconnect('127.0.0.1', 11211)){
-					$this->mCacheEnable	= false;
-					$this->mErrors++;
-				} else {
-					$this->mCacheEnable	= true;
-					$GLOBALS["CACHECNX"]= $this->mCnn;
-				}
-			}
+			$this->mCacheEnable	= false;
+			$this->mErrors++;
 		}
-		
-
-		//$this->mCacheEnable	= false;
 		return $this->mCnn;
 	}
 	function clean($id = false){
 
-		if($this->mCacheEnable == true){
+		if($this->isReady() == true){
 			$cnn	= $this->cnn();
 			if($id === false){
 				$cnn->flush(); 
@@ -1468,24 +1487,17 @@ class cCache {
 			}
 		}
 	}
-	function isReady(){ return $this->mCacheEnable;	}
-	function setInSession($value = null){
-		if(!class_exists("Memcache") ){
-			$this->mCacheEnable	= false;
-			$this->mErrors++;
-		} else {
-			$this->cnn();
-		}
+	function isReady(){
+		return ($this->getErrorsCount() >= 1) ? false : true;
+	}
+	private function getErrorsCount(){
 		if(isset($_SESSION)){
-			if(isset($_SESSION["memcache.errors"])){
-				$this->mErrors += intval($_SESSION["memcache.errors"]);
+			if(isset($_SESSION[$this->mGID_Errors])){
+				$this->mErrors = $_SESSION[$this->mGID_Errors];
+				//syslog(E_NOTICE, "MIERDA ::: " . $this->mErrors);
 			}
-			if($this->mErrors > 100){
-				$this->mErrors	= 100;
-			}
-			$_SESSION["memcache.errors"]	= $this->mErrors;
 		}
-		return ($this->mErrors >= 1 ) ? false : true;
+		return $this->mErrors;
 	}
 }
 ?>

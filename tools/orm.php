@@ -149,6 +149,7 @@ $create				= ( isset($_GET["create"]) ) ? true : false;
 $cmdForms			= ( isset($_GET["forms"]) ) ? true : false;
 $cmdReplace			= ( isset($_GET["sql"]) ) ? true : false;
 $estructura			= "";
+$estructura2		= "";
 
 $txtReplace			= "";
 
@@ -165,6 +166,7 @@ $gridF				= "";
 if($tabla != ""){
 		$NTable			= $tabla;
 		$msg			= "";
+		$descriptors	= "";
 
 		$all			= "";
 		$pKey			= "";
@@ -173,9 +175,12 @@ if($tabla != ""){
 		
 		$estructura		= "/*\tORM: Tabla:\t$tabla\t-\tGenerado:\t[" . date("d/n/Y H:i") . "]\t*/\n";
 		$estructura		.= "class c" . ucfirst($tabla). " {\n";
+		$estructura2	.= "class cT" . ucfirst($tabla). " {\n\tfunction __construct(){}\n";
 		
 		$funciones		= "";
 		$variables		= "";
+		$variables2		= "";
+		
 		$primary		= "\tfunction __construct(\$campos = false){ if(is_array(\$campos)){ \$this->mCampos = \$campos; } }\n\tfunction get(){ return \"$tabla\";}\n";
 		$nuevos			= "";
 		$formahead		.= "\$xFRM\t= new cHForm(\"$nombreForm\", \"$nombreFile2?action=\$action\");\n";
@@ -232,15 +237,17 @@ if($tabla != ""){
 					
 					$all			.= ($all == "") ? "\"" . $nombre . "\"" : ",\"$nombre\"";
 					//$estructura		.= "";
-					$variables		.= "\"$nombre\" => array(\"N\"=>\"$nombre\",\"T\"=>\"$field_type\",\"V\"=>\"$valor\",\"L\"=>$field_long),";
+					$variables		.= ($variables == "") ? "\"$nombre\" => array(\"N\"=>\"$nombre\",\"T\"=>\"$field_type\",\"V\"=>\"$valor\",\"L\"=>$field_long)" : ",\"$nombre\" => array(\"N\"=>\"$nombre\",\"T\"=>\"$field_type\",\"V\"=>\"$valor\",\"L\"=>$field_long)";
+					$variables2		.= ($variables2 == "") ? "\"$nombre\" => array(\"N\"=>\"$nombre\",\"T\"=>\"$field_type\",\"V\"=>\"$valor\",\"L\"=>$field_long,\"S\"=>false)" : ",\"$nombre\" => array(\"N\"=>\"$nombre\",\"T\"=>\"$field_type\",\"V\"=>\"$valor\",\"L\"=>$field_long,\"S\"=>false)";
+					
+					
 					$funciones		.= "\tfunction $nombre(\$v = false){ if(\$v !== false){\$this->mCampos[\"$nombre\"][\"V\"] =  \$v; } return new MQLCampo(\$this->mCampos[\"$nombre\"]);}\n";
 					$nuevos			.= "\"$nombre\" => \"$valor\", ";
 					
 					if($create == true){
 						//TODO: TErminar proceso de agregacion de estructura
-						
 					}
-
+					$descriptors	.= "\tpublic \$" . strtoupper($nombre) . "\t= \"$nombre\";\r\n";
 					
 					//INSERT INTO general_structure(tabla, campo, valor, tipo, longitud, descripcion, titulo, control, sql_select, orientacion, order_index, script_field, help_text, tab_num, css_class, input_events)
 					$tipo_origen		= $mEquivalencias[  $field_type ];
@@ -310,14 +317,25 @@ if($tabla != ""){
 			$txtReplace					= "INSERT INTO general_structure(tabla, campo, valor, tipo, longitud, titulo, control) VALUES $txtReplace";
 			//Agregar los campos
 			$estructura					.= "\tprivate \$mCampos	= array($variables);\n";
+			$estructura2				.= "\tprivate \$mCampos	= array($variables2);\n";
+			$estructura2				.= $descriptors;
+			
+			$estructura					.= $descriptors;
+			
 			$estructura					.= $primary;
+			
+			
 			$estructura					.= $funciones;
 			$estructura					.= "\tfunction query(){ return new MQL(\$this->get(), \$this->mCampos, \$this->getKey());	}\n";
 			$estructura					.= "\tfunction setData(\$datos){ \$mql	= new MQL(\$this->get(), \$this->mCampos, \$this->getKey()); \$this->mCampos = \$mql->setData(\$datos); }\n";
 			$estructura					.= "\n}\n";
 			
+			$estructura2				.= "\n}\n";
+			
 			header("Content-type: text/plain");
 			echo  $estructura;
+			echo "\n\n\n\n\n";
+			echo  $estructura2;
 			echo "\n\n\n\n\n";
 			echo "\n\n\n\n/* ===========\t\tFORMULARIO EDICION \t\t============*/\n";
 			//ksort($controles);

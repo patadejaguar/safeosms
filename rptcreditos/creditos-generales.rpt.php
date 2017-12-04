@@ -204,6 +204,8 @@ $xRPT->setTitle($xHP->getTitle());
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
+$xRPT->setPDFOrietacion($xRPT->PDF_OHORIZONTAL);
+
 if($ByOficial != ""){
 	$xRPT->setGrupo("oficial");
 }

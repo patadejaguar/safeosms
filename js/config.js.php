@@ -149,6 +149,12 @@ var Configuracion = {
 		},
 		eventos : {
 			pago : "credito-pago"
+		},
+		periocidad : {
+			semanal: 7,
+			quincenal: 15,
+			catorcenal: 14,
+			mensual:30
 		}
 	},
 	opciones : {

@@ -71,7 +71,7 @@ $xLog->setNoLog();
 //header("Content-type: application/csv");
 if($toJson == true){
 	//header("Content-type: text/plain");
-	memprof_enable();
+	//memprof_enable();
 } else {
 	header("Content-type: text/x-csv");
 	header("Content-Disposition: attachment; filename=" . urlencode($ClaveOtorgante . "_" . $NombreOtorgante . "_" . $FechaExtraccion) . ".txt");

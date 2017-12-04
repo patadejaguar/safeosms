@@ -59,6 +59,9 @@ $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
+
+$xFRM->setTitle( $xHP->getTitle() );
+
 if($cuenta <= 0){
 	
 	$xFRM->addJsBasico(iDE_CAPTACION);
@@ -103,9 +106,12 @@ if($cuenta <= 0){
 	$xTBM	= new cTabla($mSQL->getListadoDeOperaciones(false, $xCta->getNumeroDeCuenta()));
 	$xTBM->setKeyField("idoperaciones_mvtos");
 	$xTBM->setKeyTable("operaciones_mvtos");
+	
+	
 	$xTBM->addEditar();
 	$xTBM->addEliminar();
 	$xHTabs->addTab("TR.OPERACIONES", $xTBM->Show());
+	$numeroops	= $xTBM->getRowCount();
 	//Saldos Promedios
 	$mSQL->setInvertirOrden();
 	$xTBS	= new cTabla($mSQL->getListadoDeSDPMCaptacion($xCta->getNumeroDeCuenta()));
@@ -119,7 +125,9 @@ if($cuenta <= 0){
 	$xFRM->addHTML( $xHTabs->get() );
 	
 	$xFRM->addAviso("", "idmsg");
-	
+	if($numeroops <= 0){
+		$xFRM->OButton("TR.ELIMINAR", "var xG=new Gen();xG.rmRecord({tabla:'captacion_cuentas', id:$cuenta})", $xFRM->ic()->ELIMINAR, "cmdeliminarcta", "red");
+	}
 	
 	/*
 	 * <fieldset>

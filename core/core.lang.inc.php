@@ -490,7 +490,7 @@ class cLang {
 			$this->mWords	= json_decode($this->OCache("listado.palabras.completas"), true);
 			if($this->mWords == null){
 				$xQL		= new MQL();
-				$sql		= "SELECT * FROM sistema_lenguaje WHERE idioma=\"" . $this->mCurrLang ."\" ";
+				$sql		= "SELECT SQL_CACHE * FROM sistema_lenguaje WHERE idioma=\"" . $this->mCurrLang ."\" ";
 				$rs			= $xQL->getDataRecord($sql);
 				foreach ($rs as $rw){
 					$this->mWords[$rw["equivalente"]]	= $rw["traduccion"];

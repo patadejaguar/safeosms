@@ -5,6 +5,9 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 	include_once("./core/core.error.inc.php");
 	include_once("./core/core.html.inc.php");
 	include_once("./core/core.init.inc.php");
+	
+	@include_once ("./libs/aes.php");
+	
 	$theFile					= __FILE__;
 	$permiso					= getSIPAKALPermissions($theFile);
 	if($permiso === false){		header ("location:../404.php?i=999");	}
@@ -12,10 +15,13 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 //<=====	FIN_H
 
 //=====================================================================================================
-//$mTit						= EACP_NAME . " .- {" . getSucursal() . "} - S.A.F.E. V " . $version. "";
 $mTit						= EACP_NAME . " - " . getSucursal();
 $xHP						= new cHPage($mTit, HP_FORM, "", ".");
 $xRuls						= new cReglaDeNegocio();
+$xMenu						= new cHMenu();
+$xCache						= new cCache();
+$xUser						= new cSystemUser(getUsuarioActual());
+
 
 $fecha_de_sesion			= parametro("f", fechasys());
 $MenuParent					= parametro("m", 0, MQL_INT);
@@ -27,7 +33,7 @@ $isMobile					= parametro("mobile", $xHP->isMobile($usarMenuAlt), MQL_BOOL);
 $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
 
 
-$xUser						= new cSystemUser(getUsuarioActual());
+
 $xUser->init();
 $xUser->getUserRules();
 $TasksPage					= $xUser->getTasksPage();
@@ -191,9 +197,18 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 <?php
 $adsense	= (MODO_DEBUG == true) ? "" : getAdsense();
 //$xFRM->addToolbar("");
-$xMenu		= new cHMenu();
+
 $xMenu->setIsMobile($isMobile);
-$menu		= "";
+$iduserniv	= $xUser->getNivel();
+$iduserniv	= ($isMobile == true) ? "xmenu-mob-$iduserniv" : "xmenu-desk-$iduserniv";
+$menu		= $xCache->get($iduserniv);
+if($menu === null){
+	$menu		= $xMenu->getAll();
+	$xCache->set($iduserniv, $menu, $xCache->EXPIRA_MEDHORA);
+}
+
+
+
 
 if($isMobile == false ){
 	
@@ -210,7 +225,7 @@ if($isMobile == false ){
 
 	</div>
  
-	<nav id=\"navmenu\">" . $xMenu->getAll() . "</nav> ";
+	<nav id=\"navmenu\">" . $menu . "</nav> ";
 	echo $menu;
 	
 	echo "<div id=\"wprincipal\">
@@ -226,7 +241,7 @@ $menu	=
 "<div id=\"jpanel\">
 	<a href=\"#menu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
 	<h1 id='htitle'>$mTit</h1>
-</div> <nav style=\"display: none\" id=\"navmenu\">" . $xMenu->getAll() . "</nav> ";
+</div> <nav style=\"display: none\" id=\"navmenu\">" . $menu . "</nav> ";
 echo $menu;
 	//echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
 	echo "<div id=\"wprincipal\">

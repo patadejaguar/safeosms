@@ -1,6 +1,7 @@
 <?php
 use Enhance\Language;
 use Respect\Validation\Exceptions\PrivateAbstractNestedException;
+use Dompdf\Dompdf;
 //use Enhance\Language;
 /**
  * @author Balam Gonzalez Luis Humberto
@@ -18,7 +19,11 @@ use Respect\Validation\Exceptions\PrivateAbstractNestedException;
 	include_once("core.lang.inc.php");
 	include_once("core.fechas.inc.php");
 	include_once("core.html.inc.php");
+	
 	@include_once("../libs/PHPExcel.php");
+	
+	@include_once("../libs/dompdf/autoload.inc.php");
+	
 	
 class cHDicccionarioDeTablas {
 	private $mLimitRecords		= 20;
@@ -749,15 +754,16 @@ class cPanelDeReportes {
 		$this->mArrOpts["NOUSUARIOS"]	= true;
 		return $xS;
 	}
-	function addCajeros($addControl = true){
+	function addCajeros($addControl = true, $id = ""){
 		$xHS	= new cHSelect();
+		$id		= ($id == "") ? "idcajero" : $id;
 		//$xFRM->addHElem(  );
 		$sqlSc		= "SELECT	`cajeros`.`id`,	`cajeros`.`nombre_completo` FROM `cajeros` ";
-		$xS 		= new cSelect("idcajero", "idcajero", $sqlSc);
+		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setEsSql();
 		$xS->addEspOption(SYS_TODAS);
 		$xS->setOptionSelect(SYS_TODAS);
-		$this->mJsVars	.= "var idcajero	= $('#idcajero').val();\r\n";
+		$this->mJsVars	.= "var idcajero	= $('#$id').val();\r\n";
 		$this->mURL		.= " + \"&cajero=\" + idcajero ";
 
 		if(!isset($this->mArrOpts["NOUSUARIOS"])){
@@ -849,6 +855,10 @@ class cReportes {
 	private $mPreSQL	= ""; 
 	public $FMT_FECHA	= "fmt.date";
 	public $FMT_MONEDA	= "fmt.mny";
+	private $mPDFPaper	= "letter";
+	private $mPDFOrient		= "portrait";
+	public $PDF_OHORIZONTAL = "landscape";
+	public $PDF_OVERTICAL 	= "portrait";
 	
 	
 	function __construct($titulo = ""){
@@ -935,11 +945,17 @@ class cReportes {
 	function setSQL($sql){ $this->mSQL = $sql; }
 	function setToPrint(){ $this->mJS .= "xRpt.print();"; }
 	function setToPagination($init = 0){ $this->mJS .= "xRpt.setPagePagination($init);"; }
+	function setPDFOrietacion(){}
+	
 	function render($includeHeaders = false){
 		$xOH		= new cHObject();
 		$cnt		= "";
 		$toMail		= (count($this->mSenders) >= 1) ? true : false;
 		$body		= "";
+		
+		ini_set('xdebug.max_nesting_level', 100);
+		
+		
 		if($this->mFile == ""){
 			if($this->mTitulo != ""){
 				$this->mFile	= $xOH->getTitulize($this->mTitulo);
@@ -985,9 +1001,11 @@ class cReportes {
 					$title	= $xOH->getTitulize($this->mTitulo);
 					$body	= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
 					
-					$dompdf = new DOMPDF();
-					$dompdf->load_html($html);
-					$dompdf->set_paper("letter", "portrait" );
+					
+					$dompdf = new Dompdf();
+					$dompdf->loadHtml($html);
+					$dompdf->setPaper($this->mPDFPaper, $this->mPDFOrient);
+					
 					$dompdf->render();
 					$this->mFile	= PATH_TMP . "" . $title . ".pdf";
 					$output = $dompdf->output();
@@ -1004,9 +1022,12 @@ class cReportes {
 				$dompdf = null;
 				//Agregar Limite de Memoria
 				try {
-					$dompdf = new DOMPDF();
-					$dompdf->load_html($html);
-					$dompdf->set_paper("letter", "portrait" );
+					
+					
+					$dompdf = new Dompdf();
+					$dompdf->loadHtml($html);
+					$dompdf->setPaper($this->mPDFPaper, $this->mPDFOrient);
+					
 					$dompdf->render();
 					if($toMail == true){
 						$this->mFile	= PATH_TMP . "" . $title . ".pdf";
@@ -1016,7 +1037,7 @@ class cReportes {
 					} else {
 						$this->mFile	= $title . ".pdf";
 						# Enviamos el fichero PDF al navegador.
-						$dompdf ->stream($this->mFile);
+						$dompdf->stream($this->mFile);
 					}					
 				} catch (Exception $e) {
 					$this->mMessages	.= "ERROR\tNo se genera el Archivo PDF\r\n";
@@ -1032,9 +1053,13 @@ class cReportes {
 				if($toMail == true){
 					$html	= $cnt;
 					$title	= $xOH->getTitulize($this->mTitulo);
-					$dompdf = new DOMPDF();
-					$dompdf->load_html($html);
-					$dompdf->set_paper("letter", "portrait" );
+					
+					
+					$dompdf = new Dompdf();
+					$dompdf->loadHtml($html);
+					$dompdf->setPaper($this->mPDFPaper, $this->mPDFOrient);
+					
+					
 					$dompdf->render();
 					$body			= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
 					$this->mFile	= PATH_TMP . "" . $title . ".pdf";
@@ -1702,6 +1727,9 @@ class cHGrid {
 	private $mOLang			= null;
 	private $mPaginacion	= true;
 	private $mOrden			= false;
+	private $mNoDefParam	= false;
+	
+	
 	function __construct($id, $title = ""){ $xlng	= new cLang(); $this->mId	= $id; $this->mTitle	= $xlng->getT($title); }
 	function setSQL($sql){
 		$arrch		= array('/\t+/', '/\s\s+/');
@@ -1726,8 +1754,12 @@ class cHGrid {
 		//setLog($sql);
 		$exsql		= base64_encode($sql);
 		$pta		= strlen($exsql);
-
-		$this->mActions["listAction"]	= $url ."?out=jtable&q=". $exsql;
+		if($this->mNoDefParam == false){
+			$this->mActions["listAction"]	= $url ."?out=jtable&q=". $exsql;
+		} else {
+			$this->mActions["listAction"]	= $url;
+		}
+		
 	}
 	/**
 	 * @deprecated @since 2015.07.04
@@ -1875,6 +1907,7 @@ class cHGrid {
 	function getDiv(){ return "<div id='" . $this->mId  . "'></div>"; }
 	function setNoPaginar(){ $this->mPaginacion= false; }
 	function setOrdenar(){ $this->mOrden	= true;	}
+	function setNoDefaultParam(){ $this->mNoDefParam = true; }
 }
 class cHMenu {
 	private $mType		= "html";

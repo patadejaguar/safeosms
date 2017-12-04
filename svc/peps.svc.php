@@ -14,6 +14,8 @@
 $xHP	     = new cHPage("TR.Consulta en PEPS", HP_SERVICE);
 include_once("../libs/aml.jaro-winkler.inc.php");
 include_once("../libs/wikipedia.php");
+@include_once("../libs/dompdf/autoload.inc.php");
+
 $txt		= "";
 $nombre		= parametro("nombre"); $nombre	= parametro("n", $nombre);
 $apaterno	= parametro("apaterno"); $apaterno	= parametro("p", $apaterno);
@@ -397,9 +399,14 @@ if($rs){
 			$xRPT->addContent($xFMT->get());			
 		
 			$xRPT->render(true);
-			$dompdf 		= new DOMPDF();
-			$dompdf->load_html($xRPT->render(true));
-			$dompdf->set_paper("letter", "portrait" );
+			
+
+			$dompdf 	= new Dompdf\Dompdf();
+			$dompdf->loadHtml($xRPT->render(true));
+			$dompdf->setPaper("letter", "portrait" );
+			
+
+			
 			$dompdf->render();
 			$json["pdf"] 	= base64_encode($dompdf->output());
 		} else {

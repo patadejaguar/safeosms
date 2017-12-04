@@ -48,7 +48,10 @@ $xRPT->setTitle($xHP->getTitle());
 //$xT		= new cTabla($sql, 2);
 //$xT->setTipoSalida($out);
 ini_set("max_execution_time", 1600);
-		
+//ini_set("memory_limit", '2048M');
+
+
+
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
@@ -66,7 +69,9 @@ $DRiesgo		= $xCats->initPorTabla(TCATALOGOS_GRADO_RIESGO);
 $sql		= $xL->getInicialDePersonas() . " WHERE (`fechaalta`<='$FechaFinal') AND (`personalidad_juridica` != 2 AND `personalidad_juridica` != 5)";
 
 $xRPT->setSQL($sql);
-$rs			= $query->getDataRecord($sql);
+//$rs			= $query->getDataRecord($sql);
+$rs			= $query->getRecordset($sql);
+
 $xTa		= new cHTabla();
 $xDSoc		= new cSocios_general();
 $xF			= new cFecha();
@@ -82,6 +87,8 @@ $xTa->addTH("Pais de Nacimiento");
 $xTa->addTH("Lugar de Nacimiento");
 $xTa->addTH("Nacionalidad");
 $xTa->addTH("RFC");
+$xTa->addTH("CURP");
+
 $xTa->addTH("Actividad economica");
 $xTa->addTH("Puesto o Ocupacion");
 $xTa->addTH("Direccion");
@@ -102,13 +109,21 @@ $xTa->endRow();
 $xT			= new cFileImporter();
 $xClean		= new cTiposLimpiadores();
 
-foreach ($rs as $rows){
-	$xDSoc->setData($rows);
-	$codigo_de_socio	= $xDSoc->codigo()->v();
+//foreach ($rs as $rows){
+
+while($rows = $rs->fetch_assoc() ){
+	
+	//$xDSoc->setData($rows);
+	$codigo_de_socio	= $rows["codigo"];// $xDSoc->codigo()->v();
+	
+	//setLog(getMemoriaLibre(true) . " - - " . $codigo_de_socio);
+	
 	$xSoc				= new cSocio($codigo_de_socio);
-	$xSoc->init($rows);
-	$xSoc->getOEstats()->initDatosDeCredito(true);
-	$saldoCred	= setNoMenorQueCero($xSoc->getCreditosComprometidos());
+	$saldoCred			= 0;
+	if($xSoc->init($rows) == true){
+		$xSoc->getOEstats()->initDatosDeCredito(true);
+		$saldoCred			= setNoMenorQueCero($xSoc->getCreditosComprometidos());
+	}
 
 	//setLog("Creditos de $saldoCred en persona $codigo_de_socio");
 	if($saldoCred > 0){
@@ -129,6 +144,8 @@ foreach ($rs as $rows){
 		$xTa->addTD( htmlentities($xSoc->getLugarDeNacimiento()) );
 		$xTa->addTD("MEXICANA");
 		$xTa->addTD( $xSoc->getRFC() );
+		$xTa->addTD( $xSoc->getCURP() );
+		
 		$xOAE		= $xSoc->getOActividadEconomica();
 		if($xOAE == null){
 			$xTa->addTD(" ");
@@ -188,10 +205,21 @@ foreach ($rs as $rows){
 		//$xTa->addTD(
 				
 		$xTa->endRow();
+		
 	}
+	
+	$xSoc	= null;
+	
 }
-unset($rs);
+//unset($rs);
+$rs->free();
+
+//$size = strlen($xTa->get());
+//setError( ($size * 8 / 1000) . "KB" );
+
+
 $xRPT->addContent( $xTa->get() );
+unset($xTa);
 //$xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
 //============ Agregar HTML
 //$xRPT->addContent( $xHP->init($jsEvent) );

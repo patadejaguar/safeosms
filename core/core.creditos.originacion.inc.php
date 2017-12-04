@@ -305,6 +305,7 @@ class cCreditosLeasing {
 			$this->mMontoAccesorios			= $xT->monto_accesorios()->v();
 			$this->mMontoGarantiaExt		= $xT->monto_garantia()->v();
 			$this->mMontoAjuste				= $xT->montoajuste()->v();
+			
 			//$this->mCuotaPrincipal	= $this->getCuota($mCoste, $residual);
 			//$this->mCuotaGPS		= $this->getCuota($costeGPS);
 			$xRuls							= new cReglaDeNegocio();
@@ -520,6 +521,39 @@ class cCreditosLeasing {
 		$clave	= $this->mClave;
 		$xQL	= new MQL();
 		$res	= $xQL->setRawQuery("UPDATE `originacion_leasing` SET `paso_proceso`=$paso WHERE `idoriginacion_leasing`=$clave");
+	}
+	function setOmitidos($pon = null, $quita = null){
+		$idx	= "arrendamiento.omitidos." . $this->mClave;
+		
+		$xCache	= new cCache();
+		$dd		= $xCache->get($idx);
+		if(!is_array($dd)){
+			$pon	= setNoMenorQueCero($pon);
+			if($pon > 0){
+				$dd[$pon]	= $pon;
+				$xCache->set($idx, $dd, $xCache->EXPIRA_UNDIA);
+			}
+		} else {
+			if($quita > 0){
+				unset($dd[$quita]);
+			}
+			if($pon > 0){
+				$dd[$pon]	= $pon;
+			}
+			$xCache->set($idx, $dd, $xCache->EXPIRA_UNDIA);
+		}
+		if($pon === null AND $quita === null){
+			$xCache->clean($idx);
+		}
+	}
+	function getOmitidos(){
+		$idx	= "arrendamiento.omitidos." . $this->mClave;
+		$xCache	= new cCache();
+		$dd		= $xCache->get($idx);
+		if(!is_array($dd)){
+			$dd	= array();
+		}
+		return $dd;
 	}
 }
 class cLeasingBonos {

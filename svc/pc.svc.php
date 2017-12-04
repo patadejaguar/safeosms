@@ -18,6 +18,7 @@ header('Access-Control-Allow-Origin: *');  //I have also tried the * wildcard an
 	$theFile			= __FILE__;
 	$permiso			= getSIPAKALPermissions($theFile);
 	if($permiso === false){	header ("location:../404.php?i=999");	}
+	
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP		= new cHPage("Servicio Remoto de Estados de Cuenta", HP_SERVICE);
@@ -101,6 +102,7 @@ switch ($cmd){
 		$nombre		= parametro("idnombre");
 		$telefono	= parametro("idtelefono"); $telefono = parametro("telefono", $telefono);
 		$email		= parametro("idmail"); $email = parametro("idemail", $email); $email = parametro("email", $email);
+		$email		= strtolower($email);
 		
 		$condiciones= parametro("idcondiciones");
 		$dcond		= explode("-", $condiciones);
@@ -112,8 +114,31 @@ switch ($cmd){
 		
 		if($apellidos !== "" AND $nombre !== "" AND $monto >0){
 			$xPr	= new cCreditosPreclientes();
-			$res	= $xPr->add($app1, $app2, $nombre, $telefono, $email, $pagos, $frecuencia, $monto);
+			$id		= $xPr->add($app1, $app2, $nombre, $telefono, $email, $pagos, $frecuencia, $monto);
 			$rs["message"] .= $xPr->getMessages();
+			
+			if($id > 0){			
+				$xRR	= new cReglaDeNegocio();
+				$xAlert	= new cAlertasDelSistema();
+				$xAlert->initByEvento($xRR->reglas()->PRECREDITOS_NUEVO_REG);
+				$amails	= $xAlert->getArrMails();
+				foreach ($amails as $idx => $idmail){
+					
+					$arr	= array(
+							"var_dirijido_a" 		=> "Responsable",
+							"var_url_action" 		=> SAFE_HOST_URL . "frmcreditos/creditos-preclientes.panel.frm.php?clave=$id",
+							"var_title_url_action" 	=> "Ver Pre-Credito",
+							"var_parrafo_inicio" 	=> "Se le notifica que un Pre-credito ha sido registrado",
+							"var_parrafo_fin" 		=> "Debe atenderse para incluirlo o descartarlo",
+							"var_parrafo_despedida" => "Gracias."
+					);
+					$xNot		= new cNotificaciones();
+					$xNot->sendMailTemplate("Nuevo Pre-Credito", $idmail, $arr);
+				}
+				$rs["error"]	= false;
+			} else {
+				$rs["message"] .= "No se hizo el registro\r\n";
+			}
 		} else {
 			$rs["message"] .= "Faltan algunos Datos para el Registro";
 		}

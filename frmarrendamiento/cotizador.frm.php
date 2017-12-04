@@ -29,11 +29,13 @@ $NoUsarTIIE		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_SIN_TI
 $NoUsarResidual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_NORES);
 $AunMasSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_RSIMPLE);
 $ArrAjustes		= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_AJUSTM);
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
 
 $itemsNoVer		= "cmdImprimirPropuesta,comision_originador,tasa_compra";
 
 $OlvidarTodo	= parametro("olvidar", false, MQL_BOOL);
 $Nuevo			= parametro("nuevo", false, MQL_BOOL);
+
 
 if($OlvidarTodo == true){
 	$AunMasSimple	= ($AunMasSimple == true) ? false : true;
@@ -150,6 +152,8 @@ function jsaGetCostoGPS($plazo, $plan, $montogps, $clave, $olvidar, $nuevo){
 				$monto	= ($monto >= $montogps) ? $monto : $montogps;
 			}
 			$tab->add(TabSetValue::getBehavior("monto_gps_$idx", $xGPS->getMonto() ));
+		} else {
+			$tab->add(TabSetValue::getBehavior("monto_gps_$idx", 0 ));
 		}
 	}
 	return $tab->getString();
@@ -275,7 +279,7 @@ function jsaAsociar($idpersona, $idcontrol){
 function jsaActualizarCredito($credito, $montosolicitado){
 	$montosolicitado	= setNoMenorQueCero($montosolicitado);
 	
-	if($montosolicitado > 0){
+	if($montosolicitado > 0 AND $credito > DEFAULT_CREDITO){
 		$xCred		= new cCredito($credito);
 		$msg		= "";
 		if($xCred->init() == true){
@@ -286,6 +290,17 @@ function jsaActualizarCredito($credito, $montosolicitado){
 		return $msg;
 	}
 }
+
+function jsaAgregarOmitidos($idomitir, $idquitar, $idid){
+	$idx	= "arrendamiento.omitidos.$idid";
+	$xCache	= New cCache();
+	
+	$xCot	= new cCreditosLeasing($idid);
+	
+	$xCot->setOmitidos($idomitir, $idquitar);
+	
+}
+
 $jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo', 'idoriginacion_leasing', 'idolvidar', 'idnuevo'));
 $jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo'), "#comision_originador");
 $jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps','idoriginacion_leasing','idolvidar', 'idnuevo'));
@@ -294,6 +309,9 @@ $jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 
 
 $jxc ->exportFunction('jsaAsociar', array('persona', 'idoriginacion_leasing'), "#idavisos");
 $jxc ->exportFunction('jsaActualizarCredito', array('credito', 'total_credito'), "#idavisos");
+
+$jxc ->exportFunction('jsaAgregarOmitidos', array('idomitidos1', 'idomitidos2', 'idid'), "#idavisos");
+
 
 $jxc ->process();
 
@@ -350,6 +368,7 @@ $xTabla->domicilia(SYS_UNO);
 $xTabla->tipo_rac($xLeas->TIPO_RAC_PEQ);
 $xTabla->montoajuste(0);
 $xTabla->administrado(SYS_CERO);
+$xTabla->monto_tenencia(0);
 
 //=======================  Datos para Creditos Editados.
 if($clave >0){
@@ -393,7 +412,7 @@ if($clave >0){
 }
 
 
-$xFRM->addSeccion("iddoriginador", "TR.DATOS DEL ORIGINADOR");
+
 
 $xFRM->OHidden("idoriginacion_leasing", $xTabla->idoriginacion_leasing()->v());
 $xFRM->OHidden("fecha_origen", $xTabla->fecha_origen()->v());
@@ -429,19 +448,32 @@ $xFRM->OHidden("monto_originador", $xTabla->monto_originador()->v());
 $xFRM->OHidden("estatus", $xTabla->estatus()->v());
 
 
+
+$xFRM->addSeccion("iddoriginador", "TR.DATOS DEL ORIGINADOR");
+
 //$xFRM->OMoneda("tipo_leasing", $xTabla->tipo_leasing()->v(), "TR.TIPO LEASING");
+
 if($xUser->getEsOriginador() == false){
 	//Si no hay credito se habilitan los campos de edicion
 	if($xTabla->credito()->v() <= DEFAULT_CREDITO){
-		$xFRM->addHElem( $xSel->getListaDeOficiales("oficial", SYS_USER_ESTADO_ACTIVO,  $xTabla->oficial()->v())->get(true) );
+		if($OlvidarTodo == true){
+			$xFRM->addHElem( $xSel->getListaDeOficiales("oficial", SYS_USER_ESTADO_ACTIVO,  $xTabla->oficial()->v())->get(true) );
+		} else {
+			$xFRM->OHidden("oficial", $xTabla->oficial()->v());
+		}
 		$xSelOrg	= $xSel->getListaDeOriginadores("originador", $xTabla->originador()->v());
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
 			$xSelOrg->addEvent("onblur", "jsDatosIniciales()");
 			$xSelOrg->addEvent("onchange", "jsDatosIniciales()");
 		}
-		$xFRM->addHElem($xSelOrg->get(true) );
-		$xFRM->addHElem($xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v())->get(true) );
-
+		
+		if($NoUsarUsers == false){
+			$xFRM->addHElem($xSelOrg->get(true) );
+			$xFRM->addHElem($xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v())->get(true) );
+		} else {
+			$xFRM->OHidden("comision_originador", $xTabla->comision_originador()->v());
+			$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
+		}
 		
 		if($OnEdit == false){
 			$xFRM->OHidden("comision_originador", $xTabla->comision_originador()->v());
@@ -809,8 +841,17 @@ foreach ($rs as $rw){
 		$xFRM->OHidden("tasa_credito_$idx", $xLeas->getTasaInteres($idx));
 		$xFRM->OHidden("tasavec_$idx", $xLeas->getTasaVec($idx));
 	}
-	
-	$tt		.= "<th>" . $xEsc->descripcion_escenario()->v() . "</th>";
+	$xChk		= new cHCheckBox();
+
+	$xChk->addEvent("jsAddOmitidos($idx)", "onchange");
+
+	$txtsi		= "";
+	if($OnEdit == false){
+		$xFRM->OHidden("idactive$idx", "false");
+	} else {
+		$txtsi	= $xChk->get("", "idactive$idx", true);
+	}
+	$tt		.= "<th>" . $xEsc->descripcion_escenario()->v() . "$txtsi</th>";
 }
 $tt		.= "</tr>";
 
@@ -1115,6 +1156,10 @@ if($clave > 0){
 	//$xFRM->addCerrar();
 }
 
+$xFRM->OHidden("idomitidos1", "");
+$xFRM->OHidden("idomitidos2", "");
+$xFRM->OHidden("idid", $clave);
+
 if($Nuevo == true){
 	$xFRM->addJsInit("setTimeout(jsActualizaResiduales,1000);");
 }
@@ -1149,6 +1194,8 @@ var mMontoMinGtosNot	= 400;
 var mOlvidar			= <?php echo ($OlvidarTodo == true) ? "true" : "false"; ?>;
 var vReloadID			= "v1.reload.this.form";
 var mAdministrado		= <?php echo ($EsAdministrado == true) ? "true" : "false"; ?>;
+
+var vEscenarios			= [12,24,36,48,60];
 
 <?php
 
@@ -1333,39 +1380,22 @@ function jsCalcularEscenariosII(){
 		//jsCalcularEscenarios();
 		
 	} else {	
-		//==================== Asignar Costos GPS al Valor 
-		$("#monto_gps-12").html( getFMoney($("#monto_gps_12").val()) );
-		$("#monto_gps-24").html( getFMoney($("#monto_gps_24").val()) );
-		$("#monto_gps-36").html( getFMoney($("#monto_gps_36").val()) );
-		$("#monto_gps-48").html( getFMoney($("#monto_gps_48").val()) );
-		$("#monto_gps-60").html( getFMoney($("#monto_gps_60").val()) );
-		//== Mostrar Tasa de Interes
-		$("#tasa_credito-12").html( getFTasa($("#tasa_credito_12").val()) );
-		$("#tasa_credito-24").html( getFTasa($("#tasa_credito_24").val()) );
-		$("#tasa_credito-36").html( getFTasa($("#tasa_credito_36").val()) );
-		$("#tasa_credito-48").html( getFTasa($("#tasa_credito_48").val()) );
-		$("#tasa_credito-60").html( getFTasa($("#tasa_credito_60").val()) );
-		//== Mostrar Tasa Vec
-		$("#tasavec-12").html( getFTasa($("#tasavec_12").val()) );
-		$("#tasavec-24").html( getFTasa($("#tasavec_24").val()) );
-		$("#tasavec-36").html( getFTasa($("#tasavec_36").val()) );
-		$("#tasavec-48").html( getFTasa($("#tasavec_48").val()) );
-		$("#tasavec-60").html( getFTasa($("#tasavec_60").val()) );
-		//== Mostrar Tasa res
-		$("#tasaresidual-12").html( getFTasa($("#tasaresidual_12").val()) );
-		$("#tasaresidual-24").html( getFTasa($("#tasaresidual_24").val()) );
-		$("#tasaresidual-36").html( getFTasa($("#tasaresidual_36").val()) );
-		$("#tasaresidual-48").html( getFTasa($("#tasaresidual_48").val()) );
-		$("#tasaresidual-60").html( getFTasa($("#tasaresidual_60").val()) );	
-				
-			//====================
-			jsCalcular(12);
-			jsCalcular(24);
-			jsCalcular(36);
-			jsCalcular(48);	
-			jsCalcular(60);
-			
-		
+		var acnt 			= vEscenarios.length;
+		for (var i_ = 0; i_ < acnt; i_++) {
+			var p_			= vEscenarios[i_];
+			//console.log( p_);
+			if($("#tasa_credito_" + p_).length > 0){
+				//==================== Asignar Costos GPS al Valor
+				$("#monto_gps-" + p_).html( getFMoney($("#monto_gps_" + p_).val()) );
+				//==================== Mostrar Tasas de Interes
+				$("#tasa_credito-" + p_).html( getFTasa($("#tasa_credito_" + p_).val()) );
+				//==================== Mostrar Tasa VEC
+				$("#tasavec-" + p_).html( getFTasa($("#tasavec_" + p_).val()) );
+				//==================== Mostrar Tasa RES
+				$("#tasaresidual-" + p_).html( getFTasa($("#tasaresidual_" + p_).val()) );
+				jsCalcular(p_);
+			}
+		}
 		//Actualizar el Programa
 		if(entero(idcotiza)>0){
 			xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idcotiza, nomsg: true});
@@ -1672,12 +1702,31 @@ function jsActualizaResiduales(vDesde){
 
 	if(vDesde > 0){ //Se origina desde el Control de tasa_compra
 		$("#tasavec_" + pzo).val(vDesde);
+		//Condicionar la regla de que el VEC no puede ser mayor al Residual
+		var ttv	= redondear($("#tasavec_" + pzo).val(),2);
+		var ttr	= redondear($("#tasaresidual_" + pzo).val(),2);
+		if(ttv < ttr){
+			$("#tasavec_" + pzo).val(ttr);
+			xG.alerta({msg:"La TASAVEC no puede ser menor a la Tasa Residual", type: "warn"});
+		}
 	} else {
+		var acnt 		= vEscenarios.length;
+		for (var i_ = 0; i_ < acnt; i_++) {
+			var p_		= vEscenarios[i_];
+			var ttv		= redondear($("#tasavec_" + p_).val(),2);
+			var ttr		= redondear($("#tasaresidual_" + p_).val(),2);
+			if(ttv < ttr){
+				$("#tasavec_" + p_).val(ttr);
+				xG.alerta({msg:"La TASAVEC no puede ser menor a la Tasa Residual en el Plazo " + p_, type: "warn"});
+			}
+		}		
 		$("#tasa_compra").val( $("#tasavec_" + pzo).val() );
 		$("#tasa_credito").val( $("#tasa_credito_" + pzo).val() );
 		
 		//console.log("SIN el control");
 	}
+	
+	
 	//Actualizar
 	
 	$("#vecs").val(ww);
@@ -1717,7 +1766,22 @@ function jsEditarBonos(){
 	var idcontrol	= $("#idoriginacion_leasing").val();
 	xG.w({url: "../frmarrendamiento/leasing-bonos.frm.php?clave=" + idcontrol, tab: true});
 }
+function jsAddOmitidos(id){
 
+	var mid 	= "#idactive" + id;
+	
+	$("#idomitidos1").val(0);
+	$("#idomitidos2").val(0);
+	//console.log($(mid).prop('checked'));
+	
+	if($(mid).prop('checked') == false){
+		//console.log("omitir " + id);
+		$("#idomitidos1").val(id);
+	} else {
+		$("#idomitidos2").val(id);
+	}
+	jsaAgregarOmitidos();
+}
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

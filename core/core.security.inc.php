@@ -50,6 +50,8 @@ class cSystemUser{
 	private $mCorporativo		= false;
 	private $mSucursal			= "";
 	private $mPuesto			= "";
+	private $mCorreoElectronico	= "";
+	private $mNombreCompleto	= "";
 	
 	//private $mClaveUser			= "";//
 	/**
@@ -187,6 +189,8 @@ class cSystemUser{
 			$this->mSucursal		= $D["sucursal"];
 			$this->mUserIniciado	= true;
 			$this->mPuesto			= $D["puesto"];
+			$this->mNombreCompleto	= $D["apellidopaterno"] . " " . $D["apellidomaterno"] . " " . $D["nombres"];
+			
 			$xCache->set($this->mIDCache, $D, $xCache->EXPIRA_UNHORA);
 		} else {
 			$this->mMessages	.= "ERROR\tError al Iniciar al usuario " .  $this->mCodeUser . "\r\n";
@@ -236,6 +240,8 @@ class cSystemUser{
 			$FIdUsr			= "idusuarios, ";
 			$VIdUsr			= " $CodigoUsuario, ";
 		} //
+		
+		
 		$sql = "INSERT INTO t_03f996214fba4a1d05a68b18fece8e71(
 					$FIdUsr f_28fb96d57b21090705cfdf8bc3445d2a, f_34023acbff254d34664f94c3e08d836e,
 				nombres, apellidopaterno, apellidomaterno, puesto,
@@ -249,6 +255,11 @@ class cSystemUser{
 					if($inStat === false) {
 						$msg	.= "ERROR\tERROR EN EL ALTA DEL USUARIO\r\n";
 					} else {
+						//Agregar Nuevo Mail
+						$xLog	= new cCoreLog();
+						$xLog->add("OK\tNuevo Usuario: $NombreUsuario");
+						$xLog->guardar($xLog->OCat()->USUARIO_NUEVO, $codigo_de_persona);
+						
 						$msg	.= "SUCESS\tEL ALTA DEL USUARIO SE HA EFECTUADO SATISFACTORIAMENTE\r\n";
 					}
 				$this->mMessages	.= $msg;
@@ -345,12 +356,7 @@ class cSystemUser{
 		return $this->mDatosInArray;
 	}
 	function getNombreCompleto(){
-		$D		= $this->getDatosInArray();
-		$nombre	= "";
-		if(isset($D["nombres"])){
-			$nombre	= $D["nombres"] . " " . $D["apellidopaterno"] . " " . $D["apellidomaterno"];
-		}
-		return $nombre;
+		return $this->mNombreCompleto;
 	}
 	function getEstado(){ return $this->mEstado; }
 	function setDelete($NewUser = false){
@@ -439,22 +445,26 @@ class cSystemUser{
 		return $res;
 	}
 	function getNombreDeUsuario(){ return $this->mNombreUser;  }
+	function getCorreoElectronico(){ return $this->mCorreoElectronico; }
 	function getPuesto(){ return $this->mPuesto; }
 	function setActualizarPorPersona(){
 		$xPer	= new cSocio($this->mClaveDePersona);
 		$ready	= false;
 		if($xPer->init() == true){
-			$xT		= new cT_03f996214fba4a1d05a68b18fece8e71();
+			$xT				= new cT_03f996214fba4a1d05a68b18fece8e71();
 			$xT->setData( $xT->query()->initByID($this->getID()) );
 			$xT->apellidomaterno( $xPer->getApellidoMaterno() );
 			$xT->apellidopaterno( $xPer->getApellidoPaterno() );
 			$xT->nombres( $xPer->getNombre() );
-			$alias	= explode(" ", $xPer->getNombre());
-			$alias	= $alias[0] . " " . $xPer->getApellidoPaterno();
-			$alias	= substr($alias, 0,19);
-			$xT->alias($alias);
+			$alias			= explode(" ", $xPer->getNombre());
+			$alias			= $alias[0] . " " . $xPer->getApellidoPaterno();
+			$alias			= substr($alias, 0,19);
+			$this->mNombreCompleto	= $xPer->getNombreCompleto();
 			
-			$ready	= $xT->query()->update()->save( $this->getID() );
+			$xT->alias($alias);
+			$this->mCorreoElectronico	= $xPer->getCorreoElectronico();
+			
+			$ready			= $xT->query()->update()->save( $this->getID() );
 			if($ready == false){
 				$this->mMessages .= "ERROR\tAl actualizar el usuario " . $this->getID() . " Desde la persona " . $this->mClaveDePersona . "\r\n";
 			} else {
@@ -998,7 +1008,17 @@ class cSystemPermissions{
 		
 		return $permiso;
 	}
-	function getEsPublico(){ return $this->mPublicFile; }
+	function getEsPublico($archivo = ""){
+		if($archivo !== ""){
+			$archivo	= $this->getFileName($archivo);
+			$PSVC		= $this->getPublicFiles();
+			if(isset($PSVC[$archivo])){
+				$this->mMessages	.= "WARN\tEl archivo $archivo es Publico\r\n";
+				$this->mPublicFile	= true;
+			}
+		}
+		return $this->mPublicFile; 
+	}
 	private function getFileName($mFile){
 		$mFile	= str_replace("/", STD_LITERAL_DIVISOR, $mFile);
 		$mFile	= str_replace("\\", STD_LITERAL_DIVISOR, $mFile);

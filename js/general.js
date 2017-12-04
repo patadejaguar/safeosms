@@ -1151,18 +1151,24 @@ Gen.prototype.alerta	= function(opts){
 	var mth 	= "awesome blue";
 	if(lvl == "error"){
 		mth	= "awesome error";
-		icn	= "fa-exclamation-triangle";		
+		if(icn == ""){
+			icn	= "fa-exclamation-triangle";
+		}
 	}
 	if (lvl == "ok"||lvl == 1||lvl == "success"||mth == "success"||mth == "ok") {
 		mth	= "awesome ok";
-		icn	= "fa-check-circle-o";
+		if(icn == ""){
+			icn	= "fa-check-square-o";
+		}
 	}
 	if (lvl == "warn"||lvl == 2||lvl == "warning"||mth == "warn"||mth == "warning"||mth=="info") {
 		mth	= "awesome warning";
-		icn	= "fa-info-circle";
+		if(icn == ""){
+			icn	= "fa-info-circle";
+		}
 	}
 	if(icn == ""){
-		icn	= "fa-dot-circle-o";
+		icn	= "fa-bell-o";
 	}
 	var opciones = { message : msg, info : info, title : tit,overlay:false };
 	if(solo == true){ opciones.clearAll = true; }

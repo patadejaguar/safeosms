@@ -419,3 +419,7 @@ tbody tr td {
 		z-index: -1;
 	}
 }
+.inv {
+    text-align: center; display: none; min-width: 10em !important; max-width: 99.9%;
+    position : relative;
+}

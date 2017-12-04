@@ -798,7 +798,7 @@ class cSocio{
 	function init($ArrDatos = false){
 		$D 			= array();
 		$xCach		= new cCache();
-		
+		$inCache	= true;
 		if( setNoMenorQueCero($this->mCodigo) <= 0 ){
 			$this->mSocioIniciado		= false;
 		} else {
@@ -895,6 +895,7 @@ class cSocio{
 		$principal	= ($tipo == 99 OR setNoMenorQueCero($tipo) <=0) ? false : true;
 		$xObj		= new cPersonasVivienda($this->mCodigo);
 		$xObj->init($principal);
+		
 		if( $xObj->isInit() == true){
 			$this->mDatosDomicilio	= $xObj->getDatosInArray();
 			$this->mOBDomicilio		= $xObj;
@@ -4262,7 +4263,7 @@ class cEmpresas {
 	function init($datos = false){
 		$this->mOB					= new cSocios_aeconomica_dependencias();
 		$xCache						= new cCache();
-		
+		$inCache					= true;
 		if(!is_array($datos)){
 			$datos					= $xCache->get($this->mIDCache);
 			if(!is_array($datos)){
@@ -4290,6 +4291,7 @@ class cEmpresas {
 		$this->mTasaComision		= $this->mOB->comision_por_encargo()->v();
 		$this->mInit				= true;
 		$this->mNombreLargo			= $this->mOB->descripcion_dependencia()->v();
+		
 		return $this->mDatos;
 	}
 	function getDatos(){	return $this->mDatos;	}
@@ -4529,91 +4531,75 @@ ultimo_periodo_enviado, fecha_de_envio,
 		return $mails;
 	}
 	function getFechaDeAviso($periocidad = false, $fecha = false, $periodoInit = false, $periodoEnd = false){
-		$xF			= new cFecha();
-		$dias		= explode(",", strtoupper($this->mDiasDeAviso));
+		$xF			= new cFecha(); //setLog($this->mDiasDeAviso);
+		//$this->mDiasDeAviso	= str_replace("|", ",", $this->mDiasDeAviso);
+		
+		//setLog(strtoupper($this->mDiasDeAviso));
 		$diasSem	= $xF->getDiasDeSemanaInArray();
-		$periocidad	= ($periocidad == false) ? $this->getPeriocidadPref() : $periocidad;
-		$fecha		= ($fecha == false) ? fechasys() : $fecha;
-		$result		= null;
+		$periocidad	= setNoMenorQueCero($periocidad);
+		$periocidad	= ($periocidad <= 0) ? $this->getPeriocidadPref() : $periocidad;
+		$periodoInit= setNoMenorQueCero($periodoInit);
+		$periodoEnd	= setNoMenorQueCero($periodoEnd);
+		
+		$fecha		= $xF->getFechaISO( $fecha );
+		$result		= $fecha;
 		$items		= 1;
 		
-		foreach ($diasSem as $numero => $nombre){
-				/*if(isset($dias[$nombre]) ){
-					unset($dias[$nombre]);
-					$dias[$numero]
-				}*/
-		}
-		foreach ($dias as $id => $dia){
-			
-		}
-		foreach ($dias as $id => $dia){
-			//limpiar
-			if($periocidad != CREDITO_TIPO_PERIOCIDAD_SEMANAL){
-				foreach ($diasSem as $numero => $nombre){
-					if($dia == $nombre){
-						unset($dias[$id]);
-					}
-				}
-				if(setNoMenorQueCero($dia) > $xF->getDiasDelMes() OR setNoMenorQueCero($dia) == 0 ){
-					unset($dias[$id]);
-				}
-				switch ($periocidad){
-					case CREDITO_TIPO_PERIOCIDAD_DECENAL:
-						if($id > 3){ unset($dias[$id]); 	}
-						break;
-					case CREDITO_TIPO_PERIOCIDAD_CATORCENAL:
-						if($id > 2){ unset($dias[$id]); 	}
-						break;
-					case CREDITO_TIPO_PERIOCIDAD_QUINCENAL:
-						if($id > 2){ unset($dias[$id]); 	}	
-						break;
-					case CREDITO_TIPO_PERIOCIDAD_MENSUAL:
-						if($id > 1){ unset($dias[$id]); 	}	
-						break;
+		$arrCFG		= explode("|", $this->mDiasDeAviso);
+		//7=VIERNES|15=17,30
+		foreach ($arrCFG as $idx_x => $cnt ){
+			$arrInfo	= explode("=", $cnt);
+			$idperH		= setNoMenorQueCero($arrInfo[0]);
+			if($idperH == $periocidad ){
+				if(isset($arrInfo[1])){ //Estructura de dias
+					$cntDias		= $arrInfo[1];
+					if($periocidad == CREDITO_TIPO_PERIOCIDAD_SEMANAL OR $periocidad == CREDITO_TIPO_PERIOCIDAD_CATORCENAL){
+						$dias		= setNoMenorQueCero($cntDias);
+						$xF->set($fecha);
+						if($periocidad == CREDITO_TIPO_PERIOCIDAD_SEMANAL){
+							$buscar			= 1;
+							if(setNoMenorQueCero($buscar) > 0){
+								$buscar		= setNoMenorQueCero($buscar);
+							} else {
+								foreach ($diasSem as $s_dia => $n_dia){
+									$n_dia	= strtoupper($n_dia);
+									$a_dia	= strtoupper($cntDias);
+									if($n_dia == $a_dia){
+										$buscar	= $s_dia;
+									}
+								}
+							}
+							$semana			= ($periodoInit <= 0) ? $xF->semana() : $periodoInit;
+							$result			= $xF->setFechaPorSemana($semana, $buscar);// setError("$semana . $buscar . $result");
+						} else {
 							
-				}
-			} else {
-				//convertir dias
-				foreach ($diasSem as $numero => $nombre){
-					if($dia == $nombre){
-						$dias[$id]	= $numero;
+						}
+					} else if ($periocidad == CREDITO_TIPO_PERIOCIDAD_MENSUAL){
+						$xF->set($fecha);
+						$dias			= setNoMenorQueCero($cntDias);
+						$result			= $xF->anno() . "-" . $xF->mes() . "-" . $dias;
+					} else {
+						$adias			= explode(",", strtoupper($cntDias));
+						$xF->set($fecha);
+						$dia_0			= 0;
+						foreach ($adias as $idx_y => $dia_){
+							$dia_		= setNoMenorQueCero($dia_);
+							$dact		= $xF->dia();
+							
+							if($dia_ > $dact){
+								//setError($dia_);
+								if($dia_0<=0){
+									$dia_		= $dia_;
+									$result		= $xF->anno() . "-" . $xF->mes() . "-" . $dia_;
+									//setLog($result . "- en  - $periocidadm  --  $periodoInit");
+								}
+							}
+						}
 					}
 				}
-				if(setNoMenorQueCero($dia) > 7 OR setNoMenorQueCero($dia) == 0 ){
-					unset($dias[$id]);
-				}				
-				if($id > 1){ unset($dias[$id]); 	}
 			}
 		}
-		//$items		= count($dias);
-		//encontrar el periodo cero
-		switch ($periocidad){
-			case CREDITO_TIPO_PERIOCIDAD_DECENAL:
-					
-				break;
-			case CREDITO_TIPO_PERIOCIDAD_CATORCENAL:
-					
-				break;
-			case CREDITO_TIPO_PERIOCIDAD_QUINCENAL:
-					
-				break;
-			case CREDITO_TIPO_PERIOCIDAD_MENSUAL:
-				$xF1			= new cFecha(0, $fecha);
-				$result			= $xF1->anno() . "-" . $xF1->mes() . "-" . $dias[0];
-				break;
-			case CREDITO_TIPO_PERIOCIDAD_SEMANAL:
-				//$fechaInicial	= $xF->setFechaPorSemana();
-				$xF1			= new cFecha(0, $fecha);
-				$buscar			= 1;
-				foreach($dias as $id => $cnt){ $buscar = $cnt; }
-				$semana			= date("W", $xF1->getInt());
-				$result			= $xF1->setFechaPorSemana($semana, $buscar);
-				/*
-				 $first_day_of_week = date('m-d-Y', strtotime('Last Monday', time()));
-				$last_day_of_week = date('m-d-Y', strtotime('Next Sunday', time()));
-				*/
-				break;
-		}
+
 		return $result;
 	}
 	function getListadoDeCobranza($empresa, $periocidad, $variacion, $periodo, $fechaInicial = false, $fechaFinal = false, $uso = false){
@@ -4907,19 +4893,28 @@ ultimo_periodo_enviado, fecha_de_envio,
     return "<table class='listado'>$ttcaption $thead $tr $tfoot</table>";
 	}
 	function getTasaComision(){ return $this->mTasaComision; }
+	/**
+	 * @deprecated @since 2017.11.01
+	 */
 	function getOPeriodo($periocidad = false, $periodo = false, $clave = false, $fecha = false){
-		$periocidad	= ($periocidad == false) ? $this->getPeriocidadPref() : $periocidad;
-		$periodo	= ($periodo == false) ? $this->getPeriodo() : $periodo;
-		$xPer		= new cPeriodoDeEmpresa();
-		$empresa	= $this->getClaveDeEmpresa();
-		$xF			= new cFecha(0, $fecha);
+		$periocidad	= setNoMenorQueCero($periocidad);
+		$periodo	= setNoMenorQueCero($periodo);
+		$clave		= setNoMenorQueCero($clave);
+		$xF			= new cFecha();
+		$fecha		= $xF->getFechaISO($fecha);
 		$anno		= $xF->anno($fecha);
-		if($clave == false){
+		$empresa	= $this->getClaveDeEmpresa();
+		
+		$periocidad	= ($periocidad <= 0) ? $this->getPeriocidadPref() : $periocidad;
+		$periodo	= ($periodo <= 0) ? $this->getPeriodo() : $periodo;
+		$xPer		= new cPeriodoDeEmpresa();
+		
+		if($clave <=  0){
 		$sql	= "SELECT	* FROM `empresas_operaciones` WHERE
-			(`empresas_operaciones`.`clave_de_empresa` =$empresa) AND
-			(`empresas_operaciones`.`periodo_marcado` =$periodo) AND
-			(`empresas_operaciones`.`tipo_de_operacion` =1) AND
-			(`empresas_operaciones`.`periocidad` = $periocidad)
+			(`empresas_operaciones`.`clave_de_empresa` =$empresa)
+			AND (`empresas_operaciones`.`periodo_marcado` =$periodo)
+			AND (`empresas_operaciones`.`tipo_de_operacion` =1)
+			AND (`empresas_operaciones`.`periocidad` = $periocidad)
 			AND (`fecha_inicial` >= '$anno-01-01' )
 		LIMIT 0,1 ";
 		//setLog($sql);
@@ -5544,6 +5539,13 @@ class cPersonasVivienda{
 	private $mFirmCache				= "";
 	private $mSeConstruye			= false;
 	private $mEsPrincipal			= false;
+	private $mTable					= "socios_vivienda";
+	
+	private $mCalle					= "";
+	private $mTipoDeAcceso			= "";
+	private $mNumeroInt				= "";
+	private $mNumeroExt				= "";
+	//private $mReferencia			= "";
 	
 	function __construct($persona = false, $tipo = false){
 		$this->mPersona	= setNoMenorQueCero($persona);
@@ -5586,6 +5588,8 @@ class cPersonasVivienda{
 		}
 		if($this->mFirmCache !==""){
 			$xCache->clean($this->mFirmCache);
+			$xCache->clean($this->mTable . "-" . $this->mIDCargado);
+			$xCache->clean($this->mTable . "-c-" . $this->mIDCargado);
 		}
 		//Eliminar cache de vivienda en construccion
 		$idxv	= "socios_vivienda-construye-" . $this->mPersona;
@@ -5595,10 +5599,11 @@ class cPersonasVivienda{
 	
 	function init($principal = false, $datos = false){
 		$ByPrinc				= "";//($principal  == false) ? "" : " AND principal='1' ";
-
+		$inCache				= true;
 		$ByTipo					= ($this->mTipo > 0 AND $this->mTipo != 99 ) ?  " AND `tipo_domicilio`= " . $this->mTipo : "";
 		$xCache					= new cCache();
-
+		
+		
 		if(!is_array($datos)){
 			
 			$xDB				= new cSQLTabla(TPERSONAS_DIRECCIONES);
@@ -5608,50 +5613,85 @@ class cPersonasVivienda{
 			} else {
 				$sql				.= " WHERE socio_numero=" . $this->mPersona . " AND `estado_actual`>0 $ByPrinc $ByTipo ORDER BY principal DESC, fecha_alta DESC LIMIT 0,1";
 			}
-			$this->mFirmCache	= sha1($sql);
-			$datos 				=  $xCache->get($this->mFirmCache);
+			$this->mFirmCache		= sha1($sql);
+			$datos 					=  $xCache->get($this->mFirmCache);
 			if(!is_array($datos)){
 				$datos 				= obten_filas($sql);
 				$xCache->set($this->mFirmCache, $datos);
 				//setLog("Se lee " . $this->mFirmCache);
+				$inCache			= false;
 			}
 		}
 		$this->mDatosInArray	= $datos;
 		//setLog($sql);
-		$this->mOB				= new cSocios_vivienda();
-		$this->mInit			= (isset($this->mDatosInArray["idsocios_vivienda"])) ? true : false;
+		
+		$xT						= new cSocios_vivienda();
+		
+		
+		$this->mInit			= (isset($this->mDatosInArray[$xT->IDSOCIOS_VIVIENDA])) ? true : false;
 		//DEFAULT_TIPO_DOMICILIO
 		//setLog($sql);
 		if($this->mInit == false){
-			$this->mIDCargado	= false;
-			$this->mMessages	.= "ERROR\tDomicilio no cargado\r\n";
+			$this->mIDCargado		= false;
+			$this->mMessages		.= "ERROR\tDomicilio no cargado\r\n";
+			$this->mOB				= $xT;
 		} else {
-			$this->mIDCargado		= $this->mDatosInArray["idsocios_vivienda"];
-			$this->mOB->setData($this->mDatosInArray);
-			$this->mCodigoPostal	= setNoMenorQueCero($this->mOB->codigo_postal()->v());
-			$this->mClaveDeLocal	= $this->mOB->clave_de_localidad()->v();
-			$this->mClaveDePais		= strtoupper($this->mOB->clave_de_pais()->v());
-			$this->mNombrePais		= strtoupper($this->mOB->nombre_de_pais()->v());
-			$this->mNombreLocalidad	= strtoupper($this->mOB->localidad()->v());
-			$this->mNombreColonia	= strtoupper($this->mOB->colonia()->v());
-			$this->mNombreCiudad	= strtoupper($this->mOB->localidad()->v());
-			$this->mNombreEntidadFed= setCadenaVal($this->mOB->estado()->v());
-			$this->mMunicipio		= strtoupper($this->mOB->municipio()->v());
-			$this->mReferenciaDom	= setCadenaVal($this->mOB->referencia()->v());
-			$this->mPersona			= $this->mOB->socio_numero()->v();
-			$this->mTipo			= $this->mOB->tipo_domicilio()->v();
-			$this->mTelefonoFijo	= $this->mOB->telefono_residencial()->v();
-			$this->mTelefonoMovil	= $this->mOB->telefono_movil()->v();
-			$this->mEstadoRegistro	= $this->mOB->estado_actual()->v();
-			$this->mOficialVerifica	= $this->mOB->oficial_de_verificacion()->v();
-			$this->mFechaVerifica	= $this->mOB->fecha_de_verificacion()->v();
-			$this->mFechaRegistro	= $this->mOB->fecha_alta()->v();
-			$this->mOficial			= $this->mOB->idusuario()->v();
-			$this->mRegimen			= $this->mOB->tipo_regimen()->v();
-			$this->mSeConstruye		= ($this->mOB->construye()->v() <= 0) ? false : true;
-			$this->mEsPrincipal		= ( setNoMenorQueCero($this->mOB->principal()->v()) <= 0) ? false : true;
+			$this->mIDCargado		= $this->mDatosInArray[$xT->IDSOCIOS_VIVIENDA];
+			if($inCache == false){
+				$datos[$xT->LOCALIDAD]		= strtoupper($datos[$xT->LOCALIDAD]);
+				$datos[$xT->COLONIA]		= strtoupper($datos[$xT->COLONIA]);
+				$datos[$xT->CLAVE_DE_PAIS]	= strtoupper($datos[$xT->CLAVE_DE_PAIS]);
+				$datos[$xT->NOMBRE_DE_PAIS]	= setCadenaVal($datos[$xT->NOMBRE_DE_PAIS]);
+				$datos[$xT->CODIGO_POSTAL]	= setNoMenorQueCero($datos[$xT->CODIGO_POSTAL]);
+				$datos[$xT->REFERENCIA]		= setCadenaVal($datos[$xT->REFERENCIA]);
+				$datos[$xT->TIPO_DE_ACCESO] = strtoupper($datos[$xT->TIPO_DE_ACCESO]);
+				$datos[$xT->CONSTRUYE]		= setNoMenorQueCero($datos[$xT->CONSTRUYE]);
+				$datos[$xT->PRINCIPAL]		= setNoMenorQueCero($datos[$xT->PRINCIPAL]);
+				$datos[$xT->ESTADO]			= setNoMenorQueCero($datos[$xT->ESTADO]);
+				$datos[$xT->MUNICIPIO]		= strtoupper($datos[$xT->MUNICIPIO]);
+				
+			}			
+
+			$this->mCodigoPostal	= $datos[$xT->CODIGO_POSTAL];
+			$this->mClaveDeLocal	= $datos[$xT->CLAVE_DE_LOCALIDAD];
+			$this->mClaveDePais		= $datos[$xT->CLAVE_DE_PAIS];
+			$this->mNombrePais		= $datos[$xT->NOMBRE_DE_PAIS];
+			
+			$this->mNombreLocalidad	= $datos[$xT->LOCALIDAD];
+			$this->mNombreColonia	= $datos[$xT->COLONIA];
+			$this->mNombreCiudad	= $datos[$xT->LOCALIDAD];
+			
+			$this->mNombreEntidadFed= $datos[$xT->ESTADO];
+			$this->mMunicipio		= $datos[$xT->MUNICIPIO];
+			
+			$this->mReferenciaDom	= $datos[$xT->REFERENCIA];
+			
+			$this->mPersona			= $datos[$xT->SOCIO_NUMERO];
+			$this->mTipo			= $datos[$xT->TIPO_DOMICILIO];
+			$this->mTelefonoFijo	= $datos[$xT->TELEFONO_RESIDENCIAL];
+			$this->mTelefonoMovil	= $datos[$xT->TELEFONO_MOVIL];
+			$this->mEstadoRegistro	= $datos[$xT->ESTADO_ACTUAL];
+			$this->mOficialVerifica	= $datos[$xT->OFICIAL_DE_VERIFICACION];
+			$this->mFechaVerifica	= $datos[$xT->FECHA_DE_VERIFICACION];
+			$this->mFechaRegistro	= $datos[$xT->FECHA_ALTA];
+			$this->mOficial			= $datos[$xT->IDUSUARIO];
+			$this->mRegimen			= $datos[$xT->TIPO_REGIMEN];
+			$this->mCalle			= $datos[$xT->CALLE];
+			$this->mTipoDeAcceso	= $datos[$xT->TIPO_DE_ACCESO];
+			
+			$this->mSeConstruye		= ($datos[$xT->CONSTRUYE] <= 0) ? false : true;
+			$this->mEsPrincipal		= ($datos[$xT->PRINCIPAL] <= 0) ? false : true;
+			
+			$this->mNumeroExt		= $datos[$xT->NUMERO_EXTERIOR];
+			$this->mNumeroInt		= $datos[$xT->NUMERO_INTERIOR];
+			
+			$this->mOB				= $xT;
+			$this->mOB->setData($datos);
+			
 			$this->setIDCache($this->mIDCargado);
-			$xCache->set($this->mIDCache, $this->mDatosInArray);
+			$xCache->set($this->mIDCache, $datos);
+			//$xT->setSaveOnCache();
+			
 			//setLog($this->mCodigoPostal);
 			//iniciar colonia si No hay Manual
 			if(PERSONAS_VIVIENDA_MANUAL == false){
@@ -5678,11 +5718,11 @@ class cPersonasVivienda{
 	function getMunicipio(){	return $this->mMunicipio; 	}
 	function getDatosInArray(){ return $this->mDatosInArray;	}
 	function getEstado($out = OUT_HTML){ return $this->mNombreEntidadFed;	/*return strtoupper($this->mOB->estado()->v($out));*/	}
-	function getAcceso(){	return $this->mOB->tipo_de_acceso()->v();	}
-	function getCalle(){	return strtoupper($this->mOB->calle()->v());	}
+	function getAcceso(){	return $this->mTipoDeAcceso;	}
+	function getCalle(){	return $this->mCalle;	}
 	function getColonia(){ return $this->mNombreColonia; }
-	function getNumeroExterior(){		return $this->mOB->numero_exterior()->v();	}
-	function getNumeroInterior(){		return $this->mOB->numero_interior()->v();	}
+	function getNumeroExterior(){		return $this->mNumeroExt;	}
+	function getNumeroInterior(){		return $this->mNumeroInt;	}
 	function getClaveUnica(){ return $this->mIDCargado; }
 	function getClaveDeEstadoEnSIC(){ return $this->mClaveDeEstadoSIC; 	}
 	function getClaveDeEstadoABC(){ return $this->mClaveDeEstadoABC;	}
@@ -5721,8 +5761,8 @@ class cPersonasVivienda{
 		return $this->mObjColonia;
 	}
 	function getClaveDeMunicipio(){		return $this->mClaveDeMun;	}
-	function getTipoDeDomicilio(){ return $this->obj()->tipo_domicilio()->v();	}
-	function getTipoDeRegimen(){	return $this->obj()->tipo_regimen()->v(); 	}
+	function getTipoDeDomicilio(){ return $this->mTipo;	}
+	function getTipoDeRegimen(){	return $this->mRegimen; 	}
 	function getTelefonoFijo(){ return $this->mTelefonoFijo; }
 	function getTelefonoMovil(){ return $this->mTelefonoMovil; }
 	function setDuplicarDomicilio($persona){
@@ -6211,29 +6251,31 @@ class cPersonaActividadEconomica {
 	private $mClaveDeActSCIAN		= 0;
 	private $mDescripcion			= "";
 	
-	private $mIDCargado			= null;
-	private $mNombreDeLocalidad	= null;
-	private $mNombreDeMunicipio	= null;
+	private $mIDCargado				= null;
+	private $mNombreDeLocalidad		= null;
+	private $mNombreDeMunicipio		= null;
 	private $mNombreDeEstado		= null;
-	private $mNombreEmpresa		= "";
-	private $mNombreColonia		= "";
-	private $mCalle				= "";
-	private $mNumeroExt			= "";
+	private $mNombreEmpresa			= "";
+	private $mNombreColonia			= "";
+	private $mCalle					= "";
+	private $mNumeroExt				= "";
 	private $mViviendaInit			= false;
 	private $mPuesto				= "";
 	private $mAntiguedad			= null;
-	private $mDepto				= "";
+	private $mDepto					= "";
 	private $mIDEmpleado			= "";
 	private $mNSS					= 0;
-	private $mExtTelefonica		= 0;
+	private $mExtTelefonica			= 0;
 	private $mTelefono				= 0;
 	private $mAMLNivelRiesgo		= 1;
 	private $mAMLGeneraPEP			= false;
 	private $mIDCache				= "";
 	private $mTipoDispersion		= 0;
 	private $mFechaDeIngreso		= false;
+	private $mFechaDeVerifica		= false;
 	private $mSectorEconomico		= 0;
-
+	private $mEstatusActual			= 0;
+	private $mIngresoMensual		= 0;
 	
 	public $ESTADO_NOVERIFICADO		= 99;
 	public $ESTADO_VERIFICADO		= 1;
@@ -6274,55 +6316,93 @@ class cPersonaActividadEconomica {
 			}
 		}
 	}
-	function setCleanCache($id = ""){ $xCache = new cCache(); $id = ($id== "") ? $this->mIDCache : $id; $xCache->clean($id); }	
+	function setCleanCache($id = ""){ 
+		$xCache = new cCache(); $id = ($id== "") ? $this->mIDCache : $id; $xCache->clean($id); 
+	}	
 	function init($data = false){
-		$ql		= new MQL();
-		$xCache	= new cCache();
+		
+		$xCache		= new cCache();
+		$xT			= new cSocios_aeconomica();
+		$inCache	= true;
+		
 		if($this->mPersona > 0){
-			$ByTipo							= "";// ($this->mTipo == false ) ? "" : "AND (`socios_aeconomica`.`tipo_aeconomica` = $tipo)";//no aplica tipo
+			$ByTipo							= "";
+			
 			$ByID							= (setNoMenorQueCero($this->mIDCargado) > 1)? " AND `idsocios_aeconomica` = " . $this->mIDCargado : "";
 			if(!is_array($data)){
 				$data						= $xCache->get($this->mIDCache);
 				if(!is_array($data)){
+					$ql						= new MQL();
 					$xDB					= new cSQLTabla(TPERSONAS_ACTIVIDAD_ECONOMICA);
 					$sql 					= $xDB->getQueryInicial() . "	WHERE (`socios_aeconomica`.`socio_aeconomica` =" .  $this->mPersona . ") $ByTipo $ByID	ORDER BY `fecha_alta` DESC, `socios_aeconomica`.`monto_percibido_ae` DESC LIMIT 0,1";
 					$data					= $ql->getDataRow($sql);
+					$xDB					= null;
+					$inCache				= false;
 				}
 			}
 			$this->mDatosInArray			= $data;
-			$this->mInit					= (isset($this->mDatosInArray["idsocios_aeconomica"])) ? true : false;
+			$this->mInit					= (isset($this->mDatosInArray[$xT->IDSOCIOS_AECONOMICA])) ? true : false;
 			$this->mTipo					= FALLBACK_ACTIVIDAD_ECONOMICA;
 			if($this->mInit == true){
-				$this->mOB					= new cSocios_aeconomica();
-				$this->mOB->setData($this->mDatosInArray);
+				//$this->mOB					= new cSocios_aeconomica();
+				$xT->setData($data);
+				if($inCache	== false){
+					$data[$xT->DEPENDENCIA_AE]			= setNoMenorQueCero($data[$xT->DEPENDENCIA_AE]);
+					//$data[$xT->DOMICILIO_AE]	= $data[$xT->DOMICILIO_AE]
+					$data[$xT->AE_CODIGO_POSTAL]		= setNoMenorQueCero($data[$xT->AE_CODIGO_POSTAL]);
+					$data[$xT->DOMICILIO_VINCULADO]		= setNoMenorQueCero($data[$xT->DOMICILIO_VINCULADO]);
+					$data[$xT->ANTIGUEDAD_AE]			= setNoMenorQueCero($data[$xT->ANTIGUEDAD_AE]);
+					$data[$xT->MONTO_PERCIBIDO_AE]		= setNoMenorQueCero($data[$xT->MONTO_PERCIBIDO_AE],2);
+					
+					$xF	= new cFecha();
+					$data[$xT->FECHA_DE_INGRESO]		= $xF->getFechaISO($data[$xT->FECHA_DE_INGRESO]);
+					$data[$xT->FECHA_DE_VERIFICACION]	= $xF->getFechaISO($data[$xT->FECHA_DE_VERIFICACION]);
+					//$data[$xT->TIPO_AECONOMICA];
+					//$data[$xT->CLAVE_SCIAN];
+					//$data[$xT->SECTOR_ECONOMICO];
+					if($xF->getInt($data[$xT->FECHA_DE_INGRESO]) == $xF->getInt(fechasys())){
+						$data[$xT->ANTIGUEDAD_AE]		= $xF->setRestarDias($data[$xT->ANTIGUEDAD_AE], fechasys());
+					}
+					
+				}
 				//$this->mOB->query()->initByID($this->mDatosInArray["idsocios_aeconomica"]);
-				$this->mIDCargado			= $this->mOB->idsocios_aeconomica()->v();
-				$this->mClaveEmpresa		= $this->mOB->dependencia_ae()->v();
-				$this->mDomicilio			= $this->mOB->domicilio_ae()->v();
-				$this->mCodigoPostal		= setNoMenorQueCero($this->mOB->ae_codigo_postal()->v());
-				$this->mIDDomicilio			= setNoMenorQueCero($this->mOB->domicilio_vinculado()->v());
+				$this->mIDCargado			= $data[$xT->IDSOCIOS_AECONOMICA];
+				
+				$this->mClaveEmpresa		= $data[$xT->DEPENDENCIA_AE];
+				$this->mDomicilio			= $data[$xT->DOMICILIO_AE];
+				$this->mCodigoPostal		= $data[$xT->AE_CODIGO_POSTAL];
+				$this->mIDDomicilio			= $data[$xT->DOMICILIO_VINCULADO];
 				$this->mNombreColonia		= "";
 				//Iniciar Empresa
 				$this->mOEmp				= new cEmpresas( $this->mClaveEmpresa); $this->mOEmp->init();
 				$this->mEmpresaClavePersona	= $this->mOEmp->getClaveDePersona();
 				
-				$this->mPuesto				= $this->mOB->puesto()->v(OUT_TXT);
-				$this->mTipo				= $this->mOB->tipo_aeconomica()->v();
-				$this->mDepto				= $this->mOB->departamento_ae()->v(OUT_TXT);
-				$this->mTipoDispersion		= $this->mOB->empleado_tipo_de_dispersion()->v();
-				$this->mFechaDeIngreso		= $this->mOB->fecha_de_ingreso()->v();
-				$this->mDescripcion			= $this->mOB->descripcion()->v();
+				$this->mPuesto				= $data[$xT->PUESTO];
+				$this->mTipo				= $data[$xT->TIPO_AECONOMICA];
+				$this->mDepto				= $data[$xT->DEPARTAMENTO_AE];
+				$this->mTipoDispersion		= $data[$xT->EMPLEADO_TIPO_DE_DISPERSION];
+				$this->mFechaDeIngreso		= $data[$xT->FECHA_DE_INGRESO];
+				$this->mDescripcion			= $data[$xT->DESCRIPCION];
+				$this->mFechaDeVerifica		= $data[$xT->FECHA_DE_VERIFICACION];
+				$this->mAntiguedad			= $data[$xT->ANTIGUEDAD_AE];
+				$this->mEstatusActual		= $data[$xT->ESTADO_ACTUAL];
+				$this->mIngresoMensual		= $data[$xT->MONTO_PERCIBIDO_AE];
+				
 				if(trim($this->mDescripcion) == ""){
 					$this->mDescripcion		= $this->mPuesto;
 				}
-				$this->mClaveDeActAML		= $this->mOB->tipo_aeconomica()->v();
-				$this->mClaveDeActSCIAN		= $this->mOB->clave_scian()->v();
-				$this->mSectorEconomico		= $this->mOB->sector_economico()->v();
-				
+				$this->mClaveDeActAML		= $data[$xT->TIPO_AECONOMICA];
+				$this->mClaveDeActSCIAN		= $data[$xT->CLAVE_SCIAN];
+				$this->mSectorEconomico		= $data[$xT->SECTOR_ECONOMICO];
+				$this->mNSS					= $data[$xT->NUMERO_DE_SEGURIDAD_SOCIAL];
+				//$this->mNombreDeEstado		= $$xT->ESTADO_AE
+				//=========
+				$this->mOB					= $xT;
 				//Iniciar por codigo postal
 				$xViv					= new cPersonasVivienda($this->mPersona, PERSONAS_TIPO_DOM_LABORAL);
 				if($this->mIDDomicilio > 1){ $xViv->setID($this->mIDDomicilio); }
 				$xViv->init();
+				
 				if( $xViv->isInit() == true ){
 					$this->mDomicilio				= $xViv->getDireccionBasica();
 					$this->mClaveDeEstado			= $xViv->getClaveDeEstado();
@@ -6338,7 +6418,10 @@ class cPersonaActividadEconomica {
 					$this->mNombreColonia			= $xViv->getColonia();
 					
 					$this->mClaveDePais				= $xViv->getClaveDePais();
-					$this->mViviendaInit			= true;						
+					$this->mViviendaInit			= true;
+					//Data in Cache
+					$data[$xT->DOMICILIO_AE]		= $this->mDomicilio;
+					
 				} else {
 					if($this->mCodigoPostal > 0){
 						$xCol		= new cPersonasVivCodigosPostales($this->mCodigoPostal);
@@ -6355,6 +6438,11 @@ class cPersonaActividadEconomica {
 							
 						}
 					}
+				}
+				
+				//Guardar Cache
+				if($inCache == false){
+					$xCache->set($this->mIDCache, $data);
 				}
 				/*if(PERSONAS_VIVIENDA_MANUAL == false){
 					if($this->mIDDomicilio <= 1 AND $this->mCodigoPostal > 0) {
@@ -6394,20 +6482,13 @@ class cPersonaActividadEconomica {
 		return $this->mPuesto;	
 	}
 	function getDomicilio(){  return $this->mDomicilio; }
-	function getNombreEmpresa(){ return $this->obj()->nombre_ae()->v(OUT_TXT); }
-	function getTelefono(){ return $this->obj()->telefono_ae()->v(); }
-	function getClaveDeActividad(){ return $this->obj()->tipo_aeconomica()->v(); }
-	function getClaveDeSector(){ return $this->obj()->sector_economico()->v(); }
-	function getEstadoActual(){ return $this->obj()->estado_actual()->v(); }
-	function getFechaVerificacion(){ $xF	= new cFecha(); return $xF->getFechaISO($this->obj()->fecha_de_verificacion()->v()); }
-	function getFechaIngreso(){
-		$fecha	= $this->obj()->fecha_de_ingreso()->v();
-		$xF		= new cFecha();
-		if($fecha == "" OR $fecha == "0000-00-00"){
-			$fecha	= $xF->setRestarDias($this->obj()->antiguedad_ae()->v(), fechasys());
-		}
-		return $xF->getFechaISO($fecha);
-	}
+	function getNombreEmpresa(){ return $this->mNombreEmpresa; }
+	function getTelefono(){ return $this->mTelefono; }
+	function getClaveDeActividad(){ return $this->mTipo; }
+	function getClaveDeSector(){ return $this->mSectorEconomico; }
+	function getEstadoActual(){ return $this->mEstatusActual; }
+	function getFechaVerificacion(){ return $this->mFechaDeVerifica; }
+	function getFechaIngreso(){ return $this->mFechaDeIngreso;	}
 	function getCalle(){ return $this->mCalle;  }
 	function getNumeroExterior(){ return $this->mNumeroExt; }
 	function getNombreMunicipio(){ return $this->mNombreDeMunicipio;}
@@ -6421,11 +6502,11 @@ class cPersonaActividadEconomica {
 	function getCodigoPostal(){ return $this->mCodigoPostal;	}
 	function getClaveDeEmpresa(){ return $this->mClaveEmpresa; }
 	function getClaveDePais(){ return $this->mClaveDePais; }
-	function getSalarioMensual(){ return $this->obj()->monto_percibido_ae()->v(); }
+	function getSalarioMensual(){ return $this->mIngresoMensual; }
 	function getSectorEconomico(){ return $this->mSectorEconomico; }
 	
 	function getOEmpresa(){ return $this->mOEmp;	}
-	function getNumeroDeSeguridadSocial(){ return $this->obj()->numero_de_seguridad_social()->v();	}
+	function getNumeroDeSeguridadSocial(){ return $this->mNSS;	}
 	function setUpdatePorEmpresa($guardarVinculado = false){
 		$idx		= false;
 		if($this->mInit == true){
@@ -7464,31 +7545,45 @@ class cPersonasVivCodigosPostales {
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); }
 	function init($data = false){
+		$inCache	= true;
+		$xT			= new cTmp_colonias_activas();
+		$xCache		= new cCache();
+		$idx		= "cp-activos-". $this->mClave;
+		
 		if(!is_array($data)){
-			$xCache	= new cCache();
-			$data	= $xCache->get("cp-activos-". $this->mClave);
-			if($data == null){
-				$xQL	= new MQL();
-				
-				$data	= $xQL->getDataRow("SELECT * FROM `tmp_colonias_activas` WHERE `codigo_postal`=". $this->mClave);
-				$xCache->set("cp-activos-". $this->mClave, $data);
+			if($this->mClave > 0){
+				$data	= $xCache->get($idx);
+				if(!is_array($data)){
+					$xQL		= new MQL();
+					$data		= $xQL->getDataRow("SELECT * FROM `tmp_colonias_activas` WHERE `codigo_postal`=". $this->mClave);
+					$inCache	= false;
+				}
 			}
 		}
-		if(isset($data["codigo_postal"])){
-			$this->mObj		= new cTmp_colonias_activas(); //Cambiar
+		
+		if(isset($data[$xT->CODIGO_POSTAL])){
 			
-			$this->mObj->setData($data);
-			$this->mNombre			= $this->mObj->nombre()->v();
-			$this->mClave			= $this->mObj->codigo_postal()->v();
-			$this->mClaveDeEstado	= $this->mObj->codigo_de_estado()->v();
-			$this->mClaveDeEstadoABC= $this->mObj->clave_alfanumerica()->v();
-			$this->mClaveDeEstadoSIC= $this->mObj->clave_en_sic()->v();
-			$this->mClaveDeMunicipio= $this->mObj->codigo_de_municipio()->v();
-			$this->mNombreEstado	= $this->mObj->nombre_estado()->v();
-			$this->mNombreLocalidad	= $this->mObj->nombre_localidad()->v();
-			$this->mNombreMunicipio	= $this->mObj->nombre_municipio()->v();
-			$this->mClaveDeLocal	= $this->mObj->idlocalidad()->v();
-			$this->mInit	= true;
+			if($inCache == false){
+				$data[$xT->NOMBRE_MUNICIPIO]	= setCadenaVal($data[$xT->NOMBRE_MUNICIPIO]);
+				$data[$xT->NOMBRE_ESTADO]		= setCadenaVal($data[$xT->NOMBRE_ESTADO]);
+				$data[$xT->NOMBRE_LOCALIDAD]	= setCadenaVal($data[$xT->NOMBRE_LOCALIDAD]);
+			}
+			
+			$xT->setData($data);
+			
+			$this->mNombre			= $data[$xT->NOMBRE];//$this->mObj->nombre()->v();
+			$this->mClave			= $data[$xT->CODIGO_POSTAL];//$this->mObj->codigo_postal()->v();
+			$this->mClaveDeEstado	= $data[$xT->CODIGO_DE_ESTADO];//$this->mObj->codigo_de_estado()->v();
+			$this->mClaveDeEstadoABC= $data[$xT->CLAVE_ALFANUMERICA];//$this->mObj->clave_alfanumerica()->v();
+			$this->mClaveDeEstadoSIC= $data[$xT->CLAVE_EN_SIC];//$this->mObj->clave_en_sic()->v();
+			$this->mClaveDeMunicipio= $data[$xT->CODIGO_DE_MUNICIPIO];//$this->mObj->codigo_de_municipio()->v();
+			$this->mNombreEstado	= $data[$xT->NOMBRE_ESTADO];//$this->mObj->nombre_estado()->v();
+			$this->mNombreLocalidad	= $data[$xT->NOMBRE_LOCALIDAD];//$this->mObj->nombre_localidad()->v();
+			$this->mNombreMunicipio	= $data[$xT->NOMBRE_MUNICIPIO];//$this->mObj->nombre_municipio()->v();
+			$this->mClaveDeLocal	= $data[$xT->IDLOCALIDAD];//$this->mObj->idlocalidad()->v();
+			$this->mInit			= true;
+			$this->mObj				= $xT; //Cambiar
+			$xCache->set($idx, $data, $xCache->EXPIRA_UNDIA);
 		}
 		return $this->mInit;
 	}

@@ -35,14 +35,17 @@ class cPersonasEstadisticas {
 	 * Retorna un Listado en Formato Pedido de los Creditos Actuales
 	 */
 	function initDatosDeCredito($SoloEstadisticas = false){
-		$xCache	= new cCache();
-		$idxc	= "personas-creditos-estadisticas-". $this->mPersona;
-		$idxe	= "tmp_personas_estadisticas-". $this->mPersona;
+		$xCache		= new cCache();
+		$idxc		= "personas-creditos-estadisticas-". $this->mPersona;
+		$idxe		= "tmp_personas_estadisticas-". $this->mPersona;
+		$inCache	= true;
 		if($SoloEstadisticas == true){
 			$data	= $xCache->get($idxe);
 			if(!is_array($data)){
-				$mql	= new MQL();
-				$data	= $mql->getDataRow("SELECT * FROM `tmp_personas_estadisticas` WHERE `persona`=" . $this->mPersona . " LIMIT 0,1");
+				$mql		= new MQL();
+				$data		= $mql->getDataRow("SELECT * FROM `tmp_personas_estadisticas` WHERE `persona`=" . $this->mPersona . " LIMIT 0,1");
+				$inCache	= false;
+				$mql		= null;
 			}
 			if(isset($data["persona"])){
 				$this->mTCredsActivos		= $data["creditos_con_saldo"];
@@ -51,7 +54,9 @@ class cPersonasEstadisticas {
 				$this->mCreditoPrioritario	= $data["credito_activo"];
 				$this->mTCredsNum			= $data["creditos"];
 				$this->mTCuentasCaptacion	= $data["cuentas"];
-				$xCache->set($idxe, $data, $xCache->EXPIRA_5MIN);
+				if($inCache == false){
+					$xCache->set($idxe, $data, $xCache->EXPIRA_5MIN);
+				}
 			}
 			$this->mTotalCompromisos		+= $this->mTCredsNum;
 			$this->mTotalCompromisos		+= $this->mTCuentasCaptacion;
@@ -60,26 +65,33 @@ class cPersonasEstadisticas {
 			$xCred	= new cCreditos_solicitud();
 			$data	= $xCache->get($idxc);
 			if(!is_array($data)){
-				$mql	= new MQL();
-				$data	= $mql->getDataRecord($sql);
+				$mql		= new MQL();
+				$data		= $mql->getDataRecord($sql);
+				$mql		= null;
+				$inCache	= false;
 			}
-			if(isset($data["numero_socio"])){
+			if(isset($data[$xCred->NUMERO_SOCIO])){
 				foreach ($data as $row){
 					$xCred->setData($row);
-					if( $xCred->saldo_actual()->v() > TOLERANCIA_SALDOS ){
+					$monto		= $row[$xCred->SALDO_ACTUAL];
+					$credito	= $row[$xCred->NUMERO_SOLICITUD];
+					$aut		= $row[$xCred->MONTO_AUTORIZADO];
+					
+					if( $monto > TOLERANCIA_SALDOS ){
 						$this->mTCredsActivos++;
-						$this->mTCredsSaldo += $xCred->saldo_actual()->v();
-						//$this->mAListaDeCreds[ $xCred->numero_solicitud()->v() ][SYS_MONTO]	= $xCred->saldo_actual()->v();
-						$this->mAListaDeCreds[ $xCred->numero_solicitud()->v() ] = $row;
-						$this->mTCredsActivosAut += $xCred->monto_autorizado()->v();
+						$this->mTCredsSaldo 				+= $monto;
+						$this->mAListaDeCreds[$credito] 	= $row;
+						$this->mTCredsActivosAut 			+= $aut;
 						//TODO: Acompletar
 					}
 					if($this->mCreditoPrioritario <= DEFAULT_CREDITO){
-						$this->mCreditoPrioritario	= $xCred->numero_solicitud()->v();
+						$this->mCreditoPrioritario			= $credito;
 					}
 					$this->mTCredsNum++;
 				}
-				$xCache->set($idxc, $data, $xCache->EXPIRA_5MIN);
+				if($inCache == false){
+					$xCache->set($idxc, $data, $xCache->EXPIRA_5MIN);
+				}
 			}
 		}
 		return  $this->mAListaDeCreds;//temporal

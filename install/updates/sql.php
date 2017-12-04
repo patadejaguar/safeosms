@@ -3596,11 +3596,40 @@ $sql["20170901"][]	= "ALTER TABLE `general_estados` ADD INDEX `idvc` (`clave_num
 $sql["20170901"][]	= "ALTER TABLE `vehiculos_marcas` ADD INDEX `idbc` (`idvehiculos_marcas` ASC) ";
 $sql["20170901"][]	= "SELECT setNuevoPermisoX('vincular.personas.frm.php')";
 $sql["20170901"][]	= "SELECT setNuevoPermisoX('referencias.del.svc.php')";
-$sql["20170901"][]	= "INSERT INTO  `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2002', 'CONFIRMA_BAJA', '¿ Confirma la Baja de este Registro ?')";
-//$sql["20170901"][]	= "";
-//$sql["20170901"][]	= "";
-//$sql["20170901"][]	= "";
-//
+$sql["20170901"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2002', 'CONFIRMA_BAJA', '¿ Confirma la Baja de este Registro ?')";
+$sql["20170901"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('901', '900', 'Mail.- Aviso General', '<!-- -->')";
+$sql["20170901"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codigos`, `description_error`, `type_err`) VALUES ('901', 'Registro de Nuevo Usuario', 'security')";
+$sql["20170901"][]	= "INSERT INTO `sistema_programacion_de_avisos` (`idprograma`, `nombre_del_aviso`, `forma_de_creacion`, `programacion`, `destinatarios`, `microformato`, `tipo_de_medios`, `intent_check`, `intent_command`) VALUES ('15', 'PRECREDITOS.NUEVO_REGISTRO', 'SYS_ALERTA_POR_EVENTO', 'PRECREDITOS.NUEVO_REGISTRO', '', '', ',MAIL', '', '')";
+$sql["20170901"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `nombre_utilerias`, `descripcion_utileria`) VALUES ('902', 'Creditos.- Saldar Creditos en TEMP', 'Elimina saldos en la tabla temp')";
+$sql["20170901"][]	= "SELECT setNuevoPermisoX('pc.svc.php')";
+
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('envios_de_cobranza.frm.php')";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_file` = 'frmempresas/empresas-envios.frm.php' WHERE `idgeneral_menu` = '1067' ";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('empresas-con-nomina.svc.php')";
+$sql["20171101"][]	= "ALTER TABLE `creditos_periocidadpagos` ADD COLUMN `estatusactivo` INT(2) NULL DEFAULT '1' AFTER `tolerancia_en_dias_para_vencimiento`";
+$sql["20171101"][]	= "ALTER TABLE `aml_listanegra_int` ADD INDEX `xppi` (`persona` ASC, `riesgo` ASC,`estatus` ASC,`clave_interna` ASC)";
+
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('591', 'FORM', 'CAPTACION.SIN.DIAS_PRE', '', '', '', '', '1')";
+$sql["20171101"][]	= "ALTER TABLE `captacion_cuentasorigen` ADD COLUMN `estatusactivo` INT(2) NULL DEFAULT '1' AFTER `origen_cuenta`";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Nuevo Contrato a la Vista' , `menu_file` = 'frmcaptacion/frmcaptacioncuentas.php?clase=10' WHERE `idgeneral_menu` = '8001'";
+$sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`) VALUES ('8003', '8000', 'Nuevo Contrato a Plazo', 'frmcaptacion/frmcaptacioncuentas.php?clase=20', 'Nueva cuenta a Plazo', 'fa-calendar', 'command', '8003', '8003')";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Panel de Cuentas de Captacion' , `menu_image` = 'fa-cogs' , `menu_order` = '8012' , `menu_help_id` = '8012' WHERE `idgeneral_menu` = '8002'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-book' , `menu_help_id` = '8001' WHERE `idgeneral_menu` = '8001'";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('592', 'FORM', 'CREDITOS.ARRENDAMIENTO.NOUSERS', '', '', '', '', '1')";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-user-o' WHERE `idgeneral_menu` = '18301'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_order` = '18301' , `menu_help_id` = '18301' WHERE `idgeneral_menu` = '18301'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_description` = 'Reportes por Cajeros Beta' , `menu_image` = 'fa-user-o' , `menu_type` = 'command' , `menu_order` = '18302' , `menu_help_id` = '18302' , `menu_showin_toolbar` = 'true' WHERE `idgeneral_menu` = '18302' ";
+$sql["20171101"][]	= "UPDATE `general_reports` SET `aplica` = 'caja_tesoreria2' WHERE `idreport` = '11103'";
+$sql["20171101"][]	= "insert into `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_destination`, `menu_description`, `menu_image`, `menu_rules`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) values('18302','18300','Reportes por Cajeros II','frmreports/frmreportsxcajero2.frm.php','principal','Reportes por Cajeros Beta','fa-user-o','2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw','command','18302','18302','true')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('buscar.actividades-scian.frm.php')";
+
+//$sql["20171101"][]	= "";
+//$sql["20171101"][]	= "";
+//$sql["20171101"][]	= "";
+//$sql["20171101"][]	= "";
+//$sql["20171101"][]	= "";
+//$sql["20171101"][]	= "";
+
 		
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){

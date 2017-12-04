@@ -12,10 +12,11 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-	$xHP			= new cHPage("TR.REPORTE DE ", HP_REPORT);
+	$xHP			= new cHPage("TR.REPORTE DE CAPTACION", HP_REPORT);
 	$xL				= new cSQLListas();
 	$xF				= new cFecha();
 	$query			= new MQL();
+	$xFil			= new cSQLFiltros();
 	
 	$subproducto 	= parametro("subproducto", SYS_TODAS, MQL_INT);
 	$producto 		= parametro("producto", SYS_TODAS, MQL_INT);
@@ -28,6 +29,9 @@
 	$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 	
 	$senders		= getEmails($_REQUEST);
+	$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+	
+	$BySuc			= $xFil->PersonasPorSucursal($sucursal);
 	
 	$xHP->init();
 	
@@ -57,7 +61,7 @@ FROM
 				ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.
 				`idcaptacion_cuentastipos` 
 WHERE
-	(`captacion_cuentas`.`numero_socio` !=1) 
+	(`captacion_cuentas`.`numero_socio` !=1) $BySuc
 GROUP BY `captacion_cuentas`.`numero_cuenta`";
 	
 //setLog($sql);

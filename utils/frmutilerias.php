@@ -1308,7 +1308,11 @@ $xHP->init();
 				$cUCredit 		= new cUtileriasParaCreditos();
 				$msg			.= $cUCredit->setEliminarCreditosNegativos($tolerancia);
 				break;
-
+			case 902:
+			    $tolerancia		= setNoMenorQueCero($id);
+			    $cUCredit 		= new cUtileriasParaCreditos();
+			    $msg			.= $cUCredit->setEliminarCreditosEnTemp();
+			    break;
 			case 871:
 				$xMig		= new cMigracionSIBANCS();
 				$msg		.= $xMig->setGenerarPlanDePagos();

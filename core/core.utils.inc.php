@@ -206,8 +206,14 @@ class cSystemTask{
 	function setProcesarTareas(){
 		//CRON del Sistema
 		//Enviar Notificaciones por SMS
-		$xQL	= new MQL();
-		$rsNot	= $xQL->getDataRecord("SELECT * FROM `seguimiento_notificaciones` WHERE `estatus_notificacion`='pendiente' AND `fecha_notificacion` <=CURRENT_DATE()  AND `hora`<=CURRENT_TIME() AND (`canal_de_envio`='sms' OR `canal_de_envio`='email') ");
+		$idx	= "notificaciones.pendientes.tareas";
+		$xCache	= new cCache();
+		$rsNot	= $xCache->get($idx);
+		if(!is_array($rsNot)){
+			$xQL	= new MQL();
+			$rsNot	= $xQL->getDataRecord("SELECT * FROM `seguimiento_notificaciones` WHERE `estatus_notificacion`='pendiente' AND `fecha_notificacion` <=CURRENT_DATE()  AND `hora`<=CURRENT_TIME() AND (`canal_de_envio`='sms' OR `canal_de_envio`='email') ");
+			$xCache->set($idx, $rsNot, $xCache->EXPIRA_5MIN);
+		}
 		$xSeg	= new cSeguimiento_notificaciones();
 		$xNot	= new cNotificaciones();
 		$xFMT	= new cFormato();

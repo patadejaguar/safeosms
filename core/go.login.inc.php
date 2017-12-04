@@ -5,6 +5,7 @@ include_once("core.error.inc.php");
 include_once("core.security.inc.php");
 include_once("core.db.inc.php");
 include_once("core.db.dic.php");
+@include_once ("../libs/aes.php");
 
 function goLogged($camposolicitado, $username) {
 	$TID 	= session_id();
@@ -87,31 +88,35 @@ function getSIPAKALPermissions($mFile){
 	$xPer	= new cSystemPermissions();
 	$salir	= false;
 	$nivel	= 0;
-	if(isset($_REQUEST)){
-		
-		if(isset($_REQUEST["ctx"])){
-			$init 		= $xUsr->initByCTX($_REQUEST["ctx"]);
-			if($init === false){
-				$xLog->add("No existe el Usuario por Contexto\r\n");
-				$salir	= true;
+	if($xPer->getEsPublico($mFile) == true){
+		$permiso	= true;		
+	} else {
+		if(isset($_REQUEST)){
+			
+			if(isset($_REQUEST["ctx"])){
+				$init 		= $xUsr->initByCTX($_REQUEST["ctx"]);
+				if($init === false){
+					$xLog->add("No existe el Usuario por Contexto\r\n");
+					$salir	= true;
+				}
 			}
 		}
-	}
-	if($xUsr->init() == false){
-		$xLog->add("El Usuario Actual es Invalido \r\n");
-		$salir	= true;
-
-	} else {
-		$nivel	= $xUsr->getNivel();
-	}
-	$permiso	= $xPer->getAccessFile($mFile, $nivel);
-	if($xPer->getEsPublico() == true AND $salir == true ){
-		$salir	= false;
-	}
-	$xLog->add($xPer->getMessages(), $xLog->DEVELOPER);
-	if($salir !== false){
-		$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
-		$xUsr->setEndSession(true);
+		if($xUsr->init() == false){
+			$xLog->add("El Usuario Actual es Invalido \r\n");
+			$salir	= true;
+	
+		} else {
+			$nivel	= $xUsr->getNivel();
+		}
+		$permiso	= $xPer->getAccessFile($mFile, $nivel);
+		if($xPer->getEsPublico() == true AND $salir == true ){
+			$salir	= false;
+		}
+		$xLog->add($xPer->getMessages(), $xLog->DEVELOPER);
+		if($salir !== false){
+			$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
+			$xUsr->setEndSession(true);
+		}
 	}
 	return $permiso;
 }

@@ -284,7 +284,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_ANT_DIV				= "CREDITOS.ARRENDAMIENTO.DIV_ANTICIPO";
 	public $CREDITOS_ARREND_FRM_DIS				= "CREDITOS.ARRENDAMIENTO.DISABLE_FLD";
 	public $CREDITOS_ARREND_AJUSTM				= "CREDITOS.ARRENDAMIENTO.AJUSTESERVS";
-	
+	public $CREDITOS_ARREND_NOUSERS				= "CREDITOS.ARRENDAMIENTO.NOUSERS";
 	
 	public $CREDITOS_DESEMBOLSO_SIN_DESC		= "CREDITOS.DESEMBOLSO_SIN_DESCUENTOS";
 	public $CREDITOS_DESEMBOLSO_SIN_CHQ			= "CREDITOS.DESEMBOLSO_SIN_CHEQUE";
@@ -306,6 +306,8 @@ class cReglasDeNegocioLista {
 	
 	public $CREDITOS_PAGO_LETRAF				= "CREDITOS.PAGOS_LETRA_FIJA";
 	
+	public $PRECREDITOS_NUEVO_REG				= "PRECREDITOS.NUEVO_REGISTRO";
+	
 	public $RECIBOS_SIN_VERSIONIMP				= "RECIBOS.SIN_VERSION_IMPRESA";
 	public $RECIBOS_USE_TICKETS					= "RECIBOS.USAR_TICKETS";
 	public $RECIBOS_RPT_USE_FECHAREAL			= "RECIBOS.REPORTE.USAR.FECHA_REAL";
@@ -320,6 +322,10 @@ class cReglasDeNegocioLista {
 	
 	public $RN_USAR_REDIRECTS					= "RN_USAR_REDIRECTS";
 	public $RN_USAR_MENU_ALT					= "RN_USAR_USAR_MENU_ALTER";
+	
+	public $CAPTACION_SIN_DIASPRE				= "CAPTACION.SIN.DIAS_PRE";
+	//public $CAPTACION_				= "CAPTACION";
+	
 	
 	function getInArray(){
 		$arr	= array();
@@ -399,10 +405,13 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_ANT_DIV]			= $this->CREDITOS_ARREND_ANT_DIV;
 		$arr[$this->CREDITOS_ARREND_COT_RSIMPLE]		= $this->CREDITOS_ARREND_COT_RSIMPLE;
 		$arr[$this->CREDITOS_ARREND_AJUSTM]				= $this->CREDITOS_ARREND_AJUSTM;
+		$arr[$this->CREDITOS_ARREND_NOUSERS]			= $this->CREDITOS_ARREND_NOUSERS;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
 		$arr[$this->CREDITOS_PAGO_LETRAF]				= $this->CREDITOS_PAGO_LETRAF;
+		
+		$arr[$this->PRECREDITOS_NUEVO_REG]				= $this->PRECREDITOS_NUEVO_REG;
 		
 		//$arr[$this->]			= $this->;
 		
@@ -426,6 +435,13 @@ class cReglasDeNegocioLista {
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->AML_AUTOENVIAR_RMS]					= $this->AML_AUTOENVIAR_RMS;
+		
+		
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		$arr[$this->CAPTACION_SIN_DIASPRE]				= $this->CAPTACION_SIN_DIASPRE;
 		return $arr;
 	}
 }
@@ -448,6 +464,9 @@ class cReglaDeNegocio {
 		//Obtener de la BD
 		//evaluar
 		//dispara eventos
+	}
+	function setEvento($evento){
+		$this->mEvento	= $evento;
 	}
 	function addPersonasDestinatarios($arr){
 		if(is_array($arr)){
@@ -517,7 +536,7 @@ class cReglaDeNegocio {
 			$rs			= $xCache->get($idv);
 			if(!is_array($rs)){
 				$xQL	= new MQL();
-				$rs		= $xQL->getDataRecord("SELECT * FROM `entidad_reglas`");
+				$rs		= $xQL->getDataRecord("SELECT SQL_CACHE * FROM `entidad_reglas`");
 				//setLog($rs);
 				$xCache->set($idv, $rs);
 			}

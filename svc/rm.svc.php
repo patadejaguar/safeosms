@@ -42,6 +42,14 @@ if($tabla != false AND $clave != false ){
 				}
 				$rs["message"]	= $xDom->getMessages();
 				break;
+			case TCAPTACION_CUENTAS:
+				$xCta	= new cCuentaDeCaptacion($clave);
+				if($xCta->init() == true){
+					$xCta->setDelete();
+					$rs["error"]	= false;
+					$rs["message"]	= $xCta->getMessages();
+				}
+				break;
 			default:
 				$obj->setData( $obj->query()->initByID($clave) );
 				$data	= base64_encode( json_encode($obj->query()->getCampos()) );

@@ -11,7 +11,7 @@ include_once ("core.db.dic.php");
 //ini_set("max_execution_time", 600);
 
 $xL = new cLang ();
-define ( "CTRL_FECHA_EXTEMPORANEA", "<tr><td>" . $xL->getT ( "TR.Fecha_de_Captura" ) . "</td><td colspan='2'>" . ctrl_date ( 98 ) . "</td></tr>" );
+//define ( "CTRL_FECHA_EXTEMPORANEA", "<tr><td>" . $xL->getT ( "TR.Fecha_de_Captura" ) . "</td><td colspan='2'>" . ctrl_date ( 98 ) . "</td></tr>" );
 /**
  * Devuelve la Fecha del Sistema (Servidor)
  */
@@ -360,9 +360,10 @@ class cFecha {
 		$fi 	= "$anno-01-01";
 		$di 	= date ( "N", strtotime ( $fi ) );
 		$dias 	= ($semana * 7) - ($di);
-		$d 		= new DateTime ( "$anno-01-01" );
-		$fecha = date ( "Y-m-d", strtotime ( "$anno-01-01 +$dias day" ) ); // $d->modify("+$semana week");
-		if ($dia != false) {
+		//$d 		= new DateTime ( "$anno-01-01" );
+		$fecha	= $this->setSumarDias($dias, $fi);//date ( "Y-m-d", strtotime ( "$anno-01-01 +$dias day" ) ); // $d->modify("+$semana week");
+		
+		if (setNoMenorQueCero($dia) > 0) {
 			if ($dia > 0 and $dia <= 7) {
 				$WDias = array (
 						1 => "Monday",
@@ -373,12 +374,16 @@ class cFecha {
 						6 => "Saturday",
 						7 => "Sunday" 
 				);
-				$tim 		= strtotime ( $fecha );
-				$fecha 		= strtotime ( "Last " . $WDias [$dia], $tim );
+				//setLog($semana);
+				$tim 		= $this->getInt($fecha);
+				$fecha 		= strtotime ( "Next " . $WDias[$dia], $tim );
+				$fecha		= $this->getFechaByInt($fecha);
+				//setLog("Next " . $WDias[$dia] . " FROM $fecha");
 			}
 		}
 		$this->set( $fecha );
 		$this->init();
+		return $this->getFechaISO();
 	}
 	function setFechaPorQuincena($quincena) {
 		$qnas = array (

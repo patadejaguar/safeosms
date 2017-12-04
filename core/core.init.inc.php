@@ -6,6 +6,7 @@ include_once ("core.common.inc.php");
 include_once ("core.db.inc.php");
 include_once ("core.db.dic.php");
 
+@include_once ("../libs/aes.php");
 @include_once ("../libs/Encoding.php");
 //mysql_set_charset('latin1');
 
@@ -143,6 +144,15 @@ function parametro($nombre, $fallback = null, $tipo = MQL_STRING, $fuente = fals
 			case MQL_DATE:
 				$valor		= isset($fuente[$nombre]) ? $fuente[$nombre] : $fallback; //setLog(setFechaValida($fuente[$nombre]));
 				$valor		= setFechaValida($valor);
+				break;
+			case MQL_ARR_INT:
+				$arr		= isset($fuente[$nombre]) ? explode(",", $fuente[$nombre]) : array();
+				$valor		= array();
+				//setLog($fuente[$nombre]);
+				foreach ($arr as $idx => $v){
+					$valor[$idx]	= setNoMenorQueCero($v);
+				}
+				unset($arr);
 				break;
 			default:
 				$fallback	= ($fallback == null) ? "" : $fallback;

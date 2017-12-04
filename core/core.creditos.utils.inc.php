@@ -1558,10 +1558,12 @@ class cUtileriasParaCreditos{
 		//Crear un nuevo Recibo de Ajuste
 		$tolerancia	= setNoMenorQueCero($tolerancia);
 		$tolerancia	= ($tolerancia <=0) ? TOLERANCIA_SALDOS : $tolerancia;
-		$cRec		= new cReciboDeOperacion(10);
-		$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CREDITOS");
-		$msg		= "============\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
-		$cRec->setNumeroDeRecibo($xRec, true);
+		$xQL        = new MQL();
+		//$cRec		= new cReciboDeOperacion(10);
+		$msg        = "";
+		//$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CREDITOS");
+		//$msg		= "============\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+		//$cRec->setNumeroDeRecibo($xRec, true);
                 /*Esta funcion servira para eliminar saldos negativos de Créditos */
         $sql   		= "SELECT
 					`creditos_solicitud`.*,
@@ -1586,8 +1588,8 @@ class cUtileriasParaCreditos{
 								ON `creditos_estatus`.`idcreditos_estatus` =
 								`creditos_solicitud`.`estatus_actual`
 								WHERE saldo_actual < " . $tolerancia . " ORDER BY saldo_actual ";
-						$rs			= getRecordset( $sql );
-						while ($rw=mysql_fetch_array($rs)) {
+						$rs			= $xQL->getRecordset( $sql );
+						while ($rw=$rs->fetch_assoc()) {
 								$socio		 	= $rw["numero_socio"];
 								$credito	 	= $rw["numero_solicitud"];
 								$saldo_actual	= $rw["saldo_actual"];
@@ -1596,16 +1598,77 @@ class cUtileriasParaCreditos{
 									$cCredito 		= new cCredito($credito, $socio);
 									//y se neutralizara con su valor absoluto.
 									$cCredito->init($rw);
-									$cCredito->setReciboDeOperacion($xRec);
+									//$cCredito->setReciboDeOperacion($xRec);
 									//Generar un abono a Capital
 									$cCredito->setAbonoCapital($saldo_actual);
+									$msg	.= "-\r\n-\r\n";
 									$msg	.= "$socio\t$credito\tEliminando el saldo de $saldo_actual\r\n";
-									$msg	.=  $cCredito->getMessages("txt");
+									$msg	.=  $cCredito->getMessages();
 								}
 						}
-                        $cRec->setFinalizarRecibo(true);
+						$rs->free();
+                        //$cRec->setFinalizarRecibo(true);
 
 		return $msg;
+	}
+	function setEliminarCreditosEnTemp($tolerancia = 0){
+	    //Crear un nuevo Recibo de Ajuste
+	    $tolerancia	= setNoMenorQueCero($tolerancia);
+	    $tolerancia	= ($tolerancia <=0) ? TOLERANCIA_SALDOS : $tolerancia;
+	    $xQL        = new MQL();
+	    //$cRec		= new cReciboDeOperacion(10);
+	    $msg        = "";
+	    //$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CREDITOS");
+	    //$msg		= "============\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+	    //$cRec->setNumeroDeRecibo($xRec, true);
+	    /*Esta funcion servira para eliminar saldos negativos de Créditos */
+	    $sql   		= "SELECT
+					`creditos_solicitud`.*,
+					`creditos_tipoconvenio`.*,
+					`creditos_periocidadpagos`.*,
+					`creditos_estatus`.*,
+					`creditos_solicitud`.`tasa_interes` AS `tasa_ordinaria_anual`,
+					`creditos_solicitud`.`tipo_autorizacion` AS `tipo_de_autorizacion`,
+                    `creditos_solicitud`.`tasa_ahorro` AS `tasa_de_ahorro`
+								FROM
+					`creditos_tipoconvenio` `creditos_tipoconvenio`
+						INNER JOIN `creditos_solicitud` `creditos_solicitud`
+						ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+						= `creditos_solicitud`.`tipo_convenio`
+							INNER JOIN `creditos_periocidadpagos`
+							`creditos_periocidadpagos`
+							ON `creditos_periocidadpagos`.
+							`idcreditos_periocidadpagos` =
+							`creditos_solicitud`.`periocidad_de_pago`
+								INNER JOIN `creditos_estatus`
+								`creditos_estatus`
+								ON `creditos_estatus`.`idcreditos_estatus` =
+								`creditos_solicitud`.`estatus_actual`
+								WHERE `saldo_actual` >= " . $tolerancia . " AND (SELECT COUNT(`field_id1`) FROM `general_tmp` WHERE `general_tmp`.`field_id1`=`creditos_solicitud`.`numero_socio`)>0 ";
+	    //setLog($sql);
+	    
+	    $rs			= $xQL->getRecordset( $sql );
+	    while ($rw=$rs->fetch_assoc()) {
+	        $socio		 	= $rw["numero_socio"];
+	        $credito	 	= $rw["numero_solicitud"];
+	        $saldo_actual	= $rw["saldo_actual"];
+	        if($saldo_actual !== 0){
+	            //Se inicializa una nueva instancia de crédito
+	            $cCredito 		= new cCredito($credito, $socio);
+	            //y se neutralizara con su valor absoluto.
+	            $cCredito->init($rw);
+	            //$cCredito->setReciboDeOperacion($xRec);
+	            //Generar un abono a Capital
+	            $cCredito->setAbonoCapital($saldo_actual);
+	            $msg	.= "-\r\n-\r\n";
+	            $msg	.= "$socio\t$credito\tEliminando el saldo de $saldo_actual\r\n";
+	            $msg	.=  $cCredito->getMessages();
+	        }
+	    }
+	    $rs->free();
+	    //$cRec->setFinalizarRecibo(true);
+	    
+	    return $msg;
 	}
 	function setEliminarInteresesDeCreditosPagados(){
 		$msg		= "";
@@ -2786,11 +2849,16 @@ class cCreditosEstadisticas {
 		return $xQL->getNumberOfRows();	
 	}
 	function getNumeroClientesConCredito(){
-		$xQL	= new MQL();
-		$sql 	= "SELECT COUNT(*) AS 'clientes' FROM `tmp_personas_estadisticas` WHERE `creditos_con_saldo`>0 ";
-		$DRow	= $xQL->getDataRow($sql);
-		$clientes	= (isset($DRow["clientes"])) ? $DRow["clientes"] : 0;
-		
+		$idx		= "creditos.e.c.ccredito";
+		$xCache		= new cCache();
+		$clientes	= $xCache->get($idx);
+		if($clientes === null){
+			$xQL		= new MQL();
+			$sql 		= "SELECT COUNT(*) AS 'clientes' FROM `tmp_personas_estadisticas` WHERE `creditos_con_saldo`>0 ";
+			$DRow		= $xQL->getDataRow($sql);
+			$clientes	= (isset($DRow["clientes"])) ? $DRow["clientes"] : 0;
+			$xCache->set($idx, $clientes);
+		}
 		return $clientes;
 	}
 	function getNumeroDeAvales($credito){
@@ -2858,13 +2926,19 @@ class cCreditosProyecciones {
 		$this->mMessages	= "";
 	}
 	function getProyeccionMensual($fecha, $tipo, $sucursal = ""){
-		$xF	= new cFecha();
-		$FechaInicio	= $xF->getDiaInicial($fecha);
-		$FechaFin		= $xF->getDiaFinal($fecha);
-		$periocidad		= CREDITO_TIPO_PERIOCIDAD_MENSUAL;
-		$xQL	= new MQL();
-		$data	= $xQL->getDataRow("SELECT * FROM `entidad_creditos_proyecciones` WHERE `fecha_inicial`='$FechaInicio' AND `fecha_final`='$FechaFin' AND `tipo`=$tipo AND `sucursal`='$sucursal' LIMIT 0,1 ");
+		$idx		= "proyeccion.mes.$fecha.$tipo.$sucursal";
+		$xCache		= new cCache();
+		$data		= $xCache->get($idx);
 		
+		if(!is_array($data)){
+			$xF				= new cFecha();
+			$FechaInicio	= $xF->getDiaInicial($fecha);
+			$FechaFin		= $xF->getDiaFinal($fecha);
+			$periocidad		= CREDITO_TIPO_PERIOCIDAD_MENSUAL;
+			$xQL			= new MQL();
+			$data			= $xQL->getDataRow("SELECT * FROM `entidad_creditos_proyecciones` WHERE `fecha_inicial`='$FechaInicio' AND `fecha_final`='$FechaFin' AND `tipo`=$tipo AND `sucursal`='$sucursal' LIMIT 0,1 ");
+			$xCache->set($idx, $data, $xCache->EXPIRA_UNDIA);
+		}
 		return $this->init($data);
 	}	
 	function addProyeccionMensual($fecha, $tipo, $sucursal = ""){
@@ -3095,12 +3169,15 @@ class cCreditosPreclientes {
 		$xT->email($email);
 		$xT->idestado(SYS_UNO);//Activo
 		$xT->idorigen($origen);
-		$rs = $xT->query()->insert()->save();
-		if($rs === false){
+		$res 	= $xT->query()->insert()->save();
+		$id		= 0;
+		if($res === false){
 			$this->mMessages .= "Faltan Datos para registrar la solicitud\r\n";
 		} else {
 			$this->mMessages .= "Se registro la Solicitud con exito\r\n";
+			$id	= $res;
 		}
+		return $id;
 	}
 
 }

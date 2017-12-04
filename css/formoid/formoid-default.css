@@ -645,7 +645,6 @@ text-shadow: none; color: #0080E3;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
-
 /*.toolnav li a.blue2 {
 text-shadow: 0 -1px 3px #0066cc; color: #FFF;
 background: linear-gradient(top,#4387fd,#4683ea)
@@ -661,6 +660,11 @@ background: #B9CCD2;
 .toolnav li a.blue2 {
 text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
 background: #56C4FF;
+}
+
+.toolnav li a.blue3, .toolnav li a.editar {
+text-shadow: none;
+color: #FFFFFF; background: #4877B6;
 }
 
 .toolnav li a.persona {

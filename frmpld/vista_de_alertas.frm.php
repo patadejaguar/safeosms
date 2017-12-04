@@ -22,8 +22,8 @@ $xlistas	= new cSQLListas();
 $jxc 		= new TinyAjax();
 
 
-function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas, $byfechas){
-	$tipo			= ($tipo == SYS_TODAS) ? false : $tipo;
+function jsaGetListadoDeAvisos($subtipo, $fecha_inicial, $fecha_final, $todas, $byfechas){
+	$subtipo		= setNoMenorQueCero($subtipo);
 	$xT				= new cTipos();
 	$xF				= new cFecha();
 	$xAl			= new cAml_alerts();
@@ -32,7 +32,7 @@ function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas, $byf
 	$xImg			= new cHImg();
 	//
 	$ByEstado		= ($xT->cBool($todas) == true) ? "" : " AND `estado_en_sistema`= " . SYS_UNO;
-	$ByEstado		.= (setNoMenorQueCero($tipo) <= 0 ) ? "" : "  AND (`aml_risk_catalog`.`tipo_de_riesgo` =$tipo) ";
+	$ByEstado		.= (setNoMenorQueCero($subtipo) <= 0 ) ? "" : "  AND (`aml_alerts`.`tipo_de_aviso` =$subtipo) ";
 	$fecha_inicial	= $xF->getFechaISO($fecha_inicial);
 	$fecha_final	= $xF->getFechaISO($fecha_final);
 	if($byfechas == 1){
@@ -62,7 +62,7 @@ function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $todas, $byf
 	return $xT->Show();
 }
 
-$jxc->exportFunction('jsaGetListadoDeAvisos', array('idtipoderiesgoaml', 'idfecha-1', 'idfecha-2', 'idactivas', 'idporfecha'), "#lstalertas");
+$jxc->exportFunction('jsaGetListadoDeAvisos', array('idsubtipo', 'idfecha-1', 'idfecha-2', 'idactivas', 'idporfecha'), "#lstalertas");
 
 $jxc->process();
 
@@ -80,23 +80,27 @@ $xDate		= new cHDate();
 $xSel		= new cHSelect();
 
 $jsb->setNameForm( $xFRM->getName() );
-$selcat		= $xSel->getListaDeTipoDeRiesgoEnAML();
+
+$selcat		= $xSel->getListaDeTipoDeRiesgoEnAMLCAT('idsubtipo');
 $selcat->addEvent("onblur", "jsGetListadoAvisos()");
 $selcat->addEvent("onchange", "jsGetListadoAvisos()");
 $selcat->addEspOption(SYS_TODAS);
 $selcat->setOptionSelect(SYS_TODAS);
+
+
 
 $xFRM->addSeccion("iddivtools", $xHP->getTitle());
 $xFRM->addHElem( $selcat->get(true) );
 $xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->CARGAR);
 $xFRM->addCerrar();
 
-$xFRM->OCheck("TR.Mostrar Inactivas", "idactivas");
+
 
 $xFRM->ODate("idfecha-1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
 $xFRM->ODate("idfecha-2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
-$xFRM->OSiNo("TR.FILTRAR POR FECHA", "idporfecha");
+$xFRM->OSiNo("TR.FILTRO POR FECHA", "idporfecha");
 
+$xFRM->OCheck("TR.VER INACTIVO", "idactivas");
 
 $xFRM->endSeccion();
 $xFRM->addSeccion("iddivalertas", "TR.LISTA DE ALERTAS");

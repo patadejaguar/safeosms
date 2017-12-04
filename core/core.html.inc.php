@@ -21,7 +21,10 @@ use Enhance\Language;
 	@include_once("../libs/spyc.php");
 	@include_once("../libs/open-flash-chart.php");
 	@include_once("../libs/sql.inc.php");
-	@include_once("../libs/dompdf/dompdf_config.inc.php");
+	
+	@include_once("../libs/dompdf/autoload.inc.php");
+	//@include_once("../libs/dompdf/dompdf_config.inc.php");
+	
 	@include_once("../libs/gantti/gantti.php");
 	//@include_once("../libs/guzzle/Client.php");
 	@include_once("../reports/PHPReportMaker.php");
@@ -422,6 +425,7 @@ class cHPage {
 				$this->addJsFile("$path/js/picker.date.js");
 				$this->addJsFile("$path/js/picker.time.js");
 												
+				$this->addJsFile("$path/js/multi-select.min.js");
 				//$this->addJsFile("$path/js/jquery/imagesloaded.pkg.min.js");
 				
 				$this->addCSS("$path/css/formoid/formoid-default.css");
@@ -434,6 +438,8 @@ class cHPage {
 				$this->addCSS("$path/css/visualize-light.css");
 				$this->addCSS("$path/css/font-awesome.min.css");
 				$this->addCSS("$path/css/tinybox.css");
+				
+				$this->addCSS("$path/css/multi-select.css");
 				
 				$this->addJsFile("$path/js/tinybox.js");
 				$this->addJsFile("$path/js/deprecated.js");
@@ -870,6 +876,7 @@ class cHForm {
 	protected $mID			= "";
 	protected $mFooterBar	= "";
 	private $mAvisosInit	= array();
+	private $mAvisosErrs	= array();
 	protected $mConAcc		= false; 
 	private $mArrOpsFrm		= array();
 	private $mValidacion	= false;	//evento de validacion
@@ -887,6 +894,7 @@ class cHForm {
 	private $mNoFieldForm	= false;
 	private $mNoFormTag		= false;
 	private $mHappyBtn		= "";
+	
 	
 	function __construct($name, $action = "", $id = false, $method = "", $class="formoid-default" ){
 		$id				= ($id == false) ? "id-$name" : $id;
@@ -907,6 +915,7 @@ class cHForm {
 	function addDataTag($data, $value ){ $this->mArrProp["data-$data"]		= $value; }
 	function setElementByLine($NumsElm = 2){	$this->mEByLine		= $NumsElm;	}
 	function setTitle($title = ""){ $this->mTitle = $title; }
+	
 	function setAction($action, $conRND = false){
 		if($conRND == true){
 			$sim	= rand(0,1000);
@@ -1129,8 +1138,12 @@ class cHForm {
 	}
 	function setEnc($enc){ $this->mEnc = $enc;	}
 	function getName(){ return $this->mName; }
-	function addAvisoInicial($txt = ""){
-		$this->mAvisosInit[]	= $txt;
+	function addAvisoInicial($txt = "", $error = false){
+		if($error == false){
+			$this->mAvisosInit[]	= $txt;
+		} else {
+			$this->mAvisosErrs[]	= $txt;
+		}
 	}
 	function setValidacion($id, $function, $message = "", $required = false){
 		$xLng	= new cLang();
@@ -1183,7 +1196,10 @@ class cHForm {
 		}
 		//============ Avisos
 		foreach ($this->mAvisosInit as $id => $key){
-			$jsMes	.= "xG.alerta({msg: '" . $this->getT("TR.AVISO") . "', info:'" . $this->getT($key) . "', type : 'ok'});";
+			$jsMes	.= "xG.alerta({msg: '', info:'" . $this->getT($key) . "', type : 'warn'});";
+		}
+		foreach ($this->mAvisosErrs as $id => $key){
+			$jsMes	.= "xG.alerta({msg: '',info:'" . $this->getT($key) . "',type:'error'});";
 		}
 		if($this->mValidacion == true){
 			$valids	= "$('#" . $this->mID . "').isHappy({ fields: {" . $this->mStrVal . "}$HBtn });";
@@ -1253,7 +1269,8 @@ class cHForm {
 	function addAvisoRegistroOK($msg = ""){
 		$xL		= new cLang();
 		$txt	= $xL->getTrad(MSG_READY_SAVE);
-		$txt 	.= ($msg == "") ? "" : $xL->getT($msg);
+		$txt 	.= ($msg == "") ? "" : "\r\n". $xL->getT($msg);
+		
 		$this->addAviso($txt, "idmsg-ok", true, "success");	}
 	function addFootElement($Elements){
 		if ( !is_array($Elements) ){
@@ -1471,7 +1488,11 @@ class cHForm {
 		$xHO	= new cHObject();
 		if($mostrarTip == true){
 			$ntxt	= preg_replace( "/\r|\n/", "", $txt);
-			$this->addAvisoInicial($ntxt);
+			if($class == "error"){
+				$this->addAvisoInicial($ntxt, true);
+			} else {
+				$this->addAvisoInicial($ntxt);
+			}
 			$ntxt	= null;
 		}
 		$txt	= $xHO->Out($txt, OUT_HTML);
@@ -1742,6 +1763,9 @@ class cHForm {
 		$xTxt->setDivClass("tx4 tx18$css");
 		$this->addHElem( $xTxt->getDeCuentaContable($id, $valor, false, false, $titulo) );
 		return $xTxt;
+	}
+	function setMultisel($id){
+		$this->addJsInit(" $('#$id').multiSelect();");
 	}
 }
 class cHTextArea {
@@ -3048,6 +3072,22 @@ class cHSelect {
 		if($selected > 0){	$xS->setOptionSelect($selected);	}
 		return $xS;
 	}
+	function getListaDeCuentasCaptaPers($id = "", $selected = false, $persona = false){
+		$selected	= setNoMenorQueCero($selected);
+		$persona	= setNoMenorQueCero($persona);
+		
+		$id			= ($id == "") ? "idclavecuenta" : $id; $this->mLIDs[]	= $id;
+		$sqlSc		= "SELECT   `captacion_cuentas`.`numero_cuenta` AS `cuenta`,
+         CONCAT(`captacion_cuentas`.`numero_cuenta`, ' - ', `captacion_cuentas`.`alias`,' - ', `captacion_subproductos`.`descripcion_subproductos`, ' - ', `captacion_cuentas`.`fecha_apertura`) AS `descripcion`
+		FROM `captacion_cuentas` INNER JOIN `captacion_subproductos`  ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`.`idcaptacion_subproductos` WHERE    ( `captacion_cuentas`.`numero_socio` = $persona ) LIMIT 0,100";
+		
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		
+		$xS->setLabel("TR.CUENTAS");
+		$xS->setEsSql();
+		if($selected > 0){	$xS->setOptionSelect($selected);	}
+		return $xS;
+	}
 	
 	function getListaDeProductosDeCredito($id = "", $selected = false, $SoloActivos = false){
 		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
@@ -3309,7 +3349,7 @@ class cHSelect {
 	function getListaDePeriocidadDePago($id = "", $selected = false){
 		$id		= ($id == "") ? "idperiocidad" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
-		$sqlSc	= "SELECT `idcreditos_periocidadpagos`, `descripcion_periocidadpagos` FROM `creditos_periocidadpagos` WHERE (`idcreditos_periocidadpagos` !=99) ";
+		$sqlSc	= "SELECT `idcreditos_periocidadpagos`, `descripcion_periocidadpagos` FROM `creditos_periocidadpagos` WHERE (`idcreditos_periocidadpagos` !=99) AND (`estatusactivo`=1) ";
 		$xS 	= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.Frecuencia de pagos");
 		$xS->setDivClass("tx4 tx18 orange");
@@ -3395,13 +3435,27 @@ class cHSelect {
 	}
 	function getListaDeTipoDeRiesgoEnAML($id = "", $selected = ""){
 		$id		= ($id == "") ? "idtipoderiesgoaml" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		= " SELECT * FROM `aml_risk_types` ";
+		$sqlSc		= " SELECT `clave_de_control`,`nombre_del_riesgo` FROM `aml_risk_types` ";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.Tipo de Riesgo");
 		if($selected != ""){ $xS->setOptionSelect($selected); }
 		$xS->setEsSql();
 		return $xS;
-	}		
+	}
+	function getListaDeTipoDeRiesgoEnAMLCAT($id = "", $selected = false, $tipo = false){
+		$tipo		= setNoMenorQueCero($tipo);
+		$id			= ($id == "") ? "idtipoderiesgo" : $id; $this->mLIDs[]	= $id;
+		$sqlSc		= ( $tipo > 0) ? "SELECT * FROM aml_risk_catalog WHERE tipo_de_riesgo=$tipo ORDER BY descripcion" : "SELECT * FROM aml_risk_catalog ORDER BY descripcion ";
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		$xS->setEsSql();
+		if(setNoMenorQueCero($selected) > 0){
+			$xS->setOptionSelect($selected);
+		}
+		$xS->setLabel("TR.TIPO_DE RIESGO");
+		//$xS->addEspOption(SYS_TODAS);
+		//$xS->setOptionSelect(SYS_TODAS);
+		return $xS;
+	}
 	function getListaDeOperacionesPorBase($base, $id = "", $base2 = false, $selected = false){
 		$id			= ($id == "") ? "idtipodepago" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
@@ -3699,9 +3753,12 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}	
-	function getListaDeProductosDeCaptacion($id = "", $select = 0){
-		$id		= ($id == "") ? "idproductocaptacion" : $id; $this->mLIDs[]	= $id;
+	function getListaDeProductosDeCaptacion($id = "", $select = 0, $tipo = 0){
+		$id			= ($id == "") ? "idproductocaptacion" : $id; $this->mLIDs[]	= $id;
 		$sqlSc		= "SELECT idcaptacion_subproductos, descripcion_subproductos FROM captacion_subproductos WHERE idcaptacion_subproductos != 99 AND (`estatus`=1)";
+		if($tipo > 0){
+			$sqlSc	= "SELECT idcaptacion_subproductos, descripcion_subproductos FROM captacion_subproductos WHERE idcaptacion_subproductos != 99 AND (`estatus`=1) AND (`captacion_subproductos`.`tipo_de_cuenta`=$tipo) ";
+		}
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$select		= setNoMenorQueCero($select);
 		if($select>0){$xS->setOptionSelect($select);}
@@ -3726,10 +3783,14 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
-	function getListaDeTituloDeCaptacion($id = ""){
+	function getListaDeTituloDeCaptacion($id = "", $select = 0){
 		$id		= ($id == "") ? "idtitulocaptacion" : $id; $this->mLIDs[]	= $id;
 		$sqlSc		= "SELECT * FROM captacion_tipotitulo";
+		$select		= setNoMenorQueCero($select);
 		$xS 		= new cSelect($id, $id, $sqlSc);
+		if($select>0){
+			$xS->setOptionSelect($select);
+		}
 		$xS->setLabel("TR.TIPO_DE TITULO");
 		$xS->setEsSql();
 		return $xS;
@@ -3980,18 +4041,7 @@ class cHSelect {
 		return $ctrl;
 	}
 	function getListaDeRiesgosAML($id = "", $tipo = false, $selected = false){
-		$tipo		= setNoMenorQueCero($tipo);
-		$id			= ($id == "") ? "idtipoderiesgo" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		= ( $tipo > 0) ? "SELECT * FROM aml_risk_catalog WHERE tipo_de_riesgo=$tipo ORDER BY descripcion" : "SELECT * FROM aml_risk_catalog ORDER BY descripcion ";
-		$xS 		= new cSelect($id, $id, $sqlSc);
-		$xS->setEsSql();
-		if(setNoMenorQueCero($selected) > 0){
-			$xS->setOptionSelect($selected);
-		}
-		$xS->setLabel("TR.TIPO_DE RIESGO");
-		//$xS->addEspOption(SYS_TODAS);
-		//$xS->setOptionSelect(SYS_TODAS);
-		return $xS;
+		return $this->getListaDeTipoDeRiesgoEnAMLCAT($id, $selected, $tipo);
 	}
 
 	function getListaDePeriodosDeCredito($id = "", $fecha = false, $selected = false){
@@ -4865,10 +4915,14 @@ class cHTabla {
 		$this->addTD($html, $props);
 	}
 	function addTH($text){ $xL	= new cLang(); $text	= $xL->getT($text); $this->mHead .= "<th>$text</th>"; 	}
-	function endRow(){ $this->mHtml .= "</tr>\r\n"; 	}
+	function endRow(){
+		$this->mHtml .= "</tr>\r\n"; 	
+	}
 	function addRaw($html){ $this->mHtml .= $html; }
 	function setOut($out){ $this->mOut = $out; }
 	function setTitle($title){ $this->mCaption = $title; }
+	//function getHTML(){ return $this->mHtml; }
+	//function setCleanHTML(){ $this->mHtml = ""; }
 }
 
 class cHDate{
@@ -5955,6 +6009,8 @@ class cSelect{
 	private $mDivClass				= "tx4";
 	private $mIDKeys				= array();
 	private $mEliminados			= array();
+	private $mMultiple				= false;
+	
 	
 	function __construct($name, $id = "", $sql = ""){
 		$this->mId 		= $id;
@@ -6041,6 +6097,7 @@ class cSelect{
 				$icap 	= str_replace('"', "'", $icap);
 				$icap	= $xT->setNoAcentos( $icap );
 				$icap	= $xT->cMayusculas($icap);
+				
 				if($this->mOptionSelect==$ival){ $slt = " selected = \"selected\" ";}
 				if(isset($this->mEliminados[$ival])){
 					//eliminar
@@ -6085,8 +6142,8 @@ class cSelect{
 			}
 		}
 		$IDCache	= "";
-
-			$ctrl = "<select size=\"" . $this->mNRows . "\" name=\"" . $this->mName . "\" $cid $pEvts>
+		$mm			= ($this->mMultiple == true) ? " multiple" : "";
+			$ctrl = "<select size=\"" . $this->mNRows . "\" name=\"" . $this->mName . "\" $cid $pEvts$mm>
 				$ops
 				$pOpts
 			</select>";
@@ -6105,6 +6162,8 @@ class cSelect{
 	function getSQL(){ return  $this->mSql; }
 	function getCountRows(){ return $this->mCount; }
 	function getListaKeys(){ return $this->mIDKeys; }
+	function setMultiple(){ $this->mMultiple = true; }
+	function setID($id){ $this->mId  = $id; }
 }
 
 
@@ -9159,6 +9218,9 @@ class cFormato {
 		$rentaiva										= round(($rentasub*$mIVA),2);
 		$rentatot										= round(($rentasub+$rentaiva),2);
 		
+		
+		
+		
 		$this->mArr["var_leasing_renta_subtotal"]		= getFMoney($rentasub);
 		$this->mArr["var_leasing_renta_iva"]			= getFMoney($rentaiva);
 		$this->mArr["var_leasing_renta_total"]			= getFMoney($rentatot);
@@ -9214,6 +9276,7 @@ class cFormato {
 			if($xCredOrg->getMontoDepositoGarantia() <= 0){
 				$SumarRenta	= false;
 			}
+			$CuotaServs		= $xCredOrg->getMontoAjuste();
 			
 			$RentaProp		= $xCalc->getMontoRentaProp();
 			
@@ -9236,6 +9299,10 @@ class cFormato {
 			$this->mArr["var_leasing_" . $pzo . "_cuota_tenencia" ]		= getFMoney($CuotaTenencia);
 			$this->mArr["var_leasing_" . $pzo . "_cuota_mtto" ]			= getFMoney($CuotaMtto);
 			$this->mArr["var_leasing_" . $pzo . "_cuota_accesorios" ]	= getFMoney($CuotaAcc);
+			$this->mArr["var_leasing_" . $pzo . "_cuota_servicios" ]	= getFMoney($CuotaServs);
+			if($CuotaServs>0){
+				$this->mArr["var_leasing_" . $pzo . "_cuota_renta" ]	= getFMoney(($CuotaRenta-$CuotaServs));
+			}
 			
 			$this->mArr["var_leasing_" . $pzo . "_cuota_na_renta" ]		= getFMoney($CuotaRentaNA);
 			$this->mArr["var_leasing_" . $pzo . "_cuota_aliado" ]		= getFMoney($CuotaAliado);
@@ -9244,7 +9311,12 @@ class cFormato {
 			
 			$this->mArr["var_leasing_" . $pzo . "_proporcional" ]		= getFMoney($xT->renta_proporcional()->v());
 			
+			
+			
+			
 			$this->mArr["var_leasing_" . $pzo . "_subtotal" ]			= getFMoney($SubTotal);
+			
+			
 			
 			$this->mArr["var_leasing_" . $pzo . "_impuestos" ]			= getFMoney($Iva);
 			//$this->mArr["var_leasing_" . $pzo . "_total" ]			= getFMoney($total);
@@ -9285,6 +9357,12 @@ class cFormato {
 			$this->mArr["var_leasing_" . $pzo . "_pp_subtotal"]		= getFMoney($pp_subtotal);			//Agregado a la lista
 			$this->mArr["var_leasing_" . $pzo . "_iva_total"]		= getFMoney($pp_iva);				//Agregado a la lista
 			$this->mArr["var_leasing_" . $pzo . "_inicial_total"]	= getFMoney($pp_total);				//Agregado a la lista
+			
+			//Ocultar columnas
+			$arrCols					= $xCredOrg->getOmitidos();
+			foreach ($arrCols as $idx => $cnt){
+				$this->mArr["td_$cnt"]		= "inv";
+			}
 			//var_leasing_12_pp_subtotal
 			//var_leasing_48_iva_total
 			//var_leasing_48_inicial_total
@@ -9376,6 +9454,7 @@ class cFIcons {
 	public $FILTRO		= "fa-filter";
 	public $CONTRATO	= "fa-file-word-o";
 	public $LEGAL		= "fa-legal";
+	public $LLENAR		= "fa-battery-three-quarters";
 	public $ESTADO_CTA	= "fa-line-chart";
 	public $GRUPO		= "fa-group";
 	public $EMPRESA		= "fa-building";

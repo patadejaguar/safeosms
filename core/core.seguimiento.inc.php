@@ -626,6 +626,8 @@ class cAlertasDelSistema {
 	private $mTipoCont		= null;
 	private $mArrVars		= array();
 	private $mDestPers		= array();
+	private $mArrMails		= array();
+	private $mArrTels		= array();
 
 	function __construct($fecha = false){
 		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
@@ -858,9 +860,10 @@ class cAlertasDelSistema {
 		} else {
 			$this->mMessages	.= "OK\tNo e envia el reporte\r\n";
 		}	
-		
+		$this->mArrMails		= $emails;
+		$this->mArrTels			= $tels; 
 		//setLog($this->mMessages);
-		$this->mObProgAv	= $mOb;
+		$this->mObProgAv		= $mOb;
 		//return $this->mObProgAv;
 	}
 	function getTipoDeProgramacion(){
@@ -927,6 +930,93 @@ class cAlertasDelSistema {
 		$sql	= $ql->getListadoDeProgramacionAlertas(SYS_ALERTA_POR_EVENTO, strtoupper($evento));
 		return $mql->getDataRecord( $sql );
 	}
+	function initByEvento($evento){
+		$xCache	= new cCache();
+		$idc	= "sistema_programacion_de_avisos-byE-$evento";
+		$sql 	= "SELECT  * FROM `sistema_programacion_de_avisos` WHERE `programacion`='$evento' LIMIT 0,1";
+		$dd		= $xCache->get($idc);
+		if( !is_array($dd) ){
+			$xQL	= new MQL();
+			$dd		= $xQL->getDataRow($sql);
+			//setLog($dd);
+			
+			$xCache->set($idc, $dd);
+		}
+		if(isset($dd["programacion"])){
+			$xP		= new cSistema_programacion_de_avisos();
+			$xP->setData($dd);
+			$this->getMailsByCnt($xP->destinatarios()->v());
+		}
+		
+	}
+	function getMailsByCnt($cnt){
+		$emails				= array();
+		$tels				= array();
+		$xLog				= new cCoreLog();
+		
+		//1.- extraer emails
+		$destinatarios		= explode("|", $cnt );
+		foreach ($destinatarios as $key => $cnt){
+			if( trim($cnt) !== "" ){
+				//1.1 Desfragmentar destinos
+				$DS		= explode(":", $cnt);
+				$mdestino	= (isset($DS[0])) ? strtoupper( $DS[0]) : "";
+				$dests		= (isset($DS[1])) ? $DS[1] : "";
+				$cdests		= count($dests);
+				if( $cdests > 0 ){
+					switch ( $mdestino ) {
+						case "OFICIALES":
+							$oficiales		= explode(",", $dests);
+							foreach ($oficiales AS $ofc => $ofkey){
+								$xOf		= new cOficial($ofkey); $xOf->init();
+								$mail		= $xOf->getEmail();
+								$emails[]	= $mail;
+								$xLog->add("OK\tOFICIAL\tAgregar mail $mail  \r\n", $xLog->DEVELOPER);
+							}
+						break;
+						case "EMPRESAS":
+							$empresas		= explode(",", $dests);
+							foreach ($empresas AS $emp => $empkey){
+								$xEmp		= new cEmpresas($empkey); $xEmp->init();
+								$emails		= array_merge($emails, $xEmp->getEmailsDeEnvio());
+								$xLog->add("OK\tEMPRESAS\tAgregar mail de la empresa $empkey  \r\n", $xLog->DEVELOPER);
+							}
+						break;
+						case "PERSONAS":
+							$personas		= explode(",", $dests);
+							//Agregar personas opcionales
+							if(count($this->mDestPers) > 0 ){
+								$personas	= array_merge($personas, $this->mDestPers);
+							}
+							foreach ($personas AS $ofc => $ofkey){
+								$xSoc		= new cSocio($ofkey); $xSoc->init();
+								$mail		= $xSoc->getCorreoElectronico();
+								$emails[]	= $mail;
+								$xLog->add("OK\tPERSONA\tAgregar mail $mail  \r\n", $xLog->DEVELOPER);
+								if($xT->cNumeroTelefonico($xSoc->getTelefonoPrincipal()) != false){
+									$EnviarSMS		= true;
+									$tels[]			= $xT->cNumeroTelefonico($xSoc->getTelefonoPrincipal());
+								}
+							}
+						
+						break;
+						case "CORREO":
+							$personas		= explode(",", $dests);
+							foreach ($personas AS $ofc => $ofkey){
+								if (filter_var($ofkey, FILTER_VALIDATE_EMAIL)){ $emails[]	= $ofkey; }
+								$xLog->add("OK\tCORREO\tAgregar mail $ofkey  \r\n", $xLog->DEVELOPER);
+							}
+
+							break;
+					}
+				}
+			} 	//end trim
+		}		//end foreach
+		$this->mArrMails		= $emails;
+		$this->mArrTels			= $tels;
+	}
+	function getArrMails(){ return $this->mArrMails; }
+	function getArrTels(){ return $this->mArrTels; }
 }
 
 
@@ -1071,27 +1161,27 @@ class cNotificaciones {
 			// 0 = off (for production use)
 			// 1 = client messages
 			// 2 = client and server messages
-			$mail->SMTPDebug  = 0;
-			$mail->Timeout    = 10;
+			$mail->SMTPDebug 		= 0;
+			$mail->Timeout    		= 10;
 
 			//if(MODO_DEBUG == true){ $mail->SMTPDebug  = 2;	}
 			
 			//Ask for HTML-friendly debug output
-			$mail->Debugoutput = 'echo'; //html
+			$mail->Debugoutput 		= 'echo'; //html
 			//Set the hostname of the mail server
-			$mail->Host       = $this->mMailSrv;
+			$mail->Host      		= $this->mMailSrv;
 			//Set the SMTP port number - 587 for authenticated TLS, a.k.a. RFC4409 SMTP submission
-			$mail->Port       = $this->mMailSrvPort;
+			$mail->Port       		= $this->mMailSrvPort;
 			//Set the encryption system to use - ssl (deprecated) or tls
 			if($this->mMailSrvTLS == true OR $this->mMailSrvTLS == "tls" OR $this->mMailSrvPort == 587){
-				$mail->SMTPSecure = 'tls';//$this->mMailSrvTLS;//
+				$mail->SMTPSecure 	= 'tls';//$this->mMailSrvTLS;//
 			}
 			//Whether to use SMTP authentication
-			$mail->SMTPAuth   = true;
+			$mail->SMTPAuth   		= true;
 			//Username to use for SMTP authentication - use full email address for gmail
-			$mail->Username   = $this->mMailSrvUsr;//EACP_MAIL;
+			$mail->Username   		= $this->mMailSrvUsr;//EACP_MAIL;
 			//Password to use for SMTP authentication
-			$mail->Password   = $this->mMailSrvPwd;
+			$mail->Password   		= $this->mMailSrvPwd;
 			//Set who the message is to be sent from
 			$mail->SetFrom($this->mMailSrvUsr, $this->mTitleFrom);
 			//Set an alternative reply-to address
@@ -1102,8 +1192,8 @@ class cNotificaciones {
 			$mail->Subject = $subject;
 			//Read an HTML message body from an external file, convert referenced images to embedded, convert HTML into a basic plain-text alternative body
 			//$mail->MsgHTML(file_get_contents('contents.html'), dirname(__FILE__));
-			$mxMsg		= "";
-			$mxMsg		.= $body;
+			$mxMsg			= "";
+			$mxMsg			.= $body;
 	
 			$mail->MsgHTML($mxMsg);
 			//Replace the plain text body with one created manually
@@ -1188,6 +1278,31 @@ class cNotificaciones {
 		$cadena			= str_replace("\r\n", ".", $cadena);
 		
 		return $cadena;
+	}
+	function sendMailTemplate($titulo, $mail,$arr = array(), $idforma = 901){
+		$xFmt	= new cFormato($idforma);
+		$txt	= "";
+		//variable_nombre_de_la_entidad
+		if(isset($arr["var_dirijido_a"])){
+			$this->mMailToName	= $arr["var_dirijido_a"];
+		}
+		
+		/*
+				"var_dirijido_a" => "",
+				"var_url_action" => "",
+				"var_title_url_action" => "",
+				"var_parrafo_inicio" => "",
+				"var_parrafo_fin" => "",
+				"var_parrafo_despedida" => ""
+		*/
+		$arr["var_pre_mail"]	= $arr["var_parrafo_inicio"];
+		
+		if($xFmt->init($idforma) == true){
+			$xFmt->setProcesarVars($arr);
+			
+			$txt	= $xFmt->get();
+		}
+		$this->sendMail($titulo, $txt, $mail );
 	}
 }
 

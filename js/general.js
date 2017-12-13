@@ -34,7 +34,7 @@ var PlanGen		= function(){};
 var ValidGen	= function(){};
 var SegGen		= function(){};
 var FechaGen	= function(){};
-
+var LeasGen		= function(){};
 //---------------------------- Funciones generales
 /*function parseFechaMX(str) {
 	// this example parses dates like "month/date/year"
@@ -768,7 +768,9 @@ function numero(n){	if(typeof n == 'number' && !isNaN(n) && isFinite(n) && n != 
 if (typeof jQuery != "undefined") {
 	jQuery.fn.reset = function () {  $(this).each (function() { this.reset(); }); }
 		jQuery.extend({
-			  confirm: function(message, title, onTrue, onFalse) {
+			  confirm: function(message, title, onTrue, onFalse, onClose) {
+				onClose = (typeof onClose == "undefined") ? function(){} : onClose;
+				
 				jQuery("<div></div>").dialog({
 				   // Remove the closing 'X' from the dialog
 				   open: function(event, ui) {
@@ -788,7 +790,7 @@ if (typeof jQuery != "undefined") {
 								return false;
 							}
 						},
-						close: function(event, ui) { jQuery(this).remove(); },
+						close: function(event, ui) { setTimeout(onClose,1); jQuery(this).remove(); },
 						resizable: false,
 						title: title,
 						modal: true
@@ -1121,11 +1123,12 @@ Gen.prototype.confirmar	= function(opts){
 	var canc 	= (typeof opts.cancelar == "undefined") ? function(){} : opts.cancelar;
 	var msgNV	= (typeof opts.alert == "undefined") ? "" : opts.alert;
 	var msgTit	= (typeof opts.titulo == "undefined") ? "SAFE-OSMS" : opts.titulo;
+	var onClose	= (typeof opts.close == "undefined") ? function(){} : opts.close;
 	var metaO	= this;
 	if (evalF == true) {
 		if ($.trim(msg) != "") { msg	= metaO.lang(msg);	}
 		//if( confirm(msg) == false){ setTimeout(canc, 10); } else { setTimeout(callB, 10);	}
-		jQuery.confirm(msg, msgTit, callB, canc);
+		jQuery.confirm(msg, msgTit, callB, canc, onClose);
 	} else {
 		if ($.trim(msgNV) != "") { msg	= metaO.lang(msgNV); metaO.alerta({ msg : msg });	}
 	}
@@ -1360,11 +1363,14 @@ Gen.prototype.dec	= function(str){
 }
 var TableW 		= function(){}
 TableW.prototype.add	= function(opts){
-	opts	= (typeof opts == "undefined") ? {} : opts;
-	var mID	= (typeof opts.id == "undefined") ? "" : opts.id;
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var mID		= (typeof opts.id == "undefined") ? "" : opts.id;
 	
-	var Des	= (typeof opts.destino == "undefined") ? "" : opts.destino;
-	var Cols= (typeof opts.cols == "undefined") ? [] : opts.cols;
+	var des		= (typeof opts.destino == "undefined") ? "" : opts.destino;
+	
+	var cols	= (typeof opts.cols == "undefined") ? [] : opts.cols;
+	var sty		= (typeof opts.estilo == "undefined") ? [] : opts.estilo;
+	
 	if (!document.getElementById(mID)) {
 		
 		var tt	= document.createElement("TABLE");
@@ -1372,10 +1378,13 @@ TableW.prototype.add	= function(opts){
 		var tr1	= document.createElement("TR");
 		trH		= tr1;
 		
-		for(var ik = 0; ik < Cols.length; ik++){
-			var ccol	= Cols[ik];
-			var col		= document.createElement("TH");
+		for(var ik = 0; ik < cols.length; ik++){
+			var ccol		= cols[ik];
+			var col			= document.createElement("TH");
 			col.innerHTML	= ccol;
+			if(sty[ik]){
+				col.setAttribute("class", sty[ik]);
+			}
 			trH.appendChild(col);
 		}
 		hh.appendChild(trH);
@@ -1388,18 +1397,19 @@ TableW.prototype.add	= function(opts){
 		tt.appendChild(bb);
 		tt.appendChild(ff);
 		//setLog(tt.innerHTML);
-		$(Des).append(tt);
+		$(des).append(tt);
 	
 	}
 }
 TableW.prototype.addRow	= function(opts){
-	opts	= (typeof opts == "undefined") ? {} : opts;
-	var mID	= (typeof opts.id == "undefined") ? "" : opts.id;
-	var mVal= (typeof opts.vals == "undefined") ? [] : opts.vals;
-	var TID	= (typeof opts.tableid == "undefined") ? "" : opts.tableid;
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var mID		= (typeof opts.id == "undefined") ? "" : opts.id;
+	var mVal	= (typeof opts.vals == "undefined") ? [] : opts.vals;
+	var TID		= (typeof opts.tableid == "undefined") ? "" : opts.tableid;
+	var sty		= (typeof opts.estilo == "undefined") ? [] : opts.estilo;
 	
-	var tr1	= document.createElement("TR");
-	trH		= tr1;
+	var tr1		= document.createElement("TR");
+	trH			= tr1;
 	
 	for(var ik = 0; ik < mVal.length; ik++){
 		var ccol	= mVal[ik];
@@ -1407,6 +1417,9 @@ TableW.prototype.addRow	= function(opts){
 		col.innerHTML	= ccol;
 		//document.createTextNode(ccol)
 		//col.appendChild();
+		if(sty[ik]){
+			col.setAttribute("class", sty[ik]);
+		}
 		trH.appendChild(col);
 	}
 	$(TID).find("tbody").append(trH);
@@ -1889,7 +1902,14 @@ CredGen.prototype.getLeasingCotizacion	= function(id){
 	var gURL = "../rpt_formatos/leasing-cotizacion.rpt.php?clave=" + id;
 	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
 }
-
+CredGen.prototype.getLeasingCotizador	= function(id){
+	var gURL = "../frmarrendamiento/cotizador.edit.frm.php?clave=" + id;
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+}
+CredGen.prototype.getLeasingActivos	= function(id){
+	var gURL = "../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id;
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+}
 // --------------------- END CREDITO
 //---------------------- PERSONAS
 PersGen.prototype.goToAgregarFisicas	= function(opts){

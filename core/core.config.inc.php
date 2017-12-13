@@ -334,7 +334,7 @@ define("DEFAULT_TIEMPO",			99);
 define("DEFAULT_TIPO_DOMICILIO",		99);
 define("DEFAULT_GENERO",			99);
 define("DEFAULT_CAPTACION_ORIGEN",			99);
-define("DEFAULT_PERMISOS", "2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw");
+define("DEFAULT_PERMISOS", "2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw");
 
 define("TIPO_RELACION_CONYUGE",			3);
 define("TIPO_RELACION_BENEFICIARIO",		11);
@@ -372,9 +372,12 @@ define("AVISOS_TIPO_RECORDATORIO",		8);
 define("SYS_PRODUCTO_INDIVIDUAL",		200);
 define("SYS_PRODUCTO_REVOLVENTES",		300);
 define("SYS_PRODUCTO_NOMINA",			100);
-define("SYS_PRODUCTO_FUERA_NOMINA",		201);
-define("SYS_PRODUCTO_DESCARTADOS",		203);
 define("SYS_PRODUCTO_GRUPOS", 			900);
+define("SYS_PRODUCTO_ARREND", 			500);
+
+define("SYS_PRODUCTO_FUERA_NOMINA",		201);	//Deprecated
+define("SYS_PRODUCTO_DESCARTADOS",		203);	//Deprecated
+
 
 define("SYS_FACTOR_DIAS_MES", 			30.4166666666666);
 
@@ -469,8 +472,10 @@ define("OPERACION_CLAVE_PAGO_COM_VARIAS",	246);
 define("OPERACION_CLAVE_PAGO_SEGURO_V",		157);
 define("OPERACION_CLAVE_PAGO_MTTO_V",		172);
 define("OPERACION_CLAVE_PAGO_TENEN_V",		171);
+define("OPERACION_CLAVE_PAGO_PLACAS",		180);
 define("OPERACION_CLAVE_PAGO_ACC_V",		173);
 define("OPERACION_CLAVE_PAGO_GTIAE_V",		174);
+
 define("OPERACION_CLAVE_PAGO_IVA_ARR",		176);
 
 //define("OPERACION_CLAVE_COMISION_CBZA",	145);
@@ -488,6 +493,7 @@ define("RECIBOS_TIPO_RETIRO_VISTA",		4);
 define("RECIBOS_TIPO_TERCEROS",		20);
 define("RECIBOS_TIPO_OINGRESOS",		99);
 define("RECIBOS_TIPO_OEGRESOS",		98);
+define("RECIBOS_TIPO_PRIMERPAG",		301);
 
 define("RECIBOS_TIPO_PAGOSPENDS",		22);
 
@@ -1142,6 +1148,16 @@ if(!isset($safe_sesion_en_segundos)){
 
 class cSAFEConfiguracion {
 	public $SISTEMA_RESPALDO_POR_MAIL			= false;
+	
+}
+class cConfigCatalogo {
+	public $MODULO_CAPTACION_ACTIVADO		= "modulo_de_captacion_activado";
+	public $MODULO_LEASING_ACTIVADO			= "modulo_de_leasing_activado";
+	public $MODULO_AML_ACTIVADO				= "modulo_de_aml_activado";
+	public $MODULO_CAJA_ACTIVADO			= "modulo_de_caja_activado";
+	public $MODULO_CONTABILIDAD_ACTIVADO	= "modulo_de_contabilidad_activado";
+	public $MODULO_SEGUIMIENTO_ACTIVADO		= "modulo_de_seguimiento_activado";
+	
 }
 class cConfiguration {
     private $mTipo;
@@ -1206,14 +1222,18 @@ class cConfiguration {
         $sql    = "UPDATE entidad_configuracion
                 SET valor_del_parametro='$valor'
                 WHERE nombre_del_parametro='$parametro' ";
-        if($this->cnx() != false){ 
+        $res	= false;
+        if($this->cnx()){ 
 			$this->cnx()->query($sql);
 			if(isset($this->mArrConfig[$this->mIDConfig . $parametro])){
 				$this->mArrConfig[$this->mIDConfig . $parametro]	= $valor;
 			} 
 			//Eliminar Cache
-
+			$xCache				= new cCache();
+			$xCache->clean($this->mIDCache);
+			$res	= true;
 		}
+		return $res;
     }
     function add($nombre, $descripcion = "", $valor = "1", $tipo = "desconocido"){
         $sql    = "INSERT INTO entidad_configuracion(tipo, nombre_del_parametro, descripcion_del_parametro, valor_del_parametro)

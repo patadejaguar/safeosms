@@ -38,7 +38,9 @@ function jsaReVivienda($idsocio){
 		$cTbl->OButton("TR.Verificar", "jsVerificar(_REPLACE_ID_)", $cTbl->ODicIcons()->SALUD);
 		
 		$cTbl->addEditar();
-		$cTbl->addEliminar();
+		
+		//$cTbl->addEliminar();
+
 		
 		$cTbl->setKeyField("idsocios_vivienda");
 		$cTbl->setEventKey("var xPv=new PersVivGen();xPv.getVerVivienda");

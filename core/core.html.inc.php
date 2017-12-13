@@ -1129,12 +1129,12 @@ class cHForm {
 	}
 	function addImprimir($titulo = "",$eventName = "jsImprimirRecibo()"){
 		$titulo	= ($titulo == "") ? "TR.IMPRIMIR RECIBO" : $titulo; 
-		$this->OButton($titulo, $eventName, $this->ic()->IMPRIMIR);
+		$this->OButton($titulo, $eventName, $this->ic()->IMPRIMIR, "cmdimprimir", "red");
 	}
 	function addRefrescar($Evento = ""){
 		$xBtn		= new cHButton();
 		$Evento		= ($Evento == "") ? "document.location.reload(true);" : $Evento;
-		$this->addToolbar($xBtn->getNav("TR.RECARGAR", $Evento, $this->ic()->RECARGAR, "", "blue" ) );
+		$this->addToolbar($xBtn->getNav("TR.RECARGAR", $Evento, $this->ic()->RECARGAR, "cmdrefresh", "blue" ) );
 	}
 	function setEnc($enc){ $this->mEnc = $enc;	}
 	function getName(){ return $this->mName; }
@@ -1464,12 +1464,12 @@ class cHForm {
 		}
 		$this->OButton("TR.Reporte del Recibo", "var xRec = new RecGen();xRec.reporte($recibo);", $this->ic()->REPORTE, "rpt-$recibo");
 		if(getEsModuloMostrado(USUARIO_TIPO_CAJERO) == true){
-			$this->OButton("TR.Agregar Bancos", "var xRec = new RecGen();xRec.addBancos($recibo);", "bancos", "bn-$recibo");
-			$this->OButton("TR.Agregar Tesoreria", "var xRec = new RecGen();xRec.addTesoreria($recibo);", $this->ic()->DINERO, "tes-$recibo");
 			$this->OButton("TR.Reimprimir Recibo", "var xG=new Gen();xG.w({full:true,url:'$url'});", "imprimir", "print-$recibo", "white");
-			
-			$this->OButton("TR.Editar Recibo", "var xRec = new RecGen();xRec.editar($recibo);", $this->ic()->EDITAR, "edit-$recibo", "yellow");
-			
+			if($xUser->getPuedeEditarRecibos() == true){
+				$this->OButton("TR.Agregar Bancos", "var xRec = new RecGen();xRec.addBancos($recibo);", "bancos", "bn-$recibo");
+				$this->OButton("TR.Agregar Tesoreria", "var xRec = new RecGen();xRec.addTesoreria($recibo);", $this->ic()->DINERO, "tes-$recibo");
+				$this->OButton("TR.Editar Recibo", "var xRec = new RecGen();xRec.editar($recibo);", $this->ic()->EDITAR, "edit-$recibo", "yellow");
+			}
 		}
 		if($xUser->getPuedeEliminarRecibos() == true){
 			$this->OButton("TR.Eliminar Recibo", "var xRec = new RecGen();xRec.confirmaEliminar($recibo);", $this->ic()->ELIMINAR, "del-$recibo", "red");
@@ -1480,6 +1480,7 @@ class cHForm {
 		}		
 	}
 	function addAtras(){ $this->OButton("TR.Regresar", "window.history.back(1)", $this->ic()->ATRAS); }
+	function addEliminar($evt=""){ $this->OButton("TR.ELIMINAR", $evt, $this->ic()->ELIMINAR,"cmdeliminar", "red"); }
 	function addFecha($fecha = false){
 		
 		$this->ODate("idfechaactual", $fecha, "TR.Fecha");
@@ -2271,7 +2272,10 @@ class cHText extends cHInput {
 		//agrega un control con Letras
 		return $this->get($id, $valor, $titulo);		
 	}
-	function setPlaceholder($txt){ $this->mPlaceholder = $txt; }
+	function setPlaceholder($txt){
+		$this->mArrProp["placeholder"]	= $txt;
+		$this->mPlaceholder = $txt;
+	}
 	function getBasic($id, $size = 0, $class = "normalfield", $valor = "", $titulo = "", $forceClearProps = false){
 		if($forceClearProps	== true ){
 			$this->setClearProperties();
@@ -3513,16 +3517,19 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
-	function getListaDeNivelDeUsuario($id = "", $selected = false){
+	function getListaDeNivelDeUsuario($id = "", $selected = false, $limit = false){
 		$id			= ($id == "") ? "idniveldeusuario" : $id; $this->mLIDs[]	= $id;
+		$selected	= setNoMenorQueCero($selected);
+		$limit		= setNoMenorQueCero($limit);
+		$ByLim		= ($limit>0) ? " AND (`general_niveles`.`tipo_sistema`<$limit) " : "";
 		$sqlSc		= "SELECT
 				`general_niveles`.`idgeneral_niveles`,
 				`general_niveles`.`descripcion_del_nivel` 
 			FROM
-				`general_niveles` `general_niveles` WHERE idgeneral_niveles != 99 ";
+				`general_niveles` `general_niveles` WHERE idgeneral_niveles != 99 $ByLim ";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.PERFIL DE USUARIO");
-		if($selected != false){ $xS->setOptionSelect($selected); }
+		if($selected > 0){ $xS->setOptionSelect($selected); }
 		$xS->setEsSql();
 		return $xS;
 	}
@@ -5884,7 +5891,7 @@ LONGTEXT: 252
 					if($this->mTipoSalida == OUT_EXCEL){
 						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<th>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</th>" : "<td></td>";
 					} else {
-						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<th><input type='hidden' id='idsum-" .  $ism[$i] . "' value='" . $this->mFieldSum[ $ism[$i] ] . "' /><mark id='sum-" .  $ism[$i] . "'>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</mark></th>" : "<td></td>";
+						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<th><input type='hidden' id='idsum-" .  $ism[$i] . "' value='" . $this->mFieldSum[ $ism[$i] ] . "' /><span id='sum-" .  $ism[$i] . "'>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</span></th>" : "<td></td>";
 					}
 				} else {
 					$tfoot		.= ($i==0 AND $this->mRowCount > 0 AND $this->mNoFilas == false) ? "<th>Filas: " . $this->mRowCount . "</th>" : "<td>" . $this->mOpTitleFoot . "</td>";
@@ -6246,7 +6253,7 @@ class cHCheckBox {
 		
 	}
 	function addEvent($function = "", $onevent = "", $check = false){ $this->mAEvents[$onevent] = $function; }
-	function setOnClick($event){ $this->addEvent($onevent, "onclick"); }
+	function setOnClick($event){ $this->addEvent($event, "onclick"); }
 	function get($label = "", $id = "idcoolcheck", $checked = false){
 		if($this->mOLang == null){$this->mOLang = new cLang();}
 		$xT		= new cTipos();
@@ -6256,7 +6263,7 @@ class cHCheckBox {
 		$check	= ($checked == true) ? " checked='checked'" : "";
 		$events	= "";
 		foreach ($this->mAEvents as $onevent => $function){
-			$events	.= "$onevent='$function' ";
+			$events	.= "$onevent=\"$function\" ";
 		}
 		$divInit= ($cls == "") ? "" : "<div $cls>";
 		$divEnd = ($cls == "") ? "" : "</div>";
@@ -7748,6 +7755,8 @@ class cFormato {
 				$this->mArr["variable_aval" . $itx . "_telefono_principal"] = $xSoc->getTelefonoPrincipal();
 				$this->mArr["variable_aval" . $itx . "_email"] 				= $xSoc->getCorreoElectronico();
 				
+				$this->mArr["aval_telefono_principal"]						= $xSoc->getTelefonoPrincipal();	
+				
 				$xTI	= new cPersonasDocumentacionTipos($xSoc->getTipoDeIdentificacion()); $xTI->init();
 				
 				$vars	= array(
@@ -7758,7 +7767,6 @@ class cFormato {
 					"aval_domicilio_convencional"	=> "",
 					"aval_email"					=> $xSoc->getCorreoElectronico(),
 					"aval_representante"			=> $xSoc->getNombreDelRepresentanteLegal(),
-					
 					"aval_domicilio_localidad" 		=> "",
 					"aval_direccion_calle_y_numero" => "",
 					"aval_direccion_estado" 		=> "",
@@ -9408,6 +9416,7 @@ class cFIcons {
 	public $BLOQUEAR	= "fa-lock";
 	public $OK			= "aceptar";
 	public $NO			= "cancelar";
+	public $RANDOM		= "fa-random";
 	public $RECARGAR	= "refrescar";
 	public $CARGAR		= "fa-arrow-circle-up";
 	public $DESCARGAR	= "fa-arrow-circle-down";
@@ -9418,12 +9427,14 @@ class cFIcons {
 	public $COBROS		= "caja";
 	public $CREDITO		= "fa-money";
 	public $RECIBO		= "fa-bars";
+	public $RESTAR		= "fa-minus";
 	public $AHORRO		= "fa-university";
 	public $CHECAR		= "fa-check";
 	public $EJECUTAR	= "ejecutar";
 	public $PASSWORD	= "fa-key";
 	public $EDITAR		= "editar";
 	public $SALUD		= "fa-user-md";
+	public $SUMAR		= "fa-plus";
 	public $BANEAR		= "fa-ban";
 	public $PARAR		= "fa-stop";
 	public $PDF			= "fa-file-pdf-o";
@@ -9438,6 +9449,7 @@ class cFIcons {
 	public $GUARDAR		= "guardar";
 	public $PREGUNTAR	= "preguntar";
 	public $ATRAS		= "atras";
+	public $ACTUAL		= "fa-map-marker";
 	public $CALENDARIO	= "fa-calendar";
 	public $CALENDARIO1	= "fa-calendar-o";
 	public $EXCEL		= "fa-file-excel-o";
@@ -9449,12 +9461,14 @@ class cFIcons {
 	public $TAREA		= "tarea";
 	public $TELEFONO	= "fa-phone";
 	public $CALCULAR	= "fa-calculator";
+	public $CAJA		= "fa-inbox";
 	public $AUTORIZAR	= "fa-check-square";
 	public $FORMATO		= "fa-newspaper-o";
 	public $FILTRO		= "fa-filter";
 	public $CONTRATO	= "fa-file-word-o";
 	public $LEGAL		= "fa-legal";
 	public $LLENAR		= "fa-battery-three-quarters";
+	public $LLENO		= "fa-battery-full";
 	public $ESTADO_CTA	= "fa-line-chart";
 	public $GRUPO		= "fa-group";
 	public $EMPRESA		= "fa-building";

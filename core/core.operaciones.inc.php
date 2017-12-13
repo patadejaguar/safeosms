@@ -89,6 +89,7 @@ class cReciboDeOperacion{
 	private $mIDCache				= "";
 	private $mSaldoHistorico		= 0;
 	private $mAfectaEnCaja			= false;
+	private $mTiempo				= 0;
 	
 	public $ORIGEN_CAPTACION		= "captacion";
 	public $ORIGEN_COLOCACION		= "colocacion";
@@ -190,7 +191,7 @@ class cReciboDeOperacion{
 				$this->mOrigen				= $DR["origen"];
 				
 				$this->mIndiceOrigen		= $DR["indice_origen"];
-					
+				$this->mTiempo				= $DR["tiempo"];
 				$this->mDatosByArray		= $DR;
 				$this->mFechaDeVcto			= $this->mFechaDeOperacion;
 				$this->mUsuario				= $ORec->idusuario()->v();
@@ -340,6 +341,7 @@ class cReciboDeOperacion{
 	}
 	function setCuentaBancaria($cuenta){ $this->mCuentaBancaria = $cuenta; }
 	function getPersonaAsociada(){ return $this->mClavePersonAsoc; }
+	function getTiempo(){ return $this->mTiempo; }
 	function addMovimiento($tipo, $monto, $periodo =1, $observaciones = "", $afectacion =1,$persona = false, $documento = false, $fecha = false, $SaldoInicial = 0, $SaldoFinal=0){
 		$xF			= new cFecha();
 		$fecha		= $xF->getFechaISO($fecha);
@@ -944,7 +946,8 @@ class cReciboDeOperacion{
 				$tool	.= "<td>" . $this->getCodigoDeDocumento() . "</td>" ;
 								
 				$tool	.= "<tr><th class='izq'>" . $xLg->getT("TR.Elabora") . "</th>";
-				$tool	.= "<td>" . $xUsr->getNombreCompleto(). "-" . $xF->getFechaDDMM($this->mFechaDeCaptura) . "</td>" ;
+				//$xF->getFechaDDMM($this->mFechaDeCaptura) 
+				$tool	.= "<td>" . $xUsr->getNombreCompleto(). "-" . date("M/d H:i:s", $this->getTiempo()) . "</td>" ;
 				
 				if($this->isDeEmpresa() == true){
 					$xEmp	= new cEmpresas($personaAsoc);
@@ -1157,9 +1160,10 @@ class cReciboDeOperacion{
 		$xQL				= new MQL();
 		$xF					= new cFecha();
 		$fecha				= $xF->getFechaISO($fecha);
+		$fechaAnterior		= $this->getFechaDeRecibo();
 		$this->mFechaDeOperacion	= $fecha;
 		$recibo				= $this->mCodigoDeRecibo;
-		$this->mMessages	.= "WARN\tRecibo $recibo . Actualizando la fecha " . $this->getFechaDeRecibo() . " A  $fecha\r\n";
+		$this->mMessages	.= "WARN\tRecibo $recibo . Actualizando la fecha " . $fechaAnterior . " A  $fecha\r\n";
 		
 		if( $actualizacion == true ){
 			$xQL->setRawQuery("UPDATE operaciones_recibos SET fecha_operacion='$fecha' WHERE idoperaciones_recibos=$recibo");

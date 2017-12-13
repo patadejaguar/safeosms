@@ -19,7 +19,7 @@ include_once("../libs/sql.inc.php");
 include_once("../core/core.config.inc.php");
 
 $oficial 		= elusuario($iduser);
-$xHP			= new cHPage();
+$xHP			= new cHPage("TR.OPERACIONES BANCARIAS", HP_FORM);
 $operacion		= parametro("operacion", BANCOS_OPERACION_DEPOSITO, MQL_RAW);
 //require_once(TINYAJAX_PATH . "/TinyAjax.php");
 //$jxc = new TinyAjax();
@@ -38,6 +38,8 @@ $xSel				= new cHSelect();
 
 $xFRM				= new cHForm("bancos_operaciones", "movimientos_bancarios.frm.php");
 //id,	label value, size,	class,	options[])
+$xFRM->setTitle($xHP->getTitle());
+
 
 $selBanco			= $xSel->getListaDeCuentasBancarias("");
 $selBanco->addEspOption(SYS_TODAS);

@@ -155,6 +155,12 @@ var Configuracion = {
 			quincenal: 15,
 			catorcenal: 14,
 			mensual:30
+		},
+		tipoensistema : {
+			arrendamiento : 500,
+			lineas : 300,
+			individual : 200,
+			nomina : 100
 		}
 	},
 	opciones : {

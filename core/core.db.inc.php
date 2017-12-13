@@ -3841,7 +3841,8 @@ FROM
 	WHERE    ( `creditos_flujoefvo`.`solicitud_flujo` = $credito )";
 		return $sql;
 	}
-	function getListadoDeLeasingPlanCliente($credito){
+	function getListadoDeLeasingPlanCliente($credito, $SoloActivos = false){
+		$ByActivos	= ($SoloActivos == true) ? " AND (setNoMenorCero((`leasing_rentas`.`total`-`leasing_rentas`.`suma_pagos`)) > 0) ": "";
 		$sql	= "SELECT   `leasing_rentas`.`idleasing_renta` AS `id`,
 		`leasing_rentas`.`clave_leasing` AS `idleasing`,
 		`leasing_rentas`.`credito`,
@@ -3854,7 +3855,9 @@ FROM
 		`leasing_rentas`.`suma_pagos` AS `pagos`
 		FROM     `leasing_rentas`
 		WHERE    ( `leasing_rentas`.`credito` = $credito )
+		$ByActivos
 		ORDER BY `leasing_rentas`.`periodo` LIMIT 0,200";
+		//setLog($sql);
 		return $sql;
 	}
 

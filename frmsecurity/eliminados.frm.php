@@ -63,6 +63,7 @@ FROM     `sistema_eliminados`
 INNER JOIN `usuarios`  ON `sistema_eliminados`.`idusuario` = `usuarios`.`idusuarios` $ByUser ");
 $xHG->addList();
 $xHG->addKey("idsistema_eliminados");
+
 $xHG->col("tipoobjeto", "TR.OBJETO", "10%");
 $xHG->col("usuario", "TR.USUARIO", "10%");
 $xHG->ColFecha("fecha", "TR.FECHA", "10%");

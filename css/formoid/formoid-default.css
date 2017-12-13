@@ -9,7 +9,7 @@
 	margin:0 auto;
 	background-color:#FFFFFF;
 	font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;
-	color:#2E5798;
+	/*color:#2E5798;*/
 	padding-bottom: 3em;
 }
 .formoid-section {
@@ -621,6 +621,10 @@ border-top:1px solid #797979;
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
 }
+.toolnav li a.chocolate {
+	text-shadow: none;
+	background: #001121 url(../../images/ui/ui-bg_gloss-wave_30_44372c_500x100.png) 50% 50% repeat-x;
+}
 .toolnav li a.green {
 	text-shadow: 0 -1px 3px #468847;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
@@ -645,13 +649,18 @@ text-shadow: none; color: #0080E3;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
+.toolnav li a.gris {
+	text-shadow: 0 -1px 3px #381f00;
+	background: #001121 url(../../images/ui/ui-bg_gloss-wave_45_817865_500x100.png) 50% 50% repeat-x;
+}
+
 /*.toolnav li a.blue2 {
 text-shadow: 0 -1px 3px #0066cc; color: #FFF;
 background: linear-gradient(top,#4387fd,#4683ea)
 
 }*/
 
-.toolnav li a.gray2 {
+.toolnav li a.gray2, .toolnav li a.grey2 {
 text-shadow: none; color: #252B29;
 background: #B9CCD2;
 }

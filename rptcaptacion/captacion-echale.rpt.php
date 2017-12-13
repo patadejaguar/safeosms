@@ -84,7 +84,8 @@ GROUP BY `captacion_cuentas`.`numero_cuenta`";
 	$xRPT->addContent($body);
 	
 	$xT->setFootSum(array(
-		5 => "saldo"
+		7 => "capital",
+		8 => "interes"
 	));
 	
 	//$xT->setEventKey("jsGoPanel");

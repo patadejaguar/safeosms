@@ -28,9 +28,10 @@ use Dompdf\Dompdf;
 class cHDicccionarioDeTablas {
 	private $mLimitRecords		= 20;
 	private $mItems				= 0;
+	private $mOTable			= null;
 	
 	function __construct(){
-		
+		$this->mOTable	= new cTabla("");
 	}
 	function getCreditosPorAutorizar($fecha, $persona = false, $titulo = ""){
 		$this->mItems	= 0;
@@ -171,6 +172,46 @@ class cHDicccionarioDeTablas {
 		return $xT->Show();
 	}
 	function getNumeroItems(){ return $this->mItems; }
+	function getLeasingTablasDeRenta($credito, $simple = false, $SoloActivos = false){
+		$xLi	= new cSQLListas();
+		
+		
+		$sql	= $xLi->getListadoDeLeasingPlanCliente($credito, $SoloActivos);
+		$this->mOTable->setSQL($sql);
+		
+		//$xTabla	= new cTabla($sql);
+		$this->mOTable->setOmitidos("id");
+		$this->mOTable->setOmitidos("idleasing");
+		$this->mOTable->setOmitidos("credito");
+		$this->mOTable->setOmitidos("pagos");
+		
+		$this->mOTable->setFootSum(array(
+				2 => "deducible",
+				3 => "nodeducible",
+				4 => "iva",
+				5 => "total"
+		));
+		
+		$this->mOTable->setNoFilas("");
+		
+		$this->mOTable->setColTitle("fecha", "FECHA_DE PAGO");
+		$this->mOTable->setColTitle("periodo", "PLANPERIODORENTA");
+		
+		if($simple == true){
+			$this->mOTable->setOmitidos("deducible");
+			$this->mOTable->setOmitidos("nodeducible");
+			
+			$this->mOTable->setColTitle("total", "PLANMONTORENTA");
+			
+			
+			
+			$this->mOTable->setOmitidos("iva");
+			$this->mOTable->setFootSum(array(2=>"total"));
+			
+		}
+		return $this->mOTable->Show();
+	}
+	function OTable(){ return $this->mOTable; }
 }
 
 /**
@@ -1929,6 +1970,7 @@ class cHMenu {
 	private $mDisLeasing		= array(3040, 2064);
 	private $mDisNomina			= array(2052, 1060, 18800);
 	private $mDisAports			= array(1040, 1008);
+	private $mDisTesofe			= array(9000);
 	private $mDisables			= array();
 	private $mNumDis			= 0;
 
@@ -1961,6 +2003,9 @@ class cHMenu {
 		}
 		if(MODULO_LEASING_ACTIVADO == false){
 			$this->mDisables	= array_merge($this->mDisables, $this->mDisLeasing);
+		}
+		if(MODULO_CAJA_ACTIVADO == false){
+			$this->mDisables	= array_merge($this->mDisables, $this->mDisTesofe);
 		}
 		//if(CREDITO_CONTROLAR_POR_ORIGEN)
 		$this->mNumDis	= count($this->mDisables);

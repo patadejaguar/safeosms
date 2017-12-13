@@ -6086,42 +6086,8 @@ class cPlanDePagos{
 		return $ultimaletra;
 	}
 	function getVersionImpresaLeasing($simple = false){
-		$xLi	= new cSQLListas();
-		
-		
-		$sql	= $xLi->getListadoDeLeasingPlanCliente($this->mClaveDeCredito);
-
-		$xTabla	= new cTabla($sql);
-		$xTabla->setOmitidos("id");
-		$xTabla->setOmitidos("idleasing");
-		$xTabla->setOmitidos("credito");
-		$xTabla->setOmitidos("pagos");
-		
-		$xTabla->setFootSum(array(
-				2 => "deducible",
-				3 => "nodeducible",
-				4 => "iva",
-				5 => "total"
-		));
-		
-		$xTabla->setNoFilas("TOTAL");
-		
-		$xTabla->setColTitle("fecha", "FECHA_DE PAGO");
-		$xTabla->setColTitle("periodo", "PLANPERIODORENTA");
-		
-		if($simple == true){
-			$xTabla->setOmitidos("deducible");
-			$xTabla->setOmitidos("nodeducible");
-			
-			$xTabla->setColTitle("total", "PLANMONTORENTA");
-			
-			
-			
-			$xTabla->setOmitidos("iva");
-			$xTabla->setFootSum(array(2=>"total"));
-			
-		}
-		return $xTabla->Show();
+		$xHT	= new cHDicccionarioDeTablas();
+		return $xHT->getLeasingTablasDeRenta($this->mClaveDeCredito, $simple);
 	}
 }
 
@@ -6296,7 +6262,7 @@ class cProductoDeCredito {
 	}
 	function getEsProductoDeArrendamientoP(){
 		$res	= false;
-		if($this->mClaveDeConvenio == CREDITO_PRODUCTO_LEASING_PURO){ $res = true; }
+		if($this->mTipoEnSistema== SYS_PRODUCTO_ARREND){ $res = true; }
 		return $res;
 	}
 	function getTipoEnSistema(){ return $this->mTipoEnSistema; }
@@ -6760,6 +6726,7 @@ class cParcialidadDeCredito {
 		$sql				= $xLi->getListadoDeLetrasVista($persona, $credito, $numero);
 		$init				= true;
 		$Datos				= (is_array($this->mDatosInArray) && isset($this->mDatosInArray["letra"])) ? $this->mDatosInArray : obten_filas($sql); 
+		
 		//setLog($sql);
 		if(!isset($Datos["letra"])){
 			$init = false;
@@ -6768,21 +6735,21 @@ class cParcialidadDeCredito {
 			$xLetra				= new cCreditosLetraDePago($credito, $numero);
 			if($xLetra->init() == true){
 				//recuperar solo la fecha de la letra
-				$Datos["socio_afectado"]= $persona;
-				$Datos["docto_afectado"]= $credito;
-				$Datos["periodo_socio"]	= $numero;
-				$Datos["letra"]			= $xLetra->getTotal();
-				$Datos["fecha_de_pago"]	= $xLetra->getFechaDePago();
+				$Datos["socio_afectado"]	= $persona;
+				$Datos["docto_afectado"]	= $credito;
+				$Datos["periodo_socio"]		= $numero;
+				$Datos["letra"]				= $xLetra->getTotal();
+				$Datos["fecha_de_pago"]		= $xLetra->getFechaDePago();
 				$Datos["fecha_de_vencimiento"]	= $xF->setSumarDias(1, $xLetra->getFechaDePago());
-				$Datos["capital"]		= 0;//$xLetra->getCapital();
-				$Datos["interes"]		= 0;//$xLetra->getInteres();
-				$Datos["iva"]			= 0;//$xLetra->getImpuesto();
-				$Datos["ahorro"]		= 0;//$xLetra->getAhorro();
-				$Datos["otros"]			= 0;//$xLetra->getOtros();
-				$Datos["clave_otros"]	= 0;
-				$Datos["total_sin_otros"]=0;// $xLetra->getOtros();
-				$this->mInit			= true;
-				$this->mInitHistorico	= true;
+				$Datos["capital"]			= 0;
+				$Datos["interes"]			= 0;
+				$Datos["iva"]				= 0;
+				$Datos["ahorro"]			= 0;
+				$Datos["otros"]				= 0;
+				$Datos["clave_otros"]		= 0;
+				$Datos["total_sin_otros"]	= 0;
+				$this->mInit				= true;
+				$this->mInitHistorico		= true;
 			}
 		} else {
 			if(!isset($Datos["fecha_de_vencimiento"])){
@@ -6795,21 +6762,22 @@ class cParcialidadDeCredito {
 				//$DD["fecha_de_vencimiento"]	= $xF->setSumarDias(1, $rw["fecha"]);
 			}			
 		}
-		$this->mOB				= new cLetrasVista();
-		$this->mOB->setData($Datos);
-		$this->mDatosInArray	= $Datos;
-		$this->mCapital			= $this->mOB->capital()->v();
-		$this->mTotal			= $this->mOB->letra()->v();
-		$this->mImpuestos		= $this->mOB->iva()->v();
-		$this->mTotalSinOtros	= $this->mOB->total_sin_otros()->v();
+		$xT						= new cLetrasVista();
+		
+		$this->mCapital			= $Datos[$xT->CAPITAL];
+		$this->mTotal			= $Datos[$xT->LETRA];
+		$this->mImpuestos		= $Datos[$xT->IVA];
+		$this->mTotalSinOtros	= $Datos[$xT->TOTAL_SIN_OTROS];
+		$this->mInteres			= $Datos[$xT->INTERES];
+		$this->mOtros			= $Datos[$xT->OTROS];
+		$this->mIDOtros			= $Datos[$xT->CLAVE_OTROS];
+		$this->mFechaDePago		= $xF->getFechaISO($Datos[$xT->FECHA_DE_PAGO]);
+		$this->mFechaDeVenc		= $xF->getFechaISO($Datos[$xT->FECHA_DE_VENCIMIENTO]);
+		
 		$this->mInit			= $init;
-		$this->mInteres			= $this->mOB->interes()->v();
-		$this->mOtros			= $this->mOB->otros()->v();
-		$this->mIDOtros			= $this->mOB->clave_otros()->v();
-		$this->mFechaDePago		= $xF->getFechaISO($this->mOB->fecha_de_pago()->v());
-		$this->mFechaDeVenc		= $xF->getFechaISO($this->mOB->fecha_de_vencimiento()->v());
-		//$fecha					= $this->mOB->fecha_de_pago()->v();
-		//$this->mMessages		.= "[FECHA_DE_PAGO : $fecha]\r\n";
+		$this->mDatosInArray	= $Datos;
+		$this->mOB				= $xT;
+		$this->mOB->setData($Datos);
 		
 		return $init;
 	}
@@ -6835,6 +6803,7 @@ class cParcialidadDeCredito {
 	function setActualizarDesglose($monto, $operador = "+"){ $this->setActualizarConcepto(OPERACION_CLAVE_PLAN_DESGLOSE, $monto, $operador); }
 	private function setActualizarConcepto($idconcepto, $monto = false, $operador = "+"){
 		$idconcepto	= setNoMenorQueCero($idconcepto);
+		
 		if($monto !== false AND $this->mIDPlanDePagos > 0 AND $idconcepto >0){
 			$xMov	= new cMovimientoDeOperacion();
 			$xMov->setActualizarEstado(OPERACION_ESTADO_APLICADO);
@@ -6896,7 +6865,9 @@ class cParcialidadDeCredito {
 			afectacion_estadistica=(afectacion_estadistica*$proporcion_de_cambios) WHERE socio_afectado=$persona 
 			AND periodo_socio > $Parcialidad
 			AND docto_afectado=$credito AND (tipo_operacion=" . OPERACION_CLAVE_PLAN_INTERES . " OR tipo_operacion=" . OPERACION_CLAVE_PLAN_IVA . ") " ;
-			my_query($sqlTM);
+			$xQL	= new MQL();
+			$xQL->setRawQuery($sqlTM);
+			
 			
 			$msg							.= "WARN\tAjustando Intereses de plan de pagos solo interes a una Proporcion $proporcion_de_cambios\r\n";
 		return $msg;	

@@ -66,7 +66,9 @@ $xBtn			= new cHButton();
 $xNot			= new cHNotif();
 $LstCon			= "";
 $xTxt->setDivClass("txmon");
-$xTxt->addEvent("jsUpdateSumas()", "onblur");
+$xTxt->addEvent("jsAddNewConcepto()", "onblur");
+
+
 $xSLT			= $xSel->getListaDeTiposDeOperacion("", false, false, RECIBOS_TIPO_OINGRESOS, true);
 $msg			= "";
 
@@ -115,9 +117,10 @@ if($action == MQL_ADD){
 } else {
 //$xFRM->addJsBasico();
 	$xFRM->setNoAcordion();
-	$xFRM->addCreditBasico();
+	$xFRM->addCreditBasico($credito, $persona);
 	
 	$xSLT->addEvent("onblur", "jsaDatosOperacion()");
+	
 	$xFRM->addFecha();
 	
 	$xFRM->addCobroBasico();
@@ -130,19 +133,25 @@ if($action == MQL_ADD){
 
 	
 	$xFRM->OHidden("idtasaiva", TASA_IVA);
-	$xFRM->addSeccion("idagregarop", "TR.AGREGAR OPERACION");
+	$xNot	= new cHNotif();
+	$btn	= $xNot->getNoticon("","jsNuevoConcepto()", $xFRM->ic()->AGREGAR);
+	
+	$xFRM->addSeccion("idagregarop", "TR.AGREGAR OPERACION", $btn);
 
 	$xT			= new cHTabla("idtconceptos");
+	
 	$xT->initRow();
 	$xT->addTH("TR.CONCEPTO");
 	$xT->addTH("TR.MONTO");
-	$xT->addTH("TR.Acciones");
+	$xT->addTH("...");
 	$xT->endRow();
+	
 	$xT->initRow();
 	$xSLT->setLabel("");
 	$xT->addTD($xSLT->get());
 	$xT->addTD($xTxt->getDeMoneda("idmonto", ""));
-	$xT->addTD($xBtn->getBasic("TR.AGREGAR", "jsAddNewConcepto()", $xFRM->ic()->AGREGAR, "idcmdadd"));
+	$xT->addTD(" ");
+	//$xT->addTD($xBtn->getBasic("TR.AGREGAR", "jsAddNewConcepto()", $xFRM->ic()->AGREGAR, "idcmdadd"));
 	$xT->endRow();
 	//$xT->initRow();
 	//$xT->addFootTD(".");
@@ -182,20 +191,32 @@ echo $xFRM->get();
 var xG		= new Gen();
 var tw		= new TableW();
 var idCon	= new Array(<?php echo $LstCon; ?>);
+
+function jsNuevoConcepto(){
+	xG.spinInit();
+	jsaDatosOperacion();
+	session(TINYAJAX_CALLB, "jsAddNewConcepto()");
+}
+
 function jsAddNewConcepto(){
 	var ixIva		= $("#idtasaiva").val();
 	var ixMonto		= $("#idmonto").val();
 	var ixConcepto	= $("#idtipodeoperacion").val();
 	var ixText		= $("#idtipodeoperacion option:selected").text();
 
-		
-	if(!document.getElementById("id-" + ixConcepto)){
-		
-		HEl		= "<input type='hidden' value='"+ ixMonto  +"' name='id-" + ixConcepto + "' id='id-" + ixConcepto + "' />";
-		HEl		+= "<input type='hidden' value='"+ ixIva  +"' name='id-iva-" + ixConcepto + "' id='id-iva-" + ixConcepto + "' />";
-		tw.addRow({tableid:"#idtconceptos", vals:[ixText, getFMoney(ixMonto), HEl] });
-		$("#idmonto").val(0);
-		jsUpdateSumas();
+	if(flotante(ixMonto)>0){		
+		if(!document.getElementById("id-" + ixConcepto)){
+			
+			HEl		= "<input type='hidden' value='"+ ixMonto  +"' name='id-" + ixConcepto + "' id='id-" + ixConcepto + "' />";
+			HEl		+= "<input type='hidden' value='"+ ixIva  +"' name='id-iva-" + ixConcepto + "' id='id-iva-" + ixConcepto + "' />";
+			tw.addRow({tableid:"#idtconceptos", vals:[ixText, getFMoney(ixMonto), HEl], estilo:["", "mny", ""] });
+			$("#idmonto").val(0);
+			jsUpdateSumas();
+		} else {
+			xG.alerta({msg: "MSG_CONCEPTO_EXISTE", type: "warn"});
+		}
+	} else {
+		xG.alerta({msg: "MSG_MONTO_REQUIRED", type: "warn"});
 	}
 }
 function jsUpdateSumas(){

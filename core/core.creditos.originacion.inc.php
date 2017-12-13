@@ -555,6 +555,13 @@ class cCreditosLeasing {
 		}
 		return $dd;
 	}
+	function getCodigoReciboPagoInit(){
+		$xQL	= new MQL();
+		$dd		= $xQL->getDataRow("SELECT `idoperaciones_recibos` AS `recibo` FROM `operaciones_recibos` WHERE `docto_afectado`=" . $this->mIDCredito . " AND `tipo_docto`= " . RECIBOS_TIPO_PRIMERPAG . " LIMIT 0,1");
+		//setLog("SELECT `idoperaciones_recibos` AS `recibo` FROM `operaciones_recibos` WHERE `docto_afectado`=" . $this->mIDCredito . " AND `tipo_docto`= " . RECIBOS_TIPO_PRIMERPAG . " LIMIT 0,1");
+		$rr		= (isset($dd["recibo"])) ? setNoMenorQueCero($dd["recibo"]) : 0;
+		return $rr;
+	}
 }
 class cLeasingBonos {
 	private $mClave			= false;

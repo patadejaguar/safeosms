@@ -2422,6 +2422,15 @@ class cSQLFiltros {
 		}
 		return $By;
 	}
+	function VSociosPorSucursal($sucursal = ""){
+		$xVal	= new cReglasDeValidacion();
+		$By		= "";
+		if($xVal->sucursal($sucursal) == true){
+			//$sucursal	= $xVal->v();
+			$By			= " AND (`socios`.`sucursal`='" . $sucursal . "') ";
+		}
+		return $By;
+	}
 	
 	function LogPorFecha($FechaInicial, $FechaFinal = false){
 		$filtro		= "";

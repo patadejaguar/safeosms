@@ -305,6 +305,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	var xRec		= new RecGen();
 	var ogen		= new Gen();
 	var xG			= new Gen();
+	var xC			= new CredGen();
 	
 	function setNoAvales(){ siAvales = (document.getElementById("idNoAvales").checked) ? "no" : "si"; }
 	
@@ -340,13 +341,13 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function jsHistorialDeNomina(idcredito){xG.w({ url: '../rpt_edos_cuenta/historial_de_nomina.rpt.php?credito=' + idcredito, full : true }); }
 
 	function jsGetCotizacionArrendamiento(id){
-		xG.w({ url: '../frmarrendamiento/cotizador.edit.frm.php?clave=' + id, tab : true });
+		xC.getLeasingCotizador(id);
 	}
 	function jsGetCotizacionArrendamientoRPT(id){
-		xG.w({ url: '../rpt_formatos/leasing-cotizacion.rpt.php?clave=' + id, tab : true });
+		xC.getLeasingCotizacion(id);
 	}
 	function jsGetFlota(id){
-		xG.w({url:"../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id, tab:true});
+		xC.getLeasingActivos(id);
 	}
 
 </script>	

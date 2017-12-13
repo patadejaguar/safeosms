@@ -22,6 +22,8 @@ $xHP		= new cHPage("TR.DETALLE DE INGRESOS", HP_REPORT);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
+$xV			= new cReglasDeValidacion();
+
 ini_set("max_execution_time", 180);
 $estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
 $frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT); $frecuencia 	= parametro("frecuencia", $frecuencia, MQL_INT);
@@ -72,7 +74,11 @@ if($producto > 0){
 		$titulo		= $titulo . " / " . $xProd->getNombre();
 	}
 }
-
+$BySuc				= "";
+if(MULTISUCURSAL == true){
+	$BySuc			= $xLi->OFiltro()->VSociosPorSucursal($sucursal);
+	$otros			.= $BySuc;
+}
 $xRPT			= new cReportes($titulo);
 $xRPT->setFile($titulo);
 $xRPT->setOut($out);

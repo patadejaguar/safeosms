@@ -45,8 +45,8 @@ if($OlvidarTodo == true){
 $xFormu->init($xFormu->JS_LEAS_COT_VARS);	
 $jsFormulaPrec	= $xFormu->getFormula();
 
-$originador		= 0;
-$suborigen		= 0;
+$originador		= 1;
+$suborigen		= 1;
 $oficial		= getUsuarioActual();
 $EsAdmin		= false;
 $OnEdit			= false;
@@ -350,6 +350,8 @@ $valorTIIE	= ($NoUsarTIIE == true) ? 0 : $xMon->getValor();
 
 //=======================  Datos para Creditos Nuevos
 
+
+
 $xTabla->originador($originador);
 $xTabla->suboriginador($suborigen);
 $xTabla->oficial($oficial);
@@ -471,8 +473,8 @@ if($xUser->getEsOriginador() == false){
 			$xFRM->addHElem($xSelOrg->get(true) );
 			$xFRM->addHElem($xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v())->get(true) );
 		} else {
-			$xFRM->OHidden("comision_originador", $xTabla->comision_originador()->v());
-			$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
+			$xFRM->OHidden("originador", $xTabla->originador()->v());
+			$xFRM->OHidden("suboriginador", $xTabla->suboriginador()->v());
 		}
 		
 		if($OnEdit == false){

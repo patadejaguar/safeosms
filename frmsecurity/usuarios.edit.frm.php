@@ -20,6 +20,8 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xUsrCurr	= new cSystemUser(); $xUsrCurr->init();
+$xText		= new cHText();
 //$jxc 		= new TinyAjax();
 //$tab = new TinyAjaxBehavior();
 //$tab -> add(TabSetValue::getBehavior("idide", $x));
@@ -63,7 +65,9 @@ if($xUser->init() == true){
 		$rawsucursal		= parametro("idsucursal", $xUser->getSucursal(), MQL_RAW);
 		$rawpuesto			= parametro("idpuesto", $xUser->getPuesto(), MQL_RAW);
 		$rawcuenta			= parametro("idcuentacontable", $xUser->getCuentaContableDeCaja(), MQL_RAW);
-		$rawcorp			= parametro("idcorporativo", $xUser->getEsCorporativo(), false);	
+		$rawcorp			= parametro("idcorporativo", $xUser->getEsCorporativo(), MQL_BOOL);
+		$nivel				= parametro("idtipousuario", $xUser->getNivel(), MQL_INT);
+		
 		
 		$xUser->setCodigoDePersona($persona);	
 		$xUser->setNombreUsuario($rawnombre);
@@ -71,6 +75,9 @@ if($xUser->init() == true){
 		$xUser->setPuesto($rawpuesto);
 		
 		$xUser->setEsCorporativo($rawcorp);
+		if($nivel>0){
+			$xUser->setNivelAcceso($nivel);
+		}
 		
 		$xFRM->addAvisoRegistroOK();
 		
@@ -80,6 +87,10 @@ if($xUser->init() == true){
 		
 		$xFRM->addPersonaBasico("", false, $idpersona, "", "TR.PERSONA USUARIO");
 		$xFRM->OText_13("nombreusuario", $xUser->getNombreDeUsuario(), "TR.NOMBRE USUARIO");
+		
+		$xFRM->addHElem( $xSel->getListaDeNivelDeUsuario("idtipousuario", $xUser->getNivel(), $xUsrCurr->getTipoEnSistema())->get(true) );
+		
+		
 		$xFRM->OText("idpuesto", $xUser->getPuesto(), "TR.PUESTO");
 		$xFRM->addHElem( $xSel->getListaDeSucursales("idsucursal", $xUser->getSucursal())->get(true));
 		
@@ -89,8 +100,8 @@ if($xUser->init() == true){
 		} else {
 			$xFRM->OHidden("idcuentacontable", CUENTA_CONTABLE_EFECTIVO);
 		}
-		
 		$xFRM->OCheck("TR.CORPORATIVO", "idcorporativo", $xUser->getEsCorporativo());
+		
 	}
 	
 	

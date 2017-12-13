@@ -717,9 +717,10 @@ if($procesado != SYS_AUTOMATICO){
 	
 	$xFRM->addHElem( $oRec->getFicha(true) );
 	$total_letras 	= convertirletras($total_recibo);
-	$xBtn			= new cHButton("");
+	//$xBtn			= new cHButton("");
 	//$xFRM->addToolbar( $xBtn->getRegresar("./frmcobrosdecreditos.php", true)  );
-	$xFRM->addToolbar( $xBtn->getBasic("TR.Imprimir Recibo", "printrec()", $xFRM->ic()->IMPRIMIR, "cmdPrint", false) );
+	//$xFRM->addToolbar( $xBtn->getBasic("TR.Imprimir Recibo", "printrec()", $xFRM->ic()->IMPRIMIR, "cmdPrint", false) );
+	///$xFRM->addImprimir("", "printrec()");
 	
 	if($xCred->getClaveDeEmpresa() != FALLBACK_CLAVE_EMPRESA){
 		$xCobDet		= new cEmpresasCobranzaDetalle(false, false);
@@ -752,6 +753,8 @@ if($procesado != SYS_AUTOMATICO){
 		
 	$xFRM->addHTML("<table><tbody>$tds</tbody><tfoot><tr><th></th><th>TOTAL</th><th class='mny'>" . getFMoney($total_recibo) . "</th></tr><tr><th colspan=\"3\" class='warn'>$total_letras</th></tr></tfoot></table>");
 
+	$xFRM->addJsInit("jsInitForm();");
+	
 echo $xFRM->get();
 echo $oRec->getJsPrint(true);
 ?>
@@ -760,6 +763,11 @@ echo $oRec->getJsPrint(true);
 var Wo	= new Gen();
 function jsCloseRecibo(){ window.close(); }
 function getEdoCtaCredito(){ Wo.w({url: "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + mCredito}); }
+function jsInitForm(){
+	if(window.parent.jsEnablePrint){
+		window.parent.jsEnablePrint();
+	}
+}
 </script>
 </html>
 <?php

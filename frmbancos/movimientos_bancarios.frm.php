@@ -76,6 +76,7 @@ $xHP->init();
 $xFRM			= new cHForm("frm", "movimientos_bancarios.frm.php?action=" . MQL_ADD);
 $xSel			= new cHSelect();
 
+
 if($action == MQL_ADD){
 	if($monto > 0 AND $numero_de_cuenta > 0 ){
 		$xBanc			= new cCuentaBancaria($numero_de_cuenta);

@@ -81,7 +81,11 @@ class cSystemUser{
 	function getPuedeEliminarRecibos(){
 		$xRuList	= new cSystemUserRulesList();
 		return $this->getReglaDeUsuario($xRuList->PUEDE_ELIMINAR_RECS);
-	}	
+	}
+	function getPuedeEditarRecibos(){
+		$xRuList	= new cSystemUserRulesList();
+		return $this->getReglaDeUsuario($xRuList->PUEDE_ELIMINAR_RECS);
+	}
 	private function getReglaDeUsuario($regla = ""){
 		if($this->mReglasAsInit == false){  $this->getUserRules(); }
 		$xT		= new cTipos();
@@ -696,6 +700,7 @@ class cSystemUserRulesList {
 	public $PUEDE_EDITAR_USUARIOS 	= "PUEDE_EDITAR_USUARIOS";
 	public $PUEDE_AGREGAR_USUARIOS 	= "PUEDE_AGREGAR_USUARIOS";
 	public $PUEDE_ELIMINAR_RECS 	= "PUEDE_ELIMINAR_RECIBOS";
+	public $PUEDE_EDITAR_RECS 		= "PUEDE_EDITAR_RECIBOS";
 	function  __construct(){}
 	
 }
@@ -721,8 +726,11 @@ class cSystemPermissions{
 	private $mInit				= false;
 	private $mPermisos			= array();
 	public $IDCACHE_PUEDEN		= "sistema_permisos-tabla";
+	public $DEF_PERMISOS		= "";
+	
 	function __construct($id = false){
-		$this->mID		= setNoMenorQueCero($id);
+		$this->mID				= setNoMenorQueCero($id);
+		$this->DEF_PERMISOS		= DEFAULT_PERMISOS;
 	/*
 	 1000	Caja
 	 2000	Personas
@@ -911,17 +919,19 @@ class cSystemPermissions{
 		}
 	}
 	function setClear(){
+		$xQL	= new MQL();
 		$sql 	= "UPDATE general_menu set menu_rules='99@rw'";
-		$inf	= my_query($sql);
-		$this->mMessages	.= "OK\tDar permisos solo a ROOT (" . $inf["rows"] . ")\r\n";
-		$sqlD 	= "UPDATE general_menu SET menu_rules='2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw' WHERE menu_parent = "  . $this->mGlobalM .  " ";
-		$inf2	= my_query($sqlD);
-		$this->mMessages	.=  "OK\tPermisos establecidos por defecto afectado (" . $inf2["rows"] . ")\r\n";		
+		$xQL->setRawQuery($sql);
+		$this->mMessages	.= "OK\tDar permisos solo a ROOT\r\n";
+		$sqlD 	= "UPDATE general_menu SET menu_rules='" . $this->DEF_PERMISOS . "' WHERE menu_parent = "  . $this->mGlobalM .  " ";
+		$xQL->setRawQuery($sqlD);
+		$this->mMessages	.=  "OK\tPermisos establecidos por defecto afectado\r\n";		
 		
 	}
 	function setLiberar(){
-		$sql = "UPDATE general_menu SET menu_rules='2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw' ";
-		my_query($sql);
+		$sql = "UPDATE general_menu SET menu_rules='" . $this->DEF_PERMISOS . "' ";
+		$xQL	= new MQL();
+		$xQL->setRawQuery($sql);
 		$this->mMessages	.=  "OK\tTodos los permisos se han reseteado\r\n";
 	}
 	function setTraducir($txt, $out = OUT_TXT){

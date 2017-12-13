@@ -32,8 +32,11 @@ $otros					= parametro("otrosdatos", false, MQL_BOOL);
 $compacto				= parametro("compacto", false, MQL_BOOL);
 $conseguimiento			= parametro("conseguimiento", false, MQL_BOOL);
 
-$ByOficial				= $xLi->OFiltro()->CreditosPorOficial(parametro("oficial", SYS_TODAS ,MQL_INT));
-$BySucursal				= $xLi->OFiltro()->CreditosPorSucursal(parametro("sucursal", ""));
+$oficial				= parametro("oficial", SYS_TODAS ,MQL_INT);
+$sucursal				= parametro("sucursal", "", MQL_RAW); $sucursal	= strtolower($sucursal);
+
+$ByOficial				= $xLi->OFiltro()->CreditosPorOficial($oficial);
+$BySucursal				= $xLi->OFiltro()->CreditosPorSucursal($sucursal);
 $es_por_estatus 		= $xLi->OFiltro()->CreditosPorEstado($estatus);
 $BySaldo				= $xLi->OFiltro()->CreditosPorSaldos(TOLERANCIA_SALDOS, ">=");
 $ByEmpresa				= $xLi->OFiltro()->CreditosPorEmpresa($empresa);

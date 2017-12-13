@@ -22,7 +22,7 @@
 $xHP		= new cHPage("TR.Panel de Recibos");
 $jxc 		= new TinyAjax();
 $xSQL		= new cSQLListas();
-
+$xUser		= new cSystemUser(); $xUser->init();
 
 $fechaRecibo	= fechasys();
 
@@ -59,7 +59,6 @@ function jsaSetFecha($recibo, $fecha){
 	if( $xF->getInt($fecha) != $xF->getInt($xRec->getFechaDeRecibo()) ){
 		$xRec->setFecha($fecha, true);
 	}
-
 	return  $xRec->getMessages(OUT_HTML);
 }
 function jsaSetPeriodo($recibo, $nuevoperiodo){
@@ -277,16 +276,15 @@ $idrecibo		= "0";
 	
 	$xFRM->addRecibosComando($xRec->getCodigoDeRecibo(), $xRec->getURI_Formato());
 	
-	$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", $xFRM->ic()->CALENDARIO );
-	$xFRM->OButton("TR.Cambiar PERIODO", "jsGoActualizarPeriodo()",$xFRM->ic()->CALENDARIO1 );
-	$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", $xFRM->ic()->DINERO );
-	
-	$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()",$xFRM->ic()->EJECUTAR);
-	
-	
-	$xFRM->OButton("TR.Agregar Operacion", "jsAddMvto($idrecibo)", $xFRM->ic()->OPERACION);
-	$xFRM->OButton("TR.Cambiar Banco", "jsCambiarBanco($idrecibo)", $xFRM->ic()->BANCOS);
-
+	if($xUser->getPuedeEditarRecibos() == true){
+		$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", $xFRM->ic()->CALENDARIO );
+		$xFRM->OButton("TR.Cambiar PERIODO", "jsGoActualizarPeriodo()",$xFRM->ic()->CALENDARIO1 );
+		$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", $xFRM->ic()->DINERO );
+		
+		$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()",$xFRM->ic()->EJECUTAR);
+		$xFRM->OButton("TR.Agregar Operacion", "jsAddMvto($idrecibo)", $xFRM->ic()->OPERACION);
+		$xFRM->OButton("TR.Cambiar Banco", "jsCambiarBanco($idrecibo)", $xFRM->ic()->BANCOS);
+	}
 	if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE) == true ){
 		$xFRM->OButton("TR.Generar Poliza", "jsaSetGenerarPolizaPorRecibo()", "poliza", "cmdGo4");
 		$xFRM->OButton("TR.Generar Pre-Poliza", "jsaRegenerarPrepoliza()", $xFRM->ic()->EJECUTAR);
@@ -299,12 +297,15 @@ $idrecibo		= "0";
 	$xTabs		= new cHTabs();
 /* ----------------- DATOS --------------- */
 		$cEdit		= new cTabla($xSQL->getListadoDeOperaciones("", "", $idrecibo));
-		$cEdit->addEditar();
-		$cEdit->addEliminar();
-		$cEdit->setEventKey("jsEditClick");
+		if($xUser->getPuedeEditarRecibos() == true){
+			$cEdit->addEditar();
+			$cEdit->addEliminar();
+			$cEdit->setEventKey("jsEditClick");
+			$cEdit->OButton("TR.Copiar", "jsSetClonar(" . HP_REPLACE_ID . ")", $xFRM->ic()->EXPORTAR);
+		}
 		$cEdit->setTdClassByType();
 		$cEdit->setKeyField("idoperaciones_mvtos");
-		$cEdit->OButton("TR.Copiar", "jsSetClonar(" . HP_REPLACE_ID . ")", $xFRM->ic()->EXPORTAR);
+		
 		$cEdit->setFootSum(array(8 => "monto"));		
 		
 		$xTabs->addTab("TR.OPERACIONES", $cEdit->Show());
@@ -314,8 +315,10 @@ $idrecibo		= "0";
 		if(MODULO_CAJA_ACTIVADO == true){
 			//$cBan->setEventKey("idcontrol");
 			$cBan->setKeyField("idcontrol");
-			$cBan->addEditar();
-			$cBan->addEliminar();
+			if($xUser->getPuedeEditarRecibos() == true){
+				$cBan->addEditar();
+				$cBan->addEliminar();
+			}
 			$cBan->setFootSum(array(7 => "monto"));
 			$xTabs->addTab("TR.BANCOS", $cBan->Show());
 			//Operaciones de Tesorería

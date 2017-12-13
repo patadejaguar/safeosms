@@ -39,9 +39,20 @@ function jsaMarkSeConstruye($id){
 	if($xViv->init() == true){ $xViv->setSeConstruye(); }
 	return $xViv->getMessages();
 }
+function jsaEliminarVivienda($id){
+	$xViv	= new cPersonasVivienda();
+	$xViv->setID($id);
+	if($xViv->init() == true){
+		$xViv->setEliminar();
+	}
+	return $xViv->getMessages();
+}
 $jxc ->exportFunction('jsaMarkInactive', array('id'), "#idaviso");
 $jxc ->exportFunction('jsaMarkPrincipal', array('id'), "#idaviso");
 $jxc ->exportFunction('jsaMarkSeConstruye', array('id'), "#idaviso");
+$jxc ->exportFunction('jsaEliminarVivienda', array('id'), "#idaviso");
+
+
 $jxc ->process();
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
@@ -70,9 +81,10 @@ if($clave>0){
 		$xFRM->addCerrar();
 		$xFRM->addAviso("", "idaviso");
 		$xFRM->OHidden("id", $clave);
-		$xFRM->OButton("TR.MARCARCOMO INACTIVA", "jsaMarkInactive()", $xFRM->ic()->DESCARTAR, "", "red");
+		$xFRM->OButton("TR.MARCARCOMO INACTIVA", "jsConfirmarBaja()", $xFRM->ic()->DESCARTAR, "cmdinactive", "gris");
+		
 		if($xViv->getEsPrincipal() == false){
-			$xFRM->OButton("TR.MARCARCOMO PRINCIPAL", "jsaMarkPrincipal()", $xFRM->ic()->VALIDAR, "", "green");
+			$xFRM->OButton("TR.MARCARCOMO PRINCIPAL", "jsaMarkPrincipal()", $xFRM->ic()->VALIDAR, "cmdmarkprincipal", "green");
 		}
 		
 		
@@ -81,6 +93,7 @@ if($clave>0){
 		} else {
 			$xFRM->OButton("TR.MARCARCOMO ENCONSTRUCCION", "jsaMarkSeConstruye()", $xFRM->ic()->VALIDAR, "", "yellow");
 		}
+		$xFRM->addEliminar("jsConfirmarEliminar()");
 	}
 } else {
 	$xFRM->addCerrar();
@@ -88,5 +101,17 @@ if($clave>0){
 
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
+?>
+<script>
+var xG	= new Gen();
+
+function jsConfirmarEliminar(){
+	xG.confirmar({msg : "CONFIRMA_ELIMINAR", callback:jsaEliminarVivienda });
+}
+function jsConfirmarBaja(){
+	xG.confirmar({msg : "CONFIRMA_BAJA", callback:jsaMarkInactive });
+}
+</script>
+<?php
 $xHP->fin();
 ?>

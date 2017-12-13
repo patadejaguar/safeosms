@@ -150,7 +150,7 @@ input[type="button"] i, input[type="submit"] i, .button i, .toolnav li a i
 	max-height: 90%;max-width: 20%;float: left;padding-left: 5px;padding-right: 2px;height: 22px;
 }
 .toolnav li a img, .toolnav li a i { padding-top: 5px; }
-.trOdd td {
+tr.trOdd {
 	background-color: #DBDBDB;
 }
 .trOdd .key {
@@ -218,9 +218,7 @@ td {
 	font-size: .9em !important;
 	height: 2em;
 }
-td:hover {
-	border: 2px #0C9816 groove;
-}
+/*td:hover {	border: 2px #0C9816 groove; }*/
 td.center {
 	border-color: #FF0000;
 	border-style: dashed;
@@ -483,7 +481,7 @@ input[type=number]{
 	-moz-appearance: textfield;
 	-webkit-appearance: none;
 }
-.imny,.mnym,.number,.mny,.real,.int, input[type=number] {
+.imny,.mnym,.number,.mny,.real,.int,.float, input[type=number] {
 	background-color: #FEF0D1;
 	background-position: right;
 	color: #0800FF !important;
@@ -930,9 +928,9 @@ nav ul li a span, #jMenu li a span {
 	float: right;
 }
 /*======================================================== Table ==================================== */
-table td.int, table td.real {	background-color: #F1F1F1; }
+table td.int, table td.real,table td.float {	background-color: #FFFFFF; }
 td.key.int, td.key.real { color:#ffffff !important;  }
-table tr.trOdd  td.int, table tr.trOdd  td.real {	background-color: #DBDBDB; }
+table tr.trOdd td.int, table tr.trOdd td.real,table tr.trOdd td.float {	background-color: #DBDBDB; }
 .trOdd td.key, td.key, ._key {
 	color: white;
 	font-weight: bold;
@@ -1493,4 +1491,10 @@ and (min-width : 1561px) {
 }
 #frameless .tclose {
 	right: 6px !important;
+}
+
+.listado tr:hover td,.listado .trOdd:hover td,.listado .trOdd:hover .mny,.listado .trOdd:hover .float,.listado .trOdd:hover int {
+color: #FFFFFF !important;
+transition: background-color 0.3s ease;
+background-color: #38495A;
 }

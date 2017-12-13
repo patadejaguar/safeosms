@@ -70,32 +70,51 @@ $btns		= "";
 
 $xFRM->setNoAcordion();
 $idnumeroplan		= $xCred->getNumeroDePlanDePagos();
+$montoapagar		= 0;
+
+$xFRM->addRefrescar("jsCargarFrame()");
+
 
 
 $defaultPago	= OPERACION_PAGO_COMPLETO;
 switch($periocidad){
 	case CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO:
-		$xFRM->OButton("TR.ABONOS", "jsGetPago('ao')", "dinero", "pc2");
-		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1");
+		$xFRM->OButton("TR.ABONOS", "jsGetPago('ao')", $xFRM->ic()->ACTUAL, "pc2", "white");
+		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
+		$montoapagar	= $xCred->getSaldoActual();
 		break;
 	default:
-		$xFRM->OButton("TR.LETRA COMPLETA", "jsGetPago('plc')", "dinero", "pc2");
-		$xFRM->OButton("TR.LETRA VARIABLE", "jsGetPago('pli')", "dinero", "pc3");
-		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", "dinero", "pc1");
+		$xFRM->OButton("TR.LETRA COMPLETA", "jsGetPago('plc')", $xFRM->ic()->ACTUAL, "pc2", "white");
+		$xFRM->OButton("TR.LETRA VARIABLE", "jsAjustarPagoF()", $xFRM->ic()->RANDOM, "pc3", "yellow");
+		//$xFRM->OButton("TR.LETRA VARIABLE", "jsGetPago('pli')", $xFRM->ic()->RANDOM, "pc3", "yellow");
+		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
 		$defaultPago	= OPERACION_PAGO_LETRA_COMPLETA;
+		$xLetra			= new cParcialidadDeCredito();
+		$xLetra->init($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $parcialidad);
+		$montoapagar	= $xLetra->getTotal();
+		
 		break;
 }
+$xFRM->setTitle($xHP->getTitle());
 
 if( setNoMenorQueCero($idnumeroplan) > 0) {
 	$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagos($idnumeroplan);", $xFRM->ic()->CALENDARIO1);
 	$xFRM->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($credito)", $xFRM->ic()->PREGUNTAR);
 }
+
 if(MODO_DEBUG == true){
 	//$xFRM->addAtras();
 }
-$xFRM->addRefrescar("jsCargarFrame()");
+
+$xFRM->OButton("TR.Guardar Pago", "jsGuardarPagoF()", $xFRM->ic()->GUARDAR, "idsave", "green");
+$xFRM->OButton("Vista Previa", "jsViewPagoF()", $xFRM->ic()->VER, "idprev");
+$xFRM->addImprimir();
+
 $xFRM->addCerrar();
-if(MODO_DEBUG == true AND ($xCred->getTipoEnSistema() != SYS_PRODUCTO_NOMINA )){ $xFRM->addLog($msg); }
+
+if(MODO_DEBUG == true AND ($xCred->getTipoEnSistema() != SYS_PRODUCTO_NOMINA )){ 
+	$xFRM->addLog($msg); 
+}
 
 $xTxt			= new cHText("idobservaciones");
 $xTxt->addEvent("jsActualizarObservacion(this)", "onchange");
@@ -124,20 +143,26 @@ var oReciboFis	= $("#id-foliofiscal");
 var xGen		= new Gen();
 var sURI 		= "";
 var iFr 		= document.getElementById("idFPrincipal");
+var iWFram		= document.getElementById('idFPrincipal').contentWindow;
+var mTotalPag	= <?php echo round($montoapagar,2); ?>;
+
 function jsAsLoaded(){
 	var mFormaPago		= oTipoPago.val();
 	sURI 				= iSRC + TESORERIA_MONTO_MAXIMO_OPERADO + "|" + mTipoPago+ "|" + mFormaPago + "|" + oReciboFis.val();
+	xGen.verControl("cmdimprimir", false);
 	jsCargarFrame();
 }
 function jsRegresar(){ var g	= new Gen(); g.w({url: "frmcobrosdecreditos.php"}); }
-function jsGetPago(vTipoPago){
+function jsGetPago(vTipoPago, vMonto){
 	vTipoPago			= (typeof vTipoPago == "undefined") ? mTipoPago : vTipoPago;
+	vMonto				= (typeof vMonto == "undefined") ? mTotalPag : vMonto;
+	
 	mTipoPago			= vTipoPago;
 	var mFormaPago		= oTipoPago.val();
-	var monto			= 0;
+	var monto			= vMonto;
 	//Parcialidad Incompleta o parcialidades varias
 	if (mTipoPago == "pli" || mTipoPago == "plv" || mTipoPago == "ao"){
-		monto 			= window.prompt("---CAPTURE EL MONTO---\n---QUE SE PRESENTA---\n PARA PAGAR EL CREDITO", 0.00);
+		//monto 			= window.prompt("---CAPTURE EL MONTO---\n---QUE SE PRESENTA---\n PARA PAGAR EL CREDITO", 0.00);
 	} else {
 		monto			= TESORERIA_MONTO_MAXIMO_OPERADO;
 	}
@@ -147,6 +172,7 @@ function jsGetPago(vTipoPago){
 		alert("DEBE CAPTURAR UN MONTO MAYOR A CERO\nPARA QUE EL COBRO SE EFECTUE");
 		//$("#idtipo_pago").focus();
 	}
+	
 	jsCargarFrame();
 }
 function jsCargarFrame(){
@@ -168,6 +194,45 @@ function jsActualizarObservacion(){
 }
 function jsEndCarga(){
 	xGen.spinEnd();
+}
+function jsAjustarPagoF(){
+	
+	var mxTotalPag	= iWFram.jsGetTotal();
+	var mMonto	= window.prompt("---CAPTURE EL MONTO---\n---QUE SE PRESENTA---\n PARA PAGAR EL CREDITO", mxTotalPag);
+	mMonto		= redondear(mMonto);
+	if(mMonto < mxTotalPag){
+		jsGetPago('pli', mMonto);
+		
+	} else {
+		iWFram.jsGetPagoAjustado(mMonto);
+	}
+}
+function jsGuardarPagoF(){
+	jsDisableSave();
+	iWFram.FormSucess();
+}
+function jsViewPagoF(){
+	iWFram.showVistaPago();
+}
+function jsEnableSave(){
+	xGen.ena("#idsave");
+}
+function jsDisableSave(){
+	xGen.dis("#idsave");
+}
+function jsRemoveSave(){
+	xGen.verControl("idsave", false);
+	xGen.verControl("pc2", false);
+	xGen.verControl("pc3", false);
+	xGen.verControl("pc1", false);
+	xGen.verControl("idprev", false);
+	xGen.verControl("cmdrefresh", false);
+}
+function jsImprimirRecibo(){
+	iWFram.printrec();
+}
+function jsEnablePrint(){
+	xGen.verControl("cmdimprimir", true);
 }
 </script>
 <?php

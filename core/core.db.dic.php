@@ -2236,27 +2236,23 @@ class cOperaciones_promociones {
 
 
 
-
-/*	ORM: Tabla:	letras	-	Generado:	[18/12/2013 12:32]	*/
+/*	ORM: Tabla:	letras	-	Generado:	[08/12/2017 18:13]	*/
 class cLetrasVista {
-	
-	private $mCampos	= array(
-			"codigo_de_base" => array("N"=>"codigo_de_base","T"=>"INT","V"=>"","L"=>10),
-			"socio_afectado" => array("N"=>"socio_afectado","T"=>"BIGINT","V"=>"1","L"=>20),
-			"docto_afectado" => array("N"=>"docto_afectado","T"=>"BIGINT","V"=>"1","L"=>20),
-			"periodo_socio" => array("N"=>"periodo_socio","T"=>"INT","V"=>"1","L"=>4),
-			"fecha_de_pago" => array("N"=>"fecha_de_pago","T"=>"DATE","V"=>"","L"=>0),
-			"fecha_de_vencimiento" => array("N"=>"fecha_de_vencimiento","T"=>"DATE","V"=>"","L"=>0),
-			"capital" => array("N"=>"capital","T"=>"DOUBLE","V"=>"","L"=>39),
-			"interes" => array("N"=>"interes","T"=>"DOUBLE","V"=>"","L"=>39),
-			"iva" => array("N"=>"iva","T"=>"DOUBLE","V"=>"","L"=>39),
-			"ahorro" => array("N"=>"ahorro","T"=>"DOUBLE","V"=>"","L"=>39),
-			"otros" => array("N"=>"otros","T"=>"DOUBLE","V"=>"","L"=>39),
-			"letra" => array("N"=>"letra","T"=>"DOUBLE","V"=>"","L"=>43),
-			"total_sin_otros" => array("N"=>"total_sin_otros","T"=>"DOUBLE","V"=>"","L"=>39),
-			"clave_otros" => array("N"=>"clave_otros","T"=>"DECIMAL","V"=>"","L"=>21),
-	
-	);
+	private $mCampos		= array("codigo_de_base" => array("N"=>"codigo_de_base","T"=>"INT","V"=>"","L"=>10),"socio_afectado" => array("N"=>"socio_afectado","T"=>"BIGINT","V"=>"1","L"=>20),"docto_afectado" => array("N"=>"docto_afectado","T"=>"BIGINT","V"=>"1","L"=>20),"periodo_socio" => array("N"=>"periodo_socio","T"=>"INT","V"=>"1","L"=>4),"fecha_de_pago" => array("N"=>"fecha_de_pago","T"=>"DATE","V"=>"","L"=>0),"fecha_de_vencimiento" => array("N"=>"fecha_de_vencimiento","T"=>"DATE","V"=>"","L"=>0),"capital" => array("N"=>"capital","T"=>"DOUBLE","V"=>"","L"=>39),"interes" => array("N"=>"interes","T"=>"DOUBLE","V"=>"","L"=>39),"iva" => array("N"=>"iva","T"=>"DOUBLE","V"=>"","L"=>39),"ahorro" => array("N"=>"ahorro","T"=>"DOUBLE","V"=>"","L"=>39),"otros" => array("N"=>"otros","T"=>"DOUBLE","V"=>"","L"=>39),"letra" => array("N"=>"letra","T"=>"DOUBLE","V"=>"","L"=>43),"total_sin_otros" => array("N"=>"total_sin_otros","T"=>"DOUBLE","V"=>"","L"=>39),"clave_otros" => array("N"=>"clave_otros","T"=>"DECIMAL","V"=>"","L"=>21));
+	public $CODIGO_DE_BASE	= "codigo_de_base";
+	public $SOCIO_AFECTADO	= "socio_afectado";
+	public $DOCTO_AFECTADO	= "docto_afectado";
+	public $PERIODO_SOCIO	= "periodo_socio";
+	public $FECHA_DE_PAGO	= "fecha_de_pago";
+	public $FECHA_DE_VENCIMIENTO	= "fecha_de_vencimiento";
+	public $CAPITAL			= "capital";
+	public $INTERES			= "interes";
+	public $IVA				= "iva";
+	public $AHORRO			= "ahorro";
+	public $OTROS			= "otros";
+	public $LETRA			= "letra";
+	public $TOTAL_SIN_OTROS	= "total_sin_otros";
+	public $CLAVE_OTROS	= "clave_otros";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "letras";}
 	function codigo_de_base($v = false){ if($v !== false){$this->mCampos["codigo_de_base"]["V"] =  $v; } return new MQLCampo($this->mCampos["codigo_de_base"]);}
@@ -2276,79 +2272,9 @@ class cLetrasVista {
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 	function getKey(){return false;}
-	/*private $mCampos	= array(
-		"codigo_de_base" => array("N"=>"codigo_de_base","T"=>"INT","V"=>"","L"=>10),
-		"socio_afectado" => array("N"=>"socio_afectado","T"=>"BIGINT","V"=>"1","L"=>20),
-		"docto_afectado" => array("N"=>"docto_afectado","T"=>"BIGINT","V"=>"1","L"=>20),
-		"periodo_socio" => array("N"=>"periodo_socio","T"=>"INT","V"=>"1","L"=>4),
-		"fecha_de_pago" => array("N"=>"fecha_de_pago","T"=>"DATE","V"=>"","L"=>0),
-		"fecha_de_vencimiento" => array("N"=>"fecha_de_vencimiento","T"=>"DATE","V"=>"","L"=>0),
-		"capital" => array("N"=>"capital","T"=>"DOUBLE","V"=>"","L"=>39),
-		"interes" => array("N"=>"interes","T"=>"DOUBLE","V"=>"","L"=>39),
-		"iva" => array("N"=>"iva","T"=>"DOUBLE","V"=>"","L"=>39),
-		"ahorro" => array("N"=>"ahorro","T"=>"DOUBLE","V"=>"","L"=>39),
-		"otros" => array("N"=>"otros","T"=>"DOUBLE","V"=>"","L"=>39),
-		"letra" => array("N"=>"letra","T"=>"DOUBLE","V"=>"","L"=>43),
-
-	);
-	function __construct(){}
-	function getKey(){return false;}
-	function get(){ return "letras";}
-	function codigo_de_base($v=false){
-		if($v!==false){$this->mCampos["codigo_de_base"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["codigo_de_base"]);
-	}
-	function socio_afectado($v=false){
-		if($v!==false){$this->mCampos["socio_afectado"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["socio_afectado"]);
-	}
-	function docto_afectado($v=false){
-		if($v!==false){$this->mCampos["docto_afectado"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["docto_afectado"]);
-	}
-	function periodo_socio($v=false){
-		if($v!==false){$this->mCampos["periodo_socio"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["periodo_socio"]);
-	}
-	function fecha_de_pago($v=false){
-		if($v!==false){$this->mCampos["fecha_de_pago"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["fecha_de_pago"]);
-	}
-	function fecha_de_vencimiento($v=false){
-		if($v!==false){$this->mCampos["fecha_de_vencimiento"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["fecha_de_vencimiento"]);
-	}
-	function capital($v=false){
-		if($v!==false){$this->mCampos["capital"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["capital"]);
-	}
-	function interes($v=false){
-		if($v!==false){$this->mCampos["interes"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["interes"]);
-	}
-	function iva($v=false){
-		if($v!==false){$this->mCampos["iva"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["iva"]);
-	}
-	function ahorro($v=false){
-		if($v!==false){$this->mCampos["ahorro"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["ahorro"]);
-	}
-	function otros($v=false){
-		if($v!==false){$this->mCampos["otros"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["otros"]);
-	}
-	function letra($v=false){
-		if($v!==false){$this->mCampos["letra"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["letra"]);
-	}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){
-		$mql	= new MQL($this->get(), $this->mCampos, $this->getKey());
-		$this->mCampos	= $mql->setData($datos);
-	}*/
-
 }
+
+
 
 /*	ORM: Tabla:	socios_estadocivil	-	Generado:	[02/3/2015 14:34]	*/
 class cSocios_estadocivil {

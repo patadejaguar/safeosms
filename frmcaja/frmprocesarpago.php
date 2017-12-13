@@ -186,6 +186,8 @@ for($ix=0; $ix <= $limParms; $ix++){
 	$monto_iva_intereses			= 0;
 	$monto_iva_otros				= 0;
 	$monto_capital_operado			= 0;
+	$cargos_mora					= 0;		//Solo evalua si existe la mora
+	
 	if($pago_total == true){
 		$monto_penas				= $xCred->getPenasPorCobrar();
 	}
@@ -234,8 +236,10 @@ $tasa_iva_otros			= TASA_IVA;
 echo $xHP->setBodyinit("initComponents()");
 $xFRM	= new cHForm("frmprocesarpago", "frmpagoprocesado.php?p=$params|$estatus_del_credito|$grupo", "frmprocesarpago");
 
+$xFRM->OHidden("ctipo_pago", $mTipoPago); //<input type='hidden' name='ctipo_pago' id=\"idtipo_pago\" value='$mTipoPago' />
+
 $xFRM->addFootElement("<input type='hidden' name='cobservaciones' value='' id=\"idobservaciones\" />
-<input type='hidden' name='ctipo_pago' id=\"idtipo_pago\" value='$mTipoPago' /> <input type='hidden' name='crecibo_fiscal' id=\"idrecibo_fiscal\" value='$mReciboFiscal' />
+ <input type='hidden' name='crecibo_fiscal' id=\"idrecibo_fiscal\" value='$mReciboFiscal' />
 <input type=\"hidden\" name='procesar' id=\"procesar\" value=\"$procesado\" />
 <input type='hidden' name='ccheque' id=\"idcheque\" value='$cheque'  /><input type='hidden' name='idcomodin' id=\"idcomodin\" value='0'  />
 <input type='hidden' name='idletra' id=\"idletra\" value='$parcialidad'  /><input type='hidden' name='idpersona' id=\"idpersona\" value='$socio'  />
@@ -613,7 +617,7 @@ if($gastos_de_cobranza_calculado > 0){
 	$tds 	.= "<tr><th>600</th><td>" . $xLng->getT("TR.GASTOS DE COBRANZA") . "</td>
 		<th><input type=\"text\" name=\"c-$claveCbza\" id=\"id-$claveCbza\" value=\"$gastos_de_cobranza_calculado\" data-original=\"$gastos_de_cobranza_calculado\" class='mny' onchange=\"jsEval(this);\"  /></th></tr>";
 }
-
+$cargos_mora	= $gastos_de_cobranza_calculado + $interes_moratorio;
 //Sql de especiales
 		$sqlEsp = "SELECT
 			`eacp_config_bases_de_integracion_miembros`.`miembro`,
@@ -640,12 +644,14 @@ if($gastos_de_cobranza_calculado > 0){
 		$SEsp = $cEsps->show();
 $xBtn		= new cHButton();
 
+//$xFRM->OButton("TR.Guardar Pago", "FormSucess()", $xFRM->ic()->GUARDAR, "idsave", "green");
 
-$xFRM->addToolbar($xBtn->getBasic("Ajustar", "jsGetPagoAjustado()", "dinero", "idajust", false));
-$xFRM->addToolbar($xBtn->getBasic("Sin Mora", "jsEliminarCargos()", "trabajo", "idsinmora", false));
-$xFRM->addToolbar($xBtn->getBasic("Vista Previa", "showVistaPago()", "ver", "idprev", false));
+//$xFRM->OButton("TR.Ajustar", "jsGetPagoAjustado()", $xFRM->ic()->EDITAR, "idajust", "editar");
 
-$xFRM->addToolbar($xBtn->getBasic("Guardar Pago", "FormSucess()", "guardar", "idsave", false) );
+if($cargos_mora > 0){
+	$xFRM->OButton("TR.SIN MORA", "jsEliminarCargos()", $xFRM->ic()->RESTAR, "idsinmora", "white");
+}
+//$xFRM->OButton("Vista Previa", "showVistaPago()", $xFRM->ic()->VER, "idprev");
 
 $xFRM->OHidden("idtotaloperaciones", 0);
 
@@ -809,18 +815,26 @@ function FormSucess(){
   			}
   		}
 	//Verificar el Tipo de Pago
+	//
 	if (goSucess == true) { terminarCaptura(); }
 }
 function terminarCaptura() {
 	if (procesar== SYS_AUTOMATICO) {
 		Frm.submit();
 	} else {
-		xG.confirmar({msg:"¿ Confirma guardar el Pago ?", callback: setEnvioConfirmado});
+		xG.confirmar({msg:"¿ Confirma guardar el Pago ?", callback: setEnvioConfirmado, cancelar : setEnvioNoConfirmado, close : setEnvioNoConfirmado});
 	}
 }
-
+function setEnvioNoConfirmado(){
+	if(window.parent.jsEnableSave){
+		window.parent.jsEnableSave();
+	}	
+}
 function setEnvioConfirmado(){
-	xG.desactiva("#idsave");
+	//xG.desactiva("#idsave");
+	if(window.parent.jsRemoveSave){
+		window.parent.jsRemoveSave();
+	}
 	xG.spinInit();
 	Frm.submit();	
 }
@@ -999,9 +1013,11 @@ function jsEval(origen){
 	recalcIVA();
 	getTotal();
 }
-function jsGetPagoAjustado(){
+function jsGetPagoAjustado(mMonto){
 	var ixtotal	= $("#idtotal").val();
-	var ajustar	= window.prompt("Monto",ixtotal);
+	mMonto		= (typeof mMonto == "undefined") ? window.prompt("Monto",ixtotal) : mMonto; 
+	var ajustar	= mMonto;
+	
 	if ( flotante(ajustar) > 0 && flotante(ajustar) > flotante(ixtotal)) {
 		ajustar	= flotante(ajustar) - flotante(ixtotal);
 		ajustar	= ajustar / (1 + flotante(tasaIVAO));
@@ -1029,6 +1045,10 @@ function jsAsLoaded(){
 	if(window.parent){
 		if(window.parent.jsEndCarga){ window.parent.jsEndCarga();	} else { alert("NO LAYER");}
 	}
+}
+function jsGetTotal(){
+	var vv = $("#idtotal").val();
+	return vv;
 }
 </script>
 <?php

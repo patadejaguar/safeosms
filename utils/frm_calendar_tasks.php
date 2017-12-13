@@ -72,7 +72,7 @@ function jsaGetLetrasAVencer($fecha, $producto){
 	$xD		= new cFecha();
 	$xL		= new cSQLListas();
 	$fecha 	= $xD->getFechaISO($fecha); //AND (`creditos_tipoconvenio`.`tipo_en_sistema` =" . CREDITO_PRODUCTO_INDIVIDUAL . ")
-	$filtro	= " AND (`creditos_solicitud`.`saldo_actual`> " . TOLERANCIA_SALDOS .  ")  AND (`creditos_tipoconvenio`.`omitir_seguimiento` =0) ";
+	$filtro	= " AND (`creditos_solicitud`.`saldo_actual`> " . TOLERANCIA_SALDOS .  ")  AND (`creditos_tipoconvenio`.`omitir_seguimiento` =0) AND `letras`.`letra` > 0 ";
 	$sql	= $xL->getListadoDeLetrasConCreditos($fecha, false, "", "", $filtro, $producto);
 	
 	$sql2	= "SELECT `socios`.`codigo`,
@@ -101,7 +101,10 @@ function jsaGetLetrasAVencer($fecha, $producto){
 	$xT->setWithMetaData();
 	$xT->setEventKey("jsGoPanel");
 	$xT->OButton("TR.PAGO", "jsGoToCaja(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
-	$arrSum	= array( );
+	$xT->setColTitle("letra", "TOTAL");
+	
+	$arrSum	= array( 5 => "capital", 6 => "interes", 7 => "iva", 8 => "otros",9 => "letra" );
+	
 	if(MODULO_CAPTACION_ACTIVADO == false){
 		$xT->setOmitidos("ahorro");
 	}
@@ -447,6 +450,9 @@ $xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
 
 if(getUsuarioActual(SYS_USER_NIVEL)>USUARIO_TIPO_OFICIAL_CRED){
 	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
+}
+if(MODO_DEBUG == true){
+	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php'});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
 }
 $idpersona	= $xUsr->getClaveDePersona();
 

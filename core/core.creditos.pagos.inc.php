@@ -3250,8 +3250,13 @@ class cCreditosPagos {
 	private $mOCred				= null;
 	private $mReciboDeOperacion	= 0;
 	private $mSucess			= true;
+	private $mTipoDeRecibo		= 0;
+	private $mIvaAplicado		= 0;
 	
-	function __construct($clave = false){ $this->mNumeroCredito	= setNoMenorQueCero($clave); }
+	function __construct($credito = false){
+		$this->mNumeroCredito	= setNoMenorQueCero($credito);
+		$this->mTipoDeRecibo	= RECIBOS_TIPO_PAGO_CREDITO;
+	}
 	function init($data = false){
 		$xCred	= new cCredito($this->mNumeroCredito);
 		if($xCred->init($data) == true){
@@ -3263,6 +3268,7 @@ class cCreditosPagos {
 	}
 	function getOCred(){if($this->mOCred ==null){$this->init();} return $this->mOCred; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function getIVAAplicado(){ return $this->mIvaAplicado; }
 	function __destruct(){
 		$this->mObj			= null;
 		$this->mMessages	= "";
@@ -3271,10 +3277,10 @@ class cCreditosPagos {
 		$recibo		= setNoMenorQueCero($recibo);
 		
 		if($recibo <= 0){
-			$xRec		= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO);
-			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO);
+			$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo);
+			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, $this->mTipoDeRecibo);
 		}
-		$xRec		= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO, true, $recibo);
+		$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo, true, $recibo);
 		if($xRec->init() == true){
 			$operacion	= $xRec->setNuevoMvto($fecha, $monto, OPERACION_CLAVE_PAGO_MORA, $parcialidad, $observaciones);
 			if($operacion > 0){
@@ -3309,10 +3315,10 @@ class cCreditosPagos {
 		$recibo		= setNoMenorQueCero($recibo);
 	
 		if($recibo <= 0){
-			$xRec		= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO);
-			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO);
+			$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo);
+			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, $this->mTipoDeRecibo);
 		}
-		$xRec		= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO, true, $recibo);
+		$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo, true, $recibo);
 		if($xRec->init() == true){
 			$operacion	= $xRec->setNuevoMvto($fecha, $monto, OPERACION_CLAVE_PAGO_INTERES, $parcialidad, $observaciones);
 			if($operacion > 0){
@@ -3375,11 +3381,11 @@ class cCreditosPagos {
 			$fecha					= ($fecha == false) ? $xCred->getFechaDeOperacionAct() : $fecha;
 			$fecha					= $xF->getFechaISO($fecha);
 				
-			$CRecibo 				= new cReciboDeOperacion ( RECIBOS_TIPO_PAGO_CREDITO, true, $recibo );
+			$CRecibo 				= new cReciboDeOperacion ( $this->mTipoDeRecibo, true, $recibo );
 			//$CRecibo->setGenerarPoliza();$CRecibo->setGenerarTesoreria();$CRecibo->setGenerarBancos();
 			$CRecibo->setNumeroDeRecibo($recibo);
 			if ($CRecibo->init() == false) {
-				$recibo = $CRecibo->setNuevoRecibo( $socio, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, $observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo, false, "",0, $xCred->getClaveDeEmpresa() );
+				$recibo = $CRecibo->setNuevoRecibo( $socio, $this->mNumeroCredito, $fecha, $parcialidad, $this->mTipoDeRecibo, $observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo, false, "",0, $xCred->getClaveDeEmpresa() );
 				$CRecibo->setNumeroDeRecibo($recibo);
 				if($CRecibo->init() == false){
 					$this->mMessages 	.= "ERROR\tSe Fallo al Agregar el Recibo $recibo de la Cuenta " . $this->mNumeroCredito . " \r\n";
@@ -3405,7 +3411,7 @@ class cCreditosPagos {
 				$EsPagado			= ($nuevosaldo <= TOLERANCIA_SALDOS) ? true : false;
 				$arrUpdate			= array();
 				if($xCred->isAFinalDePlazo() == false){
-					$numero_plan 		= $this->getNumeroDePlanDePagos();
+					$numero_plan 		= $xCred->getNumeroDePlanDePagos();
 					if (setNoMenorQueCero ( $numero_plan ) > 0 and $parcialidad > 0) {
 						$xPlan 			= new cPlanDePagos ( $numero_plan ); // no se necesita inicializar el plan de pagos
 						$xPlan->setActualizarParcialidad ( $parcialidad, "(afectacion_real - $monto)", false, false, false, false, false );
@@ -3420,6 +3426,7 @@ class cCreditosPagos {
 							afectacion_cobranza =(afectacion_cobranza*$proporcion_de_cambios),
 							afectacion_estadistica=(afectacion_estadistica*$proporcion_de_cambios) WHERE socio_afectado=$socio 
 							AND docto_afectado=" . $this->mNumeroCredito . " AND (tipo_operacion=" . OPERACION_CLAVE_PLAN_INTERES . " OR tipo_operacion=" . OPERACION_CLAVE_PLAN_IVA . ") " ;
+							
 							$xQL							= new MQL();
 							$xQL->setRawQuery($sqlTM);
 							$this->mMessages				.= "WARN\tAjustando Intereses de plan de pagos solo interes a una Proporcion $proporcion_de_cambios\r\n";							
@@ -3435,15 +3442,15 @@ class cCreditosPagos {
 					$arrUpdate["recibo_ultimo_capital"] = $recibo;
 					
 					//No es pago total y es diferente al ultimo pago
-					if($parcialidad < $this->getPagosAutorizados()){
+					if($parcialidad < $xCred->getPagosAutorizados()){
 						$arrUpdate["ultimo_periodo_afectado"]	= $parcialidad;
 					}
-					$this->setUpdate($arrUpdate);
+					$xCred->setUpdate($arrUpdate);
 				}
 			}
 			if($this->mSucess == true){
 				$CRecibo->setFinalizarRecibo(true);
-				$this->mFechaOperacion	= $fecha;
+				//$this->mFechaOperacion	= $fecha;
 				//$xCred->getORecibo()
 				//$this->mObjRec 			= $CRecibo;
 				$xCred->setReciboDeOperacion($this->mReciboDeOperacion);
@@ -3452,7 +3459,51 @@ class cCreditosPagos {
 			$xCred 					= null;
 		}
 		return $this->mReciboDeOperacion;
-	}	
+	}
+	function addPagoOtros($monto_otros, $parcialidad = 1, $observaciones = "",  $tipoDePago = TESORERIA_COBRO_NINGUNO, $fecha = false, $recibo = false){
+		$recibo		= setNoMenorQueCero($recibo);
+		$xCred		= $this->getOCred();
+		$OProducto	= $xCred->getOProductoDeCredito();
+		
+		if($xCred->getEsCreditoYaAfectado() == true){
+			$OProducto->initOtrosCargos($xCred->getFechaDeMinistracion(), $xCred->getMontoAutorizado());
+		} else {
+			$OProducto->initOtrosCargos();
+		}
+		
+		if($recibo <= 0){
+			$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo);
+			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, $this->mTipoDeRecibo);
+		}
+		$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo, true, $recibo);
+		if($xRec->init() == true){
+			$arr_desglose	= $OProducto->getListaOtrosCargosEnParcs();
+			if($xCred->getEsArrendamientoPuro() == true){
+				$xLeas		= new cCreditosLeasing($xCred->getClaveDeOrigen());
+				$xLeas->init();
+				
+				$totalCNC	= $xLeas->getCuotasNoCapitalizadas();
+				$arr_desglose[OPERACION_CLAVE_PAGO_SEGURO_V]	= $xLeas->getCuotaSeguro() / $totalCNC;
+				$arr_desglose[OPERACION_CLAVE_PAGO_MTTO_V]		= $xLeas->getCuotaMtto() / $totalCNC;
+				$arr_desglose[OPERACION_CLAVE_PAGO_TENEN_V]		= $xLeas->getCuotaTenencia() / $totalCNC;
+				$arr_desglose[OPERACION_CLAVE_PAGO_ACC_V]		= $xLeas->getCuotaAccesorios() / $totalCNC;
+				$arr_desglose[OPERACION_CLAVE_PAGO_GTIAE_V]		= $xLeas->getCuotaGtiaExtendida() / $totalCNC;
+				$arr_desglose[OPERACION_CLAVE_PAGO_IVA_ARR]		= $xLeas->getCuotaIVA() / $totalCNC;
+			}
+			$monto_desglose	= $monto_otros;
+			
+			foreach ($arr_desglose as $idtipooperacion=> $vv){
+				$monto		= setNoMenorQueCero(($monto_desglose * $vv),2);
+				if($idtipooperacion == OPERACION_CLAVE_PAGO_IVA_ARR){
+					$this->mIvaAplicado	= $this->mIvaAplicado + $monto;
+				}
+				$xRec->addMovimiento($idtipooperacion, $monto, $parcialidad);
+			}
+			$xRec->setFinalizarRecibo(true);
+		}
+		$this->mMessages	.= $xRec->getMessages();
+		return $recibo;
+	}
 }
 
 

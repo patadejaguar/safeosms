@@ -1972,8 +1972,62 @@ class cSAFEData{
 		//llevar los folios al maximo
 		return $msg;
 	}
+	function setModArrendamientoDA($enable = false){
+		
+		//Des-habilitar contratos
+		$this->setContratoDisEn(1900, $enable);
+		$this->setContratoDisEn(1901, $enable);
+		$this->setContratoDisEn(1902, $enable);
+		$this->setContratoDisEn(1903, $enable);
+		$this->setContratoDisEn(1904, $enable);
+		$this->setContratoDisEn(1905, $enable);
+		
+		$this->setContratoDisEn(1906, $enable);
+		$this->setContratoDisEn(1907, $enable);
+		$this->setContratoDisEn(1908, $enable);
+		$this->setContratoDisEn(1909, $enable);
+		$this->setContratoDisEn(1910, $enable);
+
+		$this->setContratoDisEn(1911, $enable);
+		$this->setContratoDisEn(1912, $enable);
+		$this->setContratoDisEn(1913, $enable);
+		$this->setContratoDisEn(1914, $enable);
+		$this->setContratoDisEn(1915, $enable);
+		$this->setContratoDisEn(1916, $enable);
+		
+	}
+	function setModAML_DA($enable = false){
+		$this->setContratoDisEn(8801, $enable);
+		$this->setContratoDisEn(8802, $enable);
+		$this->setContratoDisEn(811, $enable);
+		$this->setContratoDisEn(812, $enable);
+		$this->setContratoDisEn(800, $enable);
+		
+	}
+	function setModContableDA($enable = false){
+		$this->setContratoDisEn(501, $enable);
+		$this->setContratoDisEn(502, $enable);
+		$this->setContratoDisEn(70021, $enable);
+	}
+	function setModSeguimientoDA($enable = false){
+		$this->setContratoDisEn(3002, $enable);
+		$this->setContratoDisEn(10, $enable);
+		//$this->setContratoDisEn(502, $enable);
+		
+	}
+	function setModCaptacionDA($enable = false){
+		$this->setContratoDisEn(16, $enable);
+		$this->setContratoDisEn(2, $enable);
+		$this->setContratoDisEn(7, $enable);
+		$this->setContratoDisEn(6, $enable);
+		$this->setContratoDisEn(9, $enable);
+		$this->setContratoDisEn(18, $enable);
+	}
 	
-	
+	private function setContratoDisEn($id, $enable = false){
+		$estatus	= ($enable == true) ? "alta" : "baja";
+		$this->execQuery("UPDATE `general_contratos` SET `estatus`='$estatus' WHERE `idgeneral_contratos`=$id");
+	}
 }
 function getUsuarioActual($parametro = false){
 	$usr	= false;

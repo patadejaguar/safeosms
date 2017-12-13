@@ -1017,7 +1017,18 @@ class cSocio{
 	function getPersonalidadJuridica(){ return $this->mTipoFiguraJu; }
 	function getFechaDeNacimiento(){ return $this->mFechaDeNacimiento;	}
 	function getFechaDeRegistro(){ return$this->mFechaDeIngreso; }
-	function getTelefonoPrincipal(){ return $this->mTelefonoP; }
+	function getTelefonoPrincipal(){
+		
+		if(setNoMenorQueCero($this->mTelefonoP)<=0){
+			$arr	= $this->getTelefonos();
+			foreach ($arr as $id => $cnt){
+				if(setNoMenorQueCero($this->mTelefonoP)<=0){
+					$this->mTelefonoP	= setNoMenorQueCero($cnt);
+				}
+			}
+		}
+		return $this->mTelefonoP; 
+	}
 	function getFiguraJuridica(){ return $this->mTipoFiguraJu; }
 	function getEstadoCivil(){ return $this->mEstadoCivil; }
 	function getLugarDeNacimiento(){ return $this->mLugarDeNacimiento; }
@@ -2542,7 +2553,7 @@ class cSocio{
 		$idcx		= "persona-telefonos-$idpersona";
 		//$xCache->clean();
 		$arr		= $xCache->get($idcx);
-		if(is_array($arr)){
+		if(!is_array($arr)){
 			$xQL	= new MQL();
 		
 			$sql = "SELECT
@@ -2550,14 +2561,14 @@ class cSocio{
 					FROM
 						`socios_vivienda` `socios_vivienda`
 					WHERE
-						(`socios_vivienda`.`socio_numero` =$idpersona)
+						(`socios_vivienda`.`socio_numero` =$idpersona) AND (`socios_vivienda`.`estado_actual`>0)
 					UNION
 					SELECT
 						TRIM(`socios_vivienda`.`telefono_movil`)
 					FROM
 						`socios_vivienda` `socios_vivienda`
 					WHERE
-						(`socios_vivienda`.`socio_numero` =$idpersona)";
+						(`socios_vivienda`.`socio_numero` =$idpersona) AND (`socios_vivienda`.`estado_actual`>0)";
 			$rs		= $xQL->getRecordset($sql);
 			while($rw = $rs->fetch_assoc() ){
 				$arr[]	= $rw["telefono"];

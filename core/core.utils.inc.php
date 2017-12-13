@@ -2207,6 +2207,7 @@ class cSistemaEquivalencias {
 }
 
 class cReglasDeValidacion  {
+	private $mValue		= "";
 	function  __construct(){
 		
 	}
@@ -2231,6 +2232,19 @@ class cReglasDeValidacion  {
 		$ready	= true;
 		if($clave <= FALLBACK_CLAVE_DE_DOCTO OR $clave == DEFAULT_CREDITO OR $clave == FALLBACK_CLAVE_DE_CREDITO){ $ready = false; }
 		return $ready;
+	}
+	function v(){
+		return $this->mValue;
+	}
+	function sucursal($v){
+		$v	= strtolower($v);
+		$ready	= true;
+		if($v == SYS_TODAS OR trim($v) == ""){
+			$ready	= false;
+		} else {
+			$this->mValue	= $v;
+		}
+		return $ready; 
 	}
 }
 

@@ -16,6 +16,7 @@
 $xHP		= new cHPage("TR.RECIBO DE PAGO", HP_FORM);
 $xCaja		= new cCaja();
 $xEvt		= new cCreditosEventos();
+$xRuls		= new cReglaDeNegocio();
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
@@ -188,7 +189,10 @@ $xSel		= new cHSelect();
 ///$msel->addEvent("onchange", "initComponents()");
 
 $xDate->setDivClass("");
-$xFRM->addDivSolo($xDate->get("TR.Fecha"), "<div id='mscom'></div>", "tx14", "tx34");
+$xFRM->addFechaRecibo();
+
+//$xFRM->addDivSolo($xDate->get("TR.Fecha"), "<div id='mscom'></div>", "tx14", "tx34");
+
 $xFRM->addCreditBasico();
 $xFRM->addDataTag("role", $xEvt->PAGO);
 
@@ -200,10 +204,11 @@ $xFRM->addDivSolo($xTxt->get("idparcialidad", "", "TR.Numero de Parcialidad", ""
 
 $xDate->addEvents("onblur=\"initComponents()\" onchange=\"initComponents()\" ");
 
+$xFRM->addAviso("", "mscom");
+
+
 $xFRM->addHTML("<div id='lst' class='inv'></div>");
 $xFRM->addHTML("<div id='lst2' class='inv'></div>");
-
-
 
 $xFRM->addSubmit("", "setFrmSubmit()");
 

@@ -26,9 +26,14 @@ $xCtrl->addEspOption(SYS_TODAS, "TODAS");
 $xCtrl->setOptionSelect(SYS_TODAS);
 
 $xRPT->addControl( $xCtrl->get(true), "iddestinodecredito", "destino" );
-$xRPT->addControl($xChk->get("TR.Incluir Otros Datos", "idotrosd"), "idotrosd", "otrosdatos", true);
-$xRPT->addControl($xChk->get("TR.Datos Compacto", "idcompacto"), "idcompacto", "compacto", true);
+
+$xChk->setDivClass("tx4 tx18");
+
+$xRPT->addControl($xChk->get("TR.Incluir Otros", "idotrosd"), "idotrosd", "otrosdatos", true);
+$xRPT->addControl($xChk->get("TR.Datos Simples", "idcompacto"), "idcompacto", "compacto", true);
 $xRPT->addControl($xChk->get("TR.OMITIRCEROS", "nocero"), "nocero", "nocero", true);
+$xRPT->addControl($xChk->get("TR.CON EMPLEADOR", "conempleador"), "conempleador", "conempleador", true);
+$xRPT->addControl($xChk->get("TR.SIN EMPLEADOR", "sinempleador"), "sinempleador", "sinempleador", true);
 //$xRPT->addTipoDeOperacion();
 //$xRPT->setConRecibos(false);
 echo $xRPT->get();

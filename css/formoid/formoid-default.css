@@ -563,12 +563,14 @@ display:block;
 float:left;
 border-right:1px solid #5d5d5d;
 border-left:2px solid #929292;
-width:135px;
+width:12.1%; /*135px*/
 height:2.75em;
 border-bottom:1px solid #575757;
 border-top:1px solid #797979;
-
+overflow: hidden;
 }
+.frmpanel .toolnav li { min-width: 8em; }
+
 /* Set the states when hovering, except for the last item in the list (the search bar), since it doesn't need to change */
 .toolnav li:hover {
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
@@ -617,7 +619,7 @@ border-top:1px solid #797979;
 	text-shadow: 0 -1px 3px #0066cc;
 	background: #2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x
 }
-.toolnav li a.orange {
+.toolnav li a.orange,.diag-orange .ui-widget-header {
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
 }
@@ -664,6 +666,9 @@ background: linear-gradient(top,#4387fd,#4683ea)
 text-shadow: none; color: #252B29;
 background: #B9CCD2;
 }
+
+.main-dialog-class .ui-widget-header{background: url("/Images/your-background.png") repeat-x scroll 34px 42px #a4cf50;font-size:16px;border:0;text-transform:uppercase}
+.main-dialog-class .ui-widget-content{background-image:none;background-color:#fff}
 
 
 .toolnav li a.blue2 {

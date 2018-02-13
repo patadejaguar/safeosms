@@ -89,7 +89,7 @@ if($credito <= DEFAULT_CREDITO){
 				$xFRM->OHidden("credito", $credito);
 				$xFRM->endSeccion();
 				$xFRM->addSeccion("iddcob", "TR.DATOS DEL RECIBO");
-				$xFRM->addFecha();
+				$xFRM->addFechaRecibo();
 				
 				$xFRM->OHidden("ctipo_pago", $xProm->TIPO_PAGO_PROMO);
 				//$xFRM->addCobroBasico("", $xProm->TIPO_PAGO_PROMO);

@@ -15,7 +15,7 @@ $permiso			= getSIPAKALPermissions($theFile);
 if($permiso === false){	header ("location:../404.php?i=999");	}
 $_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CALENDARIO ATRASOS", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -43,7 +43,12 @@ $xHP->addCSS("../css/fullcalendar.min.css");
 
 $xHP->init();
 
+
+
 $xFRM		= new cHForm("frm", "./");
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
+
 $xFRM->addJsInit("init();");
 $xFRM->addHElem("<div id='calendario'></div>");
 //$xFRM->addJsBasico();
@@ -60,6 +65,8 @@ var mFecha	= FECHA_ACTUAL;
 var xSeg	= new SegGen();
 var xG		= new Gen();
 var xCss	= new CssGen();
+var xCred	= new CredGen();
+
 var HrInit	= "<?php echo sprintf("%'.02d", $xSuc->getHorarioDeEntrada()); ?>";
 var jsCache = {};
 function init(){jsRunCalendar();}
@@ -67,27 +74,50 @@ function init(){jsRunCalendar();}
 function jsProcesarAtrasos(data){
 	var events 	= new Array();
 	//JSON.parse(data);
-	var fin 	= Object.keys(data).length;
+	//var fin 	= Object.keys(data).length;
 	var iters	= null;
+	var icnt	= 0;
+	var imt		= 300;
 	moment.utc();
+	//var vvts	= [];
+	//console.log(data);
+	//console.log("loading..");
+	//try { data = JSON.parse(data); } catch (e){}
+	
 	$.each( data, function( key, val ) {
 		var atraso	= val;
-		//{"record_0":{"codigo":"1000002","nombre":"JAIR DE JESUS SALAZAR SALAZAR","credito":"200000202","parcialidad":"52",
-		//"fecha_de_pago":"2015-07-01","capital":"119.61","interes":"1.40","iva":"0.22","ahorro":"0.00","otros":"0.00","letra":"121.23"}
+
 		if(typeof atraso != "undefined"){
 			var	xF		= new moment(atraso.fecha_de_pago + "T"+ HrInit + ":00:00");
-			var xT		= (iters == null) ? xF : iters;
-			var xInfo	= xG.lang("parcialidad") + " # " + atraso.parcialidad + " " + xG.lang("monto") + " : " + atraso.letra;
+			var segs	= icnt * imt;
+			xF.add(segs, "seconds");
+						
+			var xInfo	= "Fecha : " + atraso.fecha_de_pago   + " - " + xG.lang("parcialidad") + " # " + atraso.parcialidad + " " + xG.lang("monto") + " : " + atraso.letra;
 			var css		= xCss.get("vencido");
-			var evt 	= {title: atraso.nombre, start: xT, end:xT.seconds(900), info : xInfo,
-						icon: "fa-money", textColor: "black", allDay : false,
-						borderColor: xCss.border,backgroundColor: css.background
+			var xTitle	= atraso.nombre + " - $ " + getFMoney(atraso.letra);	
+			/*icon: "fa-info",*/
+			var evt 	= {
+						title: xTitle,
+						start: xF,
+						end:xF.seconds(imt),
+						info : xInfo,
+						textColor: "black",
+						allDay : false,
+						borderColor: xCss.border,
+						backgroundColor: css.background,
+						credito : atraso.credito,
+						persona : atraso.persona,
+						periodo : atraso.parcialidad
 						};
 			$('#calendario').fullCalendar( 'renderEvent', evt, true);
-			iters		= xT.seconds(600);
+			icnt++;
+			
 			//setLog(iters);
+			//vvts.push(evt);
 		}
-	});	
+	});
+	xG.spinEnd();
+	//$('#calendario').fullCalendar( 'renderEvents', vvts, true);
 }
 
 function jsRunCalendar(){
@@ -97,7 +127,7 @@ function jsRunCalendar(){
 		header: {
 			left: 'prev,next today',
 			center: 'title',
-			right: 'month,agendaWeek,agendaDay'
+			right: 'month,list'
 		},
 	    eventRender: function(event, element) {
 	    	if (event.icon){
@@ -117,6 +147,7 @@ function jsRunCalendar(){
 					$('#calendario').fullCalendar( 'removeEvents' );
 					
 					var vURL		= "../svc/creditos.atrasos.svc.php?acumulado=true&fecha=" + fi +"&fechafinal=" + ff;
+					//setLog(vURL);
 					$.cookie.json 	= true;
 					$.getJSON( vURL, function(data){
 						if (typeof data == "undefined") {
@@ -127,7 +158,6 @@ function jsRunCalendar(){
 								var atraso	= val;
 								var css		= xCss.get("vencido");
 								if(typeof atraso != "undefined"){
-									
 									var evt 	= { title: atraso.pagos + " $ " + atraso.monto, start: atraso.fecha_de_pago, icon: "fa-money", textColor: "black", allDay : true, borderColor: xCss.border,backgroundColor: css.background };
 									$('#calendario').fullCalendar( 'renderEvent', evt, true);
 								}
@@ -135,17 +165,28 @@ function jsRunCalendar(){
 						}
 					});
 				break;
-				case "agendaDay":
+				case "list":
+					
 					var fi	= view.start.toISOString();
 					var ff	= view.end.toISOString();
 					$('#calendario').fullCalendar( 'removeEvents' );
+					xG.spinInit();
 					xSeg.getListaDeAtrasos({callback:jsProcesarAtrasos , fecha : fi, fechaFinal : ff});
-					break;					
+					break;
 			}
 		},
 	    eventClick: function(calEvent, jsEvent, view) {
-
-	    }		
+	    	switch(view.name){
+	    		case "list":
+		    		var cred	= calEvent.credito;
+		    		xCred.goToPanelControl(cred);
+		    	break;
+	    	}
+	    },
+	    dayClick: function(date, jsEvent, view) {
+	        $('#calendario').fullCalendar('changeView', 'list', date.format() );
+	   },
+	   displayEventTime: false	
 	});	
 }
 </script>

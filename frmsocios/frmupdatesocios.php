@@ -26,6 +26,8 @@ $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xRuls		= new cReglaDeNegocio();
 $xSel		= new cHSelect();
+$EsMoral	= false;
+
 
 
 $SinDatosFiscales	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_FISCALES);		//regla de negocio
@@ -37,7 +39,7 @@ $DomicilioSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_DOM_
 $SinDetalleAcceso 	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DETALLE_ACCESO);		//regla de negocio
 $EsSimple			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_SIMPLE);		//regla de negocio
 $TratarComoSalarios	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_ASALARIADO);		//regla de negocio
-
+$UsarIDInterno		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);
 
 
 //$jxc = new TinyAjax();
@@ -104,14 +106,28 @@ if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
 $xSoc				= new cSocio($persona);
 if($xSoc->init() == true){
 	$tipo_de_persona	= ($xSoc->getEsPersonaFisica() == true) ? PERSONAS_ES_FISICA : PERSONAS_ES_MORAL;
+	$EsMoral			= ($xSoc->getEsPersonaFisica() == false) ? true : false;
+	
 	$xFRM->addGuardar();
+	
 	$xFRM->OHidden("codigo", $xTabla->codigo()->v(), "TR.CODIGO");
 	$xFRM->OHidden("eacp", $xTabla->eacp()->v(), "TR.EACP");
 	$xFRM->OHidden("idusuario", $xTabla->idusuario()->v());
 	$xFRM->OHidden("sucursal", $xTabla->sucursal()->v());
 	$xFRM->OHidden("fecha_de_revision", $xTabla->fecha_de_revision()->v());
 	
-	$xFRM->OText_13("idinterna", $xTabla->idinterna()->v(), "TR.IDINTERNO", true, "", " green");
+	
+	
+	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("tipoingreso", SYS_TODAS, $xTabla->tipoingreso()->v())->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeFigurasJuridicas("personalidad_juridica", SYS_TODAS, $xTabla->personalidad_juridica()->v())->get(true));
+	
+	if($UsarIDInterno == false){
+		$xFRM->OHidden("idinterna", $xTabla->idinterna()->v());
+	} else {
+		$xFRM->OText_13("idinterna", $xTabla->idinterna()->v(), "TR.IDINTERNO", true, "", " green");
+	}
+	
+	
 	
 	$xFRM->OHidden("fechaentrevista", $xTabla->fechaentrevista()->v(), "TR.FECHA_DE_CAPTURA");
 	$xFRM->ODate("fechaalta", $xTabla->fechaalta()->v(), "TR.FECHA_DE_ACEPTACION");
@@ -119,11 +135,23 @@ if($xSoc->init() == true){
 	
 	
 	$xFRM->OText("nombrecompleto", $xTabla->nombrecompleto()->v(), "TR.NOMBRE_COMPLETO");
-	$xFRM->OText("apellidopaterno", $xTabla->apellidopaterno()->v(), "TR.APELLIDO_PATERNO");
-	$xFRM->OText("apellidomaterno", $xTabla->apellidomaterno()->v(), "TR.APELLIDO_MATERNO");
+	if($EsMoral == false){
+		$xFRM->OText("apellidopaterno", $xTabla->apellidopaterno()->v(), "TR.APELLIDO_PATERNO");
+		$xFRM->OText("apellidomaterno", $xTabla->apellidomaterno()->v(), "TR.APELLIDO_MATERNO");
+	} else {
+		$xFRM->OHidden("apellidopaterno", $xTabla->apellidopaterno()->v());
+		$xFRM->OHidden("apellidomaterno", $xTabla->apellidomaterno()->v());
+	}
 	
 	$xFRM->OText_13("rfc", $xTabla->rfc()->v(), "TR.IDENTIFICACION_FISCAL");
-	$xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.IDENTIFICACION_POBLACIONAL");
+	
+	if($EsMoral == false){
+		$xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.IDENTIFICACION_POBLACIONAL");
+	} else {
+		$xFRM->OHidden("curp", $xTabla->curp()->v());
+	}
+	
+	
 	if(EACP_CLAVE_DE_PAIS != "MX"){
 		$xFRM->OText("clave_de_firma_electronica", $xTabla->clave_de_firma_electronica()->v(), "TR.CLAVE DE FIRMA ELECTRONICA");
 	} else {
@@ -131,6 +159,7 @@ if($xSoc->init() == true){
 	}
 	
 	$xFRM->addHElem( $xSel->getListaDeRegimenesFiscales("regimen_fiscal", SYS_TODAS, $xTabla->regimen_fiscal()->v())->get(true) );
+	
 	//$xFRM->OMoneda("regimen_fiscal", $xTabla->regimen_fiscal()->v(), "TR.REGIMEN FISCAL");
 	$xFRM->addHElem( $xSel->getListaDeEstadoDePersonas("estatusactual", $xTabla->estatusactual()->v())->get(true) );
 	
@@ -159,22 +188,46 @@ if($xSoc->init() == true){
 		$xFRM->OHidden("region", $xTabla->region()->v(), "TR.REGION");
 		$xFRM->OHidden("cajalocal", $xTabla->cajalocal()->v(), "TR.CAJA_LOCAL");	
 	}
+	//TR.fecha constitucion
+	if($EsMoral == true){
+		$xFRM->ODate("fechanacimiento", $xTabla->fechanacimiento()->v(), "TR.FECHA DE CONSTITUCION");
+		$xFRM->OText("lugarnacimiento", $xTabla->lugarnacimiento()->v(), "TR.LUGAR DE CONSTITUCION");
+	} else {
+		$xFRM->ODate("fechanacimiento", $xTabla->fechanacimiento()->v(), "TR.FECHA DE NACIMIENTO");
+		$xFRM->OText("lugarnacimiento", $xTabla->lugarnacimiento()->v(), "TR.LUGAR DE NACIMIENTO");
+	}
+
 	
-	$xFRM->ODate("fechanacimiento", $xTabla->fechanacimiento()->v(), "TR.FECHA DE NACIMIENTO");
-	$xFRM->OText("lugarnacimiento", $xTabla->lugarnacimiento()->v(), "TR.LUGAR DE NACIMIENTO");
 	
-	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("tipoingreso", SYS_TODAS, $xTabla->tipoingreso()->v())->get(true) );
-	$xFRM->addHElem( $xSel->getListaDeEstadoCivil("estadocivil", $xTabla->estadocivil()->v())->get(true) );
-	$xFRM->addHElem( $xSel->getListaDeGeneros("genero", $xTabla->genero()->v())->get(true));
-	$xFRM->addHElem( $xSel->getListaDeFigurasJuridicas("personalidad_juridica", SYS_TODAS, $xTabla->personalidad_juridica()->v())->get(true));
-	$xFRM->addHElem( $xSel->getListaDeRegimenMatrimonio("regimen_conyugal", $xTabla->regimen_conyugal()->v())->get(true) );
+	
+	if($EsMoral == true){
+		$xFRM->OHidden("genero", $xTabla->genero()->v());
+		$xFRM->OHidden("estadocivil", $xTabla->estadocivil()->v());
+		$xFRM->OHidden("regimen_conyugal", $xTabla->regimen_conyugal()->v());
+	} else {
+		
+		$xFRM->addHElem( $xSel->getListaDeGeneros("genero", $xTabla->genero()->v())->get(true));
+		$xFRM->addHElem( $xSel->getListaDeEstadoCivil("estadocivil", $xTabla->estadocivil()->v())->get(true) );
+		$xFRM->addHElem( $xSel->getListaDeRegimenMatrimonio("regimen_conyugal", $xTabla->regimen_conyugal()->v())->get(true) );
+	}
+	
+	
+	
 	$xFRM->addHElem( $xSel->getListaDeTipoDeIdentificacion("tipo_de_identificacion", $tipo_de_persona, $xTabla->tipo_de_identificacion()->v())->get(true) );
-	$xFRM->OText("documento_de_identificacion", $xTabla->documento_de_identificacion()->v(), "TR.DOCUMENTO DE IDENTIFICACION");
-	
-	$xFRM->OText("titulo_personal", $xTabla->titulo_personal()->v(), "TR.TITULO_PERSONAL");
+	$xFRM->OText_13("documento_de_identificacion", $xTabla->documento_de_identificacion()->v(), "TR.DOCUMENTO DE IDENTIFICACION");
+
 	$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
 	$xFRM->OText("telefono_principal", $xTabla->telefono_principal()->v(), "TR.TELEFONO_PRINCIPAL");
-	$xFRM->OMoneda("dependientes_economicos", $xTabla->dependientes_economicos()->v(), "TR.DEPENDIENTES_ECONOMICOS");
+	
+	if($EsMoral == true){
+		$xFRM->OHidden("titulo_personal", $xTabla->titulo_personal()->v());
+		$xFRM->OHidden("dependientes_economicos", $xTabla->dependientes_economicos()->v());
+	} else {
+		$xFRM->OText("titulo_personal", $xTabla->titulo_personal()->v(), "TR.TITULO_PERSONAL");
+		$xFRM->OMoneda("dependientes_economicos", $xTabla->dependientes_economicos()->v(), "TR.DEPENDIENTES_ECONOMICOS");
+	}
+	
+	
 	
 	if(MODULO_AML_ACTIVADO == true){
 		$xFRM->OSiNo("TR.PREGUNTA_AML_PERSONA_2","nacionalidad_extranjera", $xTabla->nacionalidad_extranjera()->v());

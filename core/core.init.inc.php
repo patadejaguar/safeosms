@@ -1994,7 +1994,17 @@ class cSAFEData{
 		$this->setContratoDisEn(1914, $enable);
 		$this->setContratoDisEn(1915, $enable);
 		$this->setContratoDisEn(1916, $enable);
-		
+		$this->setOperacionDisEn(157, $enable);
+		$this->setOperacionDisEn(171, $enable);
+		$this->setOperacionDisEn(172, $enable);
+		$this->setOperacionDisEn(173, $enable);
+		$this->setOperacionDisEn(174, $enable);
+		$this->setOperacionDisEn(175, $enable);
+		$this->setOperacionDisEn(176, $enable);
+		$this->setOperacionDisEn(177, $enable);
+		$this->setOperacionDisEn(178, $enable);
+		$this->setOperacionDisEn(179, $enable);
+		$this->setOperacionDisEn(180, $enable);
 	}
 	function setModAML_DA($enable = false){
 		$this->setContratoDisEn(8801, $enable);
@@ -2022,11 +2032,19 @@ class cSAFEData{
 		$this->setContratoDisEn(6, $enable);
 		$this->setContratoDisEn(9, $enable);
 		$this->setContratoDisEn(18, $enable);
+		$this->setOperacionDisEn(412, $enable);
+		$this->setOperacionDisEn(220, $enable);
+		$this->setOperacionDisEn(500, $enable);
+		$this->setOperacionDisEn(510, $enable);
 	}
 	
 	private function setContratoDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "alta" : "baja";
 		$this->execQuery("UPDATE `general_contratos` SET `estatus`='$estatus' WHERE `idgeneral_contratos`=$id");
+	}
+	private function setOperacionDisEn($id, $enable = false){
+		$estatus	= ($enable == true) ? "1" : "0";
+		$this->execQuery("UPDATE `operaciones_tipos` SET `estatus` = '$estatus' WHERE `idoperaciones_tipos` = '$id'");
 	}
 }
 function getUsuarioActual($parametro = false){

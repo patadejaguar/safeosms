@@ -27,7 +27,9 @@ $xHP			= new cHPage("TR.Depositos a_la_vista");
 $xF				= new cFecha();
 $jxc 			= new TinyAjax();
 $iddocto 		= parametro("idcuenta", 0, MQL_INT);
-$recibo			= parametro("idrecibo");
+$recibo			= parametro("idrecibo", 0, MQL_INT);
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+
 $actload 		= "";
 $ReciboIDE		= 0;
 $urlRec			= "";
@@ -70,9 +72,13 @@ $xFRM->setTitle($xHP->getTitle());
 if ($action == SYS_NINGUNO) {
 $xFRM->addCuentaCaptacionBasico();
 $xFRM->addSubmit();
-$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.DEPOSITO_CAPTACION", 0, true) );
+
+$xFRM->addFechaRecibo();
 $xFRM->addCobroBasico();
-$xFRM->addHElem($xDate->get("TR.Fecha"));
+//$xFRM->addHElem($xDate->get("TR.Fecha"));
+$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.DEPOSITO_CAPTACION", 0, true) );
+
+
 $xFRM->addObservaciones();
 
 $xFRM->addDataTag("role", iDE_CVISTA);
@@ -80,8 +86,6 @@ $xFRM->addDataTag("role", iDE_CVISTA);
 $jxc ->drawJavaScript(false, true);
 } else {
 		$xT 			= new cTipos();
-		$Fecha				= parametro("idfecha-0", false);
-		$Fecha				= ($Fecha == false) ? fechasys() : $xF->getFechaISO($Fecha);
 		
 		$idsocio 		= parametro("idsocio", false, MQL_INT);//$xT->cInt($_POST["idsocio"]);
 		$detalles 		= parametro("idobservaciones", "");
@@ -90,7 +94,7 @@ $jxc ->drawJavaScript(false, true);
 		$comopago 		= parametro("ctipo_pago", DEFAULT_TIPO_PAGO, MQL_RAW);
 		$folio_fiscal 	= parametro("foliofiscal", DEFAULT_RECIBO_FISCAL);
 		
-		$fecha_de_operacion	= $Fecha;
+		$fecha_de_operacion	= $fecha;
 		
 		//$xSoc			= new cSocio($idsocio);
 		

@@ -76,7 +76,7 @@ if($xAlert->init() == true){
 	$xFRM->OButton("TR.MODIFICAR ESTATUS", "jsModificarEstatus($clave)", $xFRM->ic()->EDITAR, "cmdeditaralerta", "editar");
 	
 	if($xAlert->getEsEnviadoRMS() == false){
-		$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR);
+		$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR, "cmdenviarrms", "yellow");
 	} else {
 	    $xFRM->addAviso($xFRM->getT("MS.ALERTA_ENVIADO_RMS"), "idmsgs", false, "warning");
 	}

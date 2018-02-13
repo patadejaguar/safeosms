@@ -59,7 +59,8 @@ $xFRM->setNoAcordion();
 if($action == SYS_NINGUNO){
 
 	$xFRM->addPersonaBasico();
-	$xFRM->addFecha();
+	//$xFRM->addFecha();
+	$xFRM->addFechaRecibo();
 	$xFRM->addPagoBasico();
 	$xFRM->addObservaciones();
 	$xFRM->addEnviar();

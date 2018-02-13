@@ -781,6 +781,9 @@ class cSocio{
 	private $mIDInterna				= "";
 	private $mIDPersonaRepLegal		= 0;
 	
+	private $mInitDatosExt			= false;
+	
+	
 	function __construct($codigo_de_socio, $init = false){
 
 		$this->mCodigo			= setNoMenorQueCero($codigo_de_socio);
@@ -1946,6 +1949,7 @@ class cSocio{
 			$xLog->add($xAml->getMessages(), $xLog->DEVELOPER);
 			//Perfil Transaccional
 			$xTrans			= new cAMLPersonasPerfilTransaccional($this->getCodigo());
+			
 			if($xTrans->getNumeroEntradas() <= 0){
 				$ready		= false;
 				$EsOperable	= false;
@@ -2358,6 +2362,8 @@ class cSocio{
 			$sucess			= false;
 		} else {
 			$this->mMessages .= "OK\tSe agrego el Socio $codigo con Nombre $nombre $apellidopaterno $apellidomaterno \r\n";
+			//$this->setCuandoSeActualiza();
+			
 			$this->init();		//Iniciar
 			//Agregar en la Tabla de Grupos Solidarios si aplica
 			//2012-06-20 si es grupo y es persojna moral
@@ -2417,7 +2423,7 @@ class cSocio{
 	 * @return string	Mensaje de resultado
 	 */
 	function addVivienda($calle, $numero_exterior, $codigo_postal = false, $numero_interior = "", $referencia = "", $telefono_fijo = "0", $telefono_movil = "0",
-			$principal = false, $regimen = FALLBACK_PERSONAS_REGIMEN_VIV, $tipo = FALLBACK_PERSONAS_TIPO_VIV, $tiempo_de_residir = DEFAULT_TIEMPO, 
+			$principal = false, $regimen = false, $tipo = false, $tiempo_de_residir = DEFAULT_TIEMPO, 
 			$colonia = "", $TipoDeAcceso = "", $gps = "",
 			$clave_de_localidad = false, $clave_de_pais = EACP_CLAVE_DE_PAIS, 
 			$nombre_pais = "", $nombre_estado = "", $nombre_municipo = "", $nombre_localidad = "", $fecha_de_ingreso = false){
@@ -2429,7 +2435,14 @@ class cSocio{
 		$tiempo_de_residir	= setNoMenorQueCero($tiempo_de_residir);
 		$fecha_de_ingreso	= $xF->getFechaISO($fecha_de_ingreso);
 		$principal			= $xT->cBool($principal);
-		
+		$regimen			= setNoMenorQueCero($regimen);
+		$tipo				= setNoMenorQueCero($tipo);
+		if($regimen <=0){
+			$regimen		= FALLBACK_PERSONAS_REGIMEN_VIV;
+		}
+		if($tipo<=0){
+			$tipo			= FALLBACK_PERSONAS_TIPO_VIV;
+		}
 		if($tiempo_de_residir < DEFAULT_TIEMPO){
 			if($xF->getInt($fecha_de_ingreso) >= $xF->getInt(fechasys()) ){ //si es mayor o igual al actual
 				$tiempo_de_residir				= DEFAULT_TIEMPO;
@@ -2800,7 +2813,8 @@ class cSocio{
 	function existeCuenta($cuenta, $tipo = false){
 		$existentes		= setNoMenorQueCero($this->getContarDoctos(iDE_CAPTACION, $tipo, $cuenta));
 		return		($existentes <= 0 ) ? false : true;
-	}		
+	}
+	
 	/**
 	 * Funcion que Actualiza los Datos del Socio segun un array tipo Campo=>valor
 	 * @param	array	$aParam
@@ -3622,6 +3636,7 @@ class cSocio{
 				}
 			}
 		}
+		$this->setCuandoSeActualiza();
 	}
 	function getOtrosParametros($tipo){
 		$ret		= null;
@@ -3956,19 +3971,31 @@ class cSocio{
 		return $ready;
 	}
 	function getDatosExtrajero(){
-		$xQL			= new MQL();
 		$persona		= $this->mCodigo;
+		$idcx			= "personas_datos_extranjero-bypersona-$persona";
+		$oncache		= true;
+		//$xCache			= new cCache();
+		//$datos			= $xCache->get($idcx);
+		
+		$xQL			= new MQL();
 		$datos			= $xQL->getDataRow("SELECT * FROM `personas_datos_extranjero` WHERE `clave_de_persona`=$persona LIMIT 0,1");
 		$xF				= new cFecha();
-		if(isset($datos["clave_de_persona"])){
-			$xExt		= new cPersonas_datos_extranjero();
+		
+		$xExt			= new cPersonas_datos_extranjero();
+		if(isset($datos[$xExt->CLAVE_DE_PERSONA])){
+			
 			$xExt->setData($datos);
 			$this->mExtranjeroFechaInicial 	= $xF->getFechaISO($xExt->fecha_de_inicio_residencia()->v());
 			$this->mExtranjeroFechaFin		= $xF->getFechaISO($xExt->fecha_de_vencimiento()->v());
 			$this->mExtranjeroPermiso		= $xExt->clave_permiso_de_residencia()->v();
 			$this->mNacionalidad			= strtoupper($xExt->pais_de_nacionalidad()->v());
+			$this->mInitDatosExt			= true;
 			//setLog(" NADA " . $this->mNacionalidad);
+		} else {
+			$this->mNacionalidad			= "";
+			
 		}
+		return $this->mInitDatosExt;
 	}
 	function setDatosColegiacion($membresia, $lugarpago, $diapago, $gradoacademico, $contactoemergencia ="", $idcolegiacion = ""){
 		$membresia		= setNoMenorQueCero($membresia);
@@ -4239,7 +4266,7 @@ class cOficial{
 
 class cEmpresas {
 	private $mClave					= "";
-	private $mDatos					= "";
+	private $mDatos					= array();
 	private $mPeriodo				= false;
 	private $mClaveDePersona		= false;
 	private $mOB					= null;
@@ -4267,49 +4294,103 @@ class cEmpresas {
 	private $mIDDomicilio			= 0;
 	private $mDDDomicilio			= array();
 	private $mIDCache				= "";
+	private $mAlias					= "";
+	private $mDomicilio				= "";
+	private $mTelefono				= "";
+	
 	function __construct($clave = false){		$this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave);	}
 	function setIDCache($clave){if($clave >0){ $this->mIDCache = TCATALOGOS_EMPRESAS . "-" . $this->mClave; } }
 	function setCleanCache(){$xCache = new cCache(); $xCache->clean($this->mIDCache); }
 	function getClaveDeEmpresa(){ return $this->mClave; }
 	function init($datos = false){
-		$this->mOB					= new cSocios_aeconomica_dependencias();
+		
+		$xT							= new cSocios_aeconomica_dependencias();
 		$xCache						= new cCache();
-		$inCache					= true;
+		$inCache					= false;
 		if(!is_array($datos)){
 			$datos					= $xCache->get($this->mIDCache);
 			if(!is_array($datos)){
 				$datos				= obten_filas("SELECT * FROM `socios_aeconomica_dependencias` WHERE `idsocios_aeconomica_dependencias` = " . $this->mClave  . " LIMIT 0,1");
-				if(isset($datos["idsocios_aeconomica_dependencias"])){
-					$xCache->set($this->mIDCache, $datos);
-				}
+			} else {
+				$inCache			= true;
 			}
 		}
-		$this->mDatos				= $datos;
-		$datos						= null;
-		$this->mOB->setData( $this->mDatos );
-		$this->mPeriodo				= $this->mOB->ultimo_periodo_enviado()->v();
-		$this->mClaveDePersona		= $this->mOB->clave_de_persona()->v();
-		$this->mMails				= $this->mOB->email_de_envio()->v();
-		$this->mOficial				= $this->mOB->oficial_que_cierra()->v();
-		$this->mProductoPref		= $this->mOB->producto_preferente()->v();
-		$this->mPeriocidadPref		= $this->mOB->periocidad_de_avisos()->v();
-		$this->mDiasDeAviso			= $this->mOB->dias_de_avisos()->v();
-		$this->mDiasDeNomina		= $this->mOB->dias_de_pago_nomina()->v();
-		$this->mDiasDePago			= $this->mOB->dias_de_liquidacion()->v();
-		$this->mFormatoDeAviso		= $this->mOB->formato_de_envio()->v();
-		$this->mIDPersonaCont		= setNoMenorQueCero($this->mOB->clave_de_directivo()->v());
-		$this->mNombrePersonaCont	= $this->mOB->directivo_principal()->v();
-		$this->mTasaComision		= $this->mOB->comision_por_encargo()->v();
-		$this->mInit				= true;
-		$this->mNombreLargo			= $this->mOB->descripcion_dependencia()->v();
+
+		$this->mOB					= $xT;
 		
-		return $this->mDatos;
+		if(isset($datos[$xT->IDSOCIOS_AECONOMICA_DEPENDENCIAS])){
+			
+			if($inCache == false){
+				$datos[$xT->ULTIMO_PERIODO_ENVIADO]	= setNoMenorQueCero($datos[$xT->ULTIMO_PERIODO_ENVIADO]);
+				$datos[$xT->CLAVE_DE_PERSONA]		= setNoMenorQueCero($datos[$xT->CLAVE_DE_PERSONA]);
+				$datos[$xT->OFICIAL_QUE_CIERRA]		= setNoMenorQueCero($datos[$xT->OFICIAL_QUE_CIERRA]);
+				$datos[$xT->PRODUCTO_PREFERENTE]	= setNoMenorQueCero($datos[$xT->PRODUCTO_PREFERENTE]);
+				$datos[$xT->PERIOCIDAD_DE_AVISOS]	= setNoMenorQueCero($datos[$xT->PERIOCIDAD_DE_AVISOS]);
+				$datos[$xT->FORMATO_DE_ENVIO]		= setNoMenorQueCero($datos[$xT->FORMATO_DE_ENVIO]);
+				$datos[$xT->CLAVE_DE_DIRECTIVO]		= setNoMenorQueCero($datos[$xT->CLAVE_DE_DIRECTIVO]);
+				$datos[$xT->COMISION_POR_ENCARGO]	= setNoMenorQueCero($datos[$xT->COMISION_POR_ENCARGO]);
+				
+				$xCache->set($this->mIDCache, $datos);
+			}
+			
+			
+			$this->mPeriodo				= $datos[$xT->ULTIMO_PERIODO_ENVIADO];
+			$this->mClaveDePersona		= $datos[$xT->CLAVE_DE_PERSONA];
+			$this->mMails				= $datos[$xT->EMAIL_DE_ENVIO];
+			$this->mOficial				= $datos[$xT->OFICIAL_QUE_CIERRA];
+			$this->mProductoPref		= $datos[$xT->PRODUCTO_PREFERENTE];
+			$this->mPeriocidadPref		= $datos[$xT->PERIOCIDAD_DE_AVISOS];
+			
+			$this->mDiasDeAviso			= $datos[$xT->DIAS_DE_AVISOS];
+			$this->mDiasDeNomina		= $datos[$xT->DIAS_DE_PAGO_NOMINA];
+			$this->mDiasDePago			= $datos[$xT->DIAS_DE_LIQUIDACION];
+			
+			$this->mFormatoDeAviso		= $datos[$xT->FORMATO_DE_ENVIO];
+			$this->mIDPersonaCont		= $datos[$xT->CLAVE_DE_DIRECTIVO];
+			$this->mNombrePersonaCont	= $datos[$xT->DIRECTIVO_PRINCIPAL];
+			$this->mTasaComision		= $datos[$xT->COMISION_POR_ENCARGO];
+			$this->mTelefono			= $datos[$xT->TELEFONO];
+			
+			$this->mInit				= true;
+			$this->mNombreLargo			= $datos[$xT->DESCRIPCION_DEPENDENCIA];
+			$this->mAlias				= $datos[$xT->NOMBRE_CORTO];
+			$this->mDomicilio			= $datos[$xT->DOMICILIO_COMPLETO];
+			$this->mDatos				= $datos;
+			$this->mOB->setData( $this->mDatos );
+			
+			$datos						= null;
+		} else {
+			$this->mDatos				= array();
+			$this->mPeriodo				= 0;
+			$this->mClaveDePersona		= DEFAULT_SOCIO;
+			$this->mMails				= "";
+			$this->mOficial				= 0;
+			$this->mProductoPref		= DEFAULT_TIPO_CONVENIO;
+			$this->mPeriocidadPref		= FALLBACK_CRED_TIPO_PERIOCIDAD;
+			
+			$this->mDiasDeAviso			= "";
+			$this->mDiasDeNomina		= "";
+			$this->mDiasDePago			= "";
+			
+			$this->mFormatoDeAviso		= 0;
+			$this->mIDPersonaCont		= DEFAULT_SOCIO;
+			$this->mNombrePersonaCont	= "";
+			$this->mTasaComision		= 0;
+			$this->mTelefono			= 0;
+			
+			$this->mInit				= true;
+			$this->mNombreLargo			= "";
+			$this->mAlias				= "";
+			$this->mDomicilio			= "";
+			
+		}
+		return $this->mInit;
 	}
 	function getDatos(){	return $this->mDatos;	}
-	function getDomicilio(){	return $this->mDatos["domicilio_completo"];	}
-	function getTelefono(){	return $this->mDatos["telefono"];	}
+	function getDomicilio(){	return $this->mDomicilio;	}
+	function getTelefono(){	return $this->mTelefono;	}
 	function getNombre(){		return $this->mNombreLargo;	}
-	function getNombreCorto(){		return $this->mDatos["nombre_corto"];	}
+	function getNombreCorto(){		return $this->mAlias;	}
 	function getClaveDeContacto(){ return $this->mIDPersonaCont; }
 	function getNombreContacto(){ return $this->mNombrePersonaCont; }
 	function getOPersona(){
@@ -4382,12 +4463,16 @@ ultimo_periodo_enviado, fecha_de_envio,
 	function setClearPeriodo($clear = true) { $this->mClearPeriodo = $clear; }
 	function addOperacion($monto, $periodo, $periocidad, $fecha = false, $tipo = -1, $oficial = DEFAULT_USER, $observaciones = "", $FechaInicial = false, $FechaFinal = false, $FechaCobro = false){
 		$xLog			= new cCoreLog();
-		$fecha			= ($fecha == false) ? fechasys() : $fecha;
+		$xF				= new cFecha();
+		$fecha			= $xF->getFechaISO($fecha);
+		
 		$xEmp			= new cEmpresas_operaciones();
+		
 		$oficial		= ($oficial == DEFAULT_USER OR $oficial == false) ? getUsuarioActual() : $oficial;
-		$FechaFinal		= ($FechaFinal == false) ? $fecha : $FechaFinal;
-		$FechaCobro		= ($FechaCobro == false) ? $FechaFinal : $FechaCobro;
-		$FechaInicial	= ($FechaInicial == false) ? $fecha : $FechaInicial;
+		$FechaFinal		= ($FechaFinal === false) ? $fecha : $FechaFinal;
+		$FechaCobro		= ($FechaCobro === false) ? $FechaFinal : $FechaCobro;
+		$FechaInicial	= ($FechaInicial === false) ? $fecha : $FechaInicial;
+		
 		$lastID			= $xEmp->query()->getLastID();
 		$xEmp->clave_de_empresa( $this->mClave );
 		$xEmp->fecha_de_operacion($fecha);
@@ -4401,6 +4486,11 @@ ultimo_periodo_enviado, fecha_de_envio,
 		$xEmp->fecha_de_cobro($FechaCobro);
 		$xEmp->fecha_final($FechaFinal);
 		$xEmp->fecha_inicial($FechaInicial);
+		$anno	= $xF->anno($FechaFinal);
+		
+		$xEmp->unid("$anno-" . $this->mClave . "-$periocidad-$periodo");
+		
+		//CONCAT(DATE_FORMAT(`fecha_final`, '%Y'), '-', `clave_de_empresa`, '-',`periocidad`, '-', `periodo_marcado`)
 		if($monto != 0){
 			if($this->mClearPeriodo == true){ $this->setEliminarPeriodo($periodo, $periocidad, $FechaInicial);	}
 			$rs		= $xEmp->query()->insert()->save();
@@ -4476,7 +4566,7 @@ ultimo_periodo_enviado, fecha_de_envio,
 		$fecha		= fechasys();
 		$cEmp		= new cSocios_aeconomica_dependencias();
 		$periodo	= setNoMenorQueCero($periodo);
-		my_query("UPDATE socios_aeconomica_dependencias SET ultimo_periodo_enviado=$periodo, fecha_de_envio='$fecha' WHERE idsocios_aeconomica_dependencias=". $this->mClave);
+		$xQL		= new MQL(); $xQL->setRawQuery("UPDATE socios_aeconomica_dependencias SET ultimo_periodo_enviado=$periodo, fecha_de_envio='$fecha' WHERE idsocios_aeconomica_dependencias=". $this->mClave);
 	}
 	function getFicha(){
 		$cEmp	= new cSocios_aeconomica_dependencias();
@@ -4525,6 +4615,7 @@ ultimo_periodo_enviado, fecha_de_envio,
 				LIMIT 0,1 
 		";
 		$datos		= obten_filas($sql);
+		//setLog($sql);
 		if(isset($datos["monto"])){
 			$result		= true;
 		}
@@ -6287,6 +6378,7 @@ class cPersonaActividadEconomica {
 	private $mSectorEconomico		= 0;
 	private $mEstatusActual			= 0;
 	private $mIngresoMensual		= 0;
+	private $mNombreComercial		= "";
 	
 	public $ESTADO_NOVERIFICADO		= 99;
 	public $ESTADO_VERIFICADO		= 1;
@@ -6398,7 +6490,7 @@ class cPersonaActividadEconomica {
 				$this->mAntiguedad			= $data[$xT->ANTIGUEDAD_AE];
 				$this->mEstatusActual		= $data[$xT->ESTADO_ACTUAL];
 				$this->mIngresoMensual		= $data[$xT->MONTO_PERCIBIDO_AE];
-				
+				$this->mNombreComercial		= $data[$xT->NOMBRE_AE];
 				if(trim($this->mDescripcion) == ""){
 					$this->mDescripcion		= $this->mPuesto;
 				}
@@ -6515,7 +6607,7 @@ class cPersonaActividadEconomica {
 	function getClaveDePais(){ return $this->mClaveDePais; }
 	function getSalarioMensual(){ return $this->mIngresoMensual; }
 	function getSectorEconomico(){ return $this->mSectorEconomico; }
-	
+	function getNombreComercial(){ return $this->mNombreComercial; }
 	function getOEmpresa(){ return $this->mOEmp;	}
 	function getNumeroDeSeguridadSocial(){ return $this->mNSS;	}
 	function setUpdatePorEmpresa($guardarVinculado = false){
@@ -6855,7 +6947,13 @@ class cPersonaActividadEconomica {
 	function getRiesgoAMLAsociado(){ return $this->mAMLNivelRiesgo;  }
 	function getGeneraPEP(){ return $this->mAMLGeneraPEP; }
 	function getDepartamento(){ return $this->mDepto; }
+	/**
+	 * @deprecated @since 2017-01-01
+	 */
 	function getTipoPorFecha($fecha, $fecha_final = false){
+		return $this->getTiempoPorFecha($fecha, $fecha_final);
+	}
+	function getTiempoPorFecha($fecha, $fecha_final = false){
 		$xF		= new cFecha(0, $fecha_final);
 		$dias	= $xF->setRestarFechas($fecha_final, $fecha);
 		$tiempo	= 99;

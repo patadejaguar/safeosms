@@ -34,6 +34,22 @@ $err	= false;
 $rs		= array();
 $run	= true;
 
+/*$regex = <<<'END'
+ /
+ (
+ (?: [\x00-\x7F]                 # single-byte sequences   0xxxxxxx
+ |   [\xC0-\xDF][\x80-\xBF]      # double-byte sequences   110xxxxx 10xxxxxx
+ |   [\xE0-\xEF][\x80-\xBF]{2}   # triple-byte sequences   1110xxxx 10xxxxxx * 2
+ |   [\xF0-\xF7][\x80-\xBF]{3}   # quadruple-byte sequence 11110xxx 10xxxxxx * 3
+ ){1,100}                        # ...one or more times
+ )
+ | .                                 # anything else
+ /x
+ END;
+ $sql	= preg_replace($regex, '$1', $sql);
+ 
+ $sql = mb_convert_encoding($sql, 'UTF-8', 'UTF-8');*/
+
 header('Content-type: application/json');
 //exit(base64_encode("nombrecompleto LIKE '%pedro%' "));
 if($query !== "" OR $where !== ""){
@@ -50,6 +66,11 @@ if($query !== "" OR $where !== ""){
 			exit;
 		}		
 	} else {
+		//setLog($query);
+		if(strpos($query, " ") !== false){
+			$query	= str_replace(" ", "+", $query);
+		}
+		
 		$sql	= base64_decode($query);
 		if($where == ""){
 			
@@ -63,6 +84,7 @@ if($query !== "" OR $where !== ""){
 		}
 		
 		//$sql	.= ($where == "") ? "" : " " . base64_decode($where);
+		
 		
 		
 		//setLog($sql);

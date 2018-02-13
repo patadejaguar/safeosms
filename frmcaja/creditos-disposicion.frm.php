@@ -63,7 +63,8 @@ if($credito <= DEFAULT_CREDITO){
 			$xFRM->addAtras();
 			$xFRM->addHElem($xCred->getFichaMini());
 			//====================== Agregar controles
-			$xFRM->addFecha();
+			$xFRM->addFechaRecibo();
+			
 			$xFRM->addHElem( $xCob->get(TESORERIA_TIPO_EGRESOS) );
 			$xFRM->addHElem($xSel->getListaDeCuentasBancarias("", true)->get(true));
 			$xFRM->OMoneda("idmonto", 0, "TR.MONTO DE DISPOSICION");

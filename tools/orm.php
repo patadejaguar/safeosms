@@ -247,7 +247,7 @@ if($tabla != ""){
 					if($create == true){
 						//TODO: TErminar proceso de agregacion de estructura
 					}
-					$descriptors	.= "\tpublic \$" . strtoupper($nombre) . "\t= \"$nombre\";\r\n";
+					$descriptors	.= ($descriptors == "") ? "\tpublic \$" . strtoupper($nombre) . " = \"$nombre\"; ": "public \$" . strtoupper($nombre) . " = \"$nombre\"; ";
 					
 					//INSERT INTO general_structure(tabla, campo, valor, tipo, longitud, descripcion, titulo, control, sql_select, orientacion, order_index, script_field, help_text, tab_num, css_class, input_events)
 					$tipo_origen		= $mEquivalencias[  $field_type ];
@@ -318,9 +318,9 @@ if($tabla != ""){
 			//Agregar los campos
 			$estructura					.= "\tprivate \$mCampos	= array($variables);\n";
 			$estructura2				.= "\tprivate \$mCampos	= array($variables2);\n";
-			$estructura2				.= $descriptors;
+			$estructura2				.= $descriptors . "\r\n";
 			
-			$estructura					.= $descriptors;
+			$estructura					.= $descriptors . "\r\n";
 			
 			$estructura					.= $primary;
 			

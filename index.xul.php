@@ -15,7 +15,8 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 //<=====	FIN_H
 
 //=====================================================================================================
-$mTit						= EACP_NAME . " - " . getSucursal();
+$mTit						= ENTIDAD_NOMBRE_SIC. " - " . getSucursal();
+
 $xHP						= new cHPage($mTit, HP_FORM, "", ".");
 $xRuls						= new cReglaDeNegocio();
 $xMenu						= new cHMenu();
@@ -67,7 +68,7 @@ function jsaGetMenu($subitems){
 	return  $menu;
 
 }
-$jxc ->exportFunction('jsaGetMenu', array('id-KeyEditable'), "#navigator");
+$jxc ->exportFunction('jsaGetMenu', array('id-KeyEditable'), "#jMenu");
 $jxc ->exportFunction('jsaGetMoneyChanges', array("idMoneyExist"), "#idMoneyExist");
 
 $jxc ->process();
@@ -109,14 +110,14 @@ $xHP->setNoCache();
 	//$xHP->addCSS("css/general.css");
 	
 	//$xHP->addJsFile("js/jquery/jquery.ui.js");
-	if($isMobile == false){
+	//if($isMobile == false){
 		//$xHP->addCSS("css/jmenu.css");
 		//$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
 		
 		$xHP->addCSS("css/jquery.mmenu.all.css");
 		$xHP->addJsFile("js/jquery.mmenu.all.js");
 		
-	}
+	//}
 	//$xHP->addJsFile("js/tinybox.js");
 
 echo $xHP->getHeader();
@@ -199,6 +200,7 @@ $adsense	= (MODO_DEBUG == true) ? "" : getAdsense();
 //$xFRM->addToolbar("");
 
 $xMenu->setIsMobile($isMobile);
+
 $iduserniv	= $xUser->getNivel();
 $iduserniv	= ($isMobile == true) ? "xmenu-mob-$iduserniv" : "xmenu-desk-$iduserniv";
 $menu		= $xCache->get($iduserniv);
@@ -210,12 +212,6 @@ if($menu === null){
 
 
 
-if($isMobile == false ){
-	
-	/*echo "<div id='header'>" . $xMenu->getAll() . "</div>";
-	echo "<div id='wprincipal'><iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width='100%' height=\"100px\" ></iframe></div>
-	<div id=\"banner\">$adsense $menu</div>";*/
-
 	$menu	=
 	"<div id=\"jpanel\">
 
@@ -226,32 +222,19 @@ if($isMobile == false ){
 	</div>
  
 	<nav id=\"navmenu\">" . $menu . "</nav> ";
+	
+	
 	echo $menu;
-	
 	echo "<div id=\"wprincipal\">
 	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width=\"100%\" height=\"100%\" ></iframe>
 	</div>
 	<div id=\"banner\">$adsense</div>";
-	echo "<input type=\"hidden\" id=\"id-KeyEditable\" />";
 	
-} else {
-	
-$xMenu->setID("navigator");
-$menu	= 
-"<div id=\"jpanel\">
-	<a href=\"#menu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
-	<h1 id='htitle'>$mTit</h1>
-</div> <nav style=\"display: none\" id=\"navmenu\">" . $menu . "</nav> ";
-echo $menu;
-	//echo "<a href=\"#menu\" class=\"menu-trigger\"><i class=\"fa fa-reorder fa-3x\"></i></a>";
-	echo "<div id=\"wprincipal\">
-	<iframe id=\"idFPrincipal\" src=\"./$TasksPage\" width=\"100%\" height=\"100%\" ></iframe>
-	</div>
-	<div id=\"banner\">$adsense</div>";
 	echo "<input type=\"hidden\" id=\"id-KeyEditable\" />";
-}
+
 
 $jxc ->drawJavaScript(false, true);
+
 ?>
 <script>
 var xG 		= new Gen();
@@ -259,30 +242,31 @@ var smenu	= 42;
 var mmob	= <?php echo ($isMobile == false) ? 'false': 'true'; ?>;
 
 $(document).ready(function(){
-	if(mmob == false){
 
-		$(function() {
-			$('nav#navmenu').mmenu({
-				navbar : {
-				title : 'Menu'
-			},
-			navbars	: [
-				{
-					position	: 'top',
-					content		: [ 'breadcrumbs', 'close' ]
-				}
-			],
-			onClick : {
-				close : true
+	$(function() {
+		$('nav#navmenu').mmenu({
+			navbar : {
+			title : 'Menu'
+		},
+		navbars	: [
+			{
+				position	: 'top',
+				content		: [ 'breadcrumbs', 'close' ]
 			}
-			});
+		],
+		onClick : {
+			close : true
+		}
 		});
-		
+	});
 
+	//$("#wprincipal").css("height", xG.alto());
+	
+	if(mmob === false){
+		session(Configuracion.variables.sistema.isMobile, "0");
 	} else {
 		smenu	= 8;
-		$("#wprincipal").css("height", xG.alto());
-		jsGetMenu();
+		session(Configuracion.variables.sistema.isMobile, "1");
 	}
 });
 
@@ -291,28 +275,6 @@ function setInFrame(sURI, evt){
 	setCloseM1();
 	
 	xG.QFrame({ url : sURI, id : 'idFPrincipal' });
-}
-function jsGetMenuChilds(id){
-	var mParent	= $("#" + id).attr("data-key");
-	$("#id-KeyEditable").val(mParent);
-	
-	session(Configuracion.variables.tinyajax.delay,500);
-	session(Configuracion.variables.tinyajax.callback, "jsGetMenu(true)");
-	
-	jsaGetMenu();
-	jPanelMenu.off();
-	
-}
-
-function jsGetMenu(tr){
-	if(typeof tr == "undefined"){ tr = false; }
-	jPanelMenu = $.jPanelMenu({
-		menu: '#navmenu',
-		animated: false,
-		closeOnContentClick : false
-	});
-	jPanelMenu.on();
-	if(tr == true){ jPanelMenu.trigger(tr); }
 }
 function jsGetParent(parentID){	window.location = "./index.xul.php?m=" + parentID;}
 function getNewTiny(mFile){
@@ -340,14 +302,8 @@ function getNewWindow(mFile){
 
 }
 function setCloseM1(){ 
-	if(mmob == false){
-		var API = $("#navmenu").data( "mmenu" );
-		API.close();
-	} else {
-		if($("#navigator").length >0){
-			jPanelMenu.close();
-		}
-	}
+	var API = $("#navmenu").data( "mmenu" );
+	API.close();
 }
 function jsGetMoneyChanges(){
 	jsaGetMoneyChanges();
@@ -361,14 +317,18 @@ function jsEndSession(){}
 function jsInitComponents(){
 	jsGetMoneyChanges();
 	var mAlto	= xG.alto()-(smenu + 5);
-	<?php if($isMobile == true){ ?>
+	<?php
+		if($isMobile == true){ 
+	?>
 	var smenu2	= entero($("#htitle").css("height"));
 	
 	var mAlto2	= xG.alto()-(smenu+smenu2);
 	var mAlto	= xG.alto()-(smenu + 8 + smenu2);
 	$("#wprincipal").css("height", mAlto2);
 	
-	<?php } ?>
+	<?php 
+		}
+	?>
 	$("#idFPrincipal").attr("height", mAlto);
 	if($('#id-KeyEditable').length >0){
 		//setTimeout("jsGetMenu()", 500);

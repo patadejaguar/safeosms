@@ -48,6 +48,7 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivvehiculosusos",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT * FROM `vehiculos_usos` LIMIT 0,100");
 $xHG->addList();

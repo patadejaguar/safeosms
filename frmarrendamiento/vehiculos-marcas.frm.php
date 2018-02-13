@@ -50,6 +50,8 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivvehiculosmarcas",$xHP->getTitle());
+$xHG->setOrdenar();
+
 $xHG->setSQL("SELECT * FROM `vehiculos_marcas` LIMIT 0,100");
 $xHG->addList();
 $xHG->addKey("idvehiculos_marcas");

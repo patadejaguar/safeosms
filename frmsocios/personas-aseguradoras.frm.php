@@ -55,8 +55,8 @@ $xHG->setSQL("SELECT   `personas_aseguradoras`.`idpersonas_aseguradoras`,
          `personas_aseguradoras`.`persona`,
          `socios`.`nombre`,
          `personas_aseguradoras`.`alias`
-FROM     `personas_aseguradoras` 
-INNER JOIN `socios`  ON `personas_aseguradoras`.`persona` = `socios`.`codigo` ");
+FROM     `personas_aseguradoras`
+INNER JOIN `socios`  ON `personas_aseguradoras`.`persona` = `socios`.`codigo` WHERE `personas_aseguradoras`.`estatus` = 1 ");
 $xHG->addList();
 $xHG->addKey("idpersonas_aseguradoras");
 $xHG->col("persona", "TR.PERSONA", "10%");
@@ -65,7 +65,12 @@ $xHG->col("alias", "TR.ALIAS", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idpersonas_aseguradoras +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idpersonas_aseguradoras +')", "delete.png");
+$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idpersonas_aseguradoras +')", "archive.png");
+
+if(MODO_DEBUG == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idpersonas_aseguradoras +')", "delete.png");
+}
+
 $xFRM->addHElem("<div id='iddivaseguradoras'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
@@ -73,13 +78,20 @@ echo $xFRM->get();
 <script>
 var xG	= new Gen();
 function jsEdit(id){
-	xG.w({url:"../frmsocios/personas-aseguradoras.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivaseguradoras});
+	xG.w({url:"../frmsocios/personas-aseguradoras.edit.frm.php?clave=" + id, tiny:true, callback: jsReloadGrid});
 }
 function jsAdd(){
-	xG.w({url:"../frmsocios/personas-aseguradoras.new.frm.php?", tiny:true, callback: jsLGiddivaseguradoras});
+	xG.w({url:"../frmsocios/personas-aseguradoras.new.frm.php?", tiny:true, callback: jsReloadGrid});
 }
 function jsDel(id){
-	xG.rmRecord({tabla:"personas_aseguradoras", id:id, callback:jsLGiddivaseguradoras});
+	xG.rmRecord({tabla:"personas_aseguradoras", id:id, callback:jsReloadGrid});
+}
+function jsBaja(id){
+	xG.recordInActive({tabla:"personas_aseguradoras", id:id, callback:jsReloadGrid});
+}
+function jsReloadGrid(){
+	$('#iddivaseguradoras').jtable('destroy');
+	jsLGiddivaseguradoras();
 }
 </script>
 <?php

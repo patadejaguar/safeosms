@@ -22,7 +22,7 @@ $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("s
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $parcialidad= parametro("idparcialidad", 0, MQL_INT); $parcialidad = parametro("periodo", $parcialidad, MQL_INT); $parcialidad = parametro("parcialidad", $parcialidad, MQL_INT);
 $Fecha		= parametro("idfecha-0", false);
-$Fecha		= parametro("fecha", $Fecha);
+$Fecha		= parametro("fecha", $Fecha, MQL_DATE); $Fecha = parametro("idfechaactual", $Fecha, MQL_DATE);
 $Fecha		= $xF->getFechaISO($Fecha);
 
 echo $xHP->getHeader( true );

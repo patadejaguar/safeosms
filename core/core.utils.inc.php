@@ -25,6 +25,7 @@ include_once("core.db.dic.php");
 @include_once '../libs/parse/EnhanceTestFramework.php';
 @include_once '../libs/parse/parse.php';
 
+@include_once("../vendor/autoload.php");
 /*
  * CANALES
  * 
@@ -90,6 +91,7 @@ class cSystemTask{
 			$body		= "<h3>S.A.F.E. OSMS</h3><h4>Demonio CRON</h4><p>Se Anexa repaldo de la Fecha $fecha</p><hr /><h5>SysAdmin</h5>";
 			$file		= array( "path"  => $this->setBackupDB(), "mime" => "multipart/x-gzip");
 			$enviar		= true;
+			
 			if(is_file($this->mBackupFile)){
 				$size	= filesize($this->mBackupFile);
 				if($size > getMemoriaLibre()){
@@ -108,9 +110,12 @@ class cSystemTask{
 		return $msg;
 	}
 	function setBackupDB(){
-		$msg		= "";
 		$fecha		= date("Y-m-d");
-		$lns		= exec($this->mSystemCommands["respaldar_la_base_de_datos"]);
+		
+		$msg		= "SAFE-OSMS Respaldo de la Base de Datos $fecha.\r\n";
+		$msg		.= system($this->mSystemCommands["respaldar_la_base_de_datos"]);
+		$this->mMessages	.= $msg;
+		
 		return $this->mBackupFile;
 	}
 	function getMessages(){return $this->mMessages;}
@@ -242,6 +247,17 @@ class cSystemTask{
 		$xLog->add($xNot->getMessages(), $xLog->DEVELOPER);
 		$this->mMessages	.= $xLog->getMessages();
 	}
+	function cmd_exist($cmd) {
+		$return = shell_exec(sprintf("which %s", escapeshellarg($cmd)));
+		return !empty($return);
+	}
+	function getExistsPandoc(){
+		return $this->cmd_exist("pandoc");
+	}
+	function getExistsMemcache(){
+		return $this->cmd_exist("memcached");
+	}
+
 }
 
 
@@ -1523,7 +1539,7 @@ class cFileImporter {
 				$completePath	= PATH_TMP . $file['name'];
 				if(file_exists($completePath) == true){
 					unlink($completePath);
-					$this->mMessages	.= "WARN\tSE ELIMINO EL ARCHIVO " . $file['name'] . "\r\n";
+					$xLog->add("WARN\tSE ELIMINO EL ARCHIVO " . $file['name'] . "\r\n", $xLog->DEVELOPER);
 				}
 				if(move_uploaded_file($file['tmp_name'], $completePath )) {
 					$this->mMessages	.= "OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $file['name'] . "\r\n";
@@ -1720,6 +1736,118 @@ class cFileImporter {
 		return $sucess;
 	}
 	function getCompletePath(){ return $this->mCompletePath; }
+}
+class cFileSystem {
+	private $mMessages		= "";
+	
+	function __construct(){}
+	function setConvertToDocx($contenido, $titulo){
+		//pandoc  -s -S test.htm -o test.docx
+		$rawname	= $this->cleanNombreArchivo($titulo);
+		$fmt_in		= $rawname . ".html";
+		$fmt_out	= $rawname . ".docx";
+		
+		$fmt_md		= $rawname . ".md";
+		
+		$nn			= "";
+		$nfile		= $this->setCreateFile($contenido, $fmt_in);
+		
+		if($nfile !== false){
+			$ofile	= PATH_TMP . $fmt_out;
+			$mdfile	= PATH_TMP . $fmt_md;
+			
+			//$res	= shell_exec("pandoc --from=html --standalone --to=html --normalize $nfile | pandoc -s -S $nfile -o $ofile");
+			$res	= shell_exec("pandoc -s -S $nfile -o $ofile");
+			
+			//$res	= shell_exec("pandoc $nfile --to=markdown_github -o $mdfile | pandoc -s $mdfile -o $ofile");
+			//setLog("pandoc $nfile --to=markdown_github -o $mdfile | pandoc -s $mdfile -o $ofile");
+			//
+			//$res	= shell_exec("pandoc --from=html -f $nfile -t -o $ofile");
+			//pandoc -f markdown -t html | pandoc -f html -t docx -o test.docx
+			//setLog("pandoc -s -S $nfile -o $ofile");
+			if($res !== false){
+				$nn	= $ofile;
+			}
+		}
+		return $nn;
+	}
+	function setConvertToPDF($contenido, $titulo){
+		$rawname	= $this->cleanNombreArchivo($titulo);
+		//pandoc reports/7/report.html -o reports/7/report.pdf
+		$fmt_in		= $rawname . ".html";
+		$fmt_out	= $rawname . ".pdf";
+		$nn			= "";
+		$nfile		= $this->setCreateFile($contenido, $fmt_in);
+		
+		if($nfile !== false){
+			$ofile	= PATH_TMP . $fmt_out;
+			
+			$res	= shell_exec("pandoc $nfile -t latex -o $ofile");
+			//setLog("pandoc $nfile -t latex -o $ofile");
+			if($res !== false){
+				
+				$nn	= $ofile;
+			}
+		}
+		return $nn;
+	}
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function setCreateFile($contenido, $nombre){
+		$xLog			= new cCoreLog();
+		$nombre			= $this->cleanNombreArchivo($nombre);
+		
+		$completePath	= PATH_TMP . "" . $nombre;
+		$nombre_archivo	= $completePath;
+		$res			= true;
+		
+		if(file_exists($completePath) == true){
+			unlink($completePath);
+			$xLog->add("WARN\tSE ELIMINO EL ARCHIVO $completePath\r\n", $xLog->DEVELOPER);
+			//$xLog->add("ERROR\t $completePath\r\n", $xLog->DEVELOPER);
+		}
+		//file_put_contents($fichero, $persona, FILE_APPEND | LOCK_EX);
+		//$xF	= new cFileLog();
+		//$xF->setWrite($text);
+		//if (is_writable($nombre_archivo)) {
+			if (!$gestor = fopen($nombre_archivo, 'w+')) {
+				$xLog->add("ERROR\tNo se puede abrir el Archivo $completePath\r\n", $xLog->DEVELOPER);
+				$res	= false;
+			}
+			
+			// Escribir $contenido a nuestro archivo abierto.
+			if (fwrite($gestor, $contenido) === FALSE) {
+				$xLog->add("ERROR\tNo se puede escribir el Archivo $completePath\r\n", $xLog->DEVELOPER);
+				$res	= false;
+			}
+			if($res === true){
+				$xLog->add("OK\tSe escribio el Archivo $completePath\r\n");
+			}
+			fclose($gestor);
+			
+		//} else {
+		//	$xLog->add("ERROR\tEl Archivo $completePath no se puede escribir\r\n");
+		//	$res	= false;
+		//}
+		
+		$this->mMessages	.= $xLog->getMessages();
+		return ($res == true) ? $completePath : false;
+	}
+	function cleanNombreArchivo($f, $cleanExts = false){
+		$f	= preg_replace("/\s\s+/", "_", $f);
+		
+		$f	= str_replace(":", "_", $f);
+		$f	= str_replace("-", "_", $f);
+		$f	= str_replace(" ", "_", $f);
+		if($cleanExts == true){
+			$f	= str_replace(".", "_", $f);
+		}
+		$f	= setCadenaVal($f);
+		$f	= strtolower($f);
+		
+		$f	= preg_replace("/__+/", "_", $f);
+		
+		return $f;
+	}
 }
 //Eimina datos no validos
 class cTiposLimpiadores {
@@ -2089,12 +2217,8 @@ class cDocumentos {
 		return $sucess;
 	}
 	function cleanNombreArchivo($f){
-		$f	= str_replace(":", "_", $f);
-		$f	= str_replace("-", "_", $f);
-		$f	= str_replace(" ", "_", $f);
-		$f	= setCadenaVal($f);
-		$f	= strtolower($f);
-		return $f;
+		$xFS	= new cFileSystem();
+		return $xFS->cleanNombreArchivo($f);
 	}
 	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $fichero = "", $fecha = false, $Vencimiento = false){
 		$persona	= setNoMenorQueCero($persona);
@@ -2399,6 +2523,266 @@ class cCoreImport {
 		return $n;
 	}
 }
+
+
+
+class cCouchDB {
+	public $MURL		= "http://pruebas:pruebas@localhost:5984";
+	public $MDB			= "safeosms";
+	private $mMessages	= "";
+	private $mCnn		= null;
+	private $mVista		= "tablanosync1";
+	
+	public $SYNC_VISTA1	= "tablanosync1";
+	public $SYNC_VISTA2	= "tablanosync2";
+	
+	function __construct(){
+		$this->MURL		= SVC_URL_COUCHDB;
+		$this->MDB		= SVC_DB_COUCHDB;
+		$this->mVista	= SVC_VIEW_COUCHDB;
+	}
+	function getTablaNoSync($tabla){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$arr	= array(
+				"startkey" => $tabla,
+				"endkey" => $tabla
+		);
+		$this->mCnn->setQueryParameters($arr);
+		
+		$data	= $this->mCnn->getView($this->mVista, "porTabla");
+		
+		return $data->rows;
+	}
+	function getCnn(){
+		$this->mCnn		= new PHPOnCouch\CouchClient($this->MURL,$this->MDB);
+		return $this->mCnn;
+	}
+	function setCnn($cnn){$this->mCnn = $cnn;}
+	function getDoc($id){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$doc		= false;
+		try {
+			$doc 	= $this->mCnn->getDoc($id);
+		} catch ( Exception $e ) {
+			if ( $e->getCode() == 404 ) {
+				$this->mMessages	.= "Document some_doc_id does not exist !";
+			}
+		}
+		return $doc;
+	}
+	function delDoc($id, $doc = null){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$res	= false;
+		if($doc === null){
+			$doc	= $this->getDoc($id);
+		}
+		if($doc === null){
+			
+		} else {
+			$this->mCnn->deleteDoc($doc);
+		}
+		
+	}
+	function setDoc($docx){
+		$id			= 0;
+		$H_id		= $docx->_id;
+		$save		= false;
+		$update		= true;
+		$doc		= false;
+		if($this->mCnn === null){ $this->getCnn(); }
+		// get the document
+		try {
+			$doc = $this->mCnn->getDoc($H_id);
+		} catch (Exception $e) {
+			//$this->mMessages	.= "ERROR: ".$e->getMessage()." (".$e->getCode().")<br>\n";
+			//El Documento no existe
+			if($e->getCode() == 404){
+				$save	= true;
+			}
+		}
+		if($save == true){
+			try {
+				$response 	= $this->mCnn->storeDoc($docx);
+				$id			= $response->id;
+			} catch (Exception $e) {
+				$this->mMessages	.= "ERROR: ".$e->getMessage()." (".$e->getCode().")<br>\n";
+			}
+			$docx			= null;
+			$doc			= null;
+		} else {
+			//try update
+			$arr1		= $this->objectToArray($docx);
+			$arr2		= $this->objectToArray($doc);
+			foreach ($arr1 as $idx => $vx){
+				$arr2[$idx]	= $vx;
+			}
+			$doc2			= $this->arrayToObject($arr2);
+			
+			try {
+				$response 	= $this->mCnn->storeDoc($doc2);
+				$id			= $response->id;
+			} catch (Exception $e) {
+				$this->mMessages	.= "ERROR: ".$e->getMessage()." (".$e->getCode().")<br>\n";
+			}
+			
+			$arr1		= null;
+			$arr2		= null;
+			$doc2		= null;
+			$docx		= null;
+		}
+		
+		// make changes
+		/*$doc->title = 'Some smart content';
+		$doc->tags = array('twitter','facebook','msn');
+		
+		if($doc){
+			
+		}
+		
+
+		echo "Doc recorded. id = ".$response->id." and revision = ".$response->rev."<br>\n";*/
+		// Doc recorded. id = BlogPost6576 and revision = 2-456769086
+		
+		//$doc->_id
+		/*try {
+			$doc = $client->conflicts()->getDoc("some_doc_id");
+		} catch ( Exception $e ) {
+			if ( $e->getCode() == 404 ) {
+				echo "Document some_doc_id does not exist !";
+			}
+			exit(1);
+		}*/
+		
+		/*try {
+			$response 	= $this->mCnn->storeDoc($doc);
+			$id			= $response->id;
+		} catch (Exception $e) {
+			$this->mMessages	= "ERROR: ".$e->getMessage()." (".$e->getCode().")\n";
+		}*/
+		//echo "Doc recorded. id = ".$response->id." and revision = ".$response->rev."<br>\n";
+		$id;
+	}
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function getArchivo($doc){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$obj	= false;
+		try {
+			$obj	= $this->mCnn->getAttachment($doc, "imagen.jpg");
+		} catch (Exception $e){
+			$this->mMessages .= ' '.  $e->getMessage() . "\n";
+		}
+		//setError($this->mMessages);
+		$doc		= null;
+		return $obj;
+	}
+	function getDoctosByIdInterno($id){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$arr	= array(
+				"startkey" => $id,
+				"endkey" => $id
+		);
+		$this->mCnn->setQueryParameters($arr);
+		
+		$data	= $this->mCnn->getView("totals", "doctosByIdinterno");
+		
+		return $data->rows;
+		
+	}
+	function setImporDoctoByIDInterno($id, $idpersona){
+		if($this->mCnn === null){ $this->getCnn(); }
+		
+		$xF			= new cFecha();
+		$doc		= $this->getDoc($id);
+		
+		
+		$persona	= $idpersona;
+		
+		$docto		= DEFAULT_CREDITO;
+		if(property_exists($doc, 'idcontrato') == true){
+			$docto	= setNoMenorQueCero($doc->idcontrato);
+		}
+		$tipo		= 9999;
+		if(property_exists($doc, 'idtipo') == true){
+			$tipo		= setNoMenorQueCero($doc->idtipo);
+		}
+		$time		= time();
+		
+		$nid		= setCadenaVal($id) . ".jpg";
+		$xLog		= new cCoreLog();
+		$ready		= true;
+		
+		
+		
+		//$doc		= $dd->value;
+		$file		= $this->getArchivo($doc);
+		$fechacarga	= $xF->getFechaByInt($time);
+		$xpath		= PATH_TMP . "tmp-" . $nid;
+		//$xDoc->FTPUpload($documento);
+		if($file){
+			if(file_put_contents($xpath, $file)){
+				$archivo["name"] 		= $nid;
+				$archivo["tmp_name"] 	= $xpath;
+				$pagina					= $doc->pagina;
+				$observaciones			= $doc->observaciones;
+				$fecha					= $xF->getFechaByInt($time);
+				//$documento['tmp_name']
+				
+				$xSoc	= new cSocio($persona);
+				if($xSoc->init() == true){
+					$xDoc		=  new cDocumentos($nid);
+					if($xDoc->FTPConnect()){
+						if (ftp_put($xDoc->FTPConnect(), $nid, $xpath, FTP_BINARY)) {
+							$xLog->add("OK\tSe ha enviado al servidor FTP el Archivo " . $nid . "\r\n", $xLog->DEVELOPER);
+						} else {
+							$xLog->add("ERROR\tNo se pudo enviar al servidor FTP el archivo " . $nid . "\r\n");
+							$ready				= false;
+						}
+						
+					}
+					if($ready == true){
+						$ready			= $xDoc->FTPMove($nid, $persona);
+						if($ready == true){
+							$ready		= $xDoc->add($tipo, $pagina, $observaciones, $docto, $persona, $nid, $fecha, false);
+							//Actualizar ID
+							//$this->delDoc($id);
+							//Actualizar ID de Entidad Registro
+							$idinterno1		= setNoMenorQueCero($doc->idtemp->entidad1);
+							$idinterno2		= setNoMenorQueCero($doc->idtemp->entidad2);
+							if($this->mVista == $this->SYNC_VISTA1){
+								$doc->idtemp->entidad1	= $xSoc->getClaveDePersona();
+							} else {
+								$doc->idtemp->entidad2	= $xSoc->getClaveDePersona();
+							}
+							$this->setDoc($doc);
+						}
+						
+					}
+					
+					$xLog->add($xDoc->getMessages());
+				}
+				
+				$this->mMessages	.= $xLog->getMessages();
+				//setLog($this->mMessages);
+			}
+		}
+		return $ready;
+	}
+	private function objectToArray($d) {
+		if (is_object($d)) {
+			$d = get_object_vars($d);
+		}
+		return $d;
+	}
+	private function arrayToObject($d) {
+		return (object) $d;
+	}
+	function getCleanID($id){
+		$str	= str_replace(":", "_", $id);
+		$str	= str_replace("@", "_", $str);
+		$str	= str_replace(".", "_", $str);
+		return $str;
+	}
+} 
 
 //================================================================ JSON
 function Memory_Usage($decimals = 2)

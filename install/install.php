@@ -12,6 +12,8 @@ if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  
 $msg			= "";
 //======================== Checar
 //si guardar iniciar al index
+$localaction	= (isset($_REQUEST["action"])) ?  $_REQUEST["action"] : "";
+
 $usrmysql		= (isset($_REQUEST["idusuario"])) ?  $_REQUEST["idusuario"] : "";
 $pwdmysql		= (isset($_REQUEST["idpassword"])) ?  $_REQUEST["idpassword"] : "";
 $srvmysql		= (isset($_REQUEST["idservidor"])) ?  $_REQUEST["idservidor"] : "localhost";
@@ -23,7 +25,7 @@ $urlpath		= (isset($_REQUEST["idpath"])) ?  $_REQUEST["idpath"] : $dir;
 
 $srvmysql		= ($srvmysql == "") ? "127.0.0.1" : $srvmysql;
 
-if( trim("$usrmysql$pwdmysql") != "" AND trim("$srvmysql$dbmysql") != "" ){
+if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $action == "" ){
 	
 	$cnn = new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);
 	if ($cnn->connect_errno) {
@@ -189,7 +191,7 @@ textarea:focus {
   color: rgba(51, 51, 51, 0.7);
 }
 	
-	</style>
+</style>
 	
 	<!-- 
 	
@@ -198,7 +200,7 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 
 	 -->
 	 
-<form name="sl" action="./install.php">	 
+<form name="sl" action="./install.php?action=save">	 
 <div class='container'>
   <header>
     <h1>Instalador SAFE-OSMS v 2.0</h1>

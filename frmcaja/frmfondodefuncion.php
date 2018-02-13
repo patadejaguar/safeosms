@@ -124,7 +124,9 @@ if ( setNoMenorQueCero($monto) > 0  ){
 	$xFRM->addJsBasico();
 	$xFRM->addPersonaBasico();
 	$xFRM->addCobroBasico();
-	$xFRM->ODate("idfechadepago", "", "TR.Fecha de Pago");
+	//$xFRM->ODate("idfechadepago", "", "TR.Fecha de Pago");
+	$xFRM->addFechaRecibo();
+	
 	$xFRM->OMoneda2("idmonto", 0, "TR.Cuota", true);
 	
 	$xFRM->addGuardar();

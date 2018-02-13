@@ -48,6 +48,7 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivgpscosteo",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT   `vehiculos_gps_costeo`.`idvehiculos_gps_costeo` AS `clave`,
 		 `vehiculos_gps`.`nombre_gps` AS `paquetesgps`,

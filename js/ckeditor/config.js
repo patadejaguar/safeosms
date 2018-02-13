@@ -24,19 +24,21 @@ CKEDITOR.editorConfig = function( config ) {
 		{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
 		{ name: 'paragraph',   groups: [ 'list', 'indent', 'blocks', 'align', 'bidi' ] },
 		{ name: 'styles' },
-		{ name: 'colors' },
-		{ name: 'about' }
+		{ name: 'colors' }
 	];
-	config.extraPlugins = 'justify';
+	config.extraPlugins = 'justify,tabletools,pastefromword,find,showborders';
 	// Remove some buttons provided by the standard plugins, which are
 	// not needed in the Standard(s) toolbar.
 	config.removeButtons = 'Underline,Subscript,Superscript';
 
 	// Set the most common block elements.
 	config.format_tags = 'p;h1;h2;h3;pre';
-
+	//Extra allowed
+	config.extraAllowedContent = "";
 	// Simplify the dialog windows.
 	config.removeDialogTabs = 'image:advanced;link:advanced';
-	config.height = '600px';
+	config.height = '670px';
 	config.language = 'es';
+	config.ShowTableBorders = true;
+	config.ShowBorders = true ;
 };

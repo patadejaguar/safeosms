@@ -19,9 +19,14 @@ $xF					= new cFecha();
 $xBtn				= new cHButton("");
 $xLoc				= new cLocal();
 $xLi				= new cSQLListas();
+$xSys				= new cSystemTask();
 
 
-function jsaRespaldarDB($fecha){ $xSys	= new cSystemTask(); $msg	= $xSys->setBackupDB(); return $msg; }
+function jsaRespaldarDB($fecha){ 
+	$xSys	= new cSystemTask(); 
+	$xSys->setBackupDB(); 
+	return $xSys->getMessages(); 
+}
 function jsaSetCumplido($Key){ $sql = "UPDATE usuarios_web_notas SET estado=40 WHERE idusuarios_web_notas=$Key"; my_query($sql); }
 function jsaEliminarLog($fecha){ $xQL	= new MQL(); $xQL->setRawQuery("DELETE FROM general_log");}
 function jsaShowCalendarTasks($date){
@@ -133,11 +138,20 @@ function jsaGetLetrasVencidas($fecha, $producto){
 	$BySaldo		= $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">");
 	//Agregar seguimiento
 	$BySaldo		= $BySaldo . $xFil->CreditosProductosPorSeguimiento(0);	
+	$BySaldo		= $BySaldo . " AND (`letras`.`total_sin_otros` >0) ";
+	
+	//TODO: Corregir echale
+	
 	$sql	= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, false, $producto);
 
+	//setLog($sql);
+	
 	$xT		= new cTabla($sql, 2);
 	$xT->setEventKey("jsGoPanel");
 	$xT->setWithMetaData();
+	//$xT->setOmitidos("monto_ministrado");
+	$xT->setForzarTipoSQL("dias", MQL_INT);
+	
 	$xT->OButton("TR.PAGO", "jsPagoCajaCompleto(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
 	
 	return $xT->Show( );
@@ -237,13 +251,13 @@ $jxc ->exportFunction('jsaGetIngresosDeldia', array('idDateValue'), "#tcalendar-
 $jxc ->exportFunction('jsaGetIngresosDelMes', array('idDateValue'), "#tcalendar-task");
 $jxc ->exportFunction('jsaGetIngresosMensualesPorDependencias', array('idDateValue'), "#tcalendar-task");
 
-$jxc ->exportFunction('jsaRespaldarDB', array('idDateValue'), "#avisos");
-$jxc ->exportFunction('jsaActualizarIdioma', array('idDateValue'), "#avisos");
-$jxc ->exportFunction('jsaActualizarIngresos', array('idDateValue'), "#avisos");
+$jxc ->exportFunction('jsaRespaldarDB', array('idDateValue'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarIdioma', array('idDateValue'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarIngresos', array('idDateValue'), "#idavisos");
 $jxc ->exportFunction('jsaListaPeriodosDeEmpresa', array('idDateValue'), "#tcalendar-task");
 $jxc ->exportFunction('jsaListaPeriodosDeEmpresaEmitidos', array('idDateValue'), "#tcalendar-task");
 
-$jxc ->exportFunction('jsaActualizarProyeccionMensual', array('idDateValue'), "#avisos");
+$jxc ->exportFunction('jsaActualizarProyeccionMensual', array('idDateValue'), "#idavisos");
 
 //jsaRespaldarDB
 $jxc ->process();
@@ -488,8 +502,51 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	->li("C.P. : " . $xLoc->DomicilioCodigoPostal())
 	->end();
 	
-	$xFRM->addSeccion("idmaslogs", "TR.Sistema");
+	$xFRM->addSeccion("idmaslogs", "TR.Configuracion del Sistema");
 	$xFRM->addDivSolo($sysinfo, $sysinfo2, "tx24", "tx24" );
+	$xFRM->endSeccion();
+	$xFRM->addSeccion("idmaxlogs", "TR.Estado del Sistema");
+	
+	
+	$xTt				= new cHTabla();
+	
+	//$xFRM->addDivSolo($sysinfo, $sysinfo2, "tx24", "tx24" );
+	
+	if($xSys->getExistsMemcache() == false){
+		$xTt->initRow("error");
+		$xTt->addTD("La cache No esta funcionando.");
+		$xTt->endRow();
+		
+	} else {
+		$xTt->initRow("success");
+		$xTt->addTD("La cache esta funcionando.");
+		$xTt->endRow();
+	}
+	if($xSys->getExistsPandoc() == false){
+		$xTt->initRow("error");
+		$xTt->addTD("El conversor NO de Documentos No esta funcionando. Requiere pandoc, texlive-latex-base,texlive-latex-recommended y texlive-fonts-recommended");
+		$xTt->endRow();
+		
+	} else {
+		$xTt->initRow("success");
+		$xTt->addTD("El conversor de Documentos esta funcionando.");
+		$xTt->endRow();
+	}
+
+	$xDoc	= new cDocumentos();
+	if($xDoc->FTPConnect() == false){
+		$xTt->initRow("error");
+		$xTt->addTD("El Servidor FTP No esta funcionando.");
+		$xTt->endRow();
+		
+	} else {
+		$xTt->initRow("success");
+		$xTt->addTD("El Servidor FTP esta funcionando.");
+		$xTt->endRow();
+	}
+
+	$xFRM->addHElem($xTt->get());
+	
 	$xFRM->endSeccion();
 }
 
@@ -607,7 +664,7 @@ function jsGoBuscarPersona(){
 	xG.w({ url: xrl, tiny : true });	
 }
 function jsPagoCajaCompleto(id){
-	var obj 	= processMetaData("#tr-creditos_letras_del_dia-" + id);
+	var obj 	= processMetaData("#tr-letras-" + id);
 	xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total}); 
 }
 </script>

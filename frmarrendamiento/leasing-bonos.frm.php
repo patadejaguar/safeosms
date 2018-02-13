@@ -56,6 +56,7 @@ $xFRM->addCerrar();
 $xFRM->OHidden("idleasing", $clave);
 
 $xHG	= new cHGrid("iddivbonos",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT   `leasing_bonos`.`idleasing_bonos`,
          `vw_leasing_bonos_dest`.`descripcion`,

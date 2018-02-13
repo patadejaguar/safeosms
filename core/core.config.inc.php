@@ -177,7 +177,11 @@ define("SVC_HOST_CONSULTA_WIKI",			$xC->get("url_de_consulta_wiki", "http://es.w
 define("SVC_USER_CONSULTA_WIKI",			$xC->get("usuario_de_consulta_wiki", "wikiusuario", MMOD_AML) );
 define("SVC_PWD_CONSULTA_WIKI",				$xC->get("password_de_consulta_wiki", "pwdusuario", MMOD_AML) );
 
-define("PERSONAS_COMPARTIR_CON_ASOCIADA",            (bool) $xC->get("compartir_datos_con_entidad_asocidad", "false", MMOD_PERSONAS));
+define("SVC_URL_COUCHDB",					$xC->get("svc_url_couchdb", "", MMOD_SISTEMA) );
+define("SVC_DB_COUCHDB",					$xC->get("svc_db_couchdb", "safeosms", MMOD_SISTEMA) );
+define("SVC_VIEW_COUCHDB",					$xC->get("svc_vista_couchdb", "tablanosync1", MMOD_SISTEMA) );
+
+define("PERSONAS_COMPARTIR_CON_ASOCIADA",   (bool) $xC->get("compartir_datos_con_entidad_asocidad", "false", MMOD_PERSONAS));
 
 define("SAFE_LANG",						$xC->get("system_language", "en", MMOD_SISTEMA) );
 define("SAFE_PAY_VERSION",				$xC->get("system_pay_email_register", "", MMOD_SISTEMA) );
@@ -473,6 +477,8 @@ define("OPERACION_CLAVE_PAGO_SEGURO_V",		157);
 define("OPERACION_CLAVE_PAGO_MTTO_V",		172);
 define("OPERACION_CLAVE_PAGO_TENEN_V",		171);
 define("OPERACION_CLAVE_PAGO_PLACAS",		180);
+define("OPERACION_CLAVE_PAGO_PENAS",		148);
+
 define("OPERACION_CLAVE_PAGO_ACC_V",		173);
 define("OPERACION_CLAVE_PAGO_GTIAE_V",		174);
 

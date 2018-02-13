@@ -36,13 +36,15 @@ h1,h2,h3,h4{
 }
 p {
 	text-align: justify;
+	line-height : 1.5em;
 }
 th, td, p{
 	text-transform: none !important;
 	text-indent: 0;
 }
 body, html {
-	font: <?php echo CSS_TFUENTE_CONTRATOS;?>pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;
+	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
+	font-size: <?php echo CSS_TFUENTE_CONTRATOS;?>pt;
 	line-height: 125% !important;
 	font-stretch: condensed;
 }
@@ -103,3 +105,8 @@ ol.t {list-style-type: upper-roman;}
 ol.u {list-style-type: none;}
 ol.v {list-style-type: inherit;}
 
+@media print {
+	.noprint {
+		display: none;
+	}
+}

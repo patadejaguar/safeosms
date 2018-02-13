@@ -175,12 +175,21 @@ var Configuracion = {
 		tinyajax : {
 			callback : "tinyajax.callback",
 			delay : "tinyajax.delay"
+		},
+		sistema : {
+		isMobile : "eacp.param.ismobile"
 		}
 	},
 	personas : {
 		tipoingreso : {
 			otros : 900,
 			usuario : 800
+		},
+		consanguinidad : {
+			conyuge : 3
+		},
+		tiporelacion:{
+			conyuge : 3
 		}
 	}
 }

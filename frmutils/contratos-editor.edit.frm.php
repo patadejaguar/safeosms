@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP			= new cHPage("TR.Editar Formatos");
+$xHP			= new cHPage("TR.Editar FORMS_Y_DOCS");
 $idcontrato 	= parametro("idcontrato", 0 , MQL_INT);
 $jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
@@ -64,15 +64,29 @@ if($idcontrato <= 0){
 		$titulo			= $xFMT->getTitulo();
 		$xFRM->setTitle($titulo);
 		
-		$xFRM->addDivSolo($xFMT->getSelectVariables("", "onchange=\"jsAddText()\" ", ""), "", "txmon" );
+		$xFRM->addHElem($xFMT->getSelectVariables("", "onchange=\"jsAddText(this.value)\" ", "tx4"));
+		
+		$arrVars		= $xFMT->getListaDeVars();
+		
+		
+		$mArrVars		= $arrVars["variables_de_leasing"];
+		asort($mArrVars);
+		
+		$xSel->addEvent("jsAddText(this.value)", "onchange");
+		$xSel->addOptions($mArrVars);
+		$xSel->setDivClass("tx4");
+		$xFRM->addHElem( $xSel->get("idvars2", "TR.LEASING") );
+		
+		
 		$xFRM->addGuardar();
 		//$xFRM->addAtras();
 		$text_default  = $xFMT->get();
 		
 		$xFRM->addHTML("<textarea class=\"ckeditor\" name=\"ckeditor\" id=\"ckeditor\" rows=\"20\" cols=\"15\">$text_default</textarea>");
 		//$xFRM->addFootElement("<input type='hidden' value='$idcontrato' name='idcontrato' />");
-	
+		//$xFRM->OButton("Test", "test()");
 	}
+	//$xFRM->addJsInit("setTimeout('jsLoadEditor()',1500);");
 	
 	echo $xFRM->get();
 }
@@ -85,28 +99,55 @@ if($idcontrato <= 0){
 ?>
 <script>
 var xG	= new Gen();
-	function jsAddText(){
-		var txt = document.getElementById("idvariables").value;
-		//var curSel = document.getSelection();
-		InsertHTML(txt);
-	}
-	function setSelectSize(mSize){
-		var mSelect = document.getElementById("idvariables");
-			mSelect.removeAttribute("size");
-			mSelect.setAttribute("size", mSize);
-	}
-	function InsertHTML(strText){
-		CKEDITOR.instances['ckeditor'].insertText(strText);
-	}
-	function jsGuardar(){
-		CKEDITOR.instances['ckeditor'].commands.save.exec();
-	}	
-	function initComponents(){
-		$("#cke_1_contents").css("height", "600px");
-	}
-	function getForma(id){
-		xG.w({ url : "../frmutils/forma.vista_previa.rpt.php?forma=" + id});
-	}
+
+
+
+function jsAddText(txt){
+	//var txt = document.getElementById("idvariables").value;
+	//var curSel = document.getSelection();
+	InsertHTML(txt);
+}
+function setSelectSize(mSize){
+	var mSelect = document.getElementById("idvariables");
+		mSelect.removeAttribute("size");
+		mSelect.setAttribute("size", mSize);
+}
+function InsertHTML(strText){
+	CKEDITOR.instances['ckeditor'].insertText(strText);
+}
+function jsGuardar(){
+	CKEDITOR.instances['ckeditor'].commands.save.exec();
+}	
+function initComponents(){
+	$("#cke_1_contents").css("height", "650px");
+}
+function test(){
+	/*editor = CKEDITOR.instances.fck; //fck is just my instance name you will need to replace that with yours
+
+var edata = editor.getData();
+
+var replaced_text = edata.replace("idontwant", "iwant this instead"); // you could also use a regex in the replace 
+
+editor.setData(replaced_text);*/
+	
+	//CKEDITOR.instances['ckeditor'].commands.cellProperties.exec();
+//CKEDITOR.instances['ckeditor'].commands.removeFormat.exec();
+	//console.log(CKEDITOR.instances['ckeditor'].commands );
+	/*CKEDITOR.styleCommand.prototype.exec = function( editor ) {
+		editor.focus();
+
+		if ( this.state == CKEDITOR.TRISTATE_OFF )
+			editor.applyStyle( this.style );
+		else if ( this.state == CKEDITOR.TRISTATE_ON )
+			editor.applyStyle( paragraphStyle );
+	};*/
+	console.log("Test..");
+}
+function getForma(id){
+	xG.w({ url : "../frmutils/forma.vista_previa.rpt.php?forma=" + id});
+}
+
+
 </script>
 <?php
 $xHP->fin();

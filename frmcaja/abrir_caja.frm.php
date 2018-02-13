@@ -72,7 +72,8 @@ if($action == SYS_UNO){
 	$xFRM->addCerrar();
 } else {
 	if(PERMITIR_EXTEMPORANEO == true){
-		$xFRM->addFecha($fecha);
+		
+		$xFRM->addFechaRecibo($fecha);
 	}
 	$xFRM->setAction("abrir_caja.frm.php?action=1");
 	$txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");

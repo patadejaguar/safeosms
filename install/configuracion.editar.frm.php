@@ -19,13 +19,14 @@ $parent 	= parametro("tipo", $parent, MQL_RAW);
 $txtBuscar	= parametro("idbuscar", "", MQL_RAW);
 $txtBuscar	= parametro("buscar", $txtBuscar, MQL_RAW);
 
-$xHP		= new cHPage("TR.Editar Configuracion del Sistema", HP_GRID);
+$xHP		= new cHPage("TR.Editar Configuracion del Sistema", HP_FORM);
+$xHP->addJTableSupport();
+$xHP->init();
 
 
-
-if($parent == false AND $txtBuscar == ""){
-	$xHP		= new cHPage("TR.Editar Configuracion del Sistema", HP_FORM);
-	$xHP->init();
+//if($parent == false AND $txtBuscar == ""){
+	
+	
 
 	$xFRM		= new cHForm("frmeditar", "configuracion.editar.frm.php");
 	$xFRM->setTitle($xHP->getTitle());
@@ -38,15 +39,72 @@ if($parent == false AND $txtBuscar == ""){
 	$cSel->setEsSql();
 	$cSel->addEspOption(SYS_TODAS);
 	$cSel->setOptionSelect(SYS_TODAS);
+	$cSel->addEvent("onchange", "setFiltrar()");
+	
 	
 	$xFRM->addHElem( $cSel->get("TR.Parametro", true) );
 	$xFRM->OText("idbuscar", "", "TR.Buscar Texto");
+	$xFRM->setValidacion("idbuscar", "setFiltrar");
+	
 	$xFRM->addSubmit();
 	
+	
+	
+	//Grid
+	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
+	
+	$xHG->setSQL("SELECT * FROM `entidad_configuracion`");
+	$xHG->addList();
+	$xHG->setOrdenar();
+	
+	$xHG->col("tipo", "TR.TIPO", "10%");
+	$xHG->addKey("nombre_del_parametro");
+	$xHG->col("descripcion_del_parametro", "TR.DESCRIPCION DEL PARAMETRO", "10%");
+	$xHG->col("valor_del_parametro", "TR.VALOR DEL PARAMETRO", "10%");
+	
+	//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+	$xHG->OButton("TR.EDITAR", "jsEdit(\''+ data.record.nombre_del_parametro +'\')", "edit.png");
+	//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.nombre_del_parametro +')", "delete.png");
+	$xFRM->addHElem("<div id='iddiv'></div>");
+	$xFRM->addJsCode( $xHG->getJs(true) );
 	echo $xFRM->get();
+	?>
+<script>
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../install/entidad-configuracion.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiv});
+}
+function jsAdd(){
+	//xG.w({url:"../frm/.new.frm.php?", tiny:true, callback: jsLGiddiv});
+}
+function jsDel(id){
+	//xG.rmRecord({tabla:"entidad_configuracion", id:id, callback:jsLGiddiv});
+}
+function setFiltrar(){
+	var tipo	= String($("#cmenu").val()).toLowerCase();
+	var txtb	= $("#idbuscar").val();
+	
+	var str		= "";
+	if(tipo !== "todas"){
+		str		= " (`entidad_configuracion`.`tipo`='" + tipo + "') ";
+	}
+	if($.trim(txtb) !== ""){
+		str		= (str === "") ? " (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') " : str + " AND (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') ";
+	}
+	if($.trim(str) !== ""){
+		str			= "&w="  + base64.encode(str);
+		$('#iddiv').jtable('destroy');
+		jsLGiddiv(str);	
+	}
 
-} else {
-		$filtro1			= "";
+	return true;
+}
+
+</script>
+<?php
+
+//} else {
+/*		$filtro1			= "";
 		$filtro2			= "";
 		
 		$filtro1			= ($parent != SYS_TODAS AND $parent != false AND $parent != "") ? " tipo = '$parent' " : "";
@@ -87,7 +145,7 @@ if($parent == false AND $txtBuscar == ""){
 						$_SESSION["grid"]->SetMaxRowsEachPage(40);
 						$_SESSION["grid"]->PrintGrid(MODE_EDIT);
 
-						//Create the grid.
-}
+						//Create the grid.*/
+//}
 $xHP->fin();
 ?>

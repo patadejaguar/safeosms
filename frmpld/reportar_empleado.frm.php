@@ -25,11 +25,11 @@ $action		= (isset($DDATA["action"])) ? $DDATA["action"] : SYS_NINGUNO;
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 
-echo $xHP->getHeader();
+$xHP->init();
 
-$jsb	= new jsBasicForm("");
+
 //$jxc ->drawJavaScript(false, true);
-echo $xHP->setBodyinit();
+
 $xFRM	= new cHForm("frmreporteempleado", "reportar_empleado.frm.php?action=" . SYS_UNO);
 $xBtn	= new cHButton();		
 $xTxt	= new cHText();
@@ -84,12 +84,12 @@ if($action == SYS_NINGUNO){
 	$xFRM->addToolbar($xBtn->getIrAlInicio(true));
 }
 echo $xFRM->get();
-echo $xHP->setBodyEnd();
-$jsb->show();
+
+
 ?>
 <!-- HTML content -->
 <script>
 </script>
 <?php
-$xHP->end();
+$xHP->fin();
 ?>

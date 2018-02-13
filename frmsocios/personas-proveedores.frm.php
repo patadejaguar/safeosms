@@ -57,7 +57,7 @@ $xHG->setSQL("SELECT   `personas_proveedores`.`idpersonas_proveedores`,
          `personas_proveedores`.`persona`,
          `personas`.`nombre`
 FROM     `personas` 
-INNER JOIN `personas_proveedores`  ON `personas`.`codigo` = `personas_proveedores`.`persona` ");
+INNER JOIN `personas_proveedores`  ON `personas`.`codigo` = `personas_proveedores`.`persona` WHERE `personas_proveedores`.`estatus` = 1");
 $xHG->addList();
 $xHG->addKey("idpersonas_proveedores");
 $xHG->col("persona", "TR.PERSONA", "10%");
@@ -65,7 +65,10 @@ $xHG->col("nombre", "TR.NOMBRE_COMPLETO", "50%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idpersonas_proveedores +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idpersonas_proveedores +')", "delete.png");
+$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idpersonas_proveedores +')", "archive.png");
+if(MODO_DEBUG == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idpersonas_proveedores +')", "delete.png");
+}
 $xFRM->addHElem("<div id='iddivprov'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
@@ -73,13 +76,20 @@ echo $xFRM->get();
 <script>
 var xG	= new Gen();
 function jsEdit(id){
-	xG.w({url:"../frmsocios/personas-proveedores.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivprov});
+	xG.w({url:"../frmsocios/personas-proveedores.edit.frm.php?clave=" + id, tiny:true, callback: jsReloadGrid});
 }
 function jsAdd(){
-	xG.w({url:"../frmsocios/personas-proveedores.new.frm.php?", tiny:true, callback: jsLGiddivprov});
+	xG.w({url:"../frmsocios/personas-proveedores.new.frm.php?", tiny:true, callback: jsReloadGrid});
 }
 function jsDel(id){
-	xG.rmRecord({tabla:"personas_proveedores", id:id, callback:jsLGiddivprov});
+	xG.rmRecord({tabla:"personas_proveedores", id:id, callback: jsReloadGrid});
+}
+function jsBaja(id){
+	xG.recordInActive({tabla:"personas_proveedores", id:id, callback:jsReloadGrid});
+}
+function jsReloadGrid(){
+	$('#iddivprov').jtable('destroy');
+	jsLGiddivprov();
 }
 </script>
 <?php

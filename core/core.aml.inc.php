@@ -73,6 +73,7 @@ class cAML {
 		//No deb existir la misma alerta con el mismo documento, el mismo dia
 		$DD					= $xQL->getDataRow("SELECT   COUNT(*) AS `items` FROM `aml_alerts` WHERE ( `aml_alerts`.`tipo_de_aviso` = $TipoDeAlerta ) 
 								AND ( `aml_alerts`.`fecha_de_origen` = $fecha ) AND ( `aml_alerts`.`documento_relacionado` = $documento ) AND (`aml_alerts`.`persona_de_origen`=$PersonaDeOrigen) ");
+		
 		$items				= (isset($DD["items"])) ? setNoMenorQueCero($DD["items"]) : 0;
 		if($items <= 0){
 
@@ -554,11 +555,11 @@ class cAMLPersonas {
 				$excedido			= true;					
 			}
 			if($monto > $pmonto){
-				$xLog->add("ERROR\t$tipo|$moneda\tMonto excedido por ($montoDiff), Perfil: $ $pmonto, Operaciones: $ $monto\r\n", $xLog->DEVELOPER);
-				$xLog->add("REPORTE\tEsta operacion excede en monto($monto) por $montoDiff, segun su perfil $pmonto \r\n");
+				$xLog->add("ERROR\t$tipo|$moneda\tMonto excedido por (". getFMoney($montoDiff) . "), Perfil: $ ". getFMoney($pmonto) . ", Operaciones: $ ". getFMoney($monto) . "\r\n", $xLog->DEVELOPER);
+				$xLog->add("REPORTE\tEsta operacion excede en monto(". getFMoney($monto) . ") por ". getFMoney($montoDiff) . ", segun su perfil ". getFMoney($pmonto) . "\r\n");
 				$excedido			= true;
 			} else {
-				$xLog->add("OK\t$tipo|$moneda\tMonto Normal, Perfil: $ $pmonto, Operaciones: $ $monto\r\n");
+				$xLog->add("OK\t$tipo|$moneda\tMonto Normal, Perfil: $ ". getFMoney($pmonto) .", Operaciones: $ ". getFMoney($monto) . "\r\n");
 			}
 			if($numero > $pnumero){
 				$ops_exc			= $numero - $pnumero;
@@ -1174,9 +1175,16 @@ class cAMLPersonasPerfilTransaccional {
 	public $PAGOS_INT_PLASTICO		= 302;
 	
 	function __construct($persona){
-			$this->mClaveDePersona	= $persona;
+		$this->mClaveDePersona	= $persona;
+		$idx					= "personas-perfil-transaccional-$persona";
+		$xCache					= new cCache();
+		$dperfil				= $xCache->get($idx);
+		
+		if(!is_array($dperfil)){
 			$xQL					= new MQL();
 			$xLi					= new cSQLListas();
+			$xLog					= new cCoreLog();
+			//setError($persona);
 			$datos					= $xQL->getDataRecord($xLi->getListadoResumenPerfilTransaccional($persona));
 			
 			foreach ($datos as $row){
@@ -1189,31 +1197,35 @@ class cAMLPersonasPerfilTransaccional {
 				if(isset($this->mAPerfil[$tipo])){
 					$this->mAPerfil[$tipo][SYS_NUMERO]			+= $numero;
 					$this->mAPerfil[$tipo][SYS_MONTO]			+= $monto;
-					$this->mMessages	.= "WARN\t$tipo|" .  $row[SYS_MONEDA] . "\tSumando Monto $monto con Numero $numero\r\n";
+					$xLog->add("WARN\t$tipo|" .  $row[SYS_MONEDA] . "\tSumando Monto $monto con Numero $numero\r\n", $xLog->DEVELOPER);
 				} else {
 					$this->mAPerfil[$tipo][SYS_NUMERO]			= $numero;
 					$this->mAPerfil[$tipo][SYS_MONTO]			= $monto;
 					$this->mAPerfil[$tipo]["pais"]				= $row["pais"];
 					$this->mAPerfil[$tipo][SYS_MONEDA]			= $row[SYS_MONEDA];
 					$this->mAPerfil[$tipo][SYS_TIPO]			= $exhibicion;
-					$this->mMessages	.= "WARN\t$tipo|" .  $row[SYS_MONEDA] . "\tAgregando Monto $monto con Numero $numero\r\n";
+					$xLog->add("WARN\t$tipo|" .  $row[SYS_MONEDA] . "\tAgregando Monto $monto con Numero $numero\r\n", $xLog->DEVELOPER);
 				}
 				//agregar por exhibicion
 				if(isset($this->mAPerfil[$exhibicion])){
 					$this->mAPerfil[$exhibicion][SYS_NUMERO]	+= $numero;
 					$this->mAPerfil[$exhibicion][SYS_MONTO]		+= $monto;
-					$this->mMessages	.= "WARN\t$exhibicion|" .  $row[SYS_MONEDA] . "\tSumando Monto $monto con Numero $numero\r\n";
+					$xLog->add("WARN\t$exhibicion|" .  $row[SYS_MONEDA] . "\tSumando Monto $monto con Numero $numero\r\n", $xLog->DEVELOPER);
 				} else {
 					$this->mAPerfil[$exhibicion][SYS_NUMERO]	= $numero;
 					$this->mAPerfil[$exhibicion][SYS_MONTO]		= $monto;
 					$this->mAPerfil[$exhibicion]["pais"]		= $row["pais"];
 					$this->mAPerfil[$exhibicion][SYS_MONEDA]	= $row[SYS_MONEDA];
 					$this->mAPerfil[$exhibicion][SYS_TIPO]		= $tipo;
-					$this->mMessages	.= "WARN\t$exhibicion|" .  $row[SYS_MONEDA] . "\tAgregando Monto $monto con Numero $numero \r\n";
+					$xLog->add("WARN\t$exhibicion|" .  $row[SYS_MONEDA] . "\tAgregando Monto $monto con Numero $numero \r\n", $xLog->DEVELOPER);
 				}				
 			}
-			
-			
+			$this->mMessages	.= $xLog->getMessages();
+			$xCache->set($idx, $this->mAPerfil);
+		} else {
+			$this->mAPerfil		= $dperfil;
+			$this->mItems		= count($dperfil);
+		}
 	}
 	function concepto($clave){
 		if(!isset($this->mAPerfil[$clave])){

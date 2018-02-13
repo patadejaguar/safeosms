@@ -221,6 +221,8 @@ class cReglasDeNegocioLista {
 	
 	public $RN_CREDITOS_AL_LIQUIDAR				= "CREDITOS.CUANDO_SE_LIQUIDAN";
 	public $RN_CREDITOS_ESTADOCTA_EXEC			= "CREDITOS.CUANDO_EDOCTA_EXEC";
+	public $RN_CREDITOS_AL_AUTORIZAR			= "CREDITOS.CUANDO_SE_AUTORIZA";
+	public $RN_CREDITOS_AL_RECHAZAR				= "CREDITOS.CUANDO_SE_RECHAZA";
 	
 	//=========== Reglas sin accion
 	public $ELIMINAR_PERIODO_NOMINA				= "NOMINA.ELIMINAR_PERIODO";
@@ -286,6 +288,9 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_AJUSTM				= "CREDITOS.ARRENDAMIENTO.AJUSTESERVS";
 	public $CREDITOS_ARREND_NOUSERS				= "CREDITOS.ARRENDAMIENTO.NOUSERS";
 	
+	public $CREDITOS_NOM_EXT_SEMANA				= "CREDITOS.NOMINA.SEMANAS.EXTRA";
+	public $CREDITOS_NOM_EXT_QNA				= "CREDITOS.NOMINA.QUINCENA.EXTRA";
+	
 	public $CREDITOS_DESEMBOLSO_SIN_DESC		= "CREDITOS.DESEMBOLSO_SIN_DESCUENTOS";
 	public $CREDITOS_DESEMBOLSO_SIN_CHQ			= "CREDITOS.DESEMBOLSO_SIN_CHEQUE";
 	
@@ -297,6 +302,10 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_PLAN_CON_PAGESP			= "CREDITOS.PLAN_CON_PAGESP";
 	public $CREDITOS_PLAN_CON_CEROS				= "CREDITOS.PLAN_CON_CEROS";
 	public $CREDITOS_PLAN_SIN_FINAL				= "CREDITOS.PLAN_SIN_AJUSTE_FINAL";
+	
+	public $CREDITOS_PAG_PURGE_DSPM				= "CREDITOS.PAG.PURGAR_SDPM";
+	
+	public $CREDITOS_USE_MORA_BD				= "CREDITOS.USAR_MORA_BD";
 	
 	public $CREDITOS_PLAN_SIMPLE				= "CREDITOS.PLAN_PAGOS.SIMPLE";
 	
@@ -310,9 +319,13 @@ class cReglasDeNegocioLista {
 	
 	public $RECIBOS_SIN_VERSIONIMP				= "RECIBOS.SIN_VERSION_IMPRESA";
 	public $RECIBOS_USE_TICKETS					= "RECIBOS.USAR_TICKETS";
+	public $RECIBOS_COBRO_BLOQ					= "RECIBOS.COBRO_BLOQUEADO";
 	public $RECIBOS_RPT_USE_FECHAREAL			= "RECIBOS.REPORTE.USAR.FECHA_REAL";
 	
 	public $RECIBOS_ELIM_USE_BACK				= "RECIBOS.AL.ELIMINAR.BACKUP_IMP";
+	public $RECIBOS_BLOQ_FECHA_FUT				= "RECIBOS.BLOQ_FECHA_FUTURA";
+	public $RECIBOS_BLOQ_FECHA_ANT				= "RECIBOS.BLOQ_FECHA_ANTERIOR";
+	
 	
 	public $AML_CIERRE_NV_RIESGO				= "AML.CIERRE.NO_VALIDAR_RIESGO";
 	public $AML_AUTOENVIAR_RMS					= "AML.RIESGO_AUTOENVIAR_RMS";
@@ -339,11 +352,17 @@ class cReglasDeNegocioLista {
 		$arr[$this->RN_NOMINA_AL_VINCULAR]			= $this->RN_NOMINA_AL_VINCULAR;
 		$arr[$this->RN_DATOS_AL_ELIMINAR_RECIBO]	= $this->RN_DATOS_AL_ELIMINAR_RECIBO;
 		$arr[$this->RN_CREDITOS_AL_LIQUIDAR]		= $this->RN_CREDITOS_AL_LIQUIDAR;
+		$arr[$this->RN_CREDITOS_AL_AUTORIZAR]		= $this->RN_CREDITOS_AL_AUTORIZAR;
+		$arr[$this->RN_CREDITOS_AL_RECHAZAR]		= $this->RN_CREDITOS_AL_RECHAZAR;
 		
 		$arr[$this->RN_ELIMINAR_PERSONA]				= $this->RN_ELIMINAR_PERSONA;
 		$arr[$this->RN_CASTIGAR_CREDITO]				= $this->RN_CASTIGAR_CREDITO;
 		$arr[$this->RN_CANCELAR_CREDITO]				= $this->RN_CANCELAR_CREDITO;
 		$arr[$this->RN_MINISTRAR_CREDITO]				= $this->RN_MINISTRAR_CREDITO;
+		$arr[$this->RN_USAR_REDIRECTS]					= $this->RN_USAR_REDIRECTS;
+		$arr[$this->RN_USAR_MENU_ALT]					= $this->RN_USAR_MENU_ALT;
+		
+		
 		$arr[$this->ELIMINAR_PERIODO_NOMINA]			= $this->ELIMINAR_PERIODO_NOMINA;
 		$arr[$this->PERSONAS_SIN_DATOS_FISCALES]		= $this->PERSONAS_SIN_DATOS_FISCALES;
 		$arr[$this->PERSONAS_SIN_DATO_POBLACIONAL]		= $this->PERSONAS_SIN_DATO_POBLACIONAL;
@@ -406,12 +425,17 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_COT_RSIMPLE]		= $this->CREDITOS_ARREND_COT_RSIMPLE;
 		$arr[$this->CREDITOS_ARREND_AJUSTM]				= $this->CREDITOS_ARREND_AJUSTM;
 		$arr[$this->CREDITOS_ARREND_NOUSERS]			= $this->CREDITOS_ARREND_NOUSERS;
+		$arr[$this->CREDITOS_PAG_PURGE_DSPM]			= $this->CREDITOS_PAG_PURGE_DSPM;
+		
 		//$arr[$this->]			= $this->;
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
 		$arr[$this->CREDITOS_PAGO_LETRAF]				= $this->CREDITOS_PAGO_LETRAF;
 		
 		$arr[$this->PRECREDITOS_NUEVO_REG]				= $this->PRECREDITOS_NUEVO_REG;
+		$arr[$this->CREDITOS_NOM_EXT_QNA]				= $this->CREDITOS_NOM_EXT_QNA;
+		$arr[$this->CREDITOS_NOM_EXT_SEMANA]			= $this->CREDITOS_NOM_EXT_SEMANA;
+		$arr[$this->CREDITOS_USE_MORA_BD]				= $this->CREDITOS_USE_MORA_BD;
 		
 		//$arr[$this->]			= $this->;
 		
@@ -419,6 +443,12 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_RPT_USE_FECHAREAL]			= $this->RECIBOS_RPT_USE_FECHAREAL;
 		$arr[$this->RECIBOS_ELIM_USE_BACK]				= $this->RECIBOS_ELIM_USE_BACK;
 		$arr[$this->RECIBOS_USE_TICKETS]				= $this->RECIBOS_USE_TICKETS;
+		$arr[$this->RECIBOS_COBRO_BLOQ]					= $this->RECIBOS_COBRO_BLOQ;
+		$arr[$this->RECIBOS_BLOQ_FECHA_ANT]				= $this->RECIBOS_BLOQ_FECHA_ANT;
+		$arr[$this->RECIBOS_BLOQ_FECHA_FUT]				= $this->RECIBOS_BLOQ_FECHA_FUT;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		
 		//$arr[$this->]			= $this->;
 		$arr[$this->PERSONAS_RELS_SIN_DOM]				= $this->PERSONAS_RELS_SIN_DOM;
 		$arr[$this->PERSONAS_IDENT_INE_LISTA]			= $this->PERSONAS_IDENT_INE_LISTA;
@@ -430,8 +460,7 @@ class cReglasDeNegocioLista {
 		$arr[$this->VAL_NO_PERSONA_FALTA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALTA_ACT_ECONOM;
 		$arr[$this->VAL_NO_PERSONA_FALLA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALLA_ACT_ECONOM;
 		$arr[$this->PERSONAS_OPERAR_ALTO_R]				= $this->PERSONAS_OPERAR_ALTO_R;
-		$arr[$this->RN_USAR_REDIRECTS]					= $this->RN_USAR_REDIRECTS;
-		$arr[$this->RN_USAR_MENU_ALT]					= $this->RN_USAR_MENU_ALT;
+
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->AML_AUTOENVIAR_RMS]					= $this->AML_AUTOENVIAR_RMS;
@@ -450,15 +479,19 @@ class cReglasDeNegocioLista {
 class cReglaDeNegocio {
 	private $mEvento	= false;
 	private $mMessages	= "";
-	private $mVars		= array();
-	private $mContrato	= array();
-	private $mReglas	= null;
-	private $mRead		= array();
-	private $mValores	= null;
-	private $mCodigo	= array();
-	private $mDestPers	= array(); //Personas destinatarios
-	private $mLista		= array();
-	 
+	private $mVars			= array();
+	private $mContrato		= array();
+	private $mReglas		= null;
+	private $mRead			= array();
+	private $mValores		= null;
+	private $mCodigo		= array();
+	private $mDestPers		= array(); //Personas destinatarios
+	private $mLista			= array();
+	private $mCodigoPersona = 0;
+	private $mCodigoCredito	= 0;
+	private $mCodigoRecibo	= 0;
+	private $mCodigoCuenta	= 0;
+	
 	function __construct($evento = false){
 		$this->mEvento	= $evento;
 		//Obtener de la BD
@@ -475,6 +508,10 @@ class cReglaDeNegocio {
 			$this->mDestPers[$arr]	= $arr;
 		}
 	}
+	function serCodigoDeRecibo($v){ $this->mCodigoRecibo = setNoMenorQueCero($v); }
+	function setCodigoDePersona($v){ $this->mCodigoPersona = setNoMenorQueCero($v); }
+	function setCodigoDeCredito($v){ $this->mCodigoCredito = setNoMenorQueCero($v); }
+	function setCodigoDeCuenta($v){ $this->mCodigoCuenta = setNoMenorQueCero($v); }
 	function getEnviarMensajeEnEvento($evento = false){
 		$evento			= ($evento == false ) ? $this->mEvento : $evento;
 		$this->mEvento	= $evento;
@@ -511,6 +548,50 @@ class cReglaDeNegocio {
 		$rs				= $xAlerts->getDatAlertasPorEvento($evento);
 		//$xPrg			= new cSistema_programacion_de_avisos();
 		$this->mMessages	.= "====\tEvento: $evento\r\n";
+		//Completar destinatarios
+		
+		$xFMT			= new cFormato();
+		if($this->mCodigoRecibo > 0){
+			$xFMT->setRecibo($this->mCodigoRecibo);
+			
+		} else {
+			if($this->mCodigoCredito > DEFAULT_CREDITO OR ($this->mCodigoCuenta > 0 AND $this->mCodigoCuenta !== DEFAULT_CUENTA_CORRIENTE )){
+				if($this->mCodigoCredito > DEFAULT_CREDITO){
+					$xFMT->setCredito($this->mCodigoCredito);
+					
+					$vvar	= $xFMT->getVariables();
+					$xFMT->addVars("saldo_del_credito", $vvar["vars_creds_saldo_actual"]);
+					
+					$xFMT->addVars("clave_de_credito", $this->mCodigoCredito);
+					$xFMT->addVars("idcredito", $this->mCodigoCredito);
+					$xFMT->addVars("credito", $this->mCodigoCredito);
+					$xAlerts->addOficiales($vvar["vars_creds_idoficial_credito"]);
+
+					$vvar	= null;
+				}
+				if ($this->mCodigoCuenta > 0 AND $this->mCodigoCuenta !== DEFAULT_CUENTA_CORRIENTE ){
+					$xFMT->setCuentaDeCaptacion($this->mCodigoCuenta);
+					$xFMT->addVars("clave_de_cuenta", $this->mCodigoCuenta);
+				}
+			}
+			
+			if($this->mCodigoPersona > DEFAULT_SOCIO){
+				$xFMT->setPersona($this->mCodigoPersona);
+				$vvar	= $xFMT->getVariables();
+				
+				$xFMT->addVars("nombre_de_persona", $vvar["variable_persona_nombre_completo"]);
+				$xFMT->addVars("clave_de_persona", $this->mCodigoPersona);
+				$xFMT->addVars("idpersona", $this->mCodigoPersona);
+				$xFMT->addVars("persona", $this->mCodigoPersona);
+				
+				$vvar	= null;
+				
+				$this->mDestPers[$this->mCodigoPersona]	= $this->mCodigoPersona;
+			}
+			
+		}
+		$this->mVars	= array_merge($this->mVars, $xFMT->getVariables());
+		
 		foreach ($rs as $datos){
 //				$datos["idprograma"]
 				$this->mMessages	.= "====\tProgramacion: " . $datos["idprograma"] . "\r\n";
@@ -736,6 +817,7 @@ class cReglasDeCalificacion {
 		
 		return $ready;
 	}
+	function setTipo($t){ $this->mTipo = $t; }
 	function setCredito($credito = false){
 		$credito			= setNoMenorQueCero($credito);
 		$this->mDocumento	= $credito;

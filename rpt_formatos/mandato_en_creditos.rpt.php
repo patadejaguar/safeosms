@@ -52,7 +52,8 @@ $forma		= 5002;
 //$xAval		= new cSocios_relaciones();
 
 foreach ($rs as $rows){
-	echo "<br class='nuevapagina' />";
+	/* class='nuevapagina' */
+	echo "<br />";
 	$persona	= $rows["numero_socio"];
 	$idrelacion	= $rows["num"];
 	$xSoc		= new cSocio($persona);

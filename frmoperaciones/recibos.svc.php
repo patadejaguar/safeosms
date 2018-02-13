@@ -21,21 +21,27 @@ include_once ("../core/core.common.inc.php");
 header("Content-type: text/xml");
 $txt		= "";
 $iSQL		= new cSQLListas();
+$xQL		= new MQL();
+$xF			= new cFecha();
 
 $persona	= isset($_REQUEST["persona"]) ? $_REQUEST["persona"] : "";
 $docto		= isset($_REQUEST["documento"]) ? $_REQUEST["documento"] : "";
-$fecha		= isset($_REQUEST["fecha"]) ? $_REQUEST["fecha"] : fechasys();
+$fecha		= parametro("fecha", false, MQL_RAW);
 $mx			= isset($_REQUEST["mx"]) ? true : false;
-$xF			= new cFecha();
-if($mx == true){
-		$fecha	= $xF->getFechaISO($fecha);
+
+$periodo	= parametro("periodo", 0, MQL_INT);
+if($fecha === false){
+	$fecha	= "";
+} else {
+	$fecha	= $xF->getFechaISO($fecha);
 }
 
-$rs		= getRecordset($iSQL->getListadoDeRecibos("", $persona, $docto, $fecha));
 
+$rs		= $xQL->getRecordset($iSQL->getListadoDeRecibos("", $persona, $docto, $fecha, "", "", $periodo));
+//setLog($iSQL->getListadoDeRecibos("", $persona, $docto, $fecha, "", "", $periodo));
 
-while($rw	= mysql_fetch_array($rs)){
-	$txt	.= "<recibo codigo=\"" . $rw["numero"] . "\" fecha=\"" . $rw["fecha"] . "\" documento=\"" . $rw["documento"] . "\" persona=\"" . $rw["socio"] . "\">";
+while($rw	= $rs->fetch_assoc()){
+	$txt	.= "<recibo codigo=\"" . $rw["numero"] . "\" fecha=\"" . $rw["fecha"] . "\" documento=\"" . $rw["documento"] . "\" periodo=\"" . $rw["periodo"] . "\" persona=\"" . $rw["socio"] . "\">";
 	$txt	.= "" . $rw["total"];
 	$txt	.= "</recibo>\n";
 }

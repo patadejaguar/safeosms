@@ -21,32 +21,29 @@ $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL
 
 $formato		= parametro("forma", 1906, MQL_INT);
 $senders		= getEmails($_REQUEST);
-$out 			= parametro("out", SYS_DEFAULT);
-$idtramite		= parametro("tramite",0, MQL_INT);
+$out 			= parametro("out", SYS_DEFAULT); $out = strtolower($out);
 
+$idtramite		= parametro("tramite",0, MQL_INT);
+$idvehiculo		= parametro("vehiculo", 0, MQL_INT); $idvehiculo		= parametro("idvehiculo", $idvehiculo, MQL_INT);
 
 //$xHP->setNoDefaultCSS();
 $xHP->addCSS("../css/contrato.css.php");
 
 
-
-
-
 	$xFecha				= new cFecha();
 	
 
-	$xForma				= new cFormato($formato);
-	$xForma->init();
-	$xForma->setOut($out);
+	$xFMT				= new cFormato($formato);
+	$xFMT->init();
+	$xFMT->setOut($out);
 
-	$xHP->setTitle($xForma->getTitulo());
-	$xHP->init();
+
 	
 	if($idtramite > 0){ //Carta Poder
 		$xCatT			= new cLeasingTramitesCatalogo($idtramite);
 		if($xCatT->init() == true){
 			$tramite	= $xCatT->getNombre();
-			$xForma->addVars("var_leasing_tramite_clave", $tramite);
+			$xFMT->addVars("var_leasing_tramite_clave", $tramite);
 		}
 	}
 	
@@ -56,16 +53,23 @@ $xHP->addCSS("../css/contrato.css.php");
 		
 		$DCred				= $xCred->getDatosDeCredito();
 		$numero_de_socio	= $xCred->getClaveDePersona();
+		//setLog("$idsolicitud $numero_de_socio");
+		$xFMT->setPersona($numero_de_socio);
+		$xFMT->setCredito($idsolicitud);
 		
-		$xForma->setCredito($idsolicitud, $DCred);
 	} else {
-		$xForma->setOriginacionLeasing($clave);
+		$xFMT->setOriginacionLeasing($clave);
+		
 	}
+	if($idvehiculo > 0){
+		$xFMT->setVehiculoLeasing($idvehiculo);
+	}
+	$xFMT->setProcesarVars();
 	
-	$xForma->setProcesarVars();
-	
-	echo $xForma->get();
+	$xHP->setTitle($xFMT->getTitulo());
 	
 	
-$xHP->fin();
+	$xFMT->render($xHP->init("", true), $xHP->fin(true));
+	
+	
 ?>

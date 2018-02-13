@@ -71,6 +71,8 @@ $xHG->col("nivel_de_riesgo", "TR.NIVEL DE RIESGO", "10%");
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsocios_tipoingreso +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsocios_tipoingreso +')", "delete.png");
+$xHG->OButton("TR.FORMS_Y_DOCS", "jsGetFormatos('+ data.record.idsocios_tipoingreso +')", "web.png");
+
 $xFRM->addHElem("<div id='iddivtipoingreso'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
@@ -88,6 +90,9 @@ function jsRequisitos(id){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"socios_tipoingreso", id:id, callback:jsLGiddivtipoingreso});
+}
+function jsGetFormatos(id){
+	xG.w({url:"../frmutils/contratos-editor.frm.php?tipopersona=" + id, blank:true, tab:true, callback: jsLGiddivtipoingreso});
 }
 </script>
 <?php

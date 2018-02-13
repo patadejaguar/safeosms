@@ -66,6 +66,12 @@ if($todas == true){
 //$xHG->col("", "TR.", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+if($todas == false){
+	$xHG->OToolbar(SYS_TEXTO_TODAS, "jsGoTodas()", "grid/funnel.png");
+} else {
+	$xHG->OToolbar("TR.ESTATUSACTIVO", "jsGoNormal()", "grid/filter.png");
+}
+
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 $xHG->OButton("TR.PANEL", "jsGoToPanel('+ data.record.clave +')", "controls.png");
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsocios_aeconomica_dependencias +')", "delete.png");
@@ -75,7 +81,7 @@ $xHG->setOrdenar();
 
 $xFRM->addJsCode( $xHG->getJs(true) );
 
-$xFRM->OButton("TR.VER TODO", "jsGoTodas()", $xFRM->ic()->ADELANTE);
+//$xFRM->OButton("TR.VER TODO", "jsGoTodas()", $xFRM->ic()->ADELANTE);
 
 echo $xFRM->get();
 ?>
@@ -96,6 +102,9 @@ function jsGoToPanel(id){
 }
 function jsGoTodas(){
 	xG.go({url: "../frmempresas/empresas.frm.php?todas=true" });
+}
+function jsGoNormal(){
+	xG.go({url: "../frmempresas/empresas.frm.php" });
 }
 </script>
 <?php

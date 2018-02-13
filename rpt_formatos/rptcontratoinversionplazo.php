@@ -16,6 +16,8 @@ include_once "../core/entidad.datos.php";
 include_once "../core/core.deprecated.inc.php";
 include_once "../core/core.fechas.inc.php";
 
+$xQL		= new MQL();
+
 $idcuenta = $_GET["idcuenta"];
 	if (!$idcuenta){
 		echo "LA CUENTA NO EXISTE";
@@ -69,9 +71,8 @@ $caja_local 						= eltipo("socios_cajalocal", $DSoc["cajalocal"]);
 	 */
 	$beneficiados 					= "";
 	$sql_beneficiados 				= "SELECT * FROM socios_relaciones WHERE tipo_relacion=11 AND socio_relacionado=$idsocio LIMIT 0,100";
-	$rs_beneficiados 				= mysql_query($sql_beneficiados);
-
-	while ($row_beneficiado = mysql_fetch_array($rs_beneficiados)) {
+	$rs 		= $xQL->getRecordset($sql_beneficiados);
+	while ($row_beneficiado = $rs->fetch_row() ) {
 		$beneficiados 				= $beneficiados . "<li>$row_beneficiado[6] $row_beneficiado[7] $row_beneficiado[5]</li> ";
 	}
 	$variable_lista_beneficiados 	= "<ol>

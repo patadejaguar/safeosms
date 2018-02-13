@@ -1435,8 +1435,11 @@ and (max-width : 480px) {
 	fieldset, legend,
 	td, th{ overflow: hidden; }
 	.frmpanel .formoid-default .tx4{ max-width: 100%; width: 99%;}
-	.tx18 { width: 50% !important; display: inline-block; }
+	.tx18 { width: 33% !important; display: inline-block; }
+	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	
 	#jPanelMenu-menu { font-size: 1.4em; }
+	.toolnav li { width:32% !important; max-width:32%; }
 }
 
 /*and (min-width : 768px) */
@@ -1449,7 +1452,10 @@ and (max-width : 767px) {
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 40%; width: 45%; max-width: 95%; }
 	.frmpanel .formoid-default .tx4{ max-width: 100%; width: 99%;}
 	.tx18 { width: 24% !important; display: inline-block; }
+	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	
 	#jPanelMenu-menu { font-size: 1.3em; }
+	.toolnav li { width:17.4% !important; }
 }
 
 
@@ -1460,8 +1466,12 @@ and (max-width : 1024px) {
 	.tx4 { width: 32%; display: inline-block; }
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 24%; width: 24%;}
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
-	.tx18 { width: 16.5% !important; display: inline-block; }
+	.tx18 { width: 19.5% !important; display: inline-block; }
+	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	
 	#jPanelMenu-menu { font-size: 1.2em; }
+	.toolnav li { width:13.5% !important; min-width: 6.5em; }
+	
 }
 
 /* Desktops and laptops ----------- */
@@ -1472,8 +1482,9 @@ and (max-width : 1560px){
 	.tx4 { max-width: 32%; width: 32%; display: inline-block; }
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 15%; width: 25%; max-width: 25%; }
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
-	.tx18 { width: 16.5% !important; display: inline-block; }
+	.tx18 { width: 19.5% !important; display: inline-block; }
 	#jPanelMenu-menu { font-size: 1.1em; /*padding:0.5em 5%tamannio boton*/ }
+	
 }
 
 /* Large screens ----------- */
@@ -1487,6 +1498,7 @@ and (min-width : 1561px) {
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
 	
 	.tx18 { width: 12.2% !important; display: inline-block; }
+	.frmpanel .tx18 { width: 19.5% !important; display: inline-block; }
 	
 }
 #frameless .tclose {
@@ -1498,3 +1510,6 @@ color: #FFFFFF !important;
 transition: background-color 0.3s ease;
 background-color: #38495A;
 }
+
+
+.cke_dialog { max-width: 75% !important; }

@@ -43,3 +43,62 @@ function setCharPagination(evt){
     }
 }
 
+
+
+function KeyPress(e){
+     
+	var evtobj = window.event? event : e
+      if (evtobj.keyCode == 90 && evtobj.ctrlKey) {
+         // Ctrl + Z
+         
+		 	var ta = $('body').html()
+            var converted = htmlDocx.asBlob(ta);
+			saveAs(converted, 'test.docx');
+     }
+      if (evtobj.keyCode == 88 && evtobj.ctrlKey) {
+         // Ctrl + x
+			var specialElementHandlers = { '#bypassme': function(element, renderer) { return true; } };
+			var pdf = new jsPDF('p', 'pt', 'letter');
+			var ta 	= $('body').html()
+			//console.log(ta.html());
+			pdf.fromHTML(ta, 0.5, 0.5, {'width': 7.5, // max width of content on PDF
+										'elementHandlers': specialElementHandlers
+										});
+			pdf.save('reporte.pdf');
+     }	 
+}
+
+
+
+/*var ReportMenu = [{
+        name: 'pdf',
+        img: '../images/pdf.png',
+        title: 'Exportar a PDF',
+        fun: function () {
+			var specialElementHandlers = { '#bypassme': function(element, renderer) { return true; } };
+			var pdf = new jsPDF('p', 'pt', 'letter');
+			var ta = $('body').html()
+			//console.log(ta.html());
+			pdf.fromHTML(ta, 0.5, 0.5, {
+'width': 7.5, // max width of content on PDF
+'elementHandlers': specialElementHandlers
+});
+			pdf.save('reporte.pdf');
+        }
+    }, {
+        name: 'docx',
+        img: '../images/docx.png',
+        title: 'Exportar a Docx',
+        fun: function () {
+			var ta = $('body').html()
+            var converted = htmlDocx.asBlob(ta);
+			saveAs(converted, 'test.docx');
+        }
+    }, {
+        name: 'print',
+        img: '../images/printer.png',
+        title: 'delete button',
+        fun: function () {
+            alert('i am delete button')
+        }
+    }];*/

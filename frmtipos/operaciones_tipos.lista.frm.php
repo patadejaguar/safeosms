@@ -47,10 +47,13 @@ $grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, 
 $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
 $observaciones= parametro("idobservaciones");
+
+$todos			= parametro("todos", false, MQL_BOOL);
+
 $xHP->addJTableSupport();
 $xHP->init();
 
-
+$ByActivos	= ($todos == false) ? " AND (`operaciones_tipos`.`estatus`=1) " : " ";
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
@@ -63,17 +66,15 @@ $xFRM->addCerrar();
 $xHG	= new cHGrid("iddiv",$xHP->getTitle());
 
 $xHG->setSQL("SELECT `operaciones_tipos`.`idoperaciones_tipos`,
-         `operaciones_tipos`.`descripcion_operacion`,
-         `operaciones_tipos`.`nombre_corto`,
-         IF(`operaciones_tipos`.`estatus` = 0, '" . $xFRM->l()->getT("TR.BAJA") .  "', '" . $xFRM->l()->getT("TR.ESTATUSACTIVO") . "') AS `estatus`,
-         `operaciones_tipos`.`precio`,
-
+`operaciones_tipos`.`descripcion_operacion`,
+`operaciones_tipos`.`nombre_corto`,
+IF(`operaciones_tipos`.`estatus` = 0, '" . $xFRM->l()->getT("TR.BAJA") .  "', '" . $xFRM->l()->getT("TR.ESTATUSACTIVO") . "') AS `estatus`,
+`operaciones_tipos`.`precio`,
 (SELECT COUNT(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`)
-FROM     `eacp_config_bases_de_integracion_miembros` INNER JOIN `eacp_config_bases_de_integracion`  ON `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = `eacp_config_bases_de_integracion`.`codigo_de_base` 
-WHERE    ( `eacp_config_bases_de_integracion_miembros`.`miembro` = `operaciones_tipos`.`idoperaciones_tipos`)) AS 'items',
-`operaciones_recibostipo`.`descripcion_recibostipo` AS `recibo_de_operacion`
-
-FROM     `operaciones_tipos` INNER JOIN `operaciones_recibostipo`  ON `operaciones_tipos`.`recibo_que_afecta` = `operaciones_recibostipo`.`idoperaciones_recibostipo` ");
+FROM `eacp_config_bases_de_integracion_miembros` INNER JOIN `eacp_config_bases_de_integracion`  ON `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = `eacp_config_bases_de_integracion`.`codigo_de_base` 
+WHERE (`eacp_config_bases_de_integracion_miembros`.`miembro` = `operaciones_tipos`.`idoperaciones_tipos`)) AS 'items',`operaciones_recibostipo`.`descripcion_recibostipo` AS `recibo_de_operacion`
+FROM `operaciones_tipos` INNER JOIN `operaciones_recibostipo` ON `operaciones_tipos`.`recibo_que_afecta` = `operaciones_recibostipo`.`idoperaciones_recibostipo`
+WHERE (`operaciones_tipos`.`idoperaciones_tipos`>0)$ByActivos");
 
 
 
@@ -87,7 +88,9 @@ $xHG->col("idoperaciones_tipos", "TR.CLAVE", "8%");
 $xHG->col("descripcion_operacion", "TR.NOMBRE", "22%");
 
 $xHG->col("nombre_corto", "TR.ALIAS", "12%");
-$xHG->col("estatus", "TR.ESTATUS", "8%");
+if($todos == true){
+	$xHG->col("estatus", "TR.ESTATUS", "8%");
+}
 
 
 $xHG->col("recibo_de_operacion", "TR.RECIBO", "12%");

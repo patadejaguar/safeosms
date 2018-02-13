@@ -39,7 +39,7 @@ $observaciones	= parametro("idobservaciones");
 $letra			= parametro("letra", false, MQL_INT);
 
 $cmd			= parametro("cmd", "");
-$email			= parametro("idmail", "");$email = parametro("email", "");
+$email			= parametro("idmail", "", MQL_RAW);$email = parametro("email", "", MQL_RAW);
 $senders		= getEmails($_REQUEST);
 $via			= parametro("via", "");
 $rs				= array();

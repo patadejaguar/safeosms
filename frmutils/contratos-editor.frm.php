@@ -12,9 +12,11 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP			= new cHPage("TR.Editar Formatos");
+$xHP			= new cHPage("TR.Editar FORMS_Y_DOCS");
 $idcontrato 	= parametro("idcontrato", 0 , MQL_INT);
 $jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT); $producto 	= parametro("producto", $producto);
+$tipopersona	= parametro("tipopersona",0, MQL_INT); $tipopersona = parametro("tipodepersona", $tipopersona, MQL_INT);
 
 $xHP->addJsFile("../js/ckeditor/ckeditor.js");
 
@@ -24,6 +26,7 @@ $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
 $xFMT		= new cFormato(false);
+$xLi		= new cSQLListas();
 
 $xHP->addJTableSupport();
 $jxc 		= new TinyAjax();
@@ -56,17 +59,45 @@ $xFRM->setTitle($xHP->getTitle());
 	//
 	$xFRM->OHidden("idcontrato", $idcontrato);
 	/* ===========		GRID JS		============*/
+	$xLF	= new cFormatosDelSistema();
 	
 	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 	
-	$q1		= $xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
-	$xHG->setSQL("SELECT * FROM `general_contratos` WHERE `estatus`='alta' ORDER BY `titulo_del_contrato` LIMIT 0,20");
+	//$q1		= $xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
+	//$xHG->setSQL("SELECT * FROM `general_contratos` WHERE `estatus`='alta' ORDER BY `titulo_del_contrato` LIMIT 0,20");
+	
+	$q1		= $xHG->setSQL($xLF->getSQL_Lista(false));
+	$xHG->setSQL( $xLF->getSQL_Lista() );
+	
+	
+	
+	if($producto >0){
+		$xProd	= new cProductoDeCredito($producto);
+		if($xProd->init() == true){
+		  $subtipo	= $xProd->getTipoEnSistema();
+		  $tipo     = iDE_CREDITO;
+		  //$xFMT	= new cFormato();
+		  $q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo, $subtipo));
+		  if($subtipo == 500){
+		  	$subtipo	= 281;			//FiXME: Corregir por leasing
+		  }
+		  $xHG->setSQL( $xLF->getSQL_Lista(true, $tipo, $subtipo) );
+		}
 		
+	}
+	if($tipopersona > 0){
+		$xTI	= new cPersonasTipoDeIngreso($tipopersona);
+		if($xTI->init() == true){
+			//$xTI->
+			$tipo     = iDE_SOCIO;
+			$q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo));
+		}
+	}
 	$xHG->addList();
 	$xHG->addKey("idgeneral_contratos");
 	$xHG->col("idgeneral_contratos", "TR.CLAVE", "10%");
 	$xHG->col("titulo_del_contrato", "TR.NOMBRE", "10%");
-	//$xHG->col("tipo_contrato", "TR.TIPO CONTRATO", "10%");
+	$xHG->col("tipo_contrato", "TR.TIPO", "10%");
 	$xHG->col("tags", "TR.TAGS", "10%");
 	//$xHG->col("estatus", "TR.ESTATUS", "10%");
 	

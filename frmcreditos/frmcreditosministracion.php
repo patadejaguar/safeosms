@@ -99,19 +99,20 @@ if($credito <= DEFAULT_CREDITO){
 		if(MODULO_AML_ACTIVADO == true){
 			$valido		= $xCred->getEsValido();
 		}
+		
 		if($xCred->isPagable() == true OR $valido == false){
 			$xFRM->addAvisoRegistroError($xCred->getMessages());
 			$xFRM->addCerrar();
 		} else {
 			$xFRM->addGuardar();
-		$xFRM->setAction("clscreditosministracion.php");
-		$xFRM->addHElem($xCred->getFicha(true, "", false, true));
-		$persona=$xCred->getClaveDePersona();
+			$xFRM->setAction("clscreditosministracion.php");
+			$xFRM->addHElem($xCred->getFicha(true, "", false, true));
+			$persona=$xCred->getClaveDePersona();
 		
-		$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred($credito);", $xFRM->ic()->CALENDARIO1);
-		
-		$xFRM->OHidden("idsolicitud", $credito);
-		$xFRM->OHidden("idsocio", $persona);
+			$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred($credito);", $xFRM->ic()->CALENDARIO1);
+			
+			$xFRM->OHidden("idsolicitud", $credito);
+			$xFRM->OHidden("idsocio", $persona);
 		//descuento //comisiones
 		//Cargos y comisiones
 		if($SinDatosDescuentos == true){
@@ -189,7 +190,9 @@ if($credito <= DEFAULT_CREDITO){
 			$xCant		= new cCantidad($xCred->getMontoAutorizado());
 			$xFRM->addHElem($xCant->getFicha());
 			
-			$xFRM->ODate("idfechaactual", $xCred->getFechaDeMinistracion(), "TR.Fecha de otorgacion");
+			//$xFRM->ODate("idfechaactual", $xCred->getFechaDeMinistracion(), "TR.Fecha de otorgacion");
+			$xFRM->addFechaRecibo($xCred->getFechaDeMinistracion());
+			
 			$xSelBancos	= $xSel->getListaDeCuentasBancarias("", true); $xSelBancos->addEvent("onchange", "jsGetCheque()");
 			$xFRM->addHElem( $xSelBancos->get(true) );
 			

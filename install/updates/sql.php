@@ -3645,6 +3645,179 @@ $sql["20171101"][]	= "INSERT INTO `operaciones_recibostipo` (`idoperaciones_reci
 $sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('11016', '7020', 'Opciones del Sistema', 'frmsystem/opciones.frm.php', 'Administracion de Opciones', 'fa-cogs', 'command', '11016', '11016', 'true')";
 $sql["20171101"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2006', 'CONFIRMA_ACTUALIZACION', '¿ Confirma la Actualizacion de este Registro ?')";
 $sql["20171101"][]	= "ALTER TABLE `entidad_configuracion` CHANGE COLUMN `tipo` `tipo` VARCHAR(40) NULL DEFAULT '' ,CHANGE COLUMN `descripcion_del_parametro` `descripcion_del_parametro` VARCHAR(200) NULL DEFAULT '' ,CHANGE COLUMN `valor_del_parametro` `valor_del_parametro` VARCHAR(200) NULL DEFAULT ''";
+
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('app-sync.php')";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('593', 'FORM', 'CREDITOS.NOMINA.SEMANAS.EXTRA', '', '', '', '')";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('594', 'FORM', 'CREDITOS.NOMINA.QUINCENA.EXTRA', '', '', '', '')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('leasing-activos.baja.frm.php')";
+$sql["20171101"][]	= "ALTER TABLE `leasing_activos` ADD COLUMN `annio` VARCHAR(10) NULL DEFAULT '' AFTER `serie_nal` ";
+$sql["20171101"][]	= "INSERT INTO `sistema_catalogo` (`idsistema_catalogo`, `clave`, `descripcion`, `tabla_virtual`) VALUES ('32', '100', 'Siniestro', 'leas_activo_baja_mot')";
+$sql["20171101"][]	= "INSERT INTO `sistema_catalogo` (`idsistema_catalogo`, `clave`, `descripcion`, `tabla_virtual`) VALUES ('33', '101', 'Robo', 'leas_activo_baja_mot')";
+$sql["20171101"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('3001', 'NOMINA_PERIODO_REQ', 'Se requiere un periodo de Nomina.')";
+$sql["20171101"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('1004', 'MSG_NO_NOTES', 'No existen Notas o Detalles.')";
+$sql["20171101"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('1005', 'MSG_NO_REGS', 'No hay registros en el Sistema.')";
+
+$sql["20171101"][]	= "ALTER TABLE `t_03f996214fba4a1d05a68b18fece8e71` ADD COLUMN `pin_app` VARCHAR(10) NULL DEFAULT '' AFTER `corporativo` ";
+$sql["20171101"][]	= "ALTER TABLE  `creditos_preclientes`  CHANGE COLUMN `idorigen` `idorigen` INT(4) NULL DEFAULT '1' COMMENT '1 pagina 2 app' ,ADD COLUMN `idexterno` VARCHAR(60) NULL DEFAULT '' AFTER `idoficial`";
+$sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('20102', '20100', 'Carga de Documentos', 'frmsocios/cargar-batch-documentos.frm.php', 'Carga Batch de Documentos', 'fa-file', 'command', '20102', '20102', 'true')";
+$sql["20171101"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2007', 'MSG_CONFIRMA_IMPORTAR', '¿ Confirma Importar el Registro seleccionado ?')";
+
+
+
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'AI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'AG'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'AN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'AW'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'BB'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'BZ'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'BM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'BN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'DM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'BS'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `nombre_oficial` = 'ESPAÑA' , `gentilicio` = 'ESPAÑOL' WHERE `clave_de_control` = 'ES'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' WHERE `clave_de_control` = 'AE'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BH'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'KW'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'QA'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'PR'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'GD'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'GI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'GL'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'GU'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'HK'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'KY'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'NF'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'PM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'CK'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'CC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'FK'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'SB'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'VG'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'VI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'KI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MO'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MT'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MS'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'NU'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'PF'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AD'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'LI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'SZ'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TO'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'JO'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AL'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AO'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'CV'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'CR'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'CY'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'GY'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'HN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MH'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'LR'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MV'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'MU'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'NR'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'SC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TT'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'VU'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'YE'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'UY'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'LK'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AS'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'VC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'SH'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'LC'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'SM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'OM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TK'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_paraiso_fiscal` = '1' , `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'TV'";
+
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AE'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'DM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BZ'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BS'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BM'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'BB'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AW'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AN'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AI'";
+$sql["20171101"][]	= " UPDATE `personas_domicilios_paises` SET `es_considerado_riesgo` = '100' WHERE `clave_de_control` = 'AG'";
+$sql["20171101"][]	= "UPDATE `aml_risk_catalog` SET `descripcion` = 'Operaciones Reportadas. Superiores a 7500 USD  Mensual' , `unidades_ponderadas` = '7500' WHERE `clave_de_control` = '912100'";
+
+$sql["20171101"][]	= "UPDATE `tesoreria_monedas` SET `quivalencia_en_moneda_local` = '19.3433' WHERE `clave_de_moneda` = 'USD'";
+$sql["20171101"][]	= "INSERT INTO `tesoreria_valoracion_diaria` (`idcontrol`, `denominacion`, `fecha`, `valor`, `tiempo`,`usuario`) VALUES ('2', 'USD', '2017-12-31', '19.3433', '1515771045', '99')";
+$sql["20171101"][]	= "UPDATE `aml_risk_catalog` SET `unidades_ponderadas` = '7500' WHERE `clave_de_control` = '910000'";
+$sql["20171101"][]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = '19.3433' WHERE `nombre_del_parametro` = 'precio_del_dolar'";
+
+$sql["20171101"][]	= "ALTER TABLE `socios_figura_juridica` ADD COLUMN `activo` INT(2) NULL DEFAULT '0' AFTER `tipo_de_integracion`";
+$sql["20171101"][]	= "UPDATE `socios_figura_juridica` SET `activo` = '1' WHERE `idsocios_figura_juridica` = '2'";
+$sql["20171101"][]	= "UPDATE `socios_figura_juridica` SET `activo` = '1' WHERE `idsocios_figura_juridica` = '1'";
+
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('595', 'SYSTEM', 'CREDITOS.USAR_MORA_BD', '', '', '', '', '1')";
+
+$sql["20171101"][]	= "UPDATE `eacp_config_bases_de_integracion_miembros` SET `codigo_de_base` = '7013' , `descripcion_de_la_relacion` = 'BONIFICACION DE MORA'  WHERE `codigo_de_base` = '7013' AND `miembro`=801 ";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('596', 'FORM', 'RECIBOS.COBRO_BLOQUEADO', '', '', '', '', '1')";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('597', 'SYSTEM', 'CREDITOS.PAG.PURGAR_SDPM', '', '', '', '', '1')";
+
+$sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`) VALUES ('20103', '20100', 'App.- Importar Clientes', 'frmsocios/app-clientes.frm.php', 'Importar Clientes de la App', 'fa-refresh', 'command', '20103', '20103')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('app-sync.svc.php')";
+$sql["20171101"][]	= "ALTER TABLE `creditos_destinos` ADD COLUMN `estatusactivo` INT(2) NULL DEFAULT '1' AFTER `tasa_de_iva`";
+$sql["20171101"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `opts` VARCHAR(100) NULL DEFAULT '' AFTER `administrado`,ADD COLUMN `noivarent` INT(2) NULL DEFAULT '0' COMMENT 'renta sin iva' AFTER `opts`";
+$sql["20171101"][]	= "UPDATE `general_contratos` SET `tags` = '281' WHERE `idgeneral_contratos` = '1902'";
+$sql["20171101"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Formato de Domiciliacion' WHERE `idgeneral_contratos` = '1904'";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('credito-generico.fmt.php')";
+$sql["20171101"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('813', '100', 'Formato Conoce a Tu Cliente', '<!-- ejemplo -->', 'todas', '../rpt_formatos/persona-generico.fmt.php?')";
+
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('personas-formatos.frm.php')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('persona-generico.fmt.php')";
+$sql["20171101"][]	= "UPDATE `general_contratos` SET `ruta` = '../rpt_formatos/persona-generico.fmt.php?forma=813&' WHERE `idgeneral_contratos` = '813'";
+$sql["20171101"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('10101', '100', 'Reporte de Verificacion Ocular', '<!-- Ejemplo -->', 'todas', '../rpt_formatos/persona-generico.fmt.php?forma=10101&')";
+$sql["20171101"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('103', '200', 'Notificacion de Aprobacion de Credito', '<!-- Texto -->', 'todas,evento=autorizacion', '../rpt_formatos/credito-generico.fmt.php?forma=103&')";
+
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('personas-proveedores.edit.frm.php')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('personas-aseguradoras.edit.frm.php')";
+
+$sql["20171101"][]	= "ALTER TABLE `personas_proveedores` ADD COLUMN `alias` VARCHAR(20) NULL DEFAULT '' AFTER `persona`,ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `alias`";
+$sql["20171101"][]	= "ALTER TABLE `personas_aseguradoras` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `alias`";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('inactivo.svc.php')";
+
+$sql["20171101"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('1917', '200', 'Tramite de Placas y Tenencia', '<!-- -->', '281', '../rpt_formatos/credito.arrendamiento.fmt.php?forma=1917&')";
+$sql["20171101"][]	= "INSERT INTO `sistema_programacion_de_avisos` (`idprograma`, `nombre_del_aviso`, `forma_de_creacion`, `programacion`, `destinatarios`, `microformato`, `tipo_de_medios`, `intent_check`, `intent_command`) VALUES ('16', 'CREDITOS.CUANDO_SE_AUTORIZA', 'SYS_ALERTA_POR_EVENTO', 'CREDITOS.CUANDO_SE_AUTORIZA', 'OFICIALES:oficial_de_credito|PERSONAS:clave_de_persona', '{fecha}-{hora}\r\nEl Credito {clave_de_credito} de la persona {nombre_de_persona} ha sido autorizado por {vars_creds_monto_autorizado}.', ',MAIL', '', '')";
+$sql["20171101"][]	= "SELECT setNuevoPermisoX('entidad-configuracion.edit.frm.php')";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('598', 'FORM', 'RECIBOS.BLOQ_FECHA_FUTURA', '', '', '', '', '1')";
+$sql["20171101"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('599', 'FORM', 'RECIBOS.BLOQ_FECHA_ANTERIOR', '', '', '', '', '1')";
+
+$sql["20171101"][]	= "INSERT INTO `personas_documentacion_tipos` (`clave_de_control`, `nombre_del_documento`, `clasificacion`, `vigencia_dias`, `tags`, `estatus`) VALUES ('3001', 'Contrato a la Vista', 'DG', '300', 'todas', '0')";
+$sql["20171101"][]	= "INSERT INTO `personas_documentacion_tipos` (`clave_de_control`, `nombre_del_documento`, `clasificacion`, `vigencia_dias`, `tags`) VALUES ('2001', 'Contrato de Credito', 'DG', '300', 'todas')";
+
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '11000' WHERE `idgeneral_menu` = '40100'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Cambios a la Cartera' WHERE `idgeneral_menu` = '4030'";
+
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Cargos a Creditos' WHERE `idgeneral_menu` = '4002' ";
+$sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('4100', '4000', 'Cargos, Castigos y Quitas', '', 'Cargos, descuentos, castigos, quitas, etc', 'fa-recycle', 'parent', '4100', '4100', 'true')";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4100' WHERE `idgeneral_menu` = '4003' ";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4100' WHERE `idgeneral_menu` = '4002' ";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4100' WHERE `idgeneral_menu` = '4033' ";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-minus-circle' WHERE `idgeneral_menu` = '4003'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-plus-circle' WHERE `idgeneral_menu` = '4002'";
+$sql["20171101"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('4110', '4000', 'Acciones de Gestion', '', 'Agregar llamadas, compromisos, etc', 'fa-calendar-alt', 'parent', '4110', '4110', 'true')";
+
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4030'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4010'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4009'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4005'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_image` = 'fa-handshake' WHERE `idgeneral_menu` = '4005'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_description` = 'Agregar LLamadas de Gestion' , `menu_image` = 'fa-phone' WHERE `idgeneral_menu` = '4009'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Compromisos' WHERE `idgeneral_menu` = '4005'"; 
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' , `menu_description` = 'Calificar las Referencias segun la Visita' , `menu_image` = 'fa-phone-volume' WHERE `idgeneral_menu` = '4007'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' , `menu_image` = 'fa-gears' WHERE `idgeneral_menu` = '40200'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4000' WHERE `idgeneral_menu` = '4030'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4004'";
+$sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Modificador en Batch' , `menu_image` = 'fa-gears' WHERE `idgeneral_menu` = '4014' ";
 //$sql["20171101"][]	= "";
 //$sql["20171101"][]	= "";
 //$sql["20171101"][]	= "";

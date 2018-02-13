@@ -127,7 +127,8 @@ if($action == MQL_ADD){
 			$xFRM->addGuardar();
 			$rs		= $xQL->getDataRecord($xLi->getListadoDeCargosPorProductoCred($xCred->getClaveDeProducto()));
 			$xT		= new cHTabla();
-			$xFRM->addFecha();
+			$xFRM->addFechaRecibo($fecha);
+			
 			$xFRM->addCobroBasico();
 			$xFRM->addObservaciones();
 			$sum	= 0;

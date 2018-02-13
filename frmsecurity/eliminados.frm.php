@@ -74,7 +74,7 @@ $xHG->col("persona", "TR.PERSONA", "10%");
 
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsistema_eliminados +')", "edit.png");
 $xHG->OButton("TR.VER", "jsVerContenido('+ data.record.idsistema_eliminados +')", "view.png");
-$xFRM->OButton("TR.FILTRAR", "jsSetFiltro", $xFRM->ic()->FILTRO);
+$xFRM->OButton("TR.FILTRAR", "jsSetFiltro()", $xFRM->ic()->FILTRO);
 $xFRM->addFecha();
 
 $xHG->setOrdenar();

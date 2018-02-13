@@ -1672,6 +1672,8 @@ class cUtileriasParaCreditos{
 	}
 	function setEliminarInteresesDeCreditosPagados(){
 		$msg		= "";
+		$xQL		= new MQL();
+		
 				//==============================================================================
 				$fecha			= fechasys();
 				$cheque 		= DEFAULT_CHEQUE;
@@ -1690,19 +1692,18 @@ class cUtileriasParaCreditos{
 				$CRecibo->setNumeroDeRecibo($recibo);
 
 				//
-				$sql	= "SELECT
-				*
-			FROM
+				$sql	= "SELECT * FROM
 				`creditos_solicitud` `creditos_solicitud`
 			WHERE
 				(`creditos_solicitud`.`saldo_actual` <= 0) AND
 				(
-					(`creditos_solicitud`.`interes_moratorio_devengado` != 0)
+				(`creditos_solicitud`.`interes_moratorio_devengado` != 0)
 			OR
-					(`creditos_solicitud`.`interes_normal_devengado` != 0)
+				(`creditos_solicitud`.`interes_normal_devengado` != 0)
 				)";
-			$rs	= mysql_query($sql, cnnGeneral() );
-			while( $rw = mysql_fetch_array($rs) ) {
+			$rs	= $xQL->getRecordset($sql);
+			
+			while( $rw = $rs->fetch_assoc() ) {
 						$socio		= $rw["numero_socio"];
 						$solicitud	= $rw["numero_solicitud"];
 						$OpNormal	= 420; //420;

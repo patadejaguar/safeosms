@@ -52,7 +52,7 @@ if(typeof XDate != "undefined"){
 }*/
 
 function setLog(msg){ if(MODO_DEBUG == true){ console.log(msg); } }
-	
+
 Gen.prototype.alto	= function(){
 		var mSz	= getClientSize();
 		return mSz.height;
@@ -140,12 +140,12 @@ Gen.prototype.getLog	= function(opts){
 					callback(rs.message);
 					setLog(rs.message);
 				}
-				
+
 			}
 		}
 	};
 
-	$.ajax(AjxOpts);	
+	$.ajax(AjxOpts);
 }
 Gen.prototype.clearSession	= function(){ window.localStorage.clear(); }
 Gen.prototype.desactiva		= function(id){
@@ -161,7 +161,7 @@ Gen.prototype.activa		= function(id){
 Gen.prototype.activarForma	= function(activar,conButtons){
 	activar			= (typeof activar == "undefined") ? false : activar;
 	conButtons		= (typeof conButtons == "undefined") ? true : conButtons;
-	
+
 	if(activar == false){
 		$('input, select').attr('disabled', 'disabled');
 		if(conButtons == true){
@@ -177,7 +177,7 @@ Gen.prototype.activarForma	= function(activar,conButtons){
 Gen.prototype.soloLeerForma	= function(activar,conButtons){
 	activar			= (typeof activar == "undefined") ? false : activar;
 	conButtons		= (typeof conButtons == "undefined") ? true : conButtons;
-	
+
 	$('input, select').removeAttr('disabled');
 	if(activar == false){
 		$('input, select').attr('readonly', 'readonly');
@@ -186,7 +186,7 @@ Gen.prototype.soloLeerForma	= function(activar,conButtons){
 		}
 	} else {
 		$('input, select').removeAttr('readonly');
-		
+
 		if(conButtons == true){
 			$('a').css('pointer-events', 'all');
 		}
@@ -224,7 +224,7 @@ Gen.prototype.ver	= function(id, ver){
 		} else {
 			$("#" + id).parent().css("display", "inline-block");
 		}
-	}	
+	}
 }
 Gen.prototype.aMonedaForm = function(){
 	var aMny 		= $( ":input[class=mny]" );
@@ -245,7 +245,7 @@ Gen.prototype.aMoneda	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var id0			= (typeof opts.idDesde == "undefined") ? "" : "#" + opts.idDesde;
 	var id1			= (typeof opts.idPara == "undefined") ? "" : "#" + opts.idPara;
-	
+
 	if (typeof opts.evt != "undefined" ) {
 		charCode = ( opts.evt.charCode) ? opts.evt.charCode : ((opts.evt.which) ? opts.evt.which : opts.evt.keyCode);
 	}
@@ -255,7 +255,7 @@ Gen.prototype.aMoneda	= function(opts){
 		$(id0).val( getFMoney(vv));
 	});
 	if ( (charCode >= 48 && charCode <= 57)||(charCode >= 96 && charCode <= 105)||charCode==188||charCode==190||charCode==110||charCode==46||charCode==8 ){
-		
+
 	} else {
 		var vv		=  flotante($(id0).val() );
 		$(id1).val( vv );
@@ -316,7 +316,12 @@ Gen.prototype.w	= function(opts){
 	var isBlank	= (typeof opts.blank == "undefined") ? false : opts.blank;
 	var isTab	= (typeof opts.tab == "undefined") ? false : opts.tab;
 	var wm		= this;
+	var isMob	= session(Configuracion.variables.sistema.isMobile);
+	isMob		= (isMob === null) ? false : isMob;
+
 	var tiny	= (typeof opts.tiny == "undefined") ? false : opts.tiny;
+	tiny		= (isMob == "true") ? false  : tiny;
+	//if(isMob == "true"){ console.log("mobile.."); } else { console.log( Configuracion.variables.sistema.isMobile + ": " +  session(Configuracion.variables.sistema.isMobile) ); }
 		wd		= ((wd > LimAn) && isBlank == false) ? LimAn : wd;
 		hg		= ((hg > LimAl) && isBlank == false) ? LimAl : hg;
 		tp		= entero( (LimAl - hg)/2 );
@@ -330,9 +335,9 @@ Gen.prototype.w	= function(opts){
 	var name	= "";
 	var specs	= "resizable=no,modal=yes,scrollbars=yes,location=no,status=no,height=" + hg + ",width=" + wd + ",top=" + tp + ",left=" + lf;
 	var oargs	= precallF();
-	
+
 	url			= url + oargs;
-	
+
 	if(tiny == false){
 		if (isBlank == true) {
 			//name = "tabshifted";
@@ -341,12 +346,12 @@ Gen.prototype.w	= function(opts){
 		if (isTab == true) {
 			specs 	= "";
 			name 	= "_blank";
-		}		
+		}
 		UPDWIN		= window.open(url,name,specs);
 		if (UPDWIN == null) {
 			wm.alerta({ msg : "TR.Error al Abrir la Ventana"});
 		} else {
-			UPDWIN.focus();	
+			UPDWIN.focus();
 		}
 	} else {
 		if (otags == true) { url	= url + "&tinybox=true"; }
@@ -366,6 +371,9 @@ Gen.prototype.rz	= function(opts){
 	var h		= (typeof opts.h == "undefined") ? LimAl : opts.h;
 	if (opener) { window.resizeTo(w, h); }
 }
+Gen.prototype.postajax	= function(fnc){
+	session(TINYAJAX_CALLB, fnc);
+}
 Gen.prototype.pajax	= function(opts){
 	//DroidError("Query " + this.getIn() + oper);
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -376,7 +384,8 @@ Gen.prototype.pajax	= function(opts){
 	var method	= (typeof opts.method == "undefined") ? "GET" : opts.method;
 	var res		= (typeof opts.result == "undefined") ? "xml" : opts.result;
 	var extra	= (typeof opts.extra == "undefined") ? "" : opts.extra;
-
+	var onerr	= (typeof opts.onerror == "undefined") ? function(){} : opts.onerror;
+	var onnd	= (typeof opts.onnodata == "undefined") ? function(){} : opts.onnodata;
 	var AjxOpts	= {
 		url		: murl, // cmd + tabla + primaryKey + registro
 		type		: method,
@@ -385,15 +394,20 @@ Gen.prototype.pajax	= function(opts){
 			if (res == "xml") {
 				//read nodes string
 				var size	= $(rs).find(finder).size();
-				$(rs).find(finder).each(function(index){
-					index		= index+1;
-					var fin		= (index == size) ? true : false;
-					callback(this, fin);
+				if(size <= 0){
+					setTimeout(onnd,10);
+				} else {
+					$(rs).find(finder).each(function(index){
+						index		= index+1;
+						var fin		= (index == size) ? true : false;
+						callback(this, fin);
 					});
+				}
 			} else {
 				callback(rs);
 			}
-		}
+		},
+		error: onerr
 	};
 	//agregar datos del Form
 	if (frm != ""){
@@ -421,7 +435,7 @@ Gen.prototype.sigma	= function(opts){
 			    	labelThreshold: 0,
 			    	edgeLabelSize: 'proportional'
 			    }
-			  });		
+			  });
 	}
 }
 Gen.prototype.letras	= function(opts){
@@ -434,7 +448,7 @@ Gen.prototype.letras	= function(opts){
 		contentType	: "json",
 		success		: function(rs){
 			if (typeof rs.letras != "undefined") {
-				if (mid != ""){ $("#" + mid).val(rs.letras); }
+				if (mid !== ""){ $("#" + mid).val(rs.letras); }
 				callback(rs.letras);
 			} else {
 				setLog("Error en conversion");
@@ -508,15 +522,17 @@ Gen.prototype.winTip 	= function (opts){
 	var mTitle	= (typeof opts.title == "undefined") ? "Window" : opts.title;
 	var content	= (typeof opts.content == "undefined") ? false : opts.content;
 	var self	= this;
-	
+
 	var xG		= new Gen();
 	var w		= entero((xG.ancho()/2));
-	
+
 	//var content  = $(id).closest("form");
-	session(Configuracion.opciones.dialogID, content.attr("id"));
-	
+	if(content){
+		session(Configuracion.opciones.dialogID, content.attr("id"));
+	}
+
 	content.dialog({resizable: false,height: "auto", width: w, modal: true, title: mTitle, position: ['center', 20] });
-	
+
 }
 Gen.prototype.inputMD5	= function(evt){ evt.value	= hex_md5(evt.value); }
 Gen.prototype.disTime 	= function (id, mTime){
@@ -546,12 +562,15 @@ Gen.prototype.ena 	= function (){
 	}
 }
 Gen.prototype.empty 	= function (id){ $(id).empty(); }
-Gen.prototype.happy 	= function (){
+Gen.prototype.happy 	= function (opts){
+	opts 				= (typeof opts == "undefined" ) ? {} : opts;
+	var onfail			= (typeof opts.onfail == "undefined") ? function(){} : opts.onfail;
+	var onsuccess		= (typeof opts.onsuccess == "undefined") ? function(){} : opts.onsuccess;
 	var ready			= true;
 	var self			= this;
 	if( $(".unhappyMessage").length > 0){
 		ready			= false;
-		self.alerta({msg:"No se puede guardar . Revise los Campos ."});
+		self.alerta({msg:"No se puede guardar . Revise los Campos."});
 	}
 	return ready;
 }
@@ -569,14 +588,14 @@ Gen.prototype.notify	= function(opts){
 	opts 		= (typeof opts == "undefined" ) ? {} : opts;
 	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
 	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
-	
+
 	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
 	var lvl		= (typeof opts.nivel == "undefined") ? "info" : opts.nivel;
 	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
 	lvl			= (typeof opts.type == "undefined") ? lvl : opts.type;
 	var tit		= (typeof opts.title == "undefined") ? "Mensaje del Sistema" : opts.title;
-	
-	
+
+
 	var self	= this;
 
   if (!("Notification" in window)) {
@@ -611,20 +630,20 @@ Gen.prototype.markTR	= function(opts){
 		var mP	= $(src).parent();
 		if( $(mP).is("tr") ){
 			$(mP).removeClass();
-			$(mP).addClass(cssto);			
+			$(mP).addClass(cssto);
 		} else {
 			//console.log($(mP).get(0).tagName);
 			var mP1	= $(mP).parent();
 			if( $(mP1).is("tr") ){
 				$(mP1).removeClass();
-				$(mP1).addClass(cssto);			
+				$(mP1).addClass(cssto);
 			} else {
-				
+
 				var mP2	= $(mP1).parent();
 				if( $(mP2).is("tr") ){
 					$(mP2).removeClass();
-					$(mP2).addClass(cssto);			
-				}				
+					$(mP2).addClass(cssto);
+				}
 			}
 		}
 	}
@@ -635,16 +654,16 @@ Gen.prototype.disableSelect	= function(id){
 	var idm	= id + "_mig";
 	//
 	if(document.getElementById(idx)){
-		
+
 		//Cambiar id original
 		$("#" + id).attr("name", idm);
 		$("#" + id).attr("id", idm);
 		//=== Asignar valor
 		$("#" + idx).val( $("#" + idm).val() );
-		
+
 		$("#" + idx).attr("name", id);
 		$("#" + idx).attr("id", id);
-		
+
 		$("#" + idm).attr("disabled", "disabled");
 	}
 }
@@ -767,26 +786,29 @@ function numero(n){	if(typeof n == 'number' && !isNaN(n) && isFinite(n) && n != 
 
 if (typeof jQuery != "undefined") {
 	jQuery.fn.reset = function () {  $(this).each (function() { this.reset(); }); }
+	
 		jQuery.extend({
 			  confirm: function(message, title, onTrue, onFalse, onClose) {
-				onClose = (typeof onClose == "undefined") ? function(){} : onClose;
 				
+				onClose = (typeof onClose == "undefined") ? function(){} : onClose;
+				onFalse = (typeof onFalse == "undefined") ? function(){} : onFalse;
+
 				jQuery("<div></div>").dialog({
 				   // Remove the closing 'X' from the dialog
 				   open: function(event, ui) {
 						//jQuery(".ui-dialog-titlebar-close").hide();
-					}, 
+					},
 						buttons: {
 							"Si": function() {
 								jQuery(this).dialog("close");
-								
-								setTimeout(onTrue,1);
+								$(".ui-dialog-content").dialog("close");
+								setTimeout(onTrue,100);
 								return true;
 							},
 							"No": function() {
 								jQuery(this).dialog("close");
-								
-								setTimeout(onFalse,1);
+								$(".ui-dialog-content").dialog("close");
+								setTimeout(onFalse,100);
 								return false;
 							}
 						},
@@ -797,6 +819,34 @@ if (typeof jQuery != "undefined") {
 					}).text(message);
 				}
 		});
+		//Alerta
+		jQuery.extend({
+			  alert: function(message, title, onTrue, css) {
+				css = (typeof css == "undefined") ? "" : css;
+				
+
+				jQuery("<div></div>").dialog({
+					dialogClass: css,
+				   
+				   open: function(event, ui) {
+						//jQuery(".ui-dialog-titlebar-close").hide();
+					},
+					buttons: {
+							"Ok": function(){
+								jQuery(this).dialog("close");
+
+								setTimeout(onTrue,1);
+								return true;
+							}
+						},
+						close: function(event, ui) { jQuery(this).remove(); },
+						resizable: false,
+						title: title,
+						modal: true
+					}).text(message);
+				}
+		});
+		
 }
 function tip(id, msg, delay, cont, callback){
 		delay 			= (typeof delay == "undefined") ? 1000 : delay;
@@ -899,14 +949,14 @@ Gen.prototype.Cache	= function(opts){
 		var getC	= session(idxC);
 		if(getC !== null){
 			setLog("en cache " + idxC);
-			
+
 			return getC;
 		}
 	}
 	return null;
 }
 Gen.prototype.hash = function(s){
-  return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
+  return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
 }
 Gen.prototype.QFrame	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -926,7 +976,7 @@ Gen.prototype.QList	= function(opts){
 	var id		= (typeof opts.id == "undefined") ? null : opts.id;
 	var Func	= (typeof opts.func == "undefined") ? "console.log" : opts.func;
 	//Func		= (typeof opts.callback == "undefined") ? Func : opts.callback;
-	
+
 	var vURL	= (typeof opts.url == "undefined") ? "" : opts.url;
 
 	var mKey	= (typeof opts.key == "undefined") ? "" : opts.key;
@@ -943,9 +993,9 @@ Gen.prototype.QList	= function(opts){
 		    str += "<li><a onclick=\""  + Func + "(" + val[mKey] + ")\">" + val[Lab] + "</a></li>";
 		  });
 		  str		= "<ol class=\"rounded-list\">" + str + "</ol>";
-		  
+
 		  $("#dlg").html(str);
-		  
+
 		  self.winTip({content : $("#dlg"), title:tit });
 		});
 }
@@ -965,9 +1015,9 @@ Gen.prototype.DataList	= function(opts){
 	var PreSave		= (typeof opts.presaved == "undefined") ? "" : opts.presaved; //prefijo en stored key
 	$.cookie.json 	= true;
 	var mURL		= SVC_REMOTE_HOST;
-	
+
 	var self		= this;
-	
+
 	if(vURL == "" && tbl != ""){
 		vURL		= "../svc/tabla.svc.php?action=list&tabla=" + tbl + "&clave=" + idx + fld + fnd;
 	}
@@ -980,14 +1030,14 @@ Gen.prototype.DataList	= function(opts){
 		$("#" + id).append(str);
 		vURL		= "";
 	}
-	
+
 	if(vURL == ""){
-		
+
 	} else {
 		$.getJSON( vURL, function( data ) {
 			var str     = "";
 			var cnt		= 0;
-			//var fin		
+			//var fin
 			$.each( data, function( key, val ) {
 				//$("#" + id).append("<option value='" + val[mKey] + "' label='" + val[Lab] + "' >");
 				//setLog(val);
@@ -1010,7 +1060,7 @@ Gen.prototype.closeTip	= function(obj){
 		var idxm	= session(Configuracion.opciones.dialogID);
 		jQuery($("#"+idxm)).dialog("close");
 	}
-	
+
 }
 Gen.prototype.close	= function(opts){
 	//DroidError("Query " + this.getIn() + oper);
@@ -1028,7 +1078,7 @@ Gen.prototype.close	= function(opts){
 	var process		= false;
 	var self		= this;
 	var crun		= true;
-	
+
 	if(currFrm !== ""){
 		if( $("#"+currFrm).attr("data-mod") == "true"){
 			var sipo	= confirm("El Formulario tiene Cambios\n¿Desea Salir sin Guardar?");
@@ -1125,7 +1175,7 @@ Gen.prototype.confirmar	= function(opts){
 	var msgTit	= (typeof opts.titulo == "undefined") ? "SAFE-OSMS" : opts.titulo;
 	var onClose	= (typeof opts.close == "undefined") ? function(){} : opts.close;
 	var metaO	= this;
-	if (evalF == true) {
+	if (evalF === true) {
 		if ($.trim(msg) != "") { msg	= metaO.lang(msg);	}
 		//if( confirm(msg) == false){ setTimeout(canc, 10); } else { setTimeout(callB, 10);	}
 		jQuery.confirm(msg, msgTit, callB, canc, onClose);
@@ -1133,12 +1183,33 @@ Gen.prototype.confirmar	= function(opts){
 		if ($.trim(msgNV) != "") { msg	= metaO.lang(msgNV); metaO.alerta({ msg : msg });	}
 	}
 }
+Gen.prototype.requiere	= function(opts){
+	var self	= this;
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
 
+	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
+	var lvl		= (typeof opts.nivel == "undefined") ? "info" : opts.nivel;
+	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
+	lvl			= (typeof opts.type == "undefined") ? lvl : opts.type;
+	var tit		= (typeof opts.title == "undefined") ? "Dato requerido:" : opts.title;
+	var icn		= (typeof opts.icon == "undefined") ? "" : opts.icon;
+	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
+	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
+	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
+	
+	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
+
+	jQuery.alert(msg, tit, callB, "diag-orange");
+
+	//self.confirmar(opts);
+}
 Gen.prototype.alerta	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
 	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
-	
+
 	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
 	var lvl		= (typeof opts.nivel == "undefined") ? "info" : opts.nivel;
 	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
@@ -1148,9 +1219,10 @@ Gen.prototype.alerta	= function(opts){
 	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
 	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
 	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
-	var metaO	= this;
-	if ($.trim(msg) != "" && raw == false) { msg	= metaO.lang(msg);	}
+	var self	= this;
 	
+	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
+
 	var mth 	= "awesome blue";
 	if(lvl == "error"){
 		mth	= "awesome error";
@@ -1173,14 +1245,60 @@ Gen.prototype.alerta	= function(opts){
 	if(icn == ""){
 		icn	= "fa-bell-o";
 	}
+	
 	var opciones = { message : msg, info : info, title : tit,overlay:false };
 	if(solo == true){ opciones.clearAll = true; }
 	if(icn !== ""){ opciones.icon = 'fa ' + icn; }
-	
+
 	$.amaran({ content:opciones, theme : mth, position :'top right'});
 	//theme:'awesome green'
 }
-
+Gen.prototype.enviar	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
+	var self	= this;
+	//if(idform !== ""){
+	//	$("#" + idform).submit(function (event) {
+		  // This line prevents the form from actually being submitted
+	//	  event.preventDefault();
+		
+		  // You can then define your actions however you like
+	//	  $.post({
+			// your config here
+	//	  });
+	//	});
+	//}
+	if(idform !== ""){
+		$('#'+idform).submit();
+		if(self.happy() == true){
+			self.spinInit();
+		}
+	}
+}
+Gen.prototype.recordInActive	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
+	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
+	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
+	var ask		= (typeof opts.preguntar == "undefined") ? false : opts.preguntar;
+	var self	= this;
+	
+	var mURL	= "../svc/inactivo.svc.php?tabla=" + tbl + "&id=" +  id + "&" + content;
+	
+	var mFunc	= function(){
+		$.getJSON( mURL, function( data ) {
+			self.spinEnd();
+			if (data.error == true) {
+				self.alerta({msg:data.message, nivel:"error"});
+			} else {
+				self.alerta({msg:data.message, nivel:"ok"});
+				setTimeout(callB,10);
+			}
+		});
+	};
+	var mFunc_	= function(){ self.spinInit(); setTimeout(mFunc,2000); };
+	self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
+}
 Gen.prototype.save	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
@@ -1191,24 +1309,23 @@ Gen.prototype.save	= function(opts){
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close;
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
 	var noMsg	= (typeof opts.nomsg == "undefined") ? false : opts.nomsg;
-	
+	var ask		= (typeof opts.preguntar == "undefined") ? false : opts.preguntar;
 	var tt		= this;
+	var self	= this;
 	$.cookie.json 	= true;
 	//Guardar Accion: jsAccionPostGuardarRegistro
 	//Actualizar las formas de Moneda
 	tt.aMonedaForm();
-	//------------------------------	
+	//------------------------------
 	if(content == "" && idform != ""){
 		content	= $("#" + idform).serialize();
 	}
 	var mURL	= "../svc/save.svc.php?tabla=" + tbl + "&id=" +  id + "&" + content;
-	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
-	//if (si) {
-	setTimeout(function(){
+	var mFunc	= function(){
 		var si		= tt.happy();
 		if (si == true){
 			$.getJSON( mURL, function( data ) {
-				  //var str     = "";
+				  self.spinEnd();
 				  if (data.error == true) {
 					tt.alerta({msg:data.message, nivel:"error"});
 				  } else {
@@ -1234,14 +1351,16 @@ Gen.prototype.save	= function(opts){
 				}
 			);
 		}
-	},2000);
+	};
+	var mFunc_	= function(){ self.spinInit(); setTimeout(mFunc,2000); };
+	self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
 }
 Gen.prototype.crudAdd	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
 	var id		= (typeof opts.id == "undefined") ? "" : opts.id; //idfrm
 	var callB	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	
+
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close; //Cerrar
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
 	//var content	= (typeof opts.content == "undefined") ? "" : opts.content;
@@ -1273,7 +1392,7 @@ Gen.prototype.crudAdd	= function(opts){
 					try {
 						callB(data);
 					} catch (e) {
-							
+
 					}
 					if(nclos == true){
 						tt.close();
@@ -1288,7 +1407,7 @@ Gen.prototype.crudAdd	= function(opts){
 				}
 			);
 		}
-	
+
 	},2000);
 }
 Gen.prototype.rmRecord	= function(opts){
@@ -1299,7 +1418,7 @@ Gen.prototype.rmRecord	= function(opts){
 	var self	= this;
 	$.cookie.json 	= true;
 	var mURL	= "../svc/rm.svc.php?tabla=" + tbl + "&id=" +  id;
-	
+
 	var siDel	= function(){
 		$.getJSON( mURL, function( data ) {
 			  //var str     = "";
@@ -1310,7 +1429,7 @@ Gen.prototype.rmRecord	= function(opts){
 				setTimeout(callB,10);
 			  }
 			}
-		);		
+		);
 	}
 	self.confirmar({ msg: "Confirma Eliminar el Registro", callback: siDel});
 }
@@ -1365,19 +1484,19 @@ var TableW 		= function(){}
 TableW.prototype.add	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var mID		= (typeof opts.id == "undefined") ? "" : opts.id;
-	
+
 	var des		= (typeof opts.destino == "undefined") ? "" : opts.destino;
-	
+
 	var cols	= (typeof opts.cols == "undefined") ? [] : opts.cols;
 	var sty		= (typeof opts.estilo == "undefined") ? [] : opts.estilo;
-	
+
 	if (!document.getElementById(mID)) {
-		
+
 		var tt	= document.createElement("TABLE");
 		var hh	= document.createElement("THEADER");
 		var tr1	= document.createElement("TR");
 		trH		= tr1;
-		
+
 		for(var ik = 0; ik < cols.length; ik++){
 			var ccol		= cols[ik];
 			var col			= document.createElement("TH");
@@ -1392,13 +1511,13 @@ TableW.prototype.add	= function(opts){
 		var bb	= document.createElement("TBODY");
 		//tt.createAttr("id", mID);
 		//tt.createAttr("class", "listado");
-		
+
 		tt.appendChild(hh);
 		tt.appendChild(bb);
 		tt.appendChild(ff);
 		//setLog(tt.innerHTML);
 		$(des).append(tt);
-	
+
 	}
 }
 TableW.prototype.addRow	= function(opts){
@@ -1407,10 +1526,10 @@ TableW.prototype.addRow	= function(opts){
 	var mVal	= (typeof opts.vals == "undefined") ? [] : opts.vals;
 	var TID		= (typeof opts.tableid == "undefined") ? "" : opts.tableid;
 	var sty		= (typeof opts.estilo == "undefined") ? [] : opts.estilo;
-	
+
 	var tr1		= document.createElement("TR");
 	trH			= tr1;
-	
+
 	for(var ik = 0; ik < mVal.length; ik++){
 		var ccol	= mVal[ik];
 		var col		= document.createElement("TD");
@@ -1570,7 +1689,7 @@ CredGen.prototype.getListarCreditos = function(idpersona){
 				$('#divcredito').empty();
 				$('#divcredito').append(str);
 		}
-		
+
 		});
 	}
 }
@@ -1604,7 +1723,7 @@ CredGen.prototype.getDescripcion	= function(idcredito, dest){
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var id			= (typeof opts.id == "undefined") ? null : opts.id;
-	
+
 	*/
 CredGen.prototype.getPanelDeLinea	= function(opts){
 
@@ -1636,7 +1755,7 @@ CredGen.prototype.getPrincipal = function(idpersona){
 	    var xG 			= new  Gen();
 	    $.cookie.json 	= true;
 	    var mURL 		= SVC_REMOTE_HOST;
-		
+
 		//obtener el rol del form para mostrar parametros
 		if( $('#idsolicitud').closest('form').length > 0 ){
 			if (typeof $('#idsolicitud').closest('form').attr('data-role') != "undefined") {
@@ -1660,7 +1779,7 @@ CredGen.prototype.getPrincipal = function(idpersona){
 			$('#idsolicitud').val(0);
 			if ($('#nombresolicitud').length > 0){ $("#nombresolicitud").val(''); }
 			//setLog(srUp);
-			$.getJSON(srUp, function( data ) { 
+			$.getJSON(srUp, function( data ) {
 			var str = "";
 			var cnt	= 0;
 			$.each( data, function( key, vals ) {
@@ -1706,7 +1825,7 @@ CredGen.prototype.getCompareLetra = function (opts){
 				if (typeof data.aviso != "undefined") {
 					if ($.trim(data.aviso) != "") {
 						xg.alerta({ msg : data.aviso });
-					}					
+					}
 				}
 				jscall(ierror, credito);			//callback
 		    } else {
@@ -1735,7 +1854,7 @@ CredGen.prototype.getCheckLetraEnvioAnt = function (opts){
 	var jscall		= (typeof opts.callback == "undefined") ? function(ierr, idcred){} : opts.callback;
 	var url			= "../svc/letrasenvioanterior.svc.php?credito=" + credito + "&letra=" + letra + "&periodo=" + periodo  + "&frecuencia=" + frecuencia + "&empresa=" + empresa;
 	var xG			= new Gen();
-	
+
 	xG.pajax({
 	url : url, result : "json",
 	callback : function(data){
@@ -1803,7 +1922,7 @@ CredGen.prototype.addCredito	= function(opts){
 	var monto	= (typeof opts.monto == "undefined") ? "" : "&monto="  + opts.monto;
 	var producto	= (typeof opts.producto == "undefined") ? "" : "&producto="  + opts.producto;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	
+
 	var idorigen	= (typeof opts.idorigen == "undefined") ? "" : "&idorigen=" + opts.idorigen; //id del origen
 	var origen	= (typeof opts.origen == "undefined") ? "" : "&origen=" + opts.origen;	//tipo de origen
 	var frecuencia	= (typeof opts.frecuencia == "undefined") ? "" : "&frecuencia=" + opts.frecuencia;//
@@ -1841,7 +1960,7 @@ CredGen.prototype.getHistorialNomina	= function(idCredito){
 }
 CredGen.prototype.getDocumentos	= function(idcredito){
 	var gURL	= "../frmcreditos/creditos-documentos.frm.php?credito=" + idcredito;
-	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 800, tiny : true });
+	var xGen	= new Gen(); xGen.w({ url : gURL, blank:true, full:true, tab : true });
 }
 CredGen.prototype.getCuotaDePago	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -1889,26 +2008,26 @@ CredGen.prototype.getCuotaDePago	= function(opts){
 	//console.log(Tasa);
 	var P		= (-vCapital * Math.pow(1+Tasa,vPagos) + vResidual) / ((1 + Tasa * vTipo)*((Math.pow((1 + Tasa),vPagos) - 1) / Tasa));
 	return redondear((P* (-1)),2);
-		/*    
+		/*
 		    double P = (- NPV * pow(1+IntRate,NumPay) + FV) /               ((1 + IntRate * bStart)*((pow((1 + IntRate),NumPay) - 1) /              IntRate));
-		*/	
+		*/
 }
 //Leasing
 CredGen.prototype.getLeasingPropuesta	= function(id){
 	var gURL = "../rpt_formatos/leasing-propuesta.rpt.php?clave=" + id;
-	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });
 }
 CredGen.prototype.getLeasingCotizacion	= function(id){
 	var gURL = "../rpt_formatos/leasing-cotizacion.rpt.php?clave=" + id;
-	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });
 }
 CredGen.prototype.getLeasingCotizador	= function(id){
 	var gURL = "../frmarrendamiento/cotizador.edit.frm.php?clave=" + id;
-	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });
 }
 CredGen.prototype.getLeasingActivos	= function(id){
 	var gURL = "../frmarrendamiento/leasing-activos.frm.php?idleasing=" + id;
-	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });	
+	var xGen	= new Gen(); xGen.w({ url : gURL, full:true, blank:true });
 }
 // --------------------- END CREDITO
 //---------------------- PERSONAS
@@ -1928,7 +2047,7 @@ PersGen.prototype.goToAgregarFisicas	= function(opts){
 	var claveorigen	= (typeof opts.claveorigen == "undefined") ? "" : "&claveorigen=" + opts.claveorigen;
 	var tipoingreso	= (typeof opts.tipoingreso == "undefined") ? "" : "&tipoingreso=" + opts.tipoingreso;
 	var sucursal	= (typeof opts.sucursal == "undefined") ? "" : "&sinsucursal=true&sucursal=" + opts.sucursal;
-	
+
 	var sURL 		= '../frmsocios/registro-personas_fisicas.frm.php?' + rfc + curp + email + tel + app1 + app2 + nombre + nombrecomp + tipoorigen + claveorigen + otros + tipoingreso + sucursal;
 	var xGen		= new Gen(); xGen.w({ url : sURL, tab:true, callback : callback });
 }
@@ -1944,7 +2063,7 @@ PersGen.prototype.goToAgregarMorales	= function(opts){
 	var tipoingreso	= (typeof opts.tipoingreso == "undefined") ? "" : "&tipoingreso=" + opts.tipoingreso;
 	var claveorigen	= (typeof opts.claveorigen == "undefined") ? "" : "&claveorigen=" + opts.claveorigen;
 	var sucursal	= (typeof opts.sucursal == "undefined") ? "" : "&sinsucursal=true&sucursal=" + opts.sucursal;
-	
+
 	var sURL 		= '../frmsocios/registro-personas_morales.frm.php?' + rfc + email + tel + nombre + tipoorigen + claveorigen + otros + tipoingreso + sucursal;
 	var xGen		= new Gen(); xGen.w({ url : sURL, tab : true });
 }
@@ -1966,11 +2085,11 @@ PersGen.prototype.goToPanel	= function(idpersona, tiny){
 }
 PersGen.prototype.getExpediente	= function(idpersona){
 	var sURL = '../rpt_edos_cuenta/rpt_estado_cuenta_socio.php?socio=' + idpersona;
-	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 750 });
+	var xGen	= new Gen(); xGen.w({ url : sURL, blank : true });
 }
 PersGen.prototype.getImprimirSolicitud	= function(idpersona){
 	var sURL = '../rpt_formatos/rptsolicitudingreso.php?socio=' + idpersona;
-	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 750 });
+	var xGen	= new Gen(); xGen.w({ url : sURL, blank:true });
 }
 PersGen.prototype.setAgregarDocumentos	= function(idpersona){
 	var sURL ="../frmsocios/personas_documentos.frm.php?persona=" + idpersona;
@@ -1979,6 +2098,10 @@ PersGen.prototype.setAgregarDocumentos	= function(idpersona){
 PersGen.prototype.getImagenDocumentos	= function(params){
 	var sURL = "../frmsocios/documento.png.php?persona=" + params;;
 	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true });
+}
+PersGen.prototype.getFormatos	= function(idpersona){
+	var sURL = '../frmsocios/personas-formatos.frm.php?persona=' + idpersona;
+	var xGen	= new Gen(); xGen.w({ url : sURL, blank:true });
 }
 PersGen.prototype.setVerificarRelacionados	= function(idpersona, idrelacionado){
 	var URIL	= "../frmsocios/socios.verificacion.frm.php?t=d&s=" + idpersona +"&i=" + idrelacionado;
@@ -2060,7 +2183,7 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 
 PersGen.prototype.getBuscarCreditos	= function(){
 	var idxp	= $.trim(session("idpersona.control.dx"));
-	
+
 	if(idxp == null||idxp == ""){
 		if($('#idsocio').length > 0 ){ session("idpersona.control.dx", "idsocio"); idxp = "idsocio"; }
 	}
@@ -2080,7 +2203,7 @@ PersGen.prototype.getBuscarCreditos	= function(){
 					case Configuracion.credito.eventos.pago:
 						stt	= "&evento=" + Configuracion.credito.eventos.pago;
 						break;
-				}			
+				}
 		}
 
 		var xG		= new Gen(); xG.w({ url : "../utils/frmscreditos_.php?persona="  + persona + stt, tiny : true, h: 600, w : 800});
@@ -2088,12 +2211,12 @@ PersGen.prototype.getBuscarCreditos	= function(){
 }
 PersGen.prototype.getBuscarCuentas	= function(){
 	var idxp	= $.trim(session("idpersona.control.dx"));
-	
+
 	if(idxp == null||idxp == ""){
 		if($('#idsocio').length > 0 ){ session("idpersona.control.dx", "idsocio"); idxp = "idsocio"; }
-	}	
+	}
 	var strTipo	= "";
-	
+
 	if (idxp != "") {
 		var persona	= $("#" + idxp).val();
 		if( $('#' + idxp).closest('form').length > 0 ){
@@ -2105,7 +2228,7 @@ PersGen.prototype.getBuscarCuentas	= function(){
 					strTipo		= "&tipo=" + CAPTACION_TIPO_VISTA;
 				}
 			}
-			
+
 		}
 		var xG		= new Gen(); xG.w({ url : "../utils/frmcuentas_.php?persona="  + persona + strTipo, tiny : true, h: 600, w : 800});
 	}
@@ -2181,8 +2304,8 @@ PersGen.prototype.showBuscarPersonas	= function(opts){
 					oxd.alerta({ title : v.codigo, msg : v.nombrecompleto, icon : "fa-male", type: "green", raw : true });
 				}
 		}
-	});	
-	
+	});
+
 }
 PersGen.prototype.setBuscarPorIDs	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -2194,7 +2317,7 @@ PersGen.prototype.setBuscarPorIDs	= function(opts){
 	var oxd			= new Gen();
 	$.cookie.json 	= true;
 	$.getJSON( vURL, function( data ) {
-		
+
 		if (typeof data.existe == "undefined") {
 			xG.alerta({msg : "Error al procesar el registro"});
 		} else {
@@ -2203,7 +2326,7 @@ PersGen.prototype.setBuscarPorIDs	= function(opts){
 			}
 			jcallback(data.existe);
 		}
-	});		
+	});
 }
 PersGen.prototype.setBuscarEnListas	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -2224,7 +2347,7 @@ PersGen.prototype.setAddReferenciaBancaria	= function(opts){
 	var idpersona	= (typeof opts.persona == "undefined") ? "" : "&persona=" + opts.persona;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var srUp 		= "../svc/referencia-bancaria.add.svc.php?" + idcuenta +  idpersona + idmonto + idfecha + idtipo + idbanco + idtarjeta;
-	
+
 	var xG			= new Gen();
 		$.cookie.json 	= true;
 		$.getJSON( srUp, function( data ) {
@@ -2239,7 +2362,7 @@ PersGen.prototype.setAddReferenciaBancaria	= function(opts){
 					callback(data);
 				}
 			}
-		});	
+		});
 }
 PersGen.prototype.setAddReferenciaComercial	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -2248,7 +2371,7 @@ PersGen.prototype.setAddReferenciaComercial	= function(opts){
 	var idtelefono	= (typeof opts.telefono == "undefined") ? "" : "&telefono=" + opts.telefono;
 	var idpersona	= (typeof opts.persona == "undefined") ? "" : "&persona=" + opts.persona;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	
+
 	var srUp 		= "../svc/referencia-comercial.add.svc.php?" + idnombre +  idpersona + idtelefono + iddireccion;
 	var xG			= new Gen();
 		$.cookie.json 	= true;
@@ -2264,7 +2387,7 @@ PersGen.prototype.setAddReferenciaComercial	= function(opts){
 					callback(data);
 				}
 			}
-		});	
+		});
 }
 PersGen.prototype.setNuevaCajaLocal	= function(){
 	var xG		= new Gen(); xG.w({ url : "../frmtipos/socios_caja_local.frm.php?action=load", tiny : true, h: 600, w : 800});
@@ -2360,7 +2483,7 @@ PersGen.prototype.setFormaDatosExt		= function(idpersona){
 }
 
 PersGen.prototype.buscar	= function(obj, evt) {
-	
+
 	evt				= (evt) ? evt:event;
 	var charCode 	= (evt.charCode) ? evt.charCode : ((evt.which) ? evt.which : evt.keyCode);
 	var idKey		= "codigo";
@@ -2380,7 +2503,7 @@ PersGen.prototype.buscar	= function(obj, evt) {
 				id : dlSRC,
 				key : idKey,
 				label : "nombrecompleto"
-				});	
+				});
 		}
 	}
 }
@@ -2396,7 +2519,7 @@ PersGen.prototype.addRelacion	= function(opts){
 	var docto		= (typeof opts.documento == "undefined") ? 0 : opts.documento;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/referencias.add.svc.php?persona=" + persona + "&relacionado=" + relacionado + "&tipo=" + tipo + "&parentesco=" + parentesco + "&depende=" + depende + "&documento=" + docto;
-	var xg			= new Gen();	
+	var xg			= new Gen();
 	xg.pajax({
 		url : url, result : "json",
 		callback : function(data){
@@ -2449,7 +2572,7 @@ PersGen.prototype.getListaDeNotas = function(opts){
 			jscall(data);
 			data=null;
 		}
-	});		
+	});
 }
 PersGen.prototype.addDatosExtr	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -2460,7 +2583,7 @@ PersGen.prototype.addDatosExtr	= function(opts){
 	var nacional	= (typeof opts.nacionalidad == "undefined") ? "" : "&nacionalidad=" + opts.nacionalidad;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/personas.datos-extranjeros.add.svc.php?persona=" + persona + "&on=" + fechaI + "&documento=" + docto + fechaF + nacional;
-	var xg			= new Gen();	
+	var xg			= new Gen();
 	xg.pajax({
 		url : url, result : "json",
 		callback : function(data){
@@ -2532,7 +2655,7 @@ CaptGen.prototype.getEstadoDeCuentaSDPM	= function(idcuenta){
 CaptGen.prototype.getDescripcion	= function(idcuenta, dest){
 	est 	= (typeof dest == "undefined") ? "nombrecuenta" : dest;
 	if (entero(idcuenta)<=0) {
-		
+
 	} else {
 		var srUp = "../svc/cuenta.svc.php?cuenta=" + idcuenta;
 		var xG	= new Gen();
@@ -2553,7 +2676,7 @@ CaptGen.prototype.getPrincipal	= function(opts){
 	if (entero(persona) <= 0) {
 		if ($('#idsocio').length > 0){ persona = $("#idsocio").val(); }
 	}
-	
+
 	if($('#' + control).length > 0 ){
 		if( $('#' + control).closest('form').length > 0 ){
 			//alert($('#' + control).closest('form').attr('data-role'));
@@ -2568,7 +2691,7 @@ CaptGen.prototype.getPrincipal	= function(opts){
 				}
 			}
 		}
-	
+
 		if (entero(persona) <= 0) {
 			console.log("No hay valores de busqueda " + persona);
 		} else {
@@ -2583,7 +2706,7 @@ CaptGen.prototype.getPrincipal	= function(opts){
 				$.each( data, function( key, val ){
 					$("#" + control).val( decodeEntities(val["cuenta"]) );
 				});
-			});		
+			});
 		}
 	}
 }
@@ -2597,11 +2720,11 @@ CaptGen.prototype.setNuevoDepositoVista	= function(opts){
 	var idobserva	= (typeof opts.observaciones == "undefined" ) ? "" : "&idobservaciones=" + opts.observaciones;
 	var idbanco		= (typeof opts.cuenta_bancaria == "undefined" ) ? "" : "&cuentabancaria=" + opts.cuenta_bancaria;
 	var idempresa	= (typeof opts.empresa == "undefined" ) ? "" : "&empresa=" + opts.empresa;
-	
+
 	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	//var callF		= (typeof opts.callbackFin == "undefined") ? function(){} : opts.callbackFin;
 	var srUp 		= "../svc/vista-deposito.svc.php?rmt=true" + idcuenta +  idpersona + idmonto + idfecha + idfpago +  idobserva + idbanco + idempresa;
-	
+
 	var xG			= new Gen();
 		$.cookie.json 	= true;
 		$.getJSON( srUp, function( data ) {
@@ -2645,19 +2768,19 @@ RecGen.prototype.addTesoreria			= function(clave){
 }
 RecGen.prototype.getRecibosPorCredito			= function(credito,periodo){
 	var strP = (typeof periodo == "undefined" ) ? "" : "&periodo=" + periodo;
-	
+
 	var xGen	= new Gen(); xGen.w({ url: "../frmoperaciones/recibos-por-credito.frm.php?credito=" + credito + strP, isTab : true});
 }
 RecGen.prototype.getExisteFactura	= function(opts){
 	opts = (typeof opts == "undefined" ) ? {} : opts;
 	var recibo		= (typeof opts.recibo == "undefined") ? 0 : opts.recibo;
 	var open		= (typeof opts.open == "undefined") ? false : opts.open;
-	
+
 	var xUrl		= "../svc/factura_por_recibo.svc.php?action=LIST&lim=1&recibo=" + cuenta;
 	$.getJSON( xUrl, function( data ) {
 		//$("#" + control).val( decodeEntities(data.nombre_de_cuenta) );
 	});
-	
+
 	//var xGen	= new Gen(); xGen.w({ url: "../rpt_formatos/factura.xml.php?recibo=" + clave, h:600, w : 800});
 }
 RecGen.prototype.getExistePolizaContable	= function(opts){
@@ -2680,7 +2803,7 @@ RecGen.prototype.getExistePolizaContable	= function(opts){
 			}
 		}
 	});
-	
+
 	//
 }
 RecGen.prototype.eliminar	= function(opts){
@@ -2702,7 +2825,7 @@ RecGen.prototype.eliminar	= function(opts){
 			callB(id);
 		  }
 		}
-	);		
+	);
 }
 RecGen.prototype.confirmaEliminar	= function(id){
 	//opts		= (typeof opts == "undefined") ? {} : opts;
@@ -2710,7 +2833,7 @@ RecGen.prototype.confirmaEliminar	= function(id){
 	var xG		= new Gen();
 	var onDel	= function(){ xG.spinEnd(); xG.close(); }
 	var readyF	= function(){ xG.spinInit(); self.eliminar({ recibo : id, callback: onDel }); }
-	xG.confirmar({ msg : "Eliminar Recibo y Operaciones?\nEl cambio es permanente." , callback : readyF }); 
+	xG.confirmar({ msg : "Eliminar Recibo y Operaciones?\nEl cambio es permanente." , callback : readyF });
 }
 RecGen.prototype.editar	= function(id){
 	//opts		= (typeof opts == "undefined") ? {} : opts;
@@ -2735,9 +2858,9 @@ RecGen.prototype.addOperacion			= function(opts){
 	var idperiodo	= (typeof opts.periodo == "undefined" ) ? "" : "&periodo=" + opts.periodo;
 	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
 	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	
+
 	var xG			= new Gen();
-	
+
 	xG.svc({url: "operaciones.svc.php?cmd=" + MQL_ADD + "" + idrec + idmonto + idtipo + idperiodo, callback: callB});
 }
 RecGen.prototype.setCuadrar			= function(opts){
@@ -2745,9 +2868,9 @@ RecGen.prototype.setCuadrar			= function(opts){
 	var idmonto		= (typeof opts.monto == "undefined" ) ? "" : "&monto=" + opts.monto;
 	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
 	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	
+
 	var xG			= new Gen();
-	
+
 	xG.svc({url: "recibos.svc.php?cmd=cuadrar" + idrec + idmonto, callback: callB});
 }
 //------------------------ END RECIBOS
@@ -2803,7 +2926,7 @@ Gen.prototype.getTValores = function (obj, evt, osrc){
 	var nGen		=  new Gen();
 	var xUrl		= "../svc/tabla.svc.php?action=list&tabla=" + $("#" + osrc).val() + "&clave=" + obj.value;
 	var dlSRC		= "dl" + obj.id;
-	
+
 	if (nGen.isNumberKey({evt:evt}) == true || nGen.isTextKey({evt:evt}) == true ) {
 		if ( String(obj.value).length >= 3 ) {
 			//console.log(xUrl);
@@ -2832,8 +2955,8 @@ TesGen.prototype.setAgregarPago	= function(opts){
 	var monto		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/tesoreria.pagos.svc.php?recibo=" + recibo + "&tipo=" + tipo + "&monto=" + monto;
-	
-	var xg			= new Gen();	
+
+	var xg			= new Gen();
 	xg.pajax({
 		url : url, result : "json",
 		callback : function(data){
@@ -2870,14 +2993,14 @@ EmpGen.prototype.setBuscar	= function(opts){
 	var oxd			= new Gen();
 	$.cookie.json 	= true;
 	$.getJSON( vURL, function( data ) {
-		
+
 		if (typeof data.existe == "undefined") {
 			xG.alerta({msg : "Error al procesar el registro"});
 		} else {
 			xG.alerta({msg : data.messages, tipo: "aviso"});
 			jcallback(data.existe);
 		}
-	});		
+	});
 }
 //------------------------------------------------------------------ end Empresas
 
@@ -2941,7 +3064,7 @@ GroupGen.prototype.getDescripcion	= function(idgrupo, dest){
 	var mURL		= SVC_REMOTE_HOST;
 	$.getJSON( srUp, function( data ) {
 		$("#" + dest).val( decodeEntities(data.descripcion) );
-	});	
+	});
 }
 
 function serializeForm(idfrm) {
@@ -2949,7 +3072,7 @@ function serializeForm(idfrm) {
 	var txt		= "";
 	var jsq		= "";
 	var total = fields.length;
-	
+
 	jQuery.each( fields, function( i, field ) {
 		str		= '$' + field.name  + '\t= parametro(\"' + field.name +  '\"';
 		//console.log(field)
@@ -2984,7 +3107,7 @@ DomGen.prototype.getColoniasNombreXA = function (obj, evt){
 		if (flotante($("#idcodigopostal").val()) > 0) {
 			ByCP	= "&cp=" + $("#idcodigopostal").val() ;
 		}
-	}	
+	}
 	//Politica dl
 	var xUrl	= "../svc/colonias.svc.php?action=LIST&lim=25&n=" + obj.value + ByEstado + ByCP;
 	if ((charCode >= 65 && charCode <= 90)) {
@@ -2995,7 +3118,7 @@ DomGen.prototype.getColoniasNombreXA = function (obj, evt){
 				id : dlSRC,
 				key : idKey,
 				label : "nombre"
-				});	
+				});
 		}
 	}
 }
@@ -3003,27 +3126,27 @@ DomGen.prototype.setColoniasXCP = function (obj){
 		var mAsignar	= function (objs){
 			//{"codigo":"380006","clavepostal":"24026","nombre":"Colonia Granjas(Campeche, Campeche)","estado":"4","municipio":"2","colonia":"Granjas","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE"
 			if ($("#idcp_" + obj.id).length >0) { $("#idcp_" + obj.id).val(objs.codigo); }
-			
+
 			//if ($("#iddescripcion" + obj.id).length >0) { $("#iddescripcion" + obj.id).val( decodeEntities( objs.nombre) ); }
 			if ($("#identidadfederativa").length >0) { $("#identidadfederativa").val(objs.estado); }
 			if ($("#idmunicipio").length >0) { $("#idmunicipio").val(objs.municipio); }
 			if ($("#idnombrecolonia").length >0) { $("#idnombrecolonia").val(objs.colonia); }
 			if ($("#idnombremunicipio").length >0) { $("#idnombremunicipio").val(objs.nombre_del_municipio); }
-			
+
 			//
 			//idlocalidad
 			//
 			//
 			//idnombrelocalidad
 			//
-			
+
 		};
 		var xG	= new Gen();
-		
+
 		xG.LoadFromCache({
 			callback : mAsignar,
 			indice : "cp-" + obj.value
-			});	
+			});
 }
 DomGen.prototype.getColoniasXCP = function (obj){
 
@@ -3033,10 +3156,10 @@ DomGen.prototype.getColoniasXCP = function (obj){
 	var ByEstado	= "";
 	//if ($("#identidadfederativa").length > 0) { ByEstado	= "&e=" + $("#identidadfederativa").val() ;	}
 	var xUrl	= "../svc/colonias.svc.php?action=LIST&lim=55&cp=" + obj.value + ByEstado;
-	
+
 	if ( String(obj.value).length >= 3 ) {
 		$("#" + dlSRC).empty();
-		
+
 		nGen.DataList({
 			url : xUrl,
 			id : dlSRC,
@@ -3069,7 +3192,7 @@ DomGen.prototype.getMunicipioNombreXA = function (obj, evt){
 				id : dlSRC,
 				key : idKey,
 				label : "nombre_del_municipio"
-				});	
+				});
 		}
 	}
 }
@@ -3095,7 +3218,7 @@ DomGen.prototype.getLocalidadNombreXA = function (obj, evt){
 				id : dlSRC,
 				key : idKey,
 				label : "nombre_de_la_localidad"
-				});	
+				});
 		}
 	}
 }
@@ -3105,18 +3228,18 @@ DomGen.prototype.setAccionPorPais = function (osrc){
 	if(mpais != EACP_CLAVE_DE_PAIS){
 		if ($("#identidadfederativa").length >0) {
 			$("#identidadfederativa").val(98);
-			$("#identidadfederativa").css("display", "none");			
+			$("#identidadfederativa").css("display", "none");
 		}
 		if (typeof jsaGetMunicipios != "undefined") { jsaGetMunicipios();	}
 		if (typeof jsaGetLocalidades != "undefined") { jsaGetLocalidades();	}
 	} else {
 		if ($("#identidadfederativa").length >0) {
 			$("#identidadfederativa").val(LOCAL_DOMICILIO_CLAVE_ENTIDAD);
-			$("#identidadfederativa").css("display", "inherit");		
-		}		
+			$("#identidadfederativa").css("display", "inherit");
+		}
 		if (typeof jsaGetMunicipios != "undefined") { jsaGetMunicipios();	}
 		if (typeof jsaGetLocalidades != "undefined") { jsaGetLocalidades();	}
-	}	
+	}
 }
 DomGen.prototype.setAccionPorEstado = function (osrc){
 	//if ($("#iddescripcion" + obj.id).length >0) {
@@ -3151,8 +3274,8 @@ ContGen.prototype.getCuentasPorCodigo = function (obj, evt){
 				id : dlSRC,
 				key : idKey,
 				label : "nombre_de_cuenta"
-				});	
-		}		
+				});
+		}
 	}
 }
 
@@ -3160,11 +3283,11 @@ ContGen.prototype.getNombreDeCuenta = function (opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var control		= (typeof opts.control == "undefined") ? "idcuenta" : opts.control;
 	var cuenta		= (typeof opts.cuenta == "undefined") ? 0 : opts.cuenta;
-	
+
 	var xUrl		= "../svc/cuenta.contable.svc.php?action=LIST&lim=1&cuenta=" + cuenta;
 	$.getJSON( xUrl, function( data ) {
 		$("#" + control).val( decodeEntities(data.nombre_de_cuenta) );
-	});	
+	});
 }
 
 ContGen.prototype.setEditarMovimiento = function (opts){
@@ -3189,7 +3312,7 @@ PersAEGen.prototype.getBuscarActs	= function(idf){
 		var idfrm	= $("#" + idf).val();
 		if( $('#' + idf).closest('form').length > 0 ){
 			var xG	= new Gen(); xG.w({ url : "../frmsocios/buscar.actividades.frm.php?idcontrol="  + idf, tiny : true, h: 600, w : 800});
-		}		
+		}
 	}
 }
 PersAEGen.prototype.getBuscarActsSCIAN	= function(idf){
@@ -3198,7 +3321,7 @@ PersAEGen.prototype.getBuscarActsSCIAN	= function(idf){
 		var idfrm	= $("#" + idf).val();
 		if( $('#' + idf).closest('form').length > 0 ){
 			var xG	= new Gen(); xG.w({ url : "../frmsocios/buscar.actividades-scian.frm.php?idcontrol="  + idf, tiny : true, h: 600, w : 800});
-		}		
+		}
 	}
 }
 PersAEGen.prototype.getListaDeActividades	 = function (obj, evt){
@@ -3210,17 +3333,17 @@ PersAEGen.prototype.getListaDeActividades	 = function (obj, evt){
 	var xUrl	= "../svc/personas.actividades.economicas.php?action=LIST&lim=5&arg=" + obj.value;
 	//var xUrl	= "../svc/personas.actividades.economicas.php?action=LIST&lim=5&arg=" + msrc.value;
 	if (nGen.isNumberKey({evt:evt}) == true || nGen.isTextKey({evt:evt}) == true ){
-		
+
 		if ( String(obj.value).length >= 3 ) {
 			$("#" + dlSRC).empty();
-			
+
 			nGen.DataList({
 				url : xUrl,
 				id : dlSRC,
 				key : idKey,
 				label : "nombre_de_la_actividad",
 				presaved : "ae-"
-				});	
+				});
 		}
 	} else {
 		this.setActividadPorCodigo(obj);
@@ -3250,7 +3373,7 @@ PlanGen.prototype.setEliminarLetra = function (opts){
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/letras.svc.php?credito=" + credito + "&letra=" + periodo + "&periodo=" + periodo + "&cmd=delete";
 	var xg			= new Gen();
-	
+
 	var siElim		= confirm(xg.lang("CONFIRMA ELIMINAR LA PARCIALIDAD"));
 	if(siElim == true){
 	xg.pajax({
@@ -3261,10 +3384,10 @@ PlanGen.prototype.setEliminarLetra = function (opts){
 				if (typeof data.aviso != "undefined") {
 					if ($.trim(data.aviso) != "") {
 						xg.alerta({ msg : data.aviso });
-					}					
-				}				
+					}
+				}
 		    } else {
-				
+
 			}
 		}
 	});
@@ -3275,7 +3398,7 @@ PlanGen.prototype.setAnualidadLetra = function (opts){
 	var monto		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
 	var periodo		= (typeof opts.periodo == "undefined") ? 0 : opts.periodo;
 	var credito		= (typeof opts.credito == "undefined") ? 0 : opts.credito;
-	
+
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/setanualidad.svc.php?credito=" + credito + "&letra=" + periodo + "&periodo=" + periodo + "&monto=" + monto;
 	var xg			= new Gen();
@@ -3287,10 +3410,10 @@ PlanGen.prototype.setAnualidadLetra = function (opts){
 				if (typeof data.message != "undefined") {
 					if ($.trim(data.message) != "") {
 						xg.alerta({ msg : data.message });
-					}					
-				}				
+					}
+				}
 		    } else {
-				
+
 			}
 		}
 	});
@@ -3300,7 +3423,7 @@ PlanGen.prototype.setPagoEspecial = function (opts){
 	var monto		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
 	var periodo		= (typeof opts.periodo == "undefined") ? 0 : opts.periodo;
 	var credito		= (typeof opts.credito == "undefined") ? 0 : opts.credito;
-	
+
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var url			= "../svc/setpagoesp.svc.php?credito=" + credito + "&letra=" + periodo + "&periodo=" + periodo + "&monto=" + monto;
 	var xg			= new Gen();
@@ -3312,10 +3435,10 @@ PlanGen.prototype.setPagoEspecial = function (opts){
 				if (typeof data.message != "undefined") {
 					if ($.trim(data.message) != "") {
 						xg.alerta({ msg : data.message });
-					}					
-				}				
+					}
+				}
 		    } else {
-				
+
 			}
 		}
 	});
@@ -3333,7 +3456,7 @@ SegGen.prototype.setLlamadaEstado = function (opts){
 	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var xG		= new Gen();
 	var xUrl	= "../frmseguimiento/llamadas-cambiar_estado.frm.php?id=" + clave + estado;
-	xG.w({ url : xUrl, tiny : true, w : 480, callback : jscall});	
+	xG.w({ url : xUrl, tiny : true, w : 480, callback : jscall});
 }
 
 SegGen.prototype.setAgregarNotaLlamada	= function(id){
@@ -3379,7 +3502,7 @@ SegGen.prototype.getListaDeLlamadas = function(opts){
 	var oxd			= new Gen();
 	$.cookie.json 	= true;
 	$.getJSON( vURL, function( data ) {
-		
+
 		if (typeof data == "undefined") {
 			xG.alerta({msg : "Error al procesar el registro"});
 		} else {
@@ -3387,7 +3510,7 @@ SegGen.prototype.getListaDeLlamadas = function(opts){
 			jscall(data);
 			data=null;
 		}
-	});		
+	});
 }
 SegGen.prototype.getListaDeCompromisos = function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -3395,7 +3518,7 @@ SegGen.prototype.getListaDeCompromisos = function(opts){
 	var fi		= (typeof opts.fecha == "undefined") ? "" : "&fecha=" + opts.fecha;
 	var ff		= (typeof opts.fechaFinal == "undefined") ? "" : "&fechafinal=" + opts.fechaFinal;
 	var idto	= (typeof opts.todo == "undefined") ? "" : "&todo=" + opts.todo;
-	
+
 	var vURL		= "../svc/compromisos.svc.php?ix=0" + fi + ff + idto;
 	var oxd			= new Gen();
 	$.cookie.json 	= true;
@@ -3415,7 +3538,7 @@ SegGen.prototype.getListaDeNotificaciones = function(opts){
 	var fi		= (typeof opts.fecha == "undefined") ? false : "&fecha=" + opts.fecha;
 	var ff		= (typeof opts.fechaFinal == "undefined") ? false : "&fechafinal=" + opts.fechaFinal;
 	var idto	= (typeof opts.todo == "undefined") ? "" : "&todo=" + opts.todo;
-	
+
 	var vURL		= "../svc/notificaciones.svc.php?ix=0" + fi + ff + idto;
 	var oxd			= new Gen();
 	$.cookie.json 	= true;
@@ -3427,7 +3550,7 @@ SegGen.prototype.getListaDeNotificaciones = function(opts){
 			jscall(data);
 			data=null;
 		}
-	});		
+	});
 }
 SegGen.prototype.getExpediente = function (opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -3474,7 +3597,7 @@ SegGen.prototype.getListaDeAtrasos = function(opts){
 			jscall(data);
 			data=null;
 		}
-	});		
+	});
 }
 
 var validacion = {
@@ -3537,18 +3660,18 @@ var validacion = {
 		},
 		email: function (val) {
 			var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-			return re.test(val);    
-		},		
+			return re.test(val);
+		},
 		codigopostal : function(v){
 			var ok		= false;
 			var xPais	= ($("#idpais").length > 0) ? $("#idpais").val() : EACP_CLAVE_DE_PAIS;
 			var xCP		= ($("#idcodigopostal").length > 0) ? entero($("#idcodigopostal").val()) : entero(v);
-			
+
 			var xVal	= new ValidGen();
 			var xG		= new Gen();
 			var ccnt	= {};
 			var isLoad	= false;
-			
+
 			var postCP 	= function(obj){
 				//setLog(typeof obj.record_0);
 				if(typeof obj.record_0 == "undefined"){
@@ -3561,13 +3684,13 @@ var validacion = {
 					setTimeout(postpostCP, 1000);
 				}
 			};
-			
+
 			var postpostCP 	= function(){
 				var xG		= new Gen();
-				
+
 				for(mob in ccnt){
 					var m		= ccnt[mob];
-					
+
 					if (flotante(m.estado) > 0) {
 						//{"codigo":"380004","clavepostal":"24026","nombre":"Fraccionamiento","estado":"4","municipio":"2",
 						//"colonia":"Viveros","nombre_del_municipio":"Campeche","nombre_del_estado":"CAMPECHE","buscador":"24026-380004"}
@@ -3584,23 +3707,23 @@ var validacion = {
 								$("#idnombrecolonia").val(m.nombre);
 							}
 						}
-						
+
 					}
 				}
 				xG.spinEnd();
 				isLoad	= true;
 			};
-			
+
 			if(PERSONAS_VIVIENDA_MANUAL == true){
 				ok		= true;
 				if(typeof jsaGetMunicipios != "undefined"){ jsaGetMunicipios();	}
-				if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades();	}				
+				if(typeof jsaGetLocalidades != "undefined"){ jsaGetLocalidades();	}
 			} else {
 				ok		= xVal.NoCero(v);
 				if(xPais == EACP_CLAVE_DE_PAIS && xCP != session(ID_CP_ACTUAL)){
-					
+
 					session(ID_CP_ACTUAL, xCP);
-					
+
 					if(xCP > 0 && isLoad == false){
 						xG.pajax({
 							url : "../svc/colonias.svc.php?limit=1&cp=" + xCP,
@@ -3611,10 +3734,10 @@ var validacion = {
 					}
 				}
 			}
-			
+
 			return ok;
 		}
-	
+
 }
 if(typeof XDate != "undefined"){
 	XDate.defaultLocale = 'es';
@@ -3622,7 +3745,7 @@ if(typeof XDate != "undefined"){
 FechaGen.prototype.get	= function(v){
 	//Cambiar separadores
 	var xDat	= new String(v);
-	
+
 	xDat		= new String(xDat.replace(/\//g, "-"));
 	xDat		= xDat.split("-");
 	var xF		= new XDate(FECHA_ACTUAL);
@@ -3671,7 +3794,7 @@ BanGen.prototype.setNuevoDeposito = function (opts){
 	var fecha		= (typeof opts.fecha == "undefined") ? false : opts.fecha;
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var notas		= (typeof opts.observaciones == "undefined") ? "" : opts.observaciones;
-	
+
 	var url			= "../svc/bancos.add.deposito.svc.php?documento=" + documento + "&monto=" + monto + "&cuentabancaria=" + cuenta + "&recibo=" + recibo + "&persona=" + persona + "&idfechaactual=" + fecha + "&idobservaciones=" + notas;
 	var xg			= new Gen();
 	xg.pajax({
@@ -3684,15 +3807,15 @@ BanGen.prototype.setNuevoDeposito = function (opts){
 						xg.alerta({ msg : data.message });
 					}
 					setTimeout(jscall,10);
-				}				
+				}
 		    } else {
-				
+
 			}
 		}
 	});
 }
 var CssGen	= function(){}
-	
+
 CssGen.prototype.get 	= function(stat){
 		var obj = {background : "#ffecec", border : "#f5aca6"};
 		switch(stat){
@@ -3707,7 +3830,7 @@ CssGen.prototype.get 	= function(stat){
 				break;
 			case "efectuado":
 				obj = {background : "#e9ffd9", border : "#a6ca8a"};
-				break;			
+				break;
 		}
 		return obj;
 	}

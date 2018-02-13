@@ -38,7 +38,8 @@ $xHP->init();
 $xFRM			= new cHForm("frmmultas", "frmcobrodemultas.php?action=" . MQL_ADD);
 if($action == SYS_NINGUNO){
 	$xFRM->addPersonaBasico();
-	$xFRM->ODate("idfechaactual", false, "TR.Fecha de cobro");
+	//$xFRM->ODate("idfechaactual", false, "TR.Fecha de cobro");
+	$xFRM->addFechaRecibo($fecha);
 	$xFRM->addCobroBasico();
 	$xFRM->OText("idconceptomulta", "", "TR.Concepto de Multa");
 	$xFRM->OMoneda("idmontomulta", 0, "TR.Monto de Multa", true);

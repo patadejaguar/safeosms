@@ -121,7 +121,8 @@ if($action == MQL_ADD){
 	
 	$xSLT->addEvent("onblur", "jsaDatosOperacion()");
 	
-	$xFRM->addFecha();
+	//$xFRM->addFecha();
+	$xFRM->addFechaRecibo();
 	
 	$xFRM->addCobroBasico();
 	$xChk	= new cHCheckBox();

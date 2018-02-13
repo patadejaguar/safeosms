@@ -47,6 +47,9 @@ $xHP->init();
 $xFRM		= new cHForm("frm", "./");
 $xFRM->addJsInit("init();");
 $xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
+
+
 $xChk->addEvent("jsRefreshCalendar()", "onclick");
 $xFRM->addHElem($xChk->get("TR.MOSTRARTODO", "idtodo", true));
 $xFRM->addHElem("<div id='calendario'></div>");

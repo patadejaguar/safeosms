@@ -23,6 +23,7 @@ function jsaSetCerrarNomina($idNomina){
 	if($xNom->init() == true){
 		$xNom->setCerrar();
 	}
+	return $xNom->getMessages(OUT_HTML);
 }
 function jsaGetCobranza($empresa, $idperiodo){
 	$xL				= new cSQLListas();
@@ -35,19 +36,26 @@ function jsaGetCobranza($empresa, $idperiodo){
     $xT	= new cTabla($sql);
     $xT->setKeyField("numero_solicitud");
     $xT->setKey(2);
-    $xT->setWidthTool("200px");
+    $xT->setWidthTool("240px");
     $xT->setKeyTable("creditos_solicitud");
     $xT->setEventKey("jsGetRecibosByCredito");
     $xT->addEspTool("<span>&nbsp;&nbsp;&nbsp;</span>");
     $xT->addEspTool("<div class='coolCheck'><input type='checkbox' id='chk_REPLACE_ID_' onclick='jsSetAlimentarCobros(this, _REPLACE_ID_)' /><label for='chk_REPLACE_ID_'></label></div>");
+    
+    $xT->OButton("TR.Pagos", "jsGetRecibosByCreditoPeriodo(_REPLACE_ID_)", $xBtn->ic()->DOLAR);
     
     $xT->OButton("TR.PLAN_DE_PAGOS", "getPlanDePagos(_REPLACE_ID_)", $xBtn->ic()->CALENDARIO);
     $xT->OButton("TR.Ver", "setOcultar(_REPLACE_ID_)", $xBtn->ic()->VER);
 	$xT->OButton("TR.Cobranza", "jsSetParaCobros(_REPLACE_ID_)", $xBtn->ic()->DINERO);
 	$xT->OButton("TR.ESTADO_DE_CUENTA", "getEstadoDeCuenta(_REPLACE_ID_)", $xBtn->ic()->REPORTE);
 
+	$xT->setResumidos("observaciones");
+	$xT->setOmitidos("saldo_inicial");
+	
 	$xT->setWithMetaData();
-    $xT->setFootSum(array( 5 => "letra", 7 => "monto"));
+	
+	//5 => "letra",
+    $xT->setFootSum(array( 5 => "monto"));
     return  $xT->Show();
 }
 
@@ -202,13 +210,16 @@ $xDiv		= new cHDiv();
 $xHSel		= new cHSelect();
 $xCB		= new cHCobros();
 $xFRM->setTitle($xHP->getTitle());
+$HFecha->setDivClass("tx14 tx18");
+$txt->setDiv13();
 
-$xFRM->OButton("TR.Obtener Cobranza", "jsGetCobranza()", $xFRM->ic()->CARGAR, "idgetcbza") ;
+$xFRM->OButton("TR.Obtener Cobranza", "jsGetCobranza()", $xFRM->ic()->CARGAR, "idgetcbza", "blue2") ;
 $xFRM->OButton("TR.Reporte de Nomina", "jsListaDeNominas()", $xFRM->ic()->SALDO, "idedo") ;
-$xFRM->OButton("TR.Cerrar Cobranza", "jsSetLockPeriodo()", $xFRM->ic()->COBROS, "idcerrar");
+$xFRM->OButton("TR.Guardar Cobranza", "jsSetLockPeriodo()", $xFRM->ic()->COBROS, "idcerrar", "green");
 $xFRM->OButton("TR.Cobranza del dia", "jsGetCobranzaDay()", $xFRM->ic()->DINERO, "idcobhoy");
 $xFRM->OButton("TR.Estado_de_cuenta", "jsGetEdoCuentaGeneral()", $xFRM->ic()->REPORTE, "idedocta");
-$xFRM->OButton("TR.Cerrar Nomina", "jsSetCerrarNomina()", $xFRM->ic()->CERRAR, "idcerrar");
+$xFRM->OButton("TR.NOMINA A EXCEL", "jsGetExcelFile()", $xFRM->ic()->EXCEL, "idnomaxls", "gray2");
+$xFRM->OButton("TR.Cancelar Nomina", "jsSetCerrarNomina()", $xFRM->ic()->CERRAR, "idcerrar", "orange");
 
 $xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
 $xSemp	= $xSel->getListaDeEmpresas("", true);
@@ -360,7 +371,7 @@ function jsSetAlimentarCobros(obj, id) {
 		var tt		= flotante(idsumacbza.val()) + flotante(mObj.monto);
 		if(flotante(mObj.monto) > 0){
 			idsumacbza.val(redondear(tt) );
-			$("#sum-monto").html( getInMoney(tt) );
+			//$("#sum-monto").html( getInMoney(tt) );
 			$("#idmontodeposito").val(tt);
 			ordenCbza.items++;
 		}
@@ -375,10 +386,19 @@ function jsSetAlimentarCobros(obj, id) {
 	//xG.alerta({ message:"Monto Original: " + sumaOriginal + ", Monto de la Cobranza " + idsumacbza.val()  + ", Diferencia " + getInMoney(mDifOriginal) });
 	setLog("Monto Original: " + sumaOriginal + ", Monto de la Cobranza " + idsumacbza.val()  + ", Diferencia " + getInMoney(mDifOriginal));
 }
+function jsGetNotas(id){
+	var mObj	= processMetaData("#tr-creditos_solicitud-" + id);
+	if($.trim(mObj.observaciones) == ""){
+		xG.alerta({msg: "MSG_NO_NOTES"})
+	} else {
+		$("#dlg").html(mObj.observaciones);
+		xG.winTip({content : $("#dlg"), title : "Notas" });
+	}
+}
 function jsUpdateSumas(tt){
 	tt = flotante(tt);
 	idsumacbza.val( redondear(tt) );
-	$("#sum-monto").html( getInMoney(tt) );
+	//$("#sum-monto").html( getInMoney(tt) );
 	$("#idmontodeposito").val(redondear(tt) );	
 }
 function jsPagoRegistrarError(err, credito){ 
@@ -429,6 +449,7 @@ function getPago(mObj, itms, callback){
 				    
 				    if (itms == ordenCbza.items) {
 						$(document.body).spin("modal").stop();				//spin
+						
 						xg.spin({ callback: getCorteDeRecibos, time : 8000 });
 						mcallback;
 						setTimeout("jsaSetGuardarDeposito()", 8000);
@@ -453,13 +474,26 @@ function getCorteDeRecibos(){
 }
 function setOcultar(id) {    $("#options-" + id).parent().css("display", "none"); }
 function jsGetCobranza(){
+	
     $("#idobservaciones").focus();
-    tip(idFortips, "Carga completa!", 4500);
-    jsResetCbza();
-    jsaGetDatosDelEnvio();
-    jsaGetCobranza();
-    //jsaGetCobranzaFutura();
-	//establecer Numero y monto original
+    
+    var idper	= $("#idperiodo").val();
+    if(idper > 0){
+    //tip(idFortips, "Carga completa!", 4500);
+	    jsResetCbza();
+	    jsaGetDatosDelEnvio();
+	    xG.spinInit();
+	   	xG.postajax("jsGetCobranzaPost()");
+	    jsaGetCobranza();
+	    //jsaGetCobranzaFutura();
+		//establecer Numero y monto original
+		//setTimeout("setEstablacerSumasIniciales()",1000);
+    } else {
+        xG.alerta({msg: "NOMINA_PERIODO_REQ", type : "error"});
+    }
+}
+function jsGetCobranzaPost(){
+	xG.spinEnd();
 	setTimeout("setEstablacerSumasIniciales()",1000);
 }
 function setEstablacerSumasIniciales(){
@@ -477,7 +511,7 @@ function jsPrintEstadoCuenta(){
 		url : "../rptempresas/empresas.movimientos.rpt.php?empresa=" + idemp + "&periodo=" + idper + "&periocidad=" + perio
 		});
 }
-function jsSaveExcel() {    tableToExcel( document.getElementById("sqltable")); }
+
 function jsGetCobranzaDay(){ getCorteDeRecibos(); }
 function getRecibo(){
     var idr		= $("#idcodigodeempresas").val();
@@ -489,8 +523,16 @@ function getRecibo(){
     var iF2		= $("#idfecha-11").val();
         
     var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + peri + "&on=" + iF1 + "&off=" + iF2;
-    xg.w({ url : url, w : 800, h : 600 });
+    xg.w({ url : url, tab : true });
 }
+//function jsSaveExcel() {    tableToExcel( document.getElementById("sqltable")); }
+function jsGetExcelFile(){
+    var idr		= $("#idcodigodeempresas").val();
+    var idper	= $("#idperiodo").val();
+    var url		= "../rptcreditos/orden_de_cobranza.rpt.php?out=xls&nomina=" + idper;
+    xg.w({ url : url, tab : true });
+}
+
 function generarPlanDePagos(credito) {
     var sURL = '../frmcreditos/frmcreditosplandepagos.php?r=1&c=' + credito;
     xg.w({ url : sURL, w : 800, h : 600 });
@@ -505,21 +547,56 @@ function jsGetRecibosByCredito(credito) {
     	xg.pajax({
 		url: "../frmoperaciones/recibos.svc.php?persona=" + mObj.persona + "&documento=" + mObj.credito + "&mx=true&fecha=" + ff,
 		finder: "recibo",
-		callback : function(obj, final){
-			ht	+= "<a>RECIBO :" +  $(obj).attr("codigo") + " - Monto :<mark>" + $(obj).text() + "</mark></a></br>";
-			if (final == true) {
-				tipSuggest(myId, "" + ht + "");
+		callback : function(obj, fin){
+			
+			ht	+= " Letra : " + $(obj).attr("periodo") + " - Recibo : " +  $(obj).attr("codigo") + " - $ " + getFMoney($(obj).text()) + "\r\n";
+			if (fin == true) {
+				xG.alerta({info: ht, title: "Cobros del dia:"});
 			}
+		},
+		onnodata : function (){
+			xG.alerta({msg: "MSG_NO_REGS"});
+		}
+		});
+}
+function jsGetRecibosByCreditoPeriodo(credito) {
+    var mObj	= processMetaData("#tr-creditos_solicitud-" + credito);
+    var periodo	= mObj.letra;
+    
+    var ht		= "";
+    var myId	= "#pk-" + credito;
+    var ff	= $("#idfecha-0").val();
+    
+    	xg.pajax({
+		url: "../frmoperaciones/recibos.svc.php?persona=" + mObj.persona + "&documento=" + mObj.credito + "&mx=true&periodo=" + periodo,
+		finder: "recibo",
+		callback : function(obj, fin){
+			
+			ht	+= " Fecha: " + $(obj).attr("fecha") + " - Recibo : " +  $(obj).attr("codigo") + " - $ " + getFMoney($(obj).text()) + "<br />";
+			
+			if (fin == true) {
+				$("#dlg").html(ht);
+				xG.winTip({ title : "Cobros a la letra: ", content : $("#dlg") });
+				//xG.alerta({msg: ht, title: "Recibos"});
+			}
+		},
+		onnodata: function (){
+			xG.alerta({msg: "MSG_NO_REGS"});
 		}
 		});
 }
 function jsGetEdoCuentaGeneral(){	var id = $("#idcodigodeempresas").val(); xEmp.getEstadoDeCuenta(id); }
 function jsListaDeNominas(){ var id = $("#idperiodo").val();  xEmp.getOrdenDeCobranza(id);	}
 function jsSetCerrarNomina(){
+	
 	xG.confirmar({
 		msg: "Al cerrar la Nomina las operaciones se cancelan, no se muestran de nuevo",
-		callback:  jsaSetCerrarNomina
+		callback: jsSetCerrarNominaConfirm
 		});
+}
+function jsSetCerrarNominaConfirm(){
+	xG.postajax("jsGetCobranza()");
+	jsaSetCerrarNomina();
 }
 </script>
 <?php

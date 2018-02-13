@@ -2959,6 +2959,9 @@ class cCreditosPlanDePagos{
 		$xQL->setRawQuery($sql);
 	}
 }
+/**
+ * Clase de Letras de Pago Historico
+ * */
 class cCreditosLetraDePago {
 	private $mCredito		= false;
 	private $mPeriodo		= false;
@@ -3014,6 +3017,7 @@ class cCreditosLetraDePago {
 			$periodo	= $this->mPeriodo;
 			$sql		= "SELECT * FROM `creditos_plan_de_pagos` WHERE `clave_de_credito` = $credito AND `numero_de_parcialidad`=$periodo LIMIT 0,1";
 			$data		= $xQL->getDataRow($sql);
+			
 		}
 		
 		if(isset($data["clave_de_credito"])){
@@ -3291,6 +3295,25 @@ class cCreditosPagos {
 		$this->mMessages	.= $xRec->getMessages();
 		return $recibo;
 	}
+	function addPagoPenas($monto, $parcialidad = 1, $observaciones = "",  $tipoDePago = TESORERIA_COBRO_NINGUNO, $fecha = false, $recibo = false){
+		$recibo		= setNoMenorQueCero($recibo);
+		
+		if($recibo <= 0){
+			$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo);
+			$recibo		= $xRec->setNuevoRecibo($this->mPersona, $this->mNumeroCredito, $fecha, $parcialidad, $this->mTipoDeRecibo);
+		}
+		$xRec		= new cReciboDeOperacion($this->mTipoDeRecibo, true, $recibo);
+		if($xRec->init() == true){
+			$operacion	= $xRec->setNuevoMvto($fecha, $monto, OPERACION_CLAVE_PAGO_PENAS, $parcialidad, $observaciones);
+			if($operacion > 0){
+				//$this->getOCred()->setInteresMoratorioPagado($monto);
+			}
+			$xRec->setFinalizarRecibo(true);
+		}
+		$this->mMessages	.= $xRec->getMessages();
+		return $recibo;
+	}
+	
 	function addCargosCobranza($monto, $parcialidad = 1, $observaciones = "",  $tipoDePago = TESORERIA_COBRO_NINGUNO, $fecha = false, $recibo = false){
 		$recibo		= setNoMenorQueCero($recibo);
 	

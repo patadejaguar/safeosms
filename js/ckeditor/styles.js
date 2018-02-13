@@ -35,6 +35,7 @@ CKEDITOR.stylesSet.add( 'default', [
 
 	{ name: 'Italic Title',		element: 'h2', styles: { 'font-style': 'italic' } },
 	{ name: 'Subtitle',			element: 'h3', styles: { 'color': '#aaa', 'font-style': 'italic' } },
+	
 	{
 		name: 'Special Container',
 		element: 'div',
@@ -45,6 +46,14 @@ CKEDITOR.stylesSet.add( 'default', [
 		}
 	},
 
+	/*Luis Balam*/	
+	
+	{ name: 'td-azul',			element: 'td', styles: { 'background-color': '#4877B6', 'color' : '#FFFFFF'} },
+	{ name: 'td-gris',			element: 'td', styles: { 'background-color': '#E7E7E7'} },
+	
+	{ name: 'td-1/4',			element: 'td', styles: { 'width': '25%'} },
+	
+	
 	/* Inline styles */
 
 	// These are core styles available as toolbar buttons. You may opt enabling
@@ -76,8 +85,8 @@ CKEDITOR.stylesSet.add( 'default', [
 	{ name: 'Cited Work',		element: 'cite' },
 	{ name: 'Inline Quotation',	element: 'q' },
 
-	{ name: 'Language: RTL',	element: 'span', attributes: { 'dir': 'rtl' } },
-	{ name: 'Language: LTR',	element: 'span', attributes: { 'dir': 'ltr' } },
+	/*{ name: 'Language: RTL',	element: 'span', attributes: { 'dir': 'rtl' } },
+	{ name: 'Language: LTR',	element: 'span', attributes: { 'dir': 'ltr' } },*/
 
 	/* Object styles */
 
@@ -134,4 +143,3 @@ CKEDITOR.stylesSet.add( 'default', [
 	{ name: '1080p ', type: 'widget', widget: 'embed', attributes: { 'class': 'embed-1080p' } }
 
 ] );
-

@@ -45,6 +45,7 @@ $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 
 $xHG	= new cHGrid("iddivresidual", $xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT   `leasing_residual`.`idleasing_residual` AS `clave`,
          `creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `frecuencia`,

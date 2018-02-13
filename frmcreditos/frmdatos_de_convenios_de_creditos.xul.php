@@ -112,6 +112,7 @@ $xFRM->OButton("TR.Otros parametros", "jsOtrosParametros()", $xFRM->ic()->CONTRO
 $xFRM->OButton("TR.Requisitos", "jsRequisitos()", $xFRM->ic()->CONTROL);
 $xFRM->OButton("TR.Etapas", "jsEtapas()", $xFRM->ic()->CONTROL);
 $xFRM->OButton("TR.Promociones", "jsPromociones()", $xFRM->ic()->CONTROL);
+$xFRM->OButton("TR.FORMS_Y_DOCS", "jsFormatos()", $xFRM->ic()->FORMATO);
 
 $xSProd	= $xSel->getListaDeProductosDeCredito();
 $xSProd->addEvent("onblur", "jsLoadInit()");
@@ -173,8 +174,13 @@ function jsOtrosCargosEditar(id){ var idproducto = $("#idproducto").val(); xG.w(
 function jsRequisitos(){ var idproducto = $("#idproducto").val();xG.w({url: "../frmcreditos/creditos.productos.requisitos.frm.php?producto=" + idproducto, tiny : true, w: 600, callback: jsaLoadRequisitos}); }
 function jsEtapas(){ var idproducto = $("#idproducto").val();xG.w({url: "../frmcreditos/creditos.productos.etapas.frm.php?producto=" + idproducto, tiny : true, w: 600, callback: jsaLoadEtapas}); }
 function jsPromociones(){ var idproducto = $("#idproducto").val();xG.w({url: "../frmcreditos/creditos.productos.promociones.frm.php?producto=" + idproducto, tiny : true, w: 600, callback: jsaLoadPromociones}); }
-
 function jsPromocionesEditar(id){ var idproducto = $("#idproducto").val(); xG.w({url: "../frmcreditos/creditos.productos.promociones.editar.frm.php?producto=" + idproducto + "&clave=" + id, tiny : true, w: 600, callback: jsaLoadOtrosCargos}); }
+
+
+function jsFormatos(){ var idproducto = $("#idproducto").val();
+	xG.w({url: "../frmutils/contratos-editor.frm.php?producto=" + idproducto, tab: true }); 
+}
+
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

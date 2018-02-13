@@ -31,6 +31,9 @@ $destino				= parametro("destino", SYS_TODAS ,MQL_INT);
 $otros					= parametro("otrosdatos", false, MQL_BOOL);
 $compacto				= parametro("compacto", false, MQL_BOOL);
 $conseguimiento			= parametro("conseguimiento", false, MQL_BOOL);
+$conempleador			= parametro("conempleador", false, MQL_BOOL);
+$sinempleador			= parametro("sinempleador", false, MQL_BOOL);
+
 
 $oficial				= parametro("oficial", SYS_TODAS ,MQL_INT);
 $sucursal				= parametro("sucursal", "", MQL_RAW); $sucursal	= strtolower($sucursal);
@@ -42,6 +45,7 @@ $BySaldo				= $xLi->OFiltro()->CreditosPorSaldos(TOLERANCIA_SALDOS, ">=");
 $ByEmpresa				= $xLi->OFiltro()->CreditosPorEmpresa($empresa);
 $ByTipoAut				= $xLi->OFiltro()->CreditosPorAutorizacion($tipoautorizacion);
 $ByDestino				= $xLi->OFiltro()->CreditosPorDestino($destino);
+
 
 $FechaInicial			= $xF->getFechaISO( parametro("on", fechasys()) );
 $FechaFinal				= $xF->getFechaISO( parametro("off", fechasys()) );
@@ -69,13 +73,24 @@ if($conseguimiento == true){
 	$TxtSeguimiento		= "getDiasDeMora(`creditos_solicitud`.`numero_solicitud`,`creditos_solicitud`.`periocidad_de_pago`)                                	AS `dias_de_mora`,";
 }
 
+$ByConEmpleador			= "";
+if($conempleador == true){
+	$ByConEmpleador		= " AND (`creditos_solicitud`.`persona_asociada` != " . FALLBACK_CLAVE_EMPRESA . ") AND (`creditos_solicitud`.`persona_asociada` > 0)  ";
+}
+$BySinEmpleador			= "";
+if($sinempleador == true){
+	$BySinEmpleador		= " AND (`creditos_solicitud`.`persona_asociada` = " . FALLBACK_CLAVE_EMPRESA . " OR `creditos_solicitud`.`persona_asociada` <= 0)  ";
+}
+
+
 
 $ByFecha				= " AND (creditos_solicitud.fecha_ministracion >='$FechaInicial' AND creditos_solicitud.fecha_ministracion <= '$FechaFinal') ";
 /* ******************************************************************************/
 $OperadorFecha			= ($out == OUT_EXCEL) ?  " " : "getFechaMX";
 /* ********************* CAMPOS EXTRAS *******************************************/
 $FEmpresa				= ($ByEmpresa == "") ? " `personas`.`dependencia` AS	`empresa`, " : "";
-if(PERSONAS_CONTROLAR_POR_EMPRESA == false){ $FEmpresa = ""; }
+if(PERSONAS_CONTROLAR_POR_EMPRESA == false OR $sinempleador == true){ $FEmpresa = ""; }
+
 $saldo_migrado			= (MODO_MIGRACION == true) ? " `saldo_conciliado` AS `migrado`, " : "";
 $setSql	= "SELECT
 	`creditos_solicitud`.`sucursal`,
@@ -143,6 +158,8 @@ FROM
 	
 	$ByDestino
 	$BySeguimiento
+	$ByConEmpleador
+	$BySinEmpleador
 	ORDER BY `creditos_solicitud`.`tipo_convenio`, `personas`.`nombre` ";
 
 /*$setSql = "SELECT socios.nombre,	socios.alias_dependencia AS 'empresa',
@@ -202,12 +219,13 @@ $xRPT->setFile($archivo);
 $xRPT->setOut($out);
 $xRPT->setSQL($setSql);
 $xRPT->setTitle($xHP->getTitle());
+
 //============ Reporte
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
-$xRPT->setPDFOrietacion($xRPT->PDF_OHORIZONTAL);
+$xRPT->setPDFOrientacion($xRPT->PDF_OHORIZONTAL);
 
 if($ByOficial != ""){
 	$xRPT->setGrupo("oficial");

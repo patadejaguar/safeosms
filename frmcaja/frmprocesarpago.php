@@ -21,8 +21,13 @@ $xSQL		= new cSQLListas();
 $xF			= new cFecha();
 $ql			= new MQL();
 $capital_original_de_letra		= 0;			//Monto original de capital de la letra
-$msg							= "";
+$msg		= "";
 $xLog		= new cCoreLog();
+
+$xRuls		= new cReglaDeNegocio();
+$useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
+$LockCobros	=  $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
+
 
 function jsaActualizarLetra($persona, $credito, $letra, $monto){
 	$monto	= setNoMenorQueCero($monto);
@@ -78,6 +83,8 @@ $solicitud 			= $DPar[1];
 $parcialidad 		= $DPar[2]; //$periocidad 		= $DPar[3];
 $monto_a_operar 	= $DPar[4];
 $operacion 			= $DPar[5];
+
+
 if( $aPagaCompleto[$operacion] == true ){ $pago_total = true ; $monto_a_operar	=   TESORERIA_MONTO_MAXIMO_OPERADO; $msg	.= "WARN\tOperacion de Pago Completo\r\n"; }
  
 $mTipoPago			= (isset($DPar[6])) ?  trim($DPar[6]) : DEFAULT_TIPO_PAGO;
@@ -134,44 +141,52 @@ for($ix=0; $ix <= $limParms; $ix++){
 	$periocidad						= $xCred->getPeriocidadDePago();
 	$ByLetra						= "";
 	$solo_mora_corriente			= ($pago_total == true) ? true : false;
+	
 	//Corrige calculo de Interes.- Si es primer pago
 	$DInteres						=  $xCred->getInteresDevengado($fecha_operacion, $parcialidad, false, $solo_mora_corriente);
 	$interes_normal_calculado		=  $DInteres[SYS_INTERES_NORMAL];
 	$interes_moratorio_calculado	=  $DInteres[SYS_INTERES_MORATORIO];
 	$gastos_de_cobranza_calculado	=  $DInteres[SYS_GASTOS_DE_COBRANZA];
 	$monto_penas					=  $DInteres[SYS_PENAS];
-	//Corrige las penas
-	if($monto_penas <= 0 and $xCred->isAFinalDePlazo() == false){
-		$xParc	= new cParcialidadDeCredito($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $parcialidad);
-		$xParc->init();
-		$xParc->setTasaMora($xCred->getTasaDeMora());
-		$xParc->setIDProducto($xCred->getClaveDeProducto());
-		$xParc->setPeriocidadDePago($xCred->getPeriocidadDePago());
-		//$xParc	= new cCreditosLetraDePago($solicitud, $parcialidad);
-		//if($xParc->init() == true){
-		$DPena					= $xParc->setCalcularPenas_Y_Mora($fecha_operacion, true);
-		$monto_penas			= $DPena[SYS_PENAS];// $xParc->getPenas();
-		
-		//}
-	}
-	//2015-10-10 Agregar Gastos de Cobranza Pendientes.
-	$xPag							= $xCred->getOPagos();
 	
-	$gastos_de_cobranza_calculado	+= $xPag->getCargosDeCobranza();
-	
-	//$gastos_de_cobranza_calculado	= $
 	$fecha_de_pago					= $fecha_vencimiento;
-	//$xLog->add($DInteres[SYS_MSG], $xLog->DEVELOPER);
-	if($xCred->getPeriocidadDePago() != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
+
+	//Inicializa la Parcialidad Historica
+	if($xCred->isAFinalDePlazo() == false ){
 		$xLetra						= new cParcialidadDeCredito($xCred->getClaveDePersona(), $xCred->getNumeroDeCredito(), $parcialidad);
-		if( $xLetra->init($xCred->getClaveDePersona(), $xCred->getNumeroDeCredito(), $parcialidad) == true){
+		if($xLetra->init() == true){
 			$fecha_de_pago			= $xLetra->getFechaDePago();
 			$xLog->add("OK\tFecha de Pago establecida a $fecha_de_pago\r\n", $xLog->DEVELOPER);
+			
+			if($monto_penas <= 0){
+				
+				$xLetra->setTasaMora($xCred->getTasaDeMora());
+				$xLetra->setIDProducto($xCred->getClaveDeProducto());
+				$xLetra->setPeriocidadDePago($xCred->getPeriocidadDePago());
+				
+				$DPena				= $xLetra->setCalcularPenas_Y_Mora($fecha_operacion, true);
+				$monto_penas		= $DPena[SYS_PENAS];
+				$xLog->add("WARN\tPenas de la Parcialidad $parcialidad A $monto_penas\r\n", $xLog->DEVELOPER);
+			}
+			
 		} else {
 			$xLog->add("ERROR\tParcialidad $parcialidad no inicializada\r\n", $xLog->DEVELOPER);
 			$xLog->add("ERROR\tNo existe el Periodo de Pago\r\n", $xLog->COMMON);
 		}
 	}
+	
+
+	
+
+	//2015-10-10 Agregar Gastos de Cobranza Pendientes.
+	$xPag							= $xCred->getOPagos();
+	$gastos_de_cobranza_calculado	+= $xPag->getCargosDeCobranza();
+	
+	//$gastos_de_cobranza_calculado	= $
+	
+	//$xLog->add($DInteres[SYS_MSG], $xLog->DEVELOPER);
+	
+
 
 //=========================================================
 //Datos del Respeto al Plan de Pagos
@@ -197,7 +212,7 @@ for($ix=0; $ix <= $limParms; $ix++){
 	$xLog->add("WARN\tINTS_M\t$interes_moratorio = $interes_moratorio_devengado - $interes_moratorio_pagado ) + $interes_moratorio_calculado\r\n", $xLog->DEVELOPER);
 //====================== INICIAR INTERESES
 //Codigo que ejecuta la formula si se respeta el Plan de Pagos
-if ( $xCred->getPeriocidadDePago() != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
+if ( $xCred->isAFinalDePlazo() == false ){
 	$xLog->add("WARN\tPARCIALIDAD\tEl pago es por parcialidad numero $parcialidad\r\n", $xLog->DEVELOPER);
 	if ( $xCred->getRespetarPlanDePago() == false ){
 		$interes_normal				= ( $interes_normal_devengado - $interes_normal_pagado ) + $interes_normal_calculado;
@@ -216,7 +231,33 @@ if ( $xCred->getPeriocidadDePago() != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
 		}
 		//Razonamiento : Si la letra se devengo, entonces
 		if($xCred->getEstadoActual() == CREDITO_ESTADO_VIGENTE){	}
+		//================= Si se usa intereses de la BD
+		if($useMoraBD == true){
+			if($pago_total == true){
+				if($xLetra->initSuma() == true){
+					$interes_moratorio		= $xLetra->getMora();
+					$interes_normal			= $xLetra->getInteres();
+					
+					$xLog->add("WARN\tINTS_NOR\tEL Interes Normal Ajustado en $interes_normal - Usar BD\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\tINTS_MOR\tEL Interes Moratorio Ajustado en $interes_moratorio - Usar BD\r\n", $xLog->DEVELOPER);
+				}
+				
+			}  else {
+				//Pago Parcial
+				if($xLetra->init($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $parcialidad) == true){
+					$interes_moratorio		= $xLetra->getMora();
+					//$interes_normal			= $xLetra->getInteres();
+					$xLog->add("WARN\tINTS_NOR\tEL Interes Normal Ajustado en $interes_normal - Usar BD\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\tINTS_MOR\tEL Interes Moratorio Ajustado en $interes_moratorio - Usar BD\r\n", $xLog->DEVELOPER);
+				}
+			}
+			
+		}
+		
 	}
+	
+
+	
 	$SQLBody	= $xSQL->getConceptosDePago($solicitud, $socio, $parcialidad);
 } else {
 	$SQLBody	= $xSQL->getConceptosDePago($solicitud, $socio);
@@ -259,15 +300,15 @@ if($monto_a_operar <=0 ){	$xLog->add( "WARN\tNecesita un Monto a Operar, que deb
 $monto_desglose			= 0;
 $arr_desglose			= array();
 
-$rsm =  $ql->getDataRecord($SQLBody);
-
-	foreach ($rsm as $rwm ){
-			$pendiente      = 0;
-			$title	        = $rwm["descripcion_operacion"];
-			$monto	        = $xT->cFloat($rwm["total_operacion"], 2);
-			$MTipo          = $rwm["tipo_operacion"];
-			$cls			= "";
-			$xLog->add( "WARN\tIX\tEl Movimiento es $MTipo\r\n", $xLog->DEVELOPER);
+$rsm 					=  $ql->getDataRecord($SQLBody);
+//Operaciones Rebuscadas .- Operaciones traidas de una consulta
+foreach ($rsm as $rwm ){
+		$pendiente      = 0;
+		$title	        = $rwm["descripcion_operacion"];
+		$monto	        = $xT->cFloat($rwm["total_operacion"], 2);
+		$MTipo          = $rwm["tipo_operacion"];
+		$cls			= "";
+		$xLog->add( "WARN\tIX\tEl Movimiento es $MTipo\r\n", $xLog->DEVELOPER);
 				//Omite los Intereses Pactados y tod lo concerniente al credito segun la base
 				if ( in_array($MTipo, $arrINTS) ){
 					$xLog->add("WARN\t$MTipo\tINTERES\tEl Monto por $monto Del Movimiento $MTipo se lleva a CERO\r\n", $xLog->DEVELOPER);
@@ -387,7 +428,7 @@ $rsm =  $ql->getDataRecord($SQLBody);
 				</tr>";
 			}
 			$total		+= $monto;
-		}
+} //End operaciones rebuscadas
 //============================================================= DESGLOSE DE SALDOS
 		foreach ($arr_desglose as $idx=> $vv){
 			$monto		= setNoMenorQueCero(($monto_desglose * $vv),2);
@@ -709,6 +750,7 @@ var desdeAjuste		= false;
 var mMontoCapital	= <?php echo $mAfectCapital; ?>;
 var mCapitalAmort	= 0;
 var EsFinalPlazo	= <?php echo ($xCred->isAFinalDePlazo() == true) ? "true" : "false"; ?>;
+var LockCobro		= <?php echo ($LockCobros == true) ? "true" : "false"; ?>;
 <?php
 $xB					= new cBases(0);
 $strGrav			= $xB->getMembers_InString(true, BASE_IVA_INTERESES);
@@ -734,7 +776,11 @@ function pushMny(evt){
 	if( $.inArray(idevt, aIvaCalculado) !== -1){
 		$("#idMvtosEsp").focus();
 	} else {
-		evt.target.select();
+		if(LockCobro == true && flotante(mMny) > 0 ){
+			$("#idMvtosEsp").focus();
+		} else {
+			evt.target.select();
+		}
 	}
 	getTotal(); 
 }
@@ -1005,8 +1051,10 @@ function jsEval(origen){
 		if (desdeAjuste == true){
 			
 		} else {
-			var si2 	= confirm("DESEA SEPARAR EL IVA EN ESTE MONTO?\nQUEDARIA EN " + redondear(org.value * mFactIva));
-			if (si2) { org.value	= redondear(org.value * mFactIva);  }
+			if(flotante(org.value) > 0){
+				var si2 	= confirm("DESEA SEPARAR EL IVA EN ESTE MONTO?\nQUEDARIA EN " + redondear(org.value * mFactIva));
+				if (si2) { org.value	= redondear(org.value * mFactIva);  }
+			}
 		}
 		desdeAjuste = false;
 	}
@@ -1043,7 +1091,7 @@ function jsEliminarCargos(){
 }
 function jsAsLoaded(){
 	if(window.parent){
-		if(window.parent.jsEndCarga){ window.parent.jsEndCarga();	} else { alert("NO LAYER");}
+		if(window.parent.jsEndCarga){ window.parent.jsEndCarga();	} else { setLog("NO LAYER");}
 	}
 }
 function jsGetTotal(){

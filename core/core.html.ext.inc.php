@@ -466,7 +466,7 @@ class cPanelDeReportes {
 		$xF				= new cFecha();
 		$this->mOFRM	= new cHForm("frmpanel");
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
-		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", "reporte", "cmdgetreporte");
+		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", $this->mOFRM->ic()->REPORTE, "cmdgetreporte", "green2");
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
 		$SqlRpt			= "SELECT * FROM general_reports WHERE aplica='" . $this->mFiltro . "' ORDER BY `descripcion_reports`,`order_index` ASC ";
 		$cSRpt			= new cSelect("idreporte", "idreporte", $SqlRpt );
@@ -687,6 +687,7 @@ class cPanelDeReportes {
 	function addFechaInicial(){
 		$xF						= new cFecha(0);
 		$xDate			= new cHDate(0, $this->mFechaInicialVal, TIPO_FECHA_OPERATIVA);
+		$xDate->setEsDeReporte();
 		$this->mJsVars	.= "var fechaInicial	= $('#idfecha-0').val();\r\n";
 
 		$this->mURL		.= " + \"&on=\" + fechaInicial ";
@@ -700,6 +701,8 @@ class cPanelDeReportes {
 		 $this->mFechaInicial	= $xF->show(true, TIPO_FECHA_OPERATIVA);*/
 		$titulo			= ($titulo == "") ? "TR.Fecha_Final" : $titulo;
 		$xDate			= new cHDate(1, false, TIPO_FECHA_OPERATIVA);
+		$xDate->setEsDeReporte();
+		
 		$this->mJsVars	.= "var fechaFinal	= $('#idfecha-1').val();\r\n";
 
 		$this->mURL		.= " + \"&off=\" + fechaFinal ";
@@ -709,7 +712,7 @@ class cPanelDeReportes {
 	}
 	function addTiposDeSalida(){
 		//<option value=\"html\">Pagina Web(www)</option>
-		$this->mTiposSalida = "<div class='tx4'><label>Exportar Reporte Como</label>
+		$this->mTiposSalida = "<div class='tx4 tx18'><label>Exportar Reporte Como</label>
 			<select name=\"idtipodesalida\" id=\"idtipodesalida\">
 				<option value=\"" . SYS_DEFAULT . "\" selected>Por Defecto(xml)</option>
 				<option value=\"pdf\">Archivo PDF</option>
@@ -966,7 +969,9 @@ class cReportes {
 				break;
 			default:
 				$xHP->setTitle($this->mTitulo);
+				//if($out !== OUT_DOC){
 				$xHP->setDevice($out);
+				//}
 				//setLog($out);
 				foreach ($this->mCSSList as $key => $file){
 					$xHP->addCSS($file);
@@ -986,8 +991,11 @@ class cReportes {
 	function setSQL($sql){ $this->mSQL = $sql; }
 	function setToPrint(){ $this->mJS .= "xRpt.print();"; }
 	function setToPagination($init = 0){ $this->mJS .= "xRpt.setPagePagination($init);"; }
-	function setPDFOrietacion(){}
-	
+	function setPDFOrientacion($or){$this->mPDFOrient = $or; }
+	/**
+	 * @deprecated
+	 * */
+	function setPDFOrietacion($or){$this->mPDFOrient = $or; }
 	function render($includeHeaders = false){
 		$xOH		= new cHObject();
 		$cnt		= "";
@@ -1022,6 +1030,22 @@ class cReportes {
 					$cnt	= $xls->render(false, $this->mTitulo);					
 				}				
 				break;
+			case OUT_DOC:
+				$html	= $this->mHeader . $this->mBody . $this->mFooter;
+				$title	= $xOH->getTitulize($this->mTitulo);
+				$body	= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
+				$xFS	= new cFileSystem();
+				 $nn		= $xFS->cleanNombreArchivo($title, true);
+				 
+				 $fspdf	= $xFS->setCreateFile($html, "$nn.docx");
+				 if($fspdf !== ""){
+				 	header("Content-type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+				 	header("Content-Disposition: attachment; filename=\"$nn.docx\"; ");
+				 	readfile($fspdf);
+				 }
+				
+				break;
+			
 			case OUT_RXML:
 				$arrPar		= array( "titulo" => $this->mTitulo	);
 				$output		= SYS_DEFAULT;
@@ -1060,6 +1084,16 @@ class cReportes {
 				$html	= $this->mHeader . $this->mBody . $this->mFooter;
 				$title	= $xOH->getTitulize($this->mTitulo);
 				$body	= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
+				/*$xFS	= new cFileSystem();
+				$nn		= $xFS->cleanNombreArchivo($title, true);
+				
+				$fspdf	= $xFS->setConvertToPDF($html, $nn);
+				if($fspdf !== ""){
+					header("Content-type: application/pdf");
+					header("Content-Disposition: attachment; filename=\"$nn.pdf\"; ");
+					readfile($fspdf);
+				}*/
+				//Nuevo DOM
 				$dompdf = null;
 				//Agregar Limite de Memoria
 				try {
@@ -1082,7 +1116,7 @@ class cReportes {
 					}					
 				} catch (Exception $e) {
 					$this->mMessages	.= "ERROR\tNo se genera el Archivo PDF\r\n";
-				}				
+				}			
 				break;
 
 			default:
@@ -1691,6 +1725,8 @@ class cHMenuItem {
 	public $ICON		= "";
 	public $PARENT		= 0;
 	private $mEventPa	= "";
+	private $mIsMobile	= false;
+	
 	function __construct($id, $datos = false){
 		$xMen	= new cGeneral_menu();
 		if(is_array($datos)){
@@ -1707,7 +1743,9 @@ class cHMenuItem {
 		$this->ICON		= $xMen->menu_image()->v(OUT_TXT);
 		$this->TITULO	= $xMen->menu_title()->v();
 		$this->PARENT	= $xMen->menu_parent()->v();
+		$this->mIsMobile= $_SESSION[SYS_CLIENT_MOB];
 	}
+	function setIsMobile($is){ $this->mIsMobile = $is; }
 	function getLi($WithImages = false, $html = "", $extraTags = ""){
 		$Clave		= $this->CLAVE;
 		$Tipo		= $this->TIPO;
@@ -1717,7 +1755,7 @@ class cHMenuItem {
 		$Archivo	= $this->ARCHIVO;
 		$Descrip	= $this->NOTA;
 		$Descrip	= ($Descrip == "" OR $Descrip == "NO_DESCRIPTION") ? "": "title=\"$Descrip\"";
-		$isMobile	= $_SESSION[SYS_CLIENT_MOB];
+		$isMobile	= $this->mIsMobile;
 		$xL			= new cLang();
 			
 		if( SAFE_LANG != "ES" AND SYS_TRADUCIR_MENUS == true){ $Titulo	= $xL->getT("TR.$Titulo");	}
@@ -1759,24 +1797,28 @@ class cHMenuItem {
 	}
 }
 class cHGrid {
-	private $mCampos		= array();
-	private $mActions		= array();
-	private $mToolbars		= array();
-	private $mTitle			= "";
-	private $mId			= "";
-	private $mSQL			= "";
-	private $mOLang			= null;
-	private $mPaginacion	= true;
-	private $mOrden			= false;
-	private $mNoDefParam	= false;
+	private $mCampos			= array();
+	private $mActions			= array();
+	private $mToolbars			= array();
+	private $mTitle				= "";
+	private $mId				= "";
+	private $mSQL				= "";
+	private $mOLang				= null;
+	private $mPaginacion		= true;
+	private $mOrden				= false;
+	private $mNoDefParam		= false;
+	private $mSizeIcon			= "5%";
 	
 	
 	function __construct($id, $title = ""){ $xlng	= new cLang(); $this->mId	= $id; $this->mTitle	= $xlng->getT($title); }
 	function setSQL($sql){
 		$arrch		= array('/\t+/', '/\s\s+/');
 		$sql		= preg_replace($arrch, ' ', $sql);
-		$this->mSQL = utf8_encode($sql);
 		
+
+		
+		$this->mSQL = utf8_encode($sql);
+		//setLog($this->mSQL);
 		return base64_encode($this->mSQL);
 	}
 	private function OLang(){
@@ -1832,11 +1874,14 @@ class cHGrid {
 	}
 	function OColFunction($nombre, $titulo, $zsize, $funcion = ""){
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
-	
 		$titulo	= $this->OLang()->getT($titulo);
 		$this->mCampos[$nombre] = array ("title" => $titulo, "width" => $zsize, "function" => "$funcion(data)");
 	}
-	
+	function setColSum($nombre){
+		if( isset($this->mCampos[$nombre]) ){
+			$this->mCampos[$nombre]["footer"] = "function(data){ var total = 0; $.each(data.records, function(index,record){ total += redondear(record.$nombre,2); }); return getFMoney(total); }";
+		}
+	}
 	function OToolbar($titulo, $evento, $icono){
 		$titulo	= $this->OLang()->getT($titulo);
 		$this->mToolbars[$titulo] = array(
@@ -1846,7 +1891,8 @@ class cHGrid {
 		);
 	}
 
-	function OButton($titulo, $evento, $icono, $id= "", $size = "5%"){
+	function OButton($titulo, $evento, $icono, $id = "", $dataRAW = false){
+		$size 	= $this->mSizeIcon;
 		//$xFRM->OButton("TR.CODIGO", "jsGetTable()", $xFRM->ic()->EJECUTAR);
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
 		//$xBtn	= new cHButton();
@@ -1865,8 +1911,18 @@ class cHGrid {
 		$titulo	= setLimpiarCadena($titulo);
 		
 		
-		$this->mCampos[$titulo] = array ("title" => '', "width" => $size, "button" => $btn, "listClass" => "jtable-command-column", "sorting" => "false", "edit" => "false", "create" => "false");
-
+		$this->mCampos[$titulo] = array (
+				"title" => '', 
+				"width" => $size, 
+				"button" => $btn, 
+				"listClass" => "jtable-command-column", 
+				"sorting" => "false", 
+				"edit" => "false", 
+				"create" => "false");
+		if($dataRAW == true){
+			$this->mCampos[$titulo]["dataRaw"] = true;
+		}
+		//setLog($this->mCampos[$titulo]);
 		/*if(isset($this->mCampos[$nombre])){
 			$btn = $this->mCampos[$nombre]["display"] . $btn;
 			$this->mCampos[$nombre] = array ("title" => $nombre, "width" => $zsize, "display" => $btn, "listClass" => "jtable-command-column");
@@ -1899,20 +1955,30 @@ class cHGrid {
 		$sorting	= ($this->mOrden == true) ? " sorting : true, " : "";
 		
 		foreach ($this->mCampos as $campos => $items){
-			$flds	.= ($flds == "") ? "$campos : {" : ",$campos : {";
+			$flds		.= ($flds == "") ? "$campos : {" : ",$campos : {";
+			$isRaw		= false;
+			if(isset($items["dataRaw"])){
+				$isRaw	= $items["dataRaw"];
+				unset($items["dataRaw"]);
+				setLog($items);
+			}
 			foreach ($items as $props => $vals){
 				switch($props){
 					case "button":
-						$flds .= "display : function(data){ return '$vals'; },";
+						if($isRaw == true){
+							$flds .= "display : function(data){ var dataRaw = base64.encode(JSON.stringify(data.record)); return '$vals'; },";
+						} else {
+							$flds .= "display : function(data){ return '$vals'; },";
+						}
 						break;
 					case "format":
 						$flds .= "display : function(data){ return $vals; },";
 						break;
 					case "function":
-						$flds .= "display : function(data){ return $vals;},";
+						$flds .= "display : function(data){ return $vals; },";
 						break;
 					default:
-						$flds	.= ($vals == "true" OR $vals == "false") ? "$props : $vals," : "$props : \"$vals\",";
+						$flds	.= ($vals == "true" OR $vals == "false" OR $props == "footer") ? "$props : $vals," : "$props : \"$vals\",";
 						break;
 				}
 			}
@@ -1933,6 +1999,8 @@ class cHGrid {
 		$sinit		= ($init == false) ? "" : "jsLG" . $this->mId . "();";
 		$pg			= ($this->mPaginacion == true) ? "pageSize:50, paging:true," : "";
 		$str		= "";
+		//$fn1		= "";
+		//$fn2		= ($this->mFooterCallback == "") ? "" : ",\n\tfooterCallback:" . $this->mFooterCallback . "";
 		/*sorting: true,*/
 		$str		.= "$('#" . $this->mId . "').jtable({
         title: '" . $this->mTitle . "',$pg
@@ -1949,6 +2017,7 @@ class cHGrid {
 	function setNoPaginar(){ $this->mPaginacion= false; }
 	function setOrdenar(){ $this->mOrden	= true;	}
 	function setNoDefaultParam(){ $this->mNoDefParam = true; }
+	function setSizeIcon($sz){ $this->mSizeIcon = $sz; }
 }
 class cHMenu {
 	private $mType		= "html";
@@ -1960,6 +2029,9 @@ class cHMenu {
 
 	public $PARENT		= "parent";
 	public $DESKTOP		= "desktop";
+	
+	private $mEnableLastmenu	= true;
+	
 	private $mIsMobile	= false;
 	private $mDisCaptacion		= array(8000, 1030, 1020, 8050);
 	private $mDisSeguimiento	= array(4000);
@@ -2012,7 +2084,13 @@ class cHMenu {
 		
 		
 	}
-	function setIsMobile($mobile = true){ $this->mIsMobile = $mobile; $this->mIncImages = true; }
+	function setIsMobile($mobile = true){ 
+		$this->mIsMobile 		= $mobile; 
+		$this->mIncImages 		= true;
+		if($this->mEnableLastmenu == true){
+			$this->mIsMobile	= false;
+		}	
+	}
 
 	function setID($id){ $this->mID	= $id; }
 	function setKeyEvent($evt){ $this->mKeyEvent = $evt; }
@@ -2086,6 +2164,8 @@ class cHMenu {
 				}
 				if($run == true){
 					$xItem		= new cHMenuItem($Clave, $rw);
+					$xItem->setIsMobile($this->mIsMobile);
+					
 					$subMenu	= "";
 					if($this->mIsMobile == false){
 						if( ($xItem->TIPO == $this->PARENT) AND ($ConHijos == true) ){
@@ -2112,6 +2192,7 @@ class cHMenu {
 		foreach ($rs as $rw){
 			$Clave		= $rw["idgeneral_menu"];
 			$xItem		= new cHMenuItem($Clave, $rw);
+			$xItem->setIsMobile($this->mIsMobile);
 			$subMenu	= "";
 			if( ($xItem->TIPO == $this->PARENT) AND ($ConHijos == true) ){
 
@@ -2133,6 +2214,8 @@ class cHMenu {
 		foreach($rs as $rw){
 			$Clave		= $rw["idgeneral_menu"];
 			$xItem		= new cHMenuItem($Clave, $rw);
+			$xItem->setIsMobile($this->mIsMobile);
+			
 			$subMenu	= "";
 			if( ($xItem->TIPO == $this->PARENT) AND ($ConHijos == true) ){
 				$subMenu	= $this->getSubChilds($Clave);
@@ -2186,5 +2269,69 @@ class cHTablaDic {
 	}
 }
 
-
+class cFormatosDelSistema {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "general_contratos";
+	private $mTipo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cGeneral_contratos();
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function getSQL_Lista($Activos=true, $tipo = 0, $subtipo = 0, $figura = "", $tag1="", $tag2=""){
+		$tipo	    = setNoMenorQueCero($tipo);
+		$subtipo    = setNoMenorQueCero($subtipo);
+		$ByActivos 	= ($Activos == true) ? " AND (`estatus`='alta') " : "";
+		$ByTipo		= ($tipo>0) ? " AND (`tipo_contrato`=$tipo) " : "";
+		$BySubtipo  = ($subtipo>0) ? " AND (`tags` LIKE '%$subtipo%' OR `tags` LIKE '%" . SYS_TODAS .  "%') " : "";
+		$sql	="SELECT * FROM `general_contratos` WHERE `idgeneral_contratos` > 0 $ByTipo $BySubtipo $ByActivos ORDER BY `titulo_del_contrato`";
+		//setLog($sql);
+		return $sql;
+	}
+}
 ?>

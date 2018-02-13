@@ -28,12 +28,13 @@ $xF				= new cFecha();
 
 $xT 			= new cTipos();
 $iddocto 		= parametro("idcuenta", DEFAULT_CUENTA_CORRIENTE);
-$recibo			= parametro("idrecibo");
+$recibo			= parametro("idrecibo",0, MQL_INT);
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $reciboIDE		= 0;
 //
 $actload 		= "";
-$Fecha			= parametro("idfecha-0", false);
-$Fecha			= ($Fecha == false) ? fechasys() : $xF->getFechaISO($Fecha);
+
+$Fecha			= $fecha;
 		
 $idsocio 		= parametro("idsocio", false, MQL_INT);//$xT->cInt($_POST["idsocio"]);
 $detalles 		= parametro("idobservaciones", "");
@@ -81,9 +82,12 @@ $xFRM->setTitle($xHP->getTitle());
 if ($action == SYS_NINGUNO) {
 	$xFRM->addCuentaCaptacionBasico(true, CAPTACION_TIPO_PLAZO);
 	$xFRM->addSubmit();
-	$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.deposito", 0, true) );
+	
+	$xFRM->addFechaRecibo();
 	$xFRM->addCobroBasico();
-	$xFRM->addHElem($xDate->get("TR.Fecha"));
+	//$xFRM->addHElem($xDate->get("TR.Fecha"));
+	$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.deposito", 0, true) );
+	
 	$xFRM->addObservaciones();
 	
 	$xFRM->addJsBasico(iDE_CAPTACION, CAPTACION_TIPO_PLAZO);

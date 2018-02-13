@@ -61,10 +61,23 @@ $xRPT->addContent($xCred->getFicha(true, "", false, true));
 $xT				= new cTabla($sql, 2);
 $xT->setFechaCorte($FechaFinal);
 $xT->setTipoSalida($out);
+
+$xT->setOmitidos("persona");
+$xT->setOmitidos("credito");
+
 $xT->setFootSum(array(
-		4 => "capital", 5 => "interes", 6 => "iva", 7 => "ahorro",
-		8 => "otros", 9 => "total", 13 => "mora",  14 => "iva_moratorio"
+		2 => "capital", 3 => "interes", 4 => "iva", 5 => "ahorro",
+		6 => "otros", 7 => "total", 11 => "mora",  12 => "iva_moratorio"
 ));
+
+if(MODULO_CAPTACION_ACTIVADO == false){
+	$xT->setFootSum(array(
+			2 => "capital", 3 => "interes", 4 => "iva",
+			5 => "otros", 6 => "total", 10 => "mora",  11 => "iva_moratorio"
+	));
+	$xT->setOmitidos("ahorro");
+}
+
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);

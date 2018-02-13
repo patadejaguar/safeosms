@@ -61,7 +61,8 @@ if($action == SYS_NINGUNO){
 			$xFRM->addHElem($xSoc->getFicha(false, true, "", false));
 			$xFRM->addHElem( $xSel->getListaDeMeses("", $idnumerodemes)->get(true) );
 			
-			$xFRM->addFecha();			
+			$xFRM->addFechaRecibo($fecha);
+			
 			$xFRM->addCobroBasico();
 			$xFRM->addObservaciones();
 			

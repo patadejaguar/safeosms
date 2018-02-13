@@ -55,7 +55,7 @@ if($clave <= 0){
 	$xTabla->clave_leasing($idleasing);
 }
 
-
+$xFRM->setNoAcordion();
 $xFRM->OHidden("idleasing_activos", $xTabla->idleasing_activos()->v());
 
 if($clave > 0 ){
@@ -71,7 +71,7 @@ if($clave > 0 ){
 			$xTabla->valor_nominal($xLeas->getVehiculoValor());
 			$xTabla->descripcion( $xLeas->getVehiculoDescripcion() );
 			$xTabla->valor_residual( $xLeas->getValorResidual() );
-			
+			$xTabla->annio( $xLeas->getVehiculoAnnio() );
 			$xTabla->valor_venta( $xLeas->getValorDeVenta() );
 		}
 	} else {
@@ -84,12 +84,18 @@ if($clave > 0 ){
 if($xTabla->credito()->v() > DEFAULT_CREDITO){
 	$xCred	= new cCredito($xTabla->credito()->v());
 	if($xCred->init() == true ){
+		$xFRM->addSeccion("idcd", "TR.CREDITO");
 		$xFRM->addHElem($xCred->getFichaMini());
+		$xFRM->endSeccion();
 	}
 }
 
 $xFRM->OHidden("persona", $xTabla->persona()->v());
 $xFRM->OHidden("credito", $xTabla->credito()->v());
+
+$xFRM->addSeccion("idcd2", "TR.ACTIVO");
+
+
 $xFRM->addHElem( $xSel->getListaDeProveedores("proveedor",$xTabla->proveedor()->v())->get(true) );
 //==== Agregar aseguradoras
 $xFRM->addHElem( $xSel->getListaDeAseguradoras("aseguradora",$xTabla->aseguradora()->v())->get(true) );
@@ -153,6 +159,9 @@ $xFRM->OText_13("serie", $xTabla->serie()->v(), "TR.SERIE");
 $xFRM->OText_13("motor", $xTabla->motor()->v(), "TR.MOTOR");
 $xFRM->OText_13("serie_nal", $xTabla->serie_nal()->v(), "TR.SERIENAL");
 
+$xFRM->OText_13("annio", $xTabla->annio()->v(), "TR.ANNIO");
+
+$xFRM->endSeccion();
 
 //$xFRM->addCRUD($xTabla->get(), true);
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);

@@ -399,7 +399,7 @@ $xHP->init();
 			WHERE saldo_actual>0 AND periocidad_de_pago=360
 			AND fecha_vencimiento<='2003-04-30' AND tipo_autorizacion=2
 			AND numero_socio=$rowc[0] AND saldo_actual=$rowc[1]";
-					my_query($sql_corr);
+					//my_query($sql_corr);
 				}
 				break;
 			case 805:
@@ -973,8 +973,8 @@ $xHP->init();
 							periodo_semanal = DATE_FORMAT(fecha_afectacion, '%w'),
 							periodo_mensual = DATE_FORMAT(fecha_afectacion, '%m')";
 				$sql = "UPDATE operaciones_mvtos SET periodo_mensual = 0, periodo_anual = 0, periodo_semanal = 0";
-				$x = my_query($sql);
-				$msg .= $x["info"];
+				//$x = my_query($sql);
+				//$msg .= $x["info"];
 				break;
 				/**
 				 * Purga Recibos Duplicados
@@ -1709,6 +1709,20 @@ $xHP->init();
 				
 				
 				
+				break;
+			case 806;
+				//806
+				
+				$sql	= "SELECT * FROM creditos_solicitud WHERE saldo_actual <= " . TOLERANCIA_SALDOS;
+				$xQL	= new MQL();
+				$rs		= $xQL->getRecordset($sql);
+				while( $rw = $rs->fetch_assoc() ){
+					$credito	= $rw["numero_solicitud"];
+					$xCred		= new cCredito($credito);
+					$xCred->init();
+					//$xCred->setDelete();
+					$msg		.= $xCred->getMessages();
+				}
 				break;
 		}
 

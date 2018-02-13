@@ -10,6 +10,8 @@
 	include_once("../core/core.html.inc.php");
 	include_once("../core/core.init.inc.php");
 	include_once("../core/core.db.inc.php");
+	include_once("../vendor/autoload.php");
+	
 	$theFile			= __FILE__;
 	$permiso			= getSIPAKALPermissions($theFile);
 	if($permiso === false){	header ("location:../404.php?i=999");	}
@@ -32,12 +34,13 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
 $recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
-$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
-$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$observaciones	= parametro("idobservaciones");
+
+$forcesync		= parametro("sync", false, MQL_BOOL);
 
 
-
-$observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
@@ -46,6 +49,7 @@ $xSel		= new cHSelect();
 
 
 $xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
 
 $xFRM->addSeccion("idasig", "TR.CREDITOSNOASIGNADOS");
 $sql		= "SELECT
@@ -72,7 +76,11 @@ WHERE
 
 
 $xT			= new cTabla($sql);
-$xT->setEventKey("jsGoPanel");
+//$xT->setEventKey("jsGoPanel");
+
+
+$xT->OButton("TR.PANEL", "jsGoPanel(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+
 $xFRM->addHElem($xT->Show());
 $xFRM->endSeccion();
 $xFRM->addSeccion("idasig", "TR.CREDITOSASIGNADOS");
@@ -100,10 +108,15 @@ WHERE
 
 
 $xT			= new cTabla($sql);
-$xT->setEventKey("jsGoPanel");
+
+//$xT->setEventKey("jsGoPanel");
+
+$xT->OButton("TR.PANEL", "jsGoPanel(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+
 $xFRM->addHElem($xT->Show());
 
 $xFRM->endSeccion();
+
 
 echo $xFRM->get();
 ?>

@@ -20,7 +20,7 @@ $xHP		= new cHPage("TR.Carga de Operaciones", HP_FORM);
 ini_set("max_execution_time", 1600);
 $DDATA		= $_REQUEST;
 
-$action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -40,7 +40,7 @@ class cTmp {
 $xEsq	= new cTmp();
 
 $ByType	= "";
-$xFRM	= new cHForm("frmops", "operaciones.upload.frm.php?action=" . SYS_UNO);
+$xFRM	= new cHForm("frmops", "operaciones.upload.frm.php?action=" . MQL_ADD);
 $xLog	= new cCoreLog();
 $xSel	= new cHSelect();
 $xBase	= new cBases(BASE_IVA_OTROS);
@@ -48,11 +48,13 @@ $xBase->init();
 
 $xFRM->setTitle($xHP->getTitle());
 $msg	= "";
-if($action == SYS_CERO){
+if($action == SYS_NINGUNO){
 	$xFRM->OHidden("MAX_FILE_SIZE", "1024000");
 	$xFRM->OFile("idarchivo","",  "TR.Archivo");
+	
 	$xFRM->addHElem($xSel->getListaDeTiposDeOperacion()->get(true));
 	$xFRM->addHElem($xSel->getListaDeTiposDeRecibos()->get(true));
+	
 	$xFRM->addCobroBasico();
 	$xFRM->OCheck("TR.ES CAPTACION", "idescapacion");
 	$xFRM->addObservaciones();
@@ -70,7 +72,10 @@ if($action == SYS_CERO){
 	$xUL->li("Columna 07.- Tipo .- Tipo de Operacion");
 	$xUL->li("Columna 08.- Integra .- Aplica en Abonos de Credito, si es letra completa");
 	
+	$xFRM->addSeccion("idhed", "TR.LAYOUT");
 	$xFRM->addHTML($xUL->get());
+	$xFRM->endSeccion();
+	
 } else {
 	$doc1				= (isset($_FILES["idarchivo"])) ? $_FILES["idarchivo"] : false;
 	$observaciones		= parametro("idobservaciones", "");
@@ -80,9 +85,9 @@ if($action == SYS_CERO){
 	$tipodepago			= parametro("idtipo_pago", SYS_NINGUNO, MQL_RAW);
 	$escaptacion		= parametro("idescaptacion", false, MQL_BOOL);
 	
-	$cheque 		= parametro("cheque", DEFAULT_CHEQUE);
-	$comopago 		= parametro("ctipo_pago", DEFAULT_TIPO_PAGO, MQL_RAW);
-	$foliofiscal 	= parametro("foliofiscal", DEFAULT_RECIBO_FISCAL);
+	$cheque 			= parametro("cheque", DEFAULT_CHEQUE);
+	$comopago 			= parametro("ctipo_pago", DEFAULT_TIPO_PAGO, MQL_RAW);
+	$foliofiscal 		= parametro("foliofiscal", DEFAULT_RECIBO_FISCAL);
 	
 	$detalles			= $observaciones;
 	
@@ -118,7 +123,7 @@ if($action == SYS_CERO){
 					$parcialidad		= (isset($arrPagos[$credito])) ? $arrPagos[$credito] + 1 : 1;		//Propio
 					$parcialidad		= ($MPeriodo > 0) ? $MPeriodo : $parcialidad;
 					//setLog("$fecha");
-					$idrecibo			= $xRec->setNuevoRecibo($persona, $credito, $fecha, $parcialidad, $tipoderecibo, $notas, "", TESORERIA_COBRO_EFECTIVO );
+					$idrecibo			= $xRec->setNuevoRecibo($persona, $credito, $fecha, $parcialidad, $tipoderecibo, $notas, "", $comopago );
 					$arrPagos[$credito] = $parcialidad;													//Propio
 					//================= = INTEGRADO DE CAPITAL Y OPERACIONES
 					
@@ -250,6 +255,27 @@ if($action == SYS_CERO){
 									if($ParcCap > 0){
 										$xCred->setAbonoCapital($ParcCap, $ParcPer, $cheque, $comopago, $foliofiscal, $detalles, false, $fecha, $idrecibo);
 									}
+									if($xCred->getEsNomina() == true){
+										$MontoOp		= $ParcTotal;
+										$solicitud		= $xCred->getClaveDeCredito();
+										$recibo_pago	= $xRec->getCodigoDeRecibo();
+										$fecha_operacion= $fecha;
+										
+										//$xPerNom	= new cCreditosDeNomina($xCred->getClaveDeCredito());
+										if($xCred->getClaveDeEmpresa() != FALLBACK_CLAVE_EMPRESA){
+											$xCobDet		= new cEmpresasCobranzaDetalle(false, false);
+											$xCobDet->initByCreditoID($xCred->getClaveDeCredito(), $ParcPer);
+											if($MontoOp >= $xCobDet->getMontoEnviado()){
+												$xCobDet->setPagado("[$recibo_pago] $observaciones [$fecha_operacion]", $recibo_pago);
+												$xLog->add("WARN\tEliminar Operacion de Empresa $solicitud, $ParcPer, $recibo_pago [$fecha_operacion] \r\n", $xLog->DEVELOPER);
+											} else {
+												$mMontoActualLetra	= ($xCobDet->getMontoEnviado()-$MontoOp);
+												$xCobDet->setActualizarMontoEnviado($mMontoActualLetra, "[$recibo_pago] $observaciones [$fecha_operacion]", $recibo_pago);
+												$xLog->add("WARN\tNo se actualiza Operacion de Empresa $solicitud - $ParcPer - $recibo_pago [$fecha_operacion] \r\n", $xLog->DEVELOPER);
+											}
+											
+										}
+									}
 									$xLog->getMessages($xLetra->getMessages(), $xLog->DEVELOPER);
 								}								
 							} else {
@@ -266,7 +292,10 @@ if($action == SYS_CERO){
 					$xLog->add($xCred->getMessages(), $xLog->DEVELOPER);
 					$xLog->add($xRec->getMessages());
 				}
-			} //Sin Credito
+			} else {
+				//Sentencia de Captacion
+			} 
+			//No es Credito
 			$linea++;
 		}
 	}

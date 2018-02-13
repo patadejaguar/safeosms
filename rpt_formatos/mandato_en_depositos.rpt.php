@@ -18,6 +18,8 @@ include_once("../core/core.fechas.inc.php");
 include_once("../libs/sql.inc.php");
 include_once("../core/core.config.inc.php");
 
+$xQL		= new MQL();
+
 $cuenta = parametro("i", DEFAULT_CUENTA_CORRIENTE, MQL_INT);
 $cuenta = parametro("cuenta", $cuenta, MQL_INT);
 
@@ -101,8 +103,8 @@ $saldo							= $datos_de_la_cuenta["saldo_cuenta"];
 	 */
 	$beneficiados 			= "";
 	$sql_beneficiados 		= "SELECT * FROM socios_relaciones WHERE tipo_relacion=11 AND socio_relacionado=$idsocio AND credito_relacionado = $cuenta LIMIT 0,100";
-	$rs_beneficiados 		= mysql_query($sql_beneficiados);
-	while ($row_beneficiado = mysql_fetch_array($rs_beneficiados)) {
+	$rs 		= $xQL->getRecordset($sql_beneficiados);
+	while ($row_beneficiado = $rs->fetch_row() ) {
 		$beneficiados 		= $beneficiados . "<li>$row_beneficiado[6] $row_beneficiado[7] $row_beneficiado[5]</li> ";
 	}
 	$variable_lista_beneficiados = "<ol>

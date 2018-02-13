@@ -20,7 +20,7 @@ $formato		= parametro("forma", 1903, MQL_INT);
 
 //$xHP->setNoDefaultCSS();
 $xHP->addCSS("../css/contrato.css.php");
-echo $xHP->init();
+
 
 	
 	
@@ -35,6 +35,8 @@ echo $xHP->init();
 	$xForma->setCredito($idsolicitud, $DCred);
 	$xForma->setProcesarVars();
 	
+	echo $xHP->init();
 	echo $xForma->get();
 	$xHP->fin();
+	
 ?>

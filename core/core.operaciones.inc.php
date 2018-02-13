@@ -671,11 +671,13 @@ class cReciboDeOperacion{
 				
 			
 			if($xAml->getEsPersonaOmitida() == true){
-				$xLog->add("OK\tLa Persona esta en Lista de Omitidos", $xLog->DEVELOPER);
+				$xLog->add("OK\tLa Persona esta en Lista de Omitidos. No se vigila perfil transaccional u Operaciones por Nucleo.\r\n");
 			} else {
 				//Operaciones Internas Preocupantes por Usuario
 				$xAml->setAnalizarTransaccionalidadPorNucleo($this->mCodigoDeRecibo, $this->mFechaDeOperacion, $this->mUsuario, true);
+				
 				$xAml->setVerificarPerfilTransaccional(false, true);
+				
 				//Analizar Riesgo de Producto
 
 					
@@ -703,7 +705,7 @@ class cReciboDeOperacion{
 				if($riesgo >= SYS_RIESGO_MEDIO){
 					if($xMat->initByTopico($xMat->O_RIESGO_PDTO) == true){
 						$idriesgo	= $xMat->getTipoRiesgo();
-						$xLog->add("REPORTE\tLa operacion en el Recibo ". $this->mCodigoDeRecibo . " se Reportar por Riesgo Medio o Mayor");
+						$xLog->add("REPORTE\tLa operacion en el Recibo ". $this->mCodigoDeRecibo . " se Reportar por Riesgo Medio o Mayor.\r\n");
 						$xAv->setForceRegistroRiesgo();
 						$xAv->sendAlerts($this->mSocio, getOficialAML(), $idriesgo, $xLog->getMessages(), $this->mCodigoDeRecibo, $this->getFechaDeRecibo());
 					}
@@ -713,6 +715,8 @@ class cReciboDeOperacion{
 			$xLog->add($xAml->getMessages(OUT_TXT), $xLog->DEVELOPER);
 		}
 		$this->mMessages		.= $xLog->getMessages();
+		
+		
 		return $finalizado;
 	}
 	/**
@@ -1053,6 +1057,10 @@ class cReciboDeOperacion{
 		return $datos;
 	}
 	function setDefaultEstatusOperacion($estatus = 30){ $this->mDefMvtoStatus	= $estatus; }
+	/**
+	 * 
+	 * @param array $arrParams @example array("cheque" => "", "cuenta" => "", SYS_MONTO => 0 )
+	 */
 	function setFinalizarTesoreria($arrParams = array()){
 		$ocaja	= $this->getOCaja();
 		if($ocaja != null){

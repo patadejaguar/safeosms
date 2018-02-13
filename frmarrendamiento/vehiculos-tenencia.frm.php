@@ -50,6 +50,7 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivvehiculostenencia",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT   `vehiculos_tenencia`.`idvehiculos_tenencia` AS `clave`,
          `general_estados`.`nombre` AS `entidadfederativa`,

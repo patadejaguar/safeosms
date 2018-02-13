@@ -70,6 +70,7 @@ $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 
 $xHG	= new cHGrid("idlistausuarios", $xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL($xLi->getListadoDeLeasingUsuarios($originador, $suborigen));
 $xHG->addList();

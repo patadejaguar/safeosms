@@ -47,6 +47,7 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivgps",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT * FROM `vehiculos_gps` LIMIT 0,100");
 $xHG->addList();

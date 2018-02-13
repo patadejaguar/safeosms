@@ -50,6 +50,10 @@ include_once("../core/core.html.inc.php");
 	$xLog		= new cFileLog($aliasFil);
 	$xQL		= new MQL();
 	$xRec		= new cReciboDeOperacion(12);
+	$xRuls		= new cReglaDeNegocio();
+	$PurgarSDPM	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAG_PURGE_DSPM);
+	
+	
 	$xRec->setGenerarPoliza();
 	$xRec->setForceUpdateSaldos();
 	$idrecibo	= $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO,$fechaop, 1, 12, "CIERRE_DE_COLOCACION_$fechaop", DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA, 
@@ -71,8 +75,9 @@ include_once("../core/core.html.inc.php");
 	$messages 		.= $xDB->setLowerSucursal();
 	$xQL->setRawQuery("SET @fecha_de_corte='$fechaop';");
 	//reconstruir db de pagos
-	
-	$xQL->setRawQuery("CALL `proc_crear_id_opempresas` ");			//Crea ID unico de operacion con empresas
+	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+		$xQL->setRawQuery("CALL `proc_crear_id_opempresas` ");			//Crea ID unico de operacion con empresas
+	}
 	$xQL->setRawQuery("CALL `proc_historial_de_pagos` ");
 	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`()");
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`()");		//una vez por mes
@@ -80,6 +85,10 @@ include_once("../core/core.html.inc.php");
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_totales`()");		//Abonos totales en tmp
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_parciales`()");	//Abonos mes y tipo columna
 	$xQL->setRawQuery("CALL `proc_creds_prox_letras`()");			//Abonos mes y tipo columna
+	
+	if($PurgarSDPM == true){
+		$xQL->setRawQuery("CALL `proc_purge_sdpm` ");
+	}
 	
 	$xCUtils		= new cUtileriasParaCreditos();
 	
@@ -102,6 +111,7 @@ include_once("../core/core.html.inc.php");
 		$messages		.= $xCUtils->setRegenerarInteresDevengado(false, $xF->get(), $xF->get() );
 		//Purgar error
 		$xQL->setRawQuery("DELETE FROM operaciones_mvtos WHERE tipo_operacion=420 AND (SELECT COUNT(*) FROM creditos_solicitud WHERE numero_solicitud = operaciones_mvtos.docto_afectado AND estatus_actual >= 98) > 0 ");
+		
 		$messages 		.= "=========================\tACUMULAR INTERESES\r\n";
 		$messages			.= $xCUtils->setAcumularIntereses(false); //var primero
 		$messages 		.= "=========================\tACUMULAR MORA DE PARCIALIDADES\r\n";

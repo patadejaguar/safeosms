@@ -28,6 +28,7 @@ $jsTabs		= "";
 $idempresa	= 0;
 $oficial 	= elusuario($iduser);
 $idsocio 	= parametro("idsocio", false, MQL_INT); $idsocio 	= parametro("persona", $idsocio, MQL_INT); $idsocio 	= parametro("socio", $idsocio, MQL_INT);
+$nuevo		= parametro("nuevo", false, MQL_INT);	//Indica si viene de un registro nuevo
 $xJsB		= new jsBasicForm("extrasocios");
 
 function jsaReVivienda($idsocio){
@@ -369,51 +370,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 //================= Empresa con Convenio
 	if($xSoc->getEsEmpresaConConvenio(true) == true){
-		/*$xT2		= new cHTabs("idcomoempresa");
-		$idempresa	= $xSoc->getOEmpresa()->getClaveDeEmpresa();
-		$xFRM->addEmpresaComandos($idempresa);
 
-		$xTCreds	= new cTabla($xLi->getListadoDeCreditos(false, false, false, false, " AND (`creditos_solicitud`.`persona_asociada` = $idempresa) ", false), 2 );
-		$xTPers		= new cTabla($xLi->getListadoDeSocios(" (`socios_general`.`dependencia` = $idempresa)  ") );
-		$xTAhorro	= new cTabla($xLi->getListadoDeIncidenciasAhorro($idempresa));
-		//========================== Tabla de periodos para empresas
-		$xTPeriodo	= new cTabla($xLi->getListadoDePeriodoPorEmpresa($idempresa) );
-		$xTPeriodo->setTdClassByType();
-		
-		$xTPeriodo->setEventKey("var xG = new EmpGen(); xG.getOrdenDeCobranza");
-		$xTPeriodo->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
-		$xTPeriodo->addEditar(USUARIO_TIPO_CAJERO);
-		
-		$xTCreds->setTdClassByType(); $xTPers->setTdClassByType(); $xTAhorro->setTdClassByType();
-		$xTPers->setWidthTool("200px");
-		if(MODULO_CAPTACION_ACTIVADO == true){
-			$xModAhorro	= "\$xS=new cSocio(_REPLACE_ID_,true);PHP::\"<input value='\" . \$xS->getAhorroPreferente() . \"' type='number' id='id_REPLACE_ID_' onchange='jsModificarAhorro(this,_REPLACE_ID_)' />\";";
-			$xTPers->addEspTool($xModAhorro);
-		}
-		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-			$xT2->addTab("TR.Empleados", $xTPers->Show());
-			$xTCreds->setFootSum(array(8 => "saldo"));
-			$xT2->addTab("TR.Creditos por empresa", $xTCreds->Show());
-			if(MODULO_CAPTACION_ACTIVADO == true){
-				//Ahorro por Empresa
-				$xT2->addTab("TR.Ahorro por empresa", $xTAhorro->Show());
-			}
-			$xT2->addTab("TR.Periodos de Empresa", $xTPeriodo->Show());
-		}
-		//$xHTabs->addTab("TR.empresa $idempresa", $xT2->get() ); //tab4
-		//== reporte de pagos
-		$xT		= new cTabla($xLi->getListadoDePresupuestoPorPagar($idsocio));
-		$xT->setFootSum(array(
-				10 => "monto_de_cheque"
-		));
-		$xT2->addTab("TR.Pagos Pendientes", $xT->Show());
-		$xHTabs->addTab("TR.empresa $idempresa", $xT2->get() ); //tab4
-				
-		$xFRM->OButton("TR.Cedula de Ahorro", "jsGetCedulaDeAhorro()", "deposito");
-		$xFRM->OButton("TR.Orden de Ahorro", "jsGetEmpresaCaptacion()", $xFRM->ic()->TAREA);
-		$xFRM->OButton("TR.Excel de Ahorro", "jsCedulaAhorroExcel()", $xFRM->ic()->EXCEL);
-		$xFRM->OButton("TR.Actualizar Empresa", "jsaActualizarEmpresa()", $xFRM->ic()->EJECUTAR);
-		$xFRM->OHidden("idempresa", $idempresa);*/
 	}
 	if($xSoc->getEsSucursal() == true){
 		$xFRM->OButton("TR.Actualizar Sucursal", "jsaActualizarSucursal()", $xFRM->ic()->EJECUTAR);
@@ -426,6 +383,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 			$xFRM->OButton("TR.Actualizar password", "jsActualizarPassword($idsocio)", $xFRM->ic()->PASSWORD);
 		}
 	}
+
 	//Agregar convenios
 	$InfoCreds			= "";
 	$xTListaCreds		= new cTabla($xLi->getListadoDeCreditos($idsocio), 2);
@@ -500,9 +458,6 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		} else {
 			$xFRM->OButton("TR.CAMBIAR A PERSONA_MORAL", "jsaCambiarFiguraJuridica()", $xFRM->ic()->EXPORTAR, "", "red" );
 		}
-		
-		
-		
 	}
 	
 	if((MODO_CORRECION == true OR MODO_MIGRACION == true OR MODO_DEBUG == true) OR (getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_GERENTE) ){
@@ -534,7 +489,11 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	//====================================== Datos extranjero
 	if($xSoc->getEsExtranjero() == true){
-		$xFRM->OButton("TR.DATOS_EXTRANJEROS", "var xG=new PersGen();xG.setFormaDatosExt($idsocio)", $xFRM->ic()->GRUPO);
+		$xFRM->OButton("TR.DATOS_EXTRANJEROS", "var xP=new PersGen();xP.setFormaDatosExt($idsocio)", $xFRM->ic()->GRUPO);
+		if($xSoc->getNacionalidad() == ""){
+			$xFRM->addJsInit("jsRequiereDatosExtranjero($idsocio);");
+			//$xFRM->addJsInit("");
+		}
 	}
 	$xDiv2->addHElem($xFRM10->get());
 	//===================================== Recibos de Otros Ingresos
@@ -594,7 +553,12 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	//===================================== Cotizaciones
 	
-	//=====================================
+	//===================================== Registro Nuevo
+	if($nuevo == true){
+		
+	}
+	
+	//===================================== 
 	$xFRM->addHTML($xHTabs->get());
 	$xFRM->addHTML($xDiv2->get());
 	
@@ -604,6 +568,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM->addAviso($xLog->getMessages(), "idavisos");
 	
 	$xFRM->addJsInit("initComponents();");
+	$xFRM->addCerrar();
 
 	echo $xFRM->get();
 }
@@ -754,7 +719,15 @@ function jsActualizarPassword(){
 	var xrl		= "../frmsocios/socios.usuario.frm.php?persona=" + mSocio;
 	xG.w({ url: xrl, tiny : true }); 	
 }
-
+function jsRequiereDatosExtranjero(id){
+	xG.requiere({
+		callback: function(){ 
+			var xP=new PersGen();
+			xP.setFormaDatosExt(id);
+		},
+		msg : 'PERSONA_FALTA_DEXTRA'
+	});
+}
 </script>
 <?php
 echo $xJsB->get();

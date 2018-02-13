@@ -18,9 +18,12 @@
 $xHP		= new cHPage("TR.CARGA DE DOCUMENTO", HP_FORM);
 $xDoc		= new cDocumentos();
 $xF			= new cFecha();
+$xLi		= new cSQLListas();
+
 $DDATA		= $_REQUEST;
 $persona	= ( isset($DDATA["persona"]) ) ? $DDATA["persona"] : DEFAULT_SOCIO;
 $action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
+$idcontrato	= parametro("idcontrato", 0, MQL_INT);
 
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
@@ -68,6 +71,11 @@ if($action == SYS_CERO){
 	$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE EMISION");
 	$xFRM->OText_13("idnumeropagina", 0, "TR.Numero de Documento");
 	
+	$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
+	$xSelCP->addEspOption("0", "NINGUNO");
+	
+	$xFRM->addHElem($xSelCP->get(true));
+	
 	//$xFRM->ODate("idfechavencimiento", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
 	$xFRM->addObservaciones();
 	$xFRM->addGuardar();
@@ -88,7 +96,7 @@ if($action == SYS_CERO){
 	$xSoc		= new cSocio($persona);
 	if($xSoc->init() == true){
 	//if($doc1 !== false){
-		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $nombrearchivo, $pagina, $observaciones, $fechacarga, $archivonuevo, $fechavenc);
+		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $nombrearchivo, $pagina, $observaciones, $fechacarga, $archivonuevo, $fechavenc, $idcontrato);
 		if($ready == true){
 			$xFRM->addAvisoRegistroOK($xSoc->getMessages());
 		} else {

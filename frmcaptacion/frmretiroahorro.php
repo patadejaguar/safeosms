@@ -21,6 +21,8 @@ $iddocto 	= parametro("idcuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT);
 $monto 		= parametro("idmonto", 0, MQL_FLOAT);
 $idsocio 	= parametro("idsocio", DEFAULT_SOCIO, MQL_INT);
 $recibo		= parametro("idrecibo", 0, MQL_INT); $recibo		= parametro("r", $recibo, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+
 $msg		= "";
 $jxc 		= new TinyAjax();
 
@@ -65,11 +67,18 @@ if($com == SYS_NINGUNO){
 	
 	
 	$xFRM->addCuentaCaptacionBasico();
+	
+	
+	//$xFRM->addHElem($xDate->get("TR.Fecha"));
+	$xFRM->addFechaRecibo();
+	
 	$xFRM->addPagoBasico();
-	$xFRM->addHElem($xDate->get("TR.Fecha"));
+
+	$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.Monto de Retiro", 0, true) );
+	
 	$xFRM->addObservaciones();
 	
-	$xFRM->addHElem( $xTxt->getDeMoneda("idmonto", "TR.Monto de Retiro", 0, true) );
+	
 	
 	$xFRM->addFootElement("<input type='hidden' name='cMaxRet' id='idMaxRet' value='0'  />");
 	$xFRM->addFootElement("<input type='hidden' name='sdoanterior' id='idSaldoAnterior' value='0' />");
@@ -89,8 +98,8 @@ $jxc ->drawJavaScript(false, true);
 		$sucess			= false;
 	} else {
 
-	$Fecha				= parametro("idfecha-0", false);
-	$Fecha				= ($Fecha == false) ? fechasys() : $xF->getFechaISO($Fecha);
+
+	$Fecha				= $fecha;
 		
 	$detalles 			= parametro("idobservaciones");
 	$cheque 			= parametro("cheque", DEFAULT_CHEQUE);

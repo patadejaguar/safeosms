@@ -16,10 +16,12 @@ $xHP			= new cHPage("TR.CARTA_FINIQUITO", HP_REPORT);
 
 $idsolicitud 	= parametro("i", DEFAULT_CREDITO, MQL_INT); $idsolicitud = parametro("credito", $idsolicitud, MQL_INT); $idsolicitud = parametro("solicitud", $idsolicitud, MQL_INT);
 $formato		= parametro("forma", 101, MQL_INT);
+$senders		= getEmails($_REQUEST);
+$out 			= parametro("out", SYS_DEFAULT); $out = strtolower($out);
 
 //$xHP->setNoDefaultCSS();
 $xHP->addCSS("../css/contrato.css.php");
-echo $xHP->init();
+
 
 	
 	
@@ -31,9 +33,12 @@ echo $xHP->init();
 	$numero_de_socio	= $xCred->getClaveDePersona();
 
 	$xForma						= new cFormato($formato);
+	$xForma->setOut($out);
 	$xForma->setCredito($idsolicitud, $DCred);
 	$xForma->setProcesarVars();
-	
+
+	$xForma->render($xHP->init("", true), $xHP->fin(true));
+	/*echo $xHP->init();
 	echo $xForma->get();
-	$xHP->fin();
+	$xHP->fin();*/
 ?>

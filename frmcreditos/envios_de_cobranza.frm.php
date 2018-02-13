@@ -116,23 +116,60 @@ function jsaGetDatosDelEnvio($idEmpresa, $periocidad, $variacion, $periodo){
 function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion, $fechaInicial){
 	$xEmp		= new cEmpresas($idEmpresa);
 	$xF			= new cFecha(0, $fechaInicial);
-	$periodo	= ($periocidad == CREDITO_TIPO_PERIOCIDAD_SEMANAL) ? $xF->semana() : $xF->quincena();
-	$dias		= 24*60;
-	$observaciones	= "";
+	$xRuls		= new cReglaDeNegocio();
+	$xQL		= new MQL();
+	$anno		= $xF->anno($fechaInicial);
+	
 	$xEmp->init();
-	$fecha		= strtotime(fechasys()) + (($variacion * $periocidad) * $dias);
-	$ctrl		= "<label for=\"idperiodo\">Periodo $periodo</label><input type=\"number\" id=\"idperiodo\" onchange=\"jsInitPeriodo()\" onblur=\"jsInitPeriodo()\" />";
+	
+	//
+	$periodo	= setNoMenorQueCero($xEmp->getPeriodo());
+	if($periodo <= 0){
+		$periodo	= ($periocidad == CREDITO_TIPO_PERIOCIDAD_SEMANAL) ? $xF->semana() : $xF->quincena();
+	}
+	$periodo		= $periodo + 1;
+	
+	$dias			= 24*60;
+	$observaciones	= "";
+	$fecha			= strtotime(fechasys()) + (($variacion * $periocidad) * $dias);
+	$ctrl			= "<label for=\"idperiodo\">Periodo $periodo</label><input type=\"number\" id=\"idperiodo\" onchange=\"jsInitPeriodo()\" onblur=\"jsInitPeriodo()\" />";
+	
 	//$xF			= new cFecha(0);
 	//$observaciones	.= " -- $periodo";
-	$xEmp		= new cEmpresas($idEmpresa); $xEmp->init();
-	$periodo	= ( intval($xEmp->getPeriodo()) < 1 ) ? $periodo : intval($xEmp->getPeriodo());
-	$periodo	= $periodo + 1;
+	//$xEmp		= new cEmpresas($idEmpresa); $xEmp->init();
+	
+
+	
+	
+	
 	$xSel		= null;
+	$sql		= "SELECT   `empresas_operaciones`.`periodo_marcado`,
+         	CONCAT(`empresas_operaciones`.`idempresas_operaciones`, '-',getFechaMX(`empresas_operaciones`.`fecha_de_operacion`),'-',`empresas_operaciones`.`monto`) AS `descripcion`
+			FROM     `empresas_operaciones`
+			WHERE    ( `empresas_operaciones`.`fecha_final` >='$anno-01-01' ) AND ( `empresas_operaciones`.`tipo_de_operacion` = 1 ) AND ( `empresas_operaciones`.`periocidad` = $periocidad ) AND ( `empresas_operaciones`.`clave_de_empresa` = $idEmpresa )";
+	
+	$aEnviados	= $xQL->getArrayRecord($sql);
+	
 	
 	switch($periocidad){
 	    case CREDITO_TIPO_PERIOCIDAD_SEMANAL:
-			$xSel	= $xF->getSelectSemanas("idperiodo", $periodo);
+	    	$xSel	= $xF->getSelectSemanas("idperiodo", $periodo);
+			//Capturar periodos enviados
+	    	foreach ($aEnviados as $idpp => $titpp){
+	    		$pt	= $xSel->getTitleOption($idpp);
+	    		$xSel->setChangeOption($idpp,  $titpp . "_" . $pt);
+	    	}
+			
+	    	
+			$EspSem	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_NOM_EXT_SEMANA);
 			if($xF->mes($fechaInicial) == 12){
+				$arrOptEsp			= array();
+				//================== 
+				foreach ($EspSem as $idx => $sem){
+					$arrOptEsp[$sem] = "SEMANA EXTRA .- $sem";
+				}
+				$xSel->addOptions($arrOptEsp);
+				//setLog($arrOptEsp);
 				//setLog("DICIEMBRE");
 				$anno	= $xF->anno()+1;
 				$xSel->setDelOption(1);
@@ -146,11 +183,41 @@ function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion, $fechaInicial){
 						"4" => "SEMANA  4.- $anno"
 				);
 				$xSel->addOptions($arrOpt);
+				
+			}
+			if($xF->mes($fechaInicial) == 1){
+				$anno	= $xF->anno()-1;
+				$xSel->setDelOption(49);
+				$xSel->setDelOption(50);
+				$xSel->setDelOption(51);
+				$xSel->setDelOption(52);
+				$xSel->setDelOption(53);
+				$arrOpt	= array(
+						"49" => "SEMANA 49 .- $anno",
+						"50" => "SEMANA 50 .- $anno",
+						"51" => "SEMANA 51 .- $anno",
+						"52" => "SEMANA 52 .- $anno",
+						"53" => "SEMANA 53 .- $anno"
+				);
+				$xSel->addOptions($arrOpt);
 			}
 		break;
 	    case CREDITO_TIPO_PERIOCIDAD_QUINCENAL:
-			$xSel	= $xF->getSelectQuincenas("idperiodo", $periodo);
+			$xSel		= $xF->getSelectQuincenas("idperiodo", $periodo);
+			//Capturar periodos enviados
+			foreach ($aEnviados as $idpp => $titpp){
+				$pt	= $xSel->getTitleOption($idpp);
+				$xSel->setChangeOption($idpp,  $titpp . "_" . $pt);
+			}
+			
+			$EspQuin	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_NOM_EXT_QNA);
 			if($xF->mes($fechaInicial) == 12){
+				$arrOptEsp	= array();
+				//==================
+				foreach ($EspQuin as $idx => $quin){
+					$arrOptEsp[$quin] = "QUINCENA EXTRA .- $quin";
+				}
+				$xSel->addOptions($arrOptEsp);
 				//setLog("DICIEMBRE");
 				$anno	= $xF->anno()+1;
 				$xSel->setDelOption(1);
@@ -172,7 +239,7 @@ function jsaGetDatosEmpresa($idEmpresa, $periocidad, $variacion, $fechaInicial){
 	    	$xSel	= $xF->getSelectDeMeses("idperiodo", "idperiodo", $periodo);
 	    	break;
 	}
-	if($xSel != null){		
+	if($xSel !== null){		
 		$xSel->setEnclose(false);
 		$xSel->addEvent("jsInitPeriodo()", "onblur");
 		$xSel->addEvent("jsInitPeriodo()", "onchange");
@@ -249,10 +316,16 @@ $xFRM->OButton("TR.Ver en PDF", "getReporteEnPDF()", $xFRM->ic()->PDF, "idverrep
 
 
 
-$xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
+//$xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
+$xFRM->OHidden("idsumacbza", 0);
 
 $xSemp		= $xSel->getListaDeEmpresasConCreditosActivos("", true);
 $xSPer		= $xSel->getListaDePeriocidadDePago("", $frecuencia);
+
+if($empresa > 0){
+	$xSPer		= $xSel->getListaDePeriocidadDePago("", $frecuencia, $empresa);
+}
+
 
 $xSemp->addEvent("onblur", "jsResetCbza();jsCargarDatosIniciales();");
 
@@ -271,8 +344,10 @@ if($empresa>0){
 
 
 
-$xSPer->addEvent("onblur", "jsaGetDatosEmpresa()");
-$xSPer->addEvent("onchange", "jsaGetDatosEmpresa()");
+$xSPer->addEvent("onblur", "jsGetDatosEmpresa()");
+//$xSPer->addEvent("onchange", "jsaGetDatosEmpresa()");
+
+$xFRM->addSeccion("idx1", "TR.DATOS");
 $xFRM->addHElem( $xSPer->get(true));
 
 
@@ -293,8 +368,11 @@ $xFRM->addHElem( $HFecha->get("TR.Fecha de Cobro", false, 12) );
 $xFRM->addHTML('<input type="hidden" id="idnomina" name="idnomina" value="0">');
 $xFRM->addObservaciones();
 $xDiv		= new cHDiv();
-
+$xFRM->endSeccion();
+$xFRM->addSeccion("idx2", "TR.COBRANZA");
 $xFRM->addHTML('<hr id="divavisos" /><div id="reports"></div><input type="hidden" id="idcredito" /><div id="cbzafutura"></div>');
+$xFRM->endSeccion();
+
 $xFRM->addAviso("", "idmsg");
 echo $xFRM->get();
 ?>
@@ -360,7 +438,12 @@ function jsInitPeriodoGaia(){
 		jsInitPeriodo();
 	}
 }
-
+//inicializa datos de la empresa
+function jsGetDatosEmpresa(){
+	jsaGetDatosEmpresa();
+	//if($("").length
+	$("#reports").empty();
+}
 function jsInitPeriodo(){
 	jsaInitPeriodo();
 }

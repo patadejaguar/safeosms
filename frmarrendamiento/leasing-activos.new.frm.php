@@ -55,13 +55,14 @@ if($clave <= 0){
 	$xTabla->clave_leasing($idleasing);
 }
 
-
+$xFRM->setNoAcordion();
 $xFRM->OHidden("idleasing_activos", $xTabla->idleasing_activos()->v());
 
 if($clave > 0 ){
 
 	
 } else {
+	
 	if($idleasing > 0){
 		$xLeas	= new cCreditosLeasing($idleasing);
 		if($xLeas->init() == true){
@@ -71,13 +72,12 @@ if($clave > 0 ){
 			$xTabla->valor_nominal($xLeas->getVehiculoValor());
 			$xTabla->descripcion( $xLeas->getVehiculoDescripcion() );
 			$xTabla->valor_residual( $xLeas->getValorResidual() );
-			
+			$xTabla->annio( $xLeas->getVehiculoAnnio() );
 			$xTabla->valor_venta( $xLeas->getValorDeVenta() );
 			
 		}
 	} else {
-		
-		
+
 		$xFRM->addCreditBasico($xTabla->credito()->v(), $xTabla->persona()->v());
 
 	}
@@ -85,9 +85,16 @@ if($clave > 0 ){
 if($xTabla->credito()->v() > DEFAULT_CREDITO){
 	$xCred	= new cCredito($xTabla->credito()->v());
 	if($xCred->init() == true ){
+		$xFRM->addSeccion("idcd", "TR.CREDITO");
 		$xFRM->addHElem($xCred->getFichaMini());
+		$xFRM->endSeccion();
 	}
 }
+
+
+$xFRM->addSeccion("idcd2", "TR.ACTIVO");
+
+
 
 $xFRM->OHidden("persona", $xTabla->persona()->v());
 $xFRM->OHidden("credito", $xTabla->credito()->v());
@@ -152,6 +159,10 @@ $xFRM->OText("color", $xTabla->color()->v(), "TR.COLOR");
 $xFRM->OText_13("serie", $xTabla->serie()->v(), "TR.SERIE");
 $xFRM->OText_13("motor", $xTabla->motor()->v(), "TR.MOTOR");
 $xFRM->OText_13("serie_nal", $xTabla->serie_nal()->v(), "TR.SERIENAL");
+
+$xFRM->OText_13("annio", $xTabla->annio()->v(), "TR.ANNIO");
+
+$xFRM->endSeccion();
 
 $xFRM->addCRUD($xTabla->get(), true);
 //$xFRM->addCRUDSave($xTabla->get(), $clave, true);

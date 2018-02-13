@@ -20,10 +20,12 @@ $xL				= new cSQLListas();
 	
 $empresa		= (isset($_GET["r"])) ? $_GET["r"] :  0;
 $periocidad		= (isset($_GET["p"])) ? $_GET["p"] :  SYS_TODAS;
-
 $variacion		= (isset($_GET["v"])) ? $_GET["v"] :  0;
-$out			= parametro("out", OUT_HTML);
-$periodo		= (isset($_GET["periodo"])) ? $_GET["periodo"] :  0;
+
+
+$out			= parametro("out", OUT_HTML, MQL_RAW);
+$periodo		= parametro("periodo",0, MQL_INT);
+
 
 $fechaInicial	= parametro("on", false);
 $fechaFinal		= parametro("off", false);
@@ -105,16 +107,21 @@ $xRPT->setResponse();
      //$xT->getFieldsSum()
      $xRPT->addContent( $xT->Show() );
      //=================== Agregar Pie de Formato ================
-     $xFMT			= new cFormato();
-     //$xFMT->setOut($out);
-     $xFMT->init($xFMT->FMT_NOMINA_ENVP);
      
-     $xFMT->setEmpresaPeriodo($empresa, $idnomina);
-     $xFMT->setProcesarVars();
-
-     $xRPT->addContent( "<hr />" );
-     $xRPT->addContent( $xFMT->get() );
      
+     if($out == OUT_EXCEL){
+     	
+     } else {
+	     $xFMT			= new cFormato();
+	     //$xFMT->setOut($out);
+	     $xFMT->init($xFMT->FMT_NOMINA_ENVP);
+	     
+	     $xFMT->setEmpresaPeriodo($empresa, $idnomina);
+	     $xFMT->setProcesarVars();
+	
+	     $xRPT->addContent( "<hr />" );
+	     $xRPT->addContent( $xFMT->get() );
+     }
      //===========================================================
     echo  $xRPT->render(true);
 

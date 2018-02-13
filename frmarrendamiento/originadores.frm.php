@@ -46,6 +46,7 @@ $xFRM->addCerrar();
 
 
 $xHG	= new cHGrid("idlistaoriginadores", $xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT
 	`leasing_originadores`.`idleasing_originadores` AS `clave`,
@@ -59,15 +60,21 @@ $xHG->addList();
 $xHG->addKey("idleasing_originadores");
 $xHG->col("clave", "TR.CLAVE", "10%");
 //$xHG->col("tipo", "TR.TIPO", "10%");
-$xHG->col("nombre", "TR.NOMBRE", "50%");
-$xHG->col("comision", "TR.COMISION", "15%");
+$xHG->col("nombre", "TR.NOMBRE", "45%");
+$xHG->col("comision", "TR.COMISION", "10%");
 
 $xHG->col("meta", "TR.META", "15%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->setSizeIcon("6%");
+
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+$xHG->OButton("TR.AGREGAR USUARIO", "jsAddNewUser('+ data.record.clave +')", "create-group-button.png");
+
 $xFRM->addHElem("<div id='idlistaoriginadores'></div>");
+
+
 $xFRM->addJsCode( $xHG->getJs(true) );
 
 
@@ -83,6 +90,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	//xG.w({url:"../frmarrendamiento/originadores.edit.frm.php?clave=" + id, tiny:true, callback: jsLGidlistaoriginadores});
+}
+function jsAddNewUser(id){
+	xG.w({url:"../frmarrendamiento/originadores-usuarios.new.frm.php?originador=" + id, tiny:true, callback: jsLGidlistaoriginadores});
 }
 </script>
 <?php

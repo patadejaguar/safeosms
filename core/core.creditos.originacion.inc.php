@@ -206,6 +206,8 @@ class cCreditosLeasing {
 	private $mFactorMas				= 1;
 	private $mTasaVec				= 0;
 	private $mMontoAjuste			= 0;
+	private $mEsAdministrado		= false;
+	private $mRentaSinIva			= false;
 	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
@@ -305,7 +307,8 @@ class cCreditosLeasing {
 			$this->mMontoAccesorios			= $xT->monto_accesorios()->v();
 			$this->mMontoGarantiaExt		= $xT->monto_garantia()->v();
 			$this->mMontoAjuste				= $xT->montoajuste()->v();
-			
+			$this->mEsAdministrado			= (setNoMenorQueCero($data[$xT->ADMINISTRADO]) <= 0) ? false : true;
+			$this->mRentaSinIva				= (setNoMenorQueCero($data[$xT->NOIVARENT]) <= 0) ? false : true;
 			//$this->mCuotaPrincipal	= $this->getCuota($mCoste, $residual);
 			//$this->mCuotaGPS		= $this->getCuota($costeGPS);
 			$xRuls							= new cReglaDeNegocio();
@@ -366,8 +369,8 @@ class cCreditosLeasing {
 	
 	function getMontoVehiculo(){ return $this->mMontoVehiculo; }
 	function getMontoAliado(){ return $this->mMontoAliado; }
-	
-
+	function getEsAdministrado(){ return $this->mEsAdministrado; }
+	function getRentaSinIva(){ return $this->mRentaSinIva; }
 	
 	function getVehiculoDescripcion(){ return $this->mVehiculoDescripcion;	}
 	function getVehiculoMarca(){ return $this->mVehiculoMarca; }
@@ -746,6 +749,26 @@ class cLeasingOriginadores {
 	}
 	function add(){}
 	function getTipo(){ return $this->mTipo; }
+	function getFicha(){
+		$xLng	= new cLang();
+		$html	= "<table>
+		<thead></thead>
+		<tbody>
+		<tr>
+		<th>" . $xLng->getT("TR.NOMBRE") . "</th><td>" . $this->mNombre . "</td>
+		<th>" . $xLng->getT("TR.TELEFONO") . "</th><td>" . $this->mTelefono . "</td>
+		</tr>
+		<tr>
+		<th>" . $xLng->getT("TR.DOMICILIO") . "</th><td>" . $this->mDireccion . "</td>
+		<th>" . $xLng->getT("TR.CORREO_ELECTRONICO") . "</th><td>" . $this->mMail . "</td>
+		</tr>
+		</tbody>
+		<tfoot></tfoot>
+		</table>";
+		//$html	= "<table><thead></thead><tbody></tbody><tfoot></tfoot></table>";
+		
+		return $html;
+	}
 }
 
 class cLeasingUsuarios {
@@ -1526,7 +1549,8 @@ class cLeasingActivos {
 	private $mIDLeasing	= 0;
 	private $mIDPersona	= 0;
 	private $mIDCredito	= 0;
-	private $mIDProveedor = 0;
+	private $mIDProveedor 	= 0;
+	private $mValor			= 0;
 	
 	private $mSerie		= "";
 	private $mColor		= "";
@@ -1535,6 +1559,13 @@ class cLeasingActivos {
 	private $mNIV		= "";
 	private $mFactura	= "";
 	private $mMontoVEC	= 0;
+	private $mModelo	= "";
+	private $mAnnio		= "";
+	private $mIDMarca	= 0;
+	
+	
+	public $ESTADO_ACTIVO 		= 1;
+	public $ESTADO_BAJA 		= 0;
 	
 	
 	
@@ -1560,19 +1591,23 @@ class cLeasingActivos {
 			$xT->setData($data);
 			$this->mObj		= $xT; //Cambiar
 			$this->mClave	= $data[$xT->getKey()];
-			$this->mIDCredito	= $xT->credito()->v();
-			$this->mIDLeasing	= $xT->clave_leasing()->v();
-			$this->mIDPersona	= $xT->persona()->v();
+			$this->mIDCredito	= $data[$xT->CREDITO];
+			$this->mIDLeasing	= $data[$xT->IDLEASING_ACTIVOS];
+			$this->mIDPersona	= $data[$xT->PERSONA];
 			$this->mSerie		= $xT->serie()->v();
 			$this->mMotor		= $xT->motor()->v();
 			$this->mPlacas		= $xT->placas()->v();
 			$this->mFactura		= $xT->factura()->v();
 			$this->mColor		= $xT->color()->v();
-			$this->mIDProveedor	= $xT->proveedor()->v();
+			$this->mIDProveedor	= $data[$xT->PROVEEDOR];
 			$this->mMontoVEC	= $xT->valor_venta()->v();
 			$this->mNIV			= $xT->serie_nal()->v();
 			$this->mNombre		= $xT->descripcion()->v();
-		
+			$this->mModelo		= $data[$xT->ANNIO];
+			$this->mAnnio		= $data[$xT->ANNIO];
+			$this->mValor		= $data[$xT->VALOR_NOMINAL];
+			$this->mIDMarca		= $data[$xT->MARCA];
+			
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit	= true;
@@ -1585,14 +1620,19 @@ class cLeasingActivos {
 	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
 	function getNombre(){return $this->mNombre;}
 	function getClave(){return $this->mClave;}
+	function getClaveDeMarca(){return $this->mIDMarca;}
+	
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
 	function getSerie(){ return $this->mSerie; }
 	function getMotor(){ return $this->mMotor; }
+	function getValor(){ return $this->mValor; }
 	function getPlacas(){ return $this->mPlacas; }
 	function getFactura(){ return $this->mFactura; }
 	function getColor(){ return $this->mColor; } 
 	function getNIV(){ return $this->mNIV; }
+	function getAnnio(){ return $this->mAnnio; }
+	function getModelo(){ return $this->mModelo; }
 	function getClaveDeProveedor(){ return $this->mIDProveedor; }
 	function initForContract($credito){
 		$xCache	= new cCache();
@@ -1611,6 +1651,8 @@ class cLeasingActivos {
 		return $this->init($datos);
 	}
 	function getMontoVEC(){ return $this->mMontoVEC; }
+	function getClaveDeCredito(){return $this->mIDCredito;}
+	function getClaveDePersona(){return $this->mIDPersona;}
 }
 
 class cLeasingRentas {
@@ -2002,5 +2044,61 @@ class cLeasingEscenarios {
 	function getPlazo(){ return $this->mPlazo; }
 }
 
-
+class cLeasingActivosMarcas {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "vehiculos_marcas";
+	private $mTipo		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cVehiculos_marcas();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mNombre	= $data[$xT->NOMBRE_MARCA];
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
+}
 ?>

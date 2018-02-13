@@ -202,6 +202,9 @@ if(setNoMenorQueCero($con_relacion) > 0){
 			}
 		}
 	}
+	if($xTxtSelPersonas !== ""){
+		$xFRM->setValidacion("idtipoderelacion", "jsValidarRelacion");
+	}
 	$tipo_de_ingreso	= TIPO_INGRESO_RELACION;
 	$con_domicilio		= ($RelsSinDom == true) ? false : true;
 	$con_actividad		= true;
@@ -237,7 +240,7 @@ if(setNoMenorQueCero($con_relacion) > 0){
 if($tipo_de_ingreso == DEFAULT_TIPO_INGRESO){
 	$xFRM->ODate("idfecharegistro", $fecha,"TR.fecha de registro");
 }
-if(MULTISUCURSAL == false OR $SinSucursal == true ){
+if(MULTISUCURSAL == false OR $SinSucursal == true OR ($tipo_de_ingreso == TIPO_INGRESO_RELACION OR $tipo_de_ingreso == TIPO_INGRESO_PEP) ){
 	$xFRM->OHidden("idsucursal", $desde_sucursal);
 } else {
 	$xFRM->addHElem( $xSel->getListaDeSucursales("", $desde_sucursal)->get(true) );
@@ -297,7 +300,11 @@ $xFRM->addHElem( $xTxt2->get("idapellidopaterno", $PrimerApellido, "TR.primer ap
 $xFRM->addHElem( $xTxt2->get("idapellidomaterno", $SegundoApellido, "TR.segundo apellido") );
 $xFRM->addHElem( $xSel->getListaDeGeneros()->get("TR.genero", true) );
 if(MODULO_AML_ACTIVADO == true OR PERSONAS_ACEPTAR_EXTRANJEROS == true){
-	$xFRM->addHElem( $xSel->getListaDePaises("idpaisdeorigen")->get("TR.Pais de Origen", true) );
+	if($tipo_de_ingreso == TIPO_INGRESO_RELACION OR $tipo_de_ingreso == TIPO_INGRESO_PEP){
+		$xFRM->OHidden("idpaisdeorigen", EACP_CLAVE_DE_PAIS);
+	} else {
+		$xFRM->addHElem( $xSel->getListaDePaises("idpaisdeorigen")->get("TR.Pais de Origen", true) );
+	}
 }
 
 if($con_nacimiento == true){
@@ -851,6 +858,19 @@ function jsGetListaDePuntosDeAtencion(){
 				key : "idsocios_cajalocal",
 				label : "descripcion_cajalocal"
 				});	
+}
+function jsValidarRelacion(v){
+	var idtr	= $("#idtipoderelacion").val();
+	var idtp	= $("#idtipodeparentesco").val();
+	idtr		= entero(idtr);
+	
+	if(idtr == Configuracion.personas.tiporelacion.conyuge){
+		$("#idtipodeparentesco").val(Configuracion.personas.consanguinidad.conyuge);
+		xGen.verControl("idtipodeparentesco", false);
+	} else {
+		xGen.verControl("idtipodeparentesco", true);
+	}
+	return true;
 }
 </script>
 <?php

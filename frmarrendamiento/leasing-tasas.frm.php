@@ -48,6 +48,7 @@ $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 
 $xHG	= new cHGrid("iddivtasas",$xHP->getTitle());
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT   `leasing_tasas`.`idleasing_tasas` AS `clave`,
          `leasing_tipo_rac`.`nombre_tipo_rac` AS `tipo_de_rac`,

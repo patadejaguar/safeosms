@@ -47,6 +47,7 @@ $xFRM->setTitle($xHP->getTitle());
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivfinancieros");
+$xHG->setOrdenar();
 
 $xHG->setSQL("SELECT * FROM `leasing_financiero` LIMIT 0,100");
 $xHG->addList();

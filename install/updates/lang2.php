@@ -590,12 +590,17 @@ $lang["20170901"][]	= array("PERIODOEMPRESA", "Periodo", "Period");
 //$lang["20171101"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
 //$lang["20171101"][]	= array("", "", "");
 //$lang["20171101"][]	= array("", "", "");
-//$lang["20171101"][]	= array("", "", "");
+$lang["20171101"][]	= array("DICTAMENAUT", "Dictamen de Autorizacion", "Authorization Opinion");
 $lang["20171101"][]	= array("PLAZO", "Plazo", "Term");
 $lang["20171101"][]	= array("COMPLETAR", "Completar", "Fill");
 $lang["20171101"][]	= array("INACTIVO", "Inactivo", "Disabled");
 $lang["20171101"][]	= array("FILTRO", "Filtro", "Filter");
+$lang["20171101"][]	= array("CLIENTES", "Clientes", "Customers");
 
+$lang["20171101"][]	= array("CONTRATOS", "Contratos", "Contracts");
+$lang["20171101"][]	= array("FORMS_Y_DOCS", "Formatos", "Forms and Documentation");
+$lang["20171101"][]	= array("IDVEHICULO", "ID Vehiculo", "ID Vehicle");
+$lang["20171101"][]	= array("CAUSAMORA", "Causa de Mora", "reason of default");
 
 header('Content-type: application/json');
 echo json_encode($lang);

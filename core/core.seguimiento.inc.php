@@ -636,7 +636,20 @@ class cAlertasDelSistema {
 		if(is_array($arr)){
 			$this->mDestPers		= array_merge($this->mDestPers, $arr);
 		} else {
-			$this->mDestPers[$arr]	= $arr;
+			$arr		= setNoMenorQueCero($arr);
+			if($arr > DEFAULT_SOCIO){
+				$this->mDestPers[$arr]	= $arr;
+			}
+		}
+	}
+	function addOficiales($arr){
+		if(is_array($arr)){
+			$this->mAOficiales			= array_merge($this->mAOficiales, $arr);
+		} else {
+			$arr		= setNoMenorQueCero($arr);
+			if($arr>0){
+				$this->mAOficiales[$arr]	= $arr;
+			}
 		}
 	}
 	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
@@ -758,6 +771,10 @@ class cAlertasDelSistema {
 					case "OFICIALES":
 						if(isset($DS[1])){
 							$oficiales		= explode(",", $DS[1]);
+							//Agregar Oficiales Opcionales
+							if(count($this->mAOficiales)>0){
+								$oficiales	= array_merge($oficiales, $this->mAOficiales);
+							}
 							foreach ($oficiales AS $ofc => $ofkey){
 								$xOf		= new cOficial($ofkey); $xOf->init();
 								$mail		= $xOf->getEmail();
@@ -769,6 +786,8 @@ class cAlertasDelSistema {
 					case "EMPRESAS":
 						if(isset($DS[1])){
 							$empresas		= explode(",", $DS[1]);
+							
+							
 							foreach ($empresas AS $emp => $empkey){
 								$xEmp		= new cEmpresas($empkey); $xEmp->init();
 								//$mail		= $xEmp->getEmailsDeEnvio();

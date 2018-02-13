@@ -779,6 +779,10 @@ if($AunMasSimple == true){
 
 if($xUser->getEsOriginador() == false){
 	$xFRM->OSiNo("TR.DOMICILIA","domicilia", $xTabla->domicilia()->v());
+	if($OlvidarTodo == true){
+		$xFRM->OSiNo("TR.OMITIR IVA","noivarent", $xTabla->noivarent()->v());
+	}
+	
 } else {
 	$xFRM->OHidden("domicilia", $xTabla->domicilia()->v());
 }

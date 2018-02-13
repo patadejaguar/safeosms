@@ -17,6 +17,8 @@ $xCaja		= new cCaja();
 $xF			= new cFecha();
 $xLi		= new cSQLListas();
 $xQL		= new MQL();
+$xRuls		= new cReglaDeNegocio();
+$useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 
 $jxc 		= new TinyAjax();
 
@@ -52,6 +54,9 @@ $msg		= "";
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->setNoAcordion();
 //$xFRM->addSeccion("uddu", $titulo)
+
+
+
 if($action == MQL_ADD){
 	
 	$xRec 					= new cReciboDeOperacion(RECIBOS_TIPO_ESTADISTICO, false);
@@ -74,7 +79,7 @@ if($action == MQL_ADD){
 			$periodo		= $xCred->getPeriodoActual();
 			$periodo		= ($periodo <= 0) ? SYS_UNO : $periodo;
 			$idrecibo		= $xRec->setNuevoRecibo($persona, $credito, $fecha, $periodo, RECIBOS_TIPO_PAGO_CREDITO , $detalles, $cheque, $comopago, $foliofiscal);
-			$rs				= $xQL->getDataRecord(" SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
+			$rs				= $xQL->getDataRecord("SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
 			$mCreditoIVA	= $xCred->getTasaIVA();
 			
 			foreach ($rs as $rw){
@@ -88,8 +93,35 @@ if($action == MQL_ADD){
 				$ParcAho	= $rw["ahorro"];
 				$ParcFecha	= $rw["fecha_de_pago"];
 				$ParcIDOtros= $rw["clave_otros"];
+				$MoraBD		= isset($rw["interes_moratorio"]) ? $rw["interes_moratorio"] : 0; //Interes Moratorio segun BD
+				$penas		= 0;
+				$mora		= 0;
+				$IvaOtros	= 0;
 				
 				
+				$xMParc		= new cParcialidadDeCredito($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $ParcPer);
+				//setLog("$persona, $credito, $ParcPer");
+				if($xMParc->init() == true){
+					$xMParc->setDatos($rw);
+					
+					
+					
+					$DD["docto_afectado"]		= $xCred->getNumeroDeCredito();
+					
+					$xMParc->setIDProducto($xCred->getClaveDeProducto());
+					$xMParc->setTasaMora($xCred->getTasaDeMora());
+					$xMParc->setPeriocidadDePago($xCred->getPeriocidadDePago());
+					
+					$xBase	= $xMParc->setCalcularPenas_Y_Mora(false, false);
+					$penas	= $xBase[SYS_PENAS];
+					if($useMoraBD == true){
+						$mora	= $MoraBD;
+					} else {
+						$mora	= $xBase[SYS_INTERES_MORATORIO];
+					}
+					$IvaOtros		= round((($mora+$penas) * TASA_IVA),2);
+					$ParcTotal	= $ParcTotal + $mora + $penas + $IvaOtros;
+				}
 				
 				if($monto > 0){
 					if($monto < $ParcTotal){
@@ -108,7 +140,29 @@ if($action == MQL_ADD){
 							$ParcAho	= 0;
 							$ParcOtros	= 0;
 						}
-											//============ Otros
+						//============= Mora
+						if($monto > 0){
+							
+							if($monto >= $mora){
+								$monto		= $monto - $mora;
+							} else {
+								$mora		= $monto;
+								$monto		= 0;
+								$ParcCap	= 0;
+							}
+						}
+						//============= penas
+						if($monto > 0){
+							if($monto >= $penas){
+								$monto		= $monto - $penas;
+							} else {
+								$penas		= $monto;
+								$monto		= 0;
+								$ParcCap	= 0;
+							}
+						}
+						
+						//============ Otros
 						if($monto > 0){
 							if($monto >= $ParcOtros){
 								$monto		= $monto - $ParcOtros;
@@ -119,7 +173,17 @@ if($action == MQL_ADD){
 								$ParcCap	= 0;
 							}
 						}
-												
+						//============ Iva Otros
+						if($monto > 0){
+							if($monto >= $IvaOtros){
+								$monto		= $monto - $IvaOtros;
+							} else {
+								$IvaOtros	= $monto;
+								$monto		= 0;
+								$ParcAho	= 0;
+								$ParcCap	= 0;
+							}
+						}
 						//============ Ahorro
 						if($monto > 0){
 							if($monto >= $ParcAho){
@@ -148,13 +212,26 @@ if($action == MQL_ADD){
 				} else {
 					$ParcTotal = 0;						//Cancelar letra
 				}
-			
+
 				if($ParcTotal > 0){
 					$xPag		= new cCreditosPagos($xCred->getNumeroDeCredito());
+					//=========== Registro de penas
+					if($penas > 0){
+						$xPag->addPagoPenas($penas, $ParcPer, $detalles, $comopago, $fecha, $idrecibo);
+						
+					}
+					//=========== registro de Mora
+					if($mora > 0){
+						$xPag->addPagoMora($mora, $ParcPer, $detalles, $comopago, $fecha, $idrecibo);
+					}
+					//=========== Registro de Interes
 					if($ParcInt >0){
 						$xPag->addPagoInteres($ParcInt, $ParcPer, $detalles, $comopago, $fecha, $idrecibo);
 					}
-
+					//IVA DE OTROS CONCEPTOS
+					if($IvaOtros > 0){
+						$xRec->setNuevoMvto($fecha, $IvaOtros, OPERACION_CLAVE_PAGO_IVA_OTROS, $ParcPer, $detalles, 1, false,$xCred->getClaveDePersona(), $xCred->getNumeroDeCredito(),$fecha, $fecha );
+					}
 					if($ParcOtros > 0){
 						if($ParcIDOtros == OPERACION_CLAVE_PLAN_DESGLOSE){
 							$DO		= $xCred->getOProductoDeCredito()->getListaOtrosCargosEnParcs();
@@ -246,7 +323,8 @@ if($action == MQL_ADD){
 			//setLog("SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
 			$xT		= new cHTabla();
 			$cspan	= 8;
-			$xFRM->addFecha();
+			
+			$xFRM->addFechaRecibo($fecha);
 			$xFRM->addCobroBasico();
 			$xFRM->addObservaciones();
 			
@@ -266,6 +344,7 @@ if($action == MQL_ADD){
 			}
 			$xT->addTH("TR.MORA");
 			$xT->addTH("TR.PENAS_POR_ATRASOS");
+			$xT->addTH("TR.IVA OTROS");
 			
 			$xT->addTH("TR.OTROS");
 			$xT->addTH("TR.TOTAL");
@@ -278,6 +357,8 @@ if($action == MQL_ADD){
 			$TAhorro		= 0;
 			$TMora			= 0;
 			$TPena			= 0;
+			$TIvaOtros		= 0;
+			
 			
 			foreach ($rs as $rw){
 				//idcreditos_productos_costos, clave_de_producto, clave_de_operacion, unidades, unidad_de_medida,
@@ -289,8 +370,11 @@ if($action == MQL_ADD){
 				$ParcOtros	= $rw["otros"];
 				$ParcAho	= $rw["ahorro"];
 				$ParcFecha	= $rw["fecha_de_pago"];
+				$MoraBD		= isset($rw["interes_moratorio"]) ? $rw["interes_moratorio"] : 0; //Interes Moratorio segun BD
+				
 				$penas		= 0;
 				$mora		= 0;
+				$IvaOtros	= 0;
 				
 				$xMParc		= new cParcialidadDeCredito($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $ParcPer);
 				//setLog("$persona, $credito, $ParcPer");
@@ -306,9 +390,14 @@ if($action == MQL_ADD){
 					$xMParc->setPeriocidadDePago($xCred->getPeriocidadDePago());
 					
 					$xBase	= $xMParc->setCalcularPenas_Y_Mora(false, false);
-					
 					$penas	= $xBase[SYS_PENAS];
-					$mora	= $xBase[SYS_INTERES_MORATORIO];
+					if($useMoraBD == true){
+						$mora	= $MoraBD;
+					} else {
+						$mora	= $xBase[SYS_INTERES_MORATORIO];
+					}
+					$IvaOtros	= round((($mora+$penas) * TASA_IVA),2);
+					$ParcTotal	= $ParcTotal + $mora + $penas + $IvaOtros;
 				}
 				if($monto > 0){
 					if($monto < $ParcTotal){
@@ -338,7 +427,18 @@ if($action == MQL_ADD){
 								$ParcCap	= 0;
 							}
 						}
-												
+						//============ Iva Otros
+						if($monto > 0){
+							if($monto >= $IvaOtros){
+								$monto		= $monto - $IvaOtros;
+							} else {
+								$IvaOtros	= $monto;
+								$monto		= 0;
+								$ParcAho	= 0;
+								$ParcCap	= 0;
+							}
+						}
+						
 						//============ Ahorro
 						if(MODULO_CAPTACION_ACTIVADO == true){
 							if($monto > 0){
@@ -353,6 +453,7 @@ if($action == MQL_ADD){
 						}
 						//============= Mora
 						if($monto > 0){
+							
 							if($monto >= $mora){
 								$monto		= $monto - $mora;
 							} else {
@@ -382,7 +483,11 @@ if($action == MQL_ADD){
 							}
 						}						
 						//Actualizar total
-						$ParcTotal		= $ParcInt + $ParcIVA + $ParcCap + $ParcAho + $ParcOtros;
+						$mora				= round($mora,2);
+						
+						$IvaOtros				= round((($mora+$penas) * TASA_IVA),2);
+						$ParcTotal			= $ParcInt + $ParcIVA + $ParcCap + $ParcAho + $ParcOtros + $mora + $penas + $IvaOtros;
+						//setLog("$ParcInt + $ParcIVA + $ParcCap + $ParcAho + $ParcOtros + $mora + $penas");
 					} else {
 						$monto	= $monto - $ParcTotal;	//Disminuir letra
 					}
@@ -400,21 +505,25 @@ if($action == MQL_ADD){
 					$TOtros		+= $ParcAho;
 					$TPena		+= $penas;
 					$TMora		+= $mora;
+					$TIvaOtros	+= $IvaOtros;
+					
 					
 				 	$xT->initRow();
 				 	$xT->addTD( $xF->getFechaMX($ParcFecha));
 				 	$xT->addTD($ParcPer);
-				 	$xT->addTDM($ParcCap);
-				 	$xT->addTDM($ParcInt);
-				 	$xT->addTDM($ParcIVA);
+				 	$xT->addTDM(getFMoney($ParcCap));
+				 	$xT->addTDM(getFMoney($ParcInt));
+				 	$xT->addTDM(getFMoney($ParcIVA));
 				 	if(MODULO_CAPTACION_ACTIVADO == true){
-				 		$xT->addTDM($ParcAho);
+				 		$xT->addTDM(getFMoney($ParcAho));
 				 	}
-				 	$xT->addTDM($penas);
-				 	$xT->addTDM($mora);
+				 	$xT->addTDM(getFMoney($mora));
+				 	$xT->addTDM(getFMoney($penas));
+				 	$xT->addTDM(getFMoney($IvaOtros));
 				 	
-				 	$xT->addTDM($ParcOtros);
-				 	$xT->addTDM($ParcTotal);
+				 	
+				 	$xT->addTDM(getFMoney($ParcOtros));
+				 	$xT->addTDM( getFMoney($ParcTotal) );
 				 	
 				 	$xT->endRow();
 				 	$xFRM->OHidden("idm-$ParcPer", $ParcTotal);
@@ -426,18 +535,20 @@ if($action == MQL_ADD){
 			$xT->initRow();
 			$xT->addTD("");
 			$xT->addTD("SUMAS");
-			$xT->addTDM($TCapital);
-			$xT->addTDM($TInteres);
-			$xT->addTDM($TIva);
+			
+			$xT->addTD(getFMoney($TCapital), " class='mny total' ");
+			$xT->addTD(getFMoney($TInteres), " class='mny total' ");
+			$xT->addTD(getFMoney($TIva), " class='mny total' ");
 			if(MODULO_CAPTACION_ACTIVADO== true){
-				$xT->addTDM($TAhorro);
+				$xT->addTD($TAhorro, " class='mny total' ");
 				
 			}
-			$xT->addTDM($TMora);
-			$xT->addTDM($TPena);
-				
-			$xT->addTDM($TOtros);
-			$xT->addTDM(getFMoney($sum), " id='idtsum' ");
+			$xT->addTD(getFMoney($TMora), " class='mny total' ");
+			$xT->addTD(getFMoney($TPena), " class='mny total' ");
+			$xT->addTD(getFMoney($TIvaOtros), " class='mny total' ");
+			
+			$xT->addTD(getFMoney($TOtros), " class='mny total' ");
+			$xT->addTD(getFMoney($sum), " class='mny total' id='idtsum' ");
 			$xT->endRow();
 			
 			$xFRM->addHElem($xT->get());

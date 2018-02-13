@@ -477,7 +477,7 @@ if  ( $action == SYS_DOS ){
 	$xFRM->ODate("idfecha1", $fecha_de_autorizacion, "TR.Fecha de Autorizacion");
 	$xFRM->ODate("idfecha2", $fecha_de_ministracion, "TR.Fecha de Ministracion");
 	
-	$xFRM->OTextArea("idautorizacion", "", "TR.Documento de Autorizacion");
+	$xFRM->OTextArea("idautorizacion", "", "TR.DICTAMENAUT");
 	$xFRM->setValidacion("idautorizacion", "jsGetValidacion");
 	$xFRM->addGuardar("jsGuardarAutorizacion()");
 	$xFRM->OButton("TR.Validacion", "jsGetFormaValidacion", $xFRM->ic()->CHECAR);

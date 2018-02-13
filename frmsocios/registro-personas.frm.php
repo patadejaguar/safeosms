@@ -384,7 +384,7 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 			}
 			if($esextranjero == true AND setNoMenorQueCero($persona) > 0){
 				$xSoc->addOtrosParametros($xCat->PERSONAS_ES_EXTRANJERO, "1");
-				$xSoc->setUpdate(array("nacionalidad_extranjera" => "1"), true);
+				$xSoc->setUpdate(array("nacionalidad_extranjera" => "1"));
 				if($useDExtranjero == false){
 					//================
 					$xNot	= new cHNotif();
@@ -403,7 +403,7 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 			
 		}
 		//=================================== IR AL PANEL DE PERSONA
-		$xHP->goToPageX("../frmsocios/socios.panel.frm.php?persona=$persona");
+		$xHP->goToPageX("../frmsocios/socios.panel.frm.php?nuevo=true&persona=$persona");
 		//agregar Relacion
 
 		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);

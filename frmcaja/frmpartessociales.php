@@ -16,11 +16,15 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-	$xHP	= new cHPage("TR.capital_social");
-	$jxc = new TinyAjax();
-	$xCaja		= new cCaja();
-	if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	header ("location:../404.php?i=200"); }
-	
+$xHP		= new cHPage("TR.capital_social");
+$jxc 		= new TinyAjax();
+$xCaja		= new cCaja();
+
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+
+
+if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	header ("location:../404.php?i=200"); }
+
 
 	function jsSetCuotas($socio, $form){
 		//selecciona el tipo de ingreso
@@ -92,7 +96,8 @@ function jsSetTotalCuotas(){
 		
 		$xFRM->addPersonaBasico();
 		
-		$xFRM->addHElem($xDate->get("TR.Fecha de Operacion"));
+		//$xFRM->addHElem($xDate->get("TR.Fecha de Operacion"));
+		$xFRM->addFechaRecibo($fecha);
 		$xFRM->addCobroBasico();
 		$xFRM->addObservaciones();
 		$xFRM->addDivSolo($xSel->getListaDeOperacionesPorBase(2800, "tipo1")->get(), $xTxt->getDeMoneda("monto1"));
@@ -109,8 +114,9 @@ function jsSetTotalCuotas(){
 		$cheque 			= parametro("cheque");
 		$comopago			= parametro("ctipo_pago", DEFAULT_TIPO_PAGO, MQL_RAW);
 		$foliofiscal		= parametro("foliofiscal");
-		$fecha				= parametro("fecha-0", false);
-		$fecha				= ($fecha == false) ? fechasys() : $xF->getFechaISO($fecha);
+		
+		
+		
 		$aportaciones 		= $monto1 + $monto2 + $monto3;
 	
 		$cRec 				= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_APORTACIONES, false);

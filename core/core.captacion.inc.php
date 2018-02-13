@@ -653,10 +653,11 @@ class cCuentaInversionPlazoFijo  extends cCuentaDeCaptacion {
 			$sqlucta = "UPDATE captacion_cuentas SET tasa_otorgada=$nuevatasa, fecha_afectacion='$fecha',
 						saldo_cuenta=" . $this->mNuevoSaldo . ", dias_invertidos=$diastrans, estatus_cuenta=$Estatus WHERE numero_cuenta=" . $this->mNumeroCuenta . " ";
 
-			$x 				= my_query($sqlucta);
-			$estat 			= $x[SYS_ESTADO];
-			if ($estat == false){
-				$this->mMessages	.= "ERROR\tNo se Actualizo la Cuenta(" . $x["info"] . ") Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "\r\n";
+			$xQL			= new MQL();
+			$x 				= $xQL->setRawQuery($sqlucta);
+			
+			if ($x === false){
+				$this->mMessages	.= "ERROR\tNo se Actualizo la Cuenta " . $this->mNumeroCuenta .  " Saldo Anterior" . $this->mSaldoAnterior . "; Saldo Nuevo " . $this->mNuevoSaldo . "\r\n";
 			} else {
 				$this->mMessages	.= "OK\tSe Actualizo el Saldo de la Cuenta " . $this->mNumeroCuenta . ", Sdo. Ant.(" . $this->mSaldoAnterior . "); Sdo Nuevo(" . $this->mNuevoSaldo . ") Estado $Estatus\r\n";
 			}

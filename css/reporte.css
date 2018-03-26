@@ -1,5 +1,7 @@
 html {
-	font: 8pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;
+	/*font: 8pt Verdana, "Trebuchet MS", Arial, Helvetica, sans-serif !important;*/
+	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
+	font-size: 8pt;
 }
 body {
 	font-stretch: extra-condensed;
@@ -152,7 +154,7 @@ p {
 td {
 	/*text-align: justify;*/
 	padding: 1px;
-	vertical-align: top !important;
+	/*vertical-align: top !important;*/
 }
 .legal {
 	text-align: justify;
@@ -196,6 +198,7 @@ td.date, td.otromes,th.date,.cnt,.ctr {
 table, table.default {
 	width: 100%;
 	border-collapse: collapse;
+	
 }
 
 legend {

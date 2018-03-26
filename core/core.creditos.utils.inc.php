@@ -269,8 +269,9 @@ class cUtileriasParaCreditos{
 		$credito	= setNoMenorQueCero($credito);
 		$xLog		= new cCoreLog();
 		$xQL		= new MQL();
+		$xVis		= new cSQLVistas();
 		$aplicar	= true;	
-		$sql		= ($credito > DEFAULT_CREDITO) ? "SELECT * FROM  `vw_creditos_pagos_acumulados` WHERE credito=$credito LIMIT 0,1" : "SELECT * FROM  `vw_creditos_pagos_acumulados`";
+		$sql		= ($credito > DEFAULT_CREDITO) ? $xVis->CreditoPagosAcumulados($credito) : "SELECT * FROM  `vw_creditos_pagos_acumulados`";
 		$rs			= $xQL->getRecordset($sql);
 		
 		//setLog($sql);
@@ -302,7 +303,7 @@ class cUtileriasParaCreditos{
 		//============ Actualizar Saldos de Credito
 		if(getEnCierre() == false){
 			if($credito > DEFAULT_CREDITO){
-				$sql2	= "SELECT * FROM  `vw_creditos_abonos_totales` WHERE `docto_afectado` = $credito ";
+				$sql2	= $xVis->CreditoAbonosTotales($credito);
 			} else {
 				if($xQL->getContarDe("tmp_creditos_abonos_totales")<=1){
 					$xQL->setCall("proc_creditos_abonos_totales");
@@ -2023,6 +2024,13 @@ class cSQLFiltros {
 		}
 		return $BySuc;
 	}
+	function CreditosPorMunicipioAct($mun){
+		$ByMun		= "";
+		if(setNoMenorQueCero($mun)>0){
+			$ByMun	= " AND getMunicipioByIDPers(`creditos_solicitud`.`numero_socio`)='$mun' ";
+		}
+		return $ByMun;
+	}
 	function CreditosPorOficial($oficial){
 		$ByOficial				= "";
 		$oficial				= setNoMenorQueCero($oficial);
@@ -2432,7 +2440,13 @@ class cSQLFiltros {
 		}
 		return $By;
 	}
-	
+	function VSociosPorMunicipio($mun){
+		$ByMun		= "";
+		if(setNoMenorQueCero($mun)>0){
+			$ByMun	= " AND getMunicipioByIDPers(`socios`.`codigo`)='$mun' ";
+		}
+		return $ByMun;
+	}
 	function LogPorFecha($FechaInicial, $FechaFinal = false){
 		$filtro		= "";
 		$xF			= new cFecha();

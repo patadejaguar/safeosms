@@ -116,9 +116,7 @@ if($sucess == true){
 		$fecha_vencimiento 		= $xFecha->setSumarDias($dias_solicitados, $fecha_ministracion);
 	}
 	$xConv				= new cProductoDeCredito($tipoconvenio); $xConv->init();
-	if ( USE_OFICIAL_BY_PRODUCTO == true ){
-		$oficial_de_seguimiento		= $xConv->getOficialDeSeguimiento();
-	}	
+
 	if($esrenovado == true){
 		$TipoDeAutorizacion			= CREDITO_AUTORIZACION_RENOVADO;
 		$msg						.= "WARN\tCredito marcado como Renovado \r\n";
@@ -128,6 +126,12 @@ if($sucess == true){
 	$result		= $xCred->add($tipoconvenio, $persona,$contrato_corriente, $monto_solicitado, $periocidad, $numeropagos, $dias_solicitados, $rubro_destino, false,
 			$grupo_asociado, $amp_destino, $observaciones, $oficial_de_credito, $fecha_solicitud, $tipo_de_pago,
 			$xConv->getTipoDeBaseCalc(), $TasaDeInteres,  $fecha_ministracion, $xSoc->getClaveDeEmpresa(), $TipoDeAutorizacion, $idorigen, $origen);
+	
+	if ( USE_OFICIAL_BY_PRODUCTO == true AND $result == true ){
+		$oficial_de_seguimiento		= $xConv->getOficialDeSeguimiento();
+		$xCred->setCambiarOficialSeg($oficial_de_seguimiento);
+	}	
+	
 	if($result == false){
 		$xFRM->addToolbar($xBtn->getRegresar("solicitud_de_credito.frm.php", true) );
 		$xFRM->addAviso($xHP->lang(MSG_ERROR_SAVE));
@@ -145,11 +149,14 @@ if($sucess == true){
 		$xCred->init(); $credito	= $xCred->getNumeroDeCredito();
 		//Si es Automatizado
 		$xCat						= new cCreditosOtrosDatos();
-		if($tieneprops == true){
-			$xCred->setOtrosDatos($xCat->AML_CON_PROPIETARIO, "1");
-		}
-		if($tieneprovs == true){
-			$xCred->setOtrosDatos($xCat->AML_CON_PROVEEDOR, "1");
+		
+		if(MODULO_AML_ACTIVADO == true){
+			if($tieneprops == true){
+				$xCred->setOtrosDatos($xCat->AML_CON_PROPIETARIO, "1");
+			}
+			if($tieneprovs == true){
+				$xCred->setOtrosDatos($xCat->AML_CON_PROVEEDOR, "1");
+			}
 		}
 		if($xCred->getTipoDeAutorizacion() == CREDITO_TIPO_AUTORIZACION_AUTOMATICA){
 			//$saldo_actual = $monto_autorizado;

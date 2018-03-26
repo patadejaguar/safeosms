@@ -74,7 +74,9 @@ $xHG->col("monto", "TR.MONTO", "15%");
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+
 $xFRM->addHElem("<div id='iddivgpscosteo'></div>");
+$xFRM->addTag("Registre Precios con IVA", "warning");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
 ?>

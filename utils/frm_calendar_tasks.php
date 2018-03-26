@@ -142,7 +142,7 @@ function jsaGetLetrasVencidas($fecha, $producto){
 	
 	//TODO: Corregir echale
 	
-	$sql	= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, false, $producto);
+	$sql	= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, false, $producto);
 
 	//setLog($sql);
 	
@@ -151,6 +151,9 @@ function jsaGetLetrasVencidas($fecha, $producto){
 	$xT->setWithMetaData();
 	//$xT->setOmitidos("monto_ministrado");
 	$xT->setForzarTipoSQL("dias", MQL_INT);
+	
+	$xT->setTitulo("numero_con_atraso", "NUMERO");
+	$xT->setTitulo("fecha_de_atraso", "FECHA");
 	
 	$xT->OButton("TR.PAGO", "jsPagoCajaCompleto(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
 	
@@ -221,16 +224,23 @@ function jsaActualizarProyeccionMensual($Fecha){
 
 function jsaListaPeriodosDeEmpresa($fecha){
 	$xLi	= new cSQLListas();
-	$xTabla	= new cTabla($xLi->getListadoDePeriodoPorEmpresa(false, false, false, false, false, $fecha));
+	//$empresa, $tipo , $ConActivos , $EnvioFI 
+	$xTabla	= new cTabla($xLi->getListadoDePeriodoPorEmpresa(false, false, true, false, false, $fecha, $fecha));
 	$xTabla->setOmitidos("periocidad");
+	$xTabla->setTitulo("periodo", "NUMERO");
+	$xTabla->setTitulo("nombre_periocidad", "Periocidad");
+	$xTabla->OButton("TR.Panel", "var xE = new EmpGen(); xE.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xTabla->ODicIcons()->CONTROL);
 	
 	return $xTabla->Show();
 }
 function jsaListaPeriodosDeEmpresaEmitidos($fecha){
 	$xLi	= new cSQLListas();
-	$xTabla	= new cTabla($xLi->getListadoDePeriodoPorEmpresa(false, false, false, $fecha));
+	$xTabla	= new cTabla($xLi->getListadoDePeriodoPorEmpresa(false, false, false, $fecha, $fecha));
 	$xTabla->setOmitidos("periocidad");
-
+	$xTabla->setTitulo("periodo", "NUMERO");
+	$xTabla->setTitulo("nombre_periocidad", "Periocidad");
+	$xTabla->OButton("TR.Panel", "var xE = new EmpGen(); xE.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xTabla->ODicIcons()->CONTROL);
+	
 	return $xTabla->Show();
 }
 $jxc ->exportFunction('jsaShowCalendarTasks', array('idDateValue'), "#tcalendar-task");
@@ -241,7 +251,9 @@ $jxc ->exportFunction('jsaGetLetrasVencidas', array('idDateValue', 'idproducto')
 
 $jxc ->exportFunction('jsaGetCreditosPorAutorizar', array('idDateValue', 'idproducto'), "#tcalendar-task");
 $jxc ->exportFunction('jsaGetCreditosPorMinistrar', array('idDateValue', 'idproducto'), "#tcalendar-task");
+
 $jxc ->exportFunction('jsaEliminarLog', array('idDateValue'), "#tcalendar-task");
+
 $jxc ->exportFunction('jsaGetLog', array('idDateValue'), "#tcalendar-task");
 $jxc ->exportFunction('jsaGetRecibosEmitidos', array('idDateValue'), "#tcalendar-task");
 
@@ -299,8 +311,8 @@ if($xUsr->getNivel() != USUARIO_TIPO_OFICIAL_AML  OR (MODO_DEBUG == true) ){
 $xCEs	= new cCreditosEstadisticas();
 	$xFRM->addHElem( $xNotif->getDash("TR.Clientes con Creditos", $xCEs->getNumeroClientesConCredito(), $xFRM->ic()->PERSONA, $xNotif->NOTICE) );
 	if($xUsr->getNivel() >= USUARIO_TIPO_OFICIAL_CRED OR (MODO_DEBUG == true) OR (OPERACION_LIBERAR_ACCIONES == true)){
-		$xFRM->addToolbar($xBtn->getBasic("TR.Pagos FECHA ACTUAL", "jsaGetLetrasAVencer()", "reporte", "idletrav", false) );
-		$xFRM->addToolbar($xBtn->getBasic("TR.Pagos Vencidos", "jsaGetLetrasVencidas()", "reporte", "idletrav", false) );
+		$xFRM->addToolbar($xBtn->getBasic("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", "reporte", "idletrav", false) );
+		$xFRM->addToolbar($xBtn->getBasic("TR.LETRASVENC", "jsaGetLetrasVencidas()", "reporte", "idletrav", false) );
 		//$xFRM->addToolbar($xBtn->getBasic("TR.Letras Pendientes", "jsaGetLetrasAVencerTodas()", "reporte", "idletrave", false) );
 		//$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Simples", "jsaGetCreditosSimplesMinistrados()", "lista", "idsimplev", false) );
 		//$xFRM->OButton("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", $xFRM->ic()->LIBERAR, "idcredd");
@@ -387,16 +399,20 @@ $xChUser->addData($xTE->getNumeroCajasAbiertas(), "TR.CAJAS_ABIERTAS");
 //Checar si las caja del usuario está abierta
 $xCaja		= new cCaja();
 $OnCaja		= false;
-if($xCaja->initByFechaUsuario(fechasys(), getUsuarioActual()) == true){
-	if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){
-		//cerrar Caja
-		$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',tab:true});", $xFRM->ic()->CERRAR);
-		$OnCaja	= true;
+if(MODULO_CAJA_ACTIVADO == true){
+	if($xCaja->initByFechaUsuario(fechasys(), getUsuarioActual()) == true){
+		if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){
+			//cerrar Caja
+			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',tab:true});", $xFRM->ic()->CERRAR);
+			$OnCaja	= true;
+		}
 	}
 }
 if(getEsModuloMostrado(false, MMOD_TESORERIA) == true){
-	$xFRM->OButton("TR.NOMINAS POR COBRAR", "jsaListaPeriodosDeEmpresa", $xFRM->ic()->REPORTE2);
-	$xFRM->OButton("TR.NOMINAS ENVIADAS", "jsaListaPeriodosDeEmpresaEmitidos", $xFRM->ic()->REPORTE3);
+	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+		$xFRM->OButton("TR.NOMINAS POR COBRAR", "jsaListaPeriodosDeEmpresa", $xFRM->ic()->REPORTE2);
+		$xFRM->OButton("TR.NOMINAS ENVIADAS", "jsaListaPeriodosDeEmpresaEmitidos", $xFRM->ic()->REPORTE3);
+	}
 }
 if(getEsModuloMostrado(false, MMOD_TESORERIA) == true AND $OnCaja == false){
 	$xFRM->OButton("TR.ABRIR_SESSION DE CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/abrir_caja.frm.php?',tab:true})", $xFRM->ic()->COBROS);
@@ -437,7 +453,13 @@ $xFRM->addJsInit($xChUser->getJs());
 
 $xFRM->setNoAcordion();
 if(MODO_DEBUG == true){
-	$xFRM->addToolbar($xBtn->getBasic("ELiminar LOG", "jsaEliminarLog()", "grafico", "idlog", false) );
+	$srv	= $xHP->getServerName();
+	if(strpos($srv, "localhost") === false){
+		
+	} else {
+		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
+		
+	}
 	$xFRM->addToolbar($xBtn->getBasic("Obtener LOG", "jsaGetLog()", "grafico", "idglog", false) );
 	$xFRM->addToolbar($xBtn->getBasic("TR.Respaldo", "jsaRespaldarDB()", "ejecutar", "idrespdb", false) );
 	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR);
@@ -522,14 +544,25 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 		$xTt->addTD("La cache esta funcionando.");
 		$xTt->endRow();
 	}
-	if($xSys->getExistsPandoc() == false){
+	if($xSys->getExistsWHPDF() == false){
 		$xTt->initRow("error");
-		$xTt->addTD("El conversor NO de Documentos No esta funcionando. Requiere pandoc, texlive-latex-base,texlive-latex-recommended y texlive-fonts-recommended");
+		$xTt->addTD("El conversor PDF No esta funcionando. Requiere wkhtmltopdf y Xvfb");
 		$xTt->endRow();
 		
 	} else {
 		$xTt->initRow("success");
-		$xTt->addTD("El conversor de Documentos esta funcionando.");
+		$xTt->addTD("El conversor PDF de Documentos esta funcionando.");
+		$xTt->endRow();
+	}
+	
+	if($xSys->getExistsUnoconv() == false){
+		$xTt->initRow("error");
+		$xTt->addTD("El conversor DOCX No esta funcionando. Requiere unoconv");
+		$xTt->endRow();
+		
+	} else {
+		$xTt->initRow("success");
+		$xTt->addTD("El conversor DOCX esta funcionando.");
 		$xTt->endRow();
 	}
 
@@ -568,7 +601,9 @@ $(document).ready( function(){
 	//$('#idDateValue').pickadate({format: 'dd-mm-yyyy',formatSubmit:'yyyy-mm-dd'});
 	window.localStorage.clear();
 });
-
+function jsEliminarLog(){
+	xG.confirmar({msg: "¿Esta seguro de eliminar el LOG?", callback : jsaEliminarLog});
+}
 function jsGetPanelRecibo(id){	var xR	= new RecGen(); xR.panel(id); }
 function jsGetInformes(){
 	jsaShowCalendarTasks();

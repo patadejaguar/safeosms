@@ -11,9 +11,7 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
 //====================================================================================================
-$xHP		= new cHPage("TR.Creditos del Sistema");
-
-
+$xHP		= new cHPage("TR.Informacion del Sistema");
 $xDiv		= new cHDiv();
 
 $xHP->init();
@@ -21,40 +19,45 @@ $xHP->init();
 $xFRM		= new cHForm("frm", "./");
 $msg		= "";
 
-$xFRM->addDivSolo('<img src="../images/banner-safe.png" />');
-$xFRM->addHTML("<h3>AUTOR</h3>");
-$xFRM->addHTML("<h5>Balam Gonzalez Luis Humberto 2005-2014</h5>");
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->setNoAcordion();
 
-$xUl2	= new cHUl();
-$xUl2->li('<a href="http://www.opencorebanking.com/">P&aacute;gina del Proyecto : www.opencorebanking.com</a>');
-$xUl2->li('<a href="http://sourceforge.net/projects/safemicrofin/"> Hosting del Proyecto :  SourceForge</a>');
+$xFRM->addDivSolo('<img src="../images/banner-safe.png"/>');
+
+$xFRM->addSeccion("id0", "TR.Autor");
+$xFRM->addHElem("<h5>Balam Gonzalez Luis Humberto 2005-2018</h5>");
+$xUl2	= new cHUl("", "ul", "");
+$xUl2->li("<a href='https://www.sipakal.com/'>Soporte Comercial</a>");
+$xFRM->addHElem($xUl2->get());
+//$xUl2->li('<a href="http://www.opencorebanking.com/">P&aacute;gina del Proyecto : www.opencorebanking.com</a>');
+//$xUl2->li('<a href="http://sourceforge.net/projects/safemicrofin/"> Hosting del Proyecto :  SourceForge</a>');
 //$xUl2->li('Blog del Proyecto <a href="http://sourceforge.net/apps/wordpress/safemicrofin/">Hospedado en SourceForge</a>');
 //$xFRM->addHTML( $xUl2->li('<a href="http://wiki.opencorebanking.com/">Wiki del Proyecto Hospedado en www.opencorebanking.com</a>')->end());
-
+$xFRM->endSeccion();
 
 //$xFRM->addDivSolo("")
-$xFRM->addHTML("<h3>FINANCIAMIENTO</h3>");
-
+$xFRM->addSeccion("id1", "Soporte Financiero");
 $xUl3	= new cHUl();
-//<a href="http://www.grupopadio.com.mx"> <a href="http://www.mulmeyah.org">
-$xUl3->li('GRUPO PADIO, SOFOM ENR (Desde Agosto de 2013).- Calle 25 # 87-A, Col. México, Mérida, Yucatán');
-$xFRM->addHTML( $xUl3->li('CAJA SOLIDARIA MULMEYAH, S.C. DE A.P. DE C.V. DE R.L (Hasta Diciembre de 2006).- Calle 61 Num. 50 Entre 16 y 14, Col. Centro. San Francisco de Campeche, 01(981)8113766')->end() );
+$xUl3->li('GRUPO PADIO, SOFOM ENR (Desde Agosto de 2013)');
+$xFRM->addHElem( $xUl3->li('CAJA SOLIDARIA MULMEYAH, S.C. DE A.P. DE C.V. DE R.L (Hasta Diciembre de 2006)')->end() );
+$xFRM->endSeccion();
 
-$xFRM->addHTML("<h3>AGRADECIMIENTOS ESPECIALES</h3>");
+
+$xFRM->addSeccion("id2", "Agradecimientos Especiales");
 $xUl		= new cHUl();
-$xUl->li("Lic. Alejandro Roberto de jesus Ojeda Mendez, Por su confianza en el proyecto.");
-$xUl->li("Ing. Jorge Alberto Poot Xiu.- Motivaci&oacute;n, Base de datos, Normalizaci&oacute;n  y su Gran Experiencia");
-$xUl->li("Ing. Gabriel Orozco Ruiz Velazco.- Seguridad, Motivaci&oacute;n y uso en otras entidades");
+$xUl->li("Lic. Alejandro Ojeda, Por su confianza en el proyecto.");
+$xUl->li("Ing. Jorge Poot.- Motivaci&oacute;n, Base de datos, Normalizaci&oacute;n  y su Gran Experiencia");
+$xUl->li("Ing. Gabriel Ruiz.- Seguridad, Motivaci&oacute;n y uso en otras entidades");
 //$xUl->li("");
+$xFRM->addHElem( $xUl->li("L.I. Victor Rojas.- Motivaci&oacute;n, Recomendaci&oacute;n y uso del Now How")->end() );
+$xFRM->endSeccion();
 
-$xFRM->addHTML( $xUl->li("L.I. Victor Rojas.- Motivaci&oacute;n, Recomendaci&oacute;n y uso del Now How")->end() );
-
-$xFRM->addHTML("<h3>DATOS DEL SISTEMA</h3>");
+$xFRM->addSeccion("id3", "TR.DATOS DEL SISTEMA");
 $xULi	= new cHUl();
-$xFRM->addHTML( $xULi->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)->li("Sucursal: " . getSucursal())
+$xFRM->addHElem( $xULi->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)->li("Sucursal: " . getSucursal())
 		->li("Version S.A.F.E.:" . SAFE_VERSION)->li("Revision S.A.F.E: " . SAFE_REVISION)->li("Path Temporal:" . PATH_TMP)
 		->li("Path Backups:" . PATH_BACKUPS)->li("Fecha del Sistema: " . date("Y-m-d H:i:s"))->li("Usuario Activo: " .elusuario(getUsuarioActual()))->end() );
-
+$xFRM->endSeccion();
 
 echo $xFRM->get();
 

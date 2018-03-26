@@ -469,11 +469,16 @@ function jsCancelLockPeriodo(){ $(idFortips).qtip("hide"); }
 function setOcultar(id) {    $("#options-" + id).parent().css("display", "none"); }
 function jsGetCobranza(){    
 	$("#idobservaciones").focus();   
-	xg.spin({ time : 5000 });
+	xG.spinInit();
 	jsResetCbza(); jsaGetDatosDelEnvio();  
 	setTimeout("jsGetCobranzaStep2()",1500);
 	jsaGetContarPeriodo();
+	xG.postajax("jsaOnEndLoad()");
 }
+function jsaOnEndLoad(){
+	xG.spinEnd();
+}
+
 function jsGetCobranzaStep2(){ jsaGetCobranza(); jsaGetCobranzaFutura(); /*establecer Numero y monto original*/ setTimeout("setEstablacerSumasIniciales()",2000); }
 function getEstadoDeCuenta(idcredito) {  var url = "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + idcredito ;    xg.w({ url : url, w : 800, h : 600 }); }
 function getObtenListado(){    jsaGetEmailsEmpresa();    xg.tipModal({	element : "#divperiodo",	title : "Obtener recibos",	msg : $("#irecibos")	}); }

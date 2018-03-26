@@ -3818,11 +3818,122 @@ $sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' , `menu_i
 $sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4000' WHERE `idgeneral_menu` = '4030'";
 $sql["20171101"][]	= "UPDATE `general_menu` SET `menu_parent` = '4110' WHERE `idgeneral_menu` = '4004'";
 $sql["20171101"][]	= "UPDATE `general_menu` SET `menu_title` = 'Modificador en Batch' , `menu_image` = 'fa-gears' WHERE `idgeneral_menu` = '4014' ";
-//$sql["20171101"][]	= "";
-//$sql["20171101"][]	= "";
-//$sql["20171101"][]	= "";
 
-		
+$sql["20180301"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('600', 'REPORTS', 'REPORTES.USAR_ENTIDADESFED', '', '', '', '')";
+$sql["20180301"][]	= "ALTER TABLE `general_reports` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `order_index`,ADD COLUMN `tags` VARCHAR(100) NULL DEFAULT '' AFTER `estatus` ";
+$sql["20180301"][]	= "UPDATE `general_reports` SET `estatus` = '0' WHERE `idreport` = '115'";
+$sql["20180301"][]	= "UPDATE `general_reports` SET `estatus` = '0' WHERE `idreport` = '166'";
+$sql["20180301"][]	= "UPDATE `general_reports` SET `descripcion_reports` = 'Operaciones.- Ingresos detallados' WHERE `idreport` = '175' ";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('creditos-letras-pendientes-de-pago-v101.rpt.php')";
+$sql["20180301"][]	= "INSERT INTO `general_reports` (`idgeneral_reports`, `descripcion_reports`, `aplica`, `idreport`, `explicacion`, `order_index`) VALUES ('../rptseguimiento/creditos-letras-pendientes-de-pago-v101.rpt.php?', 'Creditos.- Cuotas Pendientes de Pago con RC', 'seguimiento', '1005', 'Suma de Cuotas en Mora con Razones de Mora', '18')";
+$sql["20180301"][]	= "UPDATE  `creditos_causa_de_vencimientos` SET `descripcion_de_la_causa` = 'SIN CLASIFICAR' WHERE `idcreditos_causa_de_vencimientos` = '99' ";
+$sql["20180301"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`) VALUES ('4400', '4000', 'Catalogos de Segumiento', '', 'Catalogos de Segumiento', 'fa-table', 'parent', '4400', '4400')";
+$sql["20180301"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('4401', '4400', 'Razones de Vencimiento', 'frmsegumiento/razones-de-vencimiento.frm.php', 'Razones por la cual vencieron los Creditos', 'fa-ask', 'command', '4401', '4401', 'true')";
+$sql["20180301"][]	= "UPDATE `general_menu` SET `menu_file` = 'frmseguimiento/razones-de-vencimiento.frm.php' , `menu_image` = 'fa-tasks' WHERE `idgeneral_menu` = '4401'";
+//$sql["20180301"][]	= "SELECT setNuevoPermisoX('')";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('razones-de-vencimiento.edit.frm.php')";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('razones-de-vencimiento.new.frm.php')";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `tipo_contrato` = '120' WHERE `idgeneral_contratos` = '9'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `tipo_contrato` = '120' WHERE `idgeneral_contratos` = '10'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `tipo_contrato` = '120' WHERE `idgeneral_contratos` = '3001'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `tipo_contrato` = '120' WHERE `idgeneral_contratos` = '3002'";
+$sql["20180301"][]	= "ALTER TABLE `seguimiento_notificaciones` ADD COLUMN `tiempo_entrega` INT NULL DEFAULT '0' AFTER `formato`,ADD COLUMN `idresultado` INT(3) NULL AFTER `tiempo_entrega`,ADD COLUMN `nota_entrega` VARCHAR(150) NULL DEFAULT '' AFTER `idresultado`";
+$sql["20180301"][]	= "UPDATE `creditos_causa_de_vencimientos` SET `descripcion_de_la_causa` = 'EL SOCIO/CLIENTE SUFRIO UN EVENTO NO ESPERADO(ACCIDENTE)' WHERE `idcreditos_causa_de_vencimientos` = '2'";
+$sql["20180301"][]	= "UPDATE `creditos_causa_de_vencimientos` SET `descripcion_de_la_causa` = 'EL SOCIO/CLIENTE SE QUEDO SIN LA FUENTE DE RECURSOS DEL PAGO(DESEMPLEO)' WHERE `idcreditos_causa_de_vencimientos` = '6'";
+$sql["20180301"][]	= "UPDATE `creditos_causa_de_vencimientos` SET `descripcion_de_la_causa` = 'SOBREENDEDAMIENTO DEL SOCIO/CLIENTE O SIN CAPACIDAD DE PAGO' WHERE `idcreditos_causa_de_vencimientos` = '8'";
+$sql["20180301"][]	= "UPDATE `creditos_causa_de_vencimientos` SET `descripcion_de_la_causa` = 'FALLECIMIENTO DEL SOCIO/CLIENTE' WHERE `idcreditos_causa_de_vencimientos` = '10'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Autorizacion para consulta SIC' , `tags` = 'todas' WHERE `idgeneral_contratos` = '11'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `estatus` = 'baja' WHERE `idgeneral_contratos` = '1004'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `estatus` = 'baja' WHERE `idgeneral_contratos` = '1504'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Avales.- Autorizacion Consulta SIC' WHERE `idgeneral_contratos` = '5001'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `ruta` = '../rpt_formatos/autorizacion-sic.rpt.php?' WHERE `idgeneral_contratos` = '11'";
+$sql["20180301"][]	= "ALTER TABLE `leasing_activos` ADD COLUMN `segmento` INT(2) NULL DEFAULT '1' AFTER `annio`";
+$sql["20180301"][]	= "INSERT INTO `socios_relacionestipos` (`idsocios_relacionestipos`, `descripcion_relacionestipos`, `subclasificacion`, `tipo_relacion`, `requiere_domicilio`, `requiere_actividadeconomica`, `tiene_vinculo_patrimonial`, `checar_aml`, `tags`) VALUES ('553', 'Persona Estudiada', '1', '553', '1', '1', '1', '0', 'todas')";
+$sql["20180301"][]	= "INSERT INTO `socios_relacionestipos` (`idsocios_relacionestipos`, `descripcion_relacionestipos`, `subclasificacion`, `tipo_relacion`, `requiere_domicilio`, `requiere_actividadeconomica`, `tiene_vinculo_patrimonial`, `checar_aml`, `tags`) VALUES ('554', 'Persona a Facturar', '1', '554', '1', '1', '1', '0', 'todas')";
+$sql["20180301"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('1111', '100', 'Autorizacion Consulta SIC PM', '<!-- Contenido -->', 'pm', '../rpt_formatos/persona-generico.fmt.php?forma=1111&')";
+$sql["20180301"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`, `tags`, `ruta`) VALUES ('1112', '100', 'Autorizacion Consulta SIC PF', '<!-- Contenido -->', 'pf', '../rpt_formatos/persona-generico.fmt.php?forma=1112&')";
+$sql["20180301"][]	= "ALTER TABLE `socios_patrimonio` ADD COLUMN `tamannio` INT(6) NULL DEFAULT '0' AFTER `fecha_de_alta`,ADD COLUMN `idtipounidad` INT(3) NULL DEFAULT '1' AFTER `tamannio` ";
+$sql["20180301"][]	= "ALTER TABLE `socios_patrimonio` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' COMMENT '1 activo 0 inactivo' AFTER `idtipounidad` ";
+$sql["20180301"][]	= "INSERT INTO `sistema_catalogo` (`idsistema_catalogo`, `clave`, `descripcion`, `tabla_virtual`) VALUES ('34', '101', 'Pieza / Unidad', 'catalogo_unidades')";
+$sql["20180301"][]	= "INSERT INTO `sistema_catalogo` (`idsistema_catalogo`, `clave`, `descripcion`, `tabla_virtual`) VALUES ('35', '102', 'Metro Cuadrado', 'catalogo_unidades')";
+$sql["20180301"][]	= "ALTER TABLE `socios_patrimoniotipo` ADD COLUMN `unidad` INT(4) NULL DEFAULT '101' AFTER `tipo_patrimonio`";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '99'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '100'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '110'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '102' WHERE `idsocios_patrimoniotipo` = '120'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '130'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '140'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '150'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '210'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '211'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '220'";
+$sql["20180301"][]	= "UPDATE `socios_patrimoniotipo` SET `unidad` = '101' WHERE `idsocios_patrimoniotipo` = '410'";
+$sql["20180301"][]	= "UPDATE `socios_patrimonioestatus` SET `descripcion_patrimonioestatus` = 'POSITIVO' WHERE `idsocios_patrimonioestatus` = '10'";
+$sql["20180301"][]	= "UPDATE `socios_patrimonioestatus` SET `descripcion_patrimonioestatus` = 'NEGATIVO' WHERE `idsocios_patrimonioestatus` = '20'";
+$sql["20180301"][]	= "UPDATE `socios_patrimonioestatus` SET `descripcion_patrimonioestatus` = 'DESCONOCIDO' WHERE `idsocios_patrimonioestatus` = '99'";
+$sql["20180301"][]	= "INSERT INTO `socios_patrimonioestatus` (`idsocios_patrimonioestatus`, `descripcion_patrimonioestatus`, `estatus_actual`, `estado_presentado`) VALUES ('21', 'CON OBSERVACIONES', '21', '21')";
+$sql["20180301"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('8012', '200', 'Ficha de Referencias 1', '<!-- Contenido -->')";
+$sql["20180301"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('8013', '200', 'Ficha de Referencias 2', '<!-- Contenido -->')"; 
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `tipo_contrato` = '100' WHERE `idgeneral_contratos` = '100'";
+$sql["20180301"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Solicitud de Credito' WHERE `idgeneral_contratos` = '1100' ";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('recibo.css.php')";
+$sql["20180301"][]	= "UPDATE `socios_relacionestipos` SET `descripcion_relacionestipos` = 'REPRESENTANTE LEGAL' WHERE `idsocios_relacionestipos` = '14'";
+$sql["20180301"][]	= "INSERT INTO `socios_relacionestipos` (`idsocios_relacionestipos`, `descripcion_relacionestipos`, `subclasificacion`, `tipo_relacion`, `checar_aml`, `tags`) VALUES ('15', 'REPRESENTANTE LEGAL MANCOMUNADO', '1', '15', '0', 'pm')"; 
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'CUOTA FIJA' WHERE `idcreditos_tipo_de_pago` = '2'";
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'INT. NATURAL' WHERE `idcreditos_tipo_de_pago` = '3'";
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'CAPITAL FIJO' WHERE `idcreditos_tipo_de_pago` = '5'";
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'INT. COMERCIAL' WHERE `idcreditos_tipo_de_pago` = '6'";
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'PAGO FLAT' WHERE `idcreditos_tipo_de_pago` = '7'";
+$sql["20180301"][]	= "UPDATE `creditos_tipo_de_pago` SET `descripcion` = 'PAGO VARIABLE' WHERE `idcreditos_tipo_de_pago` = '1'";
+$sql["20180301"][]	= "ALTER TABLE `creditos_tipo_de_pago` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `con_capital`";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('referencia-bancaria.add.svc.php')";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('referencia-comercial.add.svc.php')";
+$sql["20180301"][]	= "ALTER TABLE `socios_general` ADD COLUMN `nss` VARCHAR(20) NULL DEFAULT '' AFTER `idinterna`";
+$sql["20180301"][]	= "UPDATE `socios_general` SET `nss` = (SELECT `numero_de_seguridad_social` FROM `socios_aeconomica` WHERE `socios_aeconomica`.`socio_aeconomica`= `socios_general`.`codigo` AND `estado_actual`!=0 AND `numero_de_seguridad_social`!='' LIMIT 0,1) WHERE `nss` = '' OR ISNULL(`nss`) ";
+$sql["20180301"][]	= "UPDATE `socios_general` SET `nss` = '' WHERE ISNULL(`nss`)";
+$sql["20180301"][]	= "SELECT setNuevoPermisoX('edit-config.frm.php')";
+//$sql["20180301"][]	= "ALTER TABLE `personas_domicilios_paises` ADD COLUMN `clavep_sic` VARCHAR(3) NULL DEFAULT '' AFTER `gentilicio`";
+$sql["20180301"][]	= "ALTER TABLE `usuarios_web_notas` ADD COLUMN `tiempo` INT(11) NULL DEFAULT '0' AFTER `relevancia`";
+
+
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Couchdb.- Nombre de la base de datos.' WHERE `nombre_del_parametro` = 'svc_db_couchdb'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Couchdb.- URI de la Base de Datos' WHERE `nombre_del_parametro` = 'svc_url_couchdb'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Couchdb.- Nombre de la Vista No Sync.' WHERE `nombre_del_parametro` = 'svc_vista_couchdb'"; 
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Direccion URL de las Actualizaciones' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Listas.- Direccion URL de Consulta GWS' WHERE `nombre_del_parametro` = 'url_de_consulta_gws'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Listas.- Direccion URL de Consulta PEP.- Interna' WHERE `nombre_del_parametro` = 'url_de_consulta_pep'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Listas.- Direccion URL de Consulta BLOQ.- Interna' WHERE `nombre_del_parametro` = 'url_de_consulta_sdn'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Listas.- Direccion URL de Consulta WIKI.- Interna' WHERE `nombre_del_parametro` = 'url_de_consulta_wiki'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Share.- Direccion URL de la Entidad Par' WHERE `nombre_del_parametro` = 'url_de_entidad_transmisora'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Otros.- Direccion URL de Otros Servicios Remotos' WHERE `nombre_del_parametro` = 'url_de_servicios_remotos'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'FTP.- Direccion IP4 del Servidor FTP' WHERE `nombre_del_parametro` = 'url_del_servidor_ftp'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Admin.- Password del Correo de Sistema' WHERE `nombre_del_parametro` = 'password_del_email_del_administrador'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Listas.- Password de Acceso al WIKI' WHERE `nombre_del_parametro` = 'password_de_consulta_wiki'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'Mercadeo.- Password del Correo de Mercadeo' WHERE `nombre_del_parametro` = 'password_de_mercadeo'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'FTP.- Password del Usuario FTP' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'";
+$sql["20180302"][]	= "UPDATE `entidad_configuracion` SET `descripcion_del_parametro` = 'FTP.- Nombre del Usuario FTP' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'";
+
+
+$sql["20180302"][]	= "ALTER TABLE `creditos_plan_de_pagos` ADD COLUMN `iva_castigos` FLOAT(12,2) NULL DEFAULT '0.00' AFTER `descuentos`,ADD COLUMN `total_base` DOUBLE(14,2) NULL DEFAULT '0.00' AFTER `iva_castigos`,ADD COLUMN `total_c_otros` DOUBLE(14,2) NULL DEFAULT '0.00' AFTER `total_base`,ADD COLUMN `total_c_castigos` DOUBLE(14,2) NULL DEFAULT '0.00' AFTER `total_c_otros`;";
+$sql["20180302"][]	= "ALTER TABLE `creditos_plan_de_pagos` CHANGE COLUMN `otros_codigo` `otros_codigo` INT(11) NULL DEFAULT '414'";
+$sql["20180302"][]	= "UPDATE `creditos_plan_de_pagos` SET `otros_codigo`=414 WHERE `otros_codigo`<>414 AND `otros`<=0";
+$sql["20180302"][]	= "UPDATE `creditos_plan_de_pagos` SET `total_base`=`capital`+`interes`+`impuesto`";
+$sql["20180302"][]	= "UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET pin_app=`idusuarios`";
+$sql["20180302"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`, `valor`) VALUES ('601', 'SYSTEM', 'CREDITOS.NOMINA.NO_MORA', '', '', '', '', '1')";
+$sql["20180302"][]	= "CREATE TABLE IF NOT EXISTS `operaciones_recibos_arch` ( `idoperaciones_recibos` BIGINT( 20 ) UNSIGNED AUTO_INCREMENT NOT NULL,`fecha_operacion` DATE NOT NULL DEFAULT '0000-00-00',`numero_socio` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '1',`docto_afectado` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '1',`tipo_docto` INT( 4 ) UNSIGNED NOT NULL DEFAULT '99',`total_operacion` DOUBLE( 16, 2 ) NOT NULL DEFAULT '0.00',`idusuario` INT( 4 ) UNSIGNED NOT NULL DEFAULT '99',`observacion_recibo` VARCHAR( 200 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL,`cheque_afectador` VARCHAR( 20 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'N/A',	`cadena_distributiva` VARCHAR( 200 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'N/A',`tipo_pago` VARCHAR( 25 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'efectivo',`indice_origen` INT( 4 ) NULL DEFAULT '99' COMMENT 'Origen del Recibo, mas bien su motivacion',	`grupo_asociado` BIGINT( 20 ) NULL DEFAULT '99',`recibo_fiscal` VARCHAR( 15 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT '',`sucursal` VARCHAR( 10 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'MATRIZ',`eacp` VARCHAR( 20 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'EN_TRAMITE',`clave_de_moneda` VARCHAR( 6 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'MXN',`unidades_en_moneda` DOUBLE( 16, 4 ) NULL DEFAULT '0.0000',`origen_aml` INT( 4 ) NOT NULL DEFAULT '0',`archivo_fisico` VARCHAR( 200 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL,`persona_asociada` BIGINT( 20 ) NULL DEFAULT '0',`fecha_de_registro` DATE NULL DEFAULT '0000-00-00',`periodo_de_documento` INT( 4 ) NULL DEFAULT '0' , `cuenta_bancaria` BIGINT( 20 ) NULL DEFAULT '0' COMMENT 'Cuenta Bancaria asociada', `montohist` DOUBLE( 16, 2 ) NULL DEFAULT '0.00', `tiempo` INT( 11 ) NULL DEFAULT '0', PRIMARY KEY ( `idoperaciones_recibos`, `numero_socio`, `docto_afectado`, `tipo_docto`, `origen_aml` ) ) ENGINE = INNODB";
+$sql["20180302"][]	= "CREATE TABLE IF NOT EXISTS `operaciones_mvtos_arch` (`idoperaciones_mvtos` BIGINT( 20 ) UNSIGNED AUTO_INCREMENT NOT NULL COMMENT 'Numero de Operacion',`fecha_operacion` DATE NOT NULL DEFAULT '0000-00-00',`fecha_afectacion` DATE NOT NULL DEFAULT '0000-00-00',`recibo_afectado` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '1',`socio_afectado` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '1',`docto_afectado` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '1',`tipo_operacion` INT( 4 ) UNSIGNED NOT NULL DEFAULT '99',`afectacion_real` DOUBLE( 16, 2 ) NOT NULL DEFAULT '0.00',`afectacion_cobranza` TINYINT( 4 ) NULL DEFAULT '0',`afectacion_contable` TINYINT( 4 ) NULL DEFAULT '0',`valor_afectacion` FLOAT( 4, 2 ) NOT NULL DEFAULT '0.00',`fecha_vcto` DATE NOT NULL DEFAULT '0000-00-00',`estatus_mvto` INT( 3 ) UNSIGNED NOT NULL DEFAULT '99',`codigo_eacp` VARCHAR( 15 )   NULL DEFAULT 'EN_TRAMITE',`periodo_socio` INT( 4 ) UNSIGNED NOT NULL DEFAULT '1',`periodo_contable` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`periodo_cobranza` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`periodo_seguimiento` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`periodo_mensual` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`periodo_semanal` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`periodo_anual` TINYINT( 3 ) UNSIGNED NULL DEFAULT '0',`saldo_anterior` DOUBLE( 16, 2 ) NOT NULL DEFAULT '0.00',`saldo_actual` DOUBLE( 16, 2 ) NOT NULL DEFAULT '0.00',`detalles` VARCHAR( 80 )   NULL,`idusuario` INT( 4 ) NULL DEFAULT '99',`afectacion_estadistica` DOUBLE( 16, 2 ) NOT NULL DEFAULT '0.00',`docto_neutralizador` BIGINT( 20 ) UNSIGNED NULL DEFAULT '1',`cadena_heredada` VARCHAR( 20 )   NULL,`tasa_asociada` FLOAT( 7, 4 ) UNSIGNED NULL DEFAULT '0.0000',`dias_asociados` INT( 4 ) UNSIGNED NULL DEFAULT '0',`grupo_asociado` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT '0', `sucursal` VARCHAR( 20 )  NULL DEFAULT 'matriz', PRIMARY KEY ( `idoperaciones_mvtos` ) ) ENGINE = INNODB";
+$sql["20180302"][]	= "INSERT INTO `socios_memotipos` (`tipo_memo`, `descripcion_memo`) VALUES ('14', 'Nota de recibo al Eliminar')";
+$sql["20180302"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('602', 'FORM', 'CREDITOS.ARRENDAMIENTO.ANT.NOAPP', '', '', '', '')";
+$sql["20180302"][]	= "ALTER TABLE `originacion_leasing` ADD COLUMN `com_agencia` FLOAT(6,4) NULL DEFAULT '0' AFTER `noivarent`,ADD COLUMN `gps_list` VARCHAR(60) NULL DEFAULT '' AFTER `com_agencia` ";
+$sql["20180302"][]	= "ALTER TABLE `leasing_usuarios` ADD COLUMN `tasa_com` FLOAT(6,4) NULL DEFAULT '0' AFTER `telefono`";
+$sql["20180302"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('603', 'FORM', 'CREDITOS.ARRENDAMIENTO.SUM.COMIS', '', '', '', '')";
+$sql["20180302"][]	= "SELECT setNuevoPermisoX('personas.datos-pjuridicas.frm.php')";
+$sql["20180302"][]	= "ALTER TABLE `originacion_leasing` CHANGE COLUMN `montoajuste` `montoajuste` FLOAT(10,2) NULL DEFAULT '0.00' ,ADD COLUMN `montocom_agen` FLOAT(10,2) NULL DEFAULT '0' AFTER `gps_list`";
+$sql["20180302"][]	= "UPDATE `general_contratos` SET `titulo_del_contrato` = 'Arrendamiento.- Cotizacion' WHERE `idgeneral_contratos` = '1900'";
+
+//$sql["20180302"][]	= "";
+//$sql["20180302"][]	= "";
+
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){
 		

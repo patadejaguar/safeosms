@@ -33,8 +33,6 @@ $isMobile					= parametro("mobile", $xHP->isMobile($usarMenuAlt), MQL_BOOL);
 
 $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
 
-
-
 $xUser->init();
 $xUser->getUserRules();
 $TasksPage					= $xUser->getTasksPage();

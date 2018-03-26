@@ -273,9 +273,11 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_SOLICITUD_SIN_FECHA_ANT	= "CREDITOS.SOLICITUD.SIN_FECHA_PASADA";
 	public $CREDITOS_SOLICITUD_SIN_PERIODO_ANT	= "CREDITOS.SOLICITUD.SIN_PERIODO_PASADO";
 	public $CREDITOS_SOLICITUD_CON_ORIGEN		= "CREDITOS.SOLICITUD.REQUIEREN_ORIGEN";
+	public $CREDITOS_NOMINA_NOMORA				= "CREDITOS.NOMINA.NO_MORA";
 	
 	public $CREDITOS_ARREND_RES_CON_ANT			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_ANT";
 	public $CREDITOS_ARREND_RES_CON_IVA			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_IVA";
+	public $CREDITOS_ARREND_ANT_NOAPP			= "CREDITOS.ARRENDAMIENTO.ANT.NOAPP";
 	//public $CREDITOS_ARREND_ANT_SIN_IVA			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_IVA";
 	
 	
@@ -287,6 +289,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_FRM_DIS				= "CREDITOS.ARRENDAMIENTO.DISABLE_FLD";
 	public $CREDITOS_ARREND_AJUSTM				= "CREDITOS.ARRENDAMIENTO.AJUSTESERVS";
 	public $CREDITOS_ARREND_NOUSERS				= "CREDITOS.ARRENDAMIENTO.NOUSERS";
+	public $CREDITOS_ARREND_SUM_COMS			= "CREDITOS.ARRENDAMIENTO.SUM.COMIS";
 	
 	public $CREDITOS_NOM_EXT_SEMANA				= "CREDITOS.NOMINA.SEMANAS.EXTRA";
 	public $CREDITOS_NOM_EXT_QNA				= "CREDITOS.NOMINA.QUINCENA.EXTRA";
@@ -337,8 +340,9 @@ class cReglasDeNegocioLista {
 	public $RN_USAR_MENU_ALT					= "RN_USAR_USAR_MENU_ALTER";
 	
 	public $CAPTACION_SIN_DIASPRE				= "CAPTACION.SIN.DIAS_PRE";
-	//public $CAPTACION_				= "CAPTACION";
 	
+	//public $CAPTACION_				= "CAPTACION";
+	public $REPORTES_USAR_EFED					= "REPORTES.USAR_ENTIDADESFED";
 	
 	function getInArray(){
 		$arr	= array();
@@ -426,7 +430,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_AJUSTM]				= $this->CREDITOS_ARREND_AJUSTM;
 		$arr[$this->CREDITOS_ARREND_NOUSERS]			= $this->CREDITOS_ARREND_NOUSERS;
 		$arr[$this->CREDITOS_PAG_PURGE_DSPM]			= $this->CREDITOS_PAG_PURGE_DSPM;
-		
+		$arr[$this->CREDITOS_ARREND_ANT_NOAPP]			= $this->CREDITOS_ARREND_ANT_NOAPP;
+		$arr[$this->CREDITOS_ARREND_SUM_COMS]			= $this->CREDITOS_ARREND_SUM_COMS;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
@@ -436,7 +441,10 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_NOM_EXT_QNA]				= $this->CREDITOS_NOM_EXT_QNA;
 		$arr[$this->CREDITOS_NOM_EXT_SEMANA]			= $this->CREDITOS_NOM_EXT_SEMANA;
 		$arr[$this->CREDITOS_USE_MORA_BD]				= $this->CREDITOS_USE_MORA_BD;
+		$arr[$this->CREDITOS_NOMINA_NOMORA]				= $this->CREDITOS_NOMINA_NOMORA;
 		
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->RECIBOS_SIN_VERSIONIMP]				= $this->RECIBOS_SIN_VERSIONIMP;		
@@ -469,7 +477,7 @@ class cReglasDeNegocioLista {
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
-		//$arr[$this->]			= $this->;
+		$arr[$this->REPORTES_USAR_EFED]					= $this->REPORTES_USAR_EFED;
 		$arr[$this->CAPTACION_SIN_DIASPRE]				= $this->CAPTACION_SIN_DIASPRE;
 		return $arr;
 	}

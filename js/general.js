@@ -315,6 +315,7 @@ Gen.prototype.w	= function(opts){
 	var otags	= (typeof opts.tags == "undefined") ? true : opts.tags;
 	var isBlank	= (typeof opts.blank == "undefined") ? false : opts.blank;
 	var isTab	= (typeof opts.tab == "undefined") ? false : opts.tab;
+	var ajsAlto	= (typeof opts.ajusteAlto == "undefined") ? false : opts.ajusteAlto;
 	var wm		= this;
 	var isMob	= session(Configuracion.variables.sistema.isMobile);
 	isMob		= (isMob === null) ? false : isMob;
@@ -322,6 +323,10 @@ Gen.prototype.w	= function(opts){
 	var tiny	= (typeof opts.tiny == "undefined") ? false : opts.tiny;
 	tiny		= (isMob == "true") ? false  : tiny;
 	//if(isMob == "true"){ console.log("mobile.."); } else { console.log( Configuracion.variables.sistema.isMobile + ": " +  session(Configuracion.variables.sistema.isMobile) ); }
+	if(ajsAlto == true){
+		hg		= LimAl;
+	}
+		
 		wd		= ((wd > LimAn) && isBlank == false) ? LimAn : wd;
 		hg		= ((hg > LimAl) && isBlank == false) ? LimAl : hg;
 		tp		= entero( (LimAl - hg)/2 );
@@ -331,6 +336,8 @@ Gen.prototype.w	= function(opts){
 		hg		= LimAl;
 		tp		= 0;
 		lf		= 0;
+	} else {
+		
 	}
 	var name	= "";
 	var specs	= "resizable=no,modal=yes,scrollbars=yes,location=no,status=no,height=" + hg + ",width=" + wd + ",top=" + tp + ",left=" + lf;
@@ -614,6 +621,16 @@ Gen.prototype.notify	= function(opts){
       icon: theIcon
   }
   var n = new Notification(theTitle,options);*/
+}
+
+Gen.prototype.editForm	= function(opts){
+	opts 		= (typeof opts == "undefined" ) ? {} : opts;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
+	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
+	var id		= (typeof opts.id == "undefined") ? 0 : opts.id;
+	var self	= this;
+	self.w({url:"../frmutils/contratos-editor.edit.frm.php?idcontrato=" + id, tab:true, callback: callB});	
 }
 //=================================================================
 function tipSuggest(id, msg){ alert("deprecated"); }
@@ -1029,6 +1046,7 @@ Gen.prototype.DataList	= function(opts){
 		$("#" + id).empty();
 		$("#" + id).append(str);
 		vURL		= "";
+		setTimeout(callback,10);
 	}
 
 	if(vURL == ""){
@@ -1047,6 +1065,7 @@ Gen.prototype.DataList	= function(opts){
 			});
 			$("#" + id).empty();
 			$("#" + id).append(str);
+			setTimeout(callback,10);
 			if(cnt > 0){
 				self.Cache({clave:idxC, set: str});
 			}
@@ -1205,6 +1224,72 @@ Gen.prototype.requiere	= function(opts){
 
 	//self.confirmar(opts);
 }
+Gen.prototype.dialogo	= function (opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	//function getModalTip(element, content, title){
+	var tit		= (typeof opts.title == "undefined") ? "Mensaje del Sistema" : opts.title;
+	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
+	var id		= (typeof opts.id == "undefined") ? window : opts.id;
+	
+	var isSiNo		= (typeof opts.onyes == "undefined" && typeof opts.onno == "undefined") ? false : true;
+	var isAcepCan 	= (typeof opts.oncancel == "undefined" && typeof opts.onagree == "undefined") ? false : true;
+	
+	var oncan	= (typeof opts.oncancel == "undefined") ? function(){} : opts.oncancel;
+	var onacep	= (typeof opts.onagree == "undefined") ? function(){} : opts.onagree;
+	
+	var onyes	= (typeof opts.onyes == "undefined") ? function(){} : opts.onyes;
+	var onno	= (typeof opts.onno == "undefined") ? function(){} : opts.onno;
+
+	
+	var xG		= new Gen();
+	var w		= entero((xG.ancho()/2));
+	var btns	= {};
+	if(isAcepCan == true){
+		var btns	= {
+			"Aceptar" : function(){
+				jQuery(this).dialog("close");
+				$(".ui-dialog-content").dialog("close");
+				setTimeout(onacep,100);
+				return true;
+			},
+			"Cancelar" : function(){
+				jQuery(this).dialog("close");
+				$(".ui-dialog-content").dialog("close");
+				setTimeout(oncan,100);
+				return true;				
+			}
+		};
+	}
+	if(isSiNo == true){
+		var btns	= {
+			"Si" : function(){
+				jQuery(this).dialog("close");
+				$(".ui-dialog-content").dialog("close");
+				setTimeout(onyes,100);
+				return true;
+			},
+			"No" : function(){
+				jQuery(this).dialog("close");
+				$(".ui-dialog-content").dialog("close");
+				setTimeout(onno,100);
+				return true;				
+			}
+		};
+	}	
+	if(document.getElementById(id)){
+	//session(Configuracion.opciones.dialogID, content.attr("id"));
+		var cnt	= $("#" + id);
+		cnt.dialog({
+				resizable: false,height: "auto", width: w, modal: true, title:tit, buttons: btns,
+				create : function (){
+					$(this).closest(".ui-dialog").find(".ui-button:first").addClass("ui-icon-cancel");
+					$(this).closest(".ui-dialog").find(".ui-button:last").addClass("ui-icon-trash");
+				}
+			}); //.text(msg)
+	}
+}
 Gen.prototype.alerta	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
@@ -1353,7 +1438,11 @@ Gen.prototype.save	= function(opts){
 		}
 	};
 	var mFunc_	= function(){ self.spinInit(); setTimeout(mFunc,2000); };
-	self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
+	if(noMsg == true){
+		setTimeout(mFunc_,5);	
+	} else {
+		self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
+	}
 }
 Gen.prototype.crudAdd	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -1548,8 +1637,9 @@ TableW.prototype.addCol	= function(opts){
 }
 //---------------------- INIT CREDITOS
 CredGen.prototype.getImprimirSolicitud	= function(idcredito){
-	var sURL = '../frmcreditos/rptsolicitudcredito1.php?solicitud=' + idcredito;
-	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 800 });
+	//var sURL = '../frmcreditos/rptsolicitudcredito2.php?solicitud=' + idcredito;
+	var sURL = '../rpt_formatos/rptsolicitudcredito2.php?solicitud=' + idcredito;
+	var xGen	= new Gen(); xGen.w({ url : sURL, blank : true, full:true });
 }
 CredGen.prototype.getImprimirOrdenDeDesembolso	= function(idcredito){
 	var sURL = '../rpt_formatos/rptordendesembolso.php?solicitud=' + idcredito;
@@ -1662,6 +1752,15 @@ CredGen.prototype.goToCobrosDeCredito	= function(opts){
 	var idcredito	= (typeof opts.credito == "undefined") ? 0 : opts.credito;
 	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var gURL 		= "../frmcaja/frmcobrosdecreditos2.php?credito=" + idcredito + "&periodo=" + periodo;
+	var xGen 		= new Gen(); xGen.w({ url : gURL, h : 600, w : 900, callback : jscall, tab:true });
+}
+CredGen.prototype.goToCobroMasivoDeCredito	= function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var monto		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
+	//var periodo		= (typeof opts.periodo == "undefined") ? 0 : opts.periodo;
+	var idcredito	= (typeof opts.credito == "undefined") ? 0 : opts.credito;
+	var jscall		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var gURL 		= "../frmcaja/abonos-a-parcialidades.frm.php?credito=" + idcredito + "&monto=" + monto;
 	var xGen 		= new Gen(); xGen.w({ url : gURL, h : 600, w : 900, callback : jscall, tab:true });
 }
 CredGen.prototype.getListarCreditos = function(idpersona){
@@ -2746,10 +2845,10 @@ CaptGen.prototype.setNuevoDepositoVista	= function(opts){
 }
 //--------------------------- END CAPTACION
 RecGen.prototype.panel			= function(clave){
-	var xGen	= new Gen(); xGen.w({ url: "../frmoperaciones/recibos.panel.frm.php?cNumeroRecibo=" + clave, h:600, w : 800, tiny : true});
+	var xGen	= new Gen(); xGen.w({ url: "../frmoperaciones/recibos.panel.frm.php?cNumeroRecibo=" + clave, ajusteAlto: true, w : 800, tiny : true});
 }
 RecGen.prototype.reporte			= function(clave){
-	var xGen	= new Gen(); xGen.w({ url: "../rptoperaciones/rpt_consulta_recibos_individual.php?recibo=" + clave, h:600, w : 800});
+	var xGen	= new Gen(); xGen.w({ url: "../rptoperaciones/rpt_consulta_recibos_individual.php?recibo=" + clave, full:true, blank: true});
 }
 RecGen.prototype.formato			= function(clave){
 	var xGen	= new Gen(); xGen.w({ url: "../rpt_formatos/recibo.rpt.php?recibo=" + clave, full: true});
@@ -2812,20 +2911,38 @@ RecGen.prototype.eliminar	= function(opts){
 	var nomina	= (typeof opts.nomina == "undefined") ? "" : "&nomina=" + opts.nomina;
 	var letra  	= (typeof opts.letra == "undefined") ? "" : "&letra=" + opts.letra;
 	var callB	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
-	//agregar confirm y no confirm
+	var tID		= 'idtxtrazon_' + id;
+	var nota	= "";
+	var ready	= true;
 	var xG		= new Gen();
-	$.cookie.json 	= true;
-	var mURL	= "../svc/recibos.del.svc.php?id=" +  id + letra + nomina;
-	$.getJSON( mURL, function( data ) {
-		  //var str     = "";
-		  if (data.error == true) {
-			xG.alerta({msg : data.message});
-		  } else {
-			xG.alerta({msg : data.message, type : "ok"});
-			callB(id);
-		  }
+	
+	if(document.getElementById(tID)){
+		nota 	= $("#" + tID).val();
+		if($.trim(nota) == ""){
+			ready	= false;
+			xG.spinEnd();
+			xG.requiere({msg:"MSG_DATA_REQUIRED", tipo: "error"});
+		} else {
+			nota	= "&notas=" + nota;
 		}
-	);
+		
+	}
+	//agregar confirm y no confirm
+	if(ready == true){
+		
+		$.cookie.json 	= true;
+		var mURL		= "../svc/recibos.del.svc.php?id=" +  id + letra + nomina + nota;
+		$.getJSON( mURL, function( data ) {
+			  //var str     = "";
+			  if (data.error == true) {
+				xG.alerta({msg : data.message});
+			  } else {
+				xG.alerta({msg : data.message, type : "ok"});
+				callB(id);
+			  }
+			}
+		);
+	}
 }
 RecGen.prototype.confirmaEliminar	= function(id){
 	//opts		= (typeof opts == "undefined") ? {} : opts;
@@ -2833,7 +2950,14 @@ RecGen.prototype.confirmaEliminar	= function(id){
 	var xG		= new Gen();
 	var onDel	= function(){ xG.spinEnd(); xG.close(); }
 	var readyF	= function(){ xG.spinInit(); self.eliminar({ recibo : id, callback: onDel }); }
-	xG.confirmar({ msg : "Eliminar Recibo y Operaciones?\nEl cambio es permanente." , callback : readyF });
+	var dID		= 'idconfirmdel_' + id;
+	var tID		= 'idtxtrazon_' + id;
+	var $div = $('<div />').appendTo('body');
+	$div.attr('id', dID);
+	$div.attr('class', 'inv formoid-default');
+	$div.html("<p class='error'>Necesita Escribir una Razon para Eliminar este recibo:<p><textarea id='" + tID + "'></textarea>");
+	xG.dialogo({id:dID, title : "Escriba una Razon", onyes : function(){ setTimeout(readyF,10); } });
+	//xG.confirmar({ msg : "Eliminar Recibo y Operaciones?\nEl cambio es permanente." , callback : readyF });
 }
 RecGen.prototype.editar	= function(id){
 	//opts		= (typeof opts == "undefined") ? {} : opts;

@@ -78,8 +78,8 @@ $xHG->addList();
 $xHG->addKey("idleasing_usuarios");
 
 $xHG->col("nombre", "TR.NOMBRE", "40%");
-
 $xHG->col("correo_electronico", "TR.CORREO_ELECTRONICO", "40%");
+$xHG->ColMoneda("comision", "TR.COMISION", "5%");
 $xHG->col("activo", "TR.ESTATUS", "5%");
 
 $xHG->col("administrador", "TR.ADMINISTRADOR", "5%");

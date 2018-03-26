@@ -95,6 +95,7 @@ $xFRM->addSeccion("idnx1", "TR.DATOS");
 $xFRM->OText("nombre", $xTabla->nombre()->v(), "TR.NOMBRE");
 $xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
 $xFRM->OMoneda("telefono", $xTabla->telefono()->v(), "TR.TELEFONO");
+$xFRM->ONumero("tasa_com", $xTabla->tasa_com()->v(), "TR.TASA COMISION");
 
 if($EsAdmin == true){
 	$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
@@ -103,6 +104,8 @@ if($originador == 0 AND $suborigen == 0){
 	$xFRM->OSiNo("TR.ADMINISTRADOR","administrador", $xTabla->administrador()->v());
 }
 $xFRM->endSeccion();
+
+
 $xFRM->addCRUD($xTabla->get(), true);
 
 echo $xFRM->get();

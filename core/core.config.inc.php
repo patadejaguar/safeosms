@@ -12,13 +12,13 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "Nidia"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201711";
-$revision 								= "01";
+$codename 								= "AzusaF-GTO"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201803";
+$revision 								= "02";
 
 define("SAFE_VERSION",                  $version);
 define("SAFE_REVISION",                 $revision);
-define("SAFE_FIRM",                  	"S.A.F.E. OSMS - $version.$revision $codename");
+define("SAFE_FIRM",                  	"SAFE-OSMS-$version.$revision $codename");
 
 //======================================= INCLUDE RUNTIME
 ini_set("include_path", $os_path_includes_str);
@@ -100,7 +100,6 @@ define("iDE_AVAL", 				210);
 define("iDE_RECIBO", 			400);
 
 define("iDE_USUARIO", 			900);
-
 define("iDE_BANCOS", 			700);
 
 define("iDE_RECIBO_INGRESOS",	410);
@@ -114,6 +113,7 @@ define("iDE_CPOLIZA", 			600);
 define("iDE_CONTABLE", 			699);
 
 define("iDE_AML", 				510);
+define("iDE_SEGUIMIENTO", 		120);
 
 		//Define la Division Estandar de Cadenas en una funcion EXPLODE
 define("STD_LITERAL_DIVISOR", "@");
@@ -419,6 +419,7 @@ define("OPERACION_LIBERAR_SUCURSALES",		(bool) $xC->get("liberar_informacion_de_
 
 define("SYS_TEXTO_TODAS",					$xC->get("texto_para_palabra_todas", "TODAS", MMOD_SISTEMA));
 define("CSS_TFUENTE_CONTRATOS",				$xC->get("css_tamano_fuente_en_contratos", "10", MMOD_SISTEMA) );
+define("CSS_TFUENTE_RECIBOS",				$xC->get("css_tamano_fuente_en_recibos", "8", MMOD_SISTEMA) );
 
 
 define("FACTURACION_NUM_CERT",				$xC->get("facturacion.numero_certificado", "20001000000300022762", MMOD_OPERACIONES));

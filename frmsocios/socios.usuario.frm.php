@@ -22,11 +22,22 @@ $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
 $svc		= new MQLService("", "");
 $xErrCod	= new cErrorCodes();
+$jxc 		= new TinyAjax();
 
 $svc->setKey(getClaveCifradoTemporal());
-//$jxc = new TinyAjax();
-//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-//$jxc ->process();
+function jsaSavePin($pin, $idusuario){
+	$xUser	= new cSystemUser($idusuario);
+	
+	$xUser->init();
+	
+	$xUser->setPin($pin);
+	
+	return $xUser->getMessages(OUT_HTML);
+}
+
+$jxc->exportFunction('jsaSavePin', array('idpin', 'usuario'), "#idmsg");
+$jxc->process();
+
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -42,11 +53,15 @@ $usuario		= parametro("usuario", 0, MQL_INT);
 $observaciones	= parametro("idobservaciones");
 $pass1			= parametro("idpass1", "", MQL_RAW);
 $pass2			= parametro("idpass2", "", MQL_RAW);
+$idpin			= parametro("idpin", 0, MQL_INT);
 
 $xHP->init();
 
 $xFRM			= new cHForm("frm", "./");
 $xSel			= new cHSelect();
+$xTxt			= new cHText();
+$xChk			= new cHCheckBox();
+
 $xFRM->setTitle($xHP->getTitle());
 $xUser2			= new cSystemUser(); $xUser2->init();
 if($usuario >0 AND $persona <= DEFAULT_SOCIO){
@@ -56,7 +71,7 @@ if($usuario >0 AND $persona <= DEFAULT_SOCIO){
 
 //$xFRM->addJsBasico();
 $xSoc		= new cSocio($persona);
-$xTxt		= new cHText();
+
 if($xSoc->init() == true){
 	if($xSoc->getEsUsuario(true) == true){
 		$pass1		= $svc->getDecryptData($pass1);
@@ -74,28 +89,79 @@ if($xSoc->init() == true){
 			$usuario	= $xUser->getID();
 		}
 		if(($xUser2->getID() !== $xUser->getID()) AND $xUser2->getPuedeEditarUsuarios() == false ){
-			//$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
+			$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
 		}
+		
+		
 		$xFRM->OHidden("idsocio", $persona);
 		$xFRM->OHidden("usuario", $usuario);
 		
 		
 		//Reporte de Eliminados
 		$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
+		
 		if($action == SYS_NINGUNO OR ($pass1 !== $pass2)){
 			
 			$xFRM->addHElem( $xUser->getFicha());
 			$xFRM->setNoAcordion();
 			$xFRM->addSeccion("idnomsg", "TR.Cambio de password");
 			$xTxt->addEvent("var xG=new Gen(); this.value=xG.enc(this.value)", "onchange");
+			
 			$xFRM->addHElem($xTxt->getPassword("idpass1", "TR.PASSWORD"));
 			$xFRM->addHElem($xTxt->getPassword("idpass2", "TR.CONFIRME PASSWORD"));
+			
 			$xFRM->endSeccion();
+			
+			if( $xUser2->getID() == $xUser->getID() ){
+				$xFRM->addSeccion("idnewpass", "TR.Cambio de Pin");
+				$xFRM->ONumero("idpin", "", "TR.PIN");
+				$xFRM->setValidacion("idpin", "jsSavePin");
+				$xFRM->endSeccion();
+			}
+			
 			$xFRM->addGuardar();
+			
+			
 			$xFRM->setAction("socios.usuario.frm.php?action=" . MQL_ADD);
 			if($pass1 !== $pass2){
 				$xFRM->addAvisoRegistroError("TR.LA PASSWORD No es igual\r\n");
 			}
+			
+			$xTbl		= new cHTabla("idtblrules", "listado");
+			$xImg		= new cHImg();
+			$xTbl->addTH("TR.PARAMETRO");
+			$xTbl->addTH("TR.VALOR");
+			
+			$arrR	= $xUser2->getUserRules();
+			foreach ($arrR as $idx => $idv){
+				$ss		= ($idv == "false") ? "error" : "success";
+				$img	= ($idv == "false") ? "busy.png" : "check.png";
+				
+				$xTbl->initRow($ss);
+				$xTbl->addTD($idx);
+				$xTbl->addTD($xImg->get16($img));
+				
+				$xTbl->endRow();
+			}
+			//Opciones Editables
+			$arrR	= $xUser2->getUserOptions();
+			foreach ($arrR as $idx => $idv){
+				$ss		= ($idv == "false") ? "error" : "success";
+				$vv		= ($idv == "false") ? 0 : 1;
+				
+				$xChk->setDivClass("tx18");
+				$xTbl->initRow($ss);
+				$xTbl->addTD($idx);
+				$xTbl->addTD($xChk->getSiNo("", "idchk-$idx", $vv, true));
+				
+				$xTbl->endRow();
+			}
+			
+			$xFRM->addSeccion("idx", "TR.OPCIONES");
+			$xFRM->addHElem($xTbl->get());
+			$xFRM->endSeccion();
+			
+			$xFRM->addAviso("", "idmsg");
 		} else {
 			if($xUser->setPassword($pass1) == true){
 				$xFRM->addAvisoRegistroOk("TR.El password ha cambiado\r\n");
@@ -106,6 +172,8 @@ if($xSoc->init() == true){
 			
 		}
 	}
+} else {
+	$xFRM->addAvisoInicial("No se puede editar este usuario", true);
 }
 echo $xFRM->get();
 ?>
@@ -115,8 +183,15 @@ function jsVerEliminados(){
 	var iduser = $("#usuario").val();
 	xG.w({url:"../frmsecurity/eliminados.frm.php?usuario=" +  iduser});
 }
+function jsSavePin(){
+	xG.confirmar({msg: "CONFIRMA_ACTUALIZACION", callback: jsaSavePin});
+	//var iduser = $("#idpin").val();
+	return true;
+}
 </script>
 <?php
-//$jxc ->drawJavaScript(false, true);
+
+$jxc->drawJavaScript(false, true);
+
 $xHP->fin();
 ?>

@@ -73,14 +73,24 @@ if($query !== "" OR $where !== ""){
 		
 		$sql	= base64_decode($query);
 		if($where == ""){
-			
+			//setError($where );
 		} else {
 			$where	= base64_decode($where);
-			//checar si tiene where
-			if(strpos($where, "WHERE") === false){
+			//checar si tiene where el parametro y NO tiene el SQL
+			if(strpos($where, "WHERE") === false AND strpos($sql, "WHERE") === false){
 				$where	= " WHERE " . $where;
 			}
-			$sql	= $sql . $where;
+			if(strpos($sql, "WHERE") === false){
+				$sql	= $sql . $where;
+			} else {
+				if(strpos($sql, "ORDER BY") === false){
+					$sql	= $sql . $where;
+				} else {
+					$sql	= str_replace("ORDER BY", "$where ORDER BY", $sql);
+				}
+				
+			}
+			
 		}
 		
 		//$sql	.= ($where == "") ? "" : " " . base64_decode($where);

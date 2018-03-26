@@ -96,7 +96,8 @@ if($xUser->init() == true){
 		
 		
 		if(MODULO_CONTABILIDAD_ACTIVADO == true){
-			$xFRM->addHElem($xText->getDeCuentaContable("idcuentacontable", CUENTA_CONTABLE_EFECTIVO, false, CUENTA_CONTABLE_EFECTIVO, "TR.CUENTA_CONTABLE DE CAJA") );
+			
+			$xFRM->addHElem($xText->getDeCuentaContable("idcuentacontable", CUENTA_CONTABLE_EFECTIVO, true, CUENTA_CONTABLE_EFECTIVO, "TR.CUENTA_CONTABLE DE CAJA") );
 		} else {
 			$xFRM->OHidden("idcuentacontable", CUENTA_CONTABLE_EFECTIVO);
 		}

@@ -24,6 +24,7 @@ $aplicaResp	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_ELIM_USE_BACK);
 $clave		= parametro("id", 0, MQL_INT);
 $periodo	= parametro("letra", 0, MQL_INT);
 $nomina		= parametro("nomina", 0, MQL_INT);
+$notas		= parametro("notas");
 
 $rs				= array();
 $rs["error"]	= true;
@@ -36,6 +37,29 @@ if($clave > 0){
 		$rs["error"]		= true;
 	} else {
 		$credito			= $xRec->getCodigoDeDocumento();
+		//Efectuar un respaldo aunque no sea pagable
+		$ql->setRawQuery("CALL `proc_backup_recibo`($clave)");
+		if($xRec->isPagable() == true){
+			$xFMT		= new cHFormatoRecibo($clave, 400);
+			$txt		= $xFMT->render();
+			$xFS		= new cFileSystem();
+			$xFS->setPageLayout($xFS->PAGE_PORTRAIT);
+			$txt		= $xFS->setRepareHTML($txt, true);
+			$xF			= new cFecha();
+			$tt			= $xF->getMarca();
+			$xFS->setConvertToPDF($txt, "Archivo Recibo $clave - $tt");
+			
+			//Agregar una Nota de la Razon de la Eliminacion
+			if($nota !== ""){
+				$xSoc	= new cSocio($xRec->getCodigoDeSocio());
+				if($xSoc->init() == true){
+					$xMem	= new cPersonasMemos();
+					
+					$xSoc->addMemo($xMem->TIPO_RECIBO_ELIM, $notas, $xRec->getCodigoDeDocumento());
+				}
+			}
+			
+		}
 		if($aplicaResp == true AND $xRec->isPagable() == true){
 			
 			$arrV			= array (

@@ -49,6 +49,7 @@ if($estatus == CREDITO_ESTADO_AUTORIZADO OR $estatus == CREDITO_ESTADO_SOLICITAD
 $es_por_frecuencia 		= $xLi->OFiltro()->CreditosPorFrecuencia($frecuencia);
 $es_por_convenio 		= $xLi->OFiltro()->CreditosPorProducto($convenio);
 $FProducto				= " `creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `producto`, ";
+
 if($es_por_convenio != ""){
 	$xCon	= new cProductoDeCredito($convenio);
 	$xCon->init();
@@ -56,6 +57,19 @@ if($es_por_convenio != ""){
 	$FProducto			= "";
 	$xHP->setTitle($xHP->getTitle() . " " . $xCon->obj()->descripcion_tipoconvenio()->v() );
 }
+
+
+$idmunicipio			= parametro("municipioactivo", "");
+$ByMunicipio			= $xLi->OFiltro()->CreditosPorMunicipioAct($idmunicipio);
+
+if($ByMunicipio !== ""){
+	$xMun		= new cDomicilioMunicipio();
+	$xMun->initByIDUnico($idmunicipio);
+	$municipio	= $xMun->getNombre();
+	$entidadfed	= $xMun->getOEstado()->getNombre();
+	$xHP->setTitle($xHP->getTitle() . " " . " / Municipio : $entidadfed - $municipio");
+}
+
 
 $sqlOps					= "SELECT
 	`operaciones_recibos`.`docto_afectado` AS `credito`,
@@ -94,6 +108,7 @@ $FEmpresa				= ($ByEmpresa == "") ? " `personas`.`dependencia` AS	`empresa`, " :
 if(PERSONAS_CONTROLAR_POR_EMPRESA == false){ $FEmpresa = ""; }
 
 $info_ext				= "";
+
 if($otros == true){
 	$info_ext			= "	`creditos_tipo_de_autorizacion`.`descripcion_tipo_de_autorizacion` AS `autorizacion`,
 	$OperadorFecha(`creditos_solicitud`.`fecha_ministracion`)         	AS `fecha_de_desembolso`,
@@ -168,6 +183,7 @@ FROM
 	$BySucursal
 	$ByOficial
 	$ByDestino
+	$ByMunicipio
 	ORDER BY `creditos_solicitud`.`tipo_convenio`, `personas`.`nombre` ";
 
 

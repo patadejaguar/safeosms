@@ -214,7 +214,8 @@ if($ConDatosActa == false){
 	$xFRM->OText_13("idnumerodocumento","", "TR.idescritura");
 	$xFRM->setValidacion("idnumerodocumento", "validacion.novacio", "Necesita un Documento de Identificacion", true);
 	
-	$xFRM->ODate("idfechanacimiento", false,"TR.fecha constitucion");
+	//$xFRM->ODate("idfechanacimiento", false,"TR.fecha constitucion");
+	$xFRM->OFechaLarga("idfechanacimiento", false,"TR.fecha de Constitucion");
 	
 	$xFRM->OText("idnotarioconst", "", "TR.NOMBRE NOTARIO constitucion");
 	$xFRM->OText_13("ididnotariaconst", "", "TR.Numero NOTARIA Constitucion");

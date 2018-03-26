@@ -60,8 +60,9 @@ $msg		= "";
 if($credito > DEFAULT_CREDITO AND $monto > TOLERANCIA_SALDOS){
 	
 	$res	= $xSeg->add($credito, $fecha, $hora, $total, $observaciones, $oficial, $canal, $formato, $capital, $interes, $moratorio, $otros, $impuestos);
-	$xFRM->setResultado($res);
-	$xFRM->addCerrar();
+	$xFRM->setResultado($res, "", "", true);
+	
+	//$xFRM->addCerrar();
 } else {
 	if($credito <= DEFAULT_CREDITO){
 		$xFRM->addCreditBasico();
@@ -89,7 +90,9 @@ if($credito > DEFAULT_CREDITO AND $monto > TOLERANCIA_SALDOS){
 			$xFRM->addHElem($xSel->getListaDeHoras("idhora")->get(true) );
 			$xFRM->addHElem($xSel->getListaDeOficiales("idoficial", "", $xCred->getOficialDeSeguimiento())->get(true));
 			$xFRM->addHElem($xSel->getListaDeCanalesDeNotificacion()->get(true) );
-			$xFRM->addHElem( $xSel->getListaDeFormatos("idformato", false, 30)->get(true) );
+			
+			
+			$xFRM->addHElem( $xSel->getListaDeFormatos("idformato", false, iDE_SEGUIMIENTO)->get(true) );
 			$xFRM->addObservaciones();
 			
 			$xFRM->addSeccion("iddetallepago", "TR.PAGO Exigible", true);

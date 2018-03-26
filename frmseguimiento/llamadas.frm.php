@@ -64,11 +64,8 @@ if($credito > DEFAULT_CREDITO){
 if($action == MQL_ADD AND $credito > DEFAULT_CREDITO){
 	$xCall	= new cLlamadas();
 	$rs		= $xCall->add($credito, $idfecha, $idhora, false, $idobservaciones, $idoficial, $idtelefono1, $idtelefono2);
-	if($rs == true){
-		$xFRM->addAvisoRegistroOK();
-	} else {
-		$xFRM->addAvisoRegistroError();
-	}
+	$xFRM->setResultado($rs, "", "", true);
+	
 }
 if($persona > DEFAULT_SOCIO AND $credito > DEFAULT_CREDITO){
 	$xFRM->OHidden("credito",$credito);

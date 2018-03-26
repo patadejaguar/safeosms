@@ -50,9 +50,11 @@ CKEDITOR.stylesSet.add( 'default', [
 	
 	{ name: 'td-azul',			element: 'td', styles: { 'background-color': '#4877B6', 'color' : '#FFFFFF'} },
 	{ name: 'td-gris',			element: 'td', styles: { 'background-color': '#E7E7E7'} },
+	{ name: 'td-gris-2',		element: 'td', styles: { 'background-color': '#a6a6a6'} },
+	{ name: 'td-gris-3',		element: 'td', styles: { 'background-color': '#595959', 'color' : '#FFFFFF'} },
 	
 	{ name: 'td-1/4',			element: 'td', styles: { 'width': '25%'} },
-	
+	{ name: 'td-no-width',		element: 'td', styles: { 'width': ''} },
 	
 	/* Inline styles */
 

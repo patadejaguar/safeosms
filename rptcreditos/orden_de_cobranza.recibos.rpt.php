@@ -76,11 +76,11 @@ $xRPT->setOut($out);
      
      $nempresa		= $Dep->getNombre() . " - " . $Dep->getNombreCorto()  ;
      $TCobros		= 0;
-
-    $rs						= getRecordset($sql);
+	$xQL					= new MQL();
+    $rs						= $xQL->getRecordset($sql);
     $ppn					= 1;
     $contar					= 1;
-    while($rw = mysql_fetch_array($rs)){
+    while( $rw = $rs->fetch_assoc() ){
 	//cargar datos de la parcialidad
 	$numero_de_socio		= $rw["persona"];
 	$cSoc 					= new cSocio($numero_de_socio); $cSoc->init();
@@ -107,9 +107,9 @@ $xRPT->setOut($out);
 	
 	$tipo_de_credito			= "";
 	$monto_ministrado			= "";
-	$DOficial					= $xCred->getDatosOficialDeCredito_InArray();
-	$oficial					= $DOficial["nombre_completo"];
-	$variable_oficial			= $DOficial["nombre_completo"];
+	$OOficial					= $xCred->getOOficial();
+	$oficial					= $OOficial->getNombreCompleto();
+	$variable_oficial			= $oficial;
 	
 	$fecha_de_vencimiento		= "";
 	$tasa_interes_mensual_ordinario	= "";

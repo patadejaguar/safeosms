@@ -92,6 +92,21 @@ $FEmpresa				= ($ByEmpresa == "") ? " `personas`.`dependencia` AS	`empresa`, " :
 if(PERSONAS_CONTROLAR_POR_EMPRESA == false OR $sinempleador == true){ $FEmpresa = ""; }
 
 $saldo_migrado			= (MODO_MIGRACION == true) ? " `saldo_conciliado` AS `migrado`, " : "";
+
+
+$idmunicipio			= parametro("municipioactivo", "");
+$ByMunicipio			= $xLi->OFiltro()->CreditosPorMunicipioAct($idmunicipio);
+
+if($ByMunicipio !== ""){
+	$xMun		= new cDomicilioMunicipio();
+	$xMun->initByIDUnico($idmunicipio);
+	$municipio	= $xMun->getNombre();
+	$entidadfed	= $xMun->getOEstado()->getNombre();
+	$xHP->setTitle($xHP->getTitle() . " " . " / Municipio : $entidadfed - $municipio");
+}
+
+
+
 $setSql	= "SELECT
 	`creditos_solicitud`.`sucursal`,
 	`personas`.`codigo`,
@@ -160,6 +175,7 @@ FROM
 	$BySeguimiento
 	$ByConEmpleador
 	$BySinEmpleador
+	$ByMunicipio
 	ORDER BY `creditos_solicitud`.`tipo_convenio`, `personas`.`nombre` ";
 
 /*$setSql = "SELECT socios.nombre,	socios.alias_dependencia AS 'empresa',

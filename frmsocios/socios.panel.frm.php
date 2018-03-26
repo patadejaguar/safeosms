@@ -77,6 +77,10 @@ function jsaReRelaciones($idsocio){
 	$cBenef->setOmitidos("domicilio");
 	$cBenef->setOmitidos("curp");
 	$cBenef->setKeyField("idsocios_relaciones");
+	$cBenef->setOmitidos("ocupacion");
+	if($xSoc->getEsPersonaFisica() == false){
+		$cBenef->setOmitidos("consanguinidad");
+	}
 	
 	$xLi	= new cSQLListas();
 	$xT		= new cTabla($xLi->getListadoDeReferenciasBancarias($idsocio));
@@ -238,11 +242,11 @@ $jxc ->exportFunction('jsaActualizarUsuario', array('idusuario' ), "#idavisos");
 
 $jxc ->process();
 
-$xHP->addJsFile("../jsrsClient.js");
+//$xHP->addJsFile("../jsrsClient.js");
 
 echo $xHP->getHeader();
 
-echo $xJsB->setIncludeJQuery(); 
+//echo $xJsB->setIncludeJQuery(); 
 
 //$xJsB	= new jsBasicForm("extrasocios");
 ?>
@@ -269,6 +273,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xSoc 		= new cSocio($idsocio, true);
 	if($xSoc->init() == true){
 		getPersonaEnSession($idsocio);
+		//$xFRM->addJsReload();
 	}
 	$xHTabs		= new cHTabs();
 	$xBtn		= new cHButton("");
@@ -281,14 +286,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM->OButton("TR.Recargar", "jsRecargar()", $xFRM->ic()->RECARGAR, "", "blue");
 	$xFRM->addHElem( $xSoc->getFicha(true) );
 
-	if($xSoc->getPermisoParaOperar() == true){
-		$xFRM->addPersonaComandos($idsocio);
-	} else {
-		$xLog->add("ERROR\tEsta Persona esta en Baja\r\n");
-		//TODO: Agregar reactivacion de personas
-	}
-	//Agregar Sucursal
-	$xLog->add("OK\tSucursal: " . $xSoc->getSucursal() . "\r\n");
+
 	
 	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CAPT) == true OR getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){ 
 		//Agregar otra opciones
@@ -484,9 +482,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xUsr		= new cSystemUser($xSoc->getClaveDeUsuario());
 	
 	
-	if($xUsr->init() == true){
-		$xLog->add("OK\tCreado por : " . $xUsr->getNombreCompleto() . "\r\n");
-	}
+
 	//====================================== Datos extranjero
 	if($xSoc->getEsExtranjero() == true){
 		$xFRM->OButton("TR.DATOS_EXTRANJEROS", "var xP=new PersGen();xP.setFormaDatosExt($idsocio)", $xFRM->ic()->GRUPO);
@@ -557,7 +553,60 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if($nuevo == true){
 		
 	}
+	//===================================== Tags
 	
+	if($xUsr->init() == true){
+		$xFRM->addTag("Creado por : <strong>" . $xUsr->getAlias() . "</strong>", "notice");
+		
+	}
+	if($xSoc->getPermisoParaOperar() == true){
+		$xFRM->addPersonaComandos($idsocio);
+	} else {
+		$xFRM->addTag("Esta Persona : <strong>No Puede hacer operaciones</strong>", "error");
+		//$xLog->add("ERROR\tEsta Persona esta en Baja\r\n");
+		//TODO: Agregar reactivacion de personas
+		//TODO: Agregar Razon de Baja
+	}
+	//Agregar Sucursal
+	$xFRM->addTag("Sucursal : <strong>" . $xSoc->getSucursal() . "</strong>", "notice");
+	if($xSoc->getEsEmpresaConConvenio() == true){
+		$xFRM->addTag("Maneja <strong>Nominas</strong>", "warning");
+	}
+	if($xSoc->getEsExtranjero() == true){
+		$xFRM->addTag("Es <strong>Extranjero</strong>", "warning");
+	}
+	if($xSoc->getEsPersonaPoliticamenteExpuesta() ==true){
+		$xFRM->addTag("Es <strong>Politicamente Expuesta</strong>", "warning");
+	}
+	if($xSoc->getEsGrupoSolidario() == true){
+		$xFRM->addTag("Es <strong>Grupo Solidario</strong>", "notice");
+	}
+	if($xSoc->getEsPersonaRiesgosa() == true){
+		$xFRM->addTag("Es <strong>Persona Bloqueada</strong>", "error");
+	}
+	if($xSoc->getEsSucursal() == true){
+		$xFRM->addTag("Es <strong>Sucursal</strong> Activa", "warning");
+	}
+	if($xSoc->getEsUsuario() == true){
+		$xFRM->addTag("Es <strong>Usuario en Sistema</strong>", "warning");
+	}
+	if($xSoc->getAportacionesSociales()>0){
+		$mny	= getFMoney($xSoc->getAportacionesSociales());
+		$xFRM->addTag("Es <strong>$ $mny</strong>", "notice");
+	}
+	if($xSoc->getAlias() !== ""){
+		$xFRM->addTag("Alias <strong>" . $xSoc->getAlias() . "</strong>", "notice");
+	}
+	$xFRM->addTag("Identificado con <strong>" . $xSoc->getClaveDeIdentificacion() . "</strong>", "notice");
+	if($xSoc->getCreditoMaximo()>0){
+		$mny	= getFMoney($xSoc->getCreditoMaximo());
+		$xFRM->addTag("Credito Maximo <strong>$ $mny</strong>", "notice");
+		
+	}
+	if($xSoc->getCreditosComprometidos()>0){
+		$mny	= getFMoney($xSoc->getCreditosComprometidos());
+		$xFRM->addTag("Creditos Avalados <strong>$ $mny</strong>", "warning");
+	}
 	//===================================== 
 	$xFRM->addHTML($xHTabs->get());
 	$xFRM->addHTML($xDiv2->get());
@@ -570,6 +619,8 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM->addJsInit("initComponents();");
 	$xFRM->addCerrar();
 
+	
+	
 	echo $xFRM->get();
 }
 ?>
@@ -579,6 +630,9 @@ var mSocio		= <?php echo  ($idsocio === false) ? "0" : $idsocio; ?>;
 var xG			= new Gen();
 var xPG			= new PersGen();
 var xRec		= new RecGen();
+
+
+
 
 function initComponents(){
 	jsaReVivienda();
@@ -728,9 +782,16 @@ function jsRequiereDatosExtranjero(id){
 		msg : 'PERSONA_FALTA_DEXTRA'
 	});
 }
+
+
+
+
 </script>
 <?php
-echo $xJsB->get();
-$jxc ->drawJavaScript(false, true);
+//echo $xJsB->get();
+$jxc->drawJavaScript(false, true);
+if($idsocio>DEFAULT_SOCIO){
+	$xHP->addReload();
+}
 ?>
 </html>

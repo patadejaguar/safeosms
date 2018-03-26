@@ -16,6 +16,7 @@ $xHP					= new cHPage("TR.Saldos de Credito", HP_REPORT);
 $xF						= new cFecha();
 $xQL					= new MQL();
 $xLi					= new cSQLListas();
+
 //=====================================================================================================
 
 
@@ -37,6 +38,18 @@ $xRPT					= new cReportes($xHP->getTitle());
 
 $ByProducto				= $xLi->OFiltro()->CreditosPorProducto($producto);
 $BySucursal				= $xLi->OFiltro()->CreditosPorSucursal($sucursal);
+
+$idmunicipio			= parametro("municipioactivo", "");
+$ByMunicipio			= $xLi->OFiltro()->CreditosPorMunicipioAct($idmunicipio);
+
+$titulo					= $xHP->getTitle();
+
+if($ByMunicipio !== ""){
+	$xMun		= new cDomicilioMunicipio(); $xMun->initByIDUnico($idmunicipio);
+	$municipio	= $xMun->getNombre();
+	$entidadfed	= $xMun->getOEstado()->getNombre();
+	$titulo		= $titulo . " / Municipio : $entidadfed - $municipio";
+}
 
 $sql					= "
 SELECT
@@ -70,7 +83,7 @@ WHERE
 	(`operaciones_mvtos`.`tipo_operacion` =110))
 	AND
 	(`operaciones_mvtos`.`fecha_afectacion` <= '$fechaFinal') 
-	$ByProducto $BySucursal
+	$ByProducto $BySucursal $ByMunicipio
 GROUP BY
 	`operaciones_mvtos`.`docto_afectado`
 	
@@ -85,11 +98,17 @@ $xTbl->setFootSum(array(
 		8 => "abonos",
 		9 => "saldo"
 		));
+
 /*$xTbl->setFootSum(array(
 	3 => "monto_autorizado",
 		52 => "abonos",
 		53 => "saldo"
 ));*/
+$body		= $xRPT->getEncabezado($titulo);
+$xRPT->setBodyMail($body);
+$xRPT->addContent($body);
+
+$xRPT->setTitle($xHP->getTitle());
 
 $xRPT->setSQL($xTbl->getSQL());
 $xTbl->setTipoSalida($formato);

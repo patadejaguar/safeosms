@@ -23,6 +23,12 @@ $subpath	= "";
 header("Content-Type: text/css");
 header("X-Content-Type-Options: nosniff");
 ?>
+body, html {
+	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
+	font-size: <?php echo CSS_TFUENTE_CONTRATOS;?>pt;
+	line-height: 125% !important;
+	font-stretch: condensed;
+}
 h4, h3, h2, table, p {
 		
 }
@@ -42,15 +48,10 @@ th, td, p{
 	text-transform: none !important;
 	text-indent: 0;
 }
-body, html {
-	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
-	font-size: <?php echo CSS_TFUENTE_CONTRATOS;?>pt;
-	line-height: 125% !important;
-	font-stretch: condensed;
-}
+
 th {
 	text-align: left;
-	min-width: 25%;
+	/*min-width: 25%;*/
 }
 body{
 	margin:0;
@@ -59,7 +60,10 @@ body{
 }
 td {
 	text-align: justify;
-    min-width: 25%;
+    /*min-width: 25%;*/
+}
+td p {
+margin:1px;
 }
 table {
 	border-spacing: 0;

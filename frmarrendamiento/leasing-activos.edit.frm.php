@@ -138,9 +138,15 @@ $xSelTS->setDivClass("tx4 tx18 orange");
 $xFRM->addHElem($xSelTS->get(true));
 //$xFRM->OMoneda("tipo_activo", $xTabla->tipo_activo()->v(), "TR.TIPO ACTIVO");
 //$xFRM->OMoneda("tipo_seguro", $xTabla->tipo_seguro()->v(), "TR.TIPO SEGURO");
+$xFRM->addHElem($xSel->getListaDeVehiculosSegmentos("segmento", $xTabla->segmento()->v())->get(true));
 
 
-$xFRM->OTasa("tasa_depreciacion", $xTabla->tasa_depreciacion()->v(), "TR.TASA DEPRECIACION");
+if(MODULO_CONTABILIDAD_ACTIVADO == true){
+	$xFRM->OTasa("tasa_depreciacion", $xTabla->tasa_depreciacion()->v(), "TR.TASA DEPRECIACION");
+} else {
+	$xFRM->OHidden("tasa_depreciacion", $xTabla->tasa_depreciacion()->v());
+}
+
 $xFRM->OMoneda2("valor_nominal", $xTabla->valor_nominal()->v(), "TR.VALOR DE FACTURA");
 $xFRM->OMoneda2("valor_venta", $xTabla->valor_venta()->v(), "TR.VALOR DE VENTA");
 $xFRM->OMoneda2("valor_residual", $xTabla->valor_residual()->v(), "TR.VALOR RESIDUAL");

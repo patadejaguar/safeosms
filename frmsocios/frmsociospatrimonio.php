@@ -38,7 +38,11 @@ $tipo			= parametro("idtipodepatrimonio", 0, MQL_INT);
 $estado			= parametro("idestadodepatrimonio", 0, MQL_INT);
 $observaciones	= parametro("idobservaciones");
 $idvencimiento	= parametro("idvencimiento", false, MQL_DATE);
-$idvencimiento	= $xF->getFechaISO($idvencimiento);
+$unidades		= parametro("unidades", 1, MQL_INT);
+$medida			= parametro("medida", 0, MQL_INT);
+
+
+
 $xHP->init();
 
 $xFRM			= new cHForm("frmpatrimonio", "frmsociospatrimonio.php?persona=$persona&tiny=$tiny");
@@ -49,15 +53,10 @@ $xSoc			= new cSocio($persona);
 if($xSoc->init() == true AND $persona > DEFAULT_SOCIO){
 
 	if($monto >  0 and $persona > 0 and $tipo > 0 and $estado > 0 and $documento != "") {
-		$xTipoPa	= new cSocios_patrimoniotipo();
-		$xTipoPa->setData($xTipoPa->query()->initByID($tipo));
-		$afectacion	= $xTipoPa->subclasificacion()->v();
-		$rs			= $xSoc->addPatrimonio($tipo, $monto, $estado, $afectacion, $documento, $descripcion, $observaciones, $idvencimiento);
-		if($rs == false){
-			$xFRM->addAvisoRegistroError();
-		} else {
-			$xFRM->addAvisoRegistroOK();
-		}
+		$xSocPa	= new cPersonasPatrimonio();
+		$rs		= $xSocPa->add($xSoc->getClaveDePersona(), $tipo, $descripcion, $monto, $documento, $observaciones, $unidades, $medida, $estado,$idvencimiento);
+		$xFRM->setResultado($rs);		
+
 		if(MODO_DEBUG == true){ $xFRM->addLog($xSoc->getMessages()); }
 	}
 }
@@ -65,11 +64,17 @@ $xFRM->addHElem($xSel->getListaDeTiposDePatrimonioPersonal()->get(true));
 $xFRM->addHElem($xSel->getListaDeEstadosDePatrimonioPersonal()->get(true));
 $xFRM->OText("iddocumento", "", "TR.Documento de_referencia");
 $xFRM->OText("iddescripcion", "", "TR.Descripcion");
+$xFRM->OFechaLarga("idvencimiento", $fecha, "TR.Fecha de Vencimiento");
 
-$xFRM->addMonto($monto, true);
-$xFRM->ODate("idvencimiento", $fecha, "TR.Fecha de Vencimiento");
+$xFRM->ONumero("unidades", 0, "TR.TAMANNIO");
+$xMeds	= $xSel->getListaDeCatalogoGenerico("catalogo_unidades", "medida");
+$xFRM->addHElem( $xMeds->get("TR.MEDIDA", true));
+
+$xFRM->addValor($monto);
+
+
 $xFRM->addObservaciones();
-$xFRM->addSubmit();
+$xFRM->addGuardar();
 //agregar lista
 $xT		= new cTabla($xLi->getListaDePatrimonioPorPersona($persona));
 $xT->addEliminar();

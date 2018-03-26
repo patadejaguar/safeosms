@@ -16,8 +16,8 @@ echo "====================================\n";
 
 ////////////////CONFIGURATION///////////////////////
 ////////////////////////////////////////////////////
-$username = "529811098164";                      
-$password = "977446";
+$username = "";//numero de telefono                      
+$password = "";
 $identity = "identity";     
 $nickname = "patadejaguar"; 
 $debug = false;                           

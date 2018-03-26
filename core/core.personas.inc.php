@@ -247,6 +247,9 @@ class cPersonasMemos {
 	private $mInit		= false;
 	private $mTxt		= "";
 	private $mMessages	= "";
+	public $TIPO_RECIBO_ELIM	= 14;
+	
+	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); }
 	function init($data = false){
 		$xQL	= new MQL();
@@ -465,23 +468,298 @@ class cPersonasChecklist {
 }
 
 
-class cDomicilioMunicipio {
+class cPersonasPatrimonio {
 	private $mClave		= false;
 	private $mObj		= null;
 	private $mInit		= false;
 	private $mNombre	= "";
 	private $mMessages	= "";
-	private $mEstado	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "socios_patrimonio";
+	private $mTipo				= 0;
+	private $mClaveMedida		= 0;
+	private $mUnidades			= 0;
+	private $mTipoPresentado	= 0;
+	private $mClavePersona		= 0;
+	
+	
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSocios_patrimonio();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave			= $data[$xT->getKey()];
+			$this->mNombre			= $data[$xT->DESCRIPCION];
+			$this->mTipo			= $data[$xT->TIPO_PATRIMONIO];
+			$this->mClaveMedida		= $data[$xT->IDTIPOUNIDAD];
+			$this->mUnidades		= $data[$xT->TAMANNIO];
+			$this->mTipoPresentado	= $data[$xT->ESTATUS_ACTUAL];//Estado del Bien
+			$this->mClavePersona	= $data[$xT->SOCIO_PATRIMONIO];
+			$this->mObj			= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){ return $this->mNombre; }
+	function getClave(){ return $this->mClave; }
+	function getUnidades(){ return $this->mUnidades; }
+	function getClaveDeMedida(){ return $this->mClaveMedida; }
+	function getClaveDePersona(){ return $this->mClavePersona; }
+	function getTipoPresentado(){ return $this->mTipoPresentado; } 
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($Persona, $Tipo, $Descripcion, $Monto, $FactDoc = "", $Observaciones = "", $Unidades = 0, $Medida = 0, $EstadoBien = 0, $FechaExpira = false, $FechaAlta	= false){
+		$xT				= new cSocios_patrimonio();
+		$xF				= new cFecha();
+		$xEst			= new cPersonasPatrimonioEstadoBien();
+		$xUnid			= new cPersonasPatrimonioTipoUnidad();
+		$xTip			= new cPersonasPatrimonioTipo($Tipo);
+		
+		$FechaAlta		= $xF->getFechaISO($FechaAlta);
+		$FechaExpira	= ($FechaExpira === false) ? $xF->getFechaMaximaOperativa() : $xF->getFechaISO($FechaExpira);
+		$EstadoBien		= setNoMenorQueCero($EstadoBien);
+		$EstadoBien		= ($EstadoBien<=0) ? $xEst->ESTADO_DESCONOCE : $EstadoBien;
+		$Unidad			= setNoMenorQueCero($Medida);
+		$Monto			= setNoMenorQueCero($Monto);
+		$Afectacion		= 1;
+		//$Unidad			= ($Unidad <= 0) ? $xUnid->UNIDAD_PZA : $Unidad;
+		if($xTip->init() == true){
+			$Unidad		= ($Unidad<=0) ? $xTip->getUnidad() : $Unidad;
+			$Afectacion	= $xTip->getAfectacion();
+		} else {
+			$Unidad		= ($Unidad<=0) ? $xUnid->UNIDAD_PZA: $Unidad;
+		}
+		
+		
+		$Unidades		= setNoMenorQueCero($Unidades);
+		$Unidades		= ($Unidad <= 0) ? SYS_UNO : $Unidades;
+		
+		$xT->idsocios_patrimonio("NULL");
+		$xT->eacp(EACP_CLAVE);
+		$xT->sucursal(getSucursal());
+		$xT->idusuario(getUsuarioActual());
+		$xT->fecha_de_alta($FechaAlta);
+		$xT->fecha_expiracion($FechaExpira);
+		$xT->afectacion_patrimonio($Afectacion);
+		$xT->observaciones($Observaciones);
+		$xT->codigo($Persona);
+		$xT->descripcion($Descripcion);
+		$xT->documento_presentado($FactDoc);
+		$xT->estatus(SYS_UNO);//1 Activo
+		$xT->estatus_actual($EstadoBien);
+		$xT->idtipounidad($Unidad);
+		$xT->socio_patrimonio($Persona);
+		$xT->solicitud_relacionada(DEFAULT_CREDITO);
+		$xT->tamannio($Unidades);
+		$xT->tipo_patrimonio($Tipo);
+		$xT->monto_patrimonio($Monto);
+		
+		$res	= $xT->query()->insert()->save();
+		return ($res === false) ? false : true;
+	}
+	
+}
+class cPersonasPatrimonioEstadoBien {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "socios_patrimonioestatus";
+	private $mTipo		= 0;
+	public $ESTADO_DESCONOCE	= 99;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSocios_patrimonioestatus();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mNombre	= $data[$xT->DESCRIPCION_PATRIMONIOESTATUS];
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
+}
+class cPersonasPatrimonioTipo {
+	private $mClave		= false;
+	private $mObj		= null;
+	private $mInit		= false;
+	private $mNombre	= "";
+	private $mMessages	= "";
+	private $mIDCache	= "";
+	private $mTabla		= "socios_patrimoniotipo";
+	private $mTipo		= 0;
+	private $mUnidad	= 0;
+	private $mAfecta	= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSocios_patrimoniotipo();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mNombre	= $data[$xT->DESCRIPCION_PATRIMONIOTIPO];
+			$this->mUnidad	= $data[$xT->UNIDAD];
+			$this->mAfecta	= $data[$xT->SUBCLASIFICACION];
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function getUnidad(){ return $this->mUnidad; }
+	function getAfectacion(){ return $this->mAfecta; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
+}
+class cPersonasPatrimonioTipoUnidad {
+	//Tipo de Medida : catalogo_unidades
+	public $UNIDAD_MT2				= 102;
+	public $UNIDAD_PZA				= 101;
+	
+}
+class cDomicilioMunicipio {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mClaveEstado	= 0;
+	
+	private $mIDCache		= "";
+	private $mTabla			= "general_municipios";
+	
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mEstado		= "";
+	private $mClaveMun		= 0;
+	private $mOEstado		= null;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); }
 	function init($data = false){
-		$xQL	= new MQL();
-		$data	= (is_array($data)) ? $data : $xQL->getDataRow("SELECT * FROM `general_municipios` WHERE `idcreditos_destino_detallado`=". $this->mClave);
-		if(isset($data["idgeneral_municipios"])){
-			$this->mObj		= new cGeneral_municipios();
-			$this->mObj->setData($data);
-			$this->mClave	= $this->mObj->idgeneral_municipios()->v();
-			$this->mNombre	= $this->mObj->nombre_del_municipio()->v();
+		$xCache		= new cCache();
+		$inCache	= true;
+		$idcache	= $this->getIDCache();
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($idcache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `general_municipios` WHERE `idgeneral_municipios`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+
+		
+		$xT		= new cGeneral_municipios();
+		if(isset($data[$xT->IDGENERAL_MUNICIPIOS])){
+			$xT->setData($data);
+			$this->mObj			= $xT;
+			$this->mClave		= $data[$xT->IDGENERAL_MUNICIPIOS];
+			$this->mNombre		= $data[$xT->NOMBRE_DEL_MUNICIPIO];
+			$this->mClaveEstado	= $data[$xT->CLAVE_DE_ENTIDAD];
+			$this->mClaveMun	= $data[$xT->CLAVE_DE_MUNICIPIO];
+			if($inCache === false){
+				$idcache		= $this->getIDCache();
+				$xCache->set($idcache, $data);
+			}
 			$this->mInit	= true;
 		}
 		return $this->mInit;
@@ -492,12 +770,22 @@ class cDomicilioMunicipio {
 		$this->mObj			= null;
 		$this->mMessages	= "";
 	}
-	function getNombre(){return $this->mNombre;}
-	function getClave(){return $this->mClave;}
+	function getNombre(){ return $this->mNombre; }
+	function getClave(){ return $this->mClave; }
 	function add(){}
+	function getOEstado(){
+		if($this->mOEstado == null){
+			$this->mOEstado	= new cDomiciliosEntidadFederal($this->getClaveDeEstado());
+			$this->mOEstado->init();
+		}
+		return $this->mOEstado;
+	}
 	function initByEstadoBusqueda($busqueda = "", $estado = false){
 	
 	}
+	function getClaveDeMunicipio(){ return $this->mClaveMun; }
+	function getClaveDeEstado(){ return $this->mClaveEstado; }
+	
 	function initByNumeroEntidad($numero, $entidad){
 		$xQL	= new MQL();
 		$dd		= $xQL->getDataRow("SELECT * FROM `general_municipios` WHERE `clave_de_municipio`=$numero AND `clave_de_entidad`=$entidad LIMIT 0,1");
@@ -505,7 +793,23 @@ class cDomicilioMunicipio {
 			$this->mClave	= $dd["idgeneral_municipios"];
 		}
 		return $this->init($dd);
-	}	
+	}
+	function initByIDUnico($id){
+		$xQL	= new MQL();
+		$dd		= $xQL->getDataRow("SELECT * FROM `general_municipios` WHERE getIDUMun(`clave_de_entidad`,`clave_de_municipio`)='$id' LIMIT 0,1");
+		if(isset($dd["idgeneral_municipios"])){
+			$this->mClave	= $dd["idgeneral_municipios"];
+		}
+		return $this->init($dd);
+	}
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 }
 
 
@@ -911,6 +1215,7 @@ class cDomiciliosEntidadFederal {
 	private $mObj			= null;
 	private $mClaveSIC		= "";
 	private $mClaveAlpha	= "";
+	private $mClaveNum		= 0;
 	
 	function __construct($clave = ""){
 		$this->mClave	= setNoMenorQueCero($clave);
@@ -943,6 +1248,7 @@ class cDomiciliosEntidadFederal {
 		}
 		return $this->init($data);
 	}
+
 	function init($data = false){
 		$clave		= $this->mClave;
 		if(!is_array($data)){
@@ -969,6 +1275,7 @@ class cDomiciliosEntidadFederal {
 			$xCache->clean($this->mIDCache); 
 			$xCache->clean("general_estados-by-sic-". $this->mClaveSIC);
 			$xCache->clean("general_estados-by-alf-". $this->mClaveAlpha);
+			//$xCache->clean("general_estados-by-num-". $this->mClaveNum);
 		} 
 	}
 }
@@ -1479,6 +1786,8 @@ class cPersonasDocumentacionTipos {
 	private $mMessages	= "";
 	private $mIDCache	= "";
 	private $mTable		= "";
+	public $TIPO_FISCAL	= 2;
+	public $TIPO_PARTICULAR	= 1;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }

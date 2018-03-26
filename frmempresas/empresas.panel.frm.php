@@ -65,7 +65,7 @@ if($xEmp->init() == true){
 	$xTPers		= new cTabla($xLi->getListadoDeSocios(" (`socios_general`.`dependencia` = $empresa)  ") );
 	$xTAhorro	= new cTabla($xLi->getListadoDeIncidenciasAhorro($empresa));
 	//========================== Tabla de periodos para empresas
-	$xTPeriodo	= new cTabla($xLi->getListadoDePeriodoPorEmpresa($empresa) );
+	$xTPeriodo	= new cTabla($xLi->getListadoDePeriodoPorEmpresa($empresa,false, false, false, false, false, false, true) );
 	$xTPeriodo->setTdClassByType();
 	$xTPeriodo->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
 	$xTPeriodo->addEditar(USUARIO_TIPO_CAJERO);
@@ -85,7 +85,7 @@ if($xEmp->init() == true){
 		$xTPerE	= new cTabla($xLi->getListadoDePeriodoPorEmpresaMix($empresa,1, true) );
 		
 		$xTPerE->setTdClassByType();
-		$xTPerE->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+		$xTPerE->OButton("TR.Panel", "var xE = new EmpGen(); xE.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
 		$xTPerE->addEditar(USUARIO_TIPO_CAJERO);
 		$xTPerE->setOmitidos("periocidad");
 		$xTPerE->setOmitidos("fecha_de_cobro");
@@ -124,6 +124,7 @@ if($xEmp->init() == true){
 		
 		
 		$xT2->addTab("TR.Empleados", $xTPers->Show());
+		
 		$xTCreds->setFootSum(array(8 => "saldo"));
 		$xT2->addTab("TR.Creditos por empresa", $xTCreds->Show());
 		if(MODULO_CAPTACION_ACTIVADO == true){

@@ -140,7 +140,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			$idnumeroplan		= $xCred->getNumeroDePlanDePagos();
 		
 			if( setNoMenorQueCero($idnumeroplan) > 0) {
-				$oFrm->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagos($idnumeroplan);", $oFrm->ic()->CALENDARIO1);
+				$oFrm->addButtonPlanDePagos($idnumeroplan);
 				$oFrm->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($idsolicitud)", $oFrm->ic()->PREGUNTAR);
 			}
 			if($codigo_de_oficial == USUARIO_TIPO_OFICIAL_AML OR OPERACION_LIBERAR_ACCIONES == true){
@@ -168,14 +168,23 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				}
 				
 				$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
-				if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
+				/*if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
 					//$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
-				}
+					
+				}*/
+				
+				
 				if($xCred->getEsArrendamientoPuro() == true){
 					//Agregar Leasing
 					$xPlan			= new cPlanDePagos();
 					$xPlan->setClaveDeCredito($xCred->getClaveDeCredito());
 					$xHTabs->addTab("TR.RENTA", $xPlan->getVersionImpresaLeasing());
+				}
+				if($xCred->getEsPagado() == true){
+					
+					$xDic	= new cHDicccionarioDeTablas();
+					
+					$xHTabs->addTab("TR.PLAN_DE_PAGOS ORIGINAL", $xDic->getPlanDePagosOriginal($xCred->getClaveDeCredito()));
 				}
 			}
 			
@@ -351,7 +360,10 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	}
 
 </script>	
-	<?php 
+<?php
+	if($idsolicitud> DEFAULT_CREDITO){
+		$xHP->addReload();	
+	}
 }
 ?>
 </body>

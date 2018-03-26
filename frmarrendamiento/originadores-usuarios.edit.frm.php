@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.EDITAR USUARIOS", HP_FORM);
+$xHP		= new cHPage("TR.EDITAR USUARIO", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -77,9 +77,11 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->OHidden("originador", $originador);
 }
 
-$xFRM->OText("nombre", $xTabla->nombre()->v(), "TR.NOMBRE");
+$xFRM->addSeccion("idnx1", "TR.DATOS");
 
-$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO ELECTRONICO");
+$xFRM->OText("nombre", $xTabla->nombre()->v(), "TR.NOMBRE");
+$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
+$xFRM->ONumero("tasa_com", $xTabla->tasa_com()->v(), "TR.TASA COMISION");
 
 if($EsAdmin == true){
 	$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
@@ -87,6 +89,8 @@ if($EsAdmin == true){
 if($originador == 0 AND $suborigen == 0){
 	$xFRM->OSiNo("TR.ADMINISTRADOR","administrador", $xTabla->administrador()->v());
 }
+$xFRM->endSeccion();
+
 
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);
 

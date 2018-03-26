@@ -49,13 +49,20 @@ $senders		= getEmails($_REQUEST);
 $BySaldo		= $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">");
 //Agregar seguimiento
 $BySaldo		= $BySaldo . $xFil->CreditosProductosPorSeguimiento(0);
-$BySaldo		= $BySaldo . $xFil->CreditosPorFechaDeMinistracion($FechaInicial, $FechaFinal);
-
-//$sql			= $xL->getListadoDeLetrasPendientesReporte($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
-$sql			= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
-//setLog($sql);
-
+//$BySaldo		= $BySaldo . $xFil->CreditosPorFechaDeMinistracion($FechaInicial, $FechaFinal);
 $titulo			= $xHP->getTitle();
+
+
+$idmunicipio	= parametro("municipioactivo", "");
+$ByMunicipio	= $xFil->CreditosPorMunicipioAct($idmunicipio);
+
+if($idmunicipio !== ""){
+	$BySaldo	= $BySaldo . $ByMunicipio;
+	$xMun		= new cDomicilioMunicipio(); $xMun->initByIDUnico($idmunicipio);
+	$municipio	= $xMun->getNombre();
+	$entidadfed	= $xMun->getOEstado()->getNombre();
+	$titulo		= $titulo . " / Municipio : $entidadfed - $municipio";
+}
 
 
 $idproducto		= setNoMenorQueCero($producto);
@@ -64,6 +71,10 @@ if($idproducto > 0){
 	$xProd->init();
 	$titulo		.= " - " . $xProd->getNombre();
 }
+
+//$sql			= $xL->getListadoDeLetrasPendientesReporte($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
+$sql			= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
+
 
 $xRPT			= new cReportes($titulo);
 $xRPT->setFile($titulo);

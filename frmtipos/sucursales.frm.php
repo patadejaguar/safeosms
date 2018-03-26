@@ -92,7 +92,7 @@ if($action == MQL_ADD){		//Agregar
 			$xTabla->colonia( EACP_COLONIA );
 			$xTabla->telefono( EACP_TELEFONO_PRINCIPAL );
 			$xTabla->municipio( EACP_MUNICIPIO );
-			$xTabla->localidad( EACP_CLAVE_DE_LOCALIDAD );
+			$xTabla->localidad( EACP_LOCALIDAD );
 			$xTabla->estado( EACP_ESTADO );
 			$xTabla->numero_exterior( EACP_DOMICILIO_NUM_EXT );
 			$xTabla->numero_interior( EACP_DOMICILIO_NUM_INT );
@@ -102,7 +102,7 @@ if($action == MQL_ADD){		//Agregar
 			$xTabla->colonia( $ODom->getColonia() );
 			$xTabla->telefono( $xSoc->getTelefonoPrincipal() );
 			$xTabla->municipio( $ODom->getMunicipio() );
-			$xTabla->localidad( $ODom->getClaveDeLocalidad() );
+			$xTabla->localidad( $ODom->getLocalidad() );
 			$xTabla->estado( $ODom->getEstado() );
 			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
 			$xTabla->numero_interior( $ODom->getNumeroInterior() );
@@ -154,7 +154,7 @@ if($action == MQL_ADD){		//Agregar
 			$xTabla->colonia( EACP_COLONIA );
 			$xTabla->telefono( EACP_TELEFONO_PRINCIPAL );
 			$xTabla->municipio( EACP_MUNICIPIO );
-			$xTabla->localidad( EACP_CLAVE_DE_LOCALIDAD );
+			$xTabla->localidad( EACP_LOCALIDAD );
 			$xTabla->estado( EACP_ESTADO );
 			$xTabla->numero_exterior( EACP_DOMICILIO_NUM_EXT );
 			$xTabla->numero_interior( EACP_DOMICILIO_NUM_INT );
@@ -165,7 +165,7 @@ if($action == MQL_ADD){		//Agregar
 			$xTabla->colonia( $ODom->getColonia() );
 			$xTabla->telefono( $xSoc->getTelefonoPrincipal() );
 			$xTabla->municipio( $ODom->getMunicipio() );
-			$xTabla->localidad( $ODom->getClaveDeLocalidad() );
+			$xTabla->localidad( $ODom->getLocalidad() );
 			$xTabla->estado( $ODom->getEstado() );
 			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
 			$xTabla->numero_interior( $ODom->getNumeroInterior() );

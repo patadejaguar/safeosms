@@ -248,16 +248,35 @@ class cSystemTask{
 		$this->mMessages	.= $xLog->getMessages();
 	}
 	function cmd_exist($cmd) {
+		if($this->getEsWindows() == true){
+			return false;
+		}
 		$return = shell_exec(sprintf("which %s", escapeshellarg($cmd)));
 		return !empty($return);
 	}
 	function getExistsPandoc(){
 		return $this->cmd_exist("pandoc");
 	}
+	function getExistsUnoconv(){
+		return $this->cmd_exist("unoconv");
+	}
 	function getExistsMemcache(){
 		return $this->cmd_exist("memcached");
 	}
-
+	function getEsWindows(){
+		$OS 					= strtolower(substr(PHP_OS, 0, 3));
+		return ($OS == "win") ? true : false;
+	}
+	function getExistsWHPDF(){
+		$res1	= $this->cmd_exist("wkhtmltopdf");
+		$res2	= $this->cmd_exist("Xvfb");
+		
+		return ($res1 !== false && $res2 !== false) ? true : false;
+	}
+	function runcmd($orden){
+		$res	= shell_exec($orden);
+		return ($res === false) ? false : true;
+	}
 }
 
 
@@ -1739,59 +1758,77 @@ class cFileImporter {
 }
 class cFileSystem {
 	private $mMessages		= "";
-	
+	private $mPageLayout	= "landscape";
+	public $PAGE_PORTRAIT	= "portrait";
 	function __construct(){}
 	function setConvertToDocx($contenido, $titulo){
 		//pandoc  -s -S test.htm -o test.docx
 		$rawname	= $this->cleanNombreArchivo($titulo);
 		$fmt_in		= $rawname . ".html";
 		$fmt_out	= $rawname . ".docx";
-		
-		$fmt_md		= $rawname . ".md";
-		
 		$nn			= "";
 		$nfile		= $this->setCreateFile($contenido, $fmt_in);
-		
+		$res		= false;
 		if($nfile !== false){
 			$ofile	= PATH_TMP . $fmt_out;
-			$mdfile	= PATH_TMP . $fmt_md;
 			
-			//$res	= shell_exec("pandoc --from=html --standalone --to=html --normalize $nfile | pandoc -s -S $nfile -o $ofile");
-			$res	= shell_exec("pandoc -s -S $nfile -o $ofile");
-			
-			//$res	= shell_exec("pandoc $nfile --to=markdown_github -o $mdfile | pandoc -s $mdfile -o $ofile");
-			//setLog("pandoc $nfile --to=markdown_github -o $mdfile | pandoc -s $mdfile -o $ofile");
-			//
-			//$res	= shell_exec("pandoc --from=html -f $nfile -t -o $ofile");
-			//pandoc -f markdown -t html | pandoc -f html -t docx -o test.docx
-			//setLog("pandoc -s -S $nfile -o $ofile");
-			if($res !== false){
-				$nn	= $ofile;
+			$xFU	= new cSystemTask();
+			if($xFU->getExistsUnoconv() == true){
+				$res	= $xFU->runcmd("export HOME=" . PATH_TMP .  " && /usr/bin/unoconv --format=docx --output='$ofile' '$nfile'");
+				if($res !== false){
+					$nn		= $ofile;
+				}
 			}
+			
 		}
 		return $nn;
 	}
-	function setConvertToPDF($contenido, $titulo){
+	function setConvertToPDF($contenido, $titulo, $args = ""){
 		$rawname	= $this->cleanNombreArchivo($titulo);
 		//pandoc reports/7/report.html -o reports/7/report.pdf
 		$fmt_in		= $rawname . ".html";
 		$fmt_out	= $rawname . ".pdf";
 		$nn			= "";
 		$nfile		= $this->setCreateFile($contenido, $fmt_in);
+		$xFU		= new cSystemTask();
+		
 		
 		if($nfile !== false){
 			$ofile	= PATH_TMP . $fmt_out;
-			
-			$res	= shell_exec("pandoc $nfile -t latex -o $ofile");
-			//setLog("pandoc $nfile -t latex -o $ofile");
-			if($res !== false){
-				
-				$nn	= $ofile;
+			if($xFU->getExistsWHPDF() == true){
+				//Landscape
+				$orient	= ucfirst($this->mPageLayout);
+				$res	= $xFU->runcmd('/usr/bin/xvfb-run --server-args="-screen 0, 1920x1080x24" /usr/bin/wkhtmltopdf --page-size Letter --orientation ' . $orient . ' file://' . $nfile . ' ' . $ofile . '  2>&1');
+				if($res !== false){
+					$nn	= $ofile;
+				}
 			}
 		}
 		return $nn;
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function getReadFile($file, $path=""){
+		$ff				= $path . $file;
+		$cnt			= "";
+		if(file_exists($ff)){
+			
+			$mff 		= fopen($ff, "r");
+			$cnt		= fread($mff,filesize($ff));
+			fclose($mff);
+		}
+		return $cnt;
+	}
+	function setSaveFile($text, $file, $path="", $rem = false){
+		$ff				= $path . $file;
+		if($rem == true){
+			if(file_exists($ff)){
+				unlink($ff);
+			}
+		}
+		$mff 		= fopen($ff, "a+");
+		@fwrite($mff, $text);
+		@fclose($mff);
+	}
 	function setCreateFile($contenido, $nombre){
 		$xLog			= new cCoreLog();
 		$nombre			= $this->cleanNombreArchivo($nombre);
@@ -1848,6 +1885,17 @@ class cFileSystem {
 		
 		return $f;
 	}
+	function setRepareHTML($html, $incHeaders = false){
+		if($incHeaders == true){
+			$xHP	= new cHPage("", HP_REPORT);
+			$html	= $xHP->init("", true) . $html . $xHP->fin(true);
+		}
+		$html	= str_replace("../css/", SAFE_HOST_URL . "css/", $html);
+		$html	= str_replace("../js/", SAFE_HOST_URL . "js/", $html);
+		$html	= str_replace("../images/", SAFE_HOST_URL . "images/", $html);
+		return $html;
+	}
+	function setPageLayout($orient){ $this->mPageLayout =  $orient; }
 }
 //Eimina datos no validos
 class cTiposLimpiadores {
@@ -2106,9 +2154,12 @@ class cDocumentos {
 		$conn_id 		= ftp_connect(SYS_FTP_SERVER);
 		// iniciar sesión con nombre de usuario y contraseña
 		if($conn_id){
-			$login_result 	= ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD);
-			$this->mCnnFTP	= $conn_id;
-			$this->mReady	= true;
+			if(SYS_FTP_PWD !== "" AND SYS_FTP_USER !== ""){
+				if(ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD)){
+					$this->mCnnFTP	= $conn_id;
+					$this->mReady	= true;
+				}
+			}
 		}
 		return $conn_id;		
 	}
@@ -2524,7 +2575,81 @@ class cCoreImport {
 	}
 }
 
-
+class cTiempoAntiguedad {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "socios_tiempo";
+	private $mTipo			= 0;
+	private $mValorArraigoE	= 0; 
+	private $mValorArraigoD	= 0; //Arraigo Dom
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSocios_tiempo();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave			= $data[$xT->IDSOCIOS_TIEMPO];
+			$this->mNombre			= $data[$xT->DESCRIPCION_TIEMPO];
+			$this->mValorArraigoE	= $data[$xT->VALOR_ARRAIGO_ECONOMICO];
+			$this->mValorArraigoD	= $data[$xT->VALOR_ARRAIGO_RESIDENCIAL];
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre;}
+	function getClave(){return $this->mClave;}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function getValorPorFecha($fecha = false, $FechaFinal = false){
+		$xF			= new cFecha();
+		$xF->set($fecha);
+		$FechaFinal	= $xF->getFechaISO($FechaFinal);
+		
+		$dias		= $xF->setRestarFechas($FechaFinal, $fecha);
+		$sql		= "SELECT * FROM `socios_tiempo` WHERE `idsocios_tiempo` >= $dias ORDER BY `idsocios_tiempo` DESC LIMIT 0,1";
+		$xQL		= new MQL();
+		$data		= $xQL->getDataRow($sql);
+		if(isset($data["idsocios_tiempo"])){
+			$this->mClave	= $data["idsocios_tiempo"];
+		}
+		$xQL		= null;
+		
+		return $this->init($data);
+	}
+}
 
 class cCouchDB {
 	public $MURL		= "http://pruebas:pruebas@localhost:5984";

@@ -30,25 +30,42 @@ $formato	= parametro("forma", 400, MQL_INT);
 $sinTes		= parametro("notesoreria", false, MQL_BOOL);
 $out		= parametro("out", SYS_DEFAULT, MQL_STRING);		
 $out		= strtolower($out);
+$backup		= parametro("backup", false, MQL_BOOL);
+$items		= setNoMenorQueCero(RECIBOS_POR_HOJA);
+
 $xRuls		= new cReglaDeNegocio();
+$xUsr		= new cSystemUser();
+
 //Agregado para hacer Backups
 $senders		= getEmails($_REQUEST);
 //end add
 $useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
+$useAltUser		= $xUsr->getPuedeUsarPrintPOS();
+
 //================
-if($formato == 400 AND $useAlt == true){
+if($formato == 400 AND ($useAlt == true OR $useAltUser == true) ){
 	$formato	= 402;
 }
 
 $xFMT		= new cHFormatoRecibo($recibo, $formato);
 $xFMT->setIgnorarTesoreria($sinTes);
 $xFMT->setOut($out);
-$items		= setNoMenorQueCero(RECIBOS_POR_HOJA);
+
 
 $txt		= $xFMT->render();
+
 if($xFMT->isInit() === false){
 	$xHP->goToPageError(2011);	
 } else {
+	if($backup == true){
+		$xFS		= new cFileSystem();
+		$xFS->setPageLayout($xFS->PAGE_PORTRAIT);
+		$txt		= $xFS->setRepareHTML($txt, true);
+		$xF			= new cFecha();
+		$tt			= $xF->getMarca();
+		$xFS->setConvertToPDF($txt, "Archivo Recibo $recibo - $tt");
+		
+	}
 	if(count($senders) >= 1){
 		$xOH		= new cHObject();
 		
@@ -80,6 +97,7 @@ if($xFMT->isInit() === false){
 		//HEADERS JSON
 		header('Content-type: application/json');
 		echo $cnt;
+		
 	} else {
 
 		if($out == OUT_TXT){

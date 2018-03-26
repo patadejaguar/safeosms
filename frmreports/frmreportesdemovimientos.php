@@ -14,9 +14,13 @@
 //=====================================================================================================
 
 $xHP		= new cHPage("TR.Reportes de Operaciones");
+$xRuls		= new cReglaDeNegocio();
+$ConEntFed	= $xRuls->getValorPorRegla($xRuls->reglas()->REPORTES_USAR_EFED);
+
 $xHP->init();
 
 $xChk		= new cHCheckBox();
+
 $xB			= new cPanelDeReportes(iDE_OPERACION, "general_operaciones");
 
 $xB->setTitle( $xHP->getTitle() );
@@ -31,8 +35,9 @@ $xB->addListadDeCuentasBancarias();
 $xB->addHTML( $xChk->get("TR.Omitir Estadisticos", "estadisticos", true) );
 $xB->addjsVars("estadisticos", "estadisticos", true);
 
-
-
+if($ConEntFed == true){
+	$xB->addMunicipiosActivos();	
+}
 echo $xB->get();
 echo $xB->getJs(true);
 $xHP->fin();

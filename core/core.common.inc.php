@@ -408,6 +408,7 @@ class cSucursal{
 		if ( $clave == false ){	$clave = getSucursal(); }
 		$this->mClave			= $clave;
 		$this->mCentroDeCosto	= DEFAULT_CENTRO_DE_COSTO;
+		$this->mClaveLocalidad	= EACP_CLAVE_DE_LOCALIDAD;
 	}
 	function init($datos = false){
 		$xCach 					= new cCache();
@@ -752,7 +753,8 @@ class cSocio{
 	protected $mObjUser				= null;
 	protected $mObjEmpresa			= null;
 	protected $mObjGrupoS			= null;
-	protected $mORepLegal			= null;
+	private $mORepLegal				= null;
+	private $mORepLegalManc			= null;
 	protected $mOTipoIngreso		= null;
 	
 	protected $mNoAML				= false; 
@@ -782,6 +784,9 @@ class cSocio{
 	private $mIDPersonaRepLegal		= 0;
 	
 	private $mInitDatosExt			= false;
+	//private $mClaveRepLegal			= 0;
+	private $mClaveRepLegalManc		= 0;
+	private $mNumeroSeguridadSoc	= "";
 	
 	
 	function __construct($codigo_de_socio, $init = false){
@@ -802,6 +807,7 @@ class cSocio{
 		$D 			= array();
 		$xCach		= new cCache();
 		$inCache	= true;
+		$xT			= new cSocios_general();
 		if( setNoMenorQueCero($this->mCodigo) <= 0 ){
 			$this->mSocioIniciado		= false;
 		} else {
@@ -810,6 +816,7 @@ class cSocio{
 				if (!is_array($ArrDatos) ){
 					$sql 		= "SELECT * FROM socios_general WHERE codigo=" . $this->mCodigo . " LIMIT 0,1";
 					$ArrDatos	= obten_filas($sql);
+					$inCache	= false;
 				}
 				$D		= $ArrDatos;
 			} else {
@@ -817,49 +824,51 @@ class cSocio{
 				//setLog("Iniciado con datos " . $this->mCodigo);
 			}
 			$ArrDatos	= null;
-			if(isset($D["codigo"])){
-				$xSoc		= new cSocios_general();
-				$xSoc->setData($D);
+			if(isset($D[$xT->CODIGO])){
+				
+				$xT->setData($D);
 				/*		fechaentrevista, fechaalta, estatusactual, region, cajalocal,
 				,genero, eacp, observaciones, idusuario,
 				 grupo_solidario, personalidad_juridica,
 				regimen_conyugal, sucursal, fecha_de_revision */
-				$this->mNombre				= $D["nombrecompleto"];
+				$this->mNombre				= $D[$xT->NOMBRECOMPLETO];
 				//setLog($D["nombrecompleto"]);
-				$this->mApMaterno			= $D["apellidomaterno"];
-				$this->mApPaterno			= $D["apellidopaterno"];
-				$this->mTipoDeIngreso		= $D["tipoingreso"];
-				$this->mEstadoCivil			= $D["estadocivil"];
-				$this->mGrupoAsociado		= $D["grupo_solidario"];
-				$this->mCajaLocal			= $D["cajalocal"];
-				$this->mDependencia			= $D["dependencia"];
-				$this->mRFC					= $D["rfc"];
-				$this->mCURP				= $D["curp"];
-				$this->mPropietario			= $D["idusuario"];
-				$this->mFechaDeIngreso		= $D["fechaalta"];
-				$this->mTipoDeIdent			= $D["tipo_de_identificacion"];
-				$this->mNumeroDeIdent		= $D["documento_de_identificacion"];
-				$this->mEmail				= $D["correo_electronico"];
-				$this->mTelefonoP			= $D["telefono_principal"];
-				$this->mDependientes		= $D["dependientes_economicos"];
-				$this->mSucursal			= $D["sucursal"];
-				$this->mRegion				= $D["region"];
+				$this->mApMaterno			= $D[$xT->APELLIDOMATERNO];
+				$this->mApPaterno			= $D[$xT->APELLIDOPATERNO];
+				$this->mTipoDeIngreso		= $D[$xT->TIPOINGRESO];
+				$this->mEstadoCivil			= $D[$xT->ESTADOCIVIL];
+				$this->mGrupoAsociado		= $D[$xT->GRUPO_SOLIDARIO];
+				$this->mCajaLocal			= $D[$xT->CAJALOCAL];
+				$this->mDependencia			= $D[$xT->DEPENDENCIA];
+				$this->mRFC					= $D[$xT->RFC];
+				$this->mCURP				= $D[$xT->CURP];
+				$this->mPropietario			= $D[$xT->IDUSUARIO];
+				$this->mFechaDeIngreso		= $D[$xT->FECHAALTA];
+				$this->mTipoDeIdent			= $D[$xT->TIPO_DE_IDENTIFICACION];
+				$this->mNumeroDeIdent		= $D[$xT->DOCUMENTO_DE_IDENTIFICACION];
+				$this->mEmail				= strtolower($D[$xT->CORREO_ELECTRONICO]);
+				$this->mTelefonoP			= $D[$xT->TELEFONO_PRINCIPAL];
+				$this->mDependientes		= $D[$xT->DEPENDIENTES_ECONOMICOS];
+				$this->mSucursal			= $D[$xT->SUCURSAL];
+				$this->mRegion				= $D[$xT->REGION];
 				//Agrega Valores de array pedidos
-				$D["fecha_de_nacimiento"]	= $D["fechanacimiento"];
-				$D["codigo_de_socio"]		= $D["codigo"];
-				$this->mFechaDeNacimiento	= $D["fechanacimiento"];
-				$this->mTipoFiguraJu		= $D["personalidad_juridica"];
-				$this->mLugarDeNacimiento	= $D["lugarnacimiento"];
-				$this->mTituloPersona		= $xSoc->titulo_personal()->v();
-				$this->mPaisDeOrigen		= strtoupper($xSoc->pais_de_origen()->v(OUT_TXT));
-				$this->mGenero				= $xSoc->genero()->v();
-				$this->mNivelDeRiesgo		= $xSoc->nivel_de_riesgo_aml()->v();
-				$this->mObservaciones		= $xSoc->observaciones()->v(OUT_TXT);
-				$this->mEstadoActual		= $xSoc->estatusactual()->v();
-				$this->mTipoRegimenMat		= $xSoc->regimen_conyugal()->v();
-				$this->mExtranjeroEs		= ($xSoc->nacionalidad_extranjera()->v() == 1) ? true : false;
-				$this->mIDInterna			= $xSoc->idinterna()->v();
-				$this->mUsuarioProp			= $xSoc->idusuario()->v();
+				$D["fecha_de_nacimiento"]	= $D[$xT->FECHANACIMIENTO];
+				$D["codigo_de_socio"]		= $D[$xT->CODIGO];
+				$this->mFechaDeNacimiento	= $D[$xT->FECHANACIMIENTO];
+				$this->mTipoFiguraJu		= $D[$xT->PERSONALIDAD_JURIDICA];
+				$this->mLugarDeNacimiento	= $D[$xT->LUGARNACIMIENTO];
+				
+				$this->mTituloPersona		= $D[$xT->TITULO_PERSONAL];
+				$this->mPaisDeOrigen		= strtoupper($D[$xT->PAIS_DE_ORIGEN]);
+				$this->mGenero				= $D[$xT->GENERO];
+				$this->mNivelDeRiesgo		= $D[$xT->NIVEL_DE_RIESGO_AML];
+				$this->mObservaciones		= $D[$xT->OBSERVACIONES];
+				$this->mEstadoActual		= $D[$xT->ESTATUSACTUAL]; //$D[$xT->];
+				$this->mTipoRegimenMat		= $D[$xT->REGIMEN_CONYUGAL];
+				$this->mExtranjeroEs		= ($D[$xT->NACIONALIDAD_EXTRANJERA] == 1) ? true : false;
+				$this->mIDInterna			= $D[$xT->IDINTERNA];
+				$this->mUsuarioProp			= $D[$xT->IDUSUARIO];
+				$this->mNumeroSeguridadSoc	= $D[$xT->NSS];
 				//setLog($this->mCodigo . " --Nacionalidad " . $xSoc->nacionalidad_extranjera()->v());
 				//$this->mTituloP			= $xSoc->titulo_personal()->v();
 				if($this->mExtranjeroEs == true){
@@ -873,7 +882,9 @@ class cSocio{
 				
 				$this->mSocioIniciado		= true;
 				//Guardar en Cache
-				$xCach->set("persona-". $this->mCodigo, $this->mDSocioByArray, $xCach->EXPIRA_UNHORA);
+				if($inCache == false){
+					$xCach->set("persona-". $this->mCodigo, $this->mDSocioByArray, $xCach->EXPIRA_UNHORA);
+				}
 				$D							= null;
 			}
 		}
@@ -991,18 +1002,35 @@ class cSocio{
 	function getCURP($validar = false){
 		$curp	= $this->mCURP;
 		if($validar == true){
-			$xMex	= new cReglasDePais();
-			
 			if($this->getEsPersonaFisica() == true){
-				$curp		= $xMex->getValidIDPoblacional($curp);
-				if($xMex->isValid() == false){ $this->mMessages	.= "ERROR\tCURP $curp Invalido\r\n"; }
+				$xMex	= new cReglasDePais();
+				$curp	= $xMex->getValidIDPoblacional($curp);
+				if($xMex->isValid() === false){
+					$this->mMessages	.= "ERROR\tCURP $curp Invalido\r\n"; 
+				}
 					
 			} else {
 				$curp					= "";
-				$this->mMessages		.= "ERROR\tCURP $curp No para personas morales\r\n";
+				//$this->mMessages		.= "ERROR\tCURP $curp No para personas morales\r\n";
 			}
 		}
 		return $curp;
+	}
+	function getNSS($validar = false){
+		$nss	= $this->mNumeroSeguridadSoc;
+		if($validar == true){
+			$xMex	= new cReglasDePais();
+			
+			if($this->getEsPersonaFisica() == true){
+				$nss		= $xMex->getValidNSS($nss);
+				if($xMex->isValid() == false){ 
+					$this->mMessages	.= "ERROR\tNSS $nss Invalido\r\n"; 
+				}
+			} else {
+				$nss					= "";
+			}
+		}
+		return $nss;
 	}
 	function getRFC($validar = false, $retornar = false){
 		$rfc	= $this->mRFC;
@@ -1585,6 +1613,7 @@ class cSocio{
 			
 			$SinDatosFiscales	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_FISCALES);		//regla de negocio
 			$SinDatoPoblacional = $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATO_POBLACIONAL);		//regla de negocio
+			$useDColegiacion	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
 			
 			$tingreso	= $this->getOTipoIngreso()->getNombre();
 			$xLng		= new cLang();
@@ -1626,7 +1655,13 @@ class cSocio{
 					//22Octubre2013
 					$xRels	= $this->getORepresentanteLegal();
 					if($xRels != null){
-						$tdCurp		= "<th class='izq'>" . $xRels->getNombreRelacion() . "</th><td>" . $xRels->getCodigoDePersona() . "-" . $xRels->getNombreDelRelacionado() . "</td>";
+						$nombreRepL	= $xRels->getCodigoDePersona() . "-" . $xRels->getNombreDelRelacionado();
+						$xRels2 	= $this->getORepresentanteLegalManc();
+						if($xRels2 !== null){
+							$nombreRepL	.= ", " . $xRels2->getCodigoDePersona() . "-" . $xRels2->getNombreDelRelacionado();
+						}
+						
+						$tdCurp		= "<th class='izq'>" . $xRels->getNombreRelacion() . "</th><td>" . $nombreRepL . "</td>";
 					}
 				} else {
 					if($SinDatoPoblacional == true){ $tdCurp	= ""; }
@@ -1645,7 +1680,7 @@ class cSocio{
 					$Nempresa	= cleanString( $xEmp->getNombre());
 					$tdExtra	.= "<tr><th class='izq'>" . $xLng->getT("TR.Empresa") . "</th><td colspan='3'>$Nempresa</td></tr>";
 				}
-				if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
+				if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true AND MODULO_AML_ACTIVADO == true){
 					$xDPais		= new cDomiciliosPaises($this->getPaisDeOrigen());
 					$xDPais->init();
 					$NPais		= $xDPais->getNombre();
@@ -1661,7 +1696,7 @@ class cSocio{
 				}
 			}
 			$tdMem		= "";
-			if(PERSONAS_CONTROLAR_POR_APORTS == true AND $simple == false){
+			if(PERSONAS_CONTROLAR_POR_APORTS == true AND $simple == false AND $useDColegiacion == true){
 				$xTM	= new cPersonasMembresiasTipos($this->getTipoDeMembresia());
 				$xTM->init();
 				$tdMem	= "<tr><th class='izq'>" . $xLng->getT("TR.TIPO_MEMBRESIA") . "</th>
@@ -1762,12 +1797,9 @@ class cSocio{
 		$nombre	= "";
 		//OBTENER REPRESENTANTE LEGAL
 		//22Octubre2013
-		$xRels	= new cPersonasRelaciones(false, $this->getCodigo());
-		if($xRels->initRelacionPorTipo(PERSONAS_REL_REP_LEGAL) == true){
-			$nombre	= $xRels->getNombreDelRelacionado();
-			$this->mIDPersonaRepLegal	= $xRels->getCodigoDePersona();
-		}
-		
+		$xORep	= $this->getORepresentanteLegal();
+		if($xORep !== null){ $nombre	= $xORep->getNombreDelRelacionado(); }
+	
 		return $nombre;
 	}
 	function getClaveDePersonalRepLegal(){ return $this->mIDPersonaRepLegal; }
@@ -2516,25 +2548,9 @@ class cSocio{
 	 * @param date $Fecha
 	 */
 	function addPatrimonio($Tipo, $Monto, $Estado, $Afectacion = 1, $DocumentoProbatorio = "", $Descripcion = "",
-			$Observaciones = "", $Expira = "2029-01-01",
-			$Fecha = false){
-		$xF				= new cFecha(0, $Fecha);
-		$xDBT			= new cSQLTabla(TPERSONAS_PATRIMONIO);
-		$Fecha			= $xF->get();
-		if( $Afectacion == -1 AND $Monto > 0 ){
-			$Monto		= $Monto * -1;
-		}
-		$Socio			= $this->mCodigo;
-		$Documento		= DEFAULT_CREDITO;
-		$Sucursal		= getSucursal();
-		$Eacp			= EACP_CLAVE;
-		$Usr			= getUsuarioActual();
-		$valores		= "$Socio, $Tipo, $Monto, $Afectacion, '$Expira', '$Observaciones', '$Descripcion', '$DocumentoProbatorio', ";
-		$valores		.= "$Documento, $Estado, $Socio, '$Sucursal', '$Eacp', $Usr, '$Fecha' ";
-		$SQLI			= $xDBT->getInsert($valores, $xDBT->getCamposSinClaveUnica() );
-		$xQL			= new MQL();
-		$rs				= $xQL->setRawQuery($SQLI);
-		return ($rs != false) ? true : false;
+			$Observaciones = "", $Expira = false, $Fecha = false){
+		$xPat	= new cPersonasPatrimonio();
+		return $xPat->add($this->getClaveDePersona(), $Tipo, $Descripcion, $Monto, $DocumentoProbatorio, $Observaciones,0,0, $Estado, $Expira, $Fecha);
 	}
 	function addRelacionPorDocumento($relacionado, $documento, $tipo = DEFAULT_TIPO_RELACION){
 		$monto		= 0;
@@ -3559,17 +3575,32 @@ class cSocio{
 	function getEstadoActual(){ return $this->mEstadoActual; }
 	function getORepresentanteLegal(){
 		if($this->getFiguraJuridica() == PERSONAS_FIGURA_MORAL OR $this->getFiguraJuridica() == PERSONAS_FIGURA_MORAL_EXENTA){
-			if($this->mORepLegal == null){
+			$xTipoT	= new cPersonasTiposDeRelacion();
+			if($this->mORepLegal === null){
 				//OBTENER REPRESENTANTE LEGAL
 				$xRels	= new cPersonasRelaciones(false, $this->getCodigo());
-				if($xRels->initRelacionPorTipo(PERSONAS_REL_REP_LEGAL) == true){
-					$this->mORepLegal	= $xRels;
+				if($xRels->initRelacionPorTipo($xTipoT->TIPO_REP_LEGAL) == true){
+					$this->mIDPersonaRepLegal	= $xRels->getCodigoDePersona();
+					$this->mORepLegal			= $xRels;
 				}
 			}
 		}
 		return $this->mORepLegal;
 	}
-
+	function getORepresentanteLegalManc(){
+		if($this->getFiguraJuridica() == PERSONAS_FIGURA_MORAL OR $this->getFiguraJuridica() == PERSONAS_FIGURA_MORAL_EXENTA){
+			$xTipoT	= new cPersonasTiposDeRelacion();
+			if($this->mORepLegalManc === null){
+				$xRels	= new cPersonasRelaciones(false, $this->getCodigo());
+				if($xRels->initRelacionPorTipo($xTipoT->TIPO_REP_LEGAL_MANC) == true){
+					$this->mClaveRepLegalManc	= $xRels->getCodigoDePersona();
+					$this->mORepLegalManc		= $xRels;
+				}
+			}
+		}
+		return $this->mORepLegalManc;
+	}
+	
 	function getNumeroDeCreditoPrimario($tipo = false){
 		$ByTipo = " AND monto_autorizado > 0 ";//($tipo == "todos") ? "AND monto_autorizado > 0" : "  ";
 		$socio	= $this->mCodigo;
@@ -4110,6 +4141,24 @@ class cSocio{
 	function getOEventos(){
 		$mEvt	= new cPersonasProceso();
 		return $mEvt;
+	}
+	function getClaveDePersonaEstudiada(){
+		$clave	= $this->getClaveDePersona();
+		$xRel	= new cPersonasRelaciones(0, $clave);
+		$xRelT	= new cPersonasTiposDeRelacion();
+		if($xRel->initRelacionPorTipo($xRelT->TIPO_PERS_ESTUDIADO) == true){
+			$xRel->getCodigoDePersona();
+		}
+		return $clave;
+	}
+	function getClaveDePersonaAFacturar(){
+		$clave	= $this->getClaveDePersona();
+		$xRel	= new cPersonasRelaciones(0, $clave);
+		$xRelT	= new cPersonasTiposDeRelacion();
+		if($xRel->initRelacionPorTipo($xRelT->TIPO_PERS_FACTURA) == true){
+			$xRel->getCodigoDePersona();
+		}
+		return $clave;
 	}
 }
 /**
@@ -5149,6 +5198,7 @@ class cPersonasRelaciones {
 	public $CONSANGUINIDAD_NINGUNA	= 99;
 	public $ESTADO_ACTIVO			= 10;
 	public $ESTADO_INACTIVO			= 20;
+	
 	private $mTelefonoFijo			= 0;
 	private $mTelefonoMovil			= 0;
 	private $mDireccion				= "";
@@ -5575,6 +5625,12 @@ class cPersonasTiposDeRelacion {
 	private $mClave		= false;
 	private $mOmitirAML	= false;
 	private $mInit		= false;
+	public $TIPO_PERS_ESTUDIADO = 553;
+	public $TIPO_PERS_FACTURA 	= 552;
+	public $TIPO_REP_LEGAL_MANC = 15;
+	public $TIPO_REP_LEGAL 		= 14;
+	public $CLASE_REFERENCIA	= 2;
+	
 	function __construct($clave = 0){		$this->mClave	= $clave;	}
 	function init(){
 		$sql			= "SELECT * FROM socios_relacionestipos WHERE idsocios_relacionestipos=" . $this->mClave . " LIMIT 0,1";
@@ -6351,6 +6407,7 @@ class cPersonaActividadEconomica {
 	private $mClaveDePais			= null;
 	private $mClaveDeActAML			= 0;
 	private $mClaveDeActSCIAN		= 0;
+	
 	private $mDescripcion			= "";
 	
 	private $mIDCargado				= null;
@@ -6406,7 +6463,10 @@ class cPersonaActividadEconomica {
 		$this->mIDCache				= EACP_CLAVE . "." . $this->mPersona . ".domicilio";
 		$this->mFechaDeIngreso		= fechasys();
 		$this->mTipoDispersion		= FALLBACK_PERSONAS_AE_TIPO_DISPERSION;
-		$this->setIDCache(0, $this->mPersona);
+		
+		if($this->mPersona> DEFAULT_SOCIO){
+			$this->setIDCache(0, $this->mPersona);
+		}
 	}
 	function isInit(){ return $this->mInit; }
 	function setID($id){ $this->mIDCargado = setNoMenorQueCero($id); }
@@ -6602,6 +6662,8 @@ class cPersonaActividadEconomica {
 	function getClaveDeMunicipio(){ return $this->mClaveDeMunicipio;	}
 	function getClaveDeEstado(){ return $this->mClaveDeEstado;	}
 	function getClaveDeEstadoEnSIC(){ return $this->mClaveDeEstadoSIC;	}
+	function getClaveDeAntiguedad(){ return $this->mAntiguedad; }
+	function getClaveDeDomicilio(){ return $this->mIDDomicilio; }
 	function getCodigoPostal(){ return $this->mCodigoPostal;	}
 	function getClaveDeEmpresa(){ return $this->mClaveEmpresa; }
 	function getClaveDePais(){ return $this->mClaveDePais; }

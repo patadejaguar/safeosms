@@ -37,6 +37,9 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
+$tasa		= parametro("tasa", 0, MQL_FLOAT);
+$residual	= parametro("residual", true, MQL_BOOL);
+
 $xHP->init("jsInitComponents()");
 
 ?><style> #idletra { font-size : 1.3em !important; } </style><?php
@@ -56,10 +59,16 @@ $xFRM->addDivSolo($nn, $xTxt->get("idconatencion", false, " "), "tx14", "tx34");
 $xFRM->addHElem($xSel->getListaDePeriocidadDePago("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
 $xFRM->OMoneda("idmonto", 10000, "TR.MONTO CREDITO");
 $xFRM->OMoneda("idpagos", 24, "TR.NUMERO DE PAGOS");
-$xFRM->OMoneda("idtasa", 60, "TR.TASA DE INTERES ANUAL");
-
-$xFRM->OMoneda("idresidual", 0, "TR.VALORRESIDUAL");
-
+if($tasa>0){
+	$xFRM->OHidden("idtasa", $tasa);
+} else {
+	$xFRM->OMoneda("idtasa", 60, "TR.TASA DE INTERES ANUAL");
+}
+if($residual == true){
+	$xFRM->OMoneda("idresidual", 0, "TR.VALORRESIDUAL");
+} else {
+	$xFRM->OHidden("idresidual", 0);
+}
 $xFRM->OCheck("TR.SIN IMPUESTO_AL_CONSUMO", "idsiniva");
 $xFRM->OCheck("TR.REDONDEO", "idconredondeo", true);
 $xFRM->OCheck("TR.SOLO INTERES", "idsolointeres");

@@ -112,7 +112,7 @@ if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
 	$xFRM->setValidacion("monto_linea", "validacion.nozero");
 	
 	//$xFRM->OText("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.fecha de vencimiento");
-	$xFRM->ODate("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.FECHA DE VENCIMIENTO");
+	$xFRM->OFechaLarga("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.FECHA DE VENCIMIENTO");
 	$xFRM->addHElem( $xSel->getListaDeOficiales("oficial_de_credito", "", $xTabla->oficial_de_credito()->v())->get(true) );
 	
 	$idtasa	= $xTabla->tasa()->v() * 100;

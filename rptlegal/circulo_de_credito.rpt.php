@@ -76,9 +76,11 @@ if($toJson == true){
 	header("Content-type: text/x-csv");
 	header("Content-Disposition: attachment; filename=" . urlencode($ClaveOtorgante . "_" . $NombreOtorgante . "_" . $FechaExtraccion) . ".txt");
 }
-
+//MontoUltimoPago|FechaIngresoCarteraVencida|MontoCorrespondienteIntereses|FormaPagoActualIntereses|DiasVencimiento|PlazoMeses|MontoCreditoOriginacion|CorreoElectronicoConsumidor
 //Linea de Encabezados
-$strHEAD				= strtoupper("ClaveOtorgante|NombreOtorgante|IdentificadorDeMedio|FechaExtraccion|NotaOtorgante|Version|ApellidoPaterno|ApellidoMaterno|ApellidoAdicional|Nombres|FechaNacimiento|RFC|CURP|Nacionalidad|Residencia|NumeroLicenciaConducir|EstadoCivil|Sexo|ClaveElectorIFE|NumeroDependientes|FechaDefuncion|IndicadorDefuncion|TipoPersona|Direccion|ColoniaPoblacion|DelegacionMunicipio|Ciudad|Estado|CP|FechaResidencia|NumeroTelefono|TipoDomicilio|TipoAsentamiento|NombreEmpresa|Direccion|ColoniaPoblacion|DelegacionMunicipio|Ciudad|Estado|CP|NumeroTelefono|Extension|Fax|Puesto|FechaContratacion|ClaveMoneda|SalarioMensual|FechaUltimoDiaEmpleo|FechaVerificacionEmpleo|ClaveActualOtorgante|NombreOtorgante|CuentaActual|TipoResponsabilidad|TipoCuenta|TipoContrato|ClaveUnidadMonetaria|ValorActivoValuacion|NumeroPagos|FrecuenciaPagos|MontoPagar|FechaAperturaCuenta|FechaUltimoPago|FechaUltimaCompra|FechaCierreCuenta|FechaCorte|Garantia|CreditoMaximo|SaldoActual|LimiteCredito|SaldoVencido|NumeroPagosVencidos|PagoActual|HistoricoPagos|ClavePrevencion|TotalPagosReportados|ClaveAnteriorOtorgante|NombreAnteriorOtorgante|NumeroCuentaAnterior|FechaPrimerIncumplimiento|SaldoInsoluto|TotalSaldosActuales|TotalSaldosVencidos|TotalElementosNombreReportados|TotalElementosDireccionReportados|TotalElementosEmpleoReportados|TotalElementosCuentaReportados|NombreOtorgante|DomicilioDevolucion");
+$strHEAD				= strtoupper("ClaveOtorgante|NombreOtorgante|IdentificadorDeMedio|FechaExtraccion|NotaOtorgante|Version|ApellidoPaterno|ApellidoMaterno|ApellidoAdicional|Nombres|FechaNacimiento|RFC|CURP|NumeroSeguridadSocial|Nacionalidad|Residencia|NumeroLicenciaConducir|EstadoCivil|Sexo|ClaveElectorIFE|NumeroDependientes|FechaDefuncion|IndicadorDefuncion|TipoPersona|Direccion|ColoniaPoblacion|DelegacionMunicipio|Ciudad|Estado|CP|FechaResidencia|NumeroTelefono|TipoDomicilio|TipoAsentamiento|OrigenDomicilio|NombreEmpresa|Direccion|ColoniaPoblacion|DelegacionMunicipio|Ciudad|Estado|CP|NumeroTelefono|Extension|Fax|Puesto|FechaContratacion|ClaveMoneda|SalarioMensual|FechaUltimoDiaEmpleo|FechaVerificacionEmpleo|OrigenRazonSocialDomicilio|ClaveActualOtorgante|NombreOtorgante|CuentaActual|TipoResponsabilidad|TipoCuenta|TipoContrato|ClaveUnidadMonetaria|ValorActivoValuacion|NumeroPagos|FrecuenciaPagos|MontoPagar|FechaAperturaCuenta|FechaUltimoPago|FechaUltimaCompra|FechaCierreCuenta|FechaCorte|Garantia|CreditoMaximo|SaldoActual|LimiteCredito|SaldoVencido|NumeroPagosVencidos|PagoActual|HistoricoPagos|ClavePrevencion|TotalPagosReportados|ClaveAnteriorOtorgante|NombreAnteriorOtorgante|NumeroCuentaAnterior|FechaPrimerIncumplimiento|SaldoInsoluto|");
+$strHEAD				.= strtoupper("MontoUltimoPago|FechaIngresoCarteraVencida|MontoCorrespondienteIntereses|FormaPagoActualIntereses|DiasVencimiento|PlazoMeses|MontoCreditoOriginacion|CorreoElectronicoConsumidor|");
+$strHEAD				.= strtoupper("TotalSaldosActuales|TotalSaldosVecidos|TotalElementosNombreReportados|TotalElementosDireccionReportados|TotalElementosEmpleoReportados|TotalElementosCuentaReportados|NombreOtorgante|DomicilioDevolucion");
 if($toJson == true){
 	$itemJson			= explode("|", $strHEAD);
 } else {
@@ -140,6 +142,8 @@ IdentificadorDeMedio
 FechaExtraccion
 NotaOtorgante
 */
+$LimSQL					= "";//" LIMIT 0,500";
+
 
 $IdentificadorMedio		= 1;
 $NotaOtorgante			= "";
@@ -151,7 +155,7 @@ $sql 			= $mql->getQueryInicialDeCreditos("", "", " 	AND (`creditos_solicitud`.`
 				(`creditos_solicitud`.`monto_autorizado` > " . TOLERANCIA_SALDOS .  ")
 				AND	
 				(`creditos_solicitud`.`estatus_actual` !=" . CREDITO_ESTADO_AUTORIZADO . " AND `creditos_solicitud`.`estatus_actual` !=" . CREDITO_ESTADO_SOLICITADO .")  
-				$ByPersona2
+				$ByPersona2 $LimSQL
 				");
 
 //exit($sql);
@@ -163,7 +167,7 @@ $arrEquivTipoRes		= array(1 => 1, 2=> 2, 3 => 4, 4 => 3, 99 => "");
 $arrEquivEstadoCiv		= array(1 => "C" , 2 => "S", 3 => "D", 4 => "L", 5 => "", 6 => "V", 7 => "E",99 => "");
 $arrEquivGenero			= array(1 => "M", 2=> "F", 99 => "");
 
-$version				= 2;
+$version				= 4;
 
 $datos					= $xCache->get($idx3);
 if(!is_array($datos)){
@@ -219,6 +223,9 @@ foreach($datos as $rw){
 	$FechaDefuncion			= "";
 	$IndicadoDefuncion		= "Y";
 	$TipoPersona			= $xCR->getETipoPersona( $xSoc->getPersonalidadJuridica() );	//fisica moral
+	
+	$NSS					= $xSoc->getNSS(true);
+	
 	/*
 	ApellidoPaterno	
 	ApellidoMaterno	
@@ -239,12 +246,12 @@ foreach($datos as $rw){
 	TipoPersona
 	*/
 	//Linea de Socio
-	$linea					.= "$ApellidoPaterno|$ApellidoMaterno|$ApellidoAdicional|$Nombres|$FechaNacimiento|$RFC|$CURP|$Nacionalidad|$Residencia|$licencia|$EstadoCivil|$Sexo|";
+	
+	$linea					.= "$ApellidoPaterno|$ApellidoMaterno|$ApellidoAdicional|$Nombres|$FechaNacimiento|$RFC|$CURP|$NSS|$Nacionalidad|$Residencia|$licencia|$EstadoCivil|$Sexo|";
 	$linea					.= "$ClaveIFE|$NumeroDependientes|$FechaDefuncion|$IndicadoDefuncion|$TipoPersona|";		
 
 
 		
-	
 	//==================================== Domicilio Particular ==================================
 	//Calle, numero exterior, numero interior
 	if($ODom == null){
@@ -265,8 +272,10 @@ foreach($datos as $rw){
 	    $NumeroTelefono			= "";
 	    $TipoDomicilio			= "";
 	    $TipoAsentamiento		= "";
-	    $linea					.= "$Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|";
-	    $xLog->add("ERROR\t$idpersona-$idcredito\t$sucres\tSin Domicilio $Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|\r\n", $xLog->DEVELOPER);
+	    $OrigenDomicilio		= $xCR->getText(EACP_CLAVE_DE_PAIS);
+	    
+	    $linea					.= "$Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|$OrigenDomicilio|";
+	    $xLog->add("ERROR\t$idpersona-$idcredito\t$sucres\tSin Domicilio $Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|$OrigenDomicilio|\r\n", $xLog->DEVELOPER);
 	} else {
 		$calle						= $ODom->getCalle();
 		$numExterior				= ($ODom->getNumeroExterior() == "") ? "SN" : $ODom->getNumeroExterior();
@@ -293,9 +302,10 @@ foreach($datos as $rw){
 				$CP						= $xCR->getText($xSuc->getCodigoPostal(),5);
 			}
 
-			$xLog->add("ERROR\t$idpersona-$idcredito\t$sucres\tEn datos de Domicilio $Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|\r\n", $xLog->DEVELOPER);
+			$xLog->add("ERROR\t$idpersona-$idcredito\t$sucres\tEn datos de Domicilio $Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|$OrigenDomicilio|\r\n", $xLog->DEVELOPER);
 		}
 		$CP							= $xCR->getText($CP, 5);
+		
 		
 		$xColonia->existe($CP, "", "", true);
 		
@@ -305,6 +315,8 @@ foreach($datos as $rw){
 		$NumeroTelefono				= $xSoc->getTelefonoPrincipal();
 		$TipoDomicilio				= $xCR->getETipoDomicilio( $ODom->getTipoDeDomicilio() ); // (isset($arrEquivTipoDom[ $xDom["tipo_domicilio"] ])) ? $arrEquivTipoDom[ $xDom["tipo_domicilio"] ] : "";
 		$TipoAsentamiento			= $xCR->getETipoColonia( trim($xColonia->getTipoDeAsentamiento()) );
+		$OrigenDomicilio			= $xCR->getText($ODom->getClaveDePais());
+		
 		/*
 		Direccion
 		ColoniaPoblacion
@@ -317,7 +329,7 @@ foreach($datos as $rw){
 		TipoDomicilio
 		TipoAsentamiento
 		*/
-		$linea					.= "$Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|";
+		$linea					.= "$Direccion|$ColoniaPoblacion|$DelegacionMunicipio|$Ciudad|$Estado|$CP|$FechaResidencia|$NumeroTelefono|$TipoDomicilio|$TipoAsentamiento|$OrigenDomicilio|";
 	}
 	
 	//==================================== Domicilio Trabajo ==================================
@@ -362,6 +374,7 @@ foreach($datos as $rw){
 	    $CiudadEmpresa			= "";//$xCR->getText($OActE->getLocalidad() );
 	    $EstadoEmpresa			= $xCR->getText( $OActE->getClaveDeEstadoEnSIC() ); //parche
 	    $CPEmpresa				= $xCR->getText($OActE->getCodigoPostal(), 5);
+	    $OrigenRazonSocialDomicilio = $xCR->getText($OActE->getClaveDePais());
 	    $OEmpresa				= $OActE->getOEmpresa();
 	    
 		if( setNoMenorQueCero($CPEmpresa) <= 0){
@@ -411,9 +424,10 @@ foreach($datos as $rw){
 		$SalarioMensual			= "";
 		$FechaUltimoEmpresa		= "";
 		$FechaVerificaEmp		= "";
+		$OrigenRazonSocialDomicilio = "";
 	}
 	$linea			.= "$NombreEmpresa|$DireccionEmpresa|$ColoniaEmpresa|$MunicipioEmpresa|$CiudadEmpresa|$EstadoEmpresa|$CPEmpresa|$TelefonoEmpresa|";
-	$linea			.= "$ExtensionEmpresa|$FaxEmpresa|$PuestoEmpresa|$FContratoEmpresa|$ClaveMonedaEmp|$SalarioMensual|$FechaUltimoEmpresa|$FechaVerificaEmp|";	
+	$linea			.= "$ExtensionEmpresa|$FaxEmpresa|$PuestoEmpresa|$FContratoEmpresa|$ClaveMonedaEmp|$SalarioMensual|$FechaUltimoEmpresa|$FechaVerificaEmp|$OrigenRazonSocialDomicilio|";	
 	/*
 	ClaveActualOtorgante
 	NombreOtorgante
@@ -619,7 +633,7 @@ foreach($datos as $rw){
 		if(setNoMenorQueCero($PagoActual) > $xCred->getPagosAutorizados() ){
 			//pago actual reset
 			//$xMs	= new cNotificaciones();
-			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\t($PagoActual . $NumeroPagosVencidos)ERROR\tCredito " . $xCred->getNumeroDeCredito() . " Saldo $SaldoActual\r\n", $xLog->DEVELOPER );
+			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\t($PagoActual . $NumeroPagosVencidos)ERROR\tCredito " . $xCred->getNumeroDeCredito() . " saldo $SaldoActual\r\n", $xLog->DEVELOPER );
 			$PagoActual		= "01";//sprintf("%02d", setNoMenorQueCero(($xCred->getPagosAutorizados() - $NumeroPagosVencidos)) );
 		}	
 	}
@@ -647,8 +661,21 @@ foreach($datos as $rw){
 
 	$NombreOtorgante				= $xCR->getNombreOtorgante();
 	$DomicilioDevolucion			= ""; //str_replace(",", ";",  EACP_DOMICILIO_CORTO);
+	/* 2018-03-02 */
 	
+	//===== Nueva version
+	//MontoUltimoPago|FechaIngresoCarteraVencida|MontoCorrespondienteIntereses|
+	//FormaPagoActualIntereses|DiasVencimiento|PlazoMeses|MontoCreditoOriginacion|CorreoElectronicoConsumidor
+	$MontoUltimoPago				= $xCR->getMonto($xCred->getMontoUltimoPago());
+	$FechaIngresoCarteraVencida		= ($PagoActual == "V") ? "" : $xCR->getDate($xCred->getFechaDeMora());
+	$MontoCorrespondienteIntereses	= "0";
+	$FormaPagoActualIntereses		= "";
+	$DiasVencimiento				= ($PagoActual == "V") ? "" : $xCred->getDiasDeMora($FechaCorte);
+	$PlazoMeses						= $xCred->getPlazoEnMeses();
+	$MontoCreditoOriginacion		= $xCR->getMonto( $xCred->getMontoSolicitado());
+	$CorreoElectronicoConsumidor	= $xSoc->getCorreoElectronico();
 	
+	$linea							.= "$MontoUltimoPago|$FechaIngresoCarteraVencida|$MontoCorrespondienteIntereses|$FormaPagoActualIntereses|$DiasVencimiento|$PlazoMeses|$MontoCreditoOriginacion|$CorreoElectronicoConsumidor|";
 	//============================== ELEMENTOS DE CONTROL
 	$linea					.= "$TotalSaldosActuales|$TotalSaldosVencidos|$TotalElementosNombres|$TotalElementosDireccion|$TotalElementosEmpleo|$TotalElementosCuenta|$NombreOtorgante|$DomicilioDevolucion";
 	//

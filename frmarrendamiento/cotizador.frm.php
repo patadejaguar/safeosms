@@ -21,6 +21,7 @@ $xLi			= new cSQLListas();
 $xF				= new cFecha();
 $xCProc			= new cCreditosProceso();
 $xFormu			= new cFormula();
+$xHNot			= new cHNotif();
 //$xDic		= new cHDicccionarioDeTablas();
 $jxc 			= new TinyAjax();
 $xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
@@ -29,7 +30,9 @@ $NoUsarTIIE		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_SIN_TI
 $NoUsarResidual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_NORES);
 $AunMasSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_COT_RSIMPLE);
 $ArrAjustes		= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_AJUSTM);
-$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$NoUsarUsers	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$NoAppAnticipo	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_ANT_NOAPP);
+$SumComisPrinc	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_SUM_COMS);
 
 $itemsNoVer		= "cmdImprimirPropuesta,comision_originador,tasa_compra";
 
@@ -53,7 +56,7 @@ $OnEdit			= false;
 $TasaComision	= 0;
 $EsOriginador	= false;
 $EsAdministrado	= false;
-
+$EsRecalc		= true; //Indica si se recalcula 
 //$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
@@ -118,13 +121,24 @@ function jsaGetTasa($rac, $plazo, $clave, $olvidar, $nuevo){
 	}
 	return $tab->getString();
 }
-function jsaGetComision($originador, $clave, $olvidar, $nuevo){
+function jsaGetComision($originador, $clave, $olvidar, $nuevo, $suboriginador){
+	$xSub	= new cLeasingUsuarios($suboriginador);
 	$xOrg	= new cLeasingOriginadores($originador);
+	$tab 	= new TinyAjaxBehavior();
+	
+	
+	
 	$tasa	= 0;
 	if($xOrg->init() ){
-		$tasa = $xOrg->getTasaComision();
+		
+		$tab->add(TabSetValue::getBehavior("com_agencia", $xOrg->getTasaComision() ));
 	}
-	return $tasa;
+	if($xSub->init() == true){
+		$tab->add(TabSetValue::getBehavior("comision_originador", $xSub->getTasaComision() ));
+	}
+	//Comision al Originador
+	
+	return $tab->getString();
 }
 function jsaGetCostoGPS($plazo, $plan, $montogps, $clave, $olvidar, $nuevo){
 	
@@ -138,6 +152,7 @@ function jsaGetCostoGPS($plazo, $plan, $montogps, $clave, $olvidar, $nuevo){
 		$monto	= ($monto >= $montogps) ? $monto : $montogps;
 		
 		$tab->add(TabSetValue::getBehavior("monto_gps", $monto ));
+		$tab->add(TabSetValue::getBehavior("monto_gps_mny", getFMoney($monto) ));
 		
 	}
 	$xEsc		= new cLeasing_escenarios();
@@ -238,7 +253,8 @@ function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave
 			
 			
 			$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, $tr, $anticipo);
-			
+			$tr		= $xEmul->getFmtTasa($tr);
+			//setError("pzo $idx tasa $tr (Clave $clave)");
 			$tab->add(TabSetValue::getBehavior("tasaresidual_$idx", $tr ));
 			$tab->add(TabSetValue::getBehavior("residual_$idx", $res ));
 			
@@ -302,7 +318,7 @@ function jsaAgregarOmitidos($idomitir, $idquitar, $idid){
 }
 
 $jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo', 'idoriginacion_leasing', 'idolvidar', 'idnuevo'));
-$jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo'), "#comision_originador");
+$jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo', 'suboriginador'));
 $jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps','idoriginacion_leasing','idolvidar', 'idnuevo'));
 $jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehiculo','idoriginacion_leasing', 'idolvidar', 'idnuevo'));
 $jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac'));
@@ -341,6 +357,7 @@ if($clave>0){
 }
 
 $xFRM->setNoAcordion();// $xFRM->setIsWizard();
+$xFRM->setInitVerPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS);
 
 $xTabla		= new cOriginacion_leasing();
 $xLeas		= new cCreditosLeasing($clave);
@@ -448,8 +465,9 @@ $xFRM->OHidden("monto_comision", $xTabla->monto_comision()->v());
 $xFRM->OHidden("monto_originador", $xTabla->monto_originador()->v());
 
 $xFRM->OHidden("estatus", $xTabla->estatus()->v());
-
-
+$xFRM->OHidden("com_agencia", $xTabla->com_agencia()->v());
+$xFRM->OHidden("gps_list", $xTabla->gps_list()->v());
+$xFRM->OHidden("montocom_agen", $xTabla->montocom_agen()->v());
 
 $xFRM->addSeccion("iddoriginador", "TR.DATOS DEL ORIGINADOR");
 
@@ -464,14 +482,18 @@ if($xUser->getEsOriginador() == false){
 			$xFRM->OHidden("oficial", $xTabla->oficial()->v());
 		}
 		$xSelOrg	= $xSel->getListaDeOriginadores("originador", $xTabla->originador()->v());
+		$xSelSubO	= $xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v());
+		
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
 			$xSelOrg->addEvent("onblur", "jsDatosIniciales()");
 			$xSelOrg->addEvent("onchange", "jsDatosIniciales()");
+			$xSelSubO->addEvent("onblur", "jsDatosIniciales()");
+			$xSelSubO->addEvent("onchange", "jsDatosIniciales()");
 		}
 		
 		if($NoUsarUsers == false){
 			$xFRM->addHElem($xSelOrg->get(true) );
-			$xFRM->addHElem($xSel->getListaDeSubOriginadores("suboriginador", $xTabla->suboriginador()->v())->get(true) );
+			$xFRM->addHElem($xSelSubO->get(true) );
 		} else {
 			$xFRM->OHidden("originador", $xTabla->originador()->v());
 			$xFRM->OHidden("suboriginador", $xTabla->suboriginador()->v());
@@ -554,7 +576,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 				$xFRM->OButton("TR.PLAN_DE_PAGOS CLIENTE", "jsGetPlanCliente()", $xFRM->ic()->CALENDARIO1);
 			}
 			if($xCred->getEsAfectable() == true){
-				
+				$EsRecalc			= false;
 				$xFRM->addJsInit("jsDesactivarCotizacion();");
 				//============================ Agregar
 				$xFRM->addDisabledInit("tipo_rac");
@@ -701,7 +723,9 @@ if($xUser->getEsOriginador() == false){
 		$xFRM->OMoneda2("monto_tenencia", $xTabla->monto_tenencia()->v(), "TR.TENENCIA");
 		$xFRM->OMoneda2("monto_garantia", $xTabla->monto_garantia()->v(), "TR.GARANTIA");
 		$xFRM->OMoneda2("monto_mtto", $xTabla->monto_mtto()->v(), "TR.MTTO");
+		
 		$xFRM->OMoneda2("monto_gestoria", $xTabla->monto_gestoria()->v(), "TR.GASTOSGESTORIA");
+		
 	}
 	//================== Ajuste de Servicio
 	$xSelS		= new cHSelect();
@@ -779,16 +803,36 @@ if($AunMasSimple == true){
 
 if($xUser->getEsOriginador() == false){
 	$xFRM->OSiNo("TR.DOMICILIA","domicilia", $xTabla->domicilia()->v());
+	if($OlvidarTodo == true){
+		$xFRM->OSiNo("TR.OMITIR IVA","noivarent", $xTabla->noivarent()->v());
+	}
+	
 } else {
 	$xFRM->OHidden("domicilia", $xTabla->domicilia()->v());
 }
+if($xUser->getEsOriginador() == false){
+	$xFRM->addHElem("<hr />");
+	
+	$xFRM->addTag("Comision Agencia: <strong id='idtagcomagen'>% " . $xTabla->com_agencia()->v(). "</strong>", $xHNot->NOTICE);
+	$xFRM->addTag("Comision Originador: <strong id='idtagcomorg'>% " . $xTabla->comision_originador()->v() . "</strong>", $xHNot->NOTICE);
+	
+	$xFRM->addTag("Monto Com. Agencia: <strong id='idtagcomagen_m'></strong>", $xHNot->NOTICE);
+	$xFRM->addTag("Monto Com. Originador: <strong id='idtagcomorg_m'></strong>", $xHNot->NOTICE);
+	
+	if(MODO_DEBUG == true){
+
+		if($NoUsarResidual == true){
+			$xFRM->addTag("No residual en <strong>Calculo</strong>", $xHNot->ERROR);
+		}
+	}
+}
+$xFRM->endSeccion();
 
 //setLog($xTabla->residuales()->v());
 
-
 $xFRM->OHidden("cuota_iva", $xTabla->cuota_iva()->v());
 
-$xFRM->endSeccion();
+
 $xFRM->addSeccion("iddescenas", "TR.ESCENARIOS");
 if($OlvidarTodo == true){
 	$xFRM->OHidden("idolvidar", "1");
@@ -926,8 +970,11 @@ foreach ($rs as $rw){
 			$arrOpts= array();
 			
 			for($ii = $li; $ii <= $ls;){
-				$arrOpts[$ii] = round($ii,2) . " %";
-				$ii = $ii + 5;
+				//$arrOpts[$ii] = round($ii,2) . " %";
+				$ii				= number_format($ii, 2);
+				$arrOpts[$ii] 	= $ii . " %";
+				
+				$ii = $ii + 1;
 			}
 			$xHS->setDivClass("");
 			$xHS->addOptions($arrOpts);
@@ -1196,8 +1243,10 @@ var mMontoMinGtosNot	= 400;
 var mOlvidar			= <?php echo ($OlvidarTodo == true) ? "true" : "false"; ?>;
 var vReloadID			= "v1.reload.this.form";
 var mAdministrado		= <?php echo ($EsAdministrado == true) ? "true" : "false"; ?>;
-
+var mEsRecalc			= <?php echo ($EsRecalc == true) ? "true" : "false"; ?>;
 var vEscenarios			= [12,24,36,48,60];
+var vNoAppAnticipo		= <?php echo ($NoAppAnticipo == true) ? "true" : "false"; ?>;
+var vSumComisiones		= <?php echo ($SumComisPrinc == true) ? "true" : "false"; ?>;
 
 <?php
 
@@ -1263,6 +1312,7 @@ function jsCalculaFinanciamiento(){
 
 	var comision_apertura	= $("#comision_apertura").val();
 	var comision_originador	= $("#comision_originador").val();
+	var comision_agencia	= $("#com_agencia").val();
 	
 	var tasa_iva			= $("#tasa_iva").val();
 	//financiado
@@ -1281,48 +1331,77 @@ function jsCalculaFinanciamiento(){
 	var notario				= $("#monto_notario").val();
 	var placas				= $("#monto_placas").val();
 	var gestoria			= $("#monto_gestoria").val();
-	
+	var pago_sec			= 0;//Pago secundario
 	
 	var financiado			= 0;
 	var directo				= 0;
+	var MOI_Comision		= 0;
 	//PRECIO ALIADO VAN CON iva
-	setLog("Anticipo : " + anticipo);
+	
+	setLog("--- Precio sin IVA : " + getFMoney( getVRaw(precio) ) );
+	setLog("--- GPS sin IVA : " + getFMoney( getVRaw(monto_gps) ) );
+	setLog("--- Aliado sin IVA : " + getFMoney( getVRaw(aliado) ) );
+	setLog("--- Monto Anticipo : " + getFMoney(anticipo) );
+	
+	
 	financiado				= (getVRaw(precio)+getVRaw(monto_gps)+getVRaw(aliado))-anticipo;
+	MOI_Comision			= (getVRaw(precio)+getVRaw(aliado))-anticipo;
+	setLog("--- Primer FInanciado : " + getFMoney(financiado) );
 	//No van en Cuota Financiada
 	//Seguro	Tenencia	Accesorios y otros gastos	Garantía Extendida	N°
 	//+getVRaw(accesorios)+getVRaw(garantia);
 	directo					= getVRaw(notario)+getVRaw(placas)+getVRaw(gestoria);
-	if(financia_seguro== true){
+	setLog("--- Primer Directo : " + getFMoney(directo) );
+	if(financia_seguro == true){
 		//financiado	= financiado + getVRaw(seguro); 
+		pago_sec		= pago_sec + getVRaw(seguro);
 	} else {
-		directo		= directo + getVRaw(seguro);
+		directo			= directo + getVRaw(seguro);
 	}
 	if(financia_tenencia== true){
+		pago_sec		= pago_sec + getVRaw(tenencia);
 		//financiado	= financiado + getVRaw(tenencia); 
 	} else {
-		directo		= directo + getVRaw(tenencia);
+		directo			= directo + getVRaw(tenencia);
 	}
 
+
+
+	var monto_comision		= redondear((MOI_Comision * (flotante(comision_apertura)/100)));
+	var monto_originador	= redondear((MOI_Comision * (flotante(comision_originador)/100)));
+	var monto_agencia		= redondear((MOI_Comision * (flotante(comision_agencia)/100)));
+
+	setLog("--- Monto Comision Apertura : " + getFMoney(monto_comision) );
+	setLog("--- Monto Comision Agencia : " + getFMoney(monto_agencia) );
+	setLog("--- Monto Comision Originador: " + getFMoney(monto_originador) );
+	//setLog("--- Monto Comision : " + getFMoney(monto_comision) );
+	
+	if(vCalcComXTodo == true){
+		var vCoste			= getVRaw($("#precio_vehiculo").val());
+		var monto_comision	= redondear(( vCoste * (flotante(comision_apertura)/100)));
+	}
+	if(vSumComisiones == true){
+		financiado			= financiado + monto_originador + monto_agencia;
+		setLog("--- Segundo Financiado : " + getFMoney(financiado) );
+	}
+	$("#monto_comision").val(monto_comision);
+	$("#monto_originador").val(monto_originador);
+	$("#montocom_agen").val(monto_agencia);
+	
+	setLog("=== Ultimo Financiado : " + getFMoney(financiado) );
+	setLog("=== Ultimo Directo : " + getFMoney(directo) );
+	setLog("=== Cuota Secundaria : " + getFMoney(pago_sec) );
+	var tt	= financiado + pago_sec;
+	setLog("=== Total Neto : " + getFMoney(tt) );
+	//setLog("Financiado : " + financiado +" ---- Directo : " + directo + "  ---- Comision Apertura : " + monto_comision + " ---- Monto originador :" + monto_originador);
+	//calcular escenarios
+	
+	
 	financiado		= redondear(financiado,2);
 	directo			= redondear(directo,2);
 		
 	$("#monto_directo").val(directo);
-	$("#total_credito").val(financiado);
-
-	var monto_comision		= redondear((financiado * (flotante(comision_apertura)/100)));
-	var monto_originador	= redondear((financiado * (flotante(comision_originador)/100)));
-
-	if(vCalcComXTodo == true){
-		var vCoste			= getVRaw($("#precio_vehiculo").val());
-		var monto_comision	= redondear(( vCoste * (flotante(comision_apertura)/100)));
-		
-	}
-	
-	$("#monto_comision").val(monto_comision);
-	$("#monto_originador").val(monto_originador);
-		
-	setLog("Financiado : " + financiado +" ---- Directo : " + directo + "  ---- Comision Apertura : " + monto_comision + " ---- Monto originador :" + monto_originador);
-	//calcular escenarios
+	$("#total_credito").val(financiado);	
 	
 	return true;
 }
@@ -1341,8 +1420,6 @@ function jsCalcularEscenarios(){
 			$("#monto_anticipo_mny").val( getFMoney(minanticipo) );
 			$("#monto_anticipo").val( minanticipo );
 		}
-
-	
 		//jsCargarCostos
 		jsGetCostos();
 		//Calcular minimos de costos	
@@ -1378,9 +1455,7 @@ function jsCalcularEscenariosII(){
 	var idtr		= flotante($("#tasa_credito_12").val());
 	if(idtr <=0){
 		xG.alerta({msg:"No hay tasa para los Plazos " + idtr});
-
 		//jsCalcularEscenarios();
-		
 	} else {	
 		var acnt 			= vEscenarios.length;
 		for (var i_ = 0; i_ < acnt; i_++) {
@@ -1399,12 +1474,17 @@ function jsCalcularEscenariosII(){
 			}
 		}
 		//Actualizar el Programa
-		if(entero(idcotiza)>0){
-			xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idcotiza, nomsg: true});
-			jsaActualizarCredito();
-		}
+		if(mEsRecalc == true){
 
-		xG.spinEnd();
+			if(entero(idcotiza)>0){
+				xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idcotiza, nomsg: true});
+				jsaActualizarCredito();
+			}
+	
+			xG.spinEnd();
+		} else {
+			setLog("No Modificable");
+		}
 	}
 }
 function xLog(msg){
@@ -1447,10 +1527,33 @@ function jsCalcular(idx){
 	//Coste
 	var vAnticipo			= flotante($("#monto_anticipo").val());
 	var vCoste				= (precio+aliado) - vAnticipo;
+	//var MOI_Comision		= 
+	if(vNoAppAnticipo == true){
+		var vCoste			= (precio+aliado);
+		xLog(idx + " . - Sin Anticipo : " + getFMoney(vAnticipo));
+	}
+	xLog(idx + " . - Actual Coste : " + getFMoney(vCoste));
 	
-	xLog(idx + " . - Precio Vehiculo : " + precio);
-	xLog(idx + " . - Monto Aliado : " + aliado);
-	xLog(idx + " . - Anticipo : " + vAnticipo);
+	xLog(idx + " . - Precio Vehiculo : " + getFMoney(precio));
+	xLog(idx + " . - Monto Aliado : " + getFMoney(aliado));
+	xLog(idx + " . - Anticipo : " + getFMoney(vAnticipo));
+
+	
+	
+	//
+	if(vSumComisiones == true){
+		var com_agencia		= redondear( ((flotante($("#com_agencia").val()) * vCoste)/100) );
+		xLog(idx + " . - Cargar Comision Agencia : " + getFMoney(com_agencia));
+		$("#idtagcomagen_m").html(getFMoney( com_agencia ));
+		var com_orig		= redondear( ((flotante($("#comision_originador").val()) * vCoste)/100) );
+		xLog(idx + " . - Cargar Comision Originador : " + getFMoney(com_orig));
+		$("#idtagcomorg_m").html(getFMoney(com_orig));
+		//xLog(idx + " . - Precio Vehiculo : " + getFMoney(precio));
+		vCoste				= vCoste + com_agencia + com_orig;
+	}
+	//
+	//
+	xLog(idx + " . - Coste Final : " + getFMoney(vCoste));
 	
 	//Opcional
 	var seguro				= getVRaw($("#monto_seguro").val());
@@ -1483,21 +1586,22 @@ function jsCalcular(idx){
 	//Anticipo
 	$("#anticipo-" + idx).html(getFMoney(anticipo));
 	//renta Calculada
-	xLog(idx + " . - Coste : " + vCoste);
-	xLog(idx + " . - Valor Residual : " + residual);
-	xLog(idx + " . - Valor VEC : " + valorvec);
-	xLog(idx + " . - Tasa de Interes : " + idtasa);
+	xLog(idx + " . - Coste : " + getFMoney(vCoste));
+	xLog(idx + " . - Valor Residual : " + getFMoney(residual));
+	xLog(idx + " . - Valor VEC : " + getFMoney(valorvec));
+	xLog(idx + " . - Tasa de Interes : " + getFMoney(idtasa));
 	
 	var cc1				= xC.getCuotaDePago({capital:vCoste, tasa: idtasa, residual: residual, frecuencia: idfrecuencia, pagos: idpagos, iva: 0});
-	xLog(idx + " . - Cuota Vehiculo : " + cc1);
+	xLog(idx + " . - Cuota Vehiculo : " + getFMoney(cc1));
 	//Equipo Aliado, base de Original
 	//var cc6				= xC.getCuotaDePago({capital:aliado, tasa: idtasa, residual:0, frecuencia: idfrecuencia, pagos: idpagos, iva: 0});
 	//Equipo GPS a la renta Principal
 	var cc7				= xC.getCuotaDePago({capital:montogps, tasa: idtasa, residual:0, frecuencia: idfrecuencia, pagos: idpagos, iva: 0});
-	xLog(idx + " . - Cuota GPS : " + cc7);
+	xLog(idx + " . - Monto GPS : " + getFMoney(montogps));
+	xLog(idx + " . - Cuota GPS : " + getFMoney(cc7));
 	//setLog(cc7);
 	var trenta			= cc1+cc7;
-	xLog(idx + " . - Cuota Renta : " + trenta);
+	xLog(idx + " . - Cuota Renta : " + getFMoney(trenta));
 	
 	//Calcular Renta
 	$("#renta-" + idx).html(getFMoney(trenta));
@@ -1607,9 +1711,13 @@ function getVRaw(monto){
 }
 function jsGetParametros(){}
 function jsDatosIniciales(){
-	jsaGetComision();
 	//Cargar Sub originadores
-	xG.DataList({id: "suboriginador", tabla: "leasing_usuarios", buscar: $("#originador").val(), buscado: "originador"});
+	xG.DataList({id: "suboriginador", tabla: "leasing_usuarios", buscar: $("#originador").val(), buscado: "originador", callback : jsaGetComision});
+	xG.postajax("jsDatosInicialesLoad()");
+}
+function jsDatosInicialesLoad(){
+	$("#idtagcomagen").html(getFMoney( $("#com_agencia").val() ));
+	$("#idtagcomorg").html(getFMoney( $("#comision_originador").val() ));
 }
 function jsGoAsociar(){
 	jsaAsociar();
@@ -1693,8 +1801,8 @@ function jsDesactivarCotizacion(){
 	xG.soloLeerForma(false, false);
 }
 function jsActualizaResiduales(vDesde){
-	
-	vDesde	= (typeof vDesde == "undefined") ? 0 : vDesde;
+	var idcotiza	= $("#idoriginacion_leasing").val();
+	vDesde			= (typeof vDesde == "undefined") ? 0 : vDesde;
 	
 	var pzo	= $("#plazo").val()
 
@@ -1727,13 +1835,14 @@ function jsActualizaResiduales(vDesde){
 		
 		//console.log("SIN el control");
 	}
-	
-	
 	//Actualizar
-	
 	$("#vecs").val(ww);
 	$("#tasas").val(yy);
 	$("#residuales").val(xx);
+	if(onEdit == true){
+		//Guardar Tasas
+		xG.save({nomsg: true, tabla:"originacion_leasing", id: idcotiza, content: "tasas=" + yy + "&vecs=" + ww + "&residuales=" + xx });
+	}
 	return true;
 }
 

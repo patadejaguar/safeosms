@@ -1,6 +1,8 @@
 {
 	"titulo" : "Reporte Vintaje v 1.1",
 	"separador" : ";",
+	"descripcion" : "Obligatorio inusuales / preocupantes",
+	
 	"contenido" : {
 		"columna1" : {
 			"nombre" : "#ID",
@@ -286,8 +288,6 @@
 			"formato" : "########",
 			"longitud" : 8,
 			"descripcion" : "Clave de Localidad segun catalogo UIF"
-		},
-"descripcion" : "Obligatorio inusuales / preocupantes"
 		}
 	}
 }

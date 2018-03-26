@@ -509,12 +509,17 @@ class cFecha {
 		$s2 = "<select name='elmes" . $this->mIndex . "' id='idelmes" . $this->mIndex . "' $pEvts class='x50s100'>" . $s2 . "</select>";
 		$s3 = "<input type='text' name='elanno" . $this->mIndex . "' value='$elanno' id='idelanno" . $this->mIndex . "'  $pEvts class='x25s100'>";
 		// condicionante de fecha
-		if ($type != false) {
+		if ($type !== false) {
 			$txtAOpt = "";
+			
 			switch ($type) {
 				
 				case "NACIMIENTO" :
-					for($ia = 0; $ia <= EDAD_PRODUCTIVA_MAXIMA; $ia ++) {
+					$min	= EDAD_PRODUCTIVA_MAXIMA;
+					if(PERSONAS_ACEPTAR_MENORES == true){
+						$min = 0;
+					}
+					for($ia = 0; $ia <= $min; $ia ++) {
 						$anno = date ( "Y" ) - $ia;
 						$mSel = "";
 						if ($anno == $mAnnoEdadLegal) {

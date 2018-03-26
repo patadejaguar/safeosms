@@ -14,10 +14,13 @@
 //=====================================================================================================
 
 $oficial 	= elusuario($iduser);
-$parent 	= parametro("cmenu", false, MQL_RAW);
-$parent 	= parametro("tipo", $parent, MQL_RAW);
+$tipo	 	= parametro("cmenu", false, MQL_RAW);
+$tipo	 	= parametro("tipo", $tipo, MQL_RAW);
+
 $txtBuscar	= parametro("idbuscar", "", MQL_RAW);
 $txtBuscar	= parametro("buscar", $txtBuscar, MQL_RAW);
+
+$tipo		= strtolower($tipo);
 
 $xHP		= new cHPage("TR.Editar Configuracion del Sistema", HP_FORM);
 $xHP->addJTableSupport();
@@ -25,14 +28,14 @@ $xHP->init();
 
 
 //if($parent == false AND $txtBuscar == ""){
-	
+	$w			= ($tipo == "") ?  " WHERE `nombre_del_parametro`!= '' " : " WHERE `tipo`='$tipo' ";
 	
 
 	$xFRM		= new cHForm("frmeditar", "configuracion.editar.frm.php");
 	$xFRM->setTitle($xHP->getTitle());
 	
 	$sqlMost 	= "SELECT tipo, CONCAT('(' , COUNT(nombre_del_parametro), ') ', tipo ) AS 'conceptos'
-					    FROM entidad_configuracion
+					    FROM entidad_configuracion $w
 					GROUP BY tipo
 					ORDER BY tipo ";
 	$cSel 		= new cSelect("cmenu", "cmenu", $sqlMost);
@@ -41,19 +44,22 @@ $xHP->init();
 	$cSel->setOptionSelect(SYS_TODAS);
 	$cSel->addEvent("onchange", "setFiltrar()");
 	
-	
-	$xFRM->addHElem( $cSel->get("TR.Parametro", true) );
+	if($tipo == ""){
+		$xFRM->addHElem( $cSel->get("TR.Parametro", true) );
+	} else {
+		$xFRM->OHidden("cmenu", $tipo);
+	}
 	$xFRM->OText("idbuscar", "", "TR.Buscar Texto");
-	$xFRM->setValidacion("idbuscar", "setFiltrar");
+	//$xFRM->setValidacion("idbuscar", "setFiltrar");
 	
-	$xFRM->addSubmit();
-	
-	
+	//$xFRM->addSubmit();
+	$xFRM->addCerrar();
+	$xFRM->OButton("TR.FILTRO", "setFiltrar()", $xFRM->ic()->FILTRO, "", "yellow");
 	
 	//Grid
 	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 	
-	$xHG->setSQL("SELECT * FROM `entidad_configuracion`");
+	$xHG->setSQL("SELECT * FROM `entidad_configuracion` $w");
 	$xHG->addList();
 	$xHG->setOrdenar();
 	
@@ -85,12 +91,15 @@ function setFiltrar(){
 	var txtb	= $("#idbuscar").val();
 	
 	var str		= "";
+	
 	if(tipo !== "todas"){
-		str		= " (`entidad_configuracion`.`tipo`='" + tipo + "') ";
+		str		= " AND (`entidad_configuracion`.`tipo`='" + tipo + "') ";
 	}
+	
 	if($.trim(txtb) !== ""){
-		str		= (str === "") ? " (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') " : str + " AND (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') ";
+		str		= (str === "") ? " AND (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') " : str + " AND (`entidad_configuracion`.`nombre_del_parametro` LIKE '%"  + txtb +  "%' OR `entidad_configuracion`.`valor_del_parametro` LIKE '%" + txtb + "%') ";
 	}
+	
 	if($.trim(str) !== ""){
 		str			= "&w="  + base64.encode(str);
 		$('#iddiv').jtable('destroy');

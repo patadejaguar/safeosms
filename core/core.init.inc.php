@@ -2943,6 +2943,9 @@ function getEsModuloMostrado($tipo_de_usuario, $contexto = false){
 			}
 			break;
 	}
+	if(MODO_DEBUG == true){
+		$acceder	= true;
+	}
 	return $acceder;
 }
 function getSePuedeMostrar($contexto = false, $accion = false){

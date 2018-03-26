@@ -100,6 +100,7 @@ if($xAlert->init() == true){
 
 $xFRM->OHidden("idalerta", $clave);
 
+
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);

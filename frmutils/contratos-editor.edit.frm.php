@@ -25,6 +25,7 @@ $xDate			= new cHDate();
 $xSel			= new cHSelect();
 $xFMT			= new cFormato(false);
 
+
 $xHP->addJTableSupport();
 
 //ini_set("display_errors", "on");
@@ -36,6 +37,9 @@ if($idcontrato <= 0){
 	$xFRM->addCerrar();
 	echo $xFRM->get();
 } else {
+	$xForma			= new cFormatosDelSistema($idcontrato);
+	$xForma->init();
+	
 	if($action == MQL_ADD){
 		$s 				= isset($_REQUEST["ckeditor"]) ? $_REQUEST["ckeditor"] : "";
 		//$text_default 	= addslashes($s);
@@ -67,15 +71,36 @@ if($idcontrato <= 0){
 		$xFRM->addHElem($xFMT->getSelectVariables("", "onchange=\"jsAddText(this.value)\" ", "tx4"));
 		
 		$arrVars		= $xFMT->getListaDeVars();
-		
-		
-		$mArrVars		= $arrVars["variables_de_leasing"];
-		asort($mArrVars);
-		
-		$xSel->addEvent("jsAddText(this.value)", "onchange");
-		$xSel->addOptions($mArrVars);
-		$xSel->setDivClass("tx4");
-		$xFRM->addHElem( $xSel->get("idvars2", "TR.LEASING") );
+		if($xForma->getTipo() == iDE_SOCIO OR $xForma->getTipo() == iDE_CREDITO OR $xForma->getTipo() == iDE_CAPTACION){
+			
+			$mArrVars		= $arrVars["variables_de_personas"];
+			asort($mArrVars);
+			$xSel->addEvent("jsAddText(this.value)", "onchange");
+			$xSel->addOptions($mArrVars);
+			$xSel->setDivClass("tx4");
+			$xFRM->addHElem( $xSel->get("idvars2", "TR.PERSONA") );
+			
+		}
+		if($xForma->getTipo() == iDE_CREDITO){
+			$mArrVars		= $arrVars["variables_de_creditos"];
+			asort($mArrVars);
+			$xSel			= new cHSelect();
+			$xSel->addEvent("jsAddText(this.value)", "onchange");
+			$xSel->addOptions($mArrVars);
+			$xSel->setDivClass("tx4");
+			$xFRM->addHElem( $xSel->get("idvarscreds", "TR.CREDITO") );
+				
+			if($xForma->getEsArrendamiento() == true){
+				$mArrVars		= $arrVars["variables_de_leasing"];
+				asort($mArrVars);
+				$xSel			= new cHSelect();
+				
+				$xSel->addEvent("jsAddText(this.value)", "onchange");
+				$xSel->addOptions($mArrVars);
+				$xSel->setDivClass("tx4");
+				$xFRM->addHElem( $xSel->get("idvars2", "TR.LEASING") );
+			}
+		}
 		
 		
 		$xFRM->addGuardar();

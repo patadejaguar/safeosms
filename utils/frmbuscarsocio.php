@@ -309,7 +309,7 @@ function jsGetPersonasByKey2(msrc){
 	if (mstr.length >= 2) { jsShowSocios();	} /*Busqueda por ID*/
 }
 function setSocio(id){
-	var msrc	= null;
+	var msrc	= xG.winOrigen();
 	var dd		= xG.getMetadata("#tr-socios_general-" + id);
 	$("#idsocio").val(id);
 
@@ -323,16 +323,16 @@ function setSocio(id){
 	}
 	
 	jsaSetSocioEnSession();
-	if (window.parent){ msrc = window.parent.document; }
-	if (opener){ msrc = opener.document; }
-	if(msrc == null){} else {
+	if(msrc == null){
+		
+	} else {
 	<?php
 		if($OtherEvent != ""){
 			echo "if(msrc.$OtherEvent != \"undefined\"){ msrc.$OtherEvent(id); }";
 		} else {
 	?>		
 		if(msrc.getElementById(idsoc)){
-			oid			=  msrc.getElementById(idsoc);
+			oid			= msrc.getElementById(idsoc);
 			oid.value	= id;
 			oid.focus();
 			oid.select();

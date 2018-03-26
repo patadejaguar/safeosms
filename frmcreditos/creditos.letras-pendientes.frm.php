@@ -27,18 +27,54 @@ function jsaGetLetras($idcredito, $idfecha){
 	$cnt		= "";
 	$xCred->init();
 	$sql		= $xLi->getListadoDeLetrasPendientes($idcredito, $xCred->getTasaIVAOtros(), $xCred->getPagosSinCapital());
+	//echo $sql;
 	//$xCred->getProximaParcialidad();
 	
 	$xT			= new cTabla($sql);
 	$xT->setFechaCorte($idfecha);
-	$xT->setFootSum(array(
-		4 => "capital", 5 => "interes", 6 => "iva", 7 => "ahorro",
-			8 => "otros", 9 => "total", 13 => "mora",  14 => "iva_moratorio"
-	));
+	$xT->setOmitidos("codigo_de_base");
+	$xT->setOmitidos("socio_afectado");
+	$xT->setOmitidos("persona");
+	$xT->setOmitidos("credito");
+	$xT->setOmitidos("docto_afectado");
+	$xT->setOmitidos("periodo_socio");
+	$xT->setOmitidos("fecha_de_vencimiento");
+	$xT->setOmitidos("tasa_de_mora");
+	$xT->setOmitidos("mora");
+	$xT->setOmitidos("capital_exigible");
+	$xT->setOmitidos("interes_exigible");
+	$xT->setOmitidos("otros_exigible");
+	$xT->setOmitidos("ahorro_exigible");
+	$xT->setOmitidos("iva_exigible");
+	$xT->setOmitidos("total_sin_otros");
+	$xT->setOmitidos("clave_otros");
+	//$xT->setOmitidos("letra");
+	
+	$xT->setForzarTipoSQL("dias", "int");
+	
+	$arrSum	= array(
+			2 => "capital", 3 => "interes", 4 => "iva", 5 => "interes_moratorio", 6=>"iva_moratorio", 8=> "otros", 9=> "letra",10=> "neto"
+	);
+	if(MODULO_CAPTACION_ACTIVADO == true){
+		$arrSum[5] = "ahorro";
+		$arrSum[6] = "interes_moratorio";
+		$arrSum[7] = "iva_moratorio";
+		$arrSum[9] = "otros";
+		$arrSum[10] = "letra";
+		$arrSum[11] = "neto";
+	} else {
+		$xT->setOmitidos("ahorro");
+		
+	}
+	
+	$xT->setFootSum($arrSum);
+	$xT->setUsarNullPorCero();
+
 	$cnt		= $xT->Show();
 	
 	if($xCred->getPenasPorCobrar() >0){
-		/*$xTb	= new cHTabla();
+		/*
+		$xTb	= new cHTabla();
 		$xTb->initRow();
 		$xTb->addTH("TR.OTROS CARGOS");
 		$xTb->addTH("TR.MONTO");

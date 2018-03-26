@@ -185,8 +185,8 @@ if($credito <= DEFAULT_CREDITO){
 			
 			$xTt->addTD($rwx["titulo"]);
 			
-			$xBtn	= new cHButton();
-			$xHl	= new cHUl("", "ul", $cssTag);
+			$xBtn			= new cHButton();
+			$xHl			= new cHUl("", "ul", $cssTag);
 			
 			$xHl->setTags("");
 			if(isset($rwx["imprimir"]) AND $rwx["imprimir"] !== "" ){
@@ -199,6 +199,7 @@ if($credito <= DEFAULT_CREDITO){
 			if(isset($rwx["doc"]) AND $rwx["doc"] !== "" ){
 				$xHl->li($xBtn->getBasic("TR.WORD", $rwx["doc"], $xFRM->ic()->REPORTE5, "", false, true));
 			}
+
 			//$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
 			//$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
 			
@@ -226,15 +227,17 @@ if($credito <= DEFAULT_CREDITO){
 			$url3			= $rw["ruta"] . "&credito=" . $credito . "&out=" . OUT_DOC;
 			
 			$xTt->addTD($rw["titulo_del_contrato"]);
-			
-			$xBtn	= new cHButton();
-			$xHl	= new cHUl("", "ul", $cssTag);
+			$idint			= $rw["idgeneral_contratos"];
+			$xBtn			= new cHButton();
+			$xHl			= new cHUl("", "ul", $cssTag);
 			
 			$xHl->setTags("");
 			$xHl->li($xBtn->getBasic("TR.IMPRIMIR", "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->IMPRIMIR, "", false, true));
 			$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
 			$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
-			
+			if(MODO_DEBUG == true){
+				$xHl->li($xBtn->getBasic("TR.EDITAR", "var xG=new Gen();xG.editForm({id:$idint})", $xFRM->ic()->EDITAR, "", false, true));
+			}
 			$xTt->addTD($xHl->get(), " class='toolbar-24' ");
 			
 			

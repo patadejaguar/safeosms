@@ -60,6 +60,16 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
 $xFRM->addCerrar();
+$xLR	= $xSel->getListaDeTiposDeRecibos();
+
+$xLR->setSql("SELECT   `operaciones_recibostipo`.`idoperaciones_recibostipo`,`operaciones_recibostipo`.`descripcion_recibostipo`, COUNT( `operaciones_tipos`.`idoperaciones_tipos` ) AS `numero`
+FROM     `operaciones_tipos` INNER JOIN `operaciones_recibostipo`  ON `operaciones_tipos`.`recibo_que_afecta` = `operaciones_recibostipo`.`idoperaciones_recibostipo` GROUP BY recibo_que_afecta");
+
+$xLR->addEspOption(SYS_TODAS);
+$xLR->setOptionSelect(SYS_TODAS);
+$xLR->addEvent("onchange", "jsFiltrarByRecibo()");
+
+$xFRM->addHElem($xLR->get(true) );
 
 /* ===========		GRID JS		============*/
 
@@ -74,7 +84,7 @@ IF(`operaciones_tipos`.`estatus` = 0, '" . $xFRM->l()->getT("TR.BAJA") .  "', '"
 FROM `eacp_config_bases_de_integracion_miembros` INNER JOIN `eacp_config_bases_de_integracion`  ON `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = `eacp_config_bases_de_integracion`.`codigo_de_base` 
 WHERE (`eacp_config_bases_de_integracion_miembros`.`miembro` = `operaciones_tipos`.`idoperaciones_tipos`)) AS 'items',`operaciones_recibostipo`.`descripcion_recibostipo` AS `recibo_de_operacion`
 FROM `operaciones_tipos` INNER JOIN `operaciones_recibostipo` ON `operaciones_tipos`.`recibo_que_afecta` = `operaciones_recibostipo`.`idoperaciones_recibostipo`
-WHERE (`operaciones_tipos`.`idoperaciones_tipos`>0)$ByActivos");
+WHERE (`operaciones_tipos`.`idoperaciones_tipos`>0) $ByActivos ");
 
 
 
@@ -121,6 +131,7 @@ $xHG->OButton("TR.AGREGAR BASES", "jsListAddBases('+ data.record.idoperaciones_t
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idoperaciones_tipos +')", "edit.png");
 
 $xFRM->OButton("TR.AGREGAR", "jsAdd()", $xFRM->ic()->AGREGAR);
+$xFRM->OButton("TR.VER TODO", "jsGoTodos()", $xFRM->ic()->FILTRO);
 
 $xFRM->addHElem("<div id='iddiv'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
@@ -185,6 +196,22 @@ function addNewBase(idb){
 }
 function jsCerrarDiag(){
 	jQuery($("#dlg")).dialog("close");
+}
+function jsGoTodos(){
+	xG.go({url:"../frmtipos/operaciones_tipos.lista.frm.php?todos=true"});
+}
+function jsFiltrarByRecibo(){
+	
+	var idti	= $("#idtipoderecibo").val();
+	var str		= " AND (`operaciones_tipos`.`recibo_que_afecta` = " + idti + ") ";
+	str			= "&w="  + base64.encode(str);
+	
+	$('#iddiv').jtable('destroy');
+	if(idti == "todas"){
+		jsLGiddiv();
+	} else {
+		jsLGiddiv(str);
+	}
 }
 </script>
 <?php

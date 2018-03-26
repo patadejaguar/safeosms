@@ -211,6 +211,36 @@ class cHDicccionarioDeTablas {
 		}
 		return $this->mOTable->Show();
 	}
+	function getPlanDePagosOriginal($idcredito){
+		$fahorro	= (MODULO_CAPTACION_ACTIVADO == true) ? "`creditos_plan_de_pagos`.`ahorro`," : "";
+		
+		$sql	= "SELECT   `creditos_plan_de_pagos`.`plan_de_pago` AS `clave`,
+         `creditos_plan_de_pagos`.`clave_de_credito` AS `credito`,
+         `creditos_plan_de_pagos`.`numero_de_parcialidad` AS `parcialidad`,
+         `creditos_plan_de_pagos`.`fecha_de_pago`,
+         `creditos_plan_de_pagos`.`capital`,
+         `creditos_plan_de_pagos`.`interes`,
+         `creditos_plan_de_pagos`.`impuesto`,
+         `creditos_plan_de_pagos`.`otros`,
+         `operaciones_tipos`.`descripcion_operacion` AS `otros_cargos`,
+                 
+         $fahorro
+		`creditos_plan_de_pagos`.`total_c_otros` AS `original`,
+         `creditos_plan_de_pagos`.`penas`,
+         `creditos_plan_de_pagos`.`gtoscbza`,
+         `creditos_plan_de_pagos`.`mora`,
+		`creditos_plan_de_pagos`.`iva_castigos` AS `iva_otros`,
+         `creditos_plan_de_pagos`.`descuentos`,
+		
+		`creditos_plan_de_pagos`.`total_c_castigos` AS `neto`,
+ 		`creditos_plan_de_pagos`.`saldo_inverso`
+		FROM     `creditos_plan_de_pagos` INNER JOIN `operaciones_tipos`  ON `creditos_plan_de_pagos`.`otros_codigo` = `operaciones_tipos`.`idoperaciones_tipos` 
+		WHERE    ( `creditos_plan_de_pagos`.`clave_de_credito` = $idcredito )";
+		$this->mOTable->setOmitidos("credito");
+		
+		$this->mOTable->setSQL($sql);
+		return $this->mOTable->Show();
+	}
 	function OTable(){ return $this->mOTable; }
 }
 
@@ -468,7 +498,7 @@ class cPanelDeReportes {
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
 		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", $this->mOFRM->ic()->REPORTE, "cmdgetreporte", "green2");
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
-		$SqlRpt			= "SELECT * FROM general_reports WHERE aplica='" . $this->mFiltro . "' ORDER BY `descripcion_reports`,`order_index` ASC ";
+		$SqlRpt			= "SELECT * FROM general_reports WHERE aplica='" . $this->mFiltro . "' AND `estatus`=1 ORDER BY `descripcion_reports`,`order_index` ASC ";
 		$cSRpt			= new cSelect("idreporte", "idreporte", $SqlRpt );
 		$cSRpt->setEsSql();
 		$cSRpt->setNoMayus();
@@ -688,6 +718,7 @@ class cPanelDeReportes {
 		$xF						= new cFecha(0);
 		$xDate			= new cHDate(0, $this->mFechaInicialVal, TIPO_FECHA_OPERATIVA);
 		$xDate->setEsDeReporte();
+		$xDate->setDivClass("tx4 tx18 blue");
 		$this->mJsVars	.= "var fechaInicial	= $('#idfecha-0').val();\r\n";
 
 		$this->mURL		.= " + \"&on=\" + fechaInicial ";
@@ -702,7 +733,7 @@ class cPanelDeReportes {
 		$titulo			= ($titulo == "") ? "TR.Fecha_Final" : $titulo;
 		$xDate			= new cHDate(1, false, TIPO_FECHA_OPERATIVA);
 		$xDate->setEsDeReporte();
-		
+		$xDate->setDivClass("tx4 tx18 blue");
 		$this->mJsVars	.= "var fechaFinal	= $('#idfecha-1').val();\r\n";
 
 		$this->mURL		.= " + \"&off=\" + fechaFinal ";
@@ -870,6 +901,24 @@ class cPanelDeReportes {
 		$this->mJsVars	.= "var idtipoderecibo	= $('#idtipoderecibo').val();\r\n";
 		$this->mURL		.= " + \"&tiporecibo=\" + idtipoderecibo ";
 	}
+	function addMunicipiosActivos(){
+		$xUser		= new cSystemUser();
+		if(OPERACION_LIBERAR_SUCURSALES == false AND $xUser->getEsCorporativo() == false){
+			
+		} else {
+			$xSel		= new cHSelect();
+			$xSelM		= $xSel->getListaDeMunicipiosAct();
+			$xSelM->addEspOption(SYS_TODAS, SYS_TODAS);
+			$xSelM->setOptionSelect(SYS_TODAS);
+			
+			//$this->mStruct	.= $ctrl->get(true);
+			$this->mStruct	.= $xSelM->get(true);
+			//$this->OFRM()->addHElem( $xSelM->get(true) );
+			
+			$this->mJsVars	.= "var idmunicipioactivo	= $('#idmunicipioactivo').val();\r\n";
+			$this->mURL		.= " + \"&municipioactivo=\" + idmunicipioactivo ";
+		}
+	}
 }
 
 class cReportes {
@@ -967,11 +1016,12 @@ class cReportes {
 			case OUT_TXT:
 				//NADA
 				break;
+
 			default:
 				$xHP->setTitle($this->mTitulo);
-				//if($out !== OUT_DOC){
-				$xHP->setDevice($out);
-				//}
+				if($out !== OUT_DOC){
+					$xHP->setDevice($out);
+				}
 				//setLog($out);
 				foreach ($this->mCSSList as $key => $file){
 					$xHP->addCSS($file);
@@ -1034,14 +1084,21 @@ class cReportes {
 				$html	= $this->mHeader . $this->mBody . $this->mFooter;
 				$title	= $xOH->getTitulize($this->mTitulo);
 				$body	= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
+				
+				$html	= str_replace("../css/", SAFE_HOST_URL . "css/", $html);
+				$html	= str_replace("../js/", SAFE_HOST_URL . "js/", $html);
+				$html	= str_replace("../images/", SAFE_HOST_URL . "images/", $html);
+				$html 	= preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
+				
 				$xFS	= new cFileSystem();
 				 $nn		= $xFS->cleanNombreArchivo($title, true);
-				 
-				 $fspdf	= $xFS->setCreateFile($html, "$nn.docx");
+				 $fspdf	= $xFS->setConvertToDocx($html, $nn);
 				 if($fspdf !== ""){
-				 	header("Content-type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-				 	header("Content-Disposition: attachment; filename=\"$nn.docx\"; ");
-				 	readfile($fspdf);
+				 	if(file_exists($fspdf)){
+				 		header("Content-type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+				 		header("Content-Disposition: attachment; filename=\"$nn.docx\"; ");
+				 		readfile($fspdf);
+				 	}
 				 }
 				
 				break;
@@ -1084,17 +1141,22 @@ class cReportes {
 				$html	= $this->mHeader . $this->mBody . $this->mFooter;
 				$title	= $xOH->getTitulize($this->mTitulo);
 				$body	= ($this->mBodyMail == "") ? $title : $this->mBodyMail;
-				/*$xFS	= new cFileSystem();
+				
+				
+				$xFS	= new cFileSystem();
 				$nn		= $xFS->cleanNombreArchivo($title, true);
+				$html	= str_replace("../css/", SAFE_HOST_URL . "css/", $html);
+				$html	= str_replace("../js/", SAFE_HOST_URL . "js/", $html);
+				$html	= str_replace("../images/", SAFE_HOST_URL . "images/", $html);
 				
 				$fspdf	= $xFS->setConvertToPDF($html, $nn);
 				if($fspdf !== ""){
 					header("Content-type: application/pdf");
 					header("Content-Disposition: attachment; filename=\"$nn.pdf\"; ");
 					readfile($fspdf);
-				}*/
+				}
 				//Nuevo DOM
-				$dompdf = null;
+				/*$dompdf = null;
 				//Agregar Limite de Memoria
 				try {
 					
@@ -1116,7 +1178,7 @@ class cReportes {
 					}					
 				} catch (Exception $e) {
 					$this->mMessages	.= "ERROR\tNo se genera el Archivo PDF\r\n";
-				}			
+				}*/		
 				break;
 
 			default:
@@ -1432,9 +1494,9 @@ class cHExcelNew {
 		
 	}
 	function setExportar($nombre = ""){
-		$archivo	= PATH_TMP . $nombre . ".xlsx";
+		$archivo		= PATH_TMP . $nombre . ".xlsx";
 		$this->mFile	= $nombre;
-		$objWriter = PHPExcel_IOFactory::createWriter($this->mObj, 'Excel2007');
+		$objWriter 		= PHPExcel_IOFactory::createWriter($this->mObj, 'Excel2007');
 		$objWriter->save($archivo);		
 	}
 	function getLinkDownload($label, $class = "button"){
@@ -2270,14 +2332,19 @@ class cHTablaDic {
 }
 
 class cFormatosDelSistema {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mNombre	= "";
-	private $mMessages	= "";
-	private $mIDCache	= "";
-	private $mTabla		= "general_contratos";
-	private $mTipo		= 0;
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "general_contratos";
+	private $mTipo			= 0;
+	private $mTags			= "";
+	private $mEsArrend		= false;
+	private $mEsTodas		= false;
+	private $mEsPersonaM	= false;
+	private $mEsPersonaF	= false;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -2291,6 +2358,7 @@ class cFormatosDelSistema {
 		$xCache		= new cCache();
 		$inCache	= true;
 		$xT			= new cGeneral_contratos();
+		$xTC		= new cCreditosDatosDeOrigen();
 		
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
@@ -2304,8 +2372,21 @@ class cFormatosDelSistema {
 			$xT->setData($data);
 			
 			$this->mClave	= $data[$xT->getKey()];
-			
-			
+			$this->mNombre	= $data[$xT->TITULO_DEL_CONTRATO];
+			$this->mTipo	= $data[$xT->TIPO_CONTRATO];
+			$this->mTags	= $data[$xT->TAGS];
+			if(strpos($this->mTags, $xTC->ORIGEN_ARRENDAMIENTO) !== false){
+				$this->mEsArrend	= true;
+			}
+			if(strpos($this->mTags, SYS_TODAS) !== false){
+				$this->mEsTodas	= true;
+			}
+			if(strpos($this->mTags, "pm") !== false){
+				$this->mEsPersonaM	= true;
+			}
+			if(strpos($this->mTags, "pf") !== false){
+				$this->mEsPersonaF	= true;
+			}
 			$this->mObj		= $xT;
 			$this->setIDCache($this->mClave);
 			if($inCache == false){	//Si es Cache no se Guarda en Cache
@@ -2321,7 +2402,13 @@ class cFormatosDelSistema {
 	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
 	function getNombre(){return $this->mNombre;}
 	function getClave(){return $this->mClave;}
+	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function getEsArrendamiento(){ return $this->mEsArrend; }
+	function getEsTodas(){ return $this->mEsTodas; }
+	function getEsPersonaMoral(){ return $this->mEsPersonaM; }
+	function getEsPersonaFisica(){ return $this->mEsPersonaF; }
+	
 	function add(){}
 	function getSQL_Lista($Activos=true, $tipo = 0, $subtipo = 0, $figura = "", $tag1="", $tag2=""){
 		$tipo	    = setNoMenorQueCero($tipo);

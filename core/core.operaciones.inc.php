@@ -90,6 +90,7 @@ class cReciboDeOperacion{
 	private $mSaldoHistorico		= 0;
 	private $mAfectaEnCaja			= false;
 	private $mTiempo				= 0;
+	private $mDoctoAnterior			= 0;	//Documento Anterior
 	
 	public $ORIGEN_CAPTACION		= "captacion";
 	public $ORIGEN_COLOCACION		= "colocacion";
@@ -1139,14 +1140,37 @@ class cReciboDeOperacion{
 	}
 	function setCambiarCuentaBancaria($cuenta = false){
 		$cuenta	= setNoMenorQueCero($cuenta);
+		$res	= false;
 		if($cuenta != $this->getClaveCuentaBancaria()){
 			$xQL	= new MQL();
 			$xQL->setRawQuery("UPDATE `tesoreria_cajas_movimientos` SET `cuenta_bancaria`=$cuenta WHERE `recibo`=" . $this->getCodigoDeRecibo());
-			$xQL->setRawQuery("UPDATE `operaciones_recibos` SET `cuenta_bancaria`=$cuenta WHERE `idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
+			$res	= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `cuenta_bancaria`=$cuenta WHERE `idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
 			$xQL->setRawQuery("UPDATE `contable_polizas_proforma` SET `banco`=$cuenta WHERE `numero_de_recibo`=" . $this->getCodigoDeRecibo());
 			$xQL->setRawQuery("UPDATE `bancos_operaciones` SET `cuenta_bancaria`=$cuenta WHERE `recibo_relacionado`=". $this->getCodigoDeRecibo());
-		} else {
+			$res 	= ($res === false) ? false : true;
+			if($res == true){
+				$this->setCuandoSeActualiza();
+				$this->mMessages	.= "OK\tCambio a la cuenta $cuenta existoso\r\n";
+			}
+		}
+		if($res === false) {
 			$this->mMessages	.= "WARN\tNo se Actualizo la cuenta $cuenta\r\n";
+		}
+	}
+	function setCambiarTipo($NTipo = false){
+		$NTipo		= setNoMenorQueCero($NTipo);
+		$res		= false;
+		if($NTipo > 0){
+			$xQL	= new MQL();
+			$res	= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `tipo_docto`=$NTipo WHERE `idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
+			$res 	= ($res === false) ? false : true;
+			if($res == true){
+				$this->setCuandoSeActualiza();
+				$this->mMessages	.= "OK\tCambio de Tipo $NTipo exitoso\r\n";
+			}
+		}
+		if($res === false) {
+			$this->mMessages	.= "WARN\tNo se Actualizo El tipo $NTipo\r\n";
 		}
 	}	
 	function getCodigoDeSocio(){ return $this->mSocio; }
@@ -1243,8 +1267,39 @@ class cReciboDeOperacion{
 		}
 		return $ob;
 	}
+	function setCambiarDocumento($NDocumento, $ForceTodo = false){
+		$NDocumento				= setNoMenorQueCero($NDocumento);
+		$idrecibo				= $this->getCodigoDeRecibo();
+		if($NDocumento>= FALLBACK_CLAVE_DE_DOCTO){
+			$xQL					= new MQL();
+			$xLog					= new cCoreLog();
+			$this->mDoctoAnterior	= $this->getCodigoDeDocumento();
+			
+			$iddocto				= $this->getCodigoDeDocumento();
+			
+			$rsR		= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `docto_afectado`=$NDocumento WHERE `idoperaciones_recibos`=$idrecibo");
+			$rsM		= false;
+			if($rsR === false){
+				$xLog->add("ERROR\tEl recibo $idrecibo no se modifica al Documento $NDocumento\r\n");
+			} else {
+				$xLog->add("OK\tEl recibo $idrecibo se modifica del Documento Anterior $iddocto al Documento $NDocumento\r\n");
+				if($ForceTodo == true){
+					$rsM	= $xQL->setRawQuery("UPDATE `operaciones_mvtos` SET `docto_afectado`=$NDocumento WHERE `recibo_afectado`=$idrecibo");
+				} else {
+					$rsM	= $xQL->setRawQuery("UPDATE `operaciones_mvtos` SET `docto_afectado`=$NDocumento WHERE `recibo_afectado`=$idrecibo AND `docto_afectado`=$iddocto");
+				}
+				
+				$this->setCuandoSeActualiza();
+			}
+			$this->mMessages	.= $xLog->getMessages();
+		} else {
+			$this->mMessages	.= "WARN\tEl Recibo $idrecibo no tuvo cambios\r\n";
+		}
+		return true;
+	}
 	function setCambiarRelacionados($NDocumento= false, $NPersona = false, $AfectarOperaciones = false){
-		$xOO		= new cOperaciones_mvtos();
+		$xOO			= new cOperaciones_mvtos();
+		$xQL			= new MQL(); 
 		//$docto		= $xOO->docto_afectado()->v();
 		//$socio		= $xOO->socio_afectado()->v();
 		$recibo			= $this->getCodigoDeRecibo();
@@ -1255,22 +1310,22 @@ class cReciboDeOperacion{
 		if($BySocio == true){
 			$Bupdate	.= ($Bupdate == "") ? " numero_socio=$NPersona " : ", numero_socio=$NPersona ";
 		}
-		my_query("UPDATE operaciones_recibos SET $Bupdate  WHERE  idoperaciones_recibos=$recibo");
+		$xQL->setRawQuery("UPDATE operaciones_recibos SET $Bupdate  WHERE  idoperaciones_recibos=$recibo");
 		if($this->mUnicoDocto == true){
 			if($AfectarOperaciones == true){
 				$Bupdate		= ($NDocumento == false) ? "" : " docto_afectado=$NDocumento ";
 				if($BySocio == true){
 					$Bupdate	.= ($Bupdate == "") ? " socio_afectado=$NPersona " : ", socio_afectado=$NPersona ";
 				}
-				my_query("UPDATE operaciones_mvtos SET $Bupdate   WHERE recibo_afectado=$recibo");
+				$xQL->setRawQuery("UPDATE operaciones_mvtos SET $Bupdate   WHERE recibo_afectado=$recibo");
 				if($ByDocto == true){
-					my_query("UPDATE tesoreria_cajas_movimientos SET documento=$NDocumento WHERE  recibo=$recibo");
+					$xQL->setRawQuery("UPDATE tesoreria_cajas_movimientos SET documento=$NDocumento WHERE  recibo=$recibo");
 				}
 				$Bupdate		= ($NDocumento == false) ? "" : " numero_de_documento=$NDocumento ";
 				if($BySocio == true){
 					$Bupdate	.= ($Bupdate == "") ? " numero_de_socio=$NPersona " : ", numero_de_socio=$NPersona ";
 				}
-				my_query("UPDATE bancos_operaciones SET $Bupdate  WHERE recibo_relacionado=$recibo");
+				$xQL->setRawQuery("UPDATE bancos_operaciones SET $Bupdate  WHERE recibo_relacionado=$recibo");
 			}			
 		}
 	}
@@ -1767,6 +1822,20 @@ class cReciboDeOperacion{
 					$this->mMessages	.= $xCapt->getMessages();
 				}
 				break;
+		}
+		//============= Reiniciar el Documento si existe el Anterior
+		if($this->mDoctoAnterior > FALLBACK_CLAVE_DE_DOCTO){
+			//Actualizar Credito
+			$xCred	= new cCredito($this->mDoctoAnterior);
+			if($xCred->init() == true){
+				$xCred->setCuandoSeActualiza();
+				$this->mMessages	.= $xCred->getMessages();
+			}
+			$xCapt	= new cCuentaDeCaptacion($this->mDoctoAnterior);
+			if($xCapt->init() == true){
+				$xCapt->setCuandoSeActualiza();
+				$this->mMessages	.= $xCapt->getMessages();
+			}
 		}
 		return true;
 	}

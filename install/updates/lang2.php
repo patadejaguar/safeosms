@@ -588,8 +588,6 @@ $lang["20170901"][]	= array("PERIODOEMPRESA", "Periodo", "Period");
 
 //$lang["20171101"][]	= array("EXISTE", "Elegir", "Select");
 //$lang["20171101"][]	= array("CREDITOSLINEAS", "Lineas de Credito", "Credit Facilities");
-//$lang["20171101"][]	= array("", "", "");
-//$lang["20171101"][]	= array("", "", "");
 $lang["20171101"][]	= array("DICTAMENAUT", "Dictamen de Autorizacion", "Authorization Opinion");
 $lang["20171101"][]	= array("PLAZO", "Plazo", "Term");
 $lang["20171101"][]	= array("COMPLETAR", "Completar", "Fill");
@@ -601,6 +599,26 @@ $lang["20171101"][]	= array("CONTRATOS", "Contratos", "Contracts");
 $lang["20171101"][]	= array("FORMS_Y_DOCS", "Formatos", "Forms and Documentation");
 $lang["20171101"][]	= array("IDVEHICULO", "ID Vehiculo", "ID Vehicle");
 $lang["20171101"][]	= array("CAUSAMORA", "Causa de Mora", "reason of default");
+
+$lang["20180301"][]	= array("DETALLES", "Detalles", "Details");
+$lang["20180301"][]	= array("DETALLADOS", "Detallados", "On details");
+$lang["20180301"][]	= array("SEGUIMIENTO", "Seguimiento", "Tracking");
+
+$lang["20180301"][]	= array("LETRASVENC", "Letras Vencidas", "collections outdate");
+//$lang["20180301"][]	= array("LETRASCOUNT", "Num.", "Count");
+
+//$lang["20180301"][]	= array("", "", "");
+$lang["20180301"][]	= array("TARJETA", "Tarjeta Deb/Cred", "Debit/Credit Card");
+$lang["20180301"][]	= array("TAMANNIO", "Dimension / Tamaño", "Dimension / Size");
+$lang["20180301"][]	= array("PLAZOMESES", "Pzo./Meses", "Months");
+
+
+$lang["20180302"][]	= array("SYNC", "Sync", "Sync");
+$lang["20180302"][]	= array("APP", "App", "App");
+//$lang["20180302"][]	= array("", "", "");
+//$lang["20180302"][]	= array("", "", "");
+//$lang["20180302"][]	= array("", "", "");
+//$lang["20180302"][]	= array("", "", "");
 
 header('Content-type: application/json');
 echo json_encode($lang);

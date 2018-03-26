@@ -17,9 +17,10 @@ $xCaja		= new cCaja();
 $xF			= new cFecha();
 $xLi		= new cSQLListas();
 $xQL		= new MQL();
+$xVis		= new cSQLVistas();
 $xRuls		= new cReglaDeNegocio();
 $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
-
+$NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
 $jxc 		= new TinyAjax();
 
 
@@ -76,12 +77,15 @@ if($action == MQL_ADD){
 		$jsSum				= "";
 		$MontoHistorico		= 0;
 		if($xCred->init() == true){
+			
+			$xFRM->addButtonPlanDePagos($xCred->getNumeroDePlanDePagos());
+			
 			$periodo		= $xCred->getPeriodoActual();
 			$periodo		= ($periodo <= 0) ? SYS_UNO : $periodo;
 			$idrecibo		= $xRec->setNuevoRecibo($persona, $credito, $fecha, $periodo, RECIBOS_TIPO_PAGO_CREDITO , $detalles, $cheque, $comopago, $foliofiscal);
-			$rs				= $xQL->getDataRecord("SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
+			$rs				= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito));
 			$mCreditoIVA	= $xCred->getTasaIVA();
-			
+			//setLog($xVis->CreditosLetrasNoPagadas($credito));
 			foreach ($rs as $rw){
 				//idcreditos_productos_costos, clave_de_producto, clave_de_operacion, unidades, unidad_de_medida,
 				$ParcTotal	= setNoMenorQueCero($rw["letra"],2);
@@ -112,12 +116,15 @@ if($action == MQL_ADD){
 					$xMParc->setTasaMora($xCred->getTasaDeMora());
 					$xMParc->setPeriocidadDePago($xCred->getPeriocidadDePago());
 					
-					$xBase	= $xMParc->setCalcularPenas_Y_Mora(false, false);
+					$xBase	= $xMParc->setCalcularPenas_Y_Mora(false, false, $xCred->getEsNomina());
 					$penas	= $xBase[SYS_PENAS];
 					if($useMoraBD == true){
 						$mora	= $MoraBD;
 					} else {
 						$mora	= $xBase[SYS_INTERES_MORATORIO];
+					}
+					if($xCred->getEsNomina() == true AND $NoMoraNom == true){
+						$mora	= 0;
 					}
 					$IvaOtros		= round((($mora+$penas) * TASA_IVA),2);
 					$ParcTotal	= $ParcTotal + $mora + $penas + $IvaOtros;
@@ -309,7 +316,10 @@ if($action == MQL_ADD){
 		$xFRM->setAction("abonos-a-parcialidades.frm.php?action=" . MQL_ADD);
 		$xCred	= new cCredito($credito);
 		$jsSum	= "";
+		
 		if($xCred->init() == true){
+			$xFRM->addButtonPlanDePagos($xCred->getNumeroDePlanDePagos());
+			
 			$xFRM->OHidden("idsolicitud", $credito);
 			$xFRM->OHidden("idsocio", $xCred->getClaveDePersona());
 			$xFRM->OHidden("idmontoautorizado", $xCred->getMontoAutorizado());
@@ -319,8 +329,8 @@ if($action == MQL_ADD){
 			$xFRM->addGuardar();
 			$mCreditoIVA	= $xCred->getTasaIVA();
 			
-			$rs		= $xQL->getDataRecord("SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
-			//setLog("SELECT * FROM letras WHERE docto_afectado=$credito AND total_sin_otros >0 AND periodo_socio >0 ORDER BY periodo_socio");
+			$rs		= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito));
+			
 			$xT		= new cHTabla();
 			$cspan	= 8;
 			
@@ -395,6 +405,9 @@ if($action == MQL_ADD){
 						$mora	= $MoraBD;
 					} else {
 						$mora	= $xBase[SYS_INTERES_MORATORIO];
+					}
+					if($xCred->getEsNomina() == true AND $NoMoraNom == true){
+						$mora	= 0;
 					}
 					$IvaOtros	= round((($mora+$penas) * TASA_IVA),2);
 					$ParcTotal	= $ParcTotal + $mora + $penas + $IvaOtros;

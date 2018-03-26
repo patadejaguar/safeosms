@@ -13,7 +13,8 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP					= new cHPage("TR.Reportes de Credito");
-$oficial 				= elusuario($iduser);
+
+
 
 $xHP->init();
 
@@ -26,6 +27,9 @@ $xPanel->setConCreditos(false);
 $xPanel->setConRecibos(false);
 $xPanel->addCreditosEstados();
 $xPanel->addjsVars("idsolicitud", "credito");
+
+
+
 echo $xPanel->get();
 echo $xPanel->getJs(true);
 

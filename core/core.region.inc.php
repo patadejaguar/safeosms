@@ -82,7 +82,16 @@ class cReglasDePais {
 		return $tel;
 	}
 	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
-	
+	function getValidNSS($nss){
+		$xT		= new cTipos();
+		$nss	= setNoMenorQueCero($nss);
+		//81 99 81 0388 1
+		//
+		if(strlen($nss) < 11){ //once digitos
+			$nss	= "";
+		}
+		return $nss;
+	}
 	
 }
 

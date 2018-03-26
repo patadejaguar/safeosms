@@ -171,6 +171,7 @@ class cCredito {
 	private $mIDCacheCredito		= "";
 	private $mIDCacheFicha			= "";
 	private $mIDCacheInt			= "";
+	private $mRazonAutorizacion		= "";
 	
 	private $mIDUsuario				= 0;
 	public $ORIGEN_PRESUPUESTO		= 280;
@@ -233,6 +234,8 @@ class cCredito {
 		$this->mCreditoInicializado = false;
 		$WithSocio 	= "";
 		$idcredito	= setNoMenorQueCero($this->mNumeroCredito);
+		$xT			= new cCreditos_solicitud();
+		
 		if ( !is_array ( $DCredito )) {
 			
 			$DCredito	= $xCache->get($this->mIDCacheCredito);
@@ -326,7 +329,7 @@ class cCredito {
 			$this->mNumeroProximaParcialidad	= $DCredito["ultimo_periodo_afectado"]+1;
 			$this->mParcialidadesConSaldo		= setNoMenorQueCero(($DCredito["pagos_autorizados"]-$DCredito["ultimo_periodo_afectado"]));
 			$this->mMontoBonificado				= $DCredito["bonificaciones"];
-			
+			$this->mRazonAutorizacion			= $DCredito[$xT->DOCTO_AUTORIZACION];
 		
 			$xMontos							= new cCreditosMontos($this->mNumeroCredito);
 			if($xMontos->init() == true){
@@ -1419,7 +1422,8 @@ class cCredito {
 					$fvencimiento 		= $this->getFechaDeMora();
 				}				
 			}
-			$tdVencimiento 		= "<th class='izq'>" . $xL->getT ( "TR.FECHA_LIMITE_PAGO" ) . "</th><td>" . $xD->getDayName ( $fvencimiento ) . "; " . $xD->getFechaCorta ( $fvencimiento ) . "</td>";
+			//$tdVencimiento 		= "<th class='izq'>" . $xL->getT ( "TR.FECHA_LIMITE_PAGO" ) . "</th><td>" . $xD->getDayName ( $fvencimiento ) . "; " . $xD->getFechaCorta ( $fvencimiento ) . "</td>";
+			$tdVencimiento 		= "<th class='izq'>" . $xL->getT ( "TR.PLAZOMESES" ) . "</th><td>" . $this->getPlazoEnMeses() . "m</td>";
 		}
 		if ($extendido == true) {
 			$Destino			= "";
@@ -2482,6 +2486,7 @@ class cCredito {
 		$xSoc->init ();
 		$OficialDeCredito	= setNoMenorQueCero($OficialDeCredito);
 		$OficialDeCredito 	= ($OficialDeCredito <= 0) ? getUsuarioActual () : $OficialDeCredito;
+		
 		$PlazoEnDias 		= ($PlazoEnDias == 0) ? ($PeriocidadDePago * $NumeroDePagos) : $PlazoEnDias;
 		$NumeroDePagos 		= ($NumeroDePagos == 0) ? ($PlazoEnDias / $PeriocidadDePago) : $NumeroDePagos;
 		$ContratoCorriente 	= setNoMenorQueCero ( $ContratoCorriente );
@@ -3534,12 +3539,25 @@ class cCredito {
 		$this->mMessages .= $msg;
 		return $msg;
 	}
-	function setCambiarOficialCumplimiento($oficial) {
-		$oficial = setNoMenorQueCero ( $oficial );
-		$redy = false;
-		if ($oficial > 0 and $oficial != $this->mOficialDeSeguimiento) {
-			$this->obj ()->oficial_seguimiento ( $oficial );
-			$ready = $this->obj ()->query ()->update ()->save ( $this->mNumeroCredito );
+	function setCambiarOficialSeg($oficial) {
+		$oficial 	= setNoMenorQueCero ( $oficial );
+		$ready 		= false;
+		if($oficial > 0){
+			$xT			= new cCreditos_solicitud();
+			$ready		= $this->setUpdate(array(
+					$xT->OFICIAL_SEGUIMIENTO => $oficial
+			));
+		}
+		return ($ready == false) ? false : true;
+	}
+	function setCambiarOficialCred($oficial) {
+		$oficial 	= setNoMenorQueCero ( $oficial );
+		$ready 		= false;
+		if($oficial > 0){
+			$xT			= new cCreditos_solicitud();
+			$ready		= $this->setUpdate(array(
+					$xT->OFICIAL_CREDITO => $oficial
+			));
 		}
 		return ($ready == false) ? false : true;
 	}
@@ -3705,6 +3723,7 @@ class cCredito {
 		}
 		return $this->mGastosDeCobranza;
 	}
+	function getRazonAutorizacion(){ return $this->mRazonAutorizacion; }
 	function getPenasPorCobrar(){
 		if($this->mPenasPorCobrar <= 0 ){
 			if($this->getOIntereses() !== null){
@@ -4585,6 +4604,13 @@ class cCredito {
 		}
 		return $pagable;
 	}
+	function getEsPagado() {
+		$pagado = false;
+		if ($this->getEstadoActual() !== CREDITO_ESTADO_AUTORIZADO AND $this->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO AND $this->getSaldoActual () <= TOLERANCIA_SALDOS) {
+			$pagado = true;
+		}
+		return $pagado;
+	}
 	function getOtroDatos($clave) {
 		$sql = "SELECT * FROM `creditos_otros_datos` WHERE `clave_de_credito`=" . $this->mNumeroCredito . " AND `clave_de_parametro`='$clave' LIMIT 0,1";
 		$D = obten_filas ( $sql );
@@ -4929,6 +4955,18 @@ class cCredito {
 		$aParam	= array("tasa_moratorio"=> $tasa);
 		$this->setUpdate($aParam);
 	}
+	function getPlazoEnMeses(){
+		$nums	= 0;
+		$d1 	= new DateTime($this->getFechaDeMinistracion());
+		$d2 	= new DateTime($this->getFechaDevencimientoLegal());
+		//setLog($this->getFechaDeMinistracion()  . "----" . $this->getFechaDevencimientoLegal());
+		$diff	= $d1->diff($d2);
+		$m		= $diff->m;
+		$m		+= ($diff->y * 12);
+		//setLog($diff->format('%y years, %m month, %d days'));
+		
+		return $m;
+	}
 } // END CLASS
 
 
@@ -5164,13 +5202,17 @@ class cPlanDePagos{
 		$arrDev		= array();
 		$xF			= new cFecha();
 		$mql		= new MQL();
+		$xVis		= new cSQLVistas();
+		
 		$fecha_de_corte	= ($fecha_de_corte == false) ? fechasys() : $fecha_de_corte;
 		$int_fecha		= $xF->getInt($fecha_de_corte);
 		$inicio			= setNoMenorQueCero($inicio);
-		$ByNum			= ($inicio == 0) ? "  AND periodo_socio > 0 " : " AND periodo_socio >= $inicio ";
+		$ByNum			= ($inicio == 0) ? "  AND (`operaciones_mvtos`.`periodo_socio`) > 0 " : " AND (`operaciones_mvtos`.`periodo_socio`) >= $inicio ";
 		$persona		= $this->getClaveDePersona();
 		$credito		= $this->getClaveDeCredito();
-		$sql			= "SELECT * FROM `letras` WHERE docto_afectado = $credito $ByNum";
+		$sql			= $xVis->getVistaLetras($credito, false, false, false, $ByNum);
+		
+		//$sql			= "SELECT * FROM `letras` WHERE docto_afectado = $credito $ByNum";
 		//setLog($sql);
 		$rs				= ($data == false) ? $mql->getDataRecord($sql) : $data;
 		foreach($rs as $rw){
@@ -6836,7 +6878,8 @@ class cParcialidadDeCredito {
 			$this->mFechaDePago		= $xF->getFechaISO($Datos[$xT->FECHA_DE_PAGO]);
 			$this->mFechaDeVenc		= $xF->getFechaISO($Datos[$xT->FECHA_DE_VENCIMIENTO]);
 			$this->mMoratorio		= $Datos[$xT->INTERES_MORATORIO];
-			$this->mIvaOtros		= $Datos[$xT->IVA_MORATORIO];
+			//TODO : Verificar de donde viene el isset
+			$this->mIvaOtros		= $Datos[$xT->IVA_MORATORIO]; //(isset($Datos[$xT->IVA_MORATORIO])) ? $Datos[$xT->IVA_MORATORIO] : 0;
 			
 			
 			
@@ -6946,7 +6989,7 @@ class cParcialidadDeCredito {
 	function setIDProducto($producto){ $this->mIDProducto = $producto; }
 	function setTasaMora($tasa=0){ $this->mTasaMora = $tasa; }
 	function setPeriocidadDePago($periocidad){ $this->mPeriocidadDePago = $periocidad; }
-	function setCalcularPenas_Y_Mora($fecha_de_calculo = false, $guardar = true){
+	function setCalcularPenas_Y_Mora($fecha_de_calculo = false, $guardar = true, $EsNomina = false){
 		$xF	 				= new cFecha();
 		$xT					= new cTipos();
 		$xLog 				= new cCoreLog();
@@ -6954,6 +6997,7 @@ class cParcialidadDeCredito {
 		$xCache				= new cCache();
 		$xRuls				= new cReglaDeNegocio();
 		$useMoraBD			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
+		$NoMoraNom			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
 		
 		$PERIODO_A_PAGAR 	= $this->mNumero;
 		$FECHA_DE_OPERACION = $xF->getFechaISO($fecha_de_calculo);
@@ -6994,6 +7038,9 @@ class cParcialidadDeCredito {
 				if($this->init() == true){
 					$moratorio	= $this->getMora();
 				}
+			}
+			if($EsNomina == true AND $NoMoraNom == true){
+				$moratorio		= 0;
 			}
 			$arrInteres[SYS_INTERES_MORATORIO]	= setNoMenorQueCero($moratorio,2);
 			$arrInteres[SYS_PENAS]				= setNoMenorQueCero($penas,2);

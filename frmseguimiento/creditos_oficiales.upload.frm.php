@@ -59,7 +59,7 @@ if($action == SYS_NINGUNO){
 			if($idcredito > DEFAULT_CREDITO AND $idoficial > 0){
 				$xCred		= new cCredito($idcredito);
 				if($xCred->init() == true){
-					if($xCred->setCambiarOficialCumplimiento($idoficial) == true){
+					if($xCred->setCambiarOficialCred($idoficial) == true){
 						$xLog->add("OK\tEl Credito $idcredito Actualizado al Oficial $idoficial\r\n");
 					} else {
 						$xLog->add("ERROR\tEl Credito $idcredito No se Actualiza al Oficial $idoficial\r\n");

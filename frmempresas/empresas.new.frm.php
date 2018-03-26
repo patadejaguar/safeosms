@@ -75,6 +75,10 @@ $cerrar			= false;
 
 
 $observaciones= parametro("idobservaciones");
+
+//$xHP->addJsFile("../js/jquery.tagsinput.min.js");
+//$xHP->addCSS("../css/jquery.tagsinput.min.css");
+
 $xHP->init();
 
 
@@ -109,16 +113,22 @@ if($action == SYS_NINGUNO) {
 	
 	$xFRM->addHElem( $xTxt2->getDeNombreDePersona("iddirectivo", $iddirectivo, "TR.Clave_de_Persona del Contacto") );
 	$xFRM->OText("directivo", $directivo, "TR.Nombre de Contacto");
-	$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("", $producto)->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeProductosDeCreditoNomina("", $producto)->get(true) );
 	
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-		$xTabs->addTab("TR.Periocidad 1", $xSel->getListaDePeriocidadDePago("idperiocidad1", $periocidad1)->get("TR.Periocidad de pago", true) );
+		$xST1		= $xSel->getListaDePeriocidadDePagoNomina("idperiocidad1", $periocidad1);
+		
+		//$xST1->addEvent("onchange", "jsEvtSel1()");
+		
+		$xTabs->addTab("TR.Periocidad 1", $xST1->get("TR.Periocidad de pago", true) );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_aviso1", $diasaviso1, "TR.Dias de Aviso") );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_nomina1", $diasnomina1, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_pago1", $diaspago1, "TR.Dias de Pago") );
 	
-	
-		$xTabs->addTab("TR.Periocidad 2", $xSel->getListaDePeriocidadDePago("idperiocidad2", $periocidad2)->get("TR.Periocidad de pago", true) );
+		$xST2		= $xSel->getListaDePeriocidadDePagoNomina("idperiocidad2", $periocidad2);
+		//$xST2->addEvent("onchange", "jsEvtSel2()");
+		
+		$xTabs->addTab("TR.Periocidad 2", $xST2->get("TR.Periocidad de pago", true) );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_aviso2", $diasaviso2, "TR.Dias de Aviso") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_nomina2", $diasnomina2, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_pago2", $diaspago2, "TR.Dias de Pago") );
@@ -128,7 +138,7 @@ if($action == SYS_NINGUNO) {
 	
 	
 	
-	$xFRM->addHElem( $xSel->getListaDeOficiales("", "", $oficial)->get(true));
+	$xFRM->addHElem( $xSel->getListaDeOficiales("", SYS_USER_ESTADO_ACTIVO, $oficial)->get(true));
 	
 	
 	$xFRM->OMail("idemail1", $mail1, "TR.Email de contacto 1");
@@ -137,7 +147,7 @@ if($action == SYS_NINGUNO) {
 
 	
 	$xFRM->OTasa("idcomision", $idcomision, "TR.Comision_por_Encargo");
-	$xFRM->OTasa("tasa", $tasapreferente, "TR.TASA PREFERENTE");
+	$xFRM->OTasa("tasa", $tasapreferente, "TR.TASA POR_DEFECTO");
 	
 	$xFRM->addSubmit();
 	$xFRM->addJsInit("jsInitComponents();");
@@ -159,12 +169,20 @@ var xVal	= new ValidGen();
 var xNuevo	= <?php echo ($persona <= DEFAULT_SOCIO) ? "true" : "false"; ?>;
 var cnf		= false;
 
+
 function jsInitComponents(){
 	if(xNuevo == false){
 		$("#idsocio").trigger("onblur"); $("#idsocio").focus();
+		//$("#dias_de_aviso1").tagsInput({			'autocomplete': { "opt" : "val", "opt2":"val2"}			});
 	}
+	
 }
-
+function jsEvtSel1(){
+	//$(".ct option[value='X']").remove(); remover opcion
+}
+function jsEvtSel2(){
+	
+}
 function jsValidarEmpresa(){
 	var idpersona	= $("#idsocio").val();
 	if(xNuevo == true){

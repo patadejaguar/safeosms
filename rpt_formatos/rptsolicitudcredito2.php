@@ -18,7 +18,7 @@ $permiso			= getSIPAKALPermissions($theFile);
 if($permiso === false){	header ("location:../404.php?i=999");	}
 $_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.Solicitud de Credito", HP_RECIBO);
+$xHP		= new cHPage("TR.Solicitud de Credito", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -49,7 +49,8 @@ $sql			= "SELECT * FROM socios LIMIT 0,100";
 $titulo			= "";
 $archivo		= "";
 
-$xHP->init();
+$xHP->addCSS("../css/contrato.css.php");
+
 
 $xFMT			= new cFormato(1100);
 $xFMT->setCredito($credito);
@@ -63,8 +64,9 @@ if($siflujo == true){
 
 $xFMT->setProcesarVars();
 $xFMT->setToImprimir();
-echo $xFMT->get();
 
+$xHP->init();
+echo $xFMT->get();
 $xHP->fin();
 
 ?>

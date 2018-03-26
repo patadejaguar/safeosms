@@ -647,7 +647,7 @@ text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
 .toolnav li a.whiteblue {
-text-shadow: none; color: #0080E3;
+text-shadow: 0 -1px 2px #AAAAAA; color: #000066;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }

@@ -52,7 +52,9 @@ class cSystemUser{
 	private $mPuesto			= "";
 	private $mCorreoElectronico	= "";
 	private $mNombreCompleto	= "";
-	
+	private $mOptions			= "";
+	private $mOListaRules		= null;
+	//private $mIDCacheReglaN		= "";
 	//private $mClaveUser			= "";//
 	/**
 	 * Inicia la Clase
@@ -68,28 +70,31 @@ class cSystemUser{
 		$this->mCodeUser	= $UserCode;
 		$this->mTypeById	= $IniciarPorID;
 		$this->mEstado		= SYS_USER_ESTADO_BAJA;
+		$this->mOListaRules	= new cSystemUserRulesList();
 		if($UserCode !== false ){ $this->init(); }
 	}
 	function getPuedeEditarUsuarios(){
-		$xRuList	= new cSystemUserRulesList();
-		return $this->getReglaDeUsuario($xRuList->PUEDE_EDITAR_USUARIOS);		
+		return $this->getReglaDeUsuario($this->mOListaRules->PUEDE_EDITAR_USUARIOS);		
 	}
 	function getPuedeAgregarUsuarios(){
-		$xRuList	= new cSystemUserRulesList();
-		return $this->getReglaDeUsuario($xRuList->PUEDE_AGREGAR_USUARIOS);
+		return $this->getReglaDeUsuario($this->mOListaRules->PUEDE_AGREGAR_USUARIOS);
 	}
 	function getPuedeEliminarRecibos(){
-		$xRuList	= new cSystemUserRulesList();
-		return $this->getReglaDeUsuario($xRuList->PUEDE_ELIMINAR_RECS);
+		return $this->getReglaDeUsuario($this->mOListaRules->PUEDE_ELIMINAR_RECS);
 	}
 	function getPuedeEditarRecibos(){
-		$xRuList	= new cSystemUserRulesList();
-		return $this->getReglaDeUsuario($xRuList->PUEDE_ELIMINAR_RECS);
+		return $this->getReglaDeUsuario($this->mOListaRules->PUEDE_ELIMINAR_RECS);
+	}
+	function getPuedeUsarPrintPOS(){
+		return $this->getReglaDeUsuario($this->mOListaRules->ACTIVE_PRINTER_POS);
 	}
 	private function getReglaDeUsuario($regla = ""){
+		//$this->mOListaRules
 		if($this->mReglasAsInit == false){  $this->getUserRules(); }
 		$xT		= new cTipos();
-		return (isset($this->mNivelRules[$regla])) ? $xT->cBool($this->mNivelRules[$regla]) : false;
+		$arr	= array_merge($this->mNivelRules, $this->mUserOptions);
+		$regla	= strtoupper($regla);
+		return (isset($arr[$regla])) ? $xT->cBool($arr[$regla]) : false;
 	}
 	/**
 	 * Obtiene en un array las reglas de Nivel Aplicadas
@@ -120,6 +125,7 @@ class cSystemUser{
 		if(!is_array($data)){
 			$xQL	= new MQL();
 			$data	= $xQL->getDataRow("SELECT * FROM `general_niveles` WHERE `idgeneral_niveles`=" . $this->mNivel . " LIMIT 0,1");
+			
 			if(isset($data["idgeneral_niveles"])){
 				$xCache->set($idcache, $data, $xCache->EXPIRA_UNDIA);
 			}
@@ -133,7 +139,7 @@ class cSystemUser{
 	}
 	function getUserInfo($info = false){
 		if($this->mUserIniciado == false){ $this->init(); }
-		if( $info == false ){
+		if( $info === false ){
 			$val	=  $this->mDatosInArray;
 		} else {
 			$val	= (isset($this->mDatosInArray[$info])) ? $this->mDatosInArray[$info] : null;	
@@ -156,7 +162,7 @@ class cSystemUser{
 		$table = "				
 				<table>
 				<tr>
-				<th class='izq'>Nombre</th><td>" . $this->getNombreDeUsuario() . "</td>
+				<th class='izq'>Nombre de Usuario / ID</th><td>" . $this->getNombreDeUsuario() . " / " . $this->getID()  . "</td>
 				<th class='izq'>Nombre Completo</th><td>" . $this->getNombreCompleto() . "</td>
 				</tr>
 				<tr>
@@ -169,14 +175,17 @@ class cSystemUser{
 	}
 	function init(){
 		$xCache				= new cCache();
+		//$xT					= new cT_03f996214fba4a1d05a68b18fece8e71();
 		$val				= false;
 		$cFld				= "id";
+		$inCache			= true;
 		if ($this->mTypeById == false){ $cFld = "nombreusuario";	}
 		$this->mIDCache		= "data-user-$cFld-". $this->mCodeUser;
 		$D					= $xCache->get($this->mIDCache);
-		if($D == null){
+		if($D === null){
 			$sql 			= "SELECT * FROM usuarios WHERE $cFld = '" . $this->mCodeUser . "' LIMIT 0,1";
 			$D				= obten_filas($sql);
+			$inCache		= false;
 		}
 		if(isset($D["niveldeacceso"])){
 			$this->mDatosInArray	= $D;
@@ -191,11 +200,16 @@ class cSystemUser{
 			$this->mFechaExpira		= $D["expira"];
 			$this->mCorporativo		= ($D["corporativo"] == 1) ? true : false;
 			$this->mSucursal		= $D["sucursal"];
-			$this->mUserIniciado	= true;
 			$this->mPuesto			= $D["puesto"];
 			$this->mNombreCompleto	= $D["apellidopaterno"] . " " . $D["apellidomaterno"] . " " . $D["nombres"];
+			$this->mOptions			= $D["opciones"];
+			$this->mUserIniciado	= true;
 			
-			$xCache->set($this->mIDCache, $D, $xCache->EXPIRA_UNHORA);
+			//procesar reglas
+			$this->initOptions();
+			if($inCache == false){
+				$xCache->set($this->mIDCache, $D, $xCache->EXPIRA_UNHORA);
+			}
 		} else {
 			$this->mMessages	.= "ERROR\tError al Iniciar al usuario " .  $this->mCodeUser . "\r\n";
 		}
@@ -302,27 +316,9 @@ class cSystemUser{
 	}
 	/**
 	 * Obtiene en un array Las opciones del usuario
+	 * @deprecated @since 2018.03.02
 	 */
-	function getUserOptions(){
-		$usr	= $this->mCodeUser;
-		$rules	= array();
-		$sqlNiv = "SELECT
-						`t_03f996214fba4a1d05a68b18fece8e71`.`cuenta_contable_de_caja`,
-						`t_03f996214fba4a1d05a68b18fece8e71`.`usr_options` 
-					FROM
-						`t_03f996214fba4a1d05a68b18fece8e71` `t_03f996214fba4a1d05a68b18fece8e71` 
-					WHERE
-						(`t_03f996214fba4a1d05a68b18fece8e71`.`idusuarios` =$usr) LIMIT 0,1" ;
-		$dats 	= obten_filas($sqlNiv);
-		$mRules = explode("\n", $dats["usr_options"]);
-		$mLim 	= sizeof($mRules);
-			for($i = 0; $i < $mLim; $i++){
-				$rul 			= explode("=", $mRules[$i]);
-				$rules[$rul[0]] = trim($rul[1]);
-			}
-		$this->mUserOptions		= $rules;
-	return $rules;
-	}	
+	function getUserOptions(){ return $this->initOptions(); }	
 	function setCuentaContableDeCaja($cuenta){ return $this->setUpdate("cuenta_contable_de_caja", $cuenta);	}
 	function setEsCorporativo($EsCorp = true){
 		$res		= false;
@@ -484,7 +480,7 @@ class cSystemUser{
 	function setActivo(){ $this->mMessages .= "Usuario Activado"; return $this->setUpdate("estatus", SYS_USER_ESTADO_ACTIVO); }
 	function setPassword($rawpass){
 		$xLog			= new cCoreLog();
-		$xLog->add("Cambio de password\r\n");
+		$xLog->add("Cambio de password del usuario " . $this->mCodeUser . " por "  . getUsuarioActual()  . "\r\n");
 		$xLog->guardar($xLog->OCat()->PASSWORD_MODIFICADO);
 		$rawpass 		= $this->getHash($rawpass);
 		return $this->setUpdate($this->FPASSWORD, $rawpass);
@@ -496,6 +492,10 @@ class cSystemUser{
 	function setPuesto($rawnombre){
 		$rawnombre	= trim($rawnombre);
 		return $this->setUpdate("puesto", $rawnombre);
+	}
+	function setPin($pin){
+		$pin	= setNoMenorQueCero($pin);
+		return $this->setUpdate("pin_app", $pin);
 	}
 	function setSucursal($rawnombre){
 		$rawnombre	= trim(strtolower($rawnombre));
@@ -632,12 +632,11 @@ class cSystemUser{
 	function getIndexPage(){ return $this->mIndexPage;	}
 	function getTasksPage(){ return $this->mTasksPage;	}
 	function getSucursal(){ return $this->mSucursal; }
+	function getAlias(){ return $this->mAlias; }
 	function getEsOriginador(){
 		return($this->mNivel == USUARIO_TIPO_ORIGINADOR) ? true : false;
 	}
-	function setCuandoSeActualiza(){
-		$this->setCleanCache();
-	}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	private function setCleanCache(){
 		if($this->mIDCache !== ""){
 			$xCache = new cCache();
@@ -646,6 +645,22 @@ class cSystemUser{
 			$xCache->clean("data-user-id-". $this->mCodeUser);
 		}
 	}
+	private function initOptions(){
+		if($this->mUserIniciado == false){ $this->init(); }
+		$rules 	= array();
+		$mRules = explode(";", $this->mOptions);
+		foreach ($mRules as $idx => $regla){
+			$regla				= explode("=", $regla);
+			$idregla			= (isset($regla[0])) ? $regla[0] : "";
+			$valor				= (isset($regla[1])) ? $regla[1] : "";
+			if($idregla !== ""){
+				$idregla		= strtoupper($idregla);
+				$rules[$idregla]= trim($valor);
+			}
+		}
+		$this->mUserOptions		= $rules;
+		return $this->mUserOptions;
+	} 
 	function puede($form, $titulo, $obj = ""){
 		$puede		= true;
 		if($titulo == "TR.SALIR"){
@@ -695,12 +710,17 @@ class cSystemUser{
 		}
 		return $sucursal;
 	}
+
 }
 class cSystemUserRulesList {
 	public $PUEDE_EDITAR_USUARIOS 	= "PUEDE_EDITAR_USUARIOS";
 	public $PUEDE_AGREGAR_USUARIOS 	= "PUEDE_AGREGAR_USUARIOS";
 	public $PUEDE_ELIMINAR_RECS 	= "PUEDE_ELIMINAR_RECIBOS";
 	public $PUEDE_EDITAR_RECS 		= "PUEDE_EDITAR_RECIBOS";
+	
+	
+	public $ACTIVE_PRINTER_POS 		= "IMPRESORA_POS_ACTIVA";
+	
 	function  __construct(){}
 	
 }

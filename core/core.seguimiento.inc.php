@@ -1419,6 +1419,7 @@ class cSeguimientoCompromisos {
 	function getClave(){ return $this->mClave; }
 	function obj(){ return $this->mObj; }
 	function getMonto(){ return $this->mMonto; }
+	function getLugar(){ return $this->mLugar; }
 	function getFicha($fieldset = true, $extend = false){
 		$xT		= new cHTabla();
 		$xL		= new cLang();

@@ -73,9 +73,14 @@ function jsProcesarCompromisos(data){
 	$.each( data, function( key, val ) {
 		var compromiso	= val;
 		if(typeof compromiso != "undefined"){
+			//console.log(compromiso.estatus);
 			var css		= xCss.get(compromiso.estatus);
-			var evt 	= {title: xG.moneda(compromiso.monto) + "-" + compromiso.nombre , start: compromiso.fecha + "T" + compromiso.hora, backgroundColor: css.background, 
-						icon: "fa-user", textColor: "black", borderColor: xCss.border, allDay:false,
+			var evt 	= {
+						title: xG.moneda(compromiso.monto) + "-" + compromiso.nombre , start: compromiso.fecha + "T" + compromiso.hora, backgroundColor: css.background, 
+						icon: "fa-user",
+						textColor: "black", 
+						borderColor: css.border, 
+						allDay:false,
 						info: compromiso.notas, id: compromiso.clave, credito:compromiso.credito, persona:compromiso.codigo, tipo:"compromiso" };
 			$('#calendario').fullCalendar( 'renderEvent', evt, true);
 		}
@@ -87,8 +92,15 @@ function jsProcesarNotificaciones(data){
 		var notificacion	= val;
 		if(typeof notificacion != "undefined"){
 			var css		= xCss.get(notificacion.estatus);
-			var evt 	= {title: notificacion.nombre, start: notificacion.fecha + "T" + notificacion.hora, backgroundColor: css.background, 
-						icon: "fa-briefcase", textColor: "black", borderColor: xCss.border, allDay:false,
+			//console.log(notificacion.estatus);
+			var evt 	= {
+						title: notificacion.nombre, 
+						start: notificacion.fecha + "T" + notificacion.hora,
+						backgroundColor: css.background, 
+						icon: "fa-briefcase", 
+						textColor: "black", 
+						borderColor: css.border,
+						allDay:false,
 						info: notificacion.notas, id:notificacion.clave, credito: notificacion.credito, persona:notificacion.codigo, tipo:"notificacion" };
 			$('#calendario').fullCalendar( 'renderEvent', evt, true);
 		}
@@ -103,8 +115,15 @@ function jsProcesarLLamadas(data){
 		//{"codigo":"1901550","nombre":"","credito":"290155006","clave":"243452","fecha":"2015-07-03","hora":"06:00:00","estatus":"efectuado","notas":""}
 		if(typeof llamada != "undefined"){
 			var css		= xCss.get(llamada.estatus);
-			var evt 	= {title: llamada.nombre, start: llamada.fecha + "T" + llamada.hora, backgroundColor: css.background, 
-						icon: "fa-phone", textColor: "black", borderColor: xCss.border, allDay : false,
+			var evt 	= {
+						title: llamada.nombre, 
+						start: llamada.fecha + "T" + llamada.hora, 
+						backgroundColor: css.background,
+						
+						icon: "fa-phone",
+						textColor: "black", 
+						borderColor: css.border, 
+						allDay : false,
 						info: llamada.notas, id:llamada.clave, credito: llamada.credito, persona : llamada.codigo, tipo:"llamada"};
 			$('#calendario').fullCalendar( 'renderEvent', evt, true);
 		}
@@ -112,7 +131,7 @@ function jsProcesarLLamadas(data){
 }
 function jsRefreshCalendar(){
 	//$('#calendario').empty();
-$('#calendario').fullCalendar('viewRenderer');
+	$('#calendario').fullCalendar('viewRender');
 	//setLog("nada");
 }
 function jsRunCalendar(){
@@ -124,13 +143,24 @@ function jsRunCalendar(){
 		header: {
 			left: 'prev,next today',
 			center: 'title',
-			right: 'month,agendaWeek,agendaDay'
+			right: 'month,list'
 		},
 	    eventRender: function(event, element) {
 	    	if (event.icon){
-	    	    element.find("div.fc-content").prepend("<i class='fa " + event.icon +"'></i>");
+	    	   element.find("div.fc-content").prepend("<i class='fa " + event.icon +"'></i>");
+	    	   element.find(".fc-list-item-marker").empty();
+	    	   element.find(".fc-list-item-marker").prepend("<i class='fa " + event.icon +"'></i>");
 	    	}
-	    	if(event.info){ element.attr('title', event.info); }
+	        //if(event.imageurl) {
+	            //eventElement.find("div.fc-content").prepend("<img src='" + event.imageurl +"' width='12' height='12'>");
+	        //}
+	        //element.find(".fc-event-time").after($("<span class=\"fc-event-icons\"></span>").html("Whatever you want the content of the span to be"));
+	        //event.backgroundColor = "#510814";
+	        //console.log(event.backgroundColor);
+	        
+	    	if(event.info){
+		    	element.attr('title', event.info); 
+		    }
 	    },		
 		editable: false,
 		eventLimit: true, // allow "more" link when too many events
@@ -143,24 +173,32 @@ function jsRunCalendar(){
 				var fi	= view.start.toISOString();
 				var ff	= view.end.toISOString();
 				$('#calendario').fullCalendar( 'removeEvents' );
+				
 				xSeg.getListaDeLlamadas({callback:jsProcesarLLamadas , fecha : fi, fechaFinal : ff, todo:idtodas});
 				xSeg.getListaDeCompromisos({callback:jsProcesarCompromisos , fecha : fi, fechaFinal : ff, todo:idtodas});
 				xSeg.getListaDeNotificaciones({callback:jsProcesarNotificaciones , fecha : fi, fechaFinal : ff, todo:idtodas});
 			}
 		},
 	    eventClick: function(calEvent, jsEvent, view) {
-   			var vURL	= "";
-   			switch(calEvent.tipo){
-   				case "llamada":
-   					xSeg.setLlamadaEstado({clave : calEvent.id });
-   	   			break;
-   				case "compromiso":
-   	   				xSeg.getDetalleDeCompromiso({clave : calEvent.id});
-   	   				break;
-   				case "notificacion":
-   	   				break;
-   			}
-	    }		
+	    	if(view.name == "month"){
+		    	
+	    	} else {
+   				var vURL	= "";
+	   			switch(calEvent.tipo){
+	   				case "llamada":
+	   					xSeg.setLlamadaEstado({clave : calEvent.id });
+	   	   			break;
+	   				case "compromiso":
+	   	   				xSeg.getDetalleDeCompromiso({clave : calEvent.id});
+	   	   				break;
+	   				case "notificacion":
+	   	   				break;
+	   			}
+	    	}
+	    },	    
+	    dayClick: function(date, jsEvent, view) {
+			$('#calendario').fullCalendar('changeView', 'list', date.format() );
+		}
 	});	
 }
 </script>

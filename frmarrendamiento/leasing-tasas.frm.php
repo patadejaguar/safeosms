@@ -44,6 +44,11 @@ $xFRM	= new cHForm("frmleasing_tasas", "leasing-tasas.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
+$xSRac	= $xSel->getListaDeLeasingRAC("tipo_rac");
+$xSRac->addEspOption(SYS_TODAS); $xSRac->setOptionSelect(SYS_TODAS);
+$xSRac->addEvent("onchange", "jsFilterByRac()");
+$xFRM->addHElem($xSRac->get(true));
+
 
 $xFRM->addCerrar();
 
@@ -61,7 +66,9 @@ $xHG->setSQL("SELECT   `leasing_tasas`.`idleasing_tasas` AS `clave`,
 		`leasing_tasas`.`tasa_vec`
 FROM     `leasing_tasas` 
 INNER JOIN `creditos_periocidadpagos`  ON `leasing_tasas`.`frecuencia` = `creditos_periocidadpagos`.`idcreditos_periocidadpagos` 
-INNER JOIN `leasing_tipo_rac`  ON `leasing_tasas`.`tipo_de_rac` = `leasing_tipo_rac`.`idleasing_tipo_rac` ORDER BY `leasing_tasas`.`tipo_de_rac`, `leasing_tasas`.`limite_superior`");
+INNER JOIN `leasing_tipo_rac`  ON `leasing_tasas`.`tipo_de_rac` = `leasing_tipo_rac`.`idleasing_tipo_rac`
+WHERE `leasing_tasas`.`idleasing_tasas`>0
+ORDER BY `leasing_tasas`.`tipo_de_rac`, `leasing_tasas`.`limite_superior`");
 $xHG->addList();
 $xHG->addKey("clave");
 
@@ -96,6 +103,15 @@ function jsAdd(){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"leasing_tasas", id:id, callback:jsLGiddivtasas});
+}
+function jsFilterByRac(){
+	var idrac	= entero($("#tipo_rac").val());
+	if(idrac>0){
+		$("#iddivtasas").jtable('destroy');
+		var str	= "&w=" + base64.encode(" AND (`leasing_tasas`.`tipo_de_rac`=" + idrac + ") ");
+		
+		jsLGiddivtasas(str);
+	}
 }
 </script>
 <?php

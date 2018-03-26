@@ -145,6 +145,8 @@ $xHG->col("credito", "TR.CREDITO", "10%");*/
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+
+$xHG->OButton("TR.Archivo", "jsArchivo('+ data.record.clave +')", "archive.png");
 if(MODO_DEBUG){
 	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
 }
@@ -158,16 +160,24 @@ echo $xFRM->get();
 <script>
 var xG	= new Gen();
 function jsEdit(id){
-	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?clave=" + id, tab:true, callback: jsLGiddivleasingcreditos});
+	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?clave=" + id, tab:true, callback: jsReload});
 }
 function jsEdit2(id){
-	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?olvidar=true&clave=" + id, tab:true, callback: jsLGiddivleasingcreditos});
+	xG.w({url:"../frmarrendamiento/cotizador.edit.frm.php?olvidar=true&clave=" + id, tab:true, callback: jsReload});
 }
+function jsArchivo(id){
+	xG.recordInActive({preguntar:true, tabla: "originacion_leasing", id: id, callback: jsReload});
+}
+
 function jsAdd(){
-	xG.w({url:"../frmarrendamiento/cotizador.frm.php?", tab:true, callback: jsLGiddivleasingcreditos});
+	xG.w({url:"../frmarrendamiento/cotizador.frm.php?", tab:true, callback: jsReload});
+}
+function jsReload(){
+	$("#iddivleasingcreditos").jtable('destroy');
+	jsLGiddivleasingcreditos();
 }
 function jsDel(id){
-	xG.rmRecord({tabla:"originacion_leasing", id:id, callback:jsLGiddivleasingcreditos});
+	xG.rmRecord({tabla:"originacion_leasing", id:id, callback:jsReload});
 }
 function jsQuePaso(data){
 	ch 			= "";

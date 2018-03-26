@@ -21,10 +21,23 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP		= new cHPage("TR.Recibo de Egresos", HP_RECIBO);
+$xRuls		= new cReglaDeNegocio();
+$xUsr		= new cSystemUser();
+
 $recibo		= parametro("idrecibo", 0, MQL_INT); $recibo		= parametro("r", $recibo, MQL_INT); $recibo		= parametro("recibo", $recibo, MQL_INT);
+$formato	= parametro("forma", 400, MQL_INT);
 $xHP->init();
 
-$xFMT		= new cHFormatoRecibo($recibo, 400);
+$useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
+$useAltUser		= $xUsr->getPuedeUsarPrintPOS();
+
+//================
+if($formato == 400 AND ($useAlt == true OR $useAltUser == true) ){
+	$formato	= 402;
+}
+
+
+$xFMT		= new cHFormatoRecibo($recibo, $formato);
 echo $xFMT->render();
 $xHP->fin();
 ?>

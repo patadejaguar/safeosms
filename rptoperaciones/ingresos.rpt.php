@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.DETALLE DE INGRESOS", HP_REPORT);
+$xHP		= new cHPage("TR.INGRESOS DETALLADOS", HP_REPORT);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -51,6 +51,10 @@ $TipoDePago		= parametro("tipodepago", SYS_TODAS, MQL_RAW); $TipoDePago	= parame
 $cajero 		= parametro("f3", getUsuarioActual(), MQL_INT); $cajero = parametro("cajero", $cajero, MQL_INT); $cajero = parametro("usuarios", $cajero, MQL_INT);
 
 
+$idmunicipio			= parametro("municipioactivo", "");
+$ByMunicipio			= $xLi->OFiltro()->VSociosPorMunicipio($idmunicipio);
+
+
 $titulo			= $xHP->getTitle();
 
 $otros			= "";
@@ -78,7 +82,18 @@ $BySuc				= "";
 if(MULTISUCURSAL == true){
 	$BySuc			= $xLi->OFiltro()->VSociosPorSucursal($sucursal);
 	$otros			.= $BySuc;
+	if($BySuc !== ""){
+		$titulo			= $titulo . " / Sucursal : $sucursal";
+	}
 }
+if($ByMunicipio !== ""){
+	$otros			.= $ByMunicipio;
+	$xMun		= new cDomicilioMunicipio(); $xMun->initByIDUnico($idmunicipio);
+	$municipio	= $xMun->getNombre();
+	$entidadfed	= $xMun->getOEstado()->getNombre();
+	$titulo		= $titulo . " / Municipio : $entidadfed - $municipio";
+}
+
 $xRPT			= new cReportes($titulo);
 $xRPT->setFile($titulo);
 $xRPT->setOut($out);

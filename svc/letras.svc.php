@@ -13,7 +13,7 @@
 //=====================================================================================================
 $xInit      = new cHPage("", HP_SERVICE );
 $txt		= "";
-$ql			= new MQL();
+$xQL		= new MQL();
 $lis		= new cSQLListas();
 $xF			= new cFecha();
 
@@ -39,11 +39,15 @@ $dataC	= $xCach->get("credito-letras-$credito");
 $dataC	= ($dataC == null) ? false : $dataC;
 
 $init	= $xCred->init($dataC);
+
 if($init == true){
 	$xCach->set("credito-letras-$credito", $xCred->getDatosInArray(), $xCach->EXPIRA_MEDDIA);
 }
+
 if( setNoMenorQueCero($credito)  > DEFAULT_CREDITO AND $init == true){
-	$sql	= "SELECT * FROM `letras` WHERE docto_afectado = $credito AND periodo_socio=$letra LIMIT 0,1";
+	//$sql	= "SELECT * FROM `letras` WHERE docto_afectado = $credito AND periodo_socio=$letra LIMIT 0,1";
+	$sql	= $lis->getLetrasIndividual($credito, $letra);
+	
 	if($xCred->getSaldoActual() <= 0 OR $xCred->getEsAfectable() == false ){
 		$rs[SYS_MONTO]	= 0;
 		$rs["credito"]	= $credito;
@@ -51,7 +55,9 @@ if( setNoMenorQueCero($credito)  > DEFAULT_CREDITO AND $init == true){
 		$rs["letra"]	= $letra;
 		$rs["aviso"]	.= "ERROR\tEl Credito $credito no tiene saldo o no es afectable\r\n";		
 	} else {
-		$D		= $ql->getDataRow($sql);
+		$D				= $xQL->getDataRow($sql);
+		//$xL				= new cLetrasVista();
+		
 		if(isset($D["letra"])){
 			$monto			= setNoMenorQueCero($D["total_sin_otros"]);
 			$rs[SYS_MONTO]	= $monto;
@@ -63,6 +69,7 @@ if( setNoMenorQueCero($credito)  > DEFAULT_CREDITO AND $init == true){
 			$iva			= setNoMenorQueCero($D["iva"]);
 			$capital		= setNoMenorQueCero($D["capital"]);
 			$otros			= setNoMenorQueCero($D["otros"]);
+			
 			if(MODO_DEBUG == true){
 				$rs["aviso"]	= "OK\tLetra $letra Interes $interes IVA $iva Capital $capital Otros $otros\r\n";
 			}
@@ -87,6 +94,7 @@ if( setNoMenorQueCero($credito)  > DEFAULT_CREDITO AND $init == true){
 	$rs["letra"]	= $letra;
 	$rs["aviso"]	.= "ERROR\tEl Credito $credito No existe o no se inicio\r\n";	
 }
+
 header('Content-type: application/json');
 echo json_encode($rs);
 //setLog(json_encode($rs));

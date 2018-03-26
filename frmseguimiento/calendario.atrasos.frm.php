@@ -15,7 +15,7 @@ $permiso			= getSIPAKALPermissions($theFile);
 if($permiso === false){	header ("location:../404.php?i=999");	}
 $_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.CALENDARIO ATRASOS", HP_FORM);
+$xHP		= new cHPage("TR.CALENDARIO DE MORA", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();

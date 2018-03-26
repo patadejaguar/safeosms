@@ -308,7 +308,8 @@ if(MODULO_AML_ACTIVADO == true OR PERSONAS_ACEPTAR_EXTRANJEROS == true){
 }
 
 if($con_nacimiento == true){
-	$xFRM->ODate("idfechanacimiento", false,"TR.fecha de Nacimiento");
+	$xFRM->OFechaNac("idfechanacimiento", false,"TR.fecha de Nacimiento");
+	//$xFRM->ODate("idfechanacimiento", false,"TR.fecha de Nacimiento");
 	$xFRM->setValidacion("idfechanacimiento", "validacion.fechaNacimiento", "Error en Fecha");
 	$sEstados	= $xSel->getListaDeEntidadesFed("identidadfederativanacimiento");
 	$xFRM->addHElem( $sEstados->get("TR.entidad de nacimiento", true) );

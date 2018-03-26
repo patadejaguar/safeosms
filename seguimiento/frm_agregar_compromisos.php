@@ -35,6 +35,8 @@ $msg		= "";
 $anotacion	= "";
 $hora		= "";
 $compromiso	="promesa_de_pago";
+$lugar		= parametro("idlugardecompromiso",99, MQL_INT);
+
 $fecha		= $xF->get();
 $oficial	= getUsuarioActual();
 
@@ -58,6 +60,7 @@ if($clave > 0){
 		$hora		= $xSeg->getHora();
 		$oficial	= $xSeg->getOficial();
 		$monto		= $xSeg->getMonto();
+		$lugar		= $xSeg->getLugar();
 	}
 }
 if ($action == SYS_NINGUNO){
@@ -86,6 +89,8 @@ if ($action == SYS_NINGUNO){
 	}
 	$xFRM->addHElem($xSel->getListaDeOficiales("idoficial", "", $oficial)->get(true) );
 	$xFRM->addHElem($xSel->getListaDeTiposDeCompromisos("", $compromiso)->get(true));
+	$xFRM->addHElem($xSel->getListaDeTiposDeCompromisosLugares("", $lugar)->get(true));
+	
 	$xFRM->addFecha($fecha);
 	$xFRM->addHElem($xSel->getListaDeHoras("idhora", $hora) ->get(true) );
 	$xFRM->addMonto($monto);
@@ -117,14 +122,16 @@ if ($action == SYS_NINGUNO){
 			$obj->oficial_de_seguimiento($oficial);
 			$obj->hora_vencimiento($hora);
 			$obj->monto_comprometido($monto);
+			$obj->lugar_de_compromiso($lugar);
+			
 			$rs		= $obj->query()->update()->save($clave);
 		}		
 	}
 	$xSeg->init();
 	$xFRM->addHElem( $xSeg->getFicha() );
-	$xFRM->addCerrar();
-	$xFRM->addAtras();
-	$xFRM->setResultado($rs);
+	
+	//$xFRM->addAtras();
+	$xFRM->setResultado($rs, "", "", true);
 //} else if ($action == MQL_MOD){
 	//actualizar Nuevo Registro
 

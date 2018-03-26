@@ -21,6 +21,8 @@ $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $jxc 		= new TinyAjax();
 $xUser		= new cSystemUser();
+$xChk		= new cHCheckBox();
+$xTxt		= new cHText();
 
 function jsaEliminarRecibo($idrecibo, $periodo, $idnomina){
 	$xRec	= new cReciboDeOperacion(false, false, $idrecibo);
@@ -67,23 +69,27 @@ $idnomina		= parametro("nomina", 0, MQL_INT);
 $xHP->init();
 
 $xFRM			= new cHForm("frmcbza", "./");
-$xChk			= new cHCheckBox();
+
 $sql			= $xLi->getListadoDeCobranza($idnomina, SYS_TODAS, ", `empresas_cobranza`.`idempresas_cobranza` AS `clave`, `empresas_cobranza`.`recibo`");
 $xFRM->setTitle($xHP->getTitle() . " # $idnomina");
 $xFRM->OHidden("idnomina", $idnomina);
 //exit($sql);
-$xT	= new cTabla($sql);
+$xT	= new cTabla($sql,2);
 $xT->setWithMetaData();
-/*$xT->setRowCSS("monto", "mnyres");
-$xT->setColTitle("monto", "Monto de Retencion");*/
+$xTxt->setDivClass("tx4");
 
-$xFRM->OButton("TR.CEDULA DE COBRANZA", "var xG = new EmpGen(); xG.getOrdenDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
-$xFRM->OButton("TR.RECIBOS", "var xG = new EmpGen(); xG.getPreRecibosDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
+$xFRM->OButton("TR.CEDULA DE COBRANZA", "var xE=new EmpGen();xE.getOrdenDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
+$xFRM->OButton("TR.RECIBOS", "var xE=new EmpGen();xE.getPreRecibosDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
+
 
 $xT->setKeyField("numero_solicitud");
 $xT->setKeyTable("creditos_solicitud");
-//$xT->setEventKey("")
+$xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
 $xChk->addEvent("jsAddCola(this, "  . HP_REPLACE_ID . ")", "onchange");
+$xChk->setDivClass("");
+
+$xT->setFieldReplace("monto", "_X_MONTO");
+$xT->addEspTool($xTxt->getDeMoneda("mny_" . HP_REPLACE_ID, "", "_X_MONTO"));
 $xT->addEspTool( $xChk->get("", "chk-" . HP_REPLACE_ID) );
 //$xT->OButton("TR.Eliminar Recibo", "jsEliminarRecibo(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
 $xT->setTdClassByType();
@@ -95,17 +101,22 @@ $xFRM->OHidden("idkey", 0);
 $xFRM->OHidden("idkey2", 0);
 
 //$xT->addEditar();
-$xT->setWidthTool(100);
+$xT->setWidthTool("300px");
 
-$xFRM->OButton("TR.Eliminar Nomina", "jsEliminarNomina()", $xFRM->ic()->ELIMINAR);
+$xFRM->OButton("TR.Eliminar Nomina", "jsEliminarNomina()", $xFRM->ic()->ELIMINAR, "idcmdeliminarnomina", "red");
+
+
+$xT->setOmitidos("saldo_inicial");
 
 $xT->OButton("TR.Editar", "jsEditOperacion("  . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
-$xT->OButton("TR.Imprimir Recibo", "jsImprimirRecibo("  . HP_REPLACE_ID . ")", $xFRM->ic()->RECIBO);
+$xT->OButton("TR.Imprimir Recibo", "jsImprimirRecibo("  . HP_REPLACE_ID . ")", $xFRM->ic()->IMPRIMIR);
 $xT->OButton("TR.ELIMINAR OPERACION", "jsEliminarOperacion(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
+$xT->OButton("TR.COBRO LIBRE", "jsSetCobroLibre(" .  HP_REPLACE_ID . ")", $xFRM->ic()->DINERO);
 
 $xFRM->addHTML( $xT->Show() );
+
 if($xUser->getPuedeEliminarRecibos() == true){
-	$xFRM->OButton("TR.Eliminar Recibo", "jsEliminarRecibos()", $xFRM->ic()->REGISTROS);
+	$xFRM->OButton("TR.Eliminar Recibo", "jsEliminarRecibos()", $xFRM->ic()->REGISTROS, "idcmdeliminarrecs", "orange");
 }
 
 //$xFRM->addSubmit();
@@ -115,6 +126,7 @@ echo $xFRM->get();
 <script>
 var xG		= new Gen();
 var xRec	= new RecGen();
+var xCred	= new CredGen();
 var cola	= {};
 function jsAddCola(osrc, id){
 	var obj		= processMetaData("#tr-creditos_solicitud-" + id);
@@ -146,6 +158,10 @@ function jsAddCola(osrc, id){
 			xG.alerta({msg : "Eliminar el recibo del Credito " + id, type : "ok"});
 		}
 	}
+}
+function jsSetCobroLibre(idcred){
+	var xmonto	= $("#mny_" + idcred).val();
+	xCred.goToCobroMasivoDeCredito({credito:idcred, monto: xmonto});
 }
 function jsImprimirRecibo(id){
 	var obj			= processMetaData("#tr-creditos_solicitud-" + id);

@@ -26,8 +26,8 @@ $xLog		= new cCoreLog();
 
 $xRuls		= new cReglaDeNegocio();
 $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
-$LockCobros	=  $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
-
+$LockCobros	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
+$NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
 
 function jsaActualizarLetra($persona, $credito, $letra, $monto){
 	$monto	= setNoMenorQueCero($monto);
@@ -252,6 +252,11 @@ if ( $xCred->isAFinalDePlazo() == false ){
 				}
 			}
 			
+		}
+		
+		//Indica llevar a Cero la mora de creditos de nomina
+		if($xCred->getEsNomina() == true AND $NoMoraNom == true){
+			$interes_moratorio				= 0;
 		}
 		
 	}

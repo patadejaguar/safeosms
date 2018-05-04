@@ -615,10 +615,20 @@ $lang["20180301"][]	= array("PLAZOMESES", "Pzo./Meses", "Months");
 
 $lang["20180302"][]	= array("SYNC", "Sync", "Sync");
 $lang["20180302"][]	= array("APP", "App", "App");
-//$lang["20180302"][]	= array("", "", "");
-//$lang["20180302"][]	= array("", "", "");
-//$lang["20180302"][]	= array("", "", "");
-//$lang["20180302"][]	= array("", "", "");
+
+
+$lang["20180303"][]	= array("BIZRULES", "Reglas de Negocio", "Biz Rules");
+$lang["20180303"][]	= array("FIRMA", "Firma", "Sign");
+$lang["20180303"][]	= array("FOTOGRAFIA", "Foto", "Photo");
+$lang["20180303"][]	= array("GTIALIQ", "Garantia Liquida", "Liquidity Guarantee");
+
+$lang["20180401"][]	= array("INTDEV", "Int. Devengado", "Accrued interest");
+$lang["20180401"][]	= array("PERCONT", "Per. Cont.", "Accounting Period");
+$lang["20180401"][]	= array("RECHAZO", "Rechazo", "Rejection");
+$lang["20180401"][]	= array("ASIGNADO", "Asignado", "Assigned");
+//$lang["20180401"][]	= array("", "", "");
+//$lang["20180401"][]	= array("", "", "");
+
 
 header('Content-type: application/json');
 echo json_encode($lang);

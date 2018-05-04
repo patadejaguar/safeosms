@@ -2718,20 +2718,25 @@ class cEmpresasCobranzaPeriodos {
 	private $mPeriocidad	= 0;
 	private $mFechaInicial	= false;
 	private $mFechaFinal	= false;
+	private $mPeriodoAnnio	= 0;
+//	private 
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); }
 	function init($data = false){
 		$xQL	= new MQL();
 		$xF		= new cFecha();
 		$data	= (is_array($data)) ? $data : $xQL->getDataRow("SELECT * FROM `empresas_operaciones` WHERE `idempresas_operaciones`=". $this->mClave);
-		if(isset($data["idempresas_operaciones"])){
-			$this->mObj		= new cEmpresas_operaciones(); //Cambiar
-			$this->mObj->setData($data);
-			$this->mClave	= $this->mObj->idempresas_operaciones()->v();
-			$this->mClaveEmpresa	= $this->mObj->clave_de_empresa()->v();
-			$this->mPeriocidad		= $this->mObj->periocidad()->v();
-			$this->mFechaFinal		= $xF->getFechaISO($this->mObj->fecha_final()->v());
-			$this->mFechaInicial	= $xF->getFechaISO($this->mObj->fecha_inicial()->v());
-			$this->mInit	= true;
+		$xT		= new cEmpresas_operaciones();
+		
+		if(isset($data[$xT->IDEMPRESAS_OPERACIONES])){
+			$xT->setData($data);
+			$this->mClave			= $data[$xT->IDEMPRESAS_OPERACIONES];
+			$this->mClaveEmpresa	= $data[$xT->CLAVE_DE_EMPRESA];
+			$this->mPeriocidad		= $data[$xT->PERIOCIDAD];
+			$this->mFechaFinal		= $xF->getFechaISO($data[$xT->FECHA_FINAL]);
+			$this->mFechaInicial	= $xF->getFechaISO($data[$xT->FECHA_INICIAL]);
+			$this->mPeriodoAnnio	= $data[$xT->PERIODO_MARCADO];
+			$this->mObj				= $xT;
+			$this->mInit			= true;
 		}
 		return $this->mInit;
 	}
@@ -2742,6 +2747,8 @@ class cEmpresasCobranzaPeriodos {
 	function getFechaInicial(){ return $this->mFechaInicial; }
 	function getFechaFinal(){ return $this->mFechaFinal; }
 	function getFrecuencia(){ return $this->mPeriocidad;}
+	function getPeriocidad(){ return $this->mPeriocidad;}
+	function getPeriodoAnnio(){ return $this->mPeriodoAnnio; }
 	function getCobrados(){
 		$ql		= new MQL();
 		$id		= $this->mClave;
@@ -2776,7 +2783,7 @@ class cEmpresasCobranzaPeriodos {
 	function setCerrar(){
 		$ql		= new MQL();
 		$id		= $this->mClave;
-		$sql	= "UPDATE `empresas_cobranza` SET `estado` = 0 WHERE `clave_de_nomina`=$id ";
+		$sql	= "UPDATE `empresas_cobranza` SET `estado` = 0, `monto_enviado` = 0 WHERE `clave_de_nomina`=$id ";
 		$rs		= $ql->setRawQuery($sql);
 		$this->mMessages	.= "WARN\tNomina cerrada con id $id\r\n";
 		return ($rs === false ) ? false : true;
@@ -2839,13 +2846,13 @@ class cEmpresasCobranzaDetalle {
 	function getClaveUnica(){ return $this->mClave; }
 	function getClaveNomina(){ return $this->mIDNomina; }
 	function setActualizarMontoEnviado($monto, $observaciones = "", $recibo = false){
-		$recibo	= setNoMenorQueCero($recibo);
-		$xQL	= new MQL();
-		$tt		= time();
-		$monto	= setNoMenorQueCero($monto);
-		$idnomina= $this->mClave;
-		$rs		= $xQL->setRawQuery("UPDATE empresas_cobranza SET `monto_enviado` = $monto, observaciones = CONCAT(observaciones, '$observaciones'), `recibo`=$recibo, `tiempocobro`=$tt WHERE `empresas_cobranza`.`idempresas_cobranza` = $idnomina ");
-		$xQL	= null;
+		$recibo		= setNoMenorQueCero($recibo);
+		$xQL		= new MQL();
+		$tt			= time();
+		$monto		= setNoMenorQueCero($monto);
+		$idnomina	= $this->mClave;
+		$rs			= $xQL->setRawQuery("UPDATE empresas_cobranza SET `monto_enviado` = $monto, observaciones = CONCAT(observaciones, '$observaciones'), `recibo`=$recibo, `tiempocobro`=$tt WHERE `empresas_cobranza`.`idempresas_cobranza` = $idnomina ");
+		$xQL		= null;
 		return ($rs === false) ? false : true;		
 	}
 	function init($data = false){
@@ -2857,6 +2864,7 @@ class cEmpresasCobranzaDetalle {
 			$xF					= new cFecha();
 			$this->mObj			= new cEmpresas_cobranza();
 			$this->mObj->setData($data);
+			
 			$this->mClave		= $this->mObj->idempresas_cobranza()->v();
 			$this->mIDNomina	= $this->mObj->clave_de_nomina()->v();
 			$this->mMontoCobro	= $this->mObj->monto_enviado()->v();
@@ -2871,12 +2879,12 @@ class cEmpresasCobranzaDetalle {
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function __destruct(){ $this->mObj			= null; $this->mMessages	= ""; }
 	function setPagado($observaciones = "", $recibo = false){
-		$recibo	= setNoMenorQueCero($recibo);
-		$xQL	= new MQL();
-		$tt		= time();
-		$idnomina= $this->mClave;
-		$sql	= "UPDATE empresas_cobranza SET `estado` = 0, `observaciones` = CONCAT(`observaciones`,' ', '$observaciones'), `recibo`=$recibo, `tiempocobro`=$tt WHERE `empresas_cobranza`.`idempresas_cobranza` =$idnomina";
-		$rs		= $xQL->setRawQuery($sql);
+		$recibo		= setNoMenorQueCero($recibo);
+		$xQL		= new MQL();
+		$tt			= time();
+		$idnomina	= $this->mClave;
+		$sql		= "UPDATE empresas_cobranza SET `estado` = 0,`monto_enviado` = 0,`observaciones` = CONCAT(`observaciones`,' ', '$observaciones'), `recibo`=$recibo, `tiempocobro`=$tt WHERE `empresas_cobranza`.`idempresas_cobranza` =$idnomina";
+		$rs			= $xQL->setRawQuery($sql);
 		return ($rs === false) ? false : true;
 	}
 	function setRevertirPago($observaciones = ""){
@@ -2944,6 +2952,31 @@ class cEmpresasCobranzaDetalle {
 			$xQL	= null;
 		}
 		return $items;
+	}
+	function setCleanPeriodo($credito, $letra){
+		$credito	= setNoMenorQueCero($credito);
+		$letra		= setNoMenorQueCero($letra);
+		if($credito > 0 AND $letra > 0){
+			$xLet	= new cParcialidadDeCredito(false, $credito, $letra);
+			$xQL	= new MQL();
+			
+			$saldo	= $xLet->getSaldoNoPagado();
+			
+			if($saldo <= 0){
+				$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `monto_enviado`=0,`estado`=0 WHERE `clave_de_credito`=$credito AND `parcialidad`=$letra");
+				//$this->mMessages	.= "WARN\t \r\n";
+				$this->mMessages	.= "WARN\tEliminando Envio de la Letra $letra del Credito $credito \r\n";
+			} else {
+				//obtiene la ultima nomina
+				$LastSQL = "SELECT `idempresas_cobranza` AS `id` FROM `empresas_cobranza` WHERE `clave_de_credito`=$credito AND `parcialidad`=$letra ORDER BY `tiempocobro` DESC, `idempresas_cobranza` DESC LIMIT 0,1";
+				$id		 = $xQL->getDataValue($LastSQL, "id");
+				//actualiza el ID al saldo
+				$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `monto_enviado`=$saldo,`estado`=1 WHERE `idempresas_cobranza` = $id ");
+				//Elimina las demas
+				$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `monto_enviado`=0,`estado`=0 WHERE `clave_de_credito`=$credito AND `parcialidad`=$letra AND `idempresas_cobranza`!=$id");
+				$this->mMessages	.= "WARN\tEl envio $id se actualiza a $saldo, lo demas se cancela\r\n";
+			}
+		}
 	}
 }
 

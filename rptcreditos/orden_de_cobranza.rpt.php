@@ -25,18 +25,20 @@ $variacion		= (isset($_GET["v"])) ? $_GET["v"] :  0;
 
 $out			= parametro("out", OUT_HTML, MQL_RAW);
 $periodo		= parametro("periodo",0, MQL_INT);
-
+$tempMail		= parametro("mailtemplate", 902, MQL_INT);
 
 $fechaInicial	= parametro("on", false);
 $fechaFinal		= parametro("off", false);
 $fechaFinal		= $xF->getFechaISO($fechaFinal);
 $fechaInicial	= $xF->getFechaISO($fechaInicial);
 $idnomina		= parametro("nomina", 0, MQL_INT);
+$observaciones	= parametro("o");		//Observaciones
 
 $mails			= getEmails($_REQUEST);
 
 $FAnt			= new cFecha();
 $xRPT			= new cReportes("");
+$xUsr			= new cSystemUser(); $xUsr->init();
 
 if($periocidad == SYS_TODAS){
 	$xPerNom	= new cEmpresas_operaciones();
@@ -85,8 +87,23 @@ $xRPT->setResponse();
     	$xRPT->addContent( "<hr />" );
     	
 	//}
+	
 	$xRPT->setBodyMail($bheader);
-   
+	if(count($mails)>0){
+		$xFMT	= new cFormato($tempMail);
+		$xLoc	= new cLocal();
+		
+		
+		$xFMT->addVars("var_pre_mail",  "");
+		$xFMT->addVars("var_dirijido_a", $xEmp->getNombreContacto() . " /  " . $xEmp->getNombre());
+		$xFMT->addVars("var_parrafo_inicio", "");
+		$xFMT->addVars("var_parrafo_fin", $observaciones);
+		$xFMT->addVars("var_parrafo_despedida", "<p>Atentamente,</p><br /><br /><p>" . $xUsr->getNombreCompleto() . "</p>");
+		
+		$xFMT->setProcesarVars();
+		
+		$xRPT->setBodyMail($xFMT->get());
+	}
     //filtrar domicilio -> socio -> credito -> letra
     $sql	= $xL->getListadoDeCobranza($idnomina);
     $xRPT->setSQL($sql);
@@ -106,6 +123,9 @@ $xRPT->setResponse();
 						   ));
      //$xT->getFieldsSum()
      $xRPT->addContent( $xT->Show() );
+     //
+     
+     
      //=================== Agregar Pie de Formato ================
      
      

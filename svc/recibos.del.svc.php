@@ -50,7 +50,7 @@ if($clave > 0){
 			$xFS->setConvertToPDF($txt, "Archivo Recibo $clave - $tt");
 			
 			//Agregar una Nota de la Razon de la Eliminacion
-			if($nota !== ""){
+			if($notas !== ""){
 				$xSoc	= new cSocio($xRec->getCodigoDeSocio());
 				if($xSoc->init() == true){
 					$xMem	= new cPersonasMemos();
@@ -82,8 +82,10 @@ if($clave > 0){
 				if($xPer->init() == false){
 					$rs["message"]	.= "ERROR\tAl Cargar el Periodo $nomina\r\n";
 				} else {
-					if($xPer->setCancelarOperacion($credito, $periodo)== false){
-						$rs["message"]	.= "ERROR\tError al cancelar la Operacion del credito $credito y period $periodo\r\n";
+					
+					
+					if($xPer->setRevertirOperacion($credito, $periodo)== false){
+						$rs["message"]	.= "ERROR\tError al cancelar la Operacion del credito $credito y periodo $periodo\r\n";
 					}
 				}
 			}

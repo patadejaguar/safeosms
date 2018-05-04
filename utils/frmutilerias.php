@@ -18,6 +18,8 @@ $xF			= new cFecha();
 $oficial 	= elusuario($iduser);
 
 ini_set("max_execution_time", 2400);
+//ini_set("max_execution_time", 900);
+ini_set("memory_limit", SAFE_MEMORY_LIMIT);
 //ini_set("display_errors", "on");
 $chri 		= "@";
 $jsExtra	= "";

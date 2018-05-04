@@ -91,8 +91,11 @@ $xFRM->OText_13("consecutivo_actual", $xTabla->consecutivo_actual()->v(), "TR.co
 $xFRM->OMoneda2("saldo_actual", $xTabla->saldo_actual()->v(), "TR.saldo actual");
 
 //$xTabla->entidad_bancaria()->v()
-
-$xFRM->OTextContable("codigo_contable", $xTabla->codigo_contable()->v());
+if(MODULO_CONTABILIDAD_ACTIVADO == true){
+	$xFRM->OTextContable("codigo_contable", $xTabla->codigo_contable()->v());
+} else {
+	$xFRM->OHidden("codigo_contable", CUENTA_DE_CUADRE);
+}
 
 //$xFRM->OMoneda("entidad_bancaria", $xTabla->entidad_bancaria()->v(), "TR.entidad bancaria");
 

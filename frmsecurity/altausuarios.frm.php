@@ -120,12 +120,12 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		
 		$xFRM->OCheck("TR.CORPORATIVO", "corporativo");
 		
-		
 		$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNueva()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
 		
 			
 		$xFRM->addHTML("<p class='aviso' id='thAction'>$msg</p>");
 		$xFRM->addHTML('<input type="hidden" id="idUsuario" name="idUsuario" />');
+		//$xFRM->addJsInit("var blurred = false; window.onblur = function() { blurred = true; };window.onfocus = function() { var xG=new Gen();xG.setGVals();blurred && (location.reload()); };");
 		
 	} else {
 		$sucess					= true;
@@ -241,9 +241,9 @@ $jxc ->drawJavaScript(false, true);
 var xG	= new Gen();
 var xP	= new PersGen();
 
-function getValidaNombre(){
-	
-}
+window.onfocus 			= function(){ xG.onLoad(); };
+
+function getValidaNombre(){ }
 
 jsWorkForm		= document.frmAltaUsuarios;
 
@@ -290,15 +290,15 @@ function jsSetSuspender(){
 }
 
 function jsAgregarPersonaNueva(){
-	
-	
 	var tel			= "";
 	var mail		= "";
 	var nombres		= $("#nombre_sucursal").val();
-
+	xG.onLoad("jsSetIDPersona()");
 	xP.goToAgregarFisicas({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.usuario,telefono:tel,email:mail, otros : "&sinsucursal=true"});
 }
-
+function jsSetIDPersona(){
+	xG.setGVals();
+}
 </script>
 <?php 
 $xHP->fin();

@@ -110,6 +110,7 @@ if($credito <= DEFAULT_CREDITO){
 			$persona=$xCred->getClaveDePersona();
 		
 			$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred($credito);", $xFRM->ic()->CALENDARIO1);
+			$xFRM->OButton("TR.Validacion", "var xGen=new CredGen(); xGen.getFormaValidacion($credito);", $xFRM->ic()->CHECAR, "", "green");
 			
 			$xFRM->OHidden("idsolicitud", $credito);
 			$xFRM->OHidden("idsocio", $persona);
@@ -126,16 +127,36 @@ if($credito <= DEFAULT_CREDITO){
 				$xTxt->setDivClass("");
 				$xTxt->addEvent("jsGetSumas()", "onchange");			
 				$sum	= 0;
-				//Lista de Creditos
-				$xSCreditos	= $xSel->getListaDeCreditosPorPersona($persona, "idcreditodescontado");
-				$xSCreditos->setLabel("TR.CLAVE_DE_CREDITO CON DESCUENTO CAPITAL");
-				$txt		= $xSCreditos->get(false);
-				$items		= $xSCreditos->getCountRows();
-				if($items > 0){
-					$xT->addRaw("<tr><td>$txt</td><td>"  . $xTxt->getDeMoneda("idmontocreditodescontado", "TR.MONTO A DESCONTAR" ) . "</td></tr>");
-					$jsSum	.= "flotante(\$('#idmontocreditodescontado').val())";
+				//Vincular descuento de Credito Renovado
+				if($xCred->getEsRenovado() == true){
+					$xCredOrg	= new cCredito($xCred->getClaveDeOrigen());
+					if($xCredOrg->init() == true AND $xCred->getClaveDeOrigen() > DEFAULT_CREDITO){
+						if($xCredOrg->getEsPagado() == false){
+							$mdesc	= $xCredOrg->getSaldoActual();
+							$sum 	+= $mdesc;
+							$txt	= $xTxt->getHidden("idmontocreditodescontado", 0, $mdesc);
+							$txt	.= $xTxt->getHidden("idcreditodescontado", 0, $xCredOrg->getClaveDeCredito());
+							$xT->addRaw("<tr><td>"  . $xCredOrg->getDescripcion() ." $txt</td><td class='mny'>" . getFMoney($xCredOrg->getSaldoActual()) . "</td></tr>");
+							$jsSum	.= "flotante(\$('#idmontocreditodescontado').val())";
+							$xFRM->addJsInit("jsGetSumas();");
+						}
+					} else {
+						//if($xCred->getClaveDeOrigen() <= DEFAULT_CREDITO){
+							$xFRM->addTag($xFRM->getT("MS.CREDITO_FALTA_DRENOV"), "error");
+							$xFRM->addJsInit("jsRequiereDatosRenovacion($credito);");
+						//}
+					}
+				} else {
+					//Lista de Creditos
+					$xSCreditos	= $xSel->getListaDeCreditosPorPersona($persona, "idcreditodescontado", false, $credito);
+					$xSCreditos->setLabel("TR.CLAVE_DE_CREDITO CON DESCUENTO CAPITAL");
+					$txt		= $xSCreditos->get(false);
+					$items		= $xSCreditos->getCountRows();
+					if($items > 0){
+						$xT->addRaw("<tr><td>$txt</td><td>"  . $xTxt->getDeMoneda("idmontocreditodescontado", "TR.MONTO A DESCONTAR" ) . "</td></tr>");
+						$jsSum	.= "flotante(\$('#idmontocreditodescontado').val())";
+					}
 				}
-				
 							
 				$rs		= $xQL->getDataRecord($xLi->getListadoDeCargosPorProductoCred($xCred->getClaveDeProducto()));
 				foreach ($rs as $rw){
@@ -173,7 +194,7 @@ if($credito <= DEFAULT_CREDITO){
 					$jsSum	.= ($jsSum == "") ? "flotante(\$('#idm-$operacion').val())" :"+flotante(\$('#idm-$operacion').val())";
 				}
 				
-				$xT->addRaw("<tr><th>TOTAL</th><td class='mny' id='idtdsum'>"  . getFMoney($sum) . "</td></tr>");
+				$xT->addRaw("<tr><th>TOTAL</th><td class='mny total' id='idtdsum'>"  . getFMoney($sum) . "</td></tr>");
 				$xFRM->addHElem($xT->get());
 				$xFRM->endSeccion();
 				$xFRM->OHidden("idsumadescuentos", $sum);
@@ -229,6 +250,8 @@ var gn			= new Gen();
 var val			= new ValidGen();
 var errors		= 0;
 var isUpdate	= false;
+var xG			= new Gen();
+
 function jsGetCheque(){
 	var idnumerocheque	= $("#idnumerocheque").val();
 	if(entero(idnumerocheque) <=0){
@@ -244,6 +267,17 @@ function jsGetSumas(){
 	var nnto 	= flotante($("#idmontocheque").val())-mTotal;
 	$("#idtotal").html( getFMoney(nnto));
 	$("#idsumadescuentos").val(mTotal);
+}
+function jsRequiereDatosRenovacion(id){
+	xG.requiere({
+		callback: function(){ 
+			xG.w({tiny:true, url:"../frmcreditos/creditos.datos-origen.new.frm.php?tipo=" +Configuracion.credito.origen.renovacion + "&credito=" + id, callback: jsRefresh});
+		},
+		msg : 'CREDITO_FALTA_DRENOV'
+	});
+}
+function jsRefresh(){
+	window.location.reload(true);
 }
 </script>
 </body>

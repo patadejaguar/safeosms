@@ -46,6 +46,15 @@ $rs				= array();
 $rs["error"]	= true;
 $rs["message"]	= "";
 switch ($cmd){
+	case "EXPORT":
+		$xSoc			= new cSocio($persona);
+		if($xSoc->init() == true){
+			$xSoc->getExportarAsociada(TPERSONAS_GENERALES);
+			$xSoc->getExportarAsociada(TPERSONAS_DIRECCIONES);
+			$xSoc->getExportarAsociada(TPERSONAS_ACTIVIDAD_ECONOMICA);
+		}
+		$rs["message"]	= $xSoc->getMessages();
+		break;
 	case "CONSULTA":
 		//numero de credito
 		

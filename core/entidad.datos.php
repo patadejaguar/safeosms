@@ -3,7 +3,7 @@ include_once ("core.config.inc.php");
 include_once ("core.error.inc.php");
 include_once ("core.init.inc.php");
 include_once ("core.db.inc.php");
-
+//@session_start();
 
 
 
@@ -88,8 +88,9 @@ define("SPLIT_INTERES_MORATORIO", 				$xC->get("dividir_interes_moratorio_del_no
 define("AML_FECHA_DE_INICIO", 					$xC->get("aml_fecha_de_activacion", date("Y-m-d"), 				$xC->AML) );
 define("AML_KYC_DIAS_PARA_REVISAR_DOCTOS", 	$xC->get("aml_dias_para_revisar_documentos_de_personas", 3, 	$xC->AML) );
 define("AML_KYC_DIAS_PARA_COMPLETAR_PERFIL", 	$xC->get("aml_dias_para_completar_perfil_transaccional", 3, 	$xC->AML) );
-define("AML_CLAVE_MONEDA_LOCAL", 				strtoupper($xC->get("aml_clave_de_moneda_local", "MXN", 		$xC->AML) ));
 
+
+define("AML_CLAVE_MONEDA_LOCAL", 				strtoupper($xC->get("aml_clave_de_moneda_local", "MXN", 		$xC->AML) ));
 define("EACP_CLAVE_MONEDA_LOCAL", 				strtoupper($xC->get("aml_clave_de_moneda_local", "MXN", 		$xC->OPERACIONES) ));
 
 //========================================= DATOS DE CONTABILIDAD ===========================================
@@ -105,28 +106,25 @@ define("EACP_TASA_RESERVA", 						$xC->get("tasa_de_reserva_en_aportaciones", 0,
 
 
 
-
-
-
-if(isset($_SESSION["sucursal"])){
-	include_once ("core.common.inc.php");
-	$xSuc		= new cSucursal();
-	if($xSuc->init() == true){
-		//valores tomados de la sucursal
-		define("DEFAULT_CODIGO_POSTAL", 					$xSuc->getCodigoPostal());
-		define("DEFAULT_NOMBRE_COLONIA", 				$xSuc->getColonia());
-		define("DEFAULT_NOMBRE_LOCALIDAD", 				$xSuc->getClaveDeLocalidad());
-		define("DEFAULT_NOMBRE_MUNICIPIO", 				$xSuc->getMunicipio());
-		define("DEFAULT_NOMBRE_ESTADO", 					$xSuc->getEstado());		
-	} else {
-		//valores tomados de la sucursal
-		define("DEFAULT_CODIGO_POSTAL", 					$xC->get("domicilio.codigo_postal", "", $xC->ENTIDAD_DOMICILIO ));
-		define("DEFAULT_NOMBRE_COLONIA", 				$xC->get("domicilio.colonia", "", $xC->ENTIDAD_DOMICILIO ));
-		define("DEFAULT_NOMBRE_LOCALIDAD", 				$xC->get("domicilio.localidad", "", $xC->ENTIDAD_DOMICILIO ));
-		define("DEFAULT_NOMBRE_MUNICIPIO", 				$xC->get("domicilio.municipio", "", $xC->ENTIDAD_DOMICILIO ));
-		define("DEFAULT_NOMBRE_ESTADO", 					$xC->get("domicilio.estado", "", $xC->ENTIDAD_DOMICILIO ));		
+$ldopts	= true;
+/*
+if(isset($_SESSION)){
+	if(isset($_SESSION["sucursal"])){
+		include_once ("core.common.inc.php");
+		$xSuc		= new cSucursal();
+		if($xSuc->init() == true){
+			//valores tomados de la sucursal
+			define("DEFAULT_CODIGO_POSTAL", 					$xSuc->getCodigoPostal());
+			define("DEFAULT_NOMBRE_COLONIA", 				$xSuc->getColonia());
+			define("DEFAULT_NOMBRE_LOCALIDAD", 				$xSuc->getClaveDeLocalidad());
+			define("DEFAULT_NOMBRE_MUNICIPIO", 				$xSuc->getMunicipio());
+			define("DEFAULT_NOMBRE_ESTADO", 					$xSuc->getEstado());
+			$ldopts	= false;
+		}
 	}
-} else {
+}
+*/
+if($ldopts == true){
 
 	//valores tomados de la sucursal
 	define("DEFAULT_CODIGO_POSTAL", 					$xC->get("domicilio.codigo_postal", "", $xC->ENTIDAD_DOMICILIO ));
@@ -148,89 +146,13 @@ define("EACP_PER_COBRANZA", 				$periodolocal);
 
 
 
+function go_calendar($id, $type = "default"){ return ""; }
 
-
-/* -----------------------------------MENSAJES --------------------------------------*/
-$msg_rpt_exit 	= "<p class='aviso'>IMPOSIBLE LLEVAR A CABO EL REPORTE POR FALTA DE DATOS</p></body></html>";
-$msg_rec_exit 	= "<p class='aviso'>IMPOSIBLE GUARDAR/IMPRIMIR EL  RECIBO POR FALTA DE REQUISITOS</p>";
-$msg_rec_warn 	= "<p class='aviso'>AGREGUE LOS DATOS COMPLETOS Y ENVIELOS</p>";
-$msg_rec_end 	= "<p class='aviso'>EL REGISTRO SE HA AGREGADO SATISFACTORIAMENTE</p><br><input type='button' name='btprint' value='VER / IMPRIMIR RECIBO' onClick='printrec();'>";
-$fhtm		 	= 	"</body></html>";
-$atras 			= "<img src='images/query_back.png' onClick='javascript:history.back();'>";
-
-$c_gosocio 		= "<img class='buscador' title=\"Buscar una Persona\" src=\"../images/common/search.png\" onclick=\"goSocio_();\"/>";
-$c_gocredit 	= "<img class='buscador' title=\"Buscar un Credito\" src=\"../images/common/search.png\" onclick=\"goCredit_();\"/>";
-$c_goletra 		= "<img class='buscador' title=\"Buscar una Parcialidad\" src=\"../images/common/search.png\"  onclick=\"goLetra_();\"/>";
-$c_gocuentas 	= "<img class='buscador' title=\"Buscar una Cuenta de Captacion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_();\"/>";
-$c_gocuentas_a 	= "<img class='buscador' title=\"Buscar una Cuenta Corriente\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(10);\"/>";
-$c_gocuentas_i 	= "<img class='buscador' title=\"Buscar una Cuenta de Inversion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(20);\"/>";
-$c_gorecibo		= "<img class='buscador' title=\"Buscar un Recibo de Pago\" src=\"../images/common/search.png\"  onclick=\"goRecibos_();\"/>";
-$c_gogrupos 	= "<img class='buscador' title=\"Buscar un Grupo\" src=\"../images/common/search.png\"  onclick=\"goGrupos_();\"/>";
-
-function GO_CALENDAR($id, $type = "default"){
-	$ctrl1 = "";
-	$ctrl2 = "";
-	$ctrl3 = "";
-	if($type == "default"){
-		$ctrl1 = "	Calendar.setup({
-        inputField     :    \"$id\",
-        ifFormat       :    \"%Y-%m-%d\",
-        showsTime      :    false,
-        button         :    \"cmdCalendar\",
-        singleClick    :    true,
-	});";
-	} else {
-	//Dia
-	$ctrl1 = "	Calendar.setup({
-        inputField     :    \"ideldia$id\",
-        ifFormat       :    \"%d\",
-        showsTime      :    false,
-        button         :    \"cmdCalendar\",
-        singleClick    :    true,
-	});";
-	//Mes
-	$ctrl2 = "	Calendar.setup({
-        inputField     :    \"idelmes$id\",
-        ifFormat       :    \"%m\",
-        showsTime      :    false,
-        button         :    \"cmdCalendar\",
-        singleClick    :    true,
-	});";
-	//Ao
-	$ctrl3 = "	Calendar.setup({
-        inputField     :    \"idelanno$id\",
-        ifFormat       :    \"%Y\",
-        showsTime      :    false,
-        button         :    \"cmdCalendar\",
-        singleClick    :    true,
-	});";
-	}
-	return "<img style=\"width: 16px; height: 16px;\" alt=\"\" src=\"../images/common/calendar.gif\" align='middle' id=\"cmdCalendar\" alt=\"Muestra el Calendario\" />
-	<script>
-	$ctrl1
-	$ctrl2
-	$ctrl3
-	</script>
-	";
-}
-define("CTRL_GOSOCIO", 			$c_gosocio);
-define("CTRL_GOCREDIT", 		$c_gocredit);
-define("CTRL_GOLETRAS", 		$c_goletra);
-define("CTRL_GOCUENTAS", 		$c_gocuentas);
-define("CTRL_GOCUENTAS_A", 		$c_gocuentas_a);
-define("CTRL_GOCUENTAS_I", 		$c_gocuentas_i);
-define("CTRL_GOGRUPOS", 		$c_gogrupos);
-define("CTRL_GORECIBOS", 		$c_gorecibo);
 define("JS_CLOSE", 				"<script>var xG = new Gen(); xG.close(); </script>");
 
 
 /* variables varias */
-function select_bool($name){
-	return "<select name='$name'>
-			<option value='yes'>--si--</option>
-			<option value='no' selected>--no--</option>
-		</select>";
-}
+function select_bool($name){ return "";}
 /* ---------------------------------- Funciones Generales asequibles --------------------------- */
 /**
  * Funcion que Genera codigo javascript basico para el manejo de formulaios.

@@ -86,7 +86,7 @@ $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
 ?>
 <script>
-var xG	= new Gen();
+var xG		= new Gen();
 var xEmp	= new EmpGen();
 function jsEdit(id){
 	xG.w({url:"../frmempresas/empresas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivempresas});

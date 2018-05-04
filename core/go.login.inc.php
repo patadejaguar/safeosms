@@ -102,7 +102,7 @@ function getSIPAKALPermissions($mFile){
 			}
 		}
 		if($xUsr->init() == false){
-			$xLog->add("El Usuario Actual es Invalido \r\n");
+			$xLog->add("El Usuario Actual es Invalido para acceder al Archivo $mFile\r\n");
 			$salir	= true;
 	
 		} else {
@@ -111,6 +111,10 @@ function getSIPAKALPermissions($mFile){
 		$permiso	= $xPer->getAccessFile($mFile, $nivel);
 		if($xPer->getEsPublico() == true AND $salir == true ){
 			$salir	= false;
+		}
+		if($permiso == false){
+			$usr	= $xUsr->getAlias();
+			$xLog->add("El Usuario $usr No tiene permisos para el Archivo $mFile\r\n");
 		}
 		$xLog->add($xPer->getMessages(), $xLog->DEVELOPER);
 		if($salir !== false){

@@ -273,11 +273,24 @@ function session(v1,v2){
 	}
 }
 Gen.prototype.formF9key	= function(evt){
-	var key = evt.keyCode || evt.which;
-	key 	= entero(key);
-	switch(key){
-		case 120:
-			//$("#btn_guardar").click();
+	var code;
+	if (evt.key !== undefined) {
+		code = evt.key;
+	} else if (evt.keyIdentifier !== undefined) {
+		code = evt.keyIdentifier;
+	} else if (evt.keyCode !== undefined) {
+		code = evt.keyCode;
+	}
+	switch(code){
+		case 121:
+			evt.preventDefault();
+			if(document.getElementById("btn_confirm_si")){
+				$("#btn_confirm_si").click();
+			} else {
+				if(document.getElementById("btn_guardar")){
+					$("#btn_guardar").click();
+				}
+			}
 			break;
 		default:
 			break;
@@ -522,8 +535,8 @@ Gen.prototype.tip 	= function (opts){
 Gen.prototype.winTip 	= function (opts){
 	opts = (typeof opts == "undefined" ) ? {} : opts;
 	var id		= (typeof opts.element == "undefined") ? window : opts.element;
-	var msg		= (typeof opts.content == "undefined") ? "" : opts.content;
-	msg			= (typeof opts.msg == "undefined") ? msg : opts.msg;
+	//var msg		= (typeof opts.content == "undefined") ? "" : opts.content;
+	//msg			= (typeof opts.msg == "undefined") ? msg : opts.msg;
 
 	var delay	= (typeof opts.delay == "undefined") ? 4000 : opts.delay;
 	var mTitle	= (typeof opts.title == "undefined") ? "Window" : opts.title;
@@ -698,6 +711,7 @@ function getModalTip(element, content, title){
 	title	= (typeof title == "undefined") ? "" : title;
 	var xG	= new Gen(); var w= entero((xG.ancho()/2));
 	session(Configuracion.opciones.dialogID, content.attr("id"));
+	//console.log(session(Configuracion.opciones.dialogID));
 	content.dialog({resizable: false,height: "auto", width: w, modal: true, title:title });
 }
 
@@ -707,7 +721,7 @@ Number.prototype.formatMoney = function(c, d, t){
 };
 function getInMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
 function getFMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
-function getFTasa(vF){ return "% " + getFMoney(vF); }
+function getFTasa(vF){ var xG = new Gen(); return "% " + xG.moneda(vF); }
 function NativoFloat(vF) {
 		if (SEPARADOR_DECIMAL != DIV_DEC) {
 			var v	= new Number(vF);
@@ -803,30 +817,43 @@ function numero(n){	if(typeof n == 'number' && !isNaN(n) && isFinite(n) && n != 
 
 if (typeof jQuery != "undefined") {
 	jQuery.fn.reset = function () {  $(this).each (function() { this.reset(); }); }
-	
+	//var xG		= new Gen();
+	//var w		= entero((xG.ancho()/2));
 		jQuery.extend({
 			  confirm: function(message, title, onTrue, onFalse, onClose) {
 				
 				onClose = (typeof onClose == "undefined") ? function(){} : onClose;
 				onFalse = (typeof onFalse == "undefined") ? function(){} : onFalse;
-
+				//dialogClass: "warning",
 				jQuery("<div></div>").dialog({
 				   // Remove the closing 'X' from the dialog
 				   open: function(event, ui) {
-						//jQuery(".ui-dialog-titlebar-close").hide();
+
 					},
-						buttons: {
-							"Si": function() {
-								jQuery(this).dialog("close");
-								$(".ui-dialog-content").dialog("close");
-								setTimeout(onTrue,100);
-								return true;
+					my: 'top',
+					at: 'top',
+					buttons: {
+							"Si": {
+								text: "Si",
+								id: "btn_confirm_si",
+								icon : "ui-icon-check",
+								click: function() {
+									jQuery(this).dialog("close");
+									$(".ui-dialog-content").dialog("close");
+									setTimeout(onTrue,100);
+									return true;
+								}
 							},
-							"No": function() {
-								jQuery(this).dialog("close");
-								$(".ui-dialog-content").dialog("close");
-								setTimeout(onFalse,100);
-								return false;
+							"No": {
+								text : "No",
+								id: "btn_confirm_no",
+								icon : "ui-icon-cancel",
+								click: function() {
+									jQuery(this).dialog("close");
+									$(".ui-dialog-content").dialog("close");
+									setTimeout(onFalse,100);
+									return false;
+								}
 							}
 						},
 						close: function(event, ui) { setTimeout(onClose,1); jQuery(this).remove(); },
@@ -844,16 +871,29 @@ if (typeof jQuery != "undefined") {
 
 				jQuery("<div></div>").dialog({
 					dialogClass: css,
-				   
-				   open: function(event, ui) {
+					open: function(event, ui) {
+						
+						
+						//var x		= entero(( $(document).width() -300)/2);
+						//var y 		= entero(( $(document).height()-200) / 2);
+						//console.log("X =" + x);
+						//console.log("Y =" + y);
+						//$(this).dialog('option', 'position', [x,y]);
+						
 						//jQuery(".ui-dialog-titlebar-close").hide();
 					},
+				    my: 'top',
+					at: 'top',
 					buttons: {
-							"Ok": function(){
-								jQuery(this).dialog("close");
-
-								setTimeout(onTrue,1);
-								return true;
+							"Ok": {
+								text: "Ok",
+								id: "btn_alert_ok",
+								icon : "ui-icon-check",								
+								click: function(){
+									jQuery(this).dialog("close");
+									setTimeout(onTrue,1);
+									return true;
+								}
 							}
 						},
 						close: function(event, ui) { jQuery(this).remove(); },
@@ -1192,6 +1232,7 @@ Gen.prototype.confirmar	= function(opts){
 	var canc 	= (typeof opts.cancelar == "undefined") ? function(){} : opts.cancelar;
 	var msgNV	= (typeof opts.alert == "undefined") ? "" : opts.alert;
 	var msgTit	= (typeof opts.titulo == "undefined") ? "SAFE-OSMS" : opts.titulo;
+	msgTit		= (typeof opts.title == "undefined") ? msgTit : opts.title;
 	var onClose	= (typeof opts.close == "undefined") ? function(){} : opts.close;
 	var metaO	= this;
 	if (evalF === true) {
@@ -1201,6 +1242,9 @@ Gen.prototype.confirmar	= function(opts){
 	} else {
 		if ($.trim(msgNV) != "") { msg	= metaO.lang(msgNV); metaO.alerta({ msg : msg });	}
 	}
+}
+Gen.prototype.aviso	= function(opts){
+	this.requiere(opts);
 }
 Gen.prototype.requiere	= function(opts){
 	var self	= this;
@@ -1248,33 +1292,49 @@ Gen.prototype.dialogo	= function (opts){
 	var btns	= {};
 	if(isAcepCan == true){
 		var btns	= {
-			"Aceptar" : function(){
-				jQuery(this).dialog("close");
-				$(".ui-dialog-content").dialog("close");
-				setTimeout(onacep,100);
-				return true;
+			"Aceptar" : {
+				text : "Aceptar",
+				id: "btn_diag_aceptar",
+				click: function(){
+					jQuery(this).dialog("close");
+					$(".ui-dialog-content").dialog("close");
+					setTimeout(onacep,100);
+					return true;
+				}
 			},
-			"Cancelar" : function(){
-				jQuery(this).dialog("close");
-				$(".ui-dialog-content").dialog("close");
-				setTimeout(oncan,100);
-				return true;				
+			"Cancelar" :{
+				text : "Cancelar",
+				id: "btn_diag_cancelar",
+				click: function(){
+					jQuery(this).dialog("close");
+					$(".ui-dialog-content").dialog("close");
+					setTimeout(oncan,100);
+					return true;
+				}
 			}
 		};
 	}
 	if(isSiNo == true){
 		var btns	= {
-			"Si" : function(){
-				jQuery(this).dialog("close");
-				$(".ui-dialog-content").dialog("close");
-				setTimeout(onyes,100);
-				return true;
+			"Si" : {
+				text : "Si",
+				id: "btn_diag_si",
+				click: function(){
+					jQuery(this).dialog("close");
+					$(".ui-dialog-content").dialog("close");
+					setTimeout(onyes,100);
+					return true;
+				}
 			},
-			"No" : function(){
-				jQuery(this).dialog("close");
-				$(".ui-dialog-content").dialog("close");
-				setTimeout(onno,100);
-				return true;				
+			"No" : {
+				text : "No",
+				id: "btn_diag_no",
+				click: function(){				
+					jQuery(this).dialog("close");
+					$(".ui-dialog-content").dialog("close");
+					setTimeout(onno,100);
+					return true;
+				}
 			}
 		};
 	}	
@@ -1300,6 +1360,58 @@ Gen.prototype.alerta	= function(opts){
 	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
 	lvl			= (typeof opts.type == "undefined") ? lvl : opts.type;
 	var tit		= (typeof opts.title == "undefined") ? "Mensaje del Sistema" : opts.title;
+	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
+	
+	var icn		= (typeof opts.icon == "undefined") ? "" : opts.icon;
+	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
+	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
+	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
+	var self	= this;
+	
+	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
+
+	var mth 	= "awesome blue";
+	if(lvl == "error"){
+		mth	= "awesome error";
+		if(icn == ""){
+			icn	= "fa-exclamation-triangle";
+		}
+	}
+	if (lvl == "ok"||lvl == 1||lvl == "success"||mth == "success"||mth == "ok") {
+		mth	= "awesome ok";
+		if(icn == ""){
+			icn	= "fa-check-square-o";
+		}
+	}
+	if (lvl == "warn"||lvl == 2||lvl == "warning"||mth == "warn"||mth == "warning"||mth=="info") {
+		mth	= "awesome warning";
+		if(icn == ""){
+			icn	= "fa-info-circle";
+		}
+	}
+	if(icn == ""){
+		icn	= "fa-bell-o";
+	}
+	
+	var opciones = { message : msg, info : info, title : tit,overlay:false };
+	if(solo == true){ opciones.clearAll = true; }
+	if(icn !== ""){ opciones.icon = 'fa ' + icn; }
+
+	$.amaran({ content:opciones, theme : mth, position :'top right'});
+	//theme:'awesome green'
+}
+Gen.prototype.notificar	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var msg		= (typeof opts.message == "undefined") ? msg : opts.message;
+
+	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
+	var lvl		= (typeof opts.nivel == "undefined") ? "info" : opts.nivel;
+	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
+	lvl			= (typeof opts.type == "undefined") ? lvl : opts.type;
+	var tit		= (typeof opts.title == "undefined") ? "Mensaje del Sistema" : opts.title;
+	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
+	
 	var icn		= (typeof opts.icon == "undefined") ? "" : opts.icon;
 	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
 	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
@@ -1442,6 +1554,36 @@ Gen.prototype.save	= function(opts){
 		setTimeout(mFunc_,5);	
 	} else {
 		self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
+	}
+}
+Gen.prototype.setGVals	= function(){
+	var idxsoc	= entero(session(ID_PERSONA));
+	if(idxsoc >1){
+		if(document.getElementById("idsocio")){
+			$("#idsocio").val(idxsoc);
+			var xP	= new PersGen();
+			xP.getNombre(idxsoc);
+		}
+	}
+}
+Gen.prototype.onLoad	= function(fnc){
+	if(typeof fnc == "undefined"){
+		if(session(Configuracion.session.reloadform) !== null){
+			if(session(Configuracion.session.reloadform) == "1"){
+				//location.reload();
+				
+				if(session(Configuracion.session.reloadfunc) !== null){
+					var iff	= session(Configuracion.session.reloadfunc);
+					session(Configuracion.session.reloadfunc, null);
+					setTimeout(iff,10);
+					
+				}
+				session(Configuracion.session.reloadform, "0"); 
+			}
+		}
+	} else {
+		session(Configuracion.session.reloadfunc, fnc);
+		session(Configuracion.session.reloadform, "1");
 	}
 }
 Gen.prototype.crudAdd	= function(opts){
@@ -1687,6 +1829,10 @@ CredGen.prototype.getFormaGarantias	= function(idcredito){
 
 CredGen.prototype.getFormaAutorizacion	= function(idcredito){
 	var gURL = "../frmcreditos/frmcreditosautorizados.php?credito=" + idcredito;
+	var xGen	= new Gen(); xGen.w({ url : gURL, h : 800, w : 900, tiny: true });
+}
+CredGen.prototype.getFormaRechazo	= function(idcredito){
+	var gURL = "../frmcreditos/creditos-rechazados.frm.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 800, w : 900, tiny: true });
 }
 CredGen.prototype.getListaDeFirmantes	= function(idcredito){
@@ -2270,6 +2416,10 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var control	= (typeof opts.control == "undefined") ? "idsocio" : opts.control;
 	var jcallb	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var nxt		= (typeof opts.next == "undefined") ? "" : "&next=" + opts.next;
+	var oargs	= (typeof opts.args == "undefined") ? "" : opts.args;
+	var postevt	= (typeof opts.onclose == "undefined") ? "" : "&callback=" + opts.onclose;
+	
 	var vTipoI	= "";
 	//define el tipo de persona
 	if (typeof $('#' + control).closest('form').attr('data-tipodepersona') != "undefined") {
@@ -2277,7 +2427,7 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 		vTipoI	= "&tipodeingreso=" + vTipoI;
 	}
 	session("idpersona.control.dx", control);
-	var xG		= new Gen(); xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI, tiny : true, h: 600, w : 800, callback:jcallb});
+	var xG		= new Gen(); xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + oargs, tiny : true, h: 600, w : 800, callback:jcallb});
 }
 
 PersGen.prototype.getBuscarCreditos	= function(){
@@ -2844,8 +2994,11 @@ CaptGen.prototype.setNuevoDepositoVista	= function(opts){
 
 }
 //--------------------------- END CAPTACION
-RecGen.prototype.panel			= function(clave){
-	var xGen	= new Gen(); xGen.w({ url: "../frmoperaciones/recibos.panel.frm.php?cNumeroRecibo=" + clave, ajusteAlto: true, w : 800, tiny : true});
+RecGen.prototype.panel			= function(clave, opts){
+	opts 		= (typeof opts == "undefined" ) ? {} : opts;
+	var agregar	= (typeof opts.agregar == "undefined") ? 0 : opts.agregar;
+	
+	var xGen	= new Gen(); xGen.w({ url: "../frmoperaciones/recibos.panel.frm.php?cNumeroRecibo=" + clave + "&agregar=" + agregar, ajusteAlto: true, w : 800, tiny : true});
 }
 RecGen.prototype.reporte			= function(clave){
 	var xGen	= new Gen(); xGen.w({ url: "../rptoperaciones/rpt_consulta_recibos_individual.php?recibo=" + clave, full:true, blank: true});

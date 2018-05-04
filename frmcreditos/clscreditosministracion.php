@@ -67,6 +67,9 @@ if($idestrans == true){
 	$TipoPagoPagos	= TESORERIA_PAGO_TRANSFERENCIA; 	
 }
 
+
+
+
 $xBase->init();
 if($idsolicitud <= DEFAULT_CREDITO OR $monto_cheque1 <= TOLERANCIA_SALDOS){
 	$xLog->add("ERROR\tEl Credito es $idsolicitud y el Monto del Cheque $monto_cheque1 NO SE GUARDA\r\n");
@@ -174,7 +177,7 @@ if($idsolicitud <= DEFAULT_CREDITO OR $monto_cheque1 <= TOLERANCIA_SALDOS){
 					));
 				}
 				$xLog->add( $xRec->getMessages() , $xLog->DEVELOPER);				
-			}
+			} //end suma descuentos
 			//Buttons
 			$xFRM->OButton("TR.IMPRIMIR PAGARE", "var xC=new CredGen();xC.getImprimirPagare($idsolicitud)", $xFRM->ic()->DINERO);
 			$xFRM->OButton("TR.IMPRIMIR CONTRATO", "var xC=new CredGen();xC.getImprimirContrato($idsolicitud)", $xFRM->ic()->CONTRATO);

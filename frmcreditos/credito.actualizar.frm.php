@@ -204,7 +204,7 @@ if($xCred->getPeriocidadDePago() !=  CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
 $xFRM->OButton("TR.vincular_a empresa", "jsVincularEmpresa()", "empresa", "idvincularemp" );
 $xFRM->OButton("TR.Reestructurar Intereses", "jsaReestructurarIntereses();", "tasa", "idrestints"  );
 $xFRM->OButton("TR.Cambiar Persona", "jsCambiarPersona()", $xFRM->ic()->PERSONA, "idchange"  );
-$xFRM->OButton("TR.Borrado Permanente", "jsEliminarCredito()", "eliminar", "ideliminar"  );
+
 $xFRM->OButton("TR.Actualizar CAT", "jsaSetCAT()", "tasa", "idacat"  );
 $xFRM->OButton("TR.Actualizar ESTATUS", "jsaSetEstatus()", $xFRM->ic()->GENERAR );
 
@@ -217,10 +217,12 @@ if($xNotaSIC->initByCredito($xCred->getClaveDeCredito())  == true){
 	$xFRM->OButton("TR.AGREGAR NOTAS SIC", "jsAddNotaSic($credito)", $xFRM->ic()->NOTA  );
 }
 
+if(MODO_DEBUG == true OR (MODO_CORRECION == true OR MODO_MIGRACION == true)){
+	$xFRM->OButton("TR.Borrado Permanente", "jsEliminarCredito()", "eliminar", "ideliminarcredito", "red"  );
+}
 
 
-
-$xFRM->OButton($lcancelar, "jsCancelarAccion()", "salir", "idsalir" );
+$xFRM->addCerrar();
 
 $xFRM->addHElem("<p id='avisos'></p>");
 echo $xFRM->get();
@@ -335,7 +337,7 @@ $xSelPP	= new cHSelect();//$xPP->query()->html()->select($xPP->descripcion_tipoc
     ?>
 </div>
 <!--  CAMBIAR EMPRESA -->
-<div class="inv formoid-default" id="divcabiarsoc">
+<div class="inv formoid-default" id="divcambiarsoc">
 <?php 
 $oFrm7	= new cHForm("frmcambiarpers", "", "idfrmcambiarpers");
 $oFrm7->setNoFormTags();
@@ -418,13 +420,13 @@ var idCredito	= <?php echo $xCred->getNumeroDeCredito(); ?>;
 var idSocio		= <?php echo $xCred->getClaveDePersona(); ?>;
 var idRecibo	= <?php echo $idrecibo; ?>;
     
-function jsCambiarEstado(){ 			getModalTip(mobj, $("#divestatus"), xGen.lang(["Modificar", "Estado"]));   }
-function jsCambiarMonto(){ 				getModalTip(mobj, $("#divmontomin"), xGen.lang(["Modificar" ,"Monto", "Ministrado"]));  }
-function jsCambiarFechaMinistracion(){	getModalTip(mobj, $("#divfechamin"), xGen.lang(["Modificar", "Fecha_de",  "Ministracion"]) );  }
-function jsCambiarProducto(){ 			getModalTip(mobj, $("#divpdto"), xGen.lang(["Modificar", "Producto"]));  }
-function jsCambiarPeriocidad(){			getModalTip(mobj, $("#divperiocidad"), xGen.lang(["Modificar", "Periocidad"]));    }    
-function jsEliminarCredito(){ 			getModalTip(mobj, $("#diveliminar"), xGen.lang(["Eliminar", "Credito"]) );  }
-function jsCambiarPersona(){			getModalTip(mobj, $("#divcabiarsoc"), xGen.lang(["Cambiar", "Persona"]) );  }
+function jsCambiarEstado(){  			xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divestatus"), xGen.lang(["Modificar", "Estado"]));   }
+function jsCambiarMonto(){ 				xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divmontomin"), xGen.lang(["Modificar" ,"Monto", "Ministrado"]));  }
+function jsCambiarFechaMinistracion(){	xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divfechamin"), xGen.lang(["Modificar", "Fecha_de",  "Ministracion"]) );  }
+function jsCambiarProducto(){ 			xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divpdto"), xGen.lang(["Modificar", "Producto"]));  }
+function jsCambiarPeriocidad(){			xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divperiocidad"), xGen.lang(["Modificar", "Periocidad"]));    }    
+function jsEliminarCredito(){ 			xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#diveliminar"), xGen.lang(["Eliminar", "Credito"]) );  }
+function jsCambiarPersona(){			xGen.postajax("jsCancelarTip()"); getModalTip(mobj, $("#divcambiarsoc"), xGen.lang(["Cambiar", "Persona"]) );  }
 function jsConfirmarEliminarCredito(){
 	var sip	= confirm("Esta seguro de Eliminar el credito?\nNO HAY FORMA DE DESHACERLO.");
 	if (sip){ jsaEliminarCredito(); } else { jsCancelarAccion(); }
@@ -432,13 +434,16 @@ function jsConfirmarEliminarCredito(){
 function jsCancelarAccion(){ jsCancelarTip(); }
 function jsCancelarTip(){
 	var vid = session(Configuracion.opciones.dialogID);
-	$("#" + vid).dialog('close');  /*xGen.close();*/ 
+	$("#" + vid).dialog('close');
+	 
 }
 function jsCambiarMontoAutorizado() {
 	var xTit	= xGen.lang( ["cambiar", "Monto", "Autorizado"] );
+	xGen.postajax("jsCancelarTip()"); 
+	
 	getModalTip(mobj, $("#divmontoautorizado"), xTit);
 }
-function jsVincularEmpresa() {   getModalTip(mobj, $("#divvincular"), xGen.lang(["vincular_a", "empresa"]));	}
+function jsVincularEmpresa() {   xGen.postajax("jsCancelarTip()");  getModalTip(mobj, $("#divvincular"), xGen.lang(["vincular_a", "empresa"]));	}
 
 function jsTipTimer(){ setTimeout("jsReTipTimer()", 500); }
 function jsReTipTimer(){ tip(mobj, "Espere...!", 5000, false); }

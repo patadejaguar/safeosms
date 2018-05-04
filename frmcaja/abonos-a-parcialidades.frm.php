@@ -22,7 +22,7 @@ $xRuls		= new cReglaDeNegocio();
 $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 $NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
 $jxc 		= new TinyAjax();
-
+$xVals		= new cReglasDeValidacion();
 
 function jsaGetComisionPorApertura($idcredito){
 	$xCred		= new cCredito($idcredito);
@@ -80,11 +80,14 @@ if($action == MQL_ADD){
 			
 			$xFRM->addButtonPlanDePagos($xCred->getNumeroDePlanDePagos());
 			
-			$periodo		= $xCred->getPeriodoActual();
+			$periodo		= $xCred->getPeriodoActual() + 1;
 			$periodo		= ($periodo <= 0) ? SYS_UNO : $periodo;
+			
 			$idrecibo		= $xRec->setNuevoRecibo($persona, $credito, $fecha, $periodo, RECIBOS_TIPO_PAGO_CREDITO , $detalles, $cheque, $comopago, $foliofiscal);
 			$rs				= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito));
 			$mCreditoIVA	= $xCred->getTasaIVA();
+			$empresa		= $xCred->getClaveDeEmpresa();
+			
 			//setLog($xVis->CreditosLetrasNoPagadas($credito));
 			foreach ($rs as $rw){
 				//idcreditos_productos_costos, clave_de_producto, clave_de_operacion, unidades, unidad_de_medida,
@@ -279,7 +282,28 @@ if($action == MQL_ADD){
 					if($ParcCap > 0){
 						$xCred->setAbonoCapital($ParcCap, $ParcPer, $cheque, $comopago, $foliofiscal, $detalles, false, $fecha, $idrecibo);
 					}
-				}			
+					//Si es Valida la Empresa
+					if($xVals->empresa($empresa) == true){
+						$xPerEmp	= new cEmpresasCobranzaDetalle();
+						$nobs		= "[" . $xRec->getCodigoDeRecibo() . "]$detalles" . "[" . $fecha ."]";
+						
+						
+						if($xPerEmp->initByCreditoID($xCred->getClaveDeCredito(), $ParcPer) == true){
+							//si la parcialidad es mayor o menor al pago
+							if($xPerEmp->getMontoEnviado() <= $ParcTotal){
+								$xPerEmp->setPagado($nobs, $xRec->getCodigoDeRecibo());
+							} else {
+								$nmonto = $xPerEmp->getMontoEnviado() - $ParcTotal;
+								$nmonto	= setNoMenorQueCero($nmonto);
+								$xPerEmp->setActualizarMontoEnviado($nmonto,$nobs, $xRec->getCodigoDeRecibo());
+							}
+						}
+						
+						
+					}
+					
+				}
+
 			}
 
 			$xRec->setForceUpdateSaldos(true);
@@ -498,7 +522,7 @@ if($action == MQL_ADD){
 						//Actualizar total
 						$mora				= round($mora,2);
 						
-						$IvaOtros				= round((($mora+$penas) * TASA_IVA),2);
+						$IvaOtros			= round((($mora+$penas) * TASA_IVA),2);
 						$ParcTotal			= $ParcInt + $ParcIVA + $ParcCap + $ParcAho + $ParcOtros + $mora + $penas + $IvaOtros;
 						//setLog("$ParcInt + $ParcIVA + $ParcCap + $ParcAho + $ParcOtros + $mora + $penas");
 					} else {

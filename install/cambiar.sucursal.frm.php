@@ -1,4 +1,6 @@
 <?php
+
+/*
 $mSuc			= ( isset($_GET["s"]) ) ? $_GET["s"] : "";
 if ( $mSuc != ""){
 	$fConfig	= "/home/sipakal/htdocs/core/core.config.os.lin.inc.php";
@@ -27,4 +29,5 @@ if ( $mSuc != ""){
 	fclose($fw);
 	exit($fConfig);
 }
+*/
 ?>

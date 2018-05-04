@@ -39,7 +39,7 @@ $grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, 
 $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
 $usuario	= parametro("usuario", 0, MQL_INT);
-
+$strExt		= " getFechaByInt(`sistema_eliminados`.`tiempo`) = '\" + idfecha + \"' ";
 $xHP->addJTableSupport();
 
 $xHP->init();
@@ -49,7 +49,7 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
 $ByUser		= ($usuario <= 0) ? "" : " WHERE `sistema_eliminados`.`idusuario` = $usuario ";
-
+$strExt		= ($usuario <= 0) ? $strExt : " AND $strExt ";
 
 $xHG	= new cHGrid("iddiveliminados",$xHP->getTitle());
 
@@ -86,6 +86,8 @@ echo $xFRM->get();
 <script>
 var xG	= new Gen();
 var xF	= new FechaGen();
+
+
 function jsEdit(id){
 	xG.w({url:"../frmsecurity/eliminados.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiveliminados});
 }
@@ -100,7 +102,8 @@ function jsVerContenido(id){
 }
 function jsSetFiltro(){
 	var idfecha	= xF.get($("#idfechaactual").val());
-	var str 	= " getFechaByInt(`sistema_eliminados`.`tiempo`) = '" + idfecha + "' ";
+	var str 	= "<?php echo $strExt; ?>";
+	
 	str			= "&w="  + base64.encode(str);
 
 	$('#iddiveliminados').jtable('destroy');

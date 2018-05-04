@@ -18,6 +18,7 @@ $cT			= new cTipos();
 $xRuls		= new cReglaDeNegocio();
 $msg		= "";
 $jxc 		= new TinyAjax();
+$xSel		= new cHSelect();
 
 $persona	= (isset($_GET["i"])) ? $_GET["i"] : false;		//CLAVE
 $f 			= (isset($_GET["f"])) ? $_GET["f"] : false;		//form dependiente
@@ -76,7 +77,7 @@ function jsaGetListadoDeProductos(){
 	$cDE->setOptionSelect(DEFAULT_TIPO_CONVENIO);
 	return $cDE->get("", false);
 }
-function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0){
+function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $sucorigen=""){
 	$strTbls			= "";
 	$ByForm				= false;
 	$MostrarGars		= true;
@@ -84,15 +85,18 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	$sqlL				= new cSQLListas();
 	$xFil				= new cTiposLimpiadores();
 	$xUser				= new cSystemUser();
+	$xVals				= new cReglasDeValidacion();
 	$WSoc				= "";
 	$WPrel				= "";
 	$extras				= "";
 	$xIc				= new cHImg();
 	$xT					= new cTipos();
 	$todos				= $xT->cBool($todos);
-	$w1					= ($todos == true) ? "" : " (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
+	$w1					= ($todos == true) ? "" : " AND (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
+	
+	
 	if($tipoingreso > 0){
-		$w1				= " (tipoingreso=$tipoingreso) ";
+		$w1				= " AND (tipoingreso=$tipoingreso) ";
 	}
 	if ( $tipo_de_busqueda == "nc" ){
 		$ByForm			= true;
@@ -103,12 +107,17 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	//if(OPERACION_LIBERAR_SUCURSALES == false){
 		$extras			= ", `socios_general`.`sucursal` ";
 	//}
-	
+	if($xVals->sucursal($sucorigen) == true){
+		$w1				.= " AND (`socios_general`.`sucursal`='$sucorigen') ";
+	}
+		
 	$buscar				= ( ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0")) AND ($idinterno =="") ) ? false : true;
 	if ($buscar == false) {
-		$sqllike = $sqlL->getListadoDeSocios($w1, "0,50", $extras);
+		$sqllike = $sqlL->getListadoDePersonasV2($w1, "0,50", $extras);
 		$table_s = new cTabla($sqllike);
 		$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo");
+		$table_s->setEventKey("var xP=new PersGen();xP.goToPanel");
+		
 		$strTbls .= $table_s->Show();
 	} else {
 		$texto 		= trim($texto);
@@ -200,10 +209,11 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 			$strTbls .= $table_s->Show("TR.CREDITOS");
 		} else {
 			if($todos == true){$WSoc = " `socios_general`.`codigo` >0 $WSoc ";}
-			$sqllike = $sqlL->getListadoDeSocios($w1 . $WSoc, "0,100", $extras);
+			$sqllike = $sqlL->getListadoDePersonasV2($w1 . $WSoc, "0,100", $extras);
 			$table_s = new cTabla($sqllike);
-			$table_s->setEventKey("setSocio");
+			//$table_s->setEventKey("setSocio");
 			$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo");
+			$table_s->setEventKey("var xP=new PersGen();xP.goToPanel");
 			//$table_s->OButton("TR.PANEL", 'jsToPanel(_REPLACE_ID_)', $table_s->ODicIcons()->CONTROL );
 
 			$strTbls .= $table_s->Show();
@@ -215,7 +225,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 function jsaSetSocioEnSession($socio){	getPersonaEnSession($socio); }
 
 
-$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso"), "#divresultado");
+$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso", "idsucursalorigen"), "#divresultado");
 $jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaSetSocioEnSession', array("idsocio"));
@@ -236,7 +246,9 @@ $xChk		= new cHCheckBox();
 $xChk->setDivClass("");
 $xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
 $xFRM->addToolbar($xChk->get("TR.TODO", "idtodo", true));
-$xFRM->OButton("TR.EJECUTAR BATCH", "jsEjecutarBatch()", $xFRM->ic()->EJECUTAR);
+
+$xFRM->OButton("TR.MODIFICAR BATCH", "jsEjecutarBatch()", $xFRM->ic()->EJECUTAR, "idmodbatch", "green");
+$xFRM->OButton("TR.EXPORTAR", "jsEjecutarExportar()", $xFRM->ic()->EJECUTAR, "idexp", "blue2");
 
 $xTxt->addEvent("jsGetPersonasByKey(this)", "onkeyup");$xTxt2->addEvent("jsGetPersonasByKey2(this)", "onkeyup");
 $xTxt->setDivClass("");
@@ -254,6 +266,7 @@ $xHSel->setDivClass("");
 $xHSel->addEvent("jsMostrarOpciones()", "onchange");
 $xFRM->OHidden("idsocio", $persona);
 $xFRM->addSeccion("idopciones", "TR.BUSCAR PERSONAS");
+
 if($BuscarConID == true){
 	$xTxt2->setDivClass("");
 	$lbl	= $xTxt2->getLabel("TR.IDINTERNO");
@@ -264,13 +277,19 @@ if($BuscarConID == true){
 	$xFRM->addDivMedio($xHSel->get("idtipobusqueda", "Buscar por :", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, "TR.Texto de busqueda"), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));
 }
 
+$xSelSuc	= $xSel->getListaDeSucursales("idsucursalorigen");
+$xSelSuc->addVacio(true);
+$xFRM->addHElem($xSelSuc->get(true));
+
+
 $xFRM->ODate("idfechainicial", false, "TR.FECHA_INICIAL");
 $xFRM->ODate("idfechafinal", false, "TR.FECHA_FINAL");
 
 $xFRM->endSeccion();
 //Opciones de cambios
 $xFRM->addSeccion("idsec", "TR.OPCIONES DE CAMBIO");
-$xSel		= new cHSelect();
+
+
 $xSelSuc	= $xSel->getListaDeSucursales("idsucursal");
 $xSelSuc->addEspOption(SYS_TODAS, "-");
 $xSelSuc->setOptionSelect(SYS_TODAS);
@@ -326,6 +345,11 @@ function jsMostrarOpciones() {
 		$("#idbusqueda").html("<label for='idtextobusqueda'>Texto de Busqueda</label><input name='idtextobusqueda' id='idtextobusqueda' type='text' value='<?php echo $persona; ?>' onkeyup='jsGetPersonasByKey(this)' />");
 	}
 }
+
+
+
+
+
 function jsAddCola(id, obj){
 	console.log(id);
 	if (obj.checked == true) {
@@ -345,7 +369,19 @@ function jsSetUpdate(obj){
 	xG.markTR({src:obj});
 }
 function jsEjecutarBatch(){
-	xG.confirmar({msg: "Desea ejecutar la actualizacion masiva?", callback: jsEjecutarBatchReady});
+	xG.confirmar({msg: "¿ Desea ejecutar la actualizacion masiva ?", callback: jsEjecutarBatchReady});
+}
+function jsEjecutarExportar(){
+	xG.confirmar({msg: "¿ Desea ejecutar la actualizacion masiva ?", callback: jsEjecutarExportReady});
+}
+function jsEjecutarExportReady(){
+	for (var itms in OListas) {
+		var idpersona	= OListas[itms];
+		xG.svc({ url : "../svc/pc.svc.php?cmd=EXPORT&persona=" + idpersona, 
+			callback : function(data){
+				xG.alerta({ msg: data.message });
+			} });
+	}
 }
 function jsEjecutarBatchReady(){
 	var idsucursal	= $("#idsucursal").val();

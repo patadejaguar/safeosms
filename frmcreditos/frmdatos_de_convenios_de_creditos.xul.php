@@ -113,6 +113,7 @@ $xFRM->OButton("TR.Requisitos", "jsRequisitos()", $xFRM->ic()->CONTROL);
 $xFRM->OButton("TR.Etapas", "jsEtapas()", $xFRM->ic()->CONTROL);
 $xFRM->OButton("TR.Promociones", "jsPromociones()", $xFRM->ic()->CONTROL);
 $xFRM->OButton("TR.FORMS_Y_DOCS", "jsFormatos()", $xFRM->ic()->FORMATO);
+$xFRM->addCerrar();
 
 $xSProd	= $xSel->getListaDeProductosDeCredito();
 $xSProd->addEvent("onblur", "jsLoadInit()");

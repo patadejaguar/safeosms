@@ -234,7 +234,7 @@ if ( $xCred->isAFinalDePlazo() == false ){
 		//================= Si se usa intereses de la BD
 		if($useMoraBD == true){
 			if($pago_total == true){
-				if($xLetra->initSuma() == true){
+				if($xLetra->initSuma($fecha_operacion) == true){
 					$interes_moratorio		= $xLetra->getMora();
 					$interes_normal			= $xLetra->getInteres();
 					
@@ -690,10 +690,6 @@ $cargos_mora	= $gastos_de_cobranza_calculado + $interes_moratorio;
 		$SEsp = $cEsps->show();
 $xBtn		= new cHButton();
 
-//$xFRM->OButton("TR.Guardar Pago", "FormSucess()", $xFRM->ic()->GUARDAR, "idsave", "green");
-
-//$xFRM->OButton("TR.Ajustar", "jsGetPagoAjustado()", $xFRM->ic()->EDITAR, "idajust", "editar");
-
 if($cargos_mora > 0){
 	$xFRM->OButton("TR.SIN MORA", "jsEliminarCargos()", $xFRM->ic()->RESTAR, "idsinmora", "white");
 }
@@ -832,6 +828,7 @@ function getTotal(){
 	if(window.parent){
 		if(window.parent.document.getElementById("idobservaciones")){ $("#idobservaciones").val(window.parent.document.getElementById("idobservaciones").value);	}
 		if(window.parent.document.getElementById("cheque")){ $("#idcheque").val(window.parent.document.getElementById("cheque").value); 	}
+		if(window.parent.jsFrameTotalActualizado){ window.parent.jsFrameTotalActualizado(); }
 	}
 }
 function FormSucess(){
@@ -873,7 +870,8 @@ function terminarCaptura() {
 	if (procesar== SYS_AUTOMATICO) {
 		Frm.submit();
 	} else {
-		xG.confirmar({msg:"¿ Confirma guardar el Pago ?", callback: setEnvioConfirmado, cancelar : setEnvioNoConfirmado, close : setEnvioNoConfirmado});
+		var idmny	= Configuracion.moneda.simbolo + " " + getFMoney(jsGetTotal());
+		xG.confirmar({msg:"¿ Confirma guardar el Pago por " + idmny + " ?", callback: setEnvioConfirmado, cancelar : setEnvioNoConfirmado, close : setEnvioNoConfirmado});
 	}
 }
 function setEnvioNoConfirmado(){
@@ -882,7 +880,6 @@ function setEnvioNoConfirmado(){
 	}	
 }
 function setEnvioConfirmado(){
-	//xG.desactiva("#idsave");
 	if(window.parent.jsRemoveSave){
 		window.parent.jsRemoveSave();
 	}

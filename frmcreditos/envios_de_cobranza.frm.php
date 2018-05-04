@@ -12,7 +12,7 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Envios de Cobranza", HP_FORM);
+$xHP		= new cHPage("TR.Envios de Nomina", HP_FORM);
 $jxc 		= new TinyAjax();
 $xCaja		= new cCaja();
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
@@ -37,28 +37,42 @@ function jsaInitEmpresa($empresa){
 	
     return $tab -> getString();  	
 }
-function jsaInitPeriodo($empresa, $periocidad, $periodo){
+function jsaInitPeriodo($empresa, $periocidad, $periodo, $variacion){
+	$empresa			= setNoMenorQueCero($empresa);
+	$periocidad			= setNoMenorQueCero($periocidad);
+	$periodo			= setNoMenorQueCero($periodo);
+	$variacion			= setNoMenorQueCero($variacion);
+	$periodoAnterior	= setNoMenorQueCero( ($periodo-1) );
+	
 	$xF					= new cFecha();
-	$xEmp				= new cEmpresas($empresa); $xEmp->init();
+	$xEmp				= new cEmpresas($empresa);
 	$tab 				= new TinyAjaxBehavior();
-	$DPer				= $xEmp->getOPeriodo($periocidad);
-	$xPers				= new cEmpresasCobranzaPeriodos();
-	$xPers->initByDatos($empresa, $periocidad, $periodo, false);
+	$xPer				= new cEmpresasCobranzaPeriodos();	//Periodo Actual
+	$xPerA				= new cEmpresasCobranzaPeriodos();	//Periodo Anterior
+	$fechaInicial		= false;
+	$fechaFinal			= false;
 	
-	$empPeriodo			= $xEmp->getPeriodo();
-	
-	if($periodo > $empPeriodo){
-		$fechaInicial	= $xEmp->getFechaDeAviso($periocidad, false, $periodo, $periodo + 1);
-		//setError($fechaInicial);
-	} else {
-		$dias_dif		= setNoMenorQueCero($periodo - $empPeriodo );
-		$starD			= ($periocidad * $dias_dif) + 1;
-		$fechaInicial	= $xF->setSumarDias($starD, $DPer->fecha_final()->v());
+	if($xEmp->init() == true){
+		if($xPerA->initByDatos($empresa, $periocidad, $periodoAnterior, false) == true){
+			$fechaInicial	= $xF->setSumarDias(1, $xPerA->getFechaFinal());
+			$fechaFinal		= $xF->setSumarDias($periocidad, $fechaInicial);
+		}
+		//Fecha
+		if($xPer->initByDatos($empresa, $periocidad, $periodo, false) == true){
+			$fechaInicial	= $xPer->getFechaInicial();
+			$fechaFinal		= $xPer->getFechaFinal();
+		}
+		//Si la fecha Inicial es False
+		if($fechaInicial === false){
+			$fechaInicial	= $xEmp->getFechaDeAviso($periocidad, false, $periodo);
+			$fechaFinal		= $xF->setSumarDias($periocidad, $fechaInicial);
+		}
+		
+		if($fechaFinal !== false AND $fechaInicial !== false){
+			$tab->add(TabSetvalue::getBehavior("idfecha-10",  $xF->getFechaMX($fechaInicial, "-") ));
+			$tab->add(TabSetvalue::getBehavior("idfecha-11",  $xF->getFechaMX($fechaFinal, "-") ));
+		}
 	}
-	$fechaFinal			= $xF->setSumarDias($xEmp->getPeriocidadPref(), $fechaInicial );
-	
-	$tab -> add(TabSetvalue::getBehavior("idfecha-10",  $xF->getFechaMX($fechaInicial, "-") ));
-	$tab -> add(TabSetvalue::getBehavior("idfecha-11",  $xF->getFechaMX($fechaFinal, "-") ));
 	
 	return $tab -> getString();	
 }
@@ -72,10 +86,15 @@ function jsaGetCobranza($empresa, $periocidad, $variacion, $periodo, $fechaInici
      
     $xEmp			= new cEmpresas($empresa);
     $periodoReal	= $periodo + $variacion;
-    $xPer			= $xEmp->getOPeriodo($periocidad, $periodoReal, false, $fechaInicial);
     $DDias			= $xEmp->getFechaDeAviso();
-	if($xPer->getCobrados() > 0){
-		$content	= $xNot->get("ERROR\tLa nomina tiene cobros " . $xPer->getCobrados() . " ACTIVOS ", "iderror", $xNot->ERROR);
+    
+    $cobrados		= 0;
+    $xPerEmp		= new cEmpresasCobranzaPeriodos();
+    if($xPerEmp->initByDatos($empresa, $periocidad, $periodo, $fechaInicial) == true){
+    	$cobrados	= $xPerEmp->getCobrados();
+    }
+	if($cobrados > 0){
+		$content	= $xNot->get("ERROR\tLa nomina tiene cobros " . $cobrados . " ACTIVOS ", "iderror", $xNot->ERROR);
 	} else {
 		$content	= $xEmp->getListadoDeCobranza($empresa, $periocidad, $variacion, $periodo, $fechaInicial, $fechaFinal);
 	}
@@ -84,7 +103,6 @@ function jsaGetCobranza($empresa, $periocidad, $variacion, $periodo, $fechaInici
     return $content;
     
 }
-
 function jsaGetCobranzaFutura($empresa, $periocidad, $variacion, $periodo, $fechaInicial, $fechaFinal){ }
 function jsaGetEmailsEmpresa($idEmpresa, $periocidad, $variacion, $periodo){
     $xEmp	= new cEmpresas($idEmpresa); $xEmp->init();
@@ -280,14 +298,14 @@ function jsaSetCambiarFechaMinistracion($credito, $dia, $mes, $anno){
 }
 
 $jxc ->exportFunction('jsaInitEmpresa', 		array("idcodigodeempresas"));
-$jxc ->exportFunction('jsaInitPeriodo', 		array("idcodigodeempresas", "idperiocidad", "idperiodo"));
+$jxc ->exportFunction('jsaInitPeriodo', 		array("idcodigodeempresas", "idperiocidad", "idperiodo","idvariacion"));
 $jxc ->exportFunction('jsaGetDatosEmpresa', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idfecha-10"), "#divperiodo");
 $jxc ->exportFunction('jsaGetCobranza', 		array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idfecha-10", "idfecha-11"), "#reports");
 $jxc ->exportFunction('jsaGetCobranzaFutura', array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idfecha-10", "idfecha-11"), "#cbzafutura");
 $jxc ->exportFunction('jsaGetEmailsEmpresa', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo"));
 $jxc ->exportFunction('jsaGetDatosDelEnvio', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo"));
 $jxc ->exportFunction('jsaSetNominaCerrada', 	array("idcodigodeempresas", "idperiocidad", "idvariacion", "idperiodo", "idsuma", "idobservaciones", "idfecha-10", "idfecha-11", "idfecha-12"), "#idnomina");
-$jxc ->exportFunction('jsaGetContarPeriodo', 	array("idcodigodeempresas", "idperiocidad", "idperiodo", "idvariacion", "idfecha-10"), "#idmsg");
+$jxc ->exportFunction('jsaGetContarPeriodo', 	array("idcodigodeempresas", "idperiocidad", "idperiodo", "idvariacion", "idfecha-10"), "#idmsgs");
 
 $jxc ->process();
 
@@ -303,9 +321,10 @@ $xBTN4		= new cHButton();
 
 $xFRM->setTitle($xHP->getTitle());
 
-$xFRM->OButton("TR.Obtener Listado", "jsGetCobranza()", "refrescar", "idgetcbza") ;
-$xFRM->addToolbar( $xBTN4->getBasic("TR.Finalizar Nomina", "jsFinalizarNomina()", "finalizar", "idcierrereporte", false) );
-$xFRM->OButton("TR.Enviar Listado", "getObtenListado()", "lista", "idlistado") ;
+$xFRM->OButton("TR.Obtener EMPLEADOS", "jsGetCobranza()", "refrescar", "idgetcbza", "blue") ;
+$xFRM->OButton("TR.Finalizar Nomina", "jsFinalizarNomina()", $xFRM->ic()->CERRAR, "idcierrereporte", "orange");
+
+$xFRM->OButton("TR.Enviar CORREO_ELECTRONICO", "jsSendMail()", "lista", "idlistado") ;
 $xFRM->OButton("TR.estado_de_cuenta", "jsPrintEstadoCuenta()", "reporte", "idedo") ;
 
 $xFRM->OButton("TR.Ver Listado", "getReporteEnPantalla()", "reporte", "idverreporte");
@@ -314,7 +333,7 @@ $xFRM->OButton("TR.Ver en Excel", "getReporteEnExcel()", $xFRM->ic()->EXCEL, "id
 $xFRM->OButton("TR.Ver en PDF", "getReporteEnPDF()", $xFRM->ic()->PDF, "idverreportepdf");
 //$xFRM->OButton();
 
-
+$xFRM->addCerrar();
 
 //$xFRM->addFootElement('<input type="hidden" id="idsumacbza" value="0" />');
 $xFRM->OHidden("idsumacbza", 0);
@@ -353,12 +372,13 @@ $xFRM->addHElem( $xSPer->get(true));
 
 $xFRM->addHElem('<div class="tx4 tx18 red" id="divperiodo"><label for="idperiodo">Periodo</label><input type="number" id="idperiodo" onfocus="jsInitPeriodoGaia()" onblur="jsInitPeriodoGaia()" />	</div>');
 
-$xFRM->addHElem('<div class="tx4 tx18 orange"><label for="idvariacion">Variaci&oacute;n</label>
+$xFRM->OHidden("idvariacion", 0);
+/*$xFRM->addHElem('<div class="tx4 tx18 orange"><label for="idvariacion">Variaci&oacute;n</label>
 	    <select id="idvariacion" name="idvariacion" onchange="jsGetCobranza()">
 		<option value="-2">[-2]Dos Periodos Atras</option><option value="-1">[-1]Un Periodo Atras</option><option value="0" selected="selected">Periodo Actual</option>
 		<option value="1">[+1]Un Periodo Adelante</option><option value="2">[+2]Dos Periodos Adelante</option><option value="3">[+3]Tres Periodos Adelante</option>
 	    </select>
-	</div>');
+	</div>');*/
 $HFecha->setDivClass("tx14 tx18 green");
 
 $xFRM->addHElem( $HFecha->get("TR.Fecha_Inicial", false, 10) );
@@ -373,16 +393,14 @@ $xFRM->addSeccion("idx2", "TR.COBRANZA");
 $xFRM->addHTML('<hr id="divavisos" /><div id="reports"></div><input type="hidden" id="idcredito" /><div id="cbzafutura"></div>');
 $xFRM->endSeccion();
 
-$xFRM->addAviso("", "idmsg");
+$xFRM->addAviso("");
 echo $xFRM->get();
 ?>
 
-	<div class="inv" id="irecibos">
+	<div class="inv" id="idenvnomina">
 	<?php
-		$xFRM4	= new cHForm("idcobranza");	
-		
-		$xFRM4->addToolbar( $xBTN4->getBasic("TR.Enviar Listado", "getReporteEnMail()", "email", "idverreporte", false) );
-		
+		$xFRM4	= new cHForm("idfrmcobranza");	
+		$xFRM4->OButton("TR.Enviar", "jsPreguntarSiEnviaMail()", $xFRM4->ic()->EMAIL, "idverreporte", "blue");
 		$xFRM4->addHTML("<div id=\"personas-de-envio\"></div>");
 		$xFRM4->addHElem( $txt->getEmail("idmail1", "", "TR.correo_electronico destinatario 1"));
 		$xFRM4->addHElem( $txt->getEmail("idmail2", "", "TR.correo_electronico destinatario 2"));
@@ -390,8 +408,9 @@ echo $xFRM->get();
 		
 		$xFRM4->addHElem( $txt->getEmail("idmail4", "", "TR.correo_electronico destinatario 4"));
 		$xFRM4->addHElem( $txt->getEmail("idmail5", "", "TR.correo_electronico destinatario 5"));
+		$xFRM4->OTextArea("idnotasenvio", "", "TR.NOTAS DEL ENVIO");
 		
-		$xFRM4->addAviso("");
+		
 		echo $xFRM4->get();
 				
 	?>
@@ -463,14 +482,22 @@ function jsGetEsManejable(idp){
 	}
 	return is;
 }
-function jsSetCobranza(){ getModalTip(idFortips2, $("#itesofe"), "Datos del Pago"); }
-function jsCargarDatosIniciales(){	currNomina = 0; jsaInitEmpresa(); setTimeout("jsaGetDatosEmpresa()",500);	}
+function jsSetCobranza(){ 
+	getModalTip(idFortips2, $("#itesofe"), "Datos del Pago");
+	 
+}
+function jsCargarDatosIniciales(){	
+	currNomina = 0;
+	xG.postajax("jsaGetDatosEmpresa()"); 
+	jsaInitEmpresa(); 
+}
 function jsCancelLockPeriodo(){ $(idFortips).qtip("hide"); }
 function setOcultar(id) {    $("#options-" + id).parent().css("display", "none"); }
 function jsGetCobranza(){    
 	$("#idobservaciones").focus();   
 	xG.spinInit();
-	jsResetCbza(); jsaGetDatosDelEnvio();  
+	jsResetCbza(); 
+	jsaGetDatosDelEnvio();  
 	setTimeout("jsGetCobranzaStep2()",1500);
 	jsaGetContarPeriodo();
 	xG.postajax("jsaOnEndLoad()");
@@ -479,11 +506,24 @@ function jsaOnEndLoad(){
 	xG.spinEnd();
 }
 
-function jsGetCobranzaStep2(){ jsaGetCobranza(); jsaGetCobranzaFutura(); /*establecer Numero y monto original*/ setTimeout("setEstablacerSumasIniciales()",2000); }
+function jsGetCobranzaStep2(){ 
+	jsaGetCobranza();
+	jsaGetCobranzaFutura(); 
+	/*establecer Numero y monto original*/ 
+	setTimeout("setEstablacerSumasIniciales()",2000); 
+}
+
 function getEstadoDeCuenta(idcredito) {  var url = "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + idcredito ;    xg.w({ url : url, w : 800, h : 600 }); }
-function getObtenListado(){    jsaGetEmailsEmpresa();    xg.tipModal({	element : "#divperiodo",	title : "Obtener recibos",	msg : $("#irecibos")	}); }
+
 function jsSaveExcel() {    tableToExcel( document.getElementById("sqltable")); }
-function jsGetCobranzaDay(){ getCorteDeRecibos(); }
+function jsGetCobranzaDay(){
+	var idnm	= entero($("#idnomina").val());
+	if(idnm > 0){
+		getCorteDeRecibos();
+	} else {
+		xG.alerta({msg : "NOMINA_PERIODO_REQ"});
+	}	
+}
 function desvincular(credito){ $("#idcredito").val(credito); $("#options-" + credito).parent().css("display", "none");	xg.w({	url : "../frmcreditos/nominas.desvincular.frm.php?credito=" + credito,	w : 600, h: 400, tiny : true, callback: jsGetCobranza }); }
 function jsActualizarMinistracion(credito){ $("#idcredito").val(credito); var vId		= "#pk-" + credito; getModalTip(vId, $("#frmac"), "Actualizar Fecha de Ministracion"); }
 function setEstablacerSumasIniciales(){ if ( $("#sum-monto").length > 0 ) { sumaOriginal	= 0; numOriginal		= 0; } }
@@ -507,6 +547,19 @@ function jsResetCbza() {
     $("#reports").empty();
 }
 
+function jsSendMail(){
+	var idnm	= entero($("#idnomina").val());
+	if(idnm > 0){
+		xG.postajax("jsShowMail()");
+		jsaGetEmailsEmpresa();
+	} else {
+		xG.alerta({msg : "NOMINA_PERIODO_REQ"});
+	}
+}
+function jsShowMail(){
+	xG.winTip({content: $("#idenvnomina"), title : "Obtener recibos" });
+}
+
 function jsFinalizarNomina() {
     var monto	= $("#idsuma").val();
     var isCont	= true;
@@ -515,8 +568,11 @@ function jsFinalizarNomina() {
     	currNomina = 0;
     	var sip		= confirm("Desea establecer como monto " + monto + " definitivo para Cobrar?\nOperaciones Generadas:\nAgregar Operacion a la Empresa.\nRegistrar el Periodo como Activo.");
     	if (sip == true) {	
+        	xG.postajax("jsToGuardarRecibos()");
+			xG.verControl("idcierrereporte");
+        	
         	jsaSetNominaCerrada(); 
-    		setTimeout("jsToGuardarRecibos()", 4500); 
+    		 
     	}
     }
 }
@@ -531,6 +587,7 @@ function jsSetAlimentarEnvio(obj, id) {
     var vari	= entero($("#idvariacion").val());
     var periodo	= entero($("#idperiodo").val());
     periodo		= periodo+vari;
+    var itms	= entero($("#idconteo").val());
     
 	if (obj.checked == true) {	
 		$("#periodo-" + id).prop("disabled", true);
@@ -542,16 +599,16 @@ function jsSetAlimentarEnvio(obj, id) {
 		//Validar que existe en otra nomina
 		xCred.getCheckLetraEnvioAnt({credito : credito, letra : letra, periodo:periodo, empresa:idr, frecuencia: freq , callback : setReverseCheck2});
 		$("#idsuma").val( redondear( flotante($("#idsuma").val()) + flotante(monto)) );
-		$("#idconteo").val( redondear($("#idconteo").val()) +  redondear(letra));
+		$("#idconteo").val( (itms + 1) );
 	} else {
 		$("#periodo-" + id).prop("disabled", false);
 		$("#monto-" + id).prop("disabled", false);
 		$("#notas-" + id).prop("disabled", false);
 		delete ordenCbza[id];
 		$("#idsuma").val( redondear(flotante($("#idsuma").val()) - flotante(monto)) );
-		$("#idconteo").val( redondear($("#idconteo").val()) -  redondear(letra));		
+		$("#idconteo").val((itms - 1) );		
 	}
-	xg.letras({ id : "idenletras", monto : $("#idsuma").val()	});
+	xG.letras({ id : "idenletras", monto : $("#idsuma").val()	});
 }
 function setReverseCheck2(iserr, idcredito){
 	if(iserr == true){
@@ -582,14 +639,15 @@ function jsToGuardarRecibos(){
     var iF2		= $("#idfecha-11").val();
 	var iF3		= $("#idfecha-12").val();
 	var idnom	= entero($("#idnomina").val());
+	
 	//Corrige el numero de periodo
 	periodo		= periodo+vari;
 	var spinner	= null;
 	
 	if(idnom <= 0){
-		alert("La NOMINA (" + idnom + ") no es Valida... espere unos segundos!");
+		xG.alerta({ msg:"La NOMINA (" + idnom + ") no es Valida... espere unos segundos!" });
+		xG.postajax("jsToGuardarRecibos()");
 		jsaSetNominaCerrada();
-		setTimeout("jsToGuardarRecibos()", 3500);
 	} else {
 		var cnt		= 1;
 		var siz		= Object.keys(ordenCbza).length;
@@ -618,19 +676,19 @@ function jsToGuardarRecibos(){
 						
 						if(cnt >= siz){
 							$(document.body).spin("modal").stop();		//spin
-							alert("Nomina Finalizada");
+							xG.requiere({ msg :"Nomina Finalizada", title : "Tarea terminada" });
 							currNomina = $("#idnomina").val();
-							$("#idnomina").val('');
+							//$("#idnomina").val('');
 							getReporte();
 						}
 						cnt++;
 					} else {
-						alert("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+						xG.requiere({msg : "NOMINA_PERIODO_REQ"});
 					}
 				}
 			});
 	    } else {
-	    	alert("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!222");
+	    	xG.requiere({msg : "NOMINA_PERIODO_REQ"});
 	    }
 	  }
 	}
@@ -646,20 +704,30 @@ function getReporte( strOtros ){
     var periodo	= entero($("#idperiodo").val());
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
-    var periodo	= periodo+vari;
-    var idnom	= currNomina;
-    var url		= "../rptcreditos/orden_de_cobranza.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2 + "&nomina=" + idnom + "" + strOtros;
-    xg.w({ url : url, w : 800, h : 600 });
+    
+	var idnm	= entero($("#idnomina").val());
+	if(idnm > 0){
+	    var periodo	= periodo+vari;
+	    var idnom	= currNomina;
+	    var url		= "../rptcreditos/orden_de_cobranza.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2 + "&nomina=" + idnom + "" + strOtros;
+	    xG.w({ url : url, full:true,blank:true});
+	} else {
+		xG.alerta({msg : "NOMINA_PERIODO_REQ"});
+	} 
+    
 }
-
+function jsPreguntarSiEnviaMail(){
+	xG.confirmar({msg : "MSG_CONFIRMA_ENVIO", callback: getReporteEnMail});
+}
 function getReporteEnMail(){
     var idr		= $("#idcodigodeempresas").val();
     var per		= $("#idperiocidad").val();
     var vari	= entero($("#idvariacion").val());
     var obs 	= $("#idobservaciones").val();
     var periodo	= entero($("#idperiodo").val());
-    var mail	= $("#idmail1").val();
+    var notaenv	= $("#idnotasenvio").val();
     
+    var mail	= $("#idmail1").val();
     var mail2	= $("#idmail2").val();
     var mail3	= $("#idmail3").val();
     var mail4	= $("#idmail4").val();
@@ -669,10 +737,12 @@ function getReporteEnMail(){
     var iF2		= $("#idfecha-11").val(); 
     var idnom	= currNomina; 
     var periodo	= periodo+vari;
+    obs			= obs + ". " + notaenv;
+    
     
     var url	= "../rptcreditos/orden_de_cobranza.rpt.php?out=email&r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&email1=" + mail + "&email2=" + mail2 + "&email3=" + mail3 + "&email4=" + mail4+ "&email5=" + mail5 + "&on=" + iF1 + "&off=" + iF2 + "&nomina=" + idnom;
-
-    xg.pajax({
+	xG.spinInit();
+    xG.pajax({
 	url : url, result : "json",
 		callback : function(data){
 			try { data = JSON.parse(data); } catch (e){}
@@ -680,11 +750,13 @@ function getReporteEnMail(){
 			var dat	=  data[rw];
 			alert(dat);
 			}*/
+			xG.spinEnd();
 			if (typeof data != "undefined") {
-				alert(data.message);
+				xG.aviso({msg:data.message , tipo: "ok"});
 			} else {
-				alert("ERROR AL ENVIAR NOMINA");
+				xG.aviso({msg:"ERROR AL ENVIAR NOMINA", tipo: "error"});
 			}
+			
 		}
 	});
 }
@@ -713,10 +785,16 @@ function getRecibo(){
     var obs 	= $("#idobservaciones").val();
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
-    var periodo	= periodo+vari;
-    var idnom	= currNomina;
-    var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2  + "&nomina=" + idnom;
-    xg.w({ url : url, w : 800, h : 600 });
+
+	var idnm	= entero($("#idnomina").val());
+	if(idnm > 0){
+	    var periodo	= periodo+vari;
+	    var idnom	= currNomina;
+	    var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + periodo + "&on=" + iF1 + "&off=" + iF2  + "&nomina=" + idnom;
+	    xG.w({ url : url, full:true,blank:true});
+	} else {
+		xG.alerta({msg : "NOMINA_PERIODO_REQ"});
+	} 
 }
 function generarPlanDePagos(credito) {
     var sURL = '../frmcreditos/frmcreditosplandepagos.php?r=1&credito=' + credito;
@@ -742,12 +820,12 @@ function jsGetRecibosByCredito(credito) {
     	xg.pajax({
 		url: "../frmoperaciones/recibos.svc.php?persona=" + mObj.persona + "&documento=" + mObj.credito + "&mx=true&fecha=" + ff,
 		finder: "recibo",
-		callback : function(obj, final){
+		callback : function(obj, finl){
 			//alert("ITEMS >>>> "  + final);
 			//ht	+= "<a onclick=\"setSocio(" + $(obj).attr("codigo") + ")\">" + $(obj).attr("codigo") + "-" + $(obj).text() + "</a><br />";
 			ht	+= "<a>RECIBO :" +  $(obj).attr("codigo") + " - Monto :<mark>" + $(obj).text() + "</mark></a></br>";
 			//alert($(evt).attr("codigo"));
-			if (final == true) {
+			if (finl == true) {
 				//$(myId).qtip("hide");
 				tipSuggest(myId, "" + ht + "");
 			}
@@ -763,6 +841,6 @@ function jsEditarEnvioPorCredito(credito) {
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);
-$xHP->setBodyEnd();
+
 $xHP->end();
 ?>

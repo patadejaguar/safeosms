@@ -281,6 +281,7 @@ class cReporteCirculoDeCredito_tipo {
 		$xFI	= new cFileImporter();
 		$arrR	= array(",", "-", ".", "|");
 		$xT->setForceMayus();
+		$txt 	= $xT->setNoAcentos($txt);
 		$txt	= $xT->cChar($txt);
 		if($serializar != false){
 			$txt	= $xT->cSerial($serializar, $txt);

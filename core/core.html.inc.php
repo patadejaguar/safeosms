@@ -404,6 +404,8 @@ class cHPage {
 			case HP_FORM:
 				//$this->addCSS("$path/css/grid960.css");
 				$this->addCSS($path . $this->mGeneralCSS);
+				$this->addCSS("$path/css/local.css.php");
+				
 				$this->addJsFile("$path/js/lang.js.php");
 				//$this->addJsFile("$path/js/general.js?$token");
 				
@@ -462,6 +464,7 @@ class cHPage {
 				//$this->addJsFile("$path/js/jquery/jquery.jpanelmenu.min.js");
 				//$this->addCSS("$path/css/font-awesome.min.css");
 				$this->addJsFile("$path/js/spin.min.js");
+				$this->addJsFile("$path/js/hotkeys.min.js"); //shortcut
 				$this->addJsFile("$path/js/moment.min.js");
 
 				if(defined("SAFE_LANG")){
@@ -748,11 +751,17 @@ class cHPage {
 		return $xHO->Out($msgs, OUT_HTML);
 	}
 	function goToPageError($iderror = DEFAULT_CODIGO_DE_ERROR, $out = OUT_HTML){
+		$xErr			= new cError($iderror);
+		$xErr->init();
+		//caja cerrada
+		if($iderror == 200){
+			$ff = $_SERVER['REQUEST_URI']; //$ff = parse_url($_SERVER['REQUEST_URI']);
+			$xErr->setNewError($iderror, false, $xErr->getDescription() . " - " . $ff);
+		}
 		if($out == OUT_HTML){
-			header("location:../404.php?i=$iderror");
+			$xErr->setGoErrorPage($iderror);
 			exit();
 		} else {
-			$xErr			= new cError($iderror); $xErr->init();
 			$arrResponse	= array( "codigo" => $iderror, "message" => $xErr->getDescription());
 			exit (json_encode($arrResponse));
 		}
@@ -1140,6 +1149,7 @@ class cHForm {
 		if ( $event == "" ){ $event		=  "var xG=new Gen();xG.enviar({form:'" . $this->mID . "'});"; }//$('#" . $this->mID . "').submit()
 		$this->OButton("TR.CERRAR", $eventclose, $this->ic()->CERRAR, "btn_salir", "orange");
 		$this->OButton($txtGuardar, $event, $this->ic()->GUARDAR, "btn_guardar", "green");
+		//$this->addJsInit("hotkeys('f10', function(event, handler){ event.preventDefault(); $event; });");
 	}
 	function addEnviar($txtGuardar = "", $event = "", $eventclose = ""){
 		if($txtGuardar == ""){ $txtGuardar	= $this->lang("aceptar"); }
@@ -1371,10 +1381,10 @@ class cHForm {
 	function lang($palabra, $palabra2 = ""){ return $this->l()->getTrad($palabra, $palabra2); }
 	function l(){ if($this->mLang == null){$this->mLang = new cLang();} return $this->mLang; }
 	function addPersonaComandos($clave_de_persona, $evento = SYS_NINGUNO){
-		$xBtn	= new cHButton();
-		$xEvt	= new cPersonasProceso();
-		
-		
+		$xBtn			= new cHButton();
+		$xEvt			= new cPersonasProceso();
+		$xRuls			= new cReglaDeNegocio();
+		$useDatosColeg	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
 		
 		if( getUsuarioActual(SYS_USER_NIVEL) != USUARIO_TIPO_OFICIAL_AML OR OPERACION_LIBERAR_ACCIONES == true OR MODO_DEBUG == true){
 			
@@ -1393,24 +1403,21 @@ class cHForm {
 			$this->OButton("TR.AGREGAR perfil transaccional", "var xP= new PersGen();xP.setAgregarPerfilTransaccional($clave_de_persona)", "perfil", "cmdagregartransaccional", "white");
 		}
 		$this->OButton("TR.Checklist", "var xP=new PersGen();xP.setFormaCheck($clave_de_persona);", $this->ic()->OK, "cmdchecklist", "green");
-		
-		if( getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true AND $evento !== $xEvt->REGISTRO){
-			$this->OButton("TR.Reporte de Alertas", "var xML = new AmlGen(); xML.getReporteDeAlertas($clave_de_persona)", $this->ic()->REPORTE, "idrptalertas");
-			$this->OButton("TR.Reporte de Perfil transaccional", "var xML = new AmlGen(); xML.getReporteDePerfilTransaccional($clave_de_persona)", $this->ic()->REPORTE, "idrptperfil");
-			$this->OButton("TR.Listado de Transacciones", "var xML = new AmlGen(); xML.getReporteDeTransacciones($clave_de_persona)", $this->ic()->REPORTE2, "idlistatransacciones");
-			$this->OButton("TR.Transacciones Por Nucleo", "var xML = new AmlGen(); xML.getReporteDeTransaccionesPorNucleo($clave_de_persona)", $this->ic()->REGISTROS, "cmdlistatransaccionesnucleo" );
-			
+		if(MODULO_AML_ACTIVADO == true){
+			if( getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true AND $evento !== $xEvt->REGISTRO){
+				$this->OButton("TR.Reporte de Alertas", "var xML = new AmlGen(); xML.getReporteDeAlertas($clave_de_persona)", $this->ic()->REPORTE, "idrptalertas");
+				$this->OButton("TR.Reporte de Perfil transaccional", "var xML = new AmlGen(); xML.getReporteDePerfilTransaccional($clave_de_persona)", $this->ic()->REPORTE, "idrptperfil");
+				$this->OButton("TR.Listado de Transacciones", "var xML = new AmlGen(); xML.getReporteDeTransacciones($clave_de_persona)", $this->ic()->REPORTE2, "idlistatransacciones");
+				$this->OButton("TR.Transacciones Por Nucleo", "var xML = new AmlGen(); xML.getReporteDeTransaccionesPorNucleo($clave_de_persona)", $this->ic()->REGISTROS, "cmdlistatransaccionesnucleo" );
+				
+			}
 		}
-		
 
 		if(PERSONAS_CONTROLAR_POR_APORTS == true ){
 			$this->OButton("TR.Imprimir SOLICITUDINGRESO", "var xP= new PersGen();xP.getImprimirSolicitud($clave_de_persona)", $this->ic()->IMPRIMIR, "id-solicitudingreso");
 		}
-		$this->OButton("TR.NUEVO Credito", "var xP= new PersGen();xP.addCredito($clave_de_persona)", $this->ic()->CREDITO, "cmdnewcredito", "credito");
 		
-		if(MODULO_LEASING_ACTIVADO == true){
-			$this->OButton("TR.Agregar Cotizacion LEASING", "var xP= new PersGen();xP.addLeasing($clave_de_persona)", $this->ic()->CONTROL);
-		}
+
 		if($evento !== $xEvt->REGISTRO){
 			$this->OButton("TR.Expediente", "var xP= new PersGen();xP.getExpediente($clave_de_persona)", $this->ic()->IMPRIMIR, "id-expediente");
 		}
@@ -1419,18 +1426,29 @@ class cHForm {
 			$this->OButton("TR.FORMS_Y_DOCS", "var xP=new PersGen(); xP.getFormatos($clave_de_persona);", $this->ic()->ARCHIVOS, "", "white");
 		}		
 		if(CREDITO_PRODUCTO_CON_PRESUPUESTO > 0 ){
-			$this->OButton("TR.Agregar Presupuesto", "var xP= new PersGen();xP.addPresupuesto($clave_de_persona)", $this->ic()->DINERO);
+			$this->OButton("TR.Agregar Presupuesto", "var xP= new PersGen();xP.addPresupuesto($clave_de_persona)", $this->ic()->DINERO, "cmdnewpresupuesto");
 		}
 		if(PERSONAS_CONTROLAR_POR_APORTS == true ){
 			if($evento !== $xEvt->REGISTRO){
 				$this->OButton("TR.PERFIL APORTACIONES", "var xP= new PersGen();xP.getPerfilAportaciones($clave_de_persona)", $this->ic()->CALENDARIO1);
+				
 				$this->OButton("TR.ESTADO_DE_CUENTA APORTACIONES", "var xP= new PersGen();xP.getReporteAportaciones($clave_de_persona)", $this->ic()->ESTADO_CTA);
 				$this->OButton("TR.APORTACIONES DETALLE", "var xP= new PersGen();xP.getReporteAportacionesDet($clave_de_persona)", $this->ic()->ESTADO_CTA);
 				$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_A", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5103)", $this->ic()->ESTADO_CTA);
 				$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_B", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5104)", $this->ic()->ESTADO_CTA);
 			}
 			//colegiacion Datos
-			$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->DESCARGAR);
+			$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->ESCUELA, "cmddatocolegio");
+		} else {
+			if($useDatosColeg == true){
+				$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->ESCUELA, "cmddatocolegio");
+			}
+		}
+		if($evento !== $xEvt->REGISTRO){
+			if(MODULO_LEASING_ACTIVADO == true){
+				$this->OButton("TR.NUEVO ARRENDAMIENTO", "var xP= new PersGen();xP.addLeasing($clave_de_persona)", $this->ic()->VEHICULO, "cmdnewleasing");
+			}
+			$this->OButton("TR.NUEVO Credito", "var xP= new PersGen();xP.addCredito($clave_de_persona)", $this->ic()->CREDITO, "cmdnewcredito", "credito");
 		}
 	}
 	function addCaptacionComandos($contrato, $urlcontrato = ""){
@@ -1464,11 +1482,9 @@ class cHForm {
 		
 		$this->addToolbar( $xBtn->getBasic("TR.AGREGAR GARANTIAS", "var xP= new CredGen();xP.getFormaGarantias($clave_de_credito)", "bienes", "add-garantias", false ) );
 		$this->OButton("TR.DATOS_DE_TRANSFERENCIA", "var CGen=new CredGen(); CGen.setAgregarBancos($clave_de_credito);", $this->ic()->BANCOS);
-		
-		$this->OButton("TR.Validacion", "var xGen=new CredGen(); xGen.getFormaValidacion($clave_de_credito);", $this->ic()->CHECAR, "", "green");
 		$this->OButton("TR.Agregar Memo", "var xP= new CredGen();xP.setNuevaNota($clave_de_credito)", $this->ic()->NOTA);
-		
 		$this->OButton("TR.Documentacion", "var xC=new CredGen(); xC.getDocumentos($clave_de_credito);", $this->ic()->CHECAR, "", "white");
+		$this->OButton("TR.Validacion", "var xGen=new CredGen(); xGen.getFormaValidacion($clave_de_credito);", $this->ic()->CHECAR, "", "green");
 		//Seguimiento
 		//Agregar llamada
 		//agregar compromiso
@@ -1476,12 +1492,16 @@ class cHForm {
 		switch($estatus){
 			case CREDITO_ESTADO_AUTORIZADO:
 				//orden de desembolso
-				$this->OButton("TR.REAUTORIZAR", "var xC=new CredGen(); xC.getFormaAutorizacion($clave_de_credito)", $this->ic()->AUTORIZAR);
-				$this->OButton("TR.FIRMANTES", "var xC=new CredGen(); xC.getListaDeFirmantes($clave_de_credito)", $this->ic()->LISTA);
+				$this->OButton("TR.FIRMANTES", "var xC=new CredGen(); xC.getListaDeFirmantes($clave_de_credito)", $this->ic()->LISTA, "idaddfirmante");
+				$this->OButton("TR.REAUTORIZAR", "var xC=new CredGen(); xC.getFormaAutorizacion($clave_de_credito)", $this->ic()->AUTORIZAR, "idreautorizar", "green");
+				$this->OButton("TR.RECHAZAR", "var xC=new CredGen(); xC.getFormaRechazo($clave_de_credito)", $this->ic()->PARAR,"idcmdrechazar", "purple");
 				break;
 			case CREDITO_ESTADO_SOLICITADO:
-				$this->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion($clave_de_credito)", $this->ic()->AUTORIZAR);
-				$this->OButton("TR.FIRMANTES", "var xC=new CredGen(); xC.getListaDeFirmantes($clave_de_credito)", $this->ic()->LISTA);
+				$this->OButton("TR.FIRMANTES", "var xC=new CredGen(); xC.getListaDeFirmantes($clave_de_credito)", $this->ic()->LISTA, "idaddfirmante");
+				$this->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion($clave_de_credito)", $this->ic()->AUTORIZAR, "idautorizar", "green");
+				$this->OButton("TR.RECHAZAR", "var xC=new CredGen(); xC.getFormaRechazo($clave_de_credito)", $this->ic()->PARAR,"idcmdrechazar","purple");
+				break;
+			case CREDITO_ESTADO_CASTIGADO:
 				break;
 			default :
 				if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
@@ -1721,7 +1741,20 @@ class cHForm {
 	}	
 	function OFile($id , $valor = "", $titulo = ""){
 		$xFil		= new cHFile();
-		
+		$this->addHElem( $xFil->getBasic($id, $valor, $titulo) );
+		$this->setEnc("multipart/form-data");
+	}
+	function OFileImages($id , $valor = "", $titulo = ""){
+		$xFil		= new cHFile();
+		$xFil->setProperty("accept", "image/jpeg,image/png");
+		$xFil->setNoCleanProps();
+		$this->addHElem( $xFil->getBasic($id, $valor, $titulo) );
+		$this->setEnc("multipart/form-data");
+	}
+	function OFileDoctos($id , $valor = "", $titulo = ""){
+		$xFil		= new cHFile();
+		$xFil->setProperty("accept", "image/jpeg,image/png,application/pdf");
+		$xFil->setNoCleanProps();
 		$this->addHElem( $xFil->getBasic($id, $valor, $titulo) );
 		$this->setEnc("multipart/form-data");
 	}
@@ -1744,7 +1777,7 @@ class cHForm {
 		if($this->mIsWizard == true){ 
 			$this->addHElem("<h3>$titulo $btn</h3><section>");
 		} else { 
-			$this->addHElem("<h3><a href=\"#\">$titulo</a>$btn</h3><div class='formoid-default formoid-section' id='$id'>");
+			$this->addHElem("<h3 id=\"h3$id\"><a href=\"#\">$titulo</a>$btn</h3><div class='formoid-default formoid-section' id='$id'>");
 		}
 		 
 		$this->mConAcc	= true;
@@ -1878,12 +1911,13 @@ class cHForm {
 	function addButtonPlanDePagos($idnumeroplan){
 		$this->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagos($idnumeroplan);", $this->ic()->CALENDARIO1, "idcmdprintplan", "whiteblue");
 	}
-	function addTag($txt, $tipo = ""){
+	function addTag($txt, $tipo = "", $evt=""){
 		$xNot		= new cHNotif();
 		if($tipo == "err" OR $tipo == "error"){
 			$tipo	= $xNot->ERROR;
+			
 		}
-		$this->addHElem( $xNot->getTag($txt, "", $tipo) );
+		$this->addHElem( $xNot->getTag($txt, "", $tipo, $evt) );
 	}
 }
 class cHTextArea {
@@ -2012,6 +2046,8 @@ class cHCobros {
 	}
 	function setSelectOpt($t){ $this->mSelect=$t; }
 	function get($UsarEn = false, $TDExtra	= "", $TDInicial = "", $IncluirRFiscal = true ){
+		$xRuls		= new cReglaDeNegocio();
+		$ForceFis	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_RPT_USE_FECHAREAL);
 		$RFiscal 	= ($IncluirRFiscal == false) ? "" : "<div class='tx4 tx18'><label for='id-foliofiscal'>Recibo Fiscal</label><input type='text' name='foliofiscal' id='id-foliofiscal' value='" . DEFAULT_RECIBO_FISCAL . "'  /></div>";
 		$hiddens	= ($IncluirRFiscal == false) ? "<input type='hidden' name='foliofiscal' id='id-foliofiscal' value='" . DEFAULT_RECIBO_FISCAL . "'  />" : "";
 		$tipo		= ($UsarEn == false) ? TESORERIA_TIPO_INGRESOS : $UsarEn;
@@ -3254,6 +3290,39 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
+	function getListaDeProductosDeCreditoXEmpresa($id = "", $empresa, $selected = false){
+		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
+		$selected	= setNoMenorQueCero($selected);
+		$empresa	= setNoMenorQueCero($empresa);
+		$sqlSc		= "SELECT   `creditos_tipoconvenio`.`idcreditos_tipoconvenio`, `creditos_tipoconvenio`.`descripcion_tipoconvenio`
+			FROM     `socios_aeconomica_dependencias` 
+			INNER JOIN `creditos_tipoconvenio`  ON `socios_aeconomica_dependencias`.`producto_preferente` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
+			WHERE    ( `socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias` = $empresa ) AND (`idcreditos_tipoconvenio` !=99) AND `tipo_en_sistema`=" . SYS_PRODUCTO_NOMINA . " AND (`creditos_tipoconvenio`.`estatus` != 'baja')
+			
+			UNION
+			SELECT   `creditos_tipoconvenio`.`idcreditos_tipoconvenio`, `creditos_tipoconvenio`.`descripcion_tipoconvenio`
+			FROM     `creditos_solicitud` 
+			INNER JOIN `creditos_tipoconvenio`  ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
+			WHERE    ( `creditos_solicitud`.`persona_asociada` = $empresa ) AND ( `creditos_solicitud`.`saldo_actual` >0.99  ) AND (`idcreditos_tipoconvenio` !=99) AND `tipo_en_sistema`=" . SYS_PRODUCTO_NOMINA . " AND (`creditos_tipoconvenio`.`estatus` != 'baja')
+			GROUP BY `creditos_solicitud`.tipo_convenio";
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		$xS->setLabel("TR.Producto de Credito");
+		if($selected > 0){ $xS->setOptionSelect($selected); }
+		$xS->setEsSql();
+		return $xS;
+	}
+	function getListaDeProductosDeCreditoGrupos($id = "", $selected = false){
+		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
+		$selected	= setNoMenorQueCero($selected);
+		$sqlSc		= "SELECT `idcreditos_tipoconvenio`, CONCAT(`descripcion_tipoconvenio`,' .- ',`idcreditos_tipoconvenio`, '') AS `descripcion`
+					FROM `creditos_tipoconvenio` WHERE	(`idcreditos_tipoconvenio` !=99) AND `tipo_en_sistema`=" . SYS_PRODUCTO_GRUPOS . " AND (`estatus` != 'baja') ORDER BY `descripcion_tipoconvenio` ";
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		$xS->setLabel("TR.Producto de Credito");
+		if($selected > 0){ $xS->setOptionSelect($selected); }
+		$xS->setEsSql();
+		return $xS;
+	}
+	
 	function getListaDeProductosDeCreditoConSeguimiento($id = "", $selected = false){
 		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
@@ -3645,15 +3714,30 @@ class cHSelect {
 		//$xS->setOptionSelect(SYS_TODAS);
 		return $xS;
 	}
-	function getListaDeOperacionesPorBase($base, $id = "", $base2 = false, $selected = false){
-		$id			= ($id == "") ? "idtipodepago" : $id; $this->mLIDs[]	= $id;
+	function getListaDeOperacionesPorBase($base, $id = "", $base2 = false, $selected = false, $activos = false){
+		$id			= ($id == "") ? "idtipodeoperacion" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
 		$ByBase		= " WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =$base) ";
 		$ByBase		.= (setNoMenorQueCero($base2) > 0) ? " OR (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =$base2)" : "";
+		if($activos == true){
+			 $ByBase	= ($ByBase == "") ? " WHERE (`operaciones_tipos`.`estatus`=1) " : "$ByBase AND (`operaciones_tipos`.`estatus`=1) ";
+		}
 		$sqlSc		= "SELECT	`miembro`, `descripcion_operacion`
 					FROM `operaciones_tipos` INNER JOIN `eacp_config_bases_de_integracion_miembros` `eacp_config_bases_de_integracion_miembros` 
 					ON `operaciones_tipos`.`idoperaciones_tipos` = 	`eacp_config_bases_de_integracion_miembros`.`miembro` 
 					$ByBase ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,`descripcion_operacion` ";
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		if($selected > 0){
+			$xS->setOptionSelect( $selected );
+		}
+		$xS->setEsSql();
+		return $xS;
+	}
+	function getListaDeOperacionesAports($id = "", $selected = 0){
+		$id			= ($id == "") ? "idtipodeoperacion" : $id; $this->mLIDs[]	= $id;
+		$selected	= setNoMenorQueCero($selected);
+		$sqlSc		= "SELECT   `operaciones_tipos`.`idoperaciones_tipos`, `operaciones_tipos`.`descripcion_operacion`, `personas_aports_tipos`.`estatusactivo`
+		FROM     `personas_aports_tipos` INNER JOIN `operaciones_tipos`  ON `personas_aports_tipos`.`operacion_tipo_id` = `operaciones_tipos`.`idoperaciones_tipos` WHERE    ( `personas_aports_tipos`.`estatusactivo` = 1 )";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		if($selected > 0){
 			$xS->setOptionSelect( $selected );
@@ -3720,7 +3804,7 @@ class cHSelect {
 	}
 	function getListaDeMenuParents($id = "", $selected = false){
 		$id			= ($id == "") ? "idmenusuperior" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		= "SELECT `idgeneral_menu`,`menu_title`  FROM `general_menu` WHERE `menu_type`='parent' ORDER BY `menu_parent`";
+		$sqlSc		= "SELECT `idgeneral_menu`,IF(`menu_parent`=0, CONCAT('+', `menu_title`), `menu_title`) AS `menu_title`  FROM `general_menu` WHERE `menu_type`='parent' ORDER BY `menu_parent`";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.MENU SUPERIOR");
 		if($selected != false){ $xS->setOptionSelect($selected); }
@@ -4729,13 +4813,13 @@ class cHSelect {
 		return $xS;
 	
 	}	
-	function getListaDeCreditosPorPersona($persona, $id, $select = false){
+	function getListaDeCreditosPorPersona($persona, $id, $select = false, $omitir =""){
 		$xQL		= new MQL();
 		$xLi		= new cSQLListas();
 		$persona	= setNoMenorQueCero($persona);
-		$sql 		= $xLi->getListadoDeCreditos($persona);
+		$omitir		= (trim("$omitir") == "") ? "": " AND FIND_IN_SET(`creditos_solicitud`.`numero_solicitud`, '$omitir')<=0 ";
+		$sql 		= $xLi->getListadoDeCreditos($persona, false, false, false, $omitir);
 		$rs			= $xQL->getDataRecord($sql);
-				
 		$id			= ($id == "") ? "idcreditospersona" : $id; $this->mLIDs[]	= $id;
 		$select		= setNoMenorQueCero($select);
 		$xS 		= new cSelect($id, $id, "");
@@ -4747,6 +4831,7 @@ class cHSelect {
 		if($select > 0){ $xS->setOptionSelect($select); }
 		return $xS;		
 	}
+
 	function getListaDeAhorroPorPersona($persona, $producto = false,$id = "", $select = false){
 		$xQL		= new MQL();
 		$xLi		= new cSQLListas();
@@ -5106,6 +5191,8 @@ class cHTabla {
 	private $mHead			= "";
 	private $mOut			= SYS_DEFAULT;
 	private $mClass			= "";
+	
+	
 	function __construct($id = "", $class=""){
 		$this->mId			= $id;
 		$this->mClass		= $class;
@@ -5460,6 +5547,7 @@ class cHNotif {
 		$this->mTipo	= ($tipo == false) ? $this->mTipo : $tipo;
 		$xDiv	= new cHDiv("alert-box form_tag " . $this->mTipo . "" , $id);
 		$xDiv->addHElem($txt);
+		$xDiv->addClickEvt($event);
 		return $xDiv->get();
 	}
 	
@@ -5562,6 +5650,9 @@ class cTabla {
 	private $mTHStyles		= array();
 	private $mInDetails		= array(); //Detalles, elemento compacto
 	private $mForceTypes	= array();	//Tipos Forzados
+	private $mArrCtrl		= array();
+	
+	private $mMaxRed		= 6;
 	
 	private $mFechaCorte	= false;//Fecha de Corte SQL para reportes
 	/**
@@ -5698,6 +5789,11 @@ class cTabla {
 	function OCheckBox($event, $campo, $preid = "" ){
 		$preid					= ($preid == "") ?  "chk"  . rand(0, 100) : $preid;
 		$this->mEspTool[$campo]	= "<div class=\"coolCheck\"><input id=\"$preid-" . HP_REPLACE_ID . "\" " ."_COND_" . " onchange=\"$event\"  type=\"checkbox\"><label for=\"$preid-" . HP_REPLACE_ID . "\"></label></div>";
+	}
+	function OInput($campo, $tipo="text",$preid = "", $props=""){
+		$preid					= ($preid == "") ?  $campo : $preid;
+		
+		$this->mArrCtrl[$campo]	= "<input id=\"$preid-" . HP_REPLACE_ID . "\" value=\"" . HP_REPLACE_DATA . "\" type=\"$tipo\" $props />";
 	}
 	function ODicIcons(){
 		if($this->mDicIcons == null){ $this->mDicIcons = new cFIcons(); }
@@ -5898,32 +5994,35 @@ LONGTEXT: 252
 			$DatosKey				= array();
 			$CamposOmi				= array();
 			$CountOmitidos			= 0;
+			//======================================================================
 			//============================= Formato de Columnas y otras propiedades
+			//======================================================================
 			if($rs){ //=== IF RS 
 				while($obj	= $rs->fetch_field()){
 					if(!isset($this->mOmitidos[$obj->name])){
-					$this->mEsq[$obj->name]["N"] 	= $obj->name;
-					$this->mEsq[$obj->name]["TBL"] 	= $obj->table;
-					$this->mEsq[$obj->name]["L"] 	= $obj->length;
-					$ttipo							= (isset($arrNums[$obj->type])) ? $arrNums[$obj->type] : "STRING"; //INT VARCHAR
-					$lttipo							= strtolower($ttipo);
-					$this->mEsq[$obj->name]["T"] 	= $lttipo; //setLog($obj->name . "--" . $lttipo);
+					$this->mEsq[$obj->name]["N"] 		= $obj->name;
+					$this->mEsq[$obj->name]["TBL"] 		= $obj->table;
+					$this->mEsq[$obj->name]["L"] 		= $obj->length;
+					$ttipo								= (isset($arrNums[$obj->type])) ? $arrNums[$obj->type] : "STRING"; //INT VARCHAR
+					$lttipo								= strtolower($ttipo);
+					$this->mEsq[$obj->name]["T"] 		= $lttipo; //setLog($obj->name . "--" . $lttipo);
 					if(isset($this->mForceTypes[$obj->name])){
 						$this->mEsq[$obj->name]["T"] 	= $this->mForceTypes[$obj->name];
 					}
-					$this->mEsq[$obj->name]["V"] 	= $obj->def;
-					$this->mEsq[$obj->name]["IDX"] 	= $items;
-					$this->mEsq[$obj->name]["TPHP"] = $mEquiv[$ttipo];//tipo de numerico a mySQL a PHP
+					$this->mEsq[$obj->name]["V"] 		= $obj->def;
+					$this->mEsq[$obj->name]["IDX"] 		= $items;
+					$this->mEsq[$obj->name]["TPHP"] 	= $mEquiv[$ttipo];//tipo de numerico a mySQL a PHP
 					$this->mEsq[$obj->name]["PHPNUM"] 	= ($this->arrTypesPHP[$lttipo] == "numeric") ? true : false;
 					$this->mEsq[$obj->name]["TINY"] 	= (isset($this->mInDetails[$obj->name])) ? true : false;
+					$this->mEsq[$obj->name]["CTRL"] 	= (isset($this->mArrCtrl[$obj->name])) ? true : false;
 					//setLog($this->mEsq[$obj->name]["T"]);
 					//setLog($this->mEsq[$obj->name]["TPHP"]);
 					if(is_numeric($this->mKey) ){
 						if($this->mKey == $items){
-							$this->mTbl			= ($this->mTbl =="") ? $obj->table : $this->mTbl;
-							$this->mKeyField	= ($this->mKeyField == "") ? $obj->name : $this->mKeyField;
-							$DatosKey[$items]	= $this->mEsq[$obj->name];
-							$DatosKey[$obj->name]	= $this->mEsq[$obj->name];
+							$this->mTbl					= ($this->mTbl =="") ? $obj->table : $this->mTbl;
+							$this->mKeyField			= ($this->mKeyField == "") ? $obj->name : $this->mKeyField;
+							$DatosKey[$items]			= $this->mEsq[$obj->name];
+							$DatosKey[$obj->name]		= $this->mEsq[$obj->name];
 						}
 					}
 					//Visualizar
@@ -6097,12 +6196,16 @@ LONGTEXT: 252
 					$type 		= $col["T"];// ( isset($arrFieldTypes[$i]) )  ? $arrFieldTypes[$i] : "text";
 					$name		= $nombre;
 					$isNumero	= $col["PHPNUM"];
+					$isCtrl		= $col["CTRL"];
+					$isTiny		= $col["TINY"];
+					
 					$scope		= "";
 					$delims		= "td";
 					$mkEnd		= "";
 					$extraCNT	= "";
 					$numerico	= false;
 					$UsarBlanco	= false;
+					
 					if ($index == $this->mKey){
 						$event 	= $this->EventKey;
 						if($event!=""){
@@ -6129,6 +6232,7 @@ LONGTEXT: 252
 						$numerico					= true;
 						$UsarBlanco					= ($currVal == 0 AND $this->mUsarNulls == true) ? true : false;
 					}
+
 					//Tipo de Dato
 					/**
 					 * Si la Opcion de Class por tipo es verdadero
@@ -6158,9 +6262,25 @@ LONGTEXT: 252
 					} else {
 						$css			= ($this->mPrepareChart == true) ? "" : $css;
 						//retoques a la salida en html
-						if($isNumero == false){
-							if($this->mPrepareChart == false AND $col["TINY"] == true AND strlen($currVal) > 20){
-								$currVal	= "<details><summary>" . substr($currVal, 0,17) . "</summary>". substr($currVal,17) . "</details>";
+						//============================== Valores reducidos
+						if($isCtrl == true){
+							$ctrl		= $this->mArrCtrl[$name];
+							$ctrl		= str_replace(HP_REPLACE_DATA, $currVal, $ctrl);
+							$ctrl		= str_replace(HP_REPLACE_ID, $rw[$this->mKey], $ctrl);
+							$currVal	= $ctrl;
+							
+						} else {
+							if($isTiny == true){
+								if($isNumero == false){
+									
+									if($this->mPrepareChart == false AND strlen($currVal) > $this->mMaxRed){
+										$currVal	= "<details><summary>" . substr($currVal, 0,$this->mMaxRed) . "</summary>". substr($currVal,$this->mMaxRed) . "</details>";
+									}
+								} else {
+									if($this->mPrepareChart == false){
+										$currVal	= "<details><summary></summary>". $currVal . "</details>";
+									}
+								}
 							}
 						}
 
@@ -6181,10 +6301,14 @@ LONGTEXT: 252
 				if($this->mSubsEnable	== true){
 					//setLog($rw[$this->mKey]);
 					if(isset($subHTML[$rw[$this->mKey]])){
-						
 						$icx22			= $ifl+2;
 						$tds 			.= "<tr id=\"tr-subs-" . $this->mTbl . "-".str_replace(" ", "_", $rw[$this->mKey]) . "\"><td colspan='$icx22'>" . $subHTML[$rw[$this->mKey]] . "</td></tr>";
 						unset($subHTML[$rw[$this->mKey]]); 
+					}
+					if(isset($subHTML[$rw[$this->mKeyField]])){
+						$icx22			= $ifl+2;
+						$tds 			.= "<tr id=\"tr-subs-" . $this->mTbl . "-".str_replace(" ", "_", $rw[$this->mKeyField]) . "\"><td class='notice' colspan='$icx22'>" . $subHTML[$rw[$this->mKeyField]] . "</td></tr>";
+						unset($subHTML[$rw[$this->mKeyField]]);
 					}
 					/*foreach ($this->mSubSQLs as $idx => $sqls){
 						if($sqls != ""){
@@ -6215,9 +6339,9 @@ LONGTEXT: 252
 			for($i=0; $i<=$ifl; $i++){
 				if(isset($ism[$i]) ){
 					if($this->mTipoSalida == OUT_EXCEL){
-						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<th>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</th>" : "<td></td>";
+						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<td>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</td>" : "<td></td>";
 					} else {
-						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<th><input type='hidden' id='idsum-" .  $ism[$i] . "' value='" . $this->mFieldSum[ $ism[$i] ] . "' /><span id='sum-" .  $ism[$i] . "'>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</span></th>" : "<td></td>";
+						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<td class='total'><input type='hidden' id='idsum-" .  $ism[$i] . "' value='" . $this->mFieldSum[ $ism[$i] ] . "' /><span id='sum-" .  $ism[$i] . "'>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</span></td>" : "<td></td>";
 					}
 				} else {
 					$tfoot		.= ($i==0 AND $this->mRowCount > 0 AND $this->mNoFilas == false) ? "<th>Filas: " . $this->mRowCount . "</th>" : "<td>" . $this->mOpTitleFoot . "</td>";
@@ -6312,6 +6436,7 @@ LONGTEXT: 252
 	function setUsarNullPorCero(){ $this->mUsarNulls = true; }
 	function setPagination($limits){$this->mLimits = $limits;}
 	function setNoFilas($OptionalTitle = ""){ $this->mNoFilas = true; $this->mOpTitleFoot = $OptionalTitle; }
+	function setTinySize($size){ $this->mMaxRed = $size; }
 	/*			0 => $xLng->getT("TR.Ejecutar"),
 				1 => $xLng->getT("TR.Editar"),
 				2 => $xLng->getT("TR.Eliminar"),
@@ -6358,6 +6483,12 @@ class cSelect{
 		$caption	= ($caption == "") ? strtoupper($value) : $caption;
 		if($caption == SYS_TODAS){ $caption = SYS_TEXTO_TODAS; }
 		$this->mEspOption[$value] = $caption;
+	}
+	function addVacio($select = false){
+		$this->addEspOption("", "-");
+		if($select == true){
+			$this->setOptionSelect("");
+		}
 	}
 	function addEvent($event, $func, $value = false){
 		if ( strpos($event, ")") > 0){
@@ -6653,19 +6784,25 @@ class cHCheckBox {
 
 
 class cHDiv {
-	protected $mDivClass		= "tx4";
-	protected $mHTML			= "";
+	protected $mDivClass	= "tx4";
+	protected $mHTML		= "";
 	protected $mID			= "";
+	private $mClickEvt		= "";
 	function __construct($class = "tx4", $id = ""){	$this->mDivClass = $class; $this->mID = $id;	}
 	function get($cnt = "", $label = "", $id =""){
 		$xL			= new cLang();
 		$label		= ($label == "") ? "" : "<label for='$id'>" . $xL->getT($label) . "</label>";
 		$cnt		.= $this->mHTML;
 		$pid		= ($this->mID == "") ? "" : " id='" . $this->mID . "' ";
-		return "<div class='" . $this->mDivClass . "' $pid>$label$cnt</div>";
+		$props		= "";
+		if($this->mClickEvt !== ""){
+			$props	.= " onclick=\"" . $this->mClickEvt . "\" ";
+		}
+		return "<div class='" . $this->mDivClass . "' $pid$props>$label$cnt</div>";
 	}
 	function addHElem($html){ $this->mHTML	.= $html; }
 	function addHLinea($html){ $this->mHTML	.= "<div class='tx1'>$html</div>"; }
+	function addClickEvt($evt){ $this->mClickEvt = $evt; }
 }
 
 class cFileLog{
@@ -7546,11 +7683,11 @@ class cFormato {
 			$eTit			= array("numero_del_movimiento" => "#", "concepto_del_movimiento" => $xLng->getT("TR.Concepto"),"monto_del_movimiento" => $xLng->getT("TR.Monto"), "destino_del_movimiento" => $xLng->getT("TR.Destino")	);
 			$eWidth			= array("numero_del_movimiento" => "10%", "concepto_del_movimiento" => "35%", "monto_del_movimiento" => "17%", "destino_del_movimiento" => "38%");			
 			$eCss			= array("monto_del_movimiento" => "mny");
-
+			$txt2			= "";
 			
 			foreach ($this->mDataMvto as $rows){
 				$txt		= "<tr>";
-				$txt2		= "";
+				
 				foreach ($DEsq as $key => $idx){
 					$css	= (isset($eCss[$idx])) ? " class=\"". $eCss[$idx] . "\" " : "";
 					$txt	.= (isset($rows[$idx]))? "<td$css>" . $rows[$idx] . "</td>" : "";
@@ -7569,7 +7706,7 @@ class cFormato {
 			}
 			$head			= "<thead><tr>";
 			$h2				= "";
-			
+			//XXX: Recordar para que mierda era esto.
 			foreach ($DEsq as $key => $idx){
 				//si la clave es destino, usar
 				$width		= ( isset( $eWidth[ $idx ] ) ) ? " style=\"width:" . $eWidth[ $idx ] . "\" " : "";
@@ -8201,7 +8338,11 @@ class cFormato {
 				$porcentaje	= setNoMenorQueCero( $xRel->getPorcientorelacionado() );
 				if($porcentaje <= 0){
 					if($xRel->getMontoRelacionado() > 0){
-						$porcentaje	= $xRel->getMontoRelacionado() / $monto_del_credito; 
+						if($monto_del_credito > 0){
+							$porcentaje	= $xRel->getMontoRelacionado() / $monto_del_credito;
+						} else {
+							$porcentaje	= "1";
+						}
 					} else {
 						$porcentaje	= "1";
 					}
@@ -10289,6 +10430,7 @@ class cFIcons {
 	public $SALDO		= "saldo";
 	public $CERRAR		= "cerrar";
 	public $COBROS		= "caja";
+	public $EMAIL		= "envelope-e";
 	public $CREDITO		= "fa-money";
 	public $RECIBO		= "fa-bars";
 	public $RESTAR		= "fa-minus";
@@ -10300,7 +10442,7 @@ class cFIcons {
 	public $SALUD		= "fa-user-md";
 	public $SUMAR		= "fa-plus";
 	public $BANEAR		= "fa-ban";
-	public $PARAR		= "fa-stop";
+	public $PARAR		= "fa-stop-circle";
 	public $PDF			= "fa-file-pdf-o";
 	public $CONTROL		= "fa-wrench";
 	public $AVISO		= "warning";
@@ -10349,6 +10491,7 @@ class cFIcons {
 	public $PLANE		= "fa-plane";
 	public $BAJA		= "fa-thumbs-o-down";
 	public $AUTOMAGIC	= "fa-magic";
+	public $ESCUELA		= "fa-graduation-cap";
 	//public $CALCULAR	= "fa-superscript";
 	/*	private $mIcons	= array("editar" => "fa-edit",
 						"referencias" => "fa-group",
@@ -10503,7 +10646,7 @@ class cCatalogoOperacionesDeCaja {
 	/**
 	 * Devuelve un Tipo de Operacion a partir de una Tipo de Pago de recibos
 	 * @param string $TipoDePago
-	 * @return		Tipo de Operacion
+	 * @return integer Tipo de Operacion
 	 */
 	function getTipoOperacionByTipoPago($TipoDePago = "efectivo"){
 		return (isset($this->mArrOps[strtolower($TipoDePago)])) ? $this->mArrOps[strtolower($TipoDePago)] :  99;

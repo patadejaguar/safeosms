@@ -516,7 +516,7 @@ foreach($datos as $rw){
 	$DPlanDePagos				= $xCred->getDatosDelPlanDePagos();
 	$NumeroDePlan				= $xCred->getNumeroDePlanDePagos();
 	
-	$FechaDePrimerIncumplimiento		= "";
+	$FechaDePrimerIncumplimiento = "";
 	
 	if($SaldoActual <= 0){
 		//$xCred->getFechaUltimoDePago() 
@@ -525,10 +525,8 @@ foreach($datos as $rw){
 			$FechaCierreCuenta		= $FechaClave;
 			$FechaAperturaCuenta	= $xCred->getFechaDeMinistracion();
 			$FechaUltimoPago		= $FechaCierreCuenta;
-			
 			$xOfic->addNote(AVISOS_TIPO_RECORDATORIO, false, $xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), "Fechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)");
 			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\t$icnt\tFechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)\r\n", $xLog->DEVELOPER);
-						
 			//setLog("3....$FechaUltimoPago");
 		} else {
 			$FechaCierreCuenta		= $FechaUltimoPago;
@@ -550,6 +548,7 @@ foreach($datos as $rw){
 	$FechaUltimoPago		= $xCR->getDate($FechaUltimoPago);
 							
 	$PagoActual					= "V";
+	
 	if($SaldoActual > (TOLERANCIA_SALDOS + 0.01) ){
 		//AND ($TipoEnSistema == CREDITO_PRODUCTO_NOMINA) 2017-03-03
 		$EstadoDeCredito	= $xCred->getEstadoActual();

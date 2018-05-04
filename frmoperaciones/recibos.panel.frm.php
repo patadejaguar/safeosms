@@ -19,12 +19,13 @@
 //<=====	FIN_H
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
-$xHP		= new cHPage("TR.Panel de Recibos");
-$jxc 		= new TinyAjax();
-$xSQL		= new cSQLListas();
-$xUser		= new cSystemUser(); $xUser->init();
+$xHP			= new cHPage("TR.Panel de Recibos");
+$jxc 			= new TinyAjax();
+$xSQL			= new cSQLListas();
+$xUser			= new cSystemUser(); $xUser->init();
 
 $fechaRecibo	= fechasys();
+$agregar		= parametro("agregar", 0, MQL_FLOAT);
 
 function getReciboDesc($numero){
 	if ( isset($numero) AND ( $numero != 0) ){
@@ -80,7 +81,7 @@ function jsaAjustarTotal($recibo, $nuevoTotal, $nuevaletra){
 	$xRec->setGenerarTesoreria(false);
 	$xRec->setForceUpdateSaldos(true);
 	$total	= $xRec->getTotal();
-	$QL		= new MQL();
+	$xQL	= new MQL();
 	
 	$DMov	= new cOperaciones_mvtos();
 	$msg	= "";
@@ -113,26 +114,27 @@ function jsaAjustarTotal($recibo, $nuevoTotal, $nuevaletra){
 			(`operaciones_mvtos`.`recibo_afectado` =$recibo) 
 		ORDER BY
 			`operaciones_mvtos`.`tipo_operacion` DESC ";
-		$rs	= $QL->getDataRecord($sql);
+		$rs	= $xQL->getDataRecord($sql);
 		
 		$arrops	= array();
 		foreach ($rs as $rw ){
 			$DMov->setData($rw);
 			$NMonto		= $DMov->afectacion_real()->v();
 			$IDOpe		= $DMov->idoperaciones_mvtos()->v();
+			
 			if($nuevoTotal > 0){
 				$nuevoTotal	-= $NMonto;
 				$msg	.= $IDOpe . " \t $nuevoTotal DE $NMonto\r\n";
 				if($nuevoTotal < 0 ){
-					$msg		.= "CUADRAR $NMonto DE $nuevoTotal  \r\n";
-					$nuevoTotal	= $nuevoTotal * -1;
-					$dif	= $NMonto - $nuevoTotal;
+					$msg			.= "CUADRAR $NMonto DE $nuevoTotal  \r\n";
+					$nuevoTotal		= $nuevoTotal * -1;
+					$dif			= $NMonto - $nuevoTotal;
 					
 					$sql	= "UPDATE operaciones_mvtos 
 							SET afectacion_real=$dif, afectacion_cobranza=$dif, afectacion_contable=$dif,
 							afectacion_estadistica=$dif WHERE idoperaciones_mvtos=$IDOpe ";
-					$x	= my_query($sql);
-					$msg	.= $x[SYS_INFO];
+					$x	= $xQL->setRawQuery($sql);
+					//$msg	.= $x[SYS_INFO];
 					//agregar el movimiento al nuevo recibo con cargos
 					$NRec->setNuevoMvto($DMov->fecha_operacion()->v(), $nuevoTotal, $DMov->tipo_operacion()->v(),
 							    $DMov->periodo_socio()->v(), "SEPARACION DEL MVTO $IDOpe $nuevoTotal", $DMov->valor_afectacion()->v(),
@@ -149,14 +151,14 @@ function jsaAjustarTotal($recibo, $nuevoTotal, $nuevaletra){
 		}
 		//$total	= $total  * -1;
 		foreach($arrops as $operacion => $monto){
-			$x	= my_query("UPDATE operaciones_mvtos SET recibo_afectado=$idNRec WHERE idoperaciones_mvtos=$operacion");
+			$x	= $xQL->setRawQuery("UPDATE operaciones_mvtos SET recibo_afectado=$idNRec WHERE idoperaciones_mvtos=$operacion");
 			//100 - 50
 			//$dif	= $monto - $total;
-			$msg	.= $x[SYS_INFO];
+			//$msg	.= $x[SYS_INFO];
 		}
 		
 		$NRec->setFinalizarRecibo(true);
-		$msg		.= $NRec->getMessages(OUT_TXT);
+		$msg	.= $NRec->getMessages(OUT_TXT);
 		$xRec->setFinalizarRecibo(true);
 	} else{
 		$msg	.= "WARN\tNO SE MODIFICA NADA($nuevoTotal|$total)\r\n";
@@ -280,7 +282,6 @@ $idrecibo		= "0";
 
 } else {
 	$xFRM 		= new cHForm("frmrecibospanel");
-	
 	$xRec		= new cReciboDeOperacion(false, false, $idrecibo);
 	$xRec->init();
 	$fechaRecibo	= $xRec->getFechaDeRecibo();
@@ -376,6 +377,8 @@ $idrecibo		= "0";
 	<input type='hidden' name='cFechaRecibo' id='idFechaRecibo' value='$fechaRecibo'><input type='hidden' name='cTotalRecibo' id='idTotalRecibo' value='$totalRecibo'>
 	<input type='hidden' name='cOperacion' id='idOperacion' value=''>
 	");
+	
+	$xFRM->OHidden("agregar", $agregar);
 	$xFRM->addFooterBar("<br/>");
 	
 	//======================== Si puede eliminar Recibo
@@ -495,7 +498,8 @@ function jsSetClonar(id){
 	xGen.w({url:"operaciones.mvtos.clon.frm.php?id="+id, tiny:true,w:400});
 }
 function jsAddMvto(idrecibo){
-	xGen.w({url:"operaciones.mvtos.add.frm.php?recibo="+idrecibo, tiny:true,w:400});
+	var agregar	= $("#agregar").val();
+	xGen.w({url:"operaciones.mvtos.add.frm.php?recibo="+idrecibo + "&monto=" +agregar, tiny:true,w:400});
 }
 function jsCambiarBanco(id){
 	xGen.w({url:"recibos.cambiar-banco.frm.php?recibo="+id, tiny:true,w:400});

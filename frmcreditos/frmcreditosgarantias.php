@@ -69,15 +69,25 @@ if($credito<= DEFAULT_CREDITO){
 
 	$xHG->col("tipo", "TR.TIPO", "10%");
 	$xHG->col("recibido", "TR.FECHA", "10%");
-	$xHG->col("estado", "TR.ESTATUSACTIVO", "10%");
+	$xHG->col("estado", "TR.ESTATUS", "10%");
 	$xHG->col("valuacion", "TR.VALUADO", "10%");
 	$xHG->col("propietario", "TR.PROPIETARIO", "10%");
 	$xHG->col("valor", "TR.VALOR", "10%");
 	
 //	$xHG->OToolbar("TR.AGREGAR VEHICULO", "jsAddAuto()", "grid/car.png");
 //	$xHG->OToolbar("TR.AGREGAR INMUEBLE", "jsAddInmueble()", "grid/building.png");
-	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
-	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+	if($xCred->getEsCreditoYaAfectado() == false){
+		$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+		$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+		if($xCred->getEsAutorizable() == true){
+			$xHG->OButton("TR.RESGUARDO", "jsGoToResguardo('+ data.record.clave +')", "archive.png");
+		}
+	} else {
+		if($xCred->getEsPagado() == true){
+			$xHG->OButton("TR.DEVOLUCION", "jsGoToResguardo('+ data.record.clave +')", "back-button.png");
+		}
+	}
+	
 	$xFRM->addHElem("<div id='iddivgarantias'></div>");
 	$xFRM->addJsCode( $xHG->getJs(true) );
 	echo $xFRM->get();
@@ -98,6 +108,14 @@ if($credito<= DEFAULT_CREDITO){
 	function jsDel(id){
 		xG.rmRecord({tabla:"creditos_garantias", id:id, callback:jsLGiddivgarantias});
 	}
+	function jsGoToResguardo(id){
+		var idcredito = $("#credito").val();
+		xG.w({url:"../frmcreditos/frmresguardogarantias.php?credito=" +idcredito + "&clave=" + id, tiny:true, callback: jsLGiddivgarantias});
+	}
+	function jsGoToDevolucion(id){
+		var idcredito = $("#credito").val();
+		xG.w({url:"../frmcreditos/frmdevgarantiaresguardo.php?credito=" +idcredito + "&clave=" + id, tiny:true, callback: jsLGiddivgarantias});
+	}	
 	</script>
 	<?php
 	

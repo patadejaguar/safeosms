@@ -24,7 +24,7 @@ $jxc 		= new TinyAjax();
 $xRuls		= new cReglaDeNegocio();
 
 
-$idPlanAnt	= 0;
+$idPlanAnt		= 0;
 $SinOtrosEnPlan	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OTROS);	//regla de negocio
 $SinOptsEnPlan	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OPTS);	//regla de negocio
 $ConPagosEsp	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio

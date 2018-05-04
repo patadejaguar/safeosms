@@ -228,6 +228,7 @@ class cCaja{
 	function getReciboEnCorte($recibo){
 		$monto			= 0;
 		$run			= true;
+		$xRuls			= new cReglaDeNegocio();
 		//elegir el tipo de recibo, buscar en los lugares adecuados
 		$xRec			= new cReciboDeOperacion(false, false, $recibo);
 		if($xRec->init() == true){
@@ -236,8 +237,11 @@ class cCaja{
 			$sql		= "SELECT  COUNT(`idempresas_cobranza`) AS `items` FROM `empresas_cobranza` WHERE `recibo`=$recibo AND `clave_de_credito`=$credito";
 			$items		= $xQL->getDataValue($sql, "items");
 			if($items > 0){
-				$monto	= $xRec->getTotal();
-				$run	= false;
+				$ForceNomina	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOM_FORCE_PAGO);
+				if($ForceNomina == true){
+					$monto		= $xRec->getTotal();
+					$run		= false;
+				}
 			}
 		}
 		if($run == true) {

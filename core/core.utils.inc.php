@@ -1549,11 +1549,13 @@ class cFileImporter {
 	
 	function processFile($file){
 		$sucess	= true;
+		$xLog	= new cCoreLog();
+		
 		if( isset($file) AND $file != false ){
 			//Obtener Extension
 			$DExt 	= explode(".", substr($file['name'], -6));
 			$mExt	= $DExt[1];
-		
+			
 			if($mExt == $this->mType){
 				$completePath	= PATH_TMP . $file['name'];
 				if(file_exists($completePath) == true){
@@ -1561,18 +1563,18 @@ class cFileImporter {
 					$xLog->add("WARN\tSE ELIMINO EL ARCHIVO " . $file['name'] . "\r\n", $xLog->DEVELOPER);
 				}
 				if(move_uploaded_file($file['tmp_name'], $completePath )) {
-					$this->mMessages	.= "OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $file['name'] . "\r\n";
+					$xLog->add("OK\tSE GUARDO EXITOSAMENTE EL ARCHIVO " . $file['name'] . "\r\n");
 				} else {
-					$this->mMessages	.= "ERROR\tSE FALLO AL GUARDAR (" . $file['name'] . ") de " . $file['tmp_name'] . " a $completePath\r\n";
-					$this->mMessages	.= $this->getMsgError($file['error']);
+					$xLog->add("ERROR\tSE FALLO AL GUARDAR (" . $file['name'] . ") de " . $file['tmp_name'] . " a $completePath\r\n");
+					$xLog->add($this->getMsgError($file['error']));
 					$sucess				= false;
 				}
 			}	else {
-				$this->mMessages		.= "ERROR\tEL TIPO DE ARCHIVO DE " . $file['name'] . "(" .$mExt . ") NO SE ACEPTA\r\n";
+				$xLog->add("ERROR\tEL TIPO DE ARCHIVO DE " . $file['name'] . "(" .$mExt . ") NO SE ACEPTA\r\n");
 				$sucess					= false;
 			}
 		} else {
-			$this->mMessages		.= "ERROR\tEL ARCHIVO NO ES VALIDO $file\r\n";
+			$xLog->add("ERROR\tEL ARCHIVO NO ES VALIDO $file\r\n");
 			$sucess					= false;			
 		}
 		if($sucess == true){
@@ -1588,7 +1590,7 @@ class cFileImporter {
 				while (!feof($gestor)) {
 					$bufer			= fgets($gestor, 4096);
 					if (!isset($bufer) ){
-						$msg .= "ERROR\t$iReg\tLa Linea($iReg) no se leyo($bufer)\r\n";
+						$xLog->add("ERROR\t$iReg\tLa Linea($iReg) no se leyo($bufer)\r\n");
 						//$this->mData[]= array(); //Array Vacio
 					} else {
 						$bufer		= trim($bufer);
@@ -1615,6 +1617,8 @@ class cFileImporter {
 				}
 			}
 		}
+		$this->mMessages	.= $xLog->getMessages();
+		
 		return $sucess;
 	}
 	function setExo($str){ $this->mExo	= $str; }
@@ -1755,6 +1759,7 @@ class cFileImporter {
 		return $sucess;
 	}
 	function getCompletePath(){ return $this->mCompletePath; }
+	
 }
 class cFileSystem {
 	private $mMessages		= "";
@@ -2287,6 +2292,24 @@ class cDocumentos {
 		$user		= getUsuarioActual();
 		$suc		= getSucursal();
 		$ent		= EACP_CLAVE;
+		$xDocP		= new cPersonasDocumentacion();
+		if($tipo == $xDocP->TIPO_FOTO OR $tipo == $xDocP->TIPO_FIRMA){
+			//$img		= "tmp/foto_" . $this->mClavePersona;
+			//$fname		= PATH_HTDOCS . "/". $img;
+			if(file_exists(PATH_HTDOCS . "/tmp/foto_" . $persona . ".jpg")){
+				unlink(PATH_HTDOCS . "/tmp/foto_" . $persona . ".jpg");
+			}
+			if(file_exists(PATH_HTDOCS . "/tmp/foto_" . $persona . ".png")){
+				unlink(PATH_HTDOCS . "/tmp/foto_" . $persona . ".png");
+			}
+			if(file_exists(PATH_HTDOCS . "/tmp/firma_" . $persona . ".jpg")){
+				unlink(PATH_HTDOCS . "/tmp/firma_" . $persona . ".jpg");
+			}
+			if(file_exists(PATH_HTDOCS . "/tmp/firma_" . $persona . ".png")){
+				unlink(PATH_HTDOCS . "/tmp/firma_" . $persona . ".png");
+			}
+			$this->mMessages		.= "WARN\tEliminar Foto o Firma de la Persona $persona\r\n";
+		}
 		$sql 		= "INSERT INTO personas_documentacion(
 			clave_de_persona, tipo_de_documento, fecha_de_carga, observaciones, archivo_de_documento, valor_de_comprobacion, 
 			estado_en_sistema, fecha_de_verificacion, oficial_que_verifico, 
@@ -2420,6 +2443,22 @@ class cReglasDeValidacion  {
 			$this->mValue	= $v;
 		}
 		return $ready; 
+	}
+	function recibo($v){
+		$v	= setNoMenorQueCero($v);
+		$ok	= true;
+		if($v <= 0 ){ $ok = false; }
+		return $ok;
+	}
+	function grupo($v){
+		$v	= setNoMenorQueCero($v);
+		$ok	= true;
+		if(PERSONAS_CONTROLAR_POR_GRUPO == true){
+			if($v == DEFAULT_GRUPO OR $v == FALLBACK_CLAVE_DE_GRUPO ){
+				$ok		= false;
+			}
+		}
+		return $ok;
 	}
 }
 

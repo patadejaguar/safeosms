@@ -22,6 +22,7 @@
 	include_once("core.taxs.inc.php");
 	include_once("core.personas.utils.inc.php");
 	include_once("core.personas.inc.php");
+	include_once("core.grupos.inc.php");
 	
 	include_once("core.region.inc.php");
 	include_once("core.riesgo.inc.php");
@@ -678,7 +679,11 @@ class cSucursal{
 			$xSuc->query()->update()->save($this->mClave);
 		}
 	}	
-
+	function getNuevaClaveDePersona(){
+		$xCL				= new cCajaLocal($this->getCajaLocalResidente()); $xCL->init();
+		$codigo				= $xCL->getUltimoSocioRegistrado(true)+1;
+		return $codigo;
+	}
 }
 /**
 *	Clase de Funciones sobre socios
@@ -874,9 +879,9 @@ class cSocio{
 				if($this->mExtranjeroEs == true){
 					$this->getDatosExtrajero();
 				}
-				if(PERSONAS_CONTROLAR_POR_APORTS == true){
+				//if(PERSONAS_CONTROLAR_POR_APORTS == true){
 					$this->getDatosColegiacion();
-				}
+				//}
 				//
 				$this->mDSocioByArray		= $D;
 				
@@ -1696,14 +1701,16 @@ class cSocio{
 				}
 			}
 			$tdMem		= "";
-			if(PERSONAS_CONTROLAR_POR_APORTS == true AND $simple == false AND $useDColegiacion == true){
-				$xTM	= new cPersonasMembresiasTipos($this->getTipoDeMembresia());
-				$xTM->init();
-				$tdMem	= "<tr><th class='izq'>" . $xLng->getT("TR.TIPO_MEMBRESIA") . "</th>
-						<td>" . $xTM->getNombre() . "</td>
-					<th class='izq'>" . $xLng->getT("TR.FECHA DE REGISTRO") . " - " . $xLng->getT("TR.PAGO") . " - " . $xLng->getT("TR.MATRICULA") . "</th>
-					<td>" . $xF->getFechaMX($this->getFechaDeRegistro()) . " - [" . $this->mMembresiaDiaPago . "] - [" . $this->mMembresiaID . "]</td>
-					</tr>";
+			if($simple == false){
+				if(PERSONAS_CONTROLAR_POR_APORTS == true OR $useDColegiacion == true){
+					$xTM	= new cPersonasMembresiasTipos($this->getTipoDeMembresia());
+					$xTM->init();
+					$tdMem	= "<tr><th class='izq'>" . $xLng->getT("TR.TIPO_MEMBRESIA") . "</th>
+							<td>" . $xTM->getNombre() . "</td>
+						<th class='izq'>" . $xLng->getT("TR.FECHA DE REGISTRO") . " - " . $xLng->getT("TR.PAGO") . " - " . $xLng->getT("TR.MATRICULA") . "</th>
+						<td>" . $xF->getFechaMX($this->getFechaDeRegistro()) . " - [" . $this->mMembresiaDiaPago . "] - [" . $this->mMembresiaID . "]</td>
+						</tr>";
+				}
 			}
 			$tdFor		= "";
 			if($this->getEsExtranjero() == true AND $simple == false AND $this->getEsPersonaFisica() == true){
@@ -2344,10 +2351,12 @@ class cSocio{
 		$nombre					= addslashes($nombre);
 		$apellidomaterno		= addslashes($apellidomaterno);
 		$apellidopaterno		= addslashes($apellidopaterno);
+		if(SAFE_CLEAN_LANG == true){
+			$nombre				= utf8_decode( $nombre );
+			$apellidopaterno	= utf8_decode( $apellidopaterno );
+			$apellidomaterno	= utf8_decode( $apellidomaterno );
+		}
 		
-		$nombre					= utf8_decode( strtoupper($nombre) );
-		$apellidopaterno		= utf8_decode( strtoupper($apellidopaterno) );
-		$apellidomaterno		= utf8_decode( strtoupper($apellidomaterno) );
 		$dependientes			= setNoMenorQueCero($dependientes);
 		$eacp					= EACP_CLAVE;
 		$sucursal				= ($sucursal == false) ? getSucursal() : $sucursal;
@@ -2680,9 +2689,16 @@ class cSocio{
 		return $monto;
 	 }
 	function getGarantiasFisicasDepositadas(){
-		$sql			= "SELECT SUM(monto_valuado) AS 'garantias' FROM creditos_garantias WHERE estatus_actual=2 AND socio_garantia=" . $this->mCodigo;
-		$resguardado 	= mifila($sql, "garantias");
+		$xGar			= new cCreditosGarantias();
+		$xGar->setClaveDePersona($this->mCodigo);
+		$resguardado	= $xGar->getMontoResguardado();
 		return			$resguardado;
+	 }
+	 function getGarantiasLiquidasDepositadas(){
+	 	$xGar			= new cCreditosGarantiasLiquidas();
+	 	$xGar->setClaveDePersona($this->mCodigo);
+	 	$monto			= $xGar->getSaldoGantiaLiq();
+	 	return $monto;
 	 }
 	 /**
 	  * Devuelve el monto del fondo patrimonial
@@ -2819,7 +2835,7 @@ class cSocio{
 	 */
 	function existeCredito($credito){
 		$existentes		= $this->getContarDoctos(iDE_CREDITO, false, $credito);
-		return		($existentes == 0 ) ? false : true;
+		return		($existentes <= 0 ) ? false : true;
 	}
 	/**
 	 * Funcion que retorna false?true si un credito del socio existe
@@ -3026,6 +3042,7 @@ class cSocio{
 			}// end: tasa ahorro
 			//
 			eval( $validacion_php );
+			
 			if( $monto > $monto_maximo ){
 				$xLog->add("ERROR\t$socio\tEl Monto Solicitado $monto es mayor al Maximo Permitido $monto_maximo ($producto_monto_maximo)\r\n");
 				$sucess				= false;				
@@ -3170,6 +3187,7 @@ class cSocio{
 		
 		$xQL			= new MQL();
 		$xVals			= new cReglasDeValidacion();
+		
 		//checar
 		if ($codigo <= DEFAULT_CREDITO){
 			switch ($tipo_de_docto){
@@ -3178,6 +3196,7 @@ class cSocio{
 					$ByID		= ( $xVals->credito($codigo) == false ) ? "" : " AND (`creditos_solicitud`.numero_solicitud = $codigo) ";
 					$socio		= $this->mCodigo;
 					$sql		= "SELECT COUNT(numero_solicitud) AS 'existentes' FROM creditos_solicitud WHERE  numero_socio = $socio $ByTipo $ByID ";
+					
 					$existentes	= $xQL->getDataValue($sql, "existentes");
 					break;
 				//obtiene una cuenta de captacion 10 vista 20 inversion
@@ -3698,7 +3717,7 @@ class cSocio{
 	function getExportarAsociada($tipo, $host = SVC_ASOCIADA_HOST){
 		//TPERSONAS_GENERALES
 		$svc		= new MQLService("", "");
-		$xTu		= new cSystemUser( TASK_USR, false );
+		$xTu		= new cSystemUser(TASK_USR, false );
 		$xTu->init();
 		$ctx		= $xTu->getCTX();
 		
@@ -4083,7 +4102,6 @@ class cSocio{
 		$datos			= $xCache->get($idc);
 		if(!is_array($datos)){
 			$xQL		= new MQL();
-			$xF			= new cFecha();
 			$datos		= $xQL->getDataRow("SELECT * FROM `personas_datos_colegiacion` WHERE `clave_de_persona`=$persona LIMIT 0,1");
 		}
 		if(isset($datos["clave_de_persona"])){
@@ -4159,6 +4177,24 @@ class cSocio{
 			$xRel->getCodigoDePersona();
 		}
 		return $clave;
+	}
+	function setEmpleador($empleador){
+		$empleador	= setNoMenorQueCero($empleador);
+		if($empleador>0){
+			$xT		= new cSocios_general();
+			$arr	= array();
+			$arr[$xT->DEPENDENCIA]	= $empleador;
+			$this->setUpdate($arr);
+		}
+	}
+	function setGrupoSolidario($grupo){
+		$grupo	= setNoMenorQueCero($grupo);
+		if($grupo > 0){
+			$xT		= new cSocios_general();
+			$arr	= array();
+			$arr[$xT->GRUPO_SOLIDARIO]	= $grupo;
+			$this->setUpdate($arr);
+		}
 	}
 }
 /**
@@ -4427,7 +4463,7 @@ class cEmpresas {
 			$this->mTasaComision		= 0;
 			$this->mTelefono			= 0;
 			
-			$this->mInit				= true;
+			//$this->mInit				= true;
 			$this->mNombreLargo			= "";
 			$this->mAlias				= "";
 			$this->mDomicilio			= "";
@@ -4758,6 +4794,10 @@ ultimo_periodo_enviado, fecha_de_envio,
 		$xEmp			= new cEmpresas($empresa);
 		$xF				= new cFecha();
 		$xLng			= new cLang();
+		$xVi			= new cSQLVistas();
+		$xCache			= new cCache();
+		$idx			= "emp-cbza-parcs-$empresa-$periocidad";
+		$idx2			= "emp-cbza-parcs-2-$empresa-$periocidad-$periodo-$variacion";
 		$idioma			= array(
 				"plan" => $xLng->getT("TR.PLAN_DE_PAGOS"),
 				"nuevoplan" => $xLng->getT("TR.Agregar PLAN_DE_PAGOS"),
@@ -4773,72 +4813,72 @@ ultimo_periodo_enviado, fecha_de_envio,
 
     	$creditoON		= array();
     	$DDias			= $xEmp->getDiasDeAviso($periocidad);
-    	$sqletras		= "SELECT	`creditos_solicitud`.`persona_asociada`, `letras`.* 
-						FROM	`creditos_solicitud` `creditos_solicitud`		INNER JOIN `letras` `letras`	ON `creditos_solicitud`.`numero_solicitud` = `letras`.`docto_afectado` 
-    					WHERE	(`creditos_solicitud`.`persona_asociada` =$empresa) ";
-    //setLog($sqletras);
-    $rsCal			= $xQL->getDataRecord($sqletras);
-    $DCal			= array();
-    foreach ($rsCal as $dscal ){
-    	$ixcredito						= $dscal["docto_afectado"];
-    	$ixperiodo						= $dscal["periodo_socio"];
-    	$DCal["$ixcredito-$ixperiodo"]	= $dscal["total_sin_otros"];
-    }
-        
-    $ByMinistracion	= "";
-    
-    $periodo		= $periodo + $variacion;
-    
-    //filtrar domicilio -> socio -> credito -> letra
-    $sql	= "SELECT
-    creditos_solicitud.numero_socio AS 'persona',
-    CONCAT(
-    (CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN '(*)' ELSE '' END ), 
-    socios_general.nombrecompleto, ' ',
-    socios_general.apellidopaterno, ' ',
-    socios_general.apellidomaterno 
-	) AS 'nombre', 
-
-    creditos_solicitud.numero_solicitud AS 'credito',
-    `ultimo_periodo_afectado` AS `periodo_actual`,
-	getParcialidadPorFecha(`ultimo_periodo_afectado`, $variacion, '$fechaFinal', `primeras_letras`.`fecha_de_pago`, fecha_ministracion) AS 'letra',
-	getUltimaLetraEnviada(creditos_solicitud.numero_solicitud) AS `ultimo_envio`,
-   `creditos_solicitud`.`pagos_autorizados`  AS 'pagos',
-   
-    creditos_solicitud.monto_parcialidad AS 'monto'
-    
-	FROM
-		`creditos_solicitud` `creditos_solicitud` 
-			INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos` 
-			ON `creditos_solicitud`.`periocidad_de_pago` = 
-			`creditos_periocidadpagos`.`idcreditos_periocidadpagos` 
-				INNER JOIN `primeras_letras` `primeras_letras` 
-				ON `creditos_solicitud`.`numero_solicitud` = `primeras_letras`.
-				`docto_afectado` 
-					INNER JOIN `socios_general` `socios_general` 
-					ON `creditos_solicitud`.`numero_socio` = `socios_general`.
-					`codigo`
-    
-    WHERE 
-    `creditos_solicitud`.persona_asociada	= $empresa
-    AND saldo_actual > " . TOLERANCIA_SALDOS . "
-    AND (`primeras_letras`.`fecha_de_pago` <= '$fechaFinal'  OR creditos_solicitud.ultimo_periodo_afectado >= 2)
-    $ByPeriodo
-    AND (creditos_solicitud.ultimo_periodo_afectado+(1+($variacion))) > 0
-    AND (creditos_solicitud.ultimo_periodo_afectado+(1+($variacion))) <= creditos_solicitud.pagos_autorizados
-    ORDER BY ultimo_periodo_afectado DESC, fecha_ministracion,
-	socios_general.nombrecompleto
-    ";
-    //setLog($sql);
-    $dato		= $xQL->getDataRecord($sql);
-    $tr			= "";
-    //$xBt		= new cHImg();
-    $xBtn		= new cHButton();
-    $xNot		= new cHNotif();
-    $ixx		= 1;
-    $numero		= 0;
-    $suma		= 0;
-    $xT			= new cTipos();
+    	$DCal			= $xCache->get($idx);
+    	if(!is_array($DCal)){
+	   		$sqletras		= $xVi->getVistaLetras(false, false, false, false, "", "", " AND (`creditos_solicitud`.`persona_asociada` =$empresa) ");
+		    $rsCal			= $xQL->getDataRecord($sqletras);
+		    $DCal			= array();
+		    foreach ($rsCal as $dscal ){
+		    	$ixcredito						= $dscal["docto_afectado"];
+		    	$ixperiodo						= $dscal["periodo_socio"];
+		    	$DCal["$ixcredito-$ixperiodo"]	= $dscal["total_sin_otros"];
+		    }
+		    $xCache->set($idx, $DCal, $xCache->EXPIRA_5MIN);
+    	}
+	    $ByMinistracion	= "";
+	    
+	    $periodo		= $periodo + $variacion;
+	    
+	    //filtrar domicilio -> socio -> credito -> letra
+	    $sql	= "SELECT
+	    creditos_solicitud.numero_socio AS 'persona',
+	    CONCAT(
+	    (CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN '(*)' ELSE '' END ), 
+	    socios_general.nombrecompleto, ' ',
+	    socios_general.apellidopaterno, ' ',
+	    socios_general.apellidomaterno 
+		) AS 'nombre', 
+	
+	    creditos_solicitud.numero_solicitud AS 'credito',
+	    `ultimo_periodo_afectado` AS `periodo_actual`,
+		getParcialidadPorFecha(`ultimo_periodo_afectado`, $variacion, '$fechaFinal', `primeras_letras`.`fecha_de_pago`, fecha_ministracion) AS 'letra',
+		getUltimaLetraEnviada(creditos_solicitud.numero_solicitud) AS `ultimo_envio`,
+	   `creditos_solicitud`.`pagos_autorizados`  AS 'pagos',
+	   
+	    creditos_solicitud.monto_parcialidad AS 'monto'
+	    
+		FROM
+			`creditos_solicitud` `creditos_solicitud` 
+				INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos` 
+				ON `creditos_solicitud`.`periocidad_de_pago` = 
+				`creditos_periocidadpagos`.`idcreditos_periocidadpagos` 
+					INNER JOIN `primeras_letras` `primeras_letras` 
+					ON `creditos_solicitud`.`numero_solicitud` = `primeras_letras`.
+					`docto_afectado` 
+						INNER JOIN `socios_general` `socios_general` 
+						ON `creditos_solicitud`.`numero_socio` = `socios_general`.
+						`codigo`
+	    
+	    WHERE 
+	    `creditos_solicitud`.persona_asociada	= $empresa
+	    AND saldo_actual > " . TOLERANCIA_SALDOS . "
+	    AND (`primeras_letras`.`fecha_de_pago` <= '$fechaFinal'  OR creditos_solicitud.ultimo_periodo_afectado >= 2)
+	    $ByPeriodo
+	    AND (creditos_solicitud.ultimo_periodo_afectado+(1+($variacion))) > 0
+	    AND (creditos_solicitud.ultimo_periodo_afectado+(1+($variacion))) <= creditos_solicitud.pagos_autorizados
+	    ORDER BY ultimo_periodo_afectado DESC, fecha_ministracion,
+		socios_general.nombrecompleto
+	    ";
+	    //setLog($sql);
+	    $dato		= $xQL->getDataRecord($sql);
+	    $tr			= "";
+	    //$xBt		= new cHImg();
+	    $xBtn		= new cHButton();
+	    $xNot		= new cHNotif();
+	    $ixx		= 1;
+	    $numero		= 0;
+	    $suma		= 0;
+	    $xT			= new cTipos();
     foreach ($dato as $rw){
     	
     	$credito				= $rw["credito"];
@@ -5180,6 +5220,14 @@ ultimo_periodo_enviado, fecha_de_envio,
 		$str	= $this->extractDias($this->mDiasDeNomina);
 		return $this->mListaDePeriocidad;
 	}
+	function addIntegrante($persona){
+		$xSoc	= new cSocio($persona);
+		if($xSoc->init() == true){
+			if($xSoc->getEsPersonaFisica() == true){
+				$xSoc->setEmpleador($this->getClaveDeEmpresa());
+			}
+		}
+	}
 }
 
 class cPersonasRelaciones {
@@ -5369,8 +5417,8 @@ class cPersonasRelaciones {
 			        $unica_x_per     = true;
 			        break;
 				case GRUPO_CLAVE_INTEGRANTE:
-					$xPer	= new cSocio($numero_de_socio);
-					$xPer->setUpdate( array("grupo_solidario" => "$socio_relacionado") );
+					//$xPer	= new cSocio($numero_de_socio);
+					//$xPer->setUpdate( array("grupo_solidario" => "$socio_relacionado") );
 					$unica_x_per     = true;
 					break;
 				case GRUPO_CLAVE_PRESIDENTA:
@@ -7268,6 +7316,9 @@ class cGrupo{
 	private $mDatosReciboPlan	= array();
 	private $mReciboPlan		= false;
 	private $mObjPersona		= null;
+	
+	private $mTabla				= "socios_grupossolidarios";
+	
 	function __construct($codigo_de_grupo, $iniciar = true){ $this->mCodigo		= $codigo_de_grupo; if ( $iniciar  == true AND setNoMenorQueCero($codigo_de_grupo) > 0 ){ $this->init(); }	}
 	function getDescripcion(){
 		$desc	= "";
@@ -7275,12 +7326,18 @@ class cGrupo{
 		return $desc;
 	}
 	function init($D = false){
-
-		$sqlG 	= "SELECT * FROM socios_grupossolidarios	WHERE idsocios_grupossolidarios = " . $this->mCodigo . " LIMIT 0,1";
-		if ( ($D == false) OR ( !is_array($D) ) ){
-			$D		= obten_filas($sqlG);
+		$xCache		= new cCache();
+		$idx		= $this->mTabla . "-" . $this->mCodigo;
+		$inCache	= true;
+		$xT			= new cSocios_grupossolidarios();
+		if(!is_array($D)){
+			$D		= $xCache->get($idx);
+			if(!is_array($D)){
+				$xQL	= new MQL();
+				$D		= $xQL->getDataRow("SELECT * FROM socios_grupossolidarios	WHERE idsocios_grupossolidarios = " . $this->mCodigo . " LIMIT 0,1");
+			}
 		}
-		if(isset($D["nombre_gruposolidario"])){
+		if(isset($D[$xT->IDSOCIOS_GRUPOSSOLIDARIOS])){
 			$this->mNombre		= $D["nombre_gruposolidario"];
 			$this->mRepSocio	= $D["representante_numerosocio"];
 			$this->mRepNom		= $D["representante_nombrecompleto"];
@@ -7601,19 +7658,28 @@ class cGrupo{
 		 * Neutraliza el Recibo de Planeacion por socio
 		 * Neutraliza las Operaciones de Planeacion por Grupo
 		 */
+		$xQL					= new MQL();
 		$xF						= new cFecha();
 		$fecha_esperar_hasta 	= $xF->setRestarDias( DIAS_ESPERA_CREDITO, $fecha );
 		$grupo					= $this->getCodigo();
+		
 		$sqlURec 				= "UPDATE operaciones_recibos set docto_afectado=$credito WHERE numero_socio=$persona AND tipo_docto=14		AND fecha_operacion>='$fecha_esperar_hasta' ";
 		$sqlUMvto 				= "UPDATE operaciones_mvtos set docto_afectado=$credito WHERE grupo_asociado=$grupo AND tipo_operacion=112 AND fecha_operacion>='$fecha_esperar_hasta'";
-		my_query($sqlURec);
-		my_query($sqlUMvto);
+		$xQL->setRawQuery($sqlURec);
+		$xQL->setRawQuery($sqlUMvto);
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function addIntegrante($clave_de_persona){
-		$xRel	= new cPersonasRelaciones(false, $this->mClaveDePersona);
-		$xRel->addRelacion($clave_de_persona, GRUPO_CLAVE_INTEGRANTE);
-		$this->mMessages	.= $xRel->getMessages();
+		$xPer	= new cSocio($clave_de_persona);
+		if($xPer->init() == true){
+			if($xPer->getEsPersonaFisica() == true){
+				$xRel	= new cPersonasRelaciones(false, $this->mClaveDePersona);
+				$xRel->addRelacion($clave_de_persona, GRUPO_CLAVE_INTEGRANTE);
+				$this->mMessages	.= $xRel->getMessages();
+				$xPer->setGrupoSolidario($this->getCodigo());
+				$this->mMessages	.= $xPer->getMessages();
+			}
+		}
 	}
 	function setRepresentante($clave_de_persona){
 		$xLoc		= new cLocal();
@@ -7684,7 +7750,41 @@ class cGrupo{
 			}
 		}
 		return $res;
-	}	
+	}
+	function getProximoNivel(){ return $this->mNivelProximo; }
+	function addSolicitud($nivel = false, $fecha = false){
+		if($this->mGrupoIniciado == false){ $this->init(); }
+		$rs		= $this->initListaIntegrantes();
+		$xF		= new cFecha();
+		if($rs){
+			//
+			$xOrg	= new cGruposCotizaciones();
+			$xNiv	= new cGruposNiveles();
+			
+			$idplan	= $xOrg->add($this->getCodigo(), $nivel, $fecha);
+			
+			if($idplan <= 0){
+				
+			} else {
+				//Agregar nuevo Nivel
+				foreach ($rs as $rw){
+					$idpersona	= $rw["codigo"];
+					
+				}
+			}
+		}
+	}
+	function initListaIntegrantes(){
+		$grupo	= $this->getCodigo();
+		$sql	= $xLi->getListadoDePersonasV2(" ( `socios_general`.`grupo_solidario` = $grupo ) ", "0,100");
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		return $rs;
+	}
+	function setCuandoSeActualiza(){
+		
+	}
+	
 }
 /**
  * @deprecated @since 2015.03.01
@@ -7692,9 +7792,9 @@ class cGrupo{
 class cPeriodoDeEmpresa extends cEmpresas_operaciones {
 	function getCobrados(){
 		$id		= setNoMenorQueCero( $this->idempresas_operaciones()->v());
-		$ql		= new MQL();
+		$xQL		= new MQL();
 		$sql	= "SELECT COUNT(`idempresas_cobranza`) AS 'cobrados' FROM `empresas_cobranza` WHERE `clave_de_nomina` = $id AND `estado`=0";
-		$datos	= $ql->getDataRow($sql);
+		$datos	= $xQL->getDataRow($sql);
 		return (isset($datos["cobrados"])) ? setNoMenorQueCero($datos["cobrados"]) : 0;
 	}
 }

@@ -83,6 +83,8 @@ FROM
 						ON `creditos_solicitud`.`numero_socio` = `socios`.
 						`codigo` 
 WHERE
+	(`creditos_rechazados`.`estatusactivo`=1)
+	AND
 	(`creditos_rechazados`.`fecha_de_rechazo` >='$FechaInicial')
 	AND
 	(`creditos_rechazados`.`fecha_de_rechazo` <='$FechaFinal')";

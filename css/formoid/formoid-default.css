@@ -631,7 +631,7 @@ overflow: hidden;
 	text-shadow: 0 -1px 3px #468847;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.white {
+.toolnav li a.white{
 text-shadow: none; color: #901429;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 }
@@ -642,7 +642,7 @@ background: linear-gradient(to bottom, #901429 0%,#B5122D 100%);
 .toolnav li a.dark {
 background: #001121;
 }
-.toolnav li a.yellow {
+.toolnav li a.yellow, h3.yellow {
 text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
@@ -676,10 +676,15 @@ text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
 background: #56C4FF;
 }
 
-.toolnav li a.blue3, .toolnav li a.editar {
+.toolnav li a.blue3, h3.blue3 {
 text-shadow: none;
 color: #FFFFFF; background: #4877B6;
 }
+.toolnav li a.blue4, .toolnav li a.editar, h3.blue4 {
+text-shadow: none;
+color: #FFFFFF; background: #00B6E3;
+}
+
 
 .toolnav li a.persona {
 text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
@@ -691,9 +696,9 @@ background: #4464AF;
 	
 }
 .toolnav li a.green2 {
-text-shadow: 0 1px 0 rgba(0,0,0,0.2); color: #fff;
-background: #1b926c;
-border-color: #198764;
+	text-shadow: 0 1px 0 rgba(0,0,0,0.2); color: #fff;
+	background: #1b926c;
+	border-color: #198764;
 }
 .toolnav li  div.noticon {
 	clear: both;
@@ -704,6 +709,12 @@ border-color: #198764;
 .toolnav li  div.noticon i {
 	color: white;
 	text-shadow: 0 -1px 3px #202020;
+}
+.toolnav li a.purple, .credito-estado-rechazado {
+	text-shadow:none;
+	color: #320032;
+	background: #E0D5F9;
+	border-color: #5229A3;
 }
 /* Rounded corner for the first in last item. Shorthand: Top left, Top right, Bottom right, Bottom left.
 We also remove the borders, since they don't need them. */

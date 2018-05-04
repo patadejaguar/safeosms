@@ -468,21 +468,24 @@ class cUtileriasParaCreditos{
 		$arrSDOS				= array();	//array de Saldos a Insertas
 		$txtSDOS				= "";		//TXT SQL de la insercion de Saldos
 		$sucursal				= getSucursal();
+		$MONTO_AUTORIZADO		= 0;
+		$FECHA_CORTE_MORA		= $fechaCorte;
 		//$FECHA_DE_PRIMER_AT
 		while($rw = $rs->fetch_assoc()){
 		//foreach ( $rs as $rw ){
-			$socio			= setNoMenorQueCero($rw["socio"]);
-			$credito		= setNoMenorQueCero($rw["documento"]);
-			$operacion		= setNoMenorQueCero($rw["operacion"]);
-			$periodo		= setNoMenorQueCero($rw["periodo"]);
-			$afectacion		= $rw["afectacion"];
-			$monto			= setNoMenorQueCero($rw["monto"], 2);
-			$fecha			=$xF->getFechaISO( $rw["fecha"]);
-
-			$nota			= "";
+			$socio				= setNoMenorQueCero($rw["socio"]);
+			$credito			= setNoMenorQueCero($rw["documento"]);
+			$operacion			= setNoMenorQueCero($rw["operacion"]);
+			$periodo			= setNoMenorQueCero($rw["periodo"]);
+			$afectacion			= $rw["afectacion"];
+			$monto				= setNoMenorQueCero($rw["monto"], 2);
+			$fecha				= $xF->getFechaISO( $rw["fecha"]);
+			
+			$nota				= "";
 			//$dias_tolerados		= 0; //DIAS_PAGO_VARIOS;
 			$IsCredNew			= true;
 			$dias_transcurridos	= 0;
+			
 			if( $creditoA != $credito ){
 				$xLog->add($txt, $xLog->DEVELOPER);
 				if($xCred != null){
@@ -500,6 +503,7 @@ class cUtileriasParaCreditos{
 				$TASA_MORATORIO			= $xCred->getTasaDeMora();
 				$TASA_INTERES			= $xCred->getTasaDeInteres();
 				$PERIOCIDAD_DE_PAGO		= $xCred->getPeriocidadDePago();
+				$MONTO_AUTORIZADO		= $xCred->getMontoAutorizado();
 				//si es Ministracion
 				if($MvtoAnterior	== OPERACION_CLAVE_MINISTRACION){ $FECHA_DE_ULTIMO_PAGO	= $xCred->getFechaDeMinistracion(); }
 				$xLog->add("------------\t\t$credito\t\t------------\r\n");
@@ -515,6 +519,12 @@ class cUtileriasParaCreditos{
 				eval($xFormulaDiasTolera);
 				if($forzarTodos == false AND $creditoFiltrado <= DEFAULT_CREDITO){
 					$saldo				= $xCred->getSaldoActual($fechaCorte);
+				}
+				$saldo					= round($saldo,2);
+				//cortar mora a la fecha de liquidacion
+				if($xCred->getEsPagado() == true){
+					$FECHA_CORTE_MORA	= $xCred->getFechaUltimoMvtoCapital();
+					$FECHA_CORTE_MORA	= $xF->getFechaISO($FECHA_CORTE_MORA);
 				}
 			} else {
 				$IsCredNew			= false;
@@ -532,17 +542,17 @@ class cUtileriasParaCreditos{
 				if($operacion == OPERACION_CLAVE_PLAN_CAPITAL AND $monto >0){
 
 					
-					if($xF->getInt($FECHA_DE_TOLERANCIA) < $xF->getInt($fechaCorte)){
+					if($xF->getInt($FECHA_DE_TOLERANCIA) < $xF->getInt($FECHA_CORTE_MORA)){
 						$BASE_MORA		= $monto;
-						$DIAS_MORA		= setNoMenorQueCero($xF->setRestarFechas($fechaCorte, $fecha));
+						$DIAS_MORA		= setNoMenorQueCero($xF->setRestarFechas($FECHA_CORTE_MORA, $fecha));
 						$moratorio		= (($BASE_MORA * $DIAS_MORA) * $TASA_MORATORIO) / EACP_DIAS_INTERES;
 						$moratorio		= setNoMenorQueCero($moratorio,2);
-						$xLog->add( "WARN\tAgregando Mora por $moratorio con Base $BASE_MORA y dias $DIAS_MORA\r\n", $xLog->DEVELOPER);
+						$xLog->add( "WARN\tAgregando Mora por $moratorio con Base $BASE_MORA y dias $DIAS_MORA del $fecha al $FECHA_CORTE_MORA\r\n", $xLog->DEVELOPER);
 						//Agregar Vencimientop 
 						//Agregar Fecha de Primer Atraso
 						if(!isset($FECHA_DE_COMPROMISO)){
 							$FECHA_DE_COMPROMISO	= $fecha;
-							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS CON CAPITAL\r\n", $xLog->DEVELOPER);
+							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS CON CAPITAL Con saldo $saldo\r\n", $xLog->DEVELOPER);
 						//$xLog->add( , $xLog->DEVELOPER);
 						}						
 					}
@@ -553,7 +563,7 @@ class cUtileriasParaCreditos{
 					if($xF->getInt($FECHA_DE_TOLERANCIA) < $xF->getInt($fechaCorte)){
 						if(!isset($FECHA_DE_COMPROMISO)){
 							$FECHA_DE_COMPROMISO	= $fecha;
-							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS SOLO INTERES\r\n", $xLog->DEVELOPER);
+							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS SOLO INTERES Con Saldo $saldo\r\n", $xLog->DEVELOPER);
 							//$xLog->add( , $xLog->DEVELOPER);
 							//Agregar el Interes sobre la Base Inicial de los Creditos sin pagos de Capital
 							$BASE_MORA		= $xCred->getSaldoActual($fechaCorte);
@@ -569,12 +579,19 @@ class cUtileriasParaCreditos{
 
 			if($operacion == OPERACION_CLAVE_PLAN_INTERES OR $operacion == OPERACION_CLAVE_PAGO_INTERES){
 				$interes				= $monto;
-				$xLog->add("WARN\tAgregando Interes por $interes de la Operacion $operacion\r\n", $xLog->DEVELOPER);
+				
 				if($xCred->getPagosSinCapital() == true){
 					$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
 					$saldo_calculado		= setNoMenorQueCero(($saldo * $dias_transcurridos), 2);
 					$FECHA_DE_ULTIMO_PAGO	= $fecha;
 					$xLog->add("WARN\tPagos sin Capital Dias $dias_transcurridos , Saldo $saldo_calculado , Fecha $fecha\r\n", $xLog->DEVELOPER);
+				} else {
+					if($saldo_calculado<=0 AND $operacion == OPERACION_CLAVE_PLAN_INTERES){
+						$interes			= 0;
+					}
+				}
+				if($interes>0){
+					$xLog->add("WARN\tAgregando Interes por $interes de la Operacion $operacion con Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
 				}
 			} else {
 				$interes				= 0;
@@ -594,6 +611,7 @@ class cUtileriasParaCreditos{
 				$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
 				$saldo_calculado		= setNoMenorQueCero( ($saldo * $dias_transcurridos), 2);
 				$saldo					+= ($monto * $afectacion);
+				$saldo					= round($saldo,2);
 				$FECHA_DE_ULTIMO_PAGO	= $fecha;
 				//disminuye de la letra
 				if($operacion == OPERACION_CLAVE_PAGO_CAPITAL){	}
@@ -617,19 +635,23 @@ class cUtileriasParaCreditos{
 				$txt	.= "$socio\t$credito\t$fecha\t$monto\t$saldo\t$dias_transcurridos\t$operacion\t$ESTADO_ACTUAL\t$interes\t $moratorio \t$nota\r\n";
 			}
 
-			$mm							= $monto + $interes + $moratorio;
+			$mm							= round(($monto + $interes + $moratorio),2);
 			$periodo					= setNoMenorQueCero($periodo);
 			if(($xF->getInt($fecha) <= $xF->getInt($fechaCorte) AND ($mm >0 ) )){
 				//XXX: Aqui me quede
 				//Inserta un nuevo movimiento si es filtrado, si no, genera un array con los valores
-				if($creditoFiltrado > DEFAULT_CREDITO){
-					$xCred->addSDPM($interes, $moratorio, $FECHA_DE_ULTIMO_PAGO, $saldo, $ESTADO_ACTUAL, $fecha, $operacion, $saldo_calculado, $periodo);
-				} else {
-					if($saldo === false){
-						$saldo = 0;
+				//if($saldo>0.01){
+				if($MONTO_AUTORIZADO > 0){ //Filtra por monto autorizado
+					if($creditoFiltrado > DEFAULT_CREDITO){
+						$xCred->addSDPM($interes, $moratorio, $FECHA_DE_ULTIMO_PAGO, $saldo, $ESTADO_ACTUAL, $fecha, $operacion, $saldo_calculado, $periodo);
+					} else {
+						if($saldo === false){
+							$saldo = 0;
+						}
+						$arrSDOS[]			= "($socio, $credito, '$fecha', '$FECHA_DE_ULTIMO_PAGO', $dias_transcurridos, $saldo_calculado, $saldo, $ESTADO_ACTUAL, $interes, $moratorio,$operacion, '$sucursal', $periodo)";
 					}
-					$arrSDOS[]			= "($socio, $credito, '$fecha', '$FECHA_DE_ULTIMO_PAGO', $dias_transcurridos, $saldo_calculado, $saldo, $ESTADO_ACTUAL, $interes, $moratorio,$operacion, '$sucursal', $periodo)";
 				}
+				//}
 				//numero_de_socio, numero_de_credito, fecha_actual, fecha_anterior, dias_transcurridos, monto_calculado, saldo, estatus, interes_normal, interes_moratorio, tipo_de_operacion, sucursal, periodo
 			}
 			
@@ -927,7 +949,7 @@ class cUtileriasParaCreditos{
 				FROM
 					`creditos_sdpm_historico` `creditos_sdpm_historico`
 					WHERE `creditos_sdpm_historico`.`numero_de_credito` >0 
-		$wDLimit $wSDPM ";
+		$wDLimit $wSDPM ORDER BY `creditos_sdpm_historico`.`numero_de_credito`, `creditos_sdpm_historico`.`fecha_actual`";
 		$rs 		= $xQL->getDataRecord($sqlM);
 	
 		foreach ($rs as $rw ){

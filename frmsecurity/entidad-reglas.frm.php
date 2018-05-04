@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.ENTIDAD REGLAS", HP_FORM);
+$xHP		= new cHPage("TR.BIZRULES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -49,18 +49,14 @@ $xHG	= new cHGrid("iddivreglas",$xHP->getTitle());
 
 $xHG->setSQL("SELECT * FROM `entidad_reglas` LIMIT 0,100");
 $xHG->addList();
+$xHG->setOrdenar();
 $xHG->addKey("identidad_reglas");
+
+
 $xHG->col("contexto", "TR.CONTEXTO", "15%");
 $xHG->col("nombre", "TR.NOMBRE", "40%");
-//$xHG->col("evento", "TR.EVENTO", "10%");
-//$xHG->col("sujetos", "TR.SUJETOS", "10%");
-//$xHG->col("reglas", "TR.REGLAS", "10%");
-//$xHG->col("metadata", "TR.METADATA", "10%");
 $xHG->OColFunction("idvalor", "TR.ESTATUSACTIVO", "10%", "jsRenderActivo" );
-
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-//$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.identidad_reglas +')", "edit.png");
-//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.identidad_reglas +')", "delete.png");
 
 $xFRM->addHElem("<div id='iddivreglas'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );

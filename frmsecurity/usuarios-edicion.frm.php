@@ -37,10 +37,13 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
+$xHP->addJTableSupport();
 $xHP->init();
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
+$xTxt		= new cHText();
+
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 $xFRM->setNoAcordion();
@@ -52,6 +55,20 @@ $iduser		= $xUser->getID();
 $nivel		= $xUser->getNivel();
 
 $w			= ($xUser->getPuedeEditarUsuarios() == false) ? " AND `idusuarios`=$iduser " : " AND (`niveldeacceso` <= $nivel) ";
+
+$xSelLE		= $xSel->getListaDeCatalogoGenerico("usuarios_estatus", "idestatus", SYS_TODAS);
+$xSelLE->setNoMayus();
+$xSelLE->addEvent("onchange", "jsLoadFiltro()");
+$xSelLE->setDivClass("tx4 tx18 red");
+
+$xFRM->addHElem( $xSelLE->get("TR.ESTATUS", true) );
+
+$xSelLN 	= $xSel->getListaDeNivelDeUsuario("idnivel", 0, $nivel);
+
+$xTxt->addEvent("jsLoadFiltro()", "onkeyup");
+$xFRM->addHElem( $xTxt->get("idbuscar", "", "TR.BUSCAR") );
+//$xFRM->addHElem( $xSelLN->get(true) );
+//$xFRM->OText("idbusqueda", "", "TR.BUSCAR");
 
 
 $sql		= "SELECT
@@ -68,98 +85,36 @@ $sql		= "SELECT
 	 
 FROM
 	`usuarios` `usuarios`
-WHERE `usuarios`.`estatus` ='" . SYS_USER_ESTADO_ACTIVO . "' $w ORDER BY `usuarios`.`estatus` DESC, `usuarios`.`niveldeacceso`, `usuarios`.`nombrecompleto`";
-$xFRM->addSeccion("idactivos", "TR.ESTATUSACTIVO");
-$xT		= new cTabla($sql,1);
-$xT->setKeyTable(TUSUARIOS_REGISTRO);
-$xT->setKeyField("idusuarios");
+WHERE `usuarios`.`idusuarios`>0 $w ORDER BY `usuarios`.`estatus` DESC, `usuarios`.`niveldeacceso`, `usuarios`.`nombrecompleto`";
 
-$xT->OButton("TR.Cambiar password","jsVerMiPassword(" . HP_REPLACE_ID . ")", $xFRM->ic()->PASSWORD);
-$xT->OButton("TR.Baja","jsBajaUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->BANEAR);
-$xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
-//$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
+$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 
-$xT->setOmitidos("estatus");
+$xHG->setSQL($sql);
+$xHG->addList();
+$xHG->setOrdenar();
 
-if($xUser->getPuedeEditarUsuarios() == true){
-	//$xT->addEditar();
-	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
-} else {
-	$xT->setOmitidos("nivel_de_acceso");
-}
-$xFRM->addHElem( $xT->Show() );
-$xFRM->endSeccion();
+$xHG->col("clave", "TR.CLAVE", "5%");
+$xHG->col("nombre", "TR.NOMBRE", "10%");
 
-if($xUser->getPuedeEditarUsuarios() == true){
-	//BAJA
-	$sql		= "SELECT
-	`usuarios`.`codigo_de_persona`,
-	`usuarios`.`idusuarios`     AS `clave`,
-	`usuarios`.`nombreusuario`  AS `nombre`,
-	`usuarios`.`nombrecompleto` AS `nombre_completo`,
-	`usuarios`.`alias`          AS `alias`,
-	`usuarios`.`puesto`         AS `puesto`,
-	`usuarios`.`niveldeacceso`  AS `nivel_de_acceso`,
-	`usuarios`.`estatus`        AS `estatus`,
-	`usuarios`.`expira`,
-	`usuarios`.`sucursal`
-	
-FROM
-	`usuarios` `usuarios`
-WHERE `usuarios`.`estatus` ='" . SYS_USER_ESTADO_BAJA. "' $w ORDER BY `usuarios`.`estatus` DESC, `usuarios`.`niveldeacceso`, `usuarios`.`nombrecompleto`";
-	$xFRM->addSeccion("idbajas", "TR.BAJA");
-	$xT		= new cTabla($sql,1);
-	$xT->setKeyTable(TUSUARIOS_REGISTRO);
-	$xT->setKeyField("idusuarios");
-	$xT->OButton("TR.Cambiar password","jsVerMiPassword(" . HP_REPLACE_ID . ")", $xFRM->ic()->PASSWORD);
-	//$xT->OButton("TR.Baja","jsBajaUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->BANEAR);
-	//$xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
-	$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
-	$xT->setOmitidos("estatus");
-	//$xT->addEditar();
-	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
-	
-	$xFRM->OButton("TR.AGREGAR USUARIO", "jsAgregarUsuario()", $xFRM->ic()->GRUPO);
-	
-	$xFRM->addHElem( $xT->Show() );
-	$xFRM->endSeccion();
-	
-	//SUSPENDIDOS
-	$sql		= "SELECT
-	`usuarios`.`codigo_de_persona`,
-	`usuarios`.`idusuarios`     AS `clave`,
-	`usuarios`.`nombreusuario`  AS `nombre`,
-	`usuarios`.`nombrecompleto` AS `nombre_completo`,
-	`usuarios`.`alias`          AS `alias`,
-	`usuarios`.`puesto`         AS `puesto`,
-	`usuarios`.`niveldeacceso`  AS `nivel_de_acceso`,
-	`usuarios`.`estatus`        AS `estatus`,
-	`usuarios`.`expira`,
-	`usuarios`.`sucursal`
-	
-FROM
-	`usuarios` `usuarios`
-WHERE `usuarios`.`estatus` ='" . SYS_USER_ESTADO_SUSP . "' $w ORDER BY `usuarios`.`estatus` DESC, `usuarios`.`niveldeacceso`, `usuarios`.`nombrecompleto`";
-	$xFRM->addSeccion("idsuspendidos", "TR.SUSPENDIDO");
-	$xT		= new cTabla($sql,1);
-	$xT->setKeyTable(TUSUARIOS_REGISTRO);
-	$xT->setKeyField("idusuarios");
-	$xT->OButton("TR.Cambiar password","jsVerMiPassword(" . HP_REPLACE_ID . ")", $xFRM->ic()->PASSWORD);
-	$xT->OButton("TR.Baja","jsBajaUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->BANEAR);
-	//$xT->OButton("TR.Supender","jsSuspenderUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->PARAR);
-	$xT->OButton("TR.Activar","jsActivarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->SALUD);
-	
-	$xT->OButton("TR.EDITAR","jsEditarUsuario(" . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
-	
-	$xT->setOmitidos("estatus");
-	//$xT->addEditar();
-	
-	$xFRM->addHElem( $xT->Show() );
-	$xFRM->endSeccion();
-}
+//$xHG->col("nombre_completo", "TR.NOMBRE_COMPLETO", "40%");
+$xHG->col("alias", "TR.ALIAS", "20%");
+$xHG->col("puesto", "TR.PUESTO", "10%");
+$xHG->col("estatus", "TR.ESTATUS", "10%");
+
+$xHG->OButton("TR.EDITAR", "jsEditarUsuario('+ data.record.clave +')", "edit.png");
+
+$xHG->OButton("TR.BAJA", "jsActionBaja('+ data.record.clave +',\''+ data.record.estatus +'\')", "prohibition.png");
+
+$xHG->OToolbar("TR.AGREGAR USUARIO","jsAgregarUsuario()", "grid/add.png");
+
+$xFRM->addHElem("<div id='iddiv'></div>");
+
+$xFRM->addJsCode( $xHG->getJs(true) );
 
 
 echo $xFRM->get();
+
+
 ?>
 <script>
 var xG	= new Gen();
@@ -188,6 +143,36 @@ function jsEditarUsuario(id){
 function jsVerMiPassword(id){ 
 	var xrl		= "../frmsocios/socios.usuario.frm.php?usuario=" + id;
 	xG.w({ url: xrl, tiny : true }); 	
+}
+function jsActionBaja(id, estatus){
+	//var id	= dd.clave;
+	var jsOkBaja	= function(){  jsBajaUsuario(id); }
+	
+	if(estatus == "activo"){
+		xG.confirmar({msg: "MSG_USER_CONFIRM_BAJA", callback: jsOkBaja });
+	} else if(estatus == "baja"){
+		xG.alerta({msg : "MSG_USER_EN_BAJA"});
+		
+	} else if(estatus == "suspension"){
+		xG.confirmar({msg: "MSG_USER_CONFIRM_BAJA", callback: jsOkBaja });
+	}
+}
+function jsLoadFiltro(){
+	var ids	= $("#idestatus").val();
+	var ss	= $("#idbuscar").val();
+	
+	var str	= "";
+	if(ids !== "todas"){
+		str	+= " AND (estatus='" + ids + "') ";
+	}
+	if($.trim(ss) !== ""){
+		str += " AND (`puesto` LIKE '%" + ss + "%' OR `nombreusuario` LIKE '%" + ss + "%' OR `nombrecompleto` LIKE '%" + ss + "%' OR `niveldeacceso` LIKE '%" + ss + "%')";
+	}
+	if($.trim(str) !== ""){
+		str		= "&w=" + base64.encode(str);
+		$("#iddiv").jtable("destroy");
+		jsLGiddiv(str);
+	}
 }
 </script>
 <?php

@@ -45,7 +45,7 @@ switch ($command){
 		break;
 	case TPERSONAS_ACTIVIDAD_ECONOMICA:
 		$xTrab	= new cSocios_aeconomica();
-		$D	= obten_filas("SELECT * FROM `socios_aeconomica` WHERE	(`socios_aeconomica`.`socio_aeconomica` = $data ) ORDER BY `socios_aeconomica`.`fecha_alta` DESC	LIMIT 0,1");
+		$D		= obten_filas("SELECT * FROM `socios_aeconomica` WHERE	(`socios_aeconomica`.`socio_aeconomica` = $data ) ORDER BY `socios_aeconomica`.`fecha_alta` DESC	LIMIT 0,1");
 		$xTrab->setData($D);
 		$query	= $xTrab->query();
 		$query->setToUTF8();

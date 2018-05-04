@@ -29,6 +29,10 @@ $tipo_de_ingreso	= parametro("idtipodeingreso", 0, MQL_INT); $tipo_de_ingreso	= 
 $OtherEvent			= parametro("ev", "", MQL_RAW);	//Otro Evento Desatado
 $OtherEvent			= parametro("callback", $OtherEvent, MQL_RAW);
 
+$empresa			= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo				= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+
+
 $control			= parametro("control", "idsocio", MQL_RAW);
 
 $tiny 				= (isset($_GET["tinybox"])) ? true : false;
@@ -83,11 +87,14 @@ function jsaGetListadoDeProductos(){
 	$cDE->setOptionSelect(DEFAULT_TIPO_CONVENIO);
 	return $cDE->get("", false);
 }
-function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0){
+function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $idempresa = 0, $idgrupo = 0){
 	$strTbls			= "";
 	$ByForm				= false;
 	$MostrarGars		= true;
 	$MostrarPartes		= true;
+	$idempresa			= setNoMenorQueCero($idempresa);
+	$idgrupo			= setNoMenorQueCero($idgrupo);
+	
 	$sqlL				= new cSQLListas();
 	$xFil				= new cTiposLimpiadores();
 	$xUser				= new cSystemUser();
@@ -96,10 +103,11 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	$extras				= "";
 	$xIc				= new cHImg();
 	$xT					= new cTipos();
+	$xVals				= new cReglasDeValidacion();
 	$todos				= $xT->cBool($todos);
-	$w1					= ($todos == true) ? "" : " (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
+	$w1					= ($todos == true) ? "" : " AND (`socios_general`.tipoingreso != " . TIPO_INGRESO_SDN ." AND `socios_general`.tipoingreso != " . TIPO_INGRESO_PEP ." AND `socios_general`.tipoingreso != " . TIPO_INGRESO_USUARIO ." AND `socios_general`.tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
 	if($tipoingreso > 0){
-		$w1				= " (tipoingreso=$tipoingreso) ";
+		$w1				= " AND (`socios_general`.tipoingreso=$tipoingreso) ";
 	}
 	if ( $tipo_de_busqueda == "nc" ){
 		$ByForm			= true;
@@ -108,12 +116,27 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 		$w1				.= " AND `socios_general`.`sucursal`='" . $xUser->getSucursal() . "' ";
 		
 	}
+	if($xVals->empresa($idempresa) == true OR $xVals->grupo($idgrupo) == true){
+		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+			$xEmp	= new cEmpresas($idempresa);
+			if($xEmp->init() == true){
+				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` != " . PERSONAS_ES_FISICA . ") ";
+			}
+		}
+		if(PERSONAS_CONTROLAR_POR_GRUPO == true){
+			$xGpo	= new cGrupo($idgrupo);
+			if($xGpo->init() == true){
+				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` != " . PERSONAS_ES_FISICA . ") ";
+			}
+		}
+		
+	}
 	//if(OPERACION_LIBERAR_SUCURSALES == false){
 		$extras			= ", `socios_general`.`sucursal` ";
 	//}
 	$buscar				= ( ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0")) AND ($idinterno =="") ) ? false : true;
 	if ($buscar == false) {
-		$sqllike = $sqlL->getListadoDeSocios($w1, "0,50", $extras);
+		$sqllike = $sqlL->getListadoDePersonasV2($w1, "0,50", $extras);
 		$table_s = new cTabla($sqllike);
 		$table_s->setEventKey("setSocio");
 		//$table_s->setRowCSS("codigo", "center");
@@ -211,11 +234,13 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 				$table_s->setWithMetaData();
 				$strTbls .= $table_s->Show("TR.CREDITOS");
 			} else {
-				if($todos == true){$WSoc = " `socios_general`.`codigo` >0 $WSoc ";}
-				$sqllike = $sqlL->getListadoDeSocios($w1 . $WSoc, "0,100", $extras);
+				if($todos == true){
+					$WSoc = $WSoc;// " `socios_general`.`codigo` >0 $WSoc ";
+				}
+				$sqllike = $sqlL->getListadoDePersonasV2($w1 . $WSoc, "0,100", $extras);
 				$table_s = new cTabla($sqllike);
 				$table_s->setEventKey("setSocio");
-				
+				//setLog($sqllike);
 				
 				$table_s->OButton("TR.PANEL", 'jsToPanel(_REPLACE_ID_)', $table_s->ODicIcons()->CONTROL );
 				$table_s->OButton("TR.Relacion", "jsGetRelaciones(" . HP_REPLACE_ID . ")", "fa-group");
@@ -233,12 +258,31 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	return $strTbls;
 }
 function jsaSetSocioEnSession($socio){	getPersonaEnSession($socio); }
+function jsaAddPersonaToGrupo($persona, $grupo){
+	$xG	= new cGrupo($grupo);
+	if($xG->init() == true){
+		$xG->addIntegrante($persona);
+	}
+	//setError($xG->getMessages() );
+	return $xG->getMessages(OUT_HTML);
+}
+function jsaAddPersonaToEmpresa($persona, $Empresa){
+	$xEmp	= new cEmpresas($Empresa);
+	if($xEmp->init() == true){
+		$xEmp->addIntegrante($persona);
+	}
+	return $xEmp->getMessages(OUT_HTML);
+}
 
 
-$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso"), "#divresultado");
+$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso","idempresaadd","idgrupoadd"), "#divresultado");
 $jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaSetSocioEnSession', array("idsocio"));
+
+$jxc ->exportFunction('jsaAddPersonaToGrupo', array("idsocio", "idgrupoadd"));
+$jxc ->exportFunction('jsaAddPersonaToEmpresa', array("idsocio", "idempresaadd"));
+
 $jxc ->process();
 
 $xHP->init("initComponents()");
@@ -289,6 +333,9 @@ $xFRM->endSeccion();
 
 $xFRM->OHidden("tipodeingreso", $tipo_de_ingreso);
 
+$xFRM->OHidden("idempresaadd", $empresa);
+$xFRM->OHidden("idgrupoadd", $grupo);
+
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);
@@ -300,6 +347,8 @@ var xP		= new PersGen();
 var idsoc	= "<?php echo $control; ?>";
 var next	= "<?php echo $nextstep; ?>";
 
+var msrc	= xG.winOrigen();
+
 function jsGetPersonasByKey(msrc){
 	var mstr	= new String( msrc.value );
 	if (mstr.length >= 4){ jsShowSocios(); }  /*Busqueda por TXT*/
@@ -308,8 +357,22 @@ function jsGetPersonasByKey2(msrc){
 	var mstr	= new String( msrc.value );
 	if (mstr.length >= 2) { jsShowSocios();	} /*Busqueda por ID*/
 }
+function jsAddToEmpresa(){
+	xG.confirmar({msg: "MSG_CONFIRM_ADD_EMP", callback:  jsConfirmAddEmpresa});
+}
+function jsAddToGrupo(){
+	xG.confirmar({msg: "MSG_CONFIRM_ADD_GPO", callback:  jsConfirmAddGrupo});
+}
+function jsConfirmAddEmpresa(){
+	xG.postajax("jsClose()");
+	jsaAddPersonaToEmpresa();
+}
+function jsConfirmAddGrupo(){
+	xG.postajax("jsClose()");
+	jsaAddPersonaToGrupo();
+}
 function setSocio(id){
-	var msrc	= xG.winOrigen();
+	//var msrc	= xG.winOrigen();
 	var dd		= xG.getMetadata("#tr-socios_general-" + id);
 	$("#idsocio").val(id);
 
@@ -321,6 +384,14 @@ function setSocio(id){
 		xG.go({url: "../frmsocios/socios.panel.frm.php?persona=" + id});
 		return false;
 	}
+	if(next == "addgrupo"){
+		jsAddToGrupo();
+		return false;
+	}
+	if(next == "addempresa"){
+		jsAddToEmpresa();
+		return false;
+	}	
 	
 	jsaSetSocioEnSession();
 	if(msrc == null){
@@ -390,6 +461,16 @@ function jsToPanel(idpersona){
 function jsGetRelaciones(idpersona){
 	var xG	= new Gen();
 	xG.w({ url : "../frmsocios/socios.relaciones.sigma.frm.php?persona=" + idpersona});
+}
+function jsClose(){
+	if(next == "addempresa" || next == "addgrupo"){
+		<?php
+		if($OtherEvent != ""){
+			echo "if(msrc.$OtherEvent != \"undefined\"){ msrc.$OtherEvent(); }";
+		}
+		?>
+	}
+	xG.close();
 }
 </script>
 </html>

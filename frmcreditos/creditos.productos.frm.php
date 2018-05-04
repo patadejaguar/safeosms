@@ -223,7 +223,8 @@ switch ($opcion){
 		$d5 	= $ql->getArrayRecord("SELECT * FROM `creditos_periocidadpagos` ");
 		$xFRM->OSelect("tipo_de_periocidad_preferente", $xTabla->tipo_de_periocidad_preferente()->v(), "TR.tipo de periocidad preferente", $d5);
 		//$f1 	= array(CREDITO_PRODUCTO_NOMINA =>"NOMINA", CREDITO_PRODUCTO_INDIVIDUAL=>"INDIVIDUAL", CREDITO_PRODUCTO_GRUPOS => "GRUPO");
-		$f1		= array( SYS_PRODUCTO_ARREND => "ARRENDAMIENTO", SYS_PRODUCTO_GRUPOS => "GRUPOS", SYS_PRODUCTO_INDIVIDUAL => "INDIVIDUAL", SYS_PRODUCTO_REVOLVENTES => "REVOLVENTES" );
+		$f1		= array( SYS_PRODUCTO_NOMINA => "NOMINA",  SYS_PRODUCTO_ARREND => "ARRENDAMIENTO", SYS_PRODUCTO_GRUPOS => "GRUPOS", SYS_PRODUCTO_INDIVIDUAL => "INDIVIDUAL", SYS_PRODUCTO_REVOLVENTES => "REVOLVENTES" );
+		
 		$xFRM->OSelect("tipo_en_sistema", $xTabla->tipo_en_sistema()->v(), "TR.tipo en sistema", $f1);
 				
 		$xFRM->OText("clave_de_tipo_de_producto", $xTabla->clave_de_tipo_de_producto()->v(), "TR.clave de tipo de producto en SIC");

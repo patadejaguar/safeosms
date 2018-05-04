@@ -23,7 +23,7 @@
 .ui-tooltip .picker__footer, .picker__footer { width: 100%; }
 .ui-tooltip .picker__footer button, .picker__footer button { min-width: 45%; width: 45%; height: 100%; }
 .ui-corner-bottom fieldset, .ui-tooltip .formoid-default>div, .ui-tooltip li, .ui-tooltip p,
-.ui-tooltip .formoid-default, .ui-tooltip .formoid-default div, 
+.ui-tooltip .formoid-default, .ui-tooltip .formoid-default div,
 .ui-tooltip .formoid-default .element-text label, .ui-tooltip .formoid-default .tx4 label
 {
 	padding: 0;
@@ -72,7 +72,7 @@ input[type="password"]{ background-color: #ffecec; }
 th input[type=button], th input[type=submit], th .button, th .boton,th button,
 td input[type=button], td input[type=submit], td .button, td .boton,td button
 {
-	min-width: 70%; width: 95%; 
+	min-width: 70%; width: 95%;
 }
 input[type="button"], input[type="submit"], .button, .boton, button, a.button, a.boton,
 .formoid-default .button, .formoid-default button, .formoid-default a.button, .formoid-default input[type="button"],
@@ -86,14 +86,14 @@ background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
 background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
 background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
 background-repeat: repeat-x;
-	
+
 border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
 color: #333;
 box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
 display: inline-block;
-	
+
 border-radius: 3px;
-	
+
 -moz-box-sizing: border-box;
 -webkit-box-sizing: border-box;
 box-sizing: border-box;
@@ -119,7 +119,7 @@ input[type="submit"]:hover, input[type="submit"]:focus,
 .button:hover, .button:focus,
 .boton:hover,.boton:focus,
 button:hover,button:focus,
-a.button:hover, a.button:focus, 
+a.button:hover, a.button:focus,
 a.boton:hover,a.boton:focus,
 .formoid-default .button:hover, .formoid-default .button:focus,
 .formoid-default button:hover,.formoid-default button:focus,
@@ -270,7 +270,7 @@ td.row_2 {
 td.nombrecuenta {
 	color: Blue;
 	font-weight: lighter;
-	
+
 	}
 
 td.cal_1 {
@@ -297,7 +297,7 @@ td.day_2 {
 	text-indent: 0px;
 	vertical-align: middle;
 	word-spacing: 0px; }
-	
+
 td.mark { background-color: #AAC3F0; }
 
 td.cPanel {
@@ -441,7 +441,7 @@ table.micro_cal {
 table.cal {
 	height: 225px;
 	width: 225px; }
-	
+
 .ui-tooltip table, table {
 	border-collapse: collapse;
 	border-spacing: 0px;
@@ -457,7 +457,7 @@ table.cal {
 	font-stretch: condensed;
 	font-size: 90%;
 }
-	
+
 table.ficha {
 	background-color: #ffffff;
 	border-collapse: collapse;
@@ -498,7 +498,7 @@ input[type=number]{
 	border: thin inset #FF0000;
 	color: White;
 	font-weight: bold; }
-	
+
 .imgsize {
 	margin: 0px;
 	text-indent: 0px; /*	width: 16px;
@@ -522,7 +522,7 @@ a.sinsubraya {
 	color: #ff0000;
 	font-weight: bold;
 	text-decoration: none; }
-	
+
 .sNeos {
 	height: 64px;
 	position: absolute;
@@ -601,14 +601,14 @@ ol.rounded-list a:hover{
 }
 
 ol.rounded-list a:hover:before{
-    transform: rotate(360deg);	
+    transform: rotate(360deg);
 }
 /*.ui-tooltip li { margin-left: -3em; }*/
 
 ol.rounded-list a:before{
 	content: counter(li);
 	counter-increment: li;
-	position: absolute;	
+	position: absolute;
 	left: .3em;
 	top: 50%;
 	margin-top: -1em;
@@ -710,7 +710,7 @@ td .coolCheck {
 	margin:0;
 }
 .coolCheck:after {
-	content: 'NO';
+	content: 'No';
 	color: #FA0009;
 	position: absolute;
 	right: .4em;
@@ -720,13 +720,14 @@ td .coolCheck {
 }
 
 .coolCheck:before {
-	content: 'SI';
+	content: 'Si';
 	color: #4875DF;
 	position: absolute;
 	left: .6em;
 	z-index: 0;
 	font-weight: bold;
 }
+
 .coolCheck label {
 	display: block;
 	width: 1.83em;
@@ -749,7 +750,7 @@ td .coolCheck {
 	-webkit-box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.3);
 	-moz-box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.3);
 	box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.3);
-	
+
 
 	background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
 	background: -moz-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
@@ -833,11 +834,11 @@ iframe { width:99%; width: calc(100% - 8px); padding: 0; margin: 0; }
         color: #fff;
     }
 }
-.noticount {   
+.noticount {
     position: absolute;
     top: -2px;
     left: 12px;
-    
+
     background-color: rgba(212, 19, 13, 1);
     color: #fff;
     border-radius: 3px;
@@ -1094,7 +1095,7 @@ input:disabled { color: #B84DB8 !important; }
 .dash-info { font-size: 1.8em; background-color: transparent; padding-top: .2em; }
 .dash i{ padding-top: 1em; height: 100%;}
 output{ width:18%;
-	
+
 }
 input[type=range] {
   -webkit-appearance: none;
@@ -1271,7 +1272,7 @@ input[type=range]:focus::-ms-fill-upper { background: #3D91FF; }
 	left: 74px;
 	box-shadow: -1px 1px 5px rgba(0, 0, 0, 0.2);
 }
- 
+
 /* Transition
 ========================== */
 .switch-label, .switch-handle {
@@ -1335,7 +1336,7 @@ input[type=range]:focus::-ms-fill-upper { background: #3D91FF; }
   border-right: 1px solid transparent;
   border-radius: 10px;
   border: 1px solid;
-  border-color: #7C7C7C #b3b3b3 #9e9e9e;  
+  border-color: #7C7C7C #b3b3b3 #9e9e9e;
 }
 .progress > span {
   position: relative;
@@ -1431,7 +1432,7 @@ span.jtable-page-size-change,span.jtable-goto-page {
 input[type=file]{
 	color: #1D1838;
 }
-@media only screen 
+@media only screen
 and (max-width : 480px) {
 	html { font-size: 10px;	}
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
@@ -1442,7 +1443,7 @@ and (max-width : 480px) {
 	.frmpanel .formoid-default .tx4{ max-width: 100%; width: 99%;}
 	.tx18 { width: 33% !important; display: inline-block; }
 	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	
+
 	#jPanelMenu-menu { font-size: 1.4em; }
 	.toolnav li { width:32% !important; max-width:32%; }
 }
@@ -1458,14 +1459,14 @@ and (max-width : 767px) {
 	.frmpanel .formoid-default .tx4{ max-width: 100%; width: 99%;}
 	.tx18 { width: 24% !important; display: inline-block; }
 	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	
+
 	#jPanelMenu-menu { font-size: 1.3em; }
 	.toolnav li { width:17.4% !important; }
 }
 
 
-@media only screen 
-and (min-width : 768px) 
+@media only screen
+and (min-width : 768px)
 and (max-width : 1024px) {
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
 	.tx4 { width: 32%; display: inline-block; }
@@ -1473,14 +1474,14 @@ and (max-width : 1024px) {
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
 	.tx18 { width: 19.5% !important; display: inline-block; }
 	.tx18 label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	
+
 	#jPanelMenu-menu { font-size: 1.2em; }
 	.toolnav li { width:13.5% !important; min-width: 6.5em; }
-	
+
 }
 
 /* Desktops and laptops ----------- */
-@media only screen 
+@media only screen
 and (min-width : 1025px)
 and (max-width : 1560px){
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
@@ -1489,22 +1490,22 @@ and (max-width : 1560px){
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
 	.tx18 { width: 19.5% !important; display: inline-block; }
 	#jPanelMenu-menu { font-size: 1.1em; /*padding:0.5em 5%tamannio boton*/ }
-	
+
 }
 
 /* Large screens ----------- */
-@media only screen 
+@media only screen
 and (min-width : 1561px) {
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
 	.tx4 { width: 24%; display: inline-block; }
-	
+
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 10%; width: 20%; max-width: 20%; }
 	.solo-medio .tx4 { width: 49%; display: inline-block; }
 	.frmpanel .formoid-default .tx4{ max-width: 50%; width: 49%;}
-	
+
 	.tx18 { width: 12.2% !important; display: inline-block; }
 	.frmpanel .tx18 { width: 19.5% !important; display: inline-block; }
-	
+
 }
 #frameless .tclose {
 	right: 6px !important;
@@ -1523,4 +1524,7 @@ background-color: #38495A;
 	padding: 2px 2px 2px 36px;
 	width: 20%;
 	display: inline-block;
+}
+#btn_confirm_si, #btn_confirm_no, #btn_alert_ok, #btn_diag_aceptar,#btn_diag_cancelar,#btn_diag_si,#btn_diag_no  {
+    min-width: 4em;
 }

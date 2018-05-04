@@ -18,6 +18,8 @@ $indice		= parametro("o",0, MQL_INT);
 $_SESSION["sucursal"]	= strtolower($sucursal);
 $xUsr					= new cSystemUser();
 
+
+
 if($xUsr->initSession($usuario, $password) === true){
 	$arrFiles	= array(
 			1 => "./frmutils/cierre_de_colocacion.frm.php?k=" . MY_KEY,
@@ -26,10 +28,28 @@ if($xUsr->initSession($usuario, $password) === true){
 			4 => "./frmutils/cierre_de_contabilidad.frm.php?k=" . MY_KEY,
 			5 => "./frmutils/cierre_de_sistema.frm.php?k=" . MY_KEY
 	);
-	$xUsr->init();
-	
 	//Asignar Sucursal
+	if($xUsr->init() == true){
+		if(MULTISUCURSAL == true){
+			if($xUsr->getEsCorporativo() == false){
+				if(strtolower($xUsr->getSucursal()) == $sucursal){
+					
+				} else {
+				//if($xUsr->getSucursalAccede() == false){
+					$xLog	= new cCoreLog();
+					$xLog->add("Sucursal Incorrecta para el Usuario $usuario\r\n");
+					$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
+					$msg	= "Sucursal Incorrecta";
+					$xUsr->setEndSession(true, true, $msg);
+				}
+			}
+		}
+	}
 	
+	
+	
+	
+	//
 	$index	= $xUsr->getIndexPage();
 	if($usuario == TASK_USR){
 		if(isset($arrFiles[$indice])){

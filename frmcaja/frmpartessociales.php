@@ -19,14 +19,15 @@
 $xHP		= new cHPage("TR.capital_social");
 $jxc 		= new TinyAjax();
 $xCaja		= new cCaja();
-
+$xRuls		= new cReglaDeNegocio();
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	header ("location:../404.php?i=200"); }
 
+$usarAportComp	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_APORTSOC_COMP);
 
-	function jsSetCuotas($socio, $form){
+function jsSetCuotas($socio, $form){
 		//selecciona el tipo de ingreso
 		$SQLSP = "SELECT
 	`socios_general`.`codigo`,
@@ -54,7 +55,7 @@ WHERE
 		$tab -> add(TabSetValue::getBehavior("idpartepermanente", $permanente));
 		$tab -> add(TabSetValue::getBehavior("idtotalcuotas", $total));
 		return $tab -> getString();
-	}
+}
 
 $jxc ->exportFunction('jsSetCuotas', array('idsocio', "frmpartessociales"));
 $jxc ->process();
@@ -88,9 +89,11 @@ function jsSetTotalCuotas(){
 	$monto2		= parametro("monto2", 0, MQL_FLOAT);
 	$monto3		= parametro("monto3", 0, MQL_FLOAT);
 	
-	$tipo1		= parametro("tipo1", false, MQL_INT);
-	$tipo2		= parametro("tipo2", false, MQL_INT);
-	$tipo3		= parametro("tipo3", false, MQL_INT);
+	$tipo1		= parametro("tipo1", 0, MQL_INT);
+	$tipo2		= parametro("tipo2", 0, MQL_INT);
+	$tipo3		= parametro("tipo3", 0, MQL_INT);
+	
+	$xFRM->setTitle($xHP->getTitle());
 	
 	if ( $com == SYS_NINGUNO OR (($monto1 + $monto2 + $monto3) <= 0) ) {
 		
@@ -100,9 +103,18 @@ function jsSetTotalCuotas(){
 		$xFRM->addFechaRecibo($fecha);
 		$xFRM->addCobroBasico();
 		$xFRM->addObservaciones();
-		$xFRM->addDivSolo($xSel->getListaDeOperacionesPorBase(2800, "tipo1")->get(), $xTxt->getDeMoneda("monto1"));
-		$xFRM->addDivSolo($xSel->getListaDeOperacionesPorBase(2800, "tipo2")->get(), $xTxt->getDeMoneda("monto2"));
-		$xFRM->addDivSolo($xSel->getListaDeOperacionesPorBase(2800, "tipo3")->get(), $xTxt->getDeMoneda("monto3"));
+		if($usarAportComp == true){
+			$xSel1	= $xSel->getListaDeOperacionesAports("tipo1"); $xSel1->addVacio(true);
+			$xSel2 	= $xSel->getListaDeOperacionesAports("tipo2"); $xSel2->addVacio(true);
+			$xSel3	= $xSel->getListaDeOperacionesAports("tipo3"); $xSel3->addVacio(true);
+		} else {
+			$xSel1	= $xSel->getListaDeOperacionesPorBase(2800, "tipo1", false, false, true); $xSel1->addVacio(true);
+			$xSel2 	= $xSel->getListaDeOperacionesPorBase(2800, "tipo2", false, false, true); $xSel2->addVacio(true);
+			$xSel3	= $xSel->getListaDeOperacionesPorBase(2800, "tipo3", false, false, true); $xSel3->addVacio(true);
+		}
+		$xFRM->addDivSolo($xSel1->get(), $xTxt->getDeMoneda("monto1"));
+		$xFRM->addDivSolo($xSel2->get(), $xTxt->getDeMoneda("monto2"));
+		$xFRM->addDivSolo($xSel3->get(), $xTxt->getDeMoneda("monto3"));
 		
 		$xFRM->addSubmit();
 		
@@ -146,11 +158,11 @@ function jsSetTotalCuotas(){
 			if( $xCta->init() == true){
 				$idrecibo	= $cRec->setNuevoRecibo($persona, $xCta->getNumeroDeCuenta(), $fecha, 1, RECIBOS_TIPO_DEPOSITO_VISTA, $observaciones, $cheque, $comopago, $foliofiscal);
 				$cRec->init();
-				if($tipo1 != false AND $monto1 > 0){ $xCta->setDeposito($monto1, $cheque, $comopago, $foliofiscal, "Origen $tipo1:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
+				if($tipo1 > 0 AND $monto1 > 0){ $xCta->setDeposito($monto1, $cheque, $comopago, $foliofiscal, "Origen $tipo1:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
 				
-				if($tipo2 != false AND $monto2 > 0){ $xCta->setDeposito($monto2, $cheque, $comopago, $foliofiscal, "Origen $tipo2:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
+				if($tipo2 > 0 AND $monto2 > 0){ $xCta->setDeposito($monto2, $cheque, $comopago, $foliofiscal, "Origen $tipo2:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
 				
-				if($tipo3 != false AND $monto3 > 0){ $xCta->setDeposito($monto2, $cheque, $comopago, $foliofiscal, "Origen $tipo2:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
+				if($tipo3 > 0 AND $monto3 > 0){ $xCta->setDeposito($monto2, $cheque, $comopago, $foliofiscal, "Origen $tipo2:" . $observaciones, DEFAULT_GRUPO, $fecha, $cRec->getCodigoDeRecibo());	}
 			} else {
 				$msg			.= "ERROR\tError en la carga de la cuentar $cuenta\r\n";
 				$sucess			= false;
@@ -159,11 +171,11 @@ function jsSetTotalCuotas(){
 		} else {
 			$idrecibo	= $cRec->setNuevoRecibo($persona, DEFAULT_CREDITO, $fecha, 1, 5, $observaciones, $cheque, $comopago, $foliofiscal);
 
-			if($tipo1 != false AND $monto1 > 0){ $cRec->setNuevoMvto($fecha, $monto1, $tipo1, 1, $observaciones, 1, TM_ABONO, $persona);	}
+			if($tipo1 > 0 AND $monto1 > 0){ $cRec->setNuevoMvto($fecha, $monto1, $tipo1, 1, $observaciones, 1, TM_ABONO, $persona);	}
 			
-			if($tipo2 != false AND $monto2 > 0){ $cRec->setNuevoMvto($fecha, $monto2, $tipo2, 1, $observaciones, 1, TM_ABONO, $persona);	}
+			if($tipo2 > 0 AND $monto2 > 0){ $cRec->setNuevoMvto($fecha, $monto2, $tipo2, 1, $observaciones, 1, TM_ABONO, $persona);	}
 			
-			if($tipo3 != false AND $monto3 > 0){ $cRec->setNuevoMvto($fecha, $monto3, $tipo3, 1, $observaciones, 1, TM_ABONO, $persona);	}
+			if($tipo3 > 0 AND $monto3 > 0){ $cRec->setNuevoMvto($fecha, $monto3, $tipo3, 1, $observaciones, 1, TM_ABONO, $persona);	}
 		}
 		if(MODO_DEBUG == true){ $msg			.= $cRec->getMessages();		}
 			
@@ -177,6 +189,7 @@ function jsSetTotalCuotas(){
 		} else {
 			$xFRM->addAviso($msg);
 		}
+		$xFRM->addCerrar();
 	}
 	echo $xFRM->get();
 	$jxc ->drawJavaScript(false, true);

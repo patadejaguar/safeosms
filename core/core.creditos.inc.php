@@ -243,7 +243,6 @@ class cCredito {
 				$xSTb 		= new cSQLTabla ( TCREDITOS_REGISTRO );
 				$sql 		= $xSTb->getQueryInicial () . " WHERE	(`creditos_solicitud`.`numero_solicitud` =" . $idcredito . ") $WithSocio LIMIT 0,1";			
 				$DCredito 	= obten_filas ( $sql );
-				
 			}
 		}
 		if (isset ( $DCredito ["numero_solicitud"] )) {
@@ -304,7 +303,7 @@ class cCredito {
 			$this->mClaveDeDestino 				= $DCredito["destino_credito"];
 			$this->mCausaDeMora 				= $DCredito["causa_de_mora"];
 			$this->mDescripcionDestino 			= $DCredito["descripcion_aplicacion"];
-			$this->mTipoDeAutorizacion 			= $DCredito["tipo_autorizacion"];
+			$this->mTipoDeAutorizacion 			= $DCredito["tipo_de_autorizacion"];
 			$this->mMontoFijoParcialidad 		= $DCredito["monto_parcialidad"]; //
 			
 			$this->mContrato_URL 				= $DCredito["path_del_contrato"];
@@ -993,6 +992,7 @@ class cCredito {
 		$xSoc 			= new cSocio($this->getClaveDePersona());
 		$salvarReglas	= true;
 		$xReg			= new cReglasDeCalificacion();
+		$xVal			= new cReglasDeValidacion();
 		$xReg->setCredito($this->getClaveDeCredito());
 		
 		if ($xSoc->init () == true) {
@@ -1153,6 +1153,24 @@ class cCredito {
 					}
 				}
 			}
+			//===================== Validar tipo
+			$itemValEmp		= true;
+			if($this->getEsNomina() == true){
+				$emp		= $xVal->cuenta($this->getClaveDeEmpresa());
+				if($emp == false){
+					$itemValEmp	= false;
+				}
+			}
+			if($itemValEmp == false) {
+				$valido = false;
+				$this->mValidacionERRS++;
+				$xReg->add($xReg->CRED_FALTA_EMPRESA);
+				$xLog->add ( "ERROR\tEMPRESA\tEl Credito es Nomina y requiere un Empleador Valido : "  . $this->getClaveDeEmpresa() .  " \r\n" );
+				
+			} else {
+				$xReg->add($xReg->CRED_FALTA_EMPRESA, true);
+			}
+			
 			//===================== Validar Garantia
 			if($RazonGarantia > 0){
 				if($MontoQueDebeG < $MontoQueGar){
@@ -1204,8 +1222,34 @@ class cCredito {
 					$xLog->add("ERROR\tEl Activo y/o Vehiculo no existe\r\n");
 				}
 			}
+			if($this->getEsReestructuracion() == true){
+				
+				if($xSoc->existeCredito($this->getClaveDeOrigen()) == false OR ( $xVal->credito($this->getClaveDeOrigen())== false ) ){
+					$xReg->add($xReg->CRED_FALTA_DREEST);
+					$this->mValidacionERRS++;
+					$xLog->add("ERROR\tFaltan datos de Reestructura\r\n");
+				} else {
+					$xReg->add($xReg->CRED_FALTA_DREEST, true);
+				}
+			} else {
+				$xReg->add($xReg->CRED_FALTA_DREEST, true);
+			}
+			if($this->getEsRenovado() == true){
+				if($xSoc->existeCredito($this->getClaveDeOrigen()) == false OR ( $xVal->credito($this->getClaveDeOrigen())== false ) ){
+					$xReg->add($xReg->CRED_FALTA_DRENOV);
+					$this->mValidacionERRS++;
+					$xLog->add("ERROR\tFaltan datos de Renovacion\r\n");
+				} else {
+					$xReg->add($xReg->CRED_FALTA_DRENOV, true);
+				}
+			} else {
+				$xReg->add($xReg->CRED_FALTA_DRENOV, true);
+			}
+			
 			$RazonGtiaLiq			= $OConv->getTasaDeGarantiaLiquida();
-			if(MODULO_CAPTACION_ACTIVADO == true AND $RazonGtiaLiq > 0){
+			//MODULO_CAPTACION_ACTIVADO == true AND 
+			if($RazonGtiaLiq > 0){
+				
 				if($this->getEstadoActual() == CREDITO_ESTADO_AUTORIZADO){
 					$MontoGtiaLiq	= round(($this->getMontoAutorizado() * $RazonGtiaLiq),2);
 					
@@ -1237,13 +1281,11 @@ class cCredito {
 						}
 					} else {
 						//Sumar Operaciones de garantia Liquida
-						
+						$SdoGtiaLiq		= $this->getGarantiaLiquidaPagada();
 					}
 					//$xCapta			= new cCuentaDeCaptacion(false)
 				}
 				//Otros de captacion
-				
-				
 			}
 		} else {
 			$xLog->add ("ERROR\tError al Iniciar a la Persona\r\n" );
@@ -1342,6 +1384,13 @@ class cCredito {
 		}
 		return $ficha;
 	}
+	function getEsRechazado(){
+		$val	= false;
+		if($this->getEstadoActual() == CREDITO_ESTADO_CASTIGADO AND $this->getMontoAutorizado() <= 0){
+			$val	= true;
+		}
+		return $val;
+	}
 	function getFicha($mark = true, $extraTool = "", $extendido = false, $ConPersona = false) {
 		if ($this->mCreditoInicializado == false){ $this->init(); }
 		$xL 				= new cLang();
@@ -1392,6 +1441,7 @@ class cCredito {
 				$convenio = "$convenio - " . $xEmp->getNombreCorto ();
 			} else {
 				$convenio = "$convenio - ND";
+				//TODO: Activar Alerta
 			}
 		}
 		$tdSaldo = "<th class='izq'>" . $xL->getT ( "TR.Saldo Principal" ) . "</th><td class='mny'>$saldo</td>";
@@ -1401,17 +1451,40 @@ class cCredito {
 		$tdVencimiento = "";
 		// Si el Estatus es AUTORIZADO
 		if ($this->getEstadoActual () == CREDITO_ESTADO_AUTORIZADO) {
-			$tdSaldo = "";
-			$tdFecha = "<th class='izq'>" . $xL->getT ( "TR.Fecha de Autorizacion" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeAutorizacion () ) . "</td>";
-			$activo = false;
-			$tdPagos = "<td class='mny'>$pagos</td>";
-		} elseif ($this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO) {
 			$tdSaldo 	= "";
-			$tdMonto 	= "<th class='izq'>" . $xL->getT ( "TR.Monto Solicitado" ) . "</th><td class='mny'>" . getFMoney ( $this->getMontoSolicitado () ) . "</td>";
-			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha de Solicitud" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeMinistracion () ) . "</td>";
+			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha de Autorizacion" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeAutorizacion() ) . "</td>";
+			$activo 	= false;
+			$tdPagos 	= "<td class='mny'>$pagos</td>";
+		} else if ($this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO) {
+			$tdSaldo 	= "";
+			$tdMonto 	= "<th class='izq'>" . $xL->getT ( "TR.Monto Solicitado" ) . "</th><td class='mny'>" . getFMoney ( $this->getMontoSolicitado() ) . "</td>";
+			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha de Solicitud" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeMinistracion() ) . "</td>";
 			$activo 	= false;
 			$tdPagos 	= "<td class='mny'>" . $this->getPagosSolicitados () . "</td>";
+		} else if($this->getEsRechazado() == true){
+			$activo 	= false;
+			$tdSaldo 	= "";
+			$tdPagos 	= "<td class='mny'>" . $this->getPagosSolicitados () . "</td>";
+			$extendido	= false;
+			$estatus	= $xL->getT ( "TR.RECHAZADO" );
+			$cls		= "credito-estado-rechazado";
+			//$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.R" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeAutorizacion() ) . "</td>";
+			
+			$xRaz		= new cCreditosRechazos();
+			if($xRaz->initByCredito($this->getClaveDeCredito()) == true){
+				$xRazTipo	= new cCreditosRechazosRazones($xRaz->getTipo());
+				
+				$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.FECHA_de RECHAZO" ) . "</th><td>" . $xD->getFechaCorta ( $xRaz->getFecha() ) . "</td>";
+				$xUsrR		= new cSystemUser($xRaz->getUsuario());
+				if($xUsrR->init() == true){
+					$tdFecha 	.= "<th class='izq'>" . $xL->getT ( "TR.USUARIO RECHAZO" ) . "</th><td>" . $xUsrR->getNombreCompleto() . "</td>";
+				}
+				if($xRazTipo->init() == true){
+					$tdMonto = "<th class='izq'>" . $xL->getT ( "TR.MOTIVORECHAZO" ) . "</th><td colspan='3'>" . $xRazTipo->getNombre() . " / " . $xRaz->getRazones() . "</td>";
+				}
+			}
 		}
+		
 		if($extendido == true){
 			if($this->isAFinalDePlazo() == true){
 				$fvencimiento			= $this->getFechaDeVencimiento();
@@ -1432,13 +1505,19 @@ class cCredito {
 
 			$tdExigible 		= ($activo == false) ? "" : "<th class='izq'>" . $xL->getT ( "TR.Saldo exigible" ) . "</th><td class='mny'>" . getFMoney ( $this->getSaldoIntegrado ( false, true ) ) . "</td>";
 			$oficial 			= $this->getOOficial()->getNombreCompleto ();
-			$codigo_de_oficial 	= $this->getClaveDeOficialDeCredito ();
-			
+			$codigo_de_oficial 	= $this->getClaveDeOficialDeCredito();
+			$trOficial			= "<tr><th class='izq'>" . $xL->getT( "TR.ASIGNADO" ). "</td><td colspan='3'>$oficial</td></tr>";
+			if($this->isPagable() == true){
+				$xOfiSeg		= new cOficial($this->getOficialDeSeguimiento()); $xOfiSeg->init();
+				$trOficial		= "<tr><th class='izq'>" . $xL->getT( "TR.OFICIAL_DE_CREDITO" ). "</td><td>$oficial</td>
+										<th class='izq'>" . $xL->getT( "TR.SEGUIMIENTO_DE_CARTERA" ). "</td><td>" . $xOfiSeg->getNombreCompleto() . "</td>
+										</tr>";
+			}
 			$tool = "<tr>
 						<th class='izq'>" . $xL->getT( "TR.Tasa Anualizada de Moratorio" ) . "</th><td class='mny'>" . getFMoney ( ($TasaMora * 100) ) . "%</td>
 						$tdExigible</tr>
 					<tr><th class='izq'>" . $xL->getT( "TR.Destino" ) . " / " . $xL->getT( "TR.Origen" ) . "</th><td colspan='3'>" . $Destino . ": " . $this->mDescripcionDestino . " / $origen</td></tr>
-					<tr><th class='izq'>Oficial a Cargo</td><td colspan='3'>$oficial</td></tr>" . $tool;
+					$trOficial" . $tool;
 			if ($activo == true) {
 				if ($this->getPeriocidadDePago() != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) {
 					$letra 	= $this->getPeriodoActual() + 1;
@@ -1561,80 +1640,48 @@ class cCredito {
 		return $exoFicha;
 	}
 	function getGarantiaLiquidaPagada($ByGrupo = false) {
-		$monto = 0;
-		if (GARANTIA_LIQUIDA_EN_CAPTACION == true) {
-			// obtiene el monto de garantia liquida por ahorro
-			
-			if ($ByGrupo == true) {
-				$condicionante_de_garantia_liquida = " (`socios_general`.`grupo_solidario` = " . $this->mGrupoAsociado . ") ";
-				$msg .= "WARN\tLa Garantia Liquida es valuado por GRUPO \r\n";
-			} else {
-				$condicionante_de_garantia_liquida = " (`socios_general`.`codigo` = " . $this->mNumeroSocio . ")";
-				$msg .= "WARN\tLa Garantia Liquida es valuado por SOCIO \r\n";
-			}
-			$subproducto_de_ahorro_inicial = CAPTACION_PRODUCTO_GARANTIALIQ;
-			$sqlSUMDepInicial = "
-								SELECT
-									MAX(`captacion_cuentas`.`numero_cuenta`) AS 'cuenta',
-									`socios_general`.`grupo_solidario`,
-									SUM(`captacion_cuentas`.`saldo_cuenta`) AS 'sumas'
-								FROM
-									`socios_general` `socios_general`
-										INNER JOIN `captacion_cuentas` `captacion_cuentas`
-											ON `socios_general`.`codigo` = `captacion_cuentas`.`numero_socio`
-								WHERE
-									(`captacion_cuentas`.`tipo_subproducto` = $subproducto_de_ahorro_inicial)
-									AND
-									$condicionante_de_garantia_liquida
-								GROUP BY
-									`socios_general`.`grupo_solidario`,
-									`captacion_cuentas`.`tipo_cuenta`
-								ORDER BY
-									`captacion_cuentas`.`fecha_afectacion` DESC,
-									`captacion_cuentas`.`saldo_cuenta` DESC";
-			$DCta = obten_filas ( $sqlSUMDepInicial );
-			$monto = $DCta ["sumas"];
-			$this->mCuentaDeGarantiaLiquida = $DCta ["cuenta"];
-			unset ( $DCta );
-		} else {
-			$msg .= "WARN\tLa Garantia Liquida es valuado como Cuenta aparte y no de CAPTACION\r\n";
-			$sqlSUM = "SELECT
-						`operaciones_mvtos`.`docto_afectado`,
-						SUM(`operaciones_mvtos`.`afectacion_real` *
-						`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'monto'
-					FROM
-						`operaciones_mvtos` `operaciones_mvtos`
-							INNER JOIN `eacp_config_bases_de_integracion_miembros`
-							`eacp_config_bases_de_integracion_miembros`
-							ON `operaciones_mvtos`.`tipo_operacion` =
-							`eacp_config_bases_de_integracion_miembros`.`miembro`
-					WHERE
-						(`operaciones_mvtos`.`docto_afectado` =" . $this->mNumeroCredito . ") AND
-						(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2500)
-					GROUP BY
-						`operaciones_mvtos`.`docto_afectado`,
-						`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`
-					ORDER BY
-						`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` ";
-			$d = obten_filas ( $sqlSUM );
-			
-			$monto = $d ["monto"];
-			unset ( $d );
-		}
-		$this->mMessages .= $msg;
+		$monto 	= 0;
+		$xGtia	= new cCreditosGarantiasLiquidas();
+		$xGtia->setClaveDeCredito($this->getClaveDeCredito());
+		$monto	= $xGtia->getSaldoGantiaLiq();
+		$this->mMessages .= $xGtia->getMessages();
 		return $monto;
 	}
 	function getCuentaGarantiaLiquida() {
 		return $this->mCuentaDeGarantiaLiquida;
 	}
-	function getGarantiaLiquida($ForcePagados = false) {
-		if ($this->mCreditoInicializado == false) {
-			$this->initCredito ();
+	function getGarantiaLiquidaPorPagar(){
+		$PorPagar	= $this->getGarantiaLiquida();
+		if($PorPagar > 0){
+			$PorPagar	= $PorPagar - $this->getGarantiaLiquidaPagada();
+			$PorPagar	= setNoMenorQueCero($PorPagar);
 		}
-		$monto = 0;
-		$monto = $this->mMontoMinistrado * $this->mTasaGarantiaLiquida;
-		if ($ForcePagados == true and $this->mSdoCapitalInsoluto <= TOLERANCIA_SALDOS) {
-			$monto = 0;
+		return $PorPagar;
+	}
+	function getGarantiaLiquida($ForcePagados = false) {
+		if($this->mCreditoInicializado == false) { $this->initCredito(); }
+		
+		$monto	= 0;
+		if($this->getEstadoActual() == CREDITO_ESTADO_SOLICITADO){
+			
+			return 0;
+		} else {
+			$base	= 0;
+			
+			if($this->getEstadoActual() == CREDITO_ESTADO_AUTORIZADO){
+				$base	= $this->getMontoAutorizado();
+			} else {
+				if($this->getEsPagado() == true){
+					return 0;
+				} else if($this->getEsAfectable() == true){
+					$base	= $this->getSaldoActual();
+				}
+			}
+			if($base > 0){
+				$tasa	= $this->getOProductoDeCredito()->getTasaDeGarantiaLiquida();
+				$monto	= $base * $tasa;
+			}
+			
 		}
 		return $monto;
 	}
@@ -1897,6 +1944,7 @@ class cCredito {
 		$xLog->add($msg, $xLog->DEVELOPER);
 		$this->mMessages	.= $xLog->getMessages();
 		$xLog->guardar($xLog->OCat()->CREDITO_ELIMINADO, $socio);
+		$this->setCuandoSeActualiza(MQL_DEL);
 		return $xLog->getMessages();
 	}
 	function getEvolucionDeSaldos() {
@@ -2145,7 +2193,7 @@ class cCredito {
 				$xLog->add("WARN\tLa Garantia Liquida es valuado por GRUPO \r\n");
 			} else {
 				$condicionante_de_garantia_liquida = " (`socios_general`.`codigo` = $idsocio)";
-				$xLog->add("WARN\tLa Garantia Liquida es valuado por SOCIO \r\n");
+				$xLog->add("WARN\tLa Garantia Liquida es valuado por Persona \r\n");
 			}
 			
 			$tgtia 							= $this->getMontoAutorizado() * $porc_garantia_liquida;
@@ -2495,6 +2543,7 @@ class cCredito {
 		$persona_asociada	= setNoMenorQueCero($persona_asociada);
 		$persona_asociada	= ($persona_asociada > 0) ? $persona_asociada : FALLBACK_CLAVE_EMPRESA;
 		
+		
 		$GrupoAsociado 		= setNoMenorQueCero ( $GrupoAsociado );
 		$GrupoAsociado 		= ($GrupoAsociado <= 0) ? DEFAULT_GRUPO : $GrupoAsociado;
 		$TipoDeAutorizacion = setNoMenorQueCero ( $TipoDeAutorizacion );
@@ -2518,6 +2567,13 @@ class cCredito {
 		$TasaDeInteres 		= ($TasaDeInteres === false) ? $DOConv->getTasaDeInteres() : setNoMenorQueCero ( $TasaDeInteres, 4 );
 		if($PuedeTasaCero == false AND $TasaDeInteres <= 0){
 			$TasaDeInteres	= $DOConv->getTasaDeInteres();
+		}
+		//Purga la empresa, si el credito no es de nomina
+		if($DOConv->getEsProductoDeNomina() == false){
+			$persona_asociada	= FALLBACK_CLAVE_EMPRESA;
+		}
+		if($DOConv->getEsProductoDeGrupos() == false){
+			$GrupoAsociado		= FALLBACK_CLAVE_DE_GRUPO;
 		}
 		$TasaMoratorio 		= $DConv ["interes_moratorio"];
 		$TasaDeAhorro 		= $DOConv->getTasaDeAhorro ();
@@ -2927,6 +2983,7 @@ class cCredito {
 		
 		if($ready == true){
 			$ready 		= $this->setUpdate ( $arrUpdate );
+			
 			$xOrg		= new cCreditosDatosDeOrigen(false, $this->getClaveDeCredito());
 			$xRuls->setCodigoDeCredito($this->getClaveDeCredito());
 			$xRuls->setEjecutarAlertas($xRuls->reglas()->RN_CREDITOS_AL_AUTORIZAR);
@@ -3089,6 +3146,7 @@ class cCredito {
 	}
 	function setRazonRechazo($razones = "", $notas = "", $fecha = false, $idmotivo = false) {
 		$xF			= new cFecha();
+		
 		$res		= false;		
 		$idc 		= $this->mNumeroCredito;
 		$idmotivo	= setNoMenorQueCero($idmotivo);
@@ -3096,19 +3154,28 @@ class cCredito {
 		$notas		= setCadenaVal($notas,80);
 		$fecha 		= $xF->getFechaISO($fecha);
 		
-		$this->setCancelado($razones, $fecha);
+		
+		
 		if($idc > DEFAULT_CREDITO){
+			//Cancelar
+			$this->setCancelado($razones, $fecha);
+			//Actualizar los demas motivos
+			$xQL	= new MQL();
+			$xQL->setRawQuery("UPDATE `creditos_rechazados` SET `estatusactivo`=0 WHERE `numero_de_credito`=$idc");
 			
+			//Agregar nuevo motivo
 			$v 		= new cCreditos_rechazados();
-
 			$v->numero_de_credito( $idc );
 			$v->fecha_de_rechazo( $fecha );
 			$v->razones( $razones );
 			$v->notas( $notas );
 			$v->claverechazo($idmotivo);
 			$v->idusuario(getUsuarioActual());
+			$v->tiempo(time());
+			$v->estatusactivo(SYS_UNO);
 			$lid 	= $v->query()->getLastID ();
-			$v->idcreditos_rechazados( $lid );			
+			$v->idcreditos_rechazados( $lid );
+			
 			$res	= $v->query()->insert()->save();
 		}
 		return ($res === false) ? false : true;
@@ -3652,6 +3719,9 @@ class cCredito {
 	function getEsAfectable() {
 		$afectable = true;
 		if ($this->getEstadoActual () == CREDITO_ESTADO_AUTORIZADO or $this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO) {
+			$afectable = false;
+		}
+		if($this->getEsRechazado() == true){
 			$afectable = false;
 		}
 		return $afectable;
@@ -4575,17 +4645,7 @@ class cCredito {
 		return false;
 	}
 	function getEsNomina(){
-		$res	= false;
-		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-			$xVal	= new cReglasDeValidacion();
-			$emp	= $xVal->empresa($this->getClaveDeEmpresa());
-			if( $emp == true ){
-				$res = true;
-			}
-		} else {
-			return $this->getOProductoDeCredito()->getEsProductoDeNomina();
-		}
-		return $res;
+		return $this->getOProductoDeCredito()->getEsProductoDeNomina();
 	}
 	function getFechaDePrimerAtraso() {
 		return $this->mFechaPrimerAtraso;
@@ -4602,11 +4662,14 @@ class cCredito {
 		if ($this->getEstadoActual () == CREDITO_ESTADO_AUTORIZADO or $this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO or $this->getSaldoActual () <= 0) {
 			$pagable = false;
 		}
+		if($this->getEsRechazado() == true){
+			$pagable = false;
+		}
 		return $pagable;
 	}
 	function getEsPagado() {
 		$pagado = false;
-		if ($this->getEstadoActual() !== CREDITO_ESTADO_AUTORIZADO AND $this->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO AND $this->getSaldoActual () <= TOLERANCIA_SALDOS) {
+		if (($this->getEstadoActual() !== CREDITO_ESTADO_AUTORIZADO AND $this->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO) AND $this->getSaldoActual () <= TOLERANCIA_SALDOS) {
 			$pagado = true;
 		}
 		return $pagado;
@@ -4641,7 +4704,7 @@ class cCredito {
 		return $xCat;
 	}
 	
-	function setCuandoSeActualiza(){
+	function setCuandoSeActualiza($evt	= ""){
 		$xCache		= new cCache();
 		$xQL		= new MQL();
 		$idcredito	= $this->mNumeroCredito;
@@ -4659,16 +4722,17 @@ class cCredito {
 		if($this->mIDCacheInt !== ""){
 			$xCache->clean($this->mIDCacheInt);
 		}
-		//Cache de Montos
-		if($this->getOIntereses() !== null){
-			$this->getOIntereses()->setCuandoSeActualiza();
+		if($evt !== MQL_DEL){
+			//Cache de Montos
+			if($this->getOIntereses() !== null){
+				$this->getOIntereses()->setCuandoSeActualiza();
+			}
+			//Cuadrar por Movimientos
+			$xUtil				= new cUtileriasParaCreditos();
+			$xUtil->setCuadrarCreditosByMvtos($idcredito);
+			$this->mMessages	.= $xUtil->getMessages();
+			$xUtil				= null;
 		}
-		//Cuadrar por Movimientos
-		$xUtil				= new cUtileriasParaCreditos();
-		$xUtil->setCuadrarCreditosByMvtos($idcredito);
-		$this->mMessages	.= $xUtil->getMessages();
-		$xUtil				= null;
-		
 		//Cuadrar Gastos de Cobranza Exigibles
 		
 	}
@@ -4967,6 +5031,22 @@ class cCredito {
 		
 		return $m;
 	}
+	function getEsRenovado(){
+		$es		= false;
+		if($this->getTipoDeAutorizacion() == CREDITO_TIPO_AUTORIZACION_RENOVACION){
+			$es	= true;
+		}
+		return $es;
+	}
+	function getEsReestructuracion(){
+		$es		= false;
+		if($this->getTipoDeAutorizacion() == CREDITO_TIPO_AUTORIZACION_REESTRUCTURA){
+			$es	= true;
+		}
+		return $es;
+	}
+	function getClaveCredVincRenov(){ return ($this->getEsRenovado() == false) ? 0 : $this->getClaveDeOrigen(); }
+	function getMontoCredVincRenov(){ return ($this->getEsRenovado() == false) ? 0 : $this->getMontoDeOrigen(); }
 } // END CLASS
 
 
@@ -6781,12 +6861,12 @@ class cParcialidadDeCredito {
 		$this->mNumero			= setNoMenorQueCero($numero);
 		$this->mPeriodo			= setNoMenorQueCero($numero);
 	}
-	function initSuma(){
+	function initSuma($fecha){
 		$xQL		= new MQL();
 		$xLi		= new cSQLListas();
 		$xT			= new cLetrasVista();
 		
-		$sql		= $xLi->getListadoDeLetrasVista($this->mPersona, $this->mCredito, null);
+		$sql		= $xLi->getListadoDeLetrasVista($this->mPersona, $this->mCredito, null, $fecha);
 		$Datos		= $xQL->getDataRow($sql);
 		if(isset($Datos[$xT->LETRA])){
 			$this->mDatosInArray	= $Datos;
@@ -6909,7 +6989,9 @@ class cParcialidadDeCredito {
 	function getFechaDeVencimiento(){ return $this->mFechaDeVenc; }
 	function getAhorro(){ return $this->mAhorro; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
-	function initPago(){ $periodo	= $this->mNumero; }
+	function initPago(){ 
+		$periodo	= $this->mNumero; 
+	}
 	function setClaveDePlan($idplan){ $this->mIDPlanDePagos = $idplan; }
 	function setActualizarIVA($monto, $operador = "+"){ $this->setActualizarConcepto(OPERACION_CLAVE_PLAN_IVA, $monto, $operador); }
 	function setActualizarCapital($monto, $operador = "+"){ $this->setActualizarConcepto(OPERACION_CLAVE_PLAN_CAPITAL, $monto, $operador); }
@@ -7065,6 +7147,15 @@ class cParcialidadDeCredito {
 			}
 		}
 		return $this->mOCredito;
+	}
+	function getSaldoNoPagado(){
+		$xQL	= new MQL();
+		$sql1	= "SELECT SUM(`total_operacion`) AS `monto` FROM `operaciones_recibos` WHERE `docto_afectado`=" . $this->mCredito . " AND `periodo_de_documento`=" . $this->mPeriodo;
+		$montoP	= $xQL->getDataValue($sql1, "monto");
+		$sql2	= "SELECT `total_base` FROM `creditos_plan_de_pagos` WHERE `clave_de_credito`=" . $this->mCredito . " AND `numero_de_parcialidad`=" . $this->mPeriodo . " LIMIT 0,1";
+		$montoO	= $xQL->getDataValue($sql2, "total_base");
+		$sdo	= setNoMenorQueCero( ($montoO - $montoP) );
+		return $sdo;
 	}
 }
 
@@ -7237,25 +7328,120 @@ class cCreditosGarantias {
 	}
 	function getDatosInArray(){ return $this->mData; }
 	function getMontoResguardado(){
-		$xQL	= new MQL();
-		$D		= $xQL->getDataRow("SELECT SUM(`monto_valuado`) AS '" . SYS_MONTO . "' FROM `creditos_garantias` WHERE `solicitud_garantia`='" . $this->mClaveCredito . "' AND `estatus_actual`=" . CREDITO_GARANTIA_ESTADO_RESGUARDADO);
-		$monto	= setNoMenorQueCero($D[SYS_MONTO]);
-		return $monto;
+		return $this->getMontoGarantiaByX($this->ESTADO_RESGUARDO);
 	}
 	function getMontoPresentado(){
-		$xQL	= new MQL();
-		$D		= $xQL->getDataRow("SELECT SUM(`monto_valuado`) AS '" . SYS_MONTO . "' FROM `creditos_garantias` WHERE `solicitud_garantia`='" . $this->mClaveCredito . "' AND `estatus_actual`=" . CREDITO_GARANTIA_ESTADO_PRESENTADO);
-		$monto	= setNoMenorQueCero($D[SYS_MONTO]);
-		return $monto;
+		return $this->getMontoGarantiaByX($this->ESTADO_COTEJO);
 	}
 	function getMontoEntregado(){
-		$xQL	= new MQL();
-		$D		= $xQL->getDataRow("SELECT SUM(`monto_valuado`) AS '" . SYS_MONTO . "' FROM `creditos_garantias` WHERE `solicitud_garantia`='" . $this->mClaveCredito . "' AND `estatus_actual`=" . CREDITO_GARANTIA_ESTADO_ENTREGADO);
-		$monto	= setNoMenorQueCero($D[SYS_MONTO]);
+		return $this->getMontoGarantiaByX($this->ESTADO_DEVUELTO);
+	}
+	private function getMontoGarantiaByX($estatus){
+		$monto		= 0;
+		$ByFiltro	= "";
+		
+		if($this->mClaveCredito > DEFAULT_CREDITO){
+			$ByFiltro	= " `solicitud_garantia`='" . $this->mClaveCredito . "' ";
+		} else {
+			if($this->mClavePersona > DEFAULT_SOCIO){
+				$ByFiltro	= " `socio_garantia`='" . $this->mClavePersona . "' ";
+			}
+		}
+		if($ByFiltro !== ""){
+			$xQL	= new MQL();
+			$D		= $xQL->getDataRow("SELECT SUM(`monto_valuado`) AS '" . SYS_MONTO . "' FROM `creditos_garantias` WHERE $ByFiltro AND `estatus_actual`=$estatus");
+			$monto	= setNoMenorQueCero($D[SYS_MONTO]);
+		}
 		return $monto;
-	}	
+	}
 }
 
-
+class cCreditosGarantiasLiquidas {
+	private $mCodigo		= false;
+	private $mClavePersona	= false;
+	private $mClaveCredito	= false;
+	private $mData			= array();
+	private $mMessages		= "";
+	private $mClaveGrupo	= 0;
+	
+	function __construct(){
+		
+	}
+	function setClaveDePersona($persona){ $this->mClavePersona	= $persona;	}
+	function setClaveDeCredito($credito){ $this->mClaveCredito	= $credito;	}
+	function setClaveDeGrupo($grupo){ $this->mClaveGrupo	= $grupo;	}
+	
+	function getSaldoGantiaLiq($AppGrupo = true){
+		$monto 		= 0;
+		$B1Grupo	= " `socios_general`.`grupo_solidario`, ";
+		$msg		= "";
+		$By			= "";
+		
+		if(PERSONAS_CONTROLAR_POR_GRUPO == false OR ($this->mClaveGrupo <= 0 OR $this->mClaveGrupo == FALLBACK_CLAVE_DE_GRUPO) ){
+			$AppGrupo	= false;
+		}
+		if (GARANTIA_LIQUIDA_EN_CAPTACION == true) {
+			// obtiene el monto de garantia liquida por ahorro
+			
+			if($AppGrupo == true){
+				$By 	= " AND (`socios_general`.`grupo_solidario` = " . $this->mClaveGrupo . ") ";
+				$msg 	.= "WARN\tLa Garantia Liquida es valuado por Grupo : " . $this->mClaveGrupo . "\r\n";
+			} else {
+				if($this->mClaveCredito > DEFAULT_CREDITO){
+					$By	= " AND (`captacion_cuentas`.`numero_solicitud`=" . $this->mClaveCredito . ") ";
+					$msg 	.= "WARN\tLa Garantia Liquida es valuado por Credito : "  . $this->mClaveCredito .   "\r\n";
+				} else {
+					if($this->mClavePersona > DEFAULT_SOCIO){
+						$By 	= " AND (`socios_general`.`codigo` = " . $this->mClavePersona. ") ";
+						$msg 	.= "WARN\tLa Garantia Liquida es valuado por Persona : "  . $this->mClavePersona .   "\r\n";
+					}
+				}
+			}
+			$sql 				= "SELECT
+			MAX(`captacion_cuentas`.`numero_cuenta`) AS 'cuenta', 
+			SUM(`captacion_cuentas`.`saldo_cuenta`) AS '" . SYS_MONTO . "'
+			FROM `socios_general` `socios_general`
+			INNER JOIN `captacion_cuentas` `captacion_cuentas` ON `socios_general`.`codigo` = `captacion_cuentas`.`numero_socio`
+			WHERE (`captacion_cuentas`.`tipo_subproducto` = " . CAPTACION_PRODUCTO_GARANTIALIQ. ") $By
+			GROUP BY $B1Grupo `captacion_cuentas`.`tipo_cuenta`
+			ORDER BY `captacion_cuentas`.`fecha_afectacion` DESC, `captacion_cuentas`.`saldo_cuenta` DESC";
+			
+			if($By !== ""){
+				$xQL	= new MQL();
+				$monto	= $xQL->getDataValue($sql, SYS_MONTO);
+			}
+			
+		} else {
+			$B2Credito	= "";
+			if($this->mClaveCredito > DEFAULT_CREDITO){
+				$By			= " AND (`operaciones_mvtos`.`docto_afectado`=" . $this->mClaveCredito . ") ";
+				$msg 		.= "WARN\tLa Garantia Liquida es valuado por Credito : "  . $this->mClaveCredito .   "\r\n";
+				$B2Credito	= ", `operaciones_mvtos`.`docto_afectado` ";
+			} else {
+				if($this->mClavePersona > DEFAULT_SOCIO){
+					$By 		= " AND (`operaciones_mvtos`.`socio_afectado` = " . $this->mClavePersona. ") ";
+					$msg 		.= "WARN\tLa Garantia Liquida es valuado por Persona : "  . $this->mClavePersona .   "\r\n";
+					$B2Credito	= ", `operaciones_mvtos`.`socio_afectado` ";
+				}
+			}
+			
+			$msg 	.= "WARN\tLa Garantia Liquida es valuado como Cuenta Aparte y no de CAPTACION\r\n";
+			$sql	= "SELECT `operaciones_mvtos`.`docto_afectado`,`operaciones_mvtos`.`socio_afectado`,
+						SUM((`operaciones_mvtos`.`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)) AS '" . SYS_MONTO . "'
+					FROM `operaciones_mvtos` `operaciones_mvtos` INNER JOIN `eacp_config_bases_de_integracion_miembros`
+							`eacp_config_bases_de_integracion_miembros` ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro`
+					WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2500) $By
+					GROUP BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` $B2Credito
+					ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` ";
+			if($By !== ""){
+				$xQL	= new MQL();
+				$monto	= $xQL->getDataValue($sql, SYS_MONTO);
+			}
+		}
+		$this->mMessages .= $msg;
+		return $monto;
+	}
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+}
 
 ?>

@@ -14,7 +14,7 @@ ini_set("max_execution_time", 900);
 $msg			= "";
 //======================== Checar
 //si guardar iniciar al index
-$localaction	= (isset($_REQUEST["action"])) ?  $_REQUEST["action"] : "";
+$action			= (isset($_REQUEST["action"])) ?  $_REQUEST["action"] : "";
 
 $usrmysql		= (isset($_REQUEST["idusuario"])) ?  $_REQUEST["idusuario"] : "";
 $pwdmysql		= (isset($_REQUEST["idpassword"])) ?  $_REQUEST["idpassword"] : "";
@@ -41,6 +41,16 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
 	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
 	
+	//========================= Agregar Usuario y contraseña
+	$cnn 		= new mysqli($srvmysql, "root", $pwdroot, $dbmysql);
+	if ($cnn->connect_errno) {
+		$msg	.= "ERROR EN LA CONEXION ROOT: ". $cnn->connect_error . " \n";
+		exit;
+	} else {
+		$rs		= $cnn->query("CREATE USER '$usrmysql'@'localhost' IDENTIFIED BY '$pwdmysql'");
+		$rs		= $cnn->query("GRANT ALL PRIVILEGES ON $dbmysql.* To '$usrmysql'@'localhost' IDENTIFIED BY '$pwdmysql'");
+	}
+	$cnn		= null;
 	//=========================
 	
 	$cnn 		= new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);

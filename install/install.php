@@ -11,6 +11,13 @@ if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  
 include_once ("./libs/importer.php");
 ini_set("max_execution_time", 900);
 
+
+//ini_set('display_errors', 1);
+//ini_set('display_startup_errors', 1);
+//error_reporting(E_ALL);
+
+
+
 $msg			= "";
 //======================== Checar
 //si guardar iniciar al index

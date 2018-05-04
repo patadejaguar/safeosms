@@ -7,7 +7,8 @@ include_once ("core/html.inc.php");*/
 $dir			= $_SERVER["DOCUMENT_ROOT"];
 $privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 
-if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
+//if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
+include_once ("libs/importer.php");
 
 $msg			= "";
 //======================== Checar
@@ -19,6 +20,8 @@ $pwdmysql		= (isset($_REQUEST["idpassword"])) ?  $_REQUEST["idpassword"] : "";
 $srvmysql		= (isset($_REQUEST["idservidor"])) ?  $_REQUEST["idservidor"] : "localhost";
 $dbmysql		= (isset($_REQUEST["iddb"])) ?  $_REQUEST["iddb"] : "";
 
+$pwdroot		= (isset($_REQUEST["idpwdroot"])) ?  $_REQUEST["idpwdroot"] : "";
+
 //$sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 $urlsys			= (isset($_REQUEST["idurl"])) ?  $_REQUEST["idurl"] : $_SERVER['SERVER_NAME'];
 $urlpath		= (isset($_REQUEST["idpath"])) ?  $_REQUEST["idpath"] : $dir;
@@ -27,12 +30,26 @@ $srvmysql		= ($srvmysql == "") ? "127.0.0.1" : $srvmysql;
 
 if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $action == "" ){
 	
-	$cnn = new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);
+	//Importar la base de datos
+	$mysqlImport = new MySQLImporter($srvmysql, "root", $pwdroot);
+	$mysqlImport->doImport("./db/safe-osms.sql",$dbmysql,true);
+	
+	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
+	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	
+	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
+	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	
+	//=========================
+	
+	$cnn 		= new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);
+	
 	if ($cnn->connect_errno) {
 		$msg	.= "ERROR EN LA CONEXION : ". $cnn->connect_error . " \n";
 		exit;
 	} else {
 		$rs		= $cnn->query("SHOW TABLES IN $dbmysql");
+		
 		if($rs == false){
 			$msg	.= "ERROR(". $cnn->error . ") \r\n";
 		} else {
@@ -215,7 +232,7 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
   </div>
 
   <div class='name'>
-    <input class='last' placeholder='Contraseña ROOT MySQL' type='password' name='idroot'>
+    <input class='last' placeholder='Contraseña ROOT MySQL' type='password' name='idpwdroot'>
   </div>
     
 

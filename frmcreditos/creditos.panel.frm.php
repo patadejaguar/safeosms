@@ -21,6 +21,7 @@ $xF					= new cFecha();
 
 $UsarRedir			= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
 
+
 //Reglas de negocio
 //memprof_enable();
 
@@ -61,7 +62,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	echo $oFrm->get();
 	//echo $xJs->get();
 	$idsolicitud	= DEFAULT_CREDITO;
-		//exit( "<p class='aviso'>AGREGUE UN NUMERO DE SOLICITUD</p></body></html>");
+	//exit( "<p class='aviso'>AGREGUE UN NUMERO DE SOLICITUD</p></body></html>");
 } else {
 
 	$oFrm->addRefrescar("jsRecargar()");
@@ -105,8 +106,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			$oFrm->addCreditoComandos($idsolicitud, $xCred->getEstadoActual(), $xCred->getSaldoActual());
 			
 			if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_OFICIAL_CRED){
-				$oFrm->OButton("TR.ACTUALIZAR DATOS", "jsActualizarCredito()", $oFrm->ic()->EDITAR, "editar-credito", "green2");
-				
+				$oFrm->OButton("TR.ACTUALIZAR DATOS", "jsActualizarCredito()", $oFrm->ic()->EDITAR, "editar-credito", "editar");
 			}
 			
 			
@@ -130,8 +130,10 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					$oFrm->OButton("TR.RENOVAR", "jsRenovar()", $oFrm->ic()->RECARGAR, "",  "yellow");
 				}
 			} else {
-				if(MODULO_CAPTACION_ACTIVADO == true){
-					$oFrm->OButton("TR.Ministrar en cuenta", "var xG = new CredGen();xG.setMinistrarToPasivo({credito:$idsolicitud})", $oFrm->ic()->BLOQUEAR);
+				if($xCred->getEsRechazado() == false){
+					if(MODULO_CAPTACION_ACTIVADO == true){
+						$oFrm->OButton("TR.Ministrar en cuenta", "var xG = new CredGen();xG.setMinistrarToPasivo({credito:$idsolicitud})", $oFrm->ic()->BLOQUEAR);
+					}
 				}
 			}
 			//$oFrm->OButton("TR.Calculadora", "var xC=new CredGen();xC.getCalculadora($idsolicitud);", $oFrm->ic()->CALCULAR);
@@ -202,8 +204,8 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					if($c2Tbl->getRowCount()>0){ $xHTabs->addTab("TR.NOTAS", $HNotas); }
 	
 					$c4Tbl 			= new cTabla($mSQL->getListadoDeCompromisos($idsolicitud, SEGUIMIENTO_ESTADO_PENDIENTE), 0);
-					$c4Tbl->OButton("TR.Ver", "var xS = new SegGen(); xS.getDetalleDeCompromiso({clave : " . HP_REPLACE_ID . "})", $oFrm->ic()->VER);
-					$c4Tbl->OButton("TR.Editar", "var xS = new SegGen(); xS.setEditarCompromiso({clave : " . HP_REPLACE_ID . "})", $oFrm->ic()->EDITAR);
+					$c4Tbl->OButton("TR.Ver", "var xS=new SegGen(); xS.getDetalleDeCompromiso({clave : " . HP_REPLACE_ID . "})", $oFrm->ic()->VER);
+					$c4Tbl->OButton("TR.Editar", "var xS=new SegGen(); xS.setEditarCompromiso({clave : " . HP_REPLACE_ID . "})", $oFrm->ic()->EDITAR);
 					$HCompromisos	= $c4Tbl->Show();
 					if( $c4Tbl->getRowCount()>0){ $xHTabs->addTab("TR.COMPROMISOS" ,  $HCompromisos); }
 	
@@ -260,8 +262,52 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			if($xTbOD->getRowCount()>0){ $xHTabs->addTab("TR.Otros Datos", $HOtrosDatos); }
 			$xUser	= new cSystemUser($xCred->getClaveDeUsuario());
 			if($xUser->init() == true){
-				
-				$oFrm->addHElem( $xNot->get("Creado por : " . $xUser->getNombreCompleto(), "idnotcred", $xNot->NOTICE) );
+				$oFrm->addTag("Creado por : " . $xUser->getAlias(), "notice");
+			}
+			$xGtia		= new cCreditosGarantias();
+			$xGtia->setClaveDeCredito($idsolicitud);
+			$GFisicas	= $xGtia->getMontoResguardado();
+			if($GFisicas>0){
+				$mny	= getFMoney($GFisicas);
+				$oFrm->addTag("Garantias Reales: <strong>$ $mny</strong>", "success");
+			}
+			/*$xGtiaL		= new cCreditosGarantiasLiquidas();
+			$xGtiaL->setClaveDeCredito($idsolicitud);
+			$xGtiaL->getSaldoGantiaLiq();*/
+			$GMonto		= $xCred->getGarantiaLiquidaPorPagar();
+			if($GMonto > 0){
+				$mny	= getFMoney($GMonto);
+				$oFrm->addTag("Garantia Liq. Pend.: <strong>$ $mny</strong>", "warning");
+			}
+			
+			$GMonto		= $xCred->getGarantiaLiquidaPagada();
+			if($GMonto > 0){
+				$mny	= getFMoney($GMonto);
+				$oFrm->addTag("Garantia Liquida: <strong>$ $mny</strong>", "success");
+			}
+			if($xCred->getEsRenovado() == true){
+				if($xCred->getClaveDeOrigen() <= DEFAULT_CREDITO){
+					$oFrm->addTag($oFrm->getT("MS.CREDITO_FALTA_DRENOV"), "error");
+					$oFrm->addJsInit("jsRequiereDatosRenovacion($idsolicitud);");
+				} else {
+					$xCredOrg	= new cCredito($xCred->getClaveDeOrigen());
+					if($xCredOrg->init() == true){
+						$idcredorigen	= $xCredOrg->getClaveDeCredito();
+						$oFrm->addTag("Credito Origen: <strong>" . $idcredorigen  . "</strong>", "warning", "var xG=new CredGen();xG.goToPanelControl($idcredorigen)");
+					}
+				}
+			}
+			if($xCred->getEsReestructuracion() == true){
+				if($xCred->getClaveDeOrigen() <= DEFAULT_CREDITO){
+					$oFrm->addTag($oFrm->getT("MS.CREDITO_FALTA_DREEST"), "error");
+					$oFrm->addJsInit("jsRequiereDatosReestructura($idsolicitud);");
+				} else {
+					$xCredOrg	= new cCredito($xCred->getClaveDeOrigen());
+					if($xCredOrg->init() == true){
+						$idcredorigen	= $xCredOrg->getClaveDeCredito();
+						$oFrm->addTag("Credito Origen: <strong>" . $idcredorigen  . "</strong>", "warning", "var xG=new CredGen();xG.goToPanelControl($idcredorigen)");
+					}
+				}
 			}
 			//$oFrm
 			if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
@@ -279,7 +325,11 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				$HOperaciones=$cEdit->Show();
 				if($cEdit->getRowCount()>0){ $xHTabs->addTab("TR.Operaciones", $HOperaciones); }
 				
+				$mSQL->setInvertirOrden();
 				$cMovs		= new cTabla($mSQL->getListadoDeSDPMCredito($idsolicitud));
+				$cMovs->setOmitidos("numero_de_credito");
+				$cMovs->setTitulo("dias_transcurridos", "dias");
+				
 				$HSDPM		= $cMovs->Show();
 				if($cMovs->getRowCount()>0){ $xHTabs->addTab("TR.Historial", $HSDPM); }				
 			}
@@ -358,7 +408,22 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function jsGetFlota(id){
 		xC.getLeasingActivos(id);
 	}
-
+	function jsRequiereDatosRenovacion(id){
+		xG.requiere({
+			callback: function(){ 
+				xG.w({tiny:true, url:"../frmcreditos/creditos.datos-origen.new.frm.php?tipo=" +Configuracion.credito.origen.renovacion + "&credito=" + id});
+			},
+			msg : 'CREDITO_FALTA_DRENOV'
+		});
+	}
+	function jsRequiereDatosReestructura(id){
+		xG.requiere({
+			callback: function(){ 
+				xG.w({tiny:true, url:"../frmcreditos/creditos.datos-origen.new.frm.php?tipo=" +Configuracion.credito.origen.reestructura + "&credito=" + id});
+			},
+			msg : 'CREDITO_FALTA_DREEST'
+		});
+	}
 </script>	
 <?php
 	if($idsolicitud> DEFAULT_CREDITO){

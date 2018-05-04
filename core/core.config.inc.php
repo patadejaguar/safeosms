@@ -12,14 +12,14 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "AzusaF-GTO"; //Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201803";
-$revision 								= "02";
+$codename 								= "Devian"; //AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201804";
+$revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
 define("SAFE_REVISION",                 $revision);
 define("SAFE_FIRM",                  	"SAFE-OSMS-$version.$revision $codename");
-
+define("SAFE_CLEAN_LANG",                 false);
 //======================================= INCLUDE RUNTIME
 ini_set("include_path", $os_path_includes_str);
 //======================================= HOST DE TRABAJO
@@ -287,6 +287,7 @@ define("CREDITO_ESTADO_SOLICITADO",		99);
 define("CREDITO_TIPO_AUTORIZACION_NORMAL",	1);
 define("CREDITO_TIPO_AUTORIZACION_AUTOMATICA",	2);
 define("CREDITO_TIPO_AUTORIZACION_RENOVACION",	3);
+define("CREDITO_TIPO_AUTORIZACION_REESTRUCTURA",	4);
 
 
 define("CREDITO_GARANTIA_ESTADO_PRESENTADO",	1);
@@ -338,7 +339,7 @@ define("DEFAULT_TIEMPO",			99);
 define("DEFAULT_TIPO_DOMICILIO",		99);
 define("DEFAULT_GENERO",			99);
 define("DEFAULT_CAPTACION_ORIGEN",			99);
-define("DEFAULT_PERMISOS", "2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,99@rw,31@rw,41@rw,71@rw,81@rw,31@rw,41@rw,71@rw");
+define("DEFAULT_PERMISOS", "2@rw,3@rw,4@rw,5@rw,6@rw,7@rw,8@rw,9@rw,10@rw,11@rw,12@rw,13@rw,14@rw,15@rw,31@rw,41@rw,71@rw,72@rw,73@rw,81@rw,99@rw");
 
 define("TIPO_RELACION_CONYUGE",			3);
 define("TIPO_RELACION_BENEFICIARIO",		11);
@@ -375,6 +376,7 @@ define("AVISOS_TIPO_RECORDATORIO",		8);
 
 define("SYS_PRODUCTO_INDIVIDUAL",		200);
 define("SYS_PRODUCTO_REVOLVENTES",		300);
+
 define("SYS_PRODUCTO_NOMINA",			100);
 define("SYS_PRODUCTO_GRUPOS", 			900);
 define("SYS_PRODUCTO_ARREND", 			500);
@@ -389,6 +391,9 @@ define("CREDITO_PRODUCTO_INDIVIDUAL",			$xC->get("creditos_clave_producto_indivi
 define("CREDITO_PRODUCTO_REVOLVENTES",			$xC->get("creditos_clave_producto_revolventes", SYS_PRODUCTO_REVOLVENTES, MMOD_COLOCACION));
 define("CREDITO_PRODUCTO_NOMINA",				$xC->get("creditos_clave_producto_nomina", SYS_PRODUCTO_NOMINA, MMOD_COLOCACION));
 define("CREDITO_PRODUCTO_FUERA_NOMINA",			$xC->get("creditos_clave_producto_fuera_nomina", SYS_PRODUCTO_FUERA_NOMINA, MMOD_COLOCACION));
+
+define("CREDITO_PRODUCTO_FUERA_NOMINA_N",		$xC->get("creditos_nombre_producto_fuera_nomina", "DESPEDIDO", MMOD_COLOCACION));
+
 define("CREDITO_PRODUCTO_DESTINO_DESCARTADOS",	$xC->get("creditos_clave_producto_descartados", SYS_PRODUCTO_DESCARTADOS, MMOD_COLOCACION));
 define("CREDITO_PRODUCTO_LEASING_PURO",			$xC->get("creditos_clave_producto_arrendamiento_puro", "500", $xC->COLOCACION));
 define("CREDITO_DESTINO_LEASING_PURO",			$xC->get("creditos_clave_destino_arrendamiento_puro", "7100", $xC->COLOCACION));
@@ -450,6 +455,8 @@ define("OPERACION_CLAVE_PAGO_CAPITAL",		120);
 define("OPERACION_CLAVE_PAGO_INTERES",		140);
 define("OPERACION_CLAVE_PAGO_MORA",			141);
 define("OPERACION_CLAVE_PAGO_CBZA",			145);
+define("OPERACION_CLAVE_PAGO_GLIQ",			901);
+define("OPERACION_CLAVE_DEV_GLIQ",			353);
 
 define("OPERACION_CLAVE_DEP_INT",			222);
 define("OPERACION_CLAVE_DISPOCISION",		117);
@@ -821,13 +828,14 @@ define("CREDITO_TASA_COM_APERTURA_GLOBAL",	$xC->get("tasa_de_comision_por_apertu
 define("CREDITO_EN_PLAN_COM_APERTURA",		$xC->get("planes.aplicar_comision_en_primer_pago", "false", MMOD_COLOCACION)); //Tasa que aplica en otros de plan de pagos
 define("CREDITO_CONTROLAR_POR_PERIODOS", 	(bool) $xC->get("creditos_controlar_por_periodos", "false", MMOD_COLOCACION));
 define("CREDITO_CONTROLAR_POR_ORIGEN", 	(bool) $xC->get("creditos_controlar_por_origen", "true", MMOD_COLOCACION));
+define("CREDITO_USAR_AHORRO", 	(bool) $xC->get("creditos_usar_ahorro_en_creds", "false", MMOD_COLOCACION));
 //======================================= CONSTANTES DE POBLACION
 define("PERSONAS_VIVIENDA_MANUAL", 			(bool) $xC->get("personas_manejar_vivienda_manual", "false", MMOD_PERSONAS));
 define("PERSONAS_NOMBRE_ID_POBLACIONAL", 	$xC->get("nombre_del_identificador_poblacional", "C.U.R.P.", MMOD_PERSONAS));
 define("PERSONAS_NOMBRE_ID_FISCAL", 		$xC->get("nombre_del_identificador_fiscal", "R.F.C.", MMOD_PERSONAS));
 define("PERSONAS_CONTROLAR_POR_EMPRESA", 	(bool) $xC->get("personas_controlar_por_empresas", "true", MMOD_PERSONAS));
 define("PERSONAS_CONTROLAR_POR_GRUPO", 		(bool) $xC->get("personas_controlar_por_grupos", "false", MMOD_PERSONAS));
-define("PERSONAS_CONTROLAR_POR_APORTS", 		(bool) $xC->get("personas_controlar_por_aportaciones", "false", MMOD_PERSONAS));
+define("PERSONAS_CONTROLAR_POR_APORTS", 	(bool) $xC->get("personas_controlar_por_aportaciones", "false", MMOD_PERSONAS));
 
 define("PERSONAS_LARGO_IDFISCAL",     		$xC->get("persona_largo_de_id_fiscal", "13", MMOD_PERSONAS ));
 define("PERSONAS_LARGO_IDPOBLACIONAL", 		$xC->get("persona_largo_de_id_poblacional", "12", MMOD_PERSONAS ));
@@ -1144,6 +1152,19 @@ define("USUARIO_TIPO_ORIGINADOR", 					3);
 define("CAPTACION_IMPUESTOS_A_DEPOSITOS_ACTIVO",        (bool) $xC->get("impuestos_a_depositos_activo", "false", MMOD_CAPTACION) );
 define("TESORERIA_FORZAR_SESSION", 	(bool) $xC->get("forzar_sesiones_de_caja", "true", MMOD_TESORERIA));
 
+//============================================ HEREDADO ==========================================================
+
+define("CTRL_GOSOCIO", 			"<img class='buscador' title=\"Buscar una Persona\" src=\"../images/common/search.png\" onclick=\"goSocio_();\"/>");
+define("CTRL_GOCREDIT", 		"<img class='buscador' title=\"Buscar un Credito\" src=\"../images/common/search.png\" onclick=\"goCredit_();\"/>");
+define("CTRL_GOLETRAS", 		"<img class='buscador' title=\"Buscar una Parcialidad\" src=\"../images/common/search.png\"  onclick=\"goLetra_();\"/>");
+define("CTRL_GOCUENTAS", 		"<img class='buscador' title=\"Buscar una Cuenta de Captacion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_();\"/>");
+define("CTRL_GOCUENTAS_A", 		"<img class='buscador' title=\"Buscar una Cuenta Corriente\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(10);\"/>");
+define("CTRL_GOCUENTAS_I", 		"<img class='buscador' title=\"Buscar una Cuenta de Inversion\" src=\"../images/common/search.png\"  onclick=\"goCuentas_(20);\"/>");
+define("CTRL_GOGRUPOS", 		"<img class='buscador' title=\"Buscar un Grupo\" src=\"../images/common/search.png\"  onclick=\"goGrupos_();\"/>");
+define("CTRL_GORECIBOS", 		"<img class='buscador' title=\"Buscar un Recibo de Pago\" src=\"../images/common/search.png\"  onclick=\"goRecibos_();\"/>");
+//define("JS_CLOSE", 				"<script>var xG = new Gen(); xG.close(); </script>");
+
+
 //============================================ MANEJO DE SESIONES ==========================================================
 if(!isset($safe_sesion_en_segundos)){
 	$safe_sesion_en_segundos		= $xC->get("tiempo_expira_sesiones", "3600", MMOD_SISTEMA);
@@ -1389,6 +1410,8 @@ define("TSEGUMIENTO_LLAMADAS", "seguimiento_llamadas");
 define("TUSUARIOS_NOTAS", "usuarios_web_notas");
 define("TUSUARIOS_REGISTRO", "t_03f996214fba4a1d05a68b18fece8e71");
 
+
+
 if(defined("MODO_DEBUG")){
 	if(MODO_DEBUG == true){
 		if(SYSTEM_ON_HOSTING == true){
@@ -1515,6 +1538,8 @@ class cCache {
 		}
 	}
 	function isReady(){
+		//return false;
+		
 		return ($this->getErrorsCount() >= 1) ? false : true;
 	}
 	private function getErrorsCount(){

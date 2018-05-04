@@ -48,7 +48,9 @@ $FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $Fech
 $FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
-$nivel			= parametro("f1", SYS_TODAS, MQL_RAW);
+$nivel			= parametro("idtipo", SYS_TODAS, MQL_RAW);
+$nivel			= strtolower($nivel);
+
 
 $sql			= $xL->getListadoDeEventos($FechaInicial, $FechaFinal, $nivel, $clave, $usuario, $buscar);
 $titulo			= "";

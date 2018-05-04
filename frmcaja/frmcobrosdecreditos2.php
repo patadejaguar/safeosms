@@ -14,9 +14,12 @@
 //=====================================================================================================
 $xHP		= new cHPage("TR.COBROS DE CREDITOS .- 2", HP_FORM);
 $xF			= new cFecha();
+$xCaja		= new cCaja();
+
 $html		= "";
 $msg		= "";
 
+if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -106,7 +109,7 @@ if(MODO_DEBUG == true){
 	//$xFRM->addAtras();
 }
 
-$xFRM->OButton("TR.Guardar Pago", "jsGuardarPagoF()", $xFRM->ic()->GUARDAR, "idsave", "green");
+$xFRM->OButton("TR.Guardar Pago", "jsGuardarPagoF()", $xFRM->ic()->GUARDAR, "btn_guardar", "green");
 $xFRM->OButton("Vista Previa", "jsViewPagoF()", $xFRM->ic()->VER, "idprev");
 $xFRM->addImprimir();
 
@@ -124,7 +127,13 @@ $xFRM->addHElem( $xCred->getFicha(false, "", false, true) );
 $xFRM->addCobroBasico("onchange='jsGetPago()'");
 $xFRM->addObservaciones();
 $xFRM->setValidacion("idobservaciones", "jsActualizarObservacion");
-$xFRM->addSeccion("iddivpagos", $xFRM->lang("FECHA") . "&target;" . $xF->getFechaDDMM($Fecha) . "&dash;" . $xFRM->lang("PARCIALIDAD") . " &numero; $parcialidad");
+
+//$xFRM->addTag("-", "warning");
+
+//$xFRM->addTag("<strong>". $xFRM->getT("TR.TOTAL") . "</strong> : <span id='spantotal' style='font-size:1.5em'></span>", "notice");
+$strInfo	= $xFRM->getT("TR.FECHA") . "&target;" . $xF->getFechaDDMM($Fecha) . "&dash;" . $xFRM->getT("TR.PARCIALIDAD") . " &numero; $parcialidad";
+$xFRM->addSeccion("iddivpagos", $strInfo);
+
 $xFRM->addHElem("<iframe id=\"idFPrincipal\" src=\"./../principal.php\" width='100%' height=\"800px\" ></iframe>");
 
 $xFRM->addHElem( $html );
@@ -145,6 +154,7 @@ var sURI 		= "";
 var iFr 		= document.getElementById("idFPrincipal");
 var iWFram		= document.getElementById('idFPrincipal').contentWindow;
 var mTotalPag	= <?php echo round($montoapagar,2); ?>;
+var mStrInfo	= "<?php echo $strInfo; ?>";
 
 function jsAsLoaded(){
 	var mFormaPago		= oTipoPago.val();
@@ -162,15 +172,20 @@ function jsGetPago(vTipoPago, vMonto){
 	var monto			= vMonto;
 	//Parcialidad Incompleta o parcialidades varias
 	if (mTipoPago == "pli" || mTipoPago == "plv" || mTipoPago == "ao"){
+		$("#h3iddivpagos").addClass("yellow");
 		//monto 			= window.prompt("---CAPTURE EL MONTO---\n---QUE SE PRESENTA---\n PARA PAGAR EL CREDITO", 0.00);
 	} else {
 		monto			= TESORERIA_MONTO_MAXIMO_OPERADO;
+		if (mTipoPago == "pc"){
+			$("#h3iddivpagos").addClass("blue3");
+		} else {
+			$("#h3iddivpagos").removeClass();
+		}
 	}
 	if( flotante(monto) > 0) {
 		sURI 			= iSRC + monto + "|" + mTipoPago+ "|" + mFormaPago + "|" + oReciboFis.val();
 	} else {
-		alert("DEBE CAPTURAR UN MONTO MAYOR A CERO\nPARA QUE EL COBRO SE EFECTUE");
-		//$("#idtipo_pago").focus();
+		xGen.alerta({ msg: "MSG_MONTO_REQUIRED"});
 	}
 	
 	jsCargarFrame();
@@ -178,8 +193,17 @@ function jsGetPago(vTipoPago, vMonto){
 function jsCargarFrame(){
 	xGen.spinInit();
 	xGen.QFrame({ id : "idFPrincipal", url : sURI });
-	$("#idtipo_pago").focus(); 
+	$("#idtipo_pago").focus();
 }
+
+function jsFrameTotalActualizado(){
+	var mxTotalPag	= iWFram.jsGetTotal();
+	//console.log();
+	//xGen.notify({msg: "Frame Actualizado..."});
+	var simb = Configuracion.moneda.simbolo + " "  + mxTotalPag;
+	$("#h3iddivpagos").html(mStrInfo + " - " + simb);
+}
+
 function jsActualizarObservacion(){
 	if ($("#idFPrincipal").length > 0){
 		//
@@ -215,13 +239,13 @@ function jsViewPagoF(){
 	iWFram.showVistaPago();
 }
 function jsEnableSave(){
-	xGen.ena("#idsave");
+	xGen.ena("#btn_guardar");
 }
 function jsDisableSave(){
-	xGen.dis("#idsave");
+	xGen.dis("#btn_guardar");
 }
 function jsRemoveSave(){
-	xGen.verControl("idsave", false);
+	xGen.verControl("btn_guardar", false);
 	xGen.verControl("pc2", false);
 	xGen.verControl("pc3", false);
 	xGen.verControl("pc1", false);

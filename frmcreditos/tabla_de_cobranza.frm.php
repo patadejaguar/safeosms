@@ -50,10 +50,18 @@ function jsaEliminarNomina($clave){
 	}
 	return $xPer->getMessages();
 }
+function jsaCancelarNomina($clave){
+	$xPer	= new cEmpresasCobranzaPeriodos($clave);
+	if($xPer->init() == true){
+		$xPer->setCerrar();
+	}
+	return $xPer->getMessages();
+}
 
+$jxc ->exportFunction('jsaEliminarRecibo', array('idkey', 'idkey2', 'idnomina'), "#idavisos");
+$jxc ->exportFunction('jsaEliminarNomina', array('idnomina'), "#idavisos");
+$jxc ->exportFunction('jsaCancelarNomina', array('idnomina'), "#idavisos");
 
-$jxc ->exportFunction('jsaEliminarRecibo', array('idkey', 'idkey2', 'idnomina'), "#fb_frmcbza");
-$jxc ->exportFunction('jsaEliminarNomina', array('idnomina'), "#fb_frmcbza");
 $jxc ->process();
 
 $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
@@ -70,7 +78,7 @@ $xHP->init();
 
 $xFRM			= new cHForm("frmcbza", "./");
 
-$sql			= $xLi->getListadoDeCobranza($idnomina, SYS_TODAS, ", `empresas_cobranza`.`idempresas_cobranza` AS `clave`, `empresas_cobranza`.`recibo`");
+$sql			= $xLi->getListadoDeCobranza($idnomina, SYS_TODAS, ", `empresas_cobranza`.`idempresas_cobranza` AS `clave`, `empresas_cobranza`.`recibo`, getBooleanMX(`empresas_cobranza`.`estado`) AS `estatusactivo`");
 $xFRM->setTitle($xHP->getTitle() . " # $idnomina");
 $xFRM->OHidden("idnomina", $idnomina);
 //exit($sql);
@@ -88,23 +96,29 @@ $xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
 $xChk->addEvent("jsAddCola(this, "  . HP_REPLACE_ID . ")", "onchange");
 $xChk->setDivClass("");
 
-$xT->setFieldReplace("monto", "_X_MONTO");
-$xT->addEspTool($xTxt->getDeMoneda("mny_" . HP_REPLACE_ID, "", "_X_MONTO"));
+//$xT->setFieldReplace("monto", "_X_MONTO");
+//$xT->addEspTool($xTxt->getDeMoneda("mny_" . HP_REPLACE_ID, "", "_X_MONTO"));
+
 $xT->addEspTool( $xChk->get("", "chk-" . HP_REPLACE_ID) );
 //$xT->OButton("TR.Eliminar Recibo", "jsEliminarRecibo(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
 $xT->setTdClassByType();
 $xT->setFootSum(array(
 		3 => "letra",
-		6 => "monto"
+		5 => "monto"
 ));
+$xT->setOmitidos("saldo_final");
+
 $xFRM->OHidden("idkey", 0);
 $xFRM->OHidden("idkey2", 0);
 
 //$xT->addEditar();
-$xT->setWidthTool("300px");
+//$xT->setWidthTool("200px");
+$xT->setResumidos("observaciones");
 
 $xFRM->OButton("TR.Eliminar Nomina", "jsEliminarNomina()", $xFRM->ic()->ELIMINAR, "idcmdeliminarnomina", "red");
+$xFRM->OButton("TR.Cancelar Nomina", "jsCancelarNomina()", $xFRM->ic()->PARAR, "idcmdcancelarnomina", "orange");
 
+$xT->OInput("monto", "number", "mny", "style='max-width:6em;'");
 
 $xT->setOmitidos("saldo_inicial");
 
@@ -113,14 +127,35 @@ $xT->OButton("TR.Imprimir Recibo", "jsImprimirRecibo("  . HP_REPLACE_ID . ")", $
 $xT->OButton("TR.ELIMINAR OPERACION", "jsEliminarOperacion(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
 $xT->OButton("TR.COBRO LIBRE", "jsSetCobroLibre(" .  HP_REPLACE_ID . ")", $xFRM->ic()->DINERO);
 
+if($xUser->getPuedeEditarRecibos() == true){
+	$xT->OButton("TR.Editar Recibo", "jsGoPanelRecibo(" . HP_REPLACE_ID . ")", $xFRM->ic()->RECIBO, "idcmdeditrecs");
+}
+
+
+$xT->OButton("TR.ENVIOS", "jsListEnvios(" .  HP_REPLACE_ID . ")", "fa-wifi");
+
+$xPer	= new cEmpresasCobranzaPeriodos($idnomina);
+if($xPer->init() == true){
+	$xEmp	= new cEmpresas($xPer->getClaveDeEmpresa());
+	$xFMT			= new cFormato( $xEmp->getIDDeFormatoDeAviso() );
+	$xFMT->setEmpresaPeriodo($xPer->getClaveDeEmpresa(), $idnomina);
+	$xFMT->setProcesarVars();
+	$xFRM->addHElem( $xFMT->get() );
+}
+
+
+
+
 $xFRM->addHTML( $xT->Show() );
 
 if($xUser->getPuedeEliminarRecibos() == true){
 	$xFRM->OButton("TR.Eliminar Recibo", "jsEliminarRecibos()", $xFRM->ic()->REGISTROS, "idcmdeliminarrecs", "orange");
 }
 
+$xFRM->addHTML("<div id='dgl2'><ol id='oldgl2'></ol></div>");
 //$xFRM->addSubmit();
-$xFRM->addFooterBar("<br />");
+//$xFRM->addFooterBar("<br />");
+$xFRM->addAviso("", "idavisos");
 echo $xFRM->get();
 ?>
 <script>
@@ -131,25 +166,17 @@ var cola	= {};
 function jsAddCola(osrc, id){
 	var obj		= processMetaData("#tr-creditos_solicitud-" + id);
 	if (osrc.checked == true) {
-		if(typeof obj.observaciones != "undefined"){
-			if(String(obj.observaciones).indexOf("]") > 0){
-				var DPago	= new String(obj.observaciones).split("]");
-				//[361295](3887.7)L.5:52 [2015-02-18]
-		    	var idrecibo= entero(DPago[0]);
-		    	var idxp	= String(DPago[1]).split("L.");
-		    	idxp		= String(idxp[1]).split(":");
-		    	var idletra	= entero(idxp[0]);
-		    	//$("#idkey2").val();
-		    	if(idrecibo > 0){
-			    	//$("#idkey").val(idrecibo);
-			    	xG.alerta({msg : "Se Agrega el Recibo " + idrecibo, type : "warn"});
-			    	cola[id] = { recibo : idrecibo, letra : idletra };
-		    	} else {
-		    		xG.alerta({msg : "No existe el Recibo " + idrecibo + " en el Credito " + id});
-		    	}
-			} else {
-				xG.alerta({msg : "La Parcialidad no tiene Recibo Masivo"});
-			}
+		if(typeof obj.recibo != "undefined"){
+			var idrecibo	= entero(obj.recibo);
+			var idletra		= entero(obj.letra);
+			var idcredito	= entero(obj.credito);
+	    	if(idrecibo > 0){
+		    	//$("#idkey").val(idrecibo);
+		    	xG.alerta({msg : "Se Agrega el Recibo " + idrecibo, type : "warn"});
+		    	cola[id] = { recibo : idrecibo, letra : idletra, credito : idcredito };
+	    	} else {
+	    		xG.alerta({msg : "No existe el Recibo " + idrecibo + " en el Credito " + id});
+	    	}
 		}
 	} else {
 		//eliminar de la matriz
@@ -160,7 +187,7 @@ function jsAddCola(osrc, id){
 	}
 }
 function jsSetCobroLibre(idcred){
-	var xmonto	= $("#mny_" + idcred).val();
+	var xmonto	= $("#mny-" + idcred).val();
 	xCred.goToCobroMasivoDeCredito({credito:idcred, monto: xmonto});
 }
 function jsImprimirRecibo(id){
@@ -178,15 +205,25 @@ function jsEliminarRecibos(){
 function jsEliminarNomina(){
 	xG.confirmar({msg: "Confirma Eliminar la Nomina? no existe como recuperarlos.", callback : jsaEliminarNomina} );
 }
+function jsCancelarNomina(){
+	xG.confirmar({msg: "Confirma Cancelar la Nomina? Los pagos activos se cancelaran.", callback : jsaCancelarNomina} );
+}
 function jsEliminarRecibosConfirmado(){
 	var idnomina	= $("#idnomina").val();
 	var xRec		= new RecGen();
 	for(xcred in cola){
-		var obj	= cola[xcred];
+		var obj		= cola[xcred];
+
+		xG.spinInit();
 		xRec.eliminar({ preguntar : false, recibo : obj.recibo, letra : obj.letra, nomina : idnomina, callback : markItem });
 	}
 }
-function markItem(id){ $("#tr-" + id).removeClass(); $("#tr-" + id).addClass("tr-pagar"); }
+function markItem(id){
+	xG.spinEnd();
+	$("#tr-" + id).removeClass(); 
+	$("#tr-" + id).addClass("tr-pagar");
+	
+}
 function jsEditOperacion(id){
 	var obj		= processMetaData("#tr-creditos_solicitud-" + id);
 	if(typeof obj.observaciones != "undefined"){
@@ -200,8 +237,28 @@ function jsEliminarOperacion(id){
 	var clave	= obj.clave;
 	xG.rmRecord({tabla: "empresas_cobranza", id:clave});
 }
+function jsGoPanelRecibo(id){
+	var obj			= processMetaData("#tr-creditos_solicitud-" + id);
+	var idrecibo	= obj.recibo;
+	var idcredito	= entero(obj.credito);
+	var xmonto		= $("#mny-" + idcredito).val();
+	if(idrecibo >0){
+		xRec.panel(idrecibo, {agregar:xmonto});
+	} else {
+		xG.alerta({msg: "Recibo Invalido", tipo: "error"});
+	}
 
-
+}
+function jsListEnvios(id){
+	var obj			= processMetaData("#tr-creditos_solicitud-" + id);
+	var idletra		= entero(obj.letra);
+	var idcredito	= entero(obj.credito);
+	
+	xG.QList({url : "../svc/nom-letras-envios.svc.php?credito=" + idcredito + "&letra=" + idletra, id:"oldgl2",key:"id", label: "descripcion", callback: jsShowEnvios});
+}
+function jsShowEnvios(){
+	xG.winTip({content: $("#dlg")});
+}
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

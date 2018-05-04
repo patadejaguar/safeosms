@@ -32,14 +32,15 @@ $rs["message"]	= "Sin datos validos";
 
 
 $xP	= new cSystemPermissions($clave);
-$xP->init();
+if($xP->init() == true){
 
-if($enable == true){
-	$xP->setAgregarPermiso($perfil);
-	$rs["error"]	= false;
-} else {
-	$xP->setEliminarPermiso($perfil);
-	$rs["error"]	= false;
+	if($enable == true){
+		$xP->setAgregarPermiso($perfil);
+		$rs["error"]	= false;
+	} else {
+		$xP->setEliminarPermiso($perfil);
+		$rs["error"]	= false;
+	}
 }
 $rs["message"]	= $xP->getMessages();
 

@@ -25,24 +25,29 @@ $xHP		= new cHPage("TR.Solicitud de Credito");
 //$oficial 	= elusuario($iduser);
 $jxc		= new TinyAjax();
 $xRuls		= new cReglaDeNegocio();
+$xVals		= new cReglasDeValidacion();
+
 //$SinDatosDispersion	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_AUTORIZACION_SIN_DISP);		//regla de negocio
 $SinFinalPlazo		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PRODUCTOS_SIN_FINALPZO);		//regla de negocio
 $SinLugarPag		= false; //ACTUALIZAR
 $ConOrigen			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_SOLICITUD_CON_ORIGEN);		//regla de negocio
 
-$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
-$monto		= parametro("monto",0, MQL_FLOAT);
-$producto	= parametro("producto",DEFAULT_TIPO_CONVENIO, MQL_INT);
-$idorigen	= parametro("idorigen",1, MQL_INT);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$monto			= parametro("monto",0, MQL_FLOAT);
+$producto		= parametro("producto",DEFAULT_TIPO_CONVENIO, MQL_INT);
+$idorigen		= parametro("idorigen",1, MQL_INT);
 $tipoorigen		= parametro("origen",1, MQL_INT); //Tipo de Origen
 
-$fecha		= parametro("fecha", fechasys(), MQL_DATE);
-$pagos		= parametro("pagos", 1, MQL_INT);
-$frecuencia	= parametro("frecuencia", false, MQL_INT);
-$destino	= parametro("destino", FALLBACK_CRED_TIPO_DESTINO, MQL_INT);
-$oficial	= parametro("oficial", getUsuarioActual(), MQL_INT);
-$tasa		= parametro("tasa", 0, MQL_FLOAT);
+$fecha			= parametro("fecha", fechasys(), MQL_DATE);
+$pagos			= parametro("pagos", 1, MQL_INT);
+$frecuencia		= parametro("frecuencia", false, MQL_INT);
+$destino		= parametro("destino", FALLBACK_CRED_TIPO_DESTINO, MQL_INT);
+$oficial		= parametro("oficial", getUsuarioActual(), MQL_INT);
+$tasa			= parametro("tasa", 0, MQL_FLOAT);
+$claseproducto	= parametro("claseproducto", 0, MQL_INT);
+$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+
 $TipoCobro	= 0;
 
 function jsaGetPerfilDePersona($persona){
@@ -186,18 +191,36 @@ if($ready == true){
 			$xFRM->addPersonaBasico("", false, $persona);
 		}
 	}
+	
+	if($xVals->empresa($empresa) == true){
+		$xEmp		= new cEmpresas($empresa);
+		if($xEmp->init() == true){
+			$xFRM->addTag($xEmp->getNombreCorto(), "warning");
+		}
+	}
+	
 	$xFRM->addSeccion("didivgeneral", "TR.INFORMACION_GENERAL");
 	
 	
 	$xFRM->ODate("idFechaSolicitud", $fecha, "TR.Fecha de Solicitud");
-
+	
 	//========== Producto de Credito
-	$selPdto	= $xSel->getListaDeProductosDeCredito("", $producto, true);
+	$selPdto		= $xSel->getListaDeProductosDeCredito("", $producto, true);
+	if($xVals->empresa($empresa) == true){
+		$xSel->getListaDeProductosDeCreditoConSeguimiento();
+		//$selPdto	= $xSel->getListaDeProductosDeCreditoNomina("", $producto);
+		$selPdto	= $xSel->getListaDeProductosDeCreditoXEmpresa("", $empresa, $producto);
+	}
+	
 	if($ConOrigen == false){
 		$selPdto->addEvent("onblur", "jsaGetPerfilDeProducto()");
 		$selPdto->addEvent("onchange", "jsaGetPerfilDeProducto()");
 	}
 	$xFRM->addHElem($selPdto->get("TR.producto de credito", true) );
+	//==================== End producto
+	
+	
+	
 	
 	
 	$selFreq	= $xSel->getListaDePeriocidadDePago("", $frecuencia);

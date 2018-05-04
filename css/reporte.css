@@ -68,6 +68,7 @@ fieldset {
 	border-top-style: double;
 	color: #000162;
 	text-align: right;
+	font-weight:bold;
 }
 .mny,td.mny,th.mny,.numc,.real,.int,.float {
 	color: #000162;

@@ -240,7 +240,7 @@ class cReciboDeOperacion{
 	 * @return integer
 	 */
 	function setNuevoRecibo($socio, $documento, $fecha, $parcialidad,
-						$Tipo = false, $cadena = "", $cheque_afectador = "NA",
+						$Tipo = false, $cadena = "", $cheque_afectador = "",
 						$TipoPago = "", $recibo_fiscal = "", $grupo = false,
 						$cuenta_bancaria = false, $moneda = "", $unidades = 0, $persona_asociada = false, $periodo = false){
 		$ql					= new MQL();
@@ -442,7 +442,7 @@ class cReciboDeOperacion{
 			} else {
 				$sucess	= true;
 				$idoperacion	= $xQL->getLastInsertID();
-				$xLog->add("OK\t$recibo\tSe agrego Exitosamente la Operacion($tipo_operacion) por $monto con Numero $idoperacion \r\n", $xLog->DEVELOPER);
+				$xLog->add("OK\t$recibo\t$fecha_operacion\tSe agrego Exitosamente la Operacion($tipo_operacion) por $monto con Numero $idoperacion \r\n", $xLog->DEVELOPER);
 			}
 			$exec		= null;
 		} else {
@@ -726,6 +726,9 @@ class cReciboDeOperacion{
 	function setRevertir($ForzarEliminar = false){
 		$xQL			= new MQL();
 		$xLog			= new cCoreLog();
+		$xRuls			= new cReglaDeNegocio();
+		$RestLetra		= $xRuls->getValorPorRegla( $xRuls->reglas()->RECIBOS_REST_LETRA );
+		
 		$ModCaptacionEn	= (MODULO_CAPTACION_ACTIVADO == true) ? true : false;
 		if($this->getTipoDeRecibo() == RECIBOS_TIPO_PLAN_DE_PAGO){
 			$xLog->add("WARN\tEliminar Plan de Pagos con Codigo " . $this->mCodigoDeRecibo ."\r\n");
@@ -753,17 +756,26 @@ class cReciboDeOperacion{
 					WHERE
 						(`operaciones_mvtos`.`recibo_afectado` =" . $this->mCodigoDeRecibo . ")";
 			$xLog->add("WARN\tReversion del Recibo " . $this->mCodigoDeRecibo . "] - Persona : " . $this->getCodigoDeSocio() . " - Documento: " . $this->getCodigoDeDocumento() . " \r\n");
-			$original		= "";
-			$rs 			= $xQL->getDataRecord($sqlM); 	//getRecordset($sqlM);
-			$items			= $xQL->getNumberOfRows();
-			$tocarplan		= false;						//Reconstruir Letra de Pago
-			$docto			= $this->getCodigoDeDocumento();
+			$original				= "";
+			$rs 					= $xQL->getDataRecord($sqlM); 	//getRecordset($sqlM);
+			$items					= $xQL->getNumberOfRows();
+			$tocarplan				= false;						//Reconstruir Letra de Pago
+			$docto					= $this->getCodigoDeDocumento();
 			$OPT_CALCULAR_INTERES	= false;
 			$PAGOS_SIN_CAPITAL		= false;// variable
+			
+			
 			//XXX: Revisar procesos de reversion
 			if( $this->init() == true){
-				$original	= json_encode($this->getDatosInArray());
-				$original	= "====[". base64_encode( $original ) . "]====";
+				$ClaveDeRecibo		= $this->getCodigoDeRecibo();
+				$ClaveDeAsociado	= $this->getPersonaAsociada();
+				$ClaveDePeriodo		= $this->getPeriodo();
+				$ClaveDeCredito		= $this->getCodigoDeDocumento();
+				$TotalRecibo		= $this->getTotal();
+				
+				$original			= json_encode($this->getDatosInArray());
+				$original			= "====[". base64_encode( $original ) . "]====";
+				
 				setArchivarRegistro($original, iDE_RECIBO);
 				$contar		= 0;
 				$DoctoTrabajo			= 0;
@@ -867,19 +879,18 @@ class cReciboDeOperacion{
 				}
 				//Elimnar Prepoliza
 				$xLog->add("WARN\tEliminando Prepolizas\r\n", $xLog->DEVELOPER);
-				$sqlDP 				= "DELETE FROM contable_polizas_proforma	WHERE numero_de_recibo = " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDP);
+				$sqlDP 				= "DELETE FROM contable_polizas_proforma	WHERE numero_de_recibo = $ClaveDeRecibo"; $xQL->setRawQuery($sqlDP);
 				//Eliminar Recibo
-				$xLog->add("WARN\tEliminando El Recibo" . $this->mCodigoDeRecibo ."\r\n", $xLog->DEVELOPER);
-				$sqlDR 				= "DELETE FROM operaciones_recibos WHERE idoperaciones_recibos =" . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($sqlDR);
+				$xLog->add("WARN\tEliminando El Recibo $ClaveDeRecibo\r\n", $xLog->DEVELOPER);
+				$sqlDR 				= "DELETE FROM operaciones_recibos WHERE idoperaciones_recibos =$ClaveDeRecibo"; $xQL->setRawQuery($sqlDR);
 				//Agregar Tesoreria y Bancos
-				$xLog->add("WARN\tEliminando Operaciones de Caja\r\n", $xLog->DEVELOPER);
-				$DelTesoreria		= "DELETE FROM `tesoreria_cajas_movimientos` WHERE `recibo`= " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($DelTesoreria);
-				$xLog->add("WARN\tEliminando Operaciones de Bancos\r\n", $xLog->DEVELOPER);
-				$DelBancos			= "DELETE FROM `bancos_operaciones` WHERE `recibo_relacionado` = " . $this->mCodigoDeRecibo . ""; $xQL->setRawQuery($DelBancos);
-				//Neutraliza Pagos en los envio de cobranza
-				$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `recibo`= 0, `estado`=1, `tiempocobro`=0 WHERE `recibo`=" . $this->mCodigoDeRecibo);
+				$xLog->add("WARN\tEliminando Operaciones de Caja del Recibo $ClaveDeRecibo\r\n", $xLog->DEVELOPER);
+				$DelTesoreria		= "DELETE FROM `tesoreria_cajas_movimientos` WHERE `recibo`= $ClaveDeRecibo"; $xQL->setRawQuery($DelTesoreria);
+				$xLog->add("WARN\tEliminando Operaciones de Bancos del Recibo $ClaveDeRecibo\r\n", $xLog->DEVELOPER);
+				$DelBancos			= "DELETE FROM `bancos_operaciones` WHERE `recibo_relacionado` = $ClaveDeRecibo"; $xQL->setRawQuery($DelBancos);
+
 				
-				if($this->mAplicadoA == "colocacion" OR $this->mAplicadoA == "mixto" AND $this->isPagable() == true){
+				if($this->mAplicadoA == $this->ORIGEN_COLOCACION OR $this->mAplicadoA == $this->ORIGEN_MIXTO AND $this->isPagable() == true){
 					if(!isset($Credito)){
 						$Credito	= new cCredito($docto);
 					}
@@ -887,9 +898,18 @@ class cReciboDeOperacion{
 						if($Credito->getEsAfectable() == true){
 							$Credito->setReestructurarIntereses(false, false, true);
 						}
+						if($RestLetra == true){
+							//if ( !isset($Credito) ){$Credito= new cCredito($docto, $socio); $Credito->init(); }; 
+							//if ( $Credito->getNumeroDePlanDePagos()>0){ $xPP = new cParcialidadDeCredito($Credito->getClaveDePersona(), $Credito->getClaveDeCredito(), $parcialidad); 
+							//$xPP->setClaveDePlan($Credito->getNumeroDePlanDePagos()); $xPP->setActualizarCapital($monto); 
+							//if ( $PAGOS_SIN_CAPITAL == true){ $xPP->setActualInteresPropCred($socio, $docto, $parcialidad, $monto, $Credito->getSaldoActual(), true);} }
+						}
 					}
+					//Neutraliza Pagos en los envio de cobranza
+					$xQL->setRawQuery("UPDATE `empresas_cobranza` SET `recibo`= 0, `estado`=1, `observaciones`='', `tiempocobro`=0 WHERE `recibo`=$ClaveDeRecibo");
+					
 				}
-			}
+			} //end recibo
 			
 			$xCE	= new cErrorCodes();
 			//setLog($this->mMessages .  json_encode($this->getDatosInArray()), $xCE->RECIBO_ELIMINADO);
@@ -1807,7 +1827,8 @@ class cReciboDeOperacion{
 				if($xCred->init() == true){
 					$xCred->setCuandoSeActualiza();
 					$this->mMessages	.= $xCred->getMessages();
-				}				
+				}
+				
 				break;
 			case TESORERIA_RECIBOS_ORIGEN_MIXTO:
 				//Actualizar Credito
@@ -1822,6 +1843,14 @@ class cReciboDeOperacion{
 					$this->mMessages	.= $xCapt->getMessages();
 				}
 				break;
+		}
+		if($this->getTipoDeRecibo() == RECIBOS_TIPO_PAGO_CREDITO){
+			$xVal		= new cReglasDeValidacion();
+			if($xVal->empresa( $this->getPersonaAsociada()) == true AND $this->getPeriodo() > 0){
+				$xCba	= new cEmpresasCobranzaDetalle();
+				$xCba->setCleanPeriodo($this->getCodigoDeDocumento(), $this->getPeriodo());
+				$this->mMessages	.= $xCba->getMessages();
+			}
 		}
 		//============= Reiniciar el Documento si existe el Anterior
 		if($this->mDoctoAnterior > FALLBACK_CLAVE_DE_DOCTO){
@@ -1864,6 +1893,21 @@ class cReciboDeOperacion{
 	}
 	//function getOCuentaCaptacion(){}
 	//function getOCredito(){}
+	function setEmpresaAsociada($empresa){
+		$xVal		= new cReglasDeValidacion();
+		$empresa	= setNoMenorQueCero($empresa);
+		
+		if($xVal->empresa($empresa) == true AND $xVal->recibo($this->mCodigoDeRecibo) == true ){
+			
+			$this->mClavePersonAsoc	= $empresa;
+			$xQL	= new MQL();
+			$res	= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `persona_asociada`=$empresa WHERE `idoperaciones_recibos`=" . $this->mCodigoDeRecibo);
+			if($res !== false){
+				$this->mMessages .= "EMPRESA\tSe Cambia la Empresa a $empresa\r\n";
+				$this->setCuandoSeActualiza();
+			}
+		}
+	}
 }
 
 class cMovimientoDeOperacion{

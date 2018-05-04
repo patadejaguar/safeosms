@@ -1733,6 +1733,9 @@ class cPersonasDocumentacion {
 	private $mIDPersona	= 0;
 	private $mTipo		= 0;
 	
+	public $TIPO_FOTO	= 710; //ID Tipo de documentacion
+	public $TIPO_FIRMA	= 510;// 520 Escaneada, es otro tipo de docto
+	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
 	function setIDCache($clave = 0){
@@ -1757,7 +1760,7 @@ class cPersonasDocumentacion {
 			$this->mClave		= $xT->clave_de_control()->v();
 			$this->mIDPersona	= $xT->clave_de_persona()->v();
 			$this->mTipo		= $xT->tipo_de_documento()->v();
-			
+			$this->mNombre		= $xT->archivo_de_documento()->v();
 			$this->setIDCache($this->mClave);
 			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
 			$this->mInit		= true;
@@ -1772,11 +1775,25 @@ class cPersonasDocumentacion {
 	function getClave(){return $this->mClave;}
 	function getClaveDePersona(){ return $this->mIDPersona; }
 	function getTipoDocto(){ return $this->mTipo; }
-	function setCuandoSeActualiza(){
-		$this->setCleanCache();
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function initByTipo($tipo, $persona = false){
+		$persona 	= setNoMenorQueCero($persona);
+		$tipo		= setNoMenorQueCero($tipo);
+		if($persona> DEFAULT_SOCIO){
+			$this->mIDPersona	= $persona;
+		}
+		$data	= false;
+		if($tipo > 0 AND $this->mIDPersona> DEFAULT_SOCIO){
+			$xQL	= new MQL();
+			$data	= $xQL->getDataRow("SELECT * FROM `personas_documentacion` WHERE `tipo_de_documento`=$tipo AND `clave_de_persona`=" . $this->mIDPersona . " AND `estatus`=1 ORDER BY `fecha_de_carga` DESC, `clave_de_control` DESC LIMIT 0,1");
+			
+		}
+		
+		
+		return $this->init($data);
 	}
 	function add(){}
-
+	
 }
 class cPersonasDocumentacionTipos {
 	private $mClave		= false;
@@ -1786,7 +1803,7 @@ class cPersonasDocumentacionTipos {
 	private $mMessages	= "";
 	private $mIDCache	= "";
 	private $mTable		= "";
-	public $TIPO_FISCAL	= 2;
+	public $TIPO_FISCAL		= 2;
 	public $TIPO_PARTICULAR	= 1;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
@@ -1800,11 +1817,13 @@ class cPersonasDocumentacionTipos {
 	function init($data = false){
 		$xCache	= new cCache();
 		$xT		= new cPersonas_documentacion_tipos();//Tabla
+		$inCache= true;
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
-				$xQL	= new MQL();
-				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
 			}
 		}
 		if(isset($data[$xT->getKey()])){
@@ -1812,9 +1831,10 @@ class cPersonasDocumentacionTipos {
 			$this->mObj			= $xT; //Cambiar
 			$this->mClave		= $xT->clave_de_control()->v();
 			$this->mNombre		= $xT->nombre_del_documento()->v();
-			
-			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			if($inCache == false){
+				$this->setIDCache($this->mClave);
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
 			$this->mInit		= true;
 			$xT 				= null;
 		}

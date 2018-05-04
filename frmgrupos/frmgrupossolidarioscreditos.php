@@ -31,7 +31,7 @@
 <?php
 jsbasic("myformgs", "1", ".");
 ?>
-<script   >
+<script>
 var jrsFile = "../clsfunctions.inc.php";
 
 //	var idgrupo = document.frmgposolidario.idgrupo.value;

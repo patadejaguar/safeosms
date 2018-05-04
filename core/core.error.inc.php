@@ -62,8 +62,12 @@ class cError {
 		$fecha	= ($fecha == false) ?  date("Y-m-d") : $fecha;
 		$hora 	= date("H:i:s");
 		$llen	= strlen($txt);
-		if($llen>4096){
-			$txt	= "";
+		$xlim	= 4096;
+		if(MODO_DEBUG ){
+			$xlim	= 6144;
+		}
+		if($llen>$xlim){
+			$txt	= substr($txt, 0, $xlim);
 		}
 		if($txt !== ""){
 			$sqlIE 	= "INSERT INTO general_log( fecha_log, hour_log, type_error, usr_log, text_log, ip_private, ip_proxy, ip_public, `idpersona`) 

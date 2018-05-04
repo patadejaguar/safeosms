@@ -414,7 +414,7 @@ function jsDel(id){
 	echo $txtReplace;
 	
 	//Menu
-	$mmnu	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ($menuid, $menuparent, '$idtit', '$idruta/$nombreFile2', '$idtit', 'fa-money', 'command', '$menuid', '$menuid', 'true') ";
+	$mmnu	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ($menuid, $menuparent, '$idtit', '$idruta/$nombreFile2', '$idtit', 'fa-list-alt', 'command', '$menuid', '$menuid', 'true') ";
 	
 	echo "\n\n\n\n/* ===========\t\tMenu\t\t============*/\n\r\n\r\n";
 	echo $mmnu;

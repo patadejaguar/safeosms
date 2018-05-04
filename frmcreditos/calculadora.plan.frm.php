@@ -39,6 +39,9 @@ $observaciones= parametro("idobservaciones");
 
 $tasa		= parametro("tasa", 0, MQL_FLOAT);
 $residual	= parametro("residual", true, MQL_BOOL);
+$opcioniva	= parametro("optiva", true, MQL_BOOL);
+
+$solonomina	= parametro("solonomina", false, MQL_BOOL);
 
 $xHP->init("jsInitComponents()");
 
@@ -55,8 +58,12 @@ $xTxt->setLabelSize("");
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setFieldsetClass("fieldform frmpanel");
 $xFRM->addDivSolo($nn, $xTxt->get("idconatencion", false, " "), "tx14", "tx34");
+if($solonomina == false){
+	$xFRM->addHElem($xSel->getListaDePeriocidadDePago("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
+} else {
+	$xFRM->addHElem($xSel->getListaDePeriocidadDePagoNomina("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
+}
 
-$xFRM->addHElem($xSel->getListaDePeriocidadDePago("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
 $xFRM->OMoneda("idmonto", 10000, "TR.MONTO CREDITO");
 $xFRM->OMoneda("idpagos", 24, "TR.NUMERO DE PAGOS");
 if($tasa>0){
@@ -69,12 +76,21 @@ if($residual == true){
 } else {
 	$xFRM->OHidden("idresidual", 0);
 }
-$xFRM->OCheck("TR.SIN IMPUESTO_AL_CONSUMO", "idsiniva");
+if($opcioniva == true){
+	$xFRM->OCheck("TR.SIN IMPUESTO_AL_CONSUMO", "idsiniva");
+} else {
+	$xFRM->OHidden("idsiniva", 0);
+}
+
 $xFRM->OCheck("TR.REDONDEO", "idconredondeo", true);
 $xFRM->OCheck("TR.SOLO INTERES", "idsolointeres");
 //$xFRM->addJsBasico();
 $xFRM->OButton("TR.CALCULAR", "jsCalcular()", $xFRM->ic()->EJECUTAR);
 $xFRM->OButton("TR.IMPRIMIR", "jsVerCotizacion()", $xFRM->ic()->IMPRIMIR, "idimprimir");
+
+if($tasa>0){
+	//$xFRM->addTag("Tasa : <strong>% $tasa</strong>", "notice");
+}
 
 //$xFRM->addAviso("Monto a Pagar", "idletra");
 $xFRM->addHElem($xHNotif->get("Cuota de Pago : $ 0.00", "idletra"));
@@ -89,7 +105,8 @@ function jsInitComponents(){
 	xG.desactiva("#idimprimir");
 }
 function jsCalcular(){
-	var idsiniva		= $('#idsiniva').prop('checked');
+	var idsiniva		= <?php echo ($opcioniva == true) ? "$('#idsiniva').prop('checked')" : "false" ?>;;
+	
 	var idconredondeo	= $('#idconredondeo').prop('checked');
 	var idmonto			= $("#idmonto").val();
 	var idpagos			= $("#idpagos").val();

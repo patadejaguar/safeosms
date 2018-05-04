@@ -34,46 +34,70 @@ if($idreporte > 0){
 }
 
 
-function jsaListarPermisos($usuario, $superior, $buscar){
+function jsaListarPermisos($usuario, $superior, $buscar, $tipo){
 	//$superior	= setNoMenorQueCero($superior);
 	$xPerm		= new cSystemPermissions();
 	$superior	= ($superior == SYS_TODAS) ? false : $superior;
 	$rs			= $xPerm->getPermitidos($usuario, $superior, $buscar);
 	$xTab		= new cHTabla();
+	$bloq		= true;
+	$nobloq		= true;
+	
+	if($tipo !== SYS_TODAS){
+		$tipo	= setNoMenorQueCero($tipo);
+		if($tipo == 1){
+			$bloq	= false;
+		} else {
+			$nobloq	= false;
+		}
+	}
 	
 	
 	$xTab->initRow();
 	$xTab->addTH("TR.CLAVE");
 	$xTab->addTH("TR.SUPERIOR");
-	$xTab->addTH("TR.NOMBRE");
+	$xTab->addTH("TR.DESCRIPCION");
+	$xTab->addTH("TR.TIPO");
 	$xTab->addTH("TR.PERMISO");
 	$xTab->endRow();
 
 	$xItem	= new cGeneral_menu();
 	$xChk	= new cHCheckBox();
-	foreach ($rs as $rw){
-		$xItem->setData($rw);		
-		$xTab->initRow();
-		$id		= $xItem->idgeneral_menu()->v();
-		$xTab->addTD($id," class='success' ");
-		$xTab->addTD($xItem->menu_parent()->v() . "-" . $xItem->menu_type()->v());
-		$xTab->addTD($xItem->menu_title()->v(), " class='success' ");
-		$xChk->addEvent("jsGuardarPermisos(this)", "onchange", true);
-		$xTab->addTD($xChk->get("", "id-$id", true));
-		$xTab->endRow();
+	if($nobloq == true){
+		foreach ($rs as $rw){
+			$xItem->setData($rw);		
+			$xTab->initRow();
+			$id		= $rw[$xItem->IDGENERAL_MENU];
+			$tit	= ($rw[$xItem->MENU_TITLE] == "") ? $rw[$xItem->MENU_FILE] : $rw[$xItem->MENU_TITLE];
+			$xTab->addTD($id," class='success' ");
+			$xTab->addTD($rw[$xItem->MENU_PARENT]);
+			$xTab->addTD($tit, " class='success' ");
+			$xTab->addTD($rw[$xItem->MENU_TYPE]);
+			$xChk->addEvent("jsGuardarPermisos(this)", "onchange", true);
+			$xTab->addTD($xChk->get("", "id-$id", true));
+			
+			$xTab->endRow();
+		}
 	}
 	$rs			= $xPerm->getNegados($usuario, $superior, $buscar);
-	foreach ($rs as $rw){
-		$xItem->setData($rw);
-		$xTab->initRow();
-		$id		= $xItem->idgeneral_menu()->v();
-		$xTab->addTD($id, " class='warning' ");
-		$xTab->addTD($xItem->menu_parent()->v());
-		$xTab->addTD($xItem->menu_title()->v(), " class='warning' ");
-		$xChk->addEvent("jsGuardarPermisos(this)", "onchange", true);
-		$xTab->addTD($xChk->get("", "id-$id", false));
-		$xTab->endRow();
-	}	
+	if($bloq == true){
+		foreach ($rs as $rw){
+			$xItem->setData($rw);
+			$xTab->initRow();
+			$id		= $rw[$xItem->IDGENERAL_MENU];
+			$tit	= ($rw[$xItem->MENU_TITLE] == "") ? $rw[$xItem->MENU_FILE] : $rw[$xItem->MENU_TITLE];
+			
+			$xTab->addTD($id, " class='warning' ");
+			
+			$xTab->addTD($rw[$xItem->MENU_PARENT]);
+			$xTab->addTD($tit, " class='warning' ");
+			$xTab->addTD($rw[$xItem->MENU_TYPE]);
+			
+			$xChk->addEvent("jsGuardarPermisos(this)", "onchange", true);
+			$xTab->addTD($xChk->get("", "id-$id", false));
+			$xTab->endRow();
+		}	
+	}
 	$rs	= null;
 	return $xTab->get();
 }
@@ -86,12 +110,19 @@ function jsaSetAplicarPerfiles($id){
 	$xFil->setWrite($xP->getMessages()); $xFil->setClose();
 	return $xFil->getLinkDownload("Cambios");
 }
-$jxc ->exportFunction('jsaListarPermisos', array('idniveldeusuario', 'idmenusuperior', 'idbuscar'), "#idmenu" );
+function jsaSetClonarPerfiles($idnivel, $idclonar){
+	$xP					= new cSystemPermissions();
+	$xP->setCrearNuevoNivel($idclonar, $idnivel);
+	return $xP->getMessages(OUT_HTML);
+}
+
+$jxc ->exportFunction('jsaListarPermisos', array('idniveldeusuario', 'idmenusuperior', 'idbuscar', 'idtipo'), "#idmenu" );
 
 //$jxc ->exportFunction('jsaSetAplicarPermisos', array('idclaveactual', 'idniveldeusuario'), "#idSalida" );
 $jxc ->exportFunction('jsaSetClearPermisos', array('idclaveactual'), "#idmsg" );
 $jxc ->exportFunction('jsaSetAplicarPerfiles', array('idclaveactual'), "#idmsg" );
 $jxc ->exportFunction('jsaSetLiberarPermisos', array('idclaveactual'), "#idmsg" );
+$jxc ->exportFunction('jsaSetClonarPerfiles', array('idniveldeusuario', 'idclonar'), "#idmsg" );
 
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 $jxc ->process();
@@ -120,7 +151,20 @@ $xFRM->addHElem($xSelUser->get(true));
 $xFRM->addHElem($xSelMenu->get(true));
 $xFRM->OText_13("idbuscar", $buscar, "TR.BUSCAR");
 
-$xFRM->addHTML("<div id='idmenu' class='tx1'></div>");
+$xHSel2	= new cHSelect();
+$xHSel2->addOptions(array(
+		SYS_TODAS => SYS_TODAS,
+		SYS_UNO	 => "PERMITIDOS",
+		SYS_CERO => "BLOQUEADOS"
+));
+$xHSel2->setDivClass("tx4 tx18 green");
+
+$xFRM->addHElem( $xHSel2->get("idtipo", "TR.TIPO", SYS_TODAS) );
+
+//$xFRM->ONumero("idclonar", 0, "TR.COPIAR");
+$xFRM->addHElem( $xSel->getListaDeNivelDeUsuario("idclonar")->get("TR.CLONAR DE", true) );
+
+$xFRM->addHElem("<div id='idmenu' class='tx1'></div>");
 
 
 $xFRM->addAviso("", "idmsg");
@@ -129,10 +173,16 @@ $xFRM->OButton("TR.Obtener Permisos", "jsaListarPermisos()", $xFRM->ic()->CARGAR
 $xFRM->OButton("TR.Limpiar Permisos", "jsaSetClearPermisos()", $xFRM->ic()->ELIMINAR);
 $xFRM->OButton("TR.Liberar Permisos", "jsaSetLiberarPermisos()", $xFRM->ic()->LIBERAR);
 $xFRM->OButton("TR.Aplicar Perfiles", "jsaSetAplicarPerfiles()", $xFRM->ic()->GRUPO);
+
+$xFRM->OButton("TR.Copiar Perfiles", "jsSetClonarPerfiles()", $xFRM->ic()->CONTROL);
+
 echo $xFRM->get();
 ?>
 <script>
 var xG	= new Gen();
+function jsSetClonarPerfiles(){
+	xG.confirmar({msg : "¿ Confirma copiar el perfil ?", callback: jsaSetClonarPerfiles});
+}
 function jsGuardarPermisos(obj){
 	var idP		= $("#idniveldeusuario").val();	
 	var isEna	= $('#'+obj.id).prop('checked');

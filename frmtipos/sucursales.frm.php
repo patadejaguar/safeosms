@@ -107,34 +107,23 @@ if($action == MQL_ADD){		//Agregar
 			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
 			$xTabla->numero_interior( $ODom->getNumeroInterior() );
 		}
+		if( $xTabla->caja_local_residente()->v()<= 0 ){
+			//Agregar nueva Caja Local
+			$xCL	= new cCajaLocal();
+			$numcl	= setNoMenorQueCero($xTabla->clave_numerica()->v());
+			$res	= $xCL->add($xTabla->nombre_sucursal()->v(), $numcl, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
+			if($res !== false){
+				$xTabla->caja_local_residente($xCL->getClave());
+			} else {
+				$xTabla->caja_local_residente(DEFAULT_CAJA_LOCAL);
+			}
+		}
+		
 		$xTabla->query()->insert()->save();
 		$xFRM->addAvisoRegistroOK();
 		$xFRM->addCerrar();
 	}
-	//Agregar nueva Caja Local
 	
-	
-	if(SISTEMA_CAJASLOCALES_ACTIVA == false){
-		$numcl	= $xTabla->clave_numerica()->v();
-		$xCL	= new cCajaLocal();
-		$xCL->add($xTabla->nombre_sucursal()->v(), $numcl, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
-		//Actualizar la Sucursal a donde debe ser Caja Local
-		$idcl	= $xCL->getClave();
-		$xQL->setRawQuery("UPDATE `general_sucursales` SET `caja_local_residente`=$idcl WHERE `codigo_sucursal`='$clave'");
-	} else {
-		//compara la sucursal de la caja local con la sucursal nueva
-		$xCL	= new cCajaLocal($xTabla->caja_local_residente()->v());
-		if($xCL->init() == true){
-			if($xCL->getSucursal() !== $clave){
-				$xCL	= new cCajaLocal();
-				$xCL->add($xTabla->nombre_sucursal()->v(), false, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
-				//Actualizar la Sucursal a donde debe ser Caja Local
-				$idcl	= $xCL->getClave();
-				$xQL->setRawQuery("UPDATE `general_sucursales` SET `caja_local_residente`=$idcl WHERE `codigo_sucursal`='$clave'");
-			}
-			
-		}
-	}
 } else if($action == MQL_MOD){		//Modificar
 	//iniciar
 	//$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
@@ -188,7 +177,11 @@ if($action == MQL_ADD){		//Agregar
 	$xFRM->OText("nombre_sucursal", $xTabla->nombre_sucursal()->v(), "TR.nombre de sucursal");
 	$xFRM->OMoneda("clave_numerica", $xTabla->clave_numerica()->v(), "TR.clave en numero");
 	//$xFRM->OMoneda("caja_local_residente", , "TR.caja_local", );
-	$xFRM->addHElem( $xSel->getListaDeCajasLocales("caja_local_residente", false, $xTabla->caja_local_residente()->v() )->get(true));
+	if(SISTEMA_CAJASLOCALES_ACTIVA == false AND $step !== MQL_MOD){
+		$xQL->getDataValue("caja_local_residente", DEFAULT_CAJA_LOCAL);
+	} else {
+		$xFRM->addHElem( $xSel->getListaDeCajasLocales("caja_local_residente", false, $xTabla->caja_local_residente()->v() )->get(true));
+	}
 	//$xFRM->addPersonaBasico("2", false, $xTabla->gerente_sucursal()->v(), "", "TR.gerente_de_sucursal");
 	//$xFRM->addPersonaBasico("3", false, $xTabla->titular_de_cumplimiento()->v(), "", "TR.Oficial_de_Cumplimiento");
 	$xFRM->addHElem( $xSel->getListaDeUsuarios("gerente_sucursal", $xTabla->gerente_sucursal()->v())->get("TR.GERENTE_DE_SUCURSAL", true)) ;
@@ -196,7 +189,12 @@ if($action == MQL_ADD){		//Agregar
 	
 	$xFRM->addHElem($xSel->getListaDeHoras("hora_de_inicio_de_operaciones", $xTabla->hora_de_inicio_de_operaciones()->v(), true)->get("TR.hora de inicio de operaciones", true) );
 	$xFRM->addHElem( $xSel->getListaDeHoras("hora_de_fin_de_operaciones", $xTabla->hora_de_fin_de_operaciones()->v(), true)->get("TR.hora cierre de operaciones", true));
-	$xFRM->addHElem($xSel->getListaDeCentroDeCostoCont("centro_de_costo", $xTabla->centro_de_costo()->v())->get(true));
+	
+	if(MODULO_CONTABILIDAD_ACTIVADO == false AND $step !== MQL_MOD){
+		$xFRM->OHidden("centro_de_costo", DEFAULT_CENTRO_DE_COSTO);
+	} else {
+		$xFRM->addHElem($xSel->getListaDeCentroDeCostoCont("centro_de_costo", $xTabla->centro_de_costo()->v())->get(true));
+	}
 	
 	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNueva()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
 	

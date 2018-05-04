@@ -146,7 +146,9 @@ function jsaGetLetrasVencidas($fecha, $producto){
 
 	//setLog($sql);
 	
-	$xT		= new cTabla($sql, 2);
+	$xT		= new cTabla($sql, 1);
+	$xT->setOmitidos("persona");
+	$xT->setUsarNullPorCero();
 	$xT->setEventKey("jsGoPanel");
 	$xT->setWithMetaData();
 	//$xT->setOmitidos("monto_ministrado");
@@ -154,6 +156,13 @@ function jsaGetLetrasVencidas($fecha, $producto){
 	
 	$xT->setTitulo("numero_con_atraso", "NUMERO");
 	$xT->setTitulo("fecha_de_atraso", "FECHA");
+	$xT->setTitulo("letra_original", "original");
+
+	$xT->setResumidos("seguimiento");
+	$xT->setResumidos("causamora");
+	$xT->setResumidos("nombre");
+	$xT->setFootSum(array( 5=> "monto_ministrado", 6 => "capital", 7=>"historial", 10=>"letra_original", 13 => "total" ));
+	//$xT->setResumidos("iva");
 	
 	$xT->OButton("TR.PAGO", "jsPagoCajaCompleto(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
 	
@@ -205,12 +214,18 @@ function jsaGetRecibosEmitidos($fecha){
 }
 
 
-function jsaActualizarIdioma($fecha){
-	$xSys	= new cSystemPatch();
-	$msgs	= $xSys->patch(true, false, true);
-	$xCache	= new cCache();
+function jsaActualizarIdioma($fecha, $version){
+	$version	= setNoMenorQueCero($version);
+	$xSys		= new cSystemPatch();
+	if($version>0){
+		$xSys->setForceVersion($version);
+	}
+	
+	$xSys->patch(true, false, true);
+	$xCache		= new cCache();
 	$xCache->clean();
-	return $msgs;
+	
+	return $xSys->getMessages(OUT_HTML);
 }
 
 function jsaActualizarIngresos(){
@@ -243,6 +258,70 @@ function jsaListaPeriodosDeEmpresaEmitidos($fecha){
 	
 	return $xTabla->Show();
 }
+
+function jsaSetToLocalHost($fecha, $version){
+	$xQL		= new MQL();
+	$xCache		= new cCache();
+	$version	= setNoMenorQueCero($version);
+	$xSys		= new cSystemPatch();
+	if($version>0){
+		$xSys->setForceVersion($version);
+	}
+	
+	// Get HTTP/HTTPS (the possible values for this vary from server to server)
+	$lurl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && !in_array(strtolower($_SERVER['HTTPS']),array('off','no'))) ? 'https' : 'http';
+	// Get domain portion
+	$lurl .= '://'.$_SERVER['HTTP_HOST'] . "/";
+	// Get path to script
+	//$myUrl .= $_SERVER['REQUEST_URI'];
+	
+	
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl/' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
+	$xQL->setRawQuery("UPDATE `sistema_programacion_de_avisos` SET `destinatarios` = 'CORREO:luis.balam@opencorebanking.com|'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '127.0.0.1' WHERE `nombre_del_parametro` = 'url_del_servidor_ftp'");
+	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = 'luis.balam@opencorebanking.com' WHERE `codigo` = '1901850'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'http://pruebas:pruebas@localhost:5984/' WHERE `nombre_del_parametro` = 'svc_url_couchdb'");
+	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`");
+	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`");
+	$xQL->setRawQuery("CALL `proc_creditos_letras_pendientes`");
+	$xQL->setRawQuery("CALL `proc_historial_de_pagos`");
+	$xQL->setRawQuery("CALL `proc_listado_de_ingresos`");
+	$xQL->setRawQuery("CALL `proc_perfil_egresos_por_persona`");
+	$xQL->setRawQuery("CALL `proc_personas_operaciones_recursivas`");
+	$xQL->setRawQuery("CALL `sp_clonar_actividades`");
+	$xQL->setRawQuery("CALL `proc_colonias_activas`");
+	$xQL->setRawQuery("CALL `sp_correcciones`");
+	//$xQL->setRawQuery("");
+	
+	
+	$xCache->clean(false);
+	
+
+	
+	$xSys->patch(true, false);
+	$xCache->clean();
+	
+	$xQL->setRawQuery("DELETE FROM general_log");
+	return $xSys->getMessages(OUT_HTML);
+}
+function jsaSetActualizarSys($version){
+	$version	= setNoMenorQueCero($version);
+	
+	$xQL		= new MQL();
+	$xCache		= new cCache();
+	$xSys		= new cSystemPatch();
+	
+	
+	$xSys		= new cSystemPatch();
+	if($version>0){
+		$xSys->setForceVersion($version);
+	}
+	$xSys->patch(true, false);
+	$xCache->clean();
+	return $xSys->getMessages(OUT_HTML);
+}
 $jxc ->exportFunction('jsaShowCalendarTasks', array('idDateValue'), "#tcalendar-task");
 
 $jxc ->exportFunction('jsaGetLetrasAVencer', array('idDateValue', 'idproducto'), "#tcalendar-task");
@@ -264,12 +343,15 @@ $jxc ->exportFunction('jsaGetIngresosDelMes', array('idDateValue'), "#tcalendar-
 $jxc ->exportFunction('jsaGetIngresosMensualesPorDependencias', array('idDateValue'), "#tcalendar-task");
 
 $jxc ->exportFunction('jsaRespaldarDB', array('idDateValue'), "#idavisos");
-$jxc ->exportFunction('jsaActualizarIdioma', array('idDateValue'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarIdioma', array('idDateValue', 'idclave'), "#idavisos");
 $jxc ->exportFunction('jsaActualizarIngresos', array('idDateValue'), "#idavisos");
 $jxc ->exportFunction('jsaListaPeriodosDeEmpresa', array('idDateValue'), "#tcalendar-task");
 $jxc ->exportFunction('jsaListaPeriodosDeEmpresaEmitidos', array('idDateValue'), "#tcalendar-task");
 
 $jxc ->exportFunction('jsaActualizarProyeccionMensual', array('idDateValue'), "#idavisos");
+$jxc ->exportFunction('jsaSetToLocalHost', array('idDateValue', 'idclave'), "#idavisos");
+
+$jxc ->exportFunction('jsaSetActualizarSys', array('idclave'), "#idavisos");
 
 //jsaRespaldarDB
 $jxc ->process();
@@ -452,18 +534,7 @@ $xFRM->addHElem($xChUser->getDiv());
 $xFRM->addJsInit($xChUser->getJs());
 
 $xFRM->setNoAcordion();
-if(MODO_DEBUG == true){
-	$srv	= $xHP->getServerName();
-	if(strpos($srv, "localhost") === false){
-		
-	} else {
-		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
-		
-	}
-	$xFRM->addToolbar($xBtn->getBasic("Obtener LOG", "jsaGetLog()", "grafico", "idglog", false) );
-	$xFRM->addToolbar($xBtn->getBasic("TR.Respaldo", "jsaRespaldarDB()", "ejecutar", "idrespdb", false) );
-	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR);
-}
+
 //$xF->dia() < 10 AND
 if( getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_CONTABLE){
 	$xFRM->OButton("TR.Actualizar Ingresos", "jsActualizarIngresos()", $xFRM->ic()->REPORTE4);
@@ -478,16 +549,28 @@ $xChart			= new cChart("idivchart");
 
 $xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO);
 
-$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "", "blue");
+$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
 
-$xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA);
-$xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO);
+$xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
+$xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO, "cmdpanelcred", "credito");
 $xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
 
 if(getUsuarioActual(SYS_USER_NIVEL)>USUARIO_TIPO_OFICIAL_CRED){
 	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
 }
+
 if(MODO_DEBUG == true){
+	$srv	= $xHP->getServerName();
+	if(strpos($srv, "localhost") === false AND strpos($srv, "test") === false){
+		
+	} else {
+		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
+		$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
+	}
+	$xFRM->addToolbar($xBtn->getBasic("Obtener LOG", "jsaGetLog()", "grafico", "idglog", false) );
+	$xFRM->addToolbar($xBtn->getBasic("TR.Respaldo", "jsaRespaldarDB()", "ejecutar", "idrespdb", false) );
+	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR);
+	$xFRM->OButton("TR.ACTUALIZAR EL SISTEMA", "jsSetActualizarSys()", $xFRM->ic()->EJECUTAR, "cmdusys", "yellow");
 	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php'});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
 }
 $idpersona	= $xUsr->getClaveDePersona();
@@ -506,16 +589,28 @@ $sysinfo		= "";
 
 if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	$xUL			= new cHUl(); $xUL2		= new cHUl();
-	$sysinfo		=  $xUL->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)->li("Sucursal: " . getSucursal())
-	->li("Version S.A.F.E.: " . SAFE_VERSION)->li("Revision S.A.F.E: " . SAFE_REVISION)->li("Path Temporal: " . PATH_TMP)
-	->li("Path Backups: " . PATH_BACKUPS)->li("Fecha del Sistema: " . date("Y-m-d H:i:s"))->li("Usuario Activo: " . $xUsr->getNombreCompleto() )->li("ID de Usuario: " . $xUsr->getID())
-	->li("Nivel de Usuario: " . $xUsr->getNivel())
-	->li("Clave API: " . $xUsr->getCTX())
+	$sysinfo		=  $xUL->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)
+	->li("Version S.A.F.E.: " . SAFE_VERSION)->li("Revision S.A.F.E: " . SAFE_REVISION)
+	
+	->li("Path Temporal: " . PATH_TMP)
+	->li("Path Backups: " . PATH_BACKUPS)->li("Fecha del Sistema: " . date("Y-m-d H:i:s"))
+
 	->li("SAFE DB version : " . SAFE_DB_VERSION)
+	->li("SAFE Host : " . SAFE_HOST_URL)
+	->li("SAFE Actualizaciones : " . URL_UPDATES)
 	->li("Clave de Oficial AML : " . getOficialAML())
 	->end();
 	
-	$sysinfo2		= $xUL2->li("Caja Local : " . $xLoc->getCajaLocal())
+	$sysinfo2		= $xUL2
+	->li("Usuario Activo: " . $xUsr->getNombreCompleto() )
+	->li("ID de Usuario: " . $xUsr->getID())
+	->li("Nivel de Usuario: " . $xUsr->getNivel())
+	->li("Clave API: " . $xUsr->getCTX())
+	
+	->li("Sucursal: " . getSucursal())
+	->li("Caja Local : " . $xLoc->getCajaLocal())
+
+	
 	->li("Localidad : " . $xLoc->DomicilioLocalidad())
 	->li("Clave Localidad : " . $xLoc->DomicilioLocalidadClave())
 	->li("Municipio : " . $xLoc->DomicilioMunicipio())
@@ -602,7 +697,13 @@ $(document).ready( function(){
 	window.localStorage.clear();
 });
 function jsEliminarLog(){
-	xG.confirmar({msg: "¿Esta seguro de eliminar el LOG?", callback : jsaEliminarLog});
+	xG.confirmar({msg: "¿ Confirma eliminar el LOG? ", callback : jsaEliminarLog});
+}
+function jsSetLocalhost(){
+	xG.confirmar({msg: "¿ Confirma Setear a Localhost ?", callback : jsaSetToLocalHost});
+}
+function jsSetActualizarSys(){
+	xG.confirmar({msg: "¿ Confirma Actualizar el Sistema ?", callback : jsaSetActualizarSys});
 }
 function jsGetPanelRecibo(id){	var xR	= new RecGen(); xR.panel(id); }
 function jsGetInformes(){

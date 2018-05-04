@@ -1,10 +1,10 @@
 <?php
-include_once ("core.config.inc.php");
-include_once ("entidad.datos.php");
-include_once ("core.error.inc.php");
-include_once ("core.common.inc.php");
-include_once ("core.db.inc.php");
-include_once ("core.db.dic.php");
+include_once("core.config.inc.php");
+include_once("entidad.datos.php");
+include_once("core.error.inc.php");
+include_once("core.common.inc.php");
+include_once("core.db.inc.php");
+include_once("core.db.dic.php");
 
 @include_once ("../libs/aes.php");
 @include_once ("../libs/Encoding.php");
@@ -162,7 +162,12 @@ function parametro($nombre, $fallback = null, $tipo = MQL_STRING, $fuente = fals
 				} else {
 					$xT			= new cTipos();
 					$arrRAW		= array("action" => true, "out" => true, "c" => true, "s" => "true", "ctipo_pago" => true, "i" => true, "callback" => true);
-					$valor		= (isset($arrRAW[$nombre])) ? $valor : strtoupper($xT->cChar($valor));
+					if(SAFE_CLEAN_LANG == true){
+						$valor		= (isset($arrRAW[$nombre])) ? $valor : strtoupper($xT->cChar($valor));
+					} else {
+						$valor		= (isset($arrRAW[$nombre])) ? $valor : $xT->cChar($valor);
+					}
+					
 				}
 			break;
 		}
@@ -285,7 +290,9 @@ class cTipos {
 		if ($value == false){ $value 	= $this->mPrimate;	}
 		//$value			= mb_convert_encoding ($value, mb_detect_encoding($value), "UTF-8");
 		$value			= strval($value);
-        $value          = $this->setNoAcentos($value);
+		if(SAFE_CLEAN_LANG == true){
+        	$value          = $this->setNoAcentos($value);
+		}
         $value			= ($tamano != false ) ? substr($value, 0, $tamano) : $value;
         if($this->mForceClean == true){ $value = $this->cleanString($value); }
         if($this->mForceMayus	== true){ $value		= strtoupper($value); }
@@ -354,7 +361,8 @@ class cTipos {
 		
 		$text	= preg_replace('~&([a-z]{1,2})(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);~i', '$1', $html);
 		$text	= htmlspecialchars_decode($text);
-		$text 	= html_entity_decode($text);//*/
+		$text 	= html_entity_decode($text);
+		
 		$text	= ($this->mForceMayus == true) ? strtoupper($text) : $text;
 		$text	= ($this->mForceClean == true) ? cleanString($text) : $text;
 		return $text;
@@ -1900,7 +1908,7 @@ class cSAFEData{
 		
 		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `apellidopaterno`, `apellidomaterno`, `rfc`, `curp`, `estatusactual`, `cajalocal`, `lugarnacimiento`,
 				`tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`, `dependientes_economicos`) VALUES
-				('99999', 'SUJETO DE', 'PRUEBAS', 'PARA REPORTAR', 'NNGL000000', 'NGL000000', '10', '1', 'YC,MERIDA', '200', '1', '1', 'SRNC6900601', 'matriz', 'IFE9999999', 'software@grupopadio.com.mx', '9811098164', '1')";
+				('99999', 'SUJETO DE', 'PRUEBAS', 'PARA REPORTAR', 'NNGL000000', 'NGL000000', '10', '1', 'YC,MERIDA', '200', '1', '1', 'SRNC6900601', 'matriz', 'IFE9999999', 'tasks@opencorebanking.com', '00000000', '1')";
 		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `rfc`, `curp`, `fechaentrevista`, `fechaalta`, `estatusactual`, `cajalocal`, `fechanacimiento`, `lugarnacimiento`,
 				`tipoingreso`, `genero`, `eacp`, `sucursal`, `fecha_de_revision`, `tipo_de_identificacion`, `correo_electronico`, `telefono_principal`,
 				`dependientes_economicos`, `titulo_personal`) VALUES ('99998', 'PERSONA DE EJEMPLO',
@@ -2036,8 +2044,9 @@ class cSAFEData{
 		$this->setOperacionDisEn(220, $enable);
 		$this->setOperacionDisEn(500, $enable);
 		$this->setOperacionDisEn(510, $enable);
+		$this->setOperacionDisEn(251, $enable);
+		
 	}
-	
 	private function setContratoDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "alta" : "baja";
 		$this->execQuery("UPDATE `general_contratos` SET `estatus`='$estatus' WHERE `idgeneral_contratos`=$id");
@@ -2045,6 +2054,54 @@ class cSAFEData{
 	private function setOperacionDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "1" : "0";
 		$this->execQuery("UPDATE `operaciones_tipos` SET `estatus` = '$estatus' WHERE `idoperaciones_tipos` = '$id'");
+	}
+	function setModGruposDisEn($enable = false){
+		//$this->setContratoDisEn(3002, $enable);
+		//$this->setContratoDisEn(10, $enable);
+		//$this->setOperacionDisEn(510, $enable);
+		$this->setOperacionDisEn(50, $enable);
+		$this->setOperacionDisEn(112, $enable);
+		$this->setOperacionDisEn(417, $enable);
+		
+	}
+	function setModAportacionesDisEn($enable = false){
+		//$this->setContratoDisEn(3002, $enable);
+		//$this->setContratoDisEn(10, $enable);
+		//$this->setOperacionDisEn(510, $enable);
+		$this->setOperacionDisEn(701, $enable);
+		$this->setOperacionDisEn(702, $enable);
+		$this->setOperacionDisEn(703, $enable);
+		$this->setOperacionDisEn(704, $enable);
+		$this->setOperacionDisEn(705, $enable);
+		$this->setOperacionDisEn(706, $enable);
+		$this->setOperacionDisEn(707, $enable);
+		$this->setOperacionDisEn(708, $enable);
+		$this->setOperacionDisEn(710, $enable);
+		$this->setOperacionDisEn(711, $enable);
+		$this->setOperacionDisEn(712, $enable);
+		$this->setOperacionDisEn(902, $enable);
+		
+	}
+	function setManejarGarantiasEnCaptacion($manejar = false){
+		if($manejar == false){
+			//Habilitar operaciones de garantia
+			$this->setOperacionDisEn(353, true);
+			$this->setOperacionDisEn(901, true);
+		} else {
+			//inhabilitar
+			$this->setOperacionDisEn(353, false);
+			$this->setOperacionDisEn(901, false);
+		}
+	} 
+	function setModTesoreriaDisEn($enable = false){
+		//$this->setContratoDisEn(3002, $enable);
+		//$this->setContratoDisEn(10, $enable);
+		//$this->setOperacionDisEn(510, $enable);
+		$this->setOperacionDisEn(9100, $enable);
+		$this->setOperacionDisEn(9101, $enable);
+		$this->setOperacionDisEn(9200, $enable);
+		$this->setOperacionDisEn(9201, $enable);
+		
 	}
 }
 function getUsuarioActual($parametro = false){
@@ -2553,169 +2610,84 @@ class cCantidad {
 
 
 function unidad($numero){
-	$numero = intval($numero);
-	$numu = "";
-	switch ($numero)
-	{
-		case 9:
-
-			$numu = "NUEVE";
-			break;
-
-		case 8:
-
-			$numu = "OCHO";
-			break;
-
-		case 7:
-
-			$numu = "SIETE";
-			break;
-
-		case 6:
-
-			$numu = "SEIS";
-			break;
-
-		case 5:
-
-			$numu = "CINCO";
-			break;
-
-		case 4:
-
-			$numu = "CUATRO";
-			break;
-
-		case 3:
-
-			$numu = "TRES";
-			break;
-
-		case 2:
-
-			$numu = "DOS";
-			break;
-
-		case 1:
-
-			$numu = "UN";
-			break;
-
-		case 0:
-
-			$numu = "";
-			break;
-
-	}
+	$numero 	= intval($numero);
+	$numu 		= "";
+	
+	$arrN["pt"]	= array("","um","dois","três","quatro","cinco","seis","sete","oito","nove");
+	$arrN["es"]	= array("","un","dos","tres","cuatro","cinco","seis","siete","ocho","nueve");
+	$arrN["en"] = array("","one", "two","three", "four", "five", "six", "seven", "eight", "nine");
+	
+	$nums		= $arrN[SAFE_LANG];
+	
+	$numu		= strtoupper($nums[$numero]);
 	return $numu;
 }
 
 function decena($numdero){
-
+	$arrN["pt"]	= array(10 => "dez",11 => "onze",12 => "dezessete",13 => "treze",14 => "quatorze",15 => "quinze",16 => "dezesseis",17 => "dezessete",18 => "dezoito",19 => "dezenove",
+			20 => "vinte",21 => "vinte e um",22 => "vinte e dois",23 => "vinte e três",24 => "vinte e quatro",25 => "vinte e cinco",26 => "vinte e seis",27 => "vinte e sete",28 => "vinte e oito",29 => "vinte e nove",
+			30 => "trinta",40 => "quarenta",50 => "cinquenta",60 => "sessenta",70 => "setenta",80 => "oitenta",90 => "noventa");
+	$arrN["es"]	= array(10 =>"diez",11 =>"once",12 => "doce",13 => "trece",14 => "catorce",15 => "quince",16 => "dieciseis",17 => "diecisiete",18 => "dieciocho",19 => "diecinueve",
+			20 => "veinte", 21 => "veintiuno",22 => "veintidos",23 => "veintitres", 24 =>"veinticuatro",25 => "veinticinco",26 =>"veintiseis",27 => "veintisiete",28 => "veintiocho",29 => "veintinueve",
+			30 => "treinta", 40 => "cuarenta", 50 => "cincuenta",60 => "sesenta", 70 => "setenta",80 => "ochenta",90 => "noventa");
+	$arrN["en"] = array(10 => "ten", 11 =>"eleven",12 => "twelve", 13 => "thirteen", 14 => "fourteen", 15 => "fifteen", 16 => "sixteen",17 =>"seventeen", 18 => "eighteen", 19 => "nineteen",
+			20 => "twenty", 21 => "twenty-one", 22 => "twenty-two",23 => "twenty-three",24 =>"twenty-four",25=>"twenty-five", 26 => "twenty-six", 27=> "twenty-seven",28 => "twenty-eight", 29=>"twenty-nine",
+			30 => "thirty",40=> "forty",50 => "fifty",60 =>"sixty",70=> "seventy",80 => "eighty", 90=>"ninety");
+	$nums		= $arrN[SAFE_LANG];
+	$arrY		= array( "en" => " & ", "pt" => " e ", "es" => " Y ");
+	$Y			= $arrY[SAFE_LANG];
+	
 	if ($numdero >= 90 && $numdero <= 99)
 	{
-		$numd = "NOVENTA ";
+		$numd = strtoupper($nums[90]);
 		if ($numdero > 90)
-			$numd = $numd."Y ".(unidad($numdero - 90));
+			$numd = $numd . $Y  .(unidad($numdero - 90));
 	}
 	elseif ($numdero >= 80 && $numdero <= 89)
 	{
-		$numd = "OCHENTA ";
+		$numd = strtoupper($nums[80]);
 		if ($numdero > 80)
-			$numd = $numd."Y ".(unidad($numdero - 80));
+			$numd = $numd. $Y .(unidad($numdero - 80));
 	}
 	elseif ($numdero >= 70 && $numdero <= 79)
 	{
-		$numd = "SETENTA ";
+		$numd = strtoupper($nums[70]);
 		if ($numdero > 70)
-			$numd = $numd."Y ".(unidad($numdero - 70));
+			$numd = $numd. $Y .(unidad($numdero - 70));
 	}
 	elseif ($numdero >= 60 && $numdero <= 69)
 	{
-		$numd = "SESENTA ";
+		$numd = strtoupper($nums[60]);
 		if ($numdero > 60)
-			$numd = $numd."Y ".(unidad($numdero - 60));
+			$numd = $numd. $Y .(unidad($numdero - 60));
 	}
 	elseif ($numdero >= 50 && $numdero <= 59)
 	{
-		$numd = "CINCUENTA ";
+		$numd = strtoupper($nums[50]);
 		if ($numdero > 50)
-			$numd = $numd."Y ".(unidad($numdero - 50));
+			$numd = $numd. $Y .(unidad($numdero - 50));
 	}
 	elseif ($numdero >= 40 && $numdero <= 49)
 	{
-		$numd = "CUARENTA ";
+		$numd = strtoupper($nums[40]);
 		if ($numdero > 40)
-			$numd = $numd."Y ".(unidad($numdero - 40));
+			$numd = $numd. $Y .(unidad($numdero - 40));
 	}
 	elseif ($numdero >= 30 && $numdero <= 39)
 	{
-		$numd = "TREINTA ";
+		$numd = strtoupper($nums[30]);
 		if ($numdero > 30)
-			$numd = $numd."Y ".(unidad($numdero - 30));
+			$numd = $numd. $Y .(unidad($numdero - 30));
 	}
 	elseif ($numdero >= 20 && $numdero <= 29)
 	{
-		if ($numdero == 20)
-			$numd = "VEINTE ";
-		else
-			$numd = "VEINTI".(unidad($numdero - 20));
+		$numd = strtoupper($nums[$numdero]);
+
 	}
 	elseif ($numdero >= 10 && $numdero <= 19)
 	{
-		switch ($numdero){
-			case 10:
-				{
-					$numd = "DIEZ ";
-					break;
-				}
-			case 11:
-				{
-					$numd = "ONCE ";
-					break;
-				}
-			case 12:
-				{
-					$numd = "DOCE ";
-					break;
-				}
-			case 13:
-				{
-					$numd = "TRECE ";
-					break;
-				}
-			case 14:
-				{
-					$numd = "CATORCE ";
-					break;
-				}
-			case 15:
-				{
-					$numd = "QUINCE ";
-					break;
-				}
-			case 16:
-				{
-					$numd = "DIECISEIS ";
-					break;
-				}
-			case 17:
-				{
-					$numd = "DIECISIETE ";
-					break;
-				}
-			case 18:
-				{
-					$numd = "DIECIOCHO ";
-					break;
-				}
-			case 19:
-				{
-					$numd = "DIECINUEVE ";
-					break;
-				}
-		}
+		$numd = strtoupper($nums[$numdero]);
+
 	}
 	else
 		$numd = unidad($numdero);
@@ -2725,60 +2697,71 @@ function decena($numdero){
 function centena($numc){
 	if ($numc >= 100)
 	{
+		$arrN["pt"]	= array(100 => "cem ",200 => "duzentos ",300 => "trezentos ",400 => "quatrocentos ",500 => "quinhentos ",600 => "seiscentos ",700 => "setecentos ",800 => "oitocentos ",900 => "novecentos ");
+		$arrN["es"]	= array(100 => "cien ",200 => "doscientos ",300 => "trescientos ",400 => "cuatrocientos ",500 => "quinientos ",600 => "seiscientos ",700 => "setecientos ",800 => "ochocientos ",900 => "novecientos ");
+		$arrN["en"] = array(100 =>"one hundred ",200 => "two hundred ",300 => "three hundred ",400 => "four hundred ",500 => "five hundred ",600 => "six hundred ",700 => "seven hundred ",800 => "eight hundred ",900 => "nine hundred ");
+		$nums		= $arrN[SAFE_LANG];
+		
 		if ($numc >= 900 && $numc <= 999)
 		{
-			$numce = "NOVECIENTOS ";
+			$numce = strtoupper($nums[900]);
 			if ($numc > 900)
 				$numce = $numce.(decena($numc - 900));
 		}
 		elseif ($numc >= 800 && $numc <= 899)
 		{
-			$numce = "OCHOCIENTOS ";
+			$numce = strtoupper($nums[800]);
 			if ($numc > 800)
 				$numce = $numce.(decena($numc - 800));
 		}
 		elseif ($numc >= 700 && $numc <= 799)
 		{
-			$numce = "SETECIENTOS ";
+			$numce = strtoupper($nums[700]);
 			if ($numc > 700)
 				$numce = $numce.(decena($numc - 700));
 		}
 		elseif ($numc >= 600 && $numc <= 699)
 		{
-			$numce = "SEISCIENTOS ";
+			$numce = strtoupper($nums[600]);
 			if ($numc > 600)
 				$numce = $numce.(decena($numc - 600));
 		}
 		elseif ($numc >= 500 && $numc <= 599)
 		{
-			$numce = "QUINIENTOS ";
+			$numce = strtoupper($nums[500]);
 			if ($numc > 500)
 				$numce = $numce.(decena($numc - 500));
 		}
 		elseif ($numc >= 400 && $numc <= 499)
 		{
-			$numce = "CUATROCIENTOS ";
+			$numce = strtoupper($nums[400]);
 			if ($numc > 400)
 				$numce = $numce.(decena($numc - 400));
 		}
 		elseif ($numc >= 300 && $numc <= 399)
 		{
-			$numce = "TRESCIENTOS ";
+			$numce = strtoupper($nums[300]);
 			if ($numc > 300)
 				$numce = $numce.(decena($numc - 300));
 		}
 		elseif ($numc >= 200 && $numc <= 299)
 		{
-			$numce = "DOSCIENTOS ";
+			$numce = strtoupper($nums[200]);
 			if ($numc > 200)
 				$numce = $numce.(decena($numc - 200));
 		}
 		elseif ($numc >= 100 && $numc <= 199)
 		{
-			if ($numc == 100)
-				$numce = "CIEN ";
-			else
-				$numce = "CIENTO ".(decena($numc - 100));
+			$numce = strtoupper($nums[100]);
+			if ($numc == 100){
+				
+			} else {
+				if(SAFE_LANG == "es"){
+					$numce = "CIENTO ".(decena($numc - 100));
+				} else {
+					$numce = $numce.(decena($numc - 100));
+				}
+			}
 		}
 	}
 	else
@@ -2788,11 +2771,17 @@ function centena($numc){
 }
 
 function miles($nummero){
+	$arrM		= array( "en" => "thousand", "pt" => "MIL", "es" => "MIL");
+	$mMil		= strtoupper($arrM[SAFE_LANG]);
+	
 	if ($nummero >= 1000 && $nummero < 2000){
-		$numm = "MIL ".(centena($nummero%1000));
+		$numm = "$mMil ".(centena($nummero%1000));
+		if(SAFE_LANG == "en"){
+			$numm = "ONE $mMil".(centena($nummero%1000));
+		}
 	}
 	if ($nummero >= 2000 && $nummero <10000){
-		$numm = unidad(floor($nummero/1000))." MIL ".(centena($nummero%1000));
+		$numm = unidad(floor($nummero/1000))." $mMil ".(centena($nummero%1000));
 	}
 	if ($nummero < 1000)
 		$numm = centena($nummero);
@@ -2801,13 +2790,18 @@ function miles($nummero){
 }
 
 function decmiles($numdmero){
+	$arrM		= array( "en" => "THOUSAND", "pt" => "MIL", "es" => "MIL");
+	$arr10K		= array( "en" => "TEN THOUSAND ", "pt" => "DEZ MIL ", "es" => "DIEZ MIL ");
+	$mMil		= $arrM[SAFE_LANG];
+	
+	
 	if ($numdmero == 10000)
-		$numde = "DIEZ MIL";
+		$numde 		= $arr10K[SAFE_LANG];
 	if ($numdmero > 10000 && $numdmero <20000){
-		$numde = decena(floor($numdmero/1000))."MIL ".(centena($numdmero%1000));
+		$numde = decena(floor($numdmero/1000))." $mMil ".(centena($numdmero%1000));
 	}
 	if ($numdmero >= 20000 && $numdmero <100000){
-		$numde = decena(floor($numdmero/1000))." MIL ".(miles($numdmero%1000));
+		$numde = decena(floor($numdmero/1000))."  $mMil ".(miles($numdmero%1000));
 	}
 	if ($numdmero < 10000)
 		$numde = miles($numdmero);
@@ -2816,10 +2810,15 @@ function decmiles($numdmero){
 }
 
 function cienmiles($numcmero){
+	$arrM			= array( "en" => "THOUSAND", "pt" => "MIL", "es" => "MIL");
+	$arr100K		= array( "en" => "HUNDRED THOUSAND ", "pt" => "CEN MIL ", "es" => "CIEN MIL ");
+	$mMil			= $arrM[SAFE_LANG];
+	
 	if ($numcmero == 100000)
-		$num_letracm = "CIEN MIL";
+		$num_letracm 	= $arr100K[SAFE_LANG];
+		
 	if ($numcmero >= 100000 && $numcmero <1000000){
-		$num_letracm = centena(floor($numcmero/1000))." MIL ".(centena($numcmero%1000));
+		$num_letracm = centena(floor($numcmero/1000))." $mMil ".(centena($numcmero%1000));
 	}
 	if ($numcmero < 100000)
 		$num_letracm = decmiles($numcmero);
@@ -2827,11 +2826,16 @@ function cienmiles($numcmero){
 }
 
 function millon($nummiero){
+	$arrM			= array( "en" => "MILLIONS", "pt" => "MILHÕES", "es" => "MILLLONES");
+	$arr10K10K		= array( "en" => "ONE MILLION ", "pt" => "UM MILHÕES ", "es" => "UN MILLON");
+	$mMil			= $arrM[SAFE_LANG];
+	
 	if ($nummiero >= 1000000 && $nummiero <2000000){
-		$num_letramm = "UN MILLON ".(cienmiles($nummiero%1000000));
+		$num_letramm = $arr10K10K[SAFE_LANG];
+		$num_letramm = "$num_letramm ".(cienmiles($nummiero%1000000));
 	}
 	if ($nummiero >= 2000000 && $nummiero <10000000){
-		$num_letramm = unidad(floor($nummiero/1000000))." MILLONES ".(cienmiles($nummiero%1000000));
+		$num_letramm = unidad(floor($nummiero/1000000))." $mMil ".(cienmiles($nummiero%1000000));
 	}
 	if ($nummiero < 1000000)
 		$num_letramm = cienmiles($nummiero);
@@ -2840,20 +2844,25 @@ function millon($nummiero){
 }
 
 function decmillon($numerodm){
+	$arrM			= array( "en" => "MILLIONS", "pt" => "MILHÕES", "es" => "MILLLONES");
+	$arr10K10K		= array( "en" => "TEN MILLION ", "pt" => "DEZ MILHÕES ", "es" => "DIEZ MILLONES");
+	$mMil			= $arrM[SAFE_LANG];
+	
 	if ($numerodm == 10000000)
-		$num_letradmm = "DIEZ MILLONES";
+		$num_letradmm	= $arr10K10K[SAFE_LANG];
+		//$num_letradmm 	= "DIEZ MILLONES";
 	if ($numerodm > 10000000 && $numerodm <20000000){
-		$num_letradmm = decena(floor($numerodm/1000000))."MILLONES ".(cienmiles($numerodm%1000000));
+		$num_letradmm = decena(floor($numerodm/1000000))." $mMil ".(cienmiles($numerodm%1000000));
 	}
 	if ($numerodm >= 20000000 && $numerodm <100000000){
-		$num_letradmm = decena(floor($numerodm/1000000))." MILLONES ".(millon($numerodm%1000000));
+		$num_letradmm = decena(floor($numerodm/1000000))." $mMil ".(millon($numerodm%1000000));
 	}
 	if ($numerodm < 10000000)
 		$num_letradmm = millon($numerodm);
 
 	return $num_letradmm;
 }
-
+/*TOD: Actualizar a varios idiomas*/
 function cienmillon($numcmeros){
 	if ($numcmeros == 100000000)
 		$num_letracms = "CIEN MILLONES";

@@ -86,7 +86,7 @@ $xTabla		= new cSocios_aeconomica_dependencias();
 $xTabla->setData( $xTabla->query()->initByID($empresa));
 $xEmp			= new cEmpresas($empresa); //$xEmp->init();
 
-$xFRM		= new cHForm("frmempresas", "empresas.frm.php?action=$action");
+$xFRM		= new cHForm("frmempresas", "empresas.new.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xTxt2		= new cHText(); 	$xTxt	= new cHText();
@@ -106,7 +106,9 @@ if($action == SYS_NINGUNO) {
 	$xFRM->setAction("empresas.new.frm.php?action=" . MQL_ADD . "&empresa=$empresa");
 	$xFRM->OHidden("empresa", $empresa);
 	
+	
 	$xFRM->addPersonaBasico("", false, $persona, "jsValidarEmpresa()");
+	
 	$xFRM->OText("nombrecorto", $alias, "TR.Nombre_corto");
 	$xFRM->setValidacion("nombrecorto", "validacion.novacio", "TR.EL NOMBRE_CORTO ES OBLIGATORIO", true);
 	
@@ -150,6 +152,8 @@ if($action == SYS_NINGUNO) {
 	$xFRM->OTasa("tasa", $tasapreferente, "TR.TASA POR_DEFECTO");
 	
 	$xFRM->addSubmit();
+	
+	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNuevaE1()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
 	$xFRM->addJsInit("jsInitComponents();");
 } else {
 
@@ -164,24 +168,25 @@ echo $xFRM->get();
 <script>
 var xG		= new Gen();
 var xPe		= new PersGen();
+var xP		= new PersGen();
 var xEmp	= new EmpGen();
 var xVal	= new ValidGen();
 var xNuevo	= <?php echo ($persona <= DEFAULT_SOCIO) ? "true" : "false"; ?>;
 var cnf		= false;
 
 
+window.onfocus 			= function(){ xG.onLoad(); };
+
 function jsInitComponents(){
 	if(xNuevo == false){
 		$("#idsocio").trigger("onblur"); $("#idsocio").focus();
 		//$("#dias_de_aviso1").tagsInput({			'autocomplete': { "opt" : "val", "opt2":"val2"}			});
 	}
-	
 }
 function jsEvtSel1(){
 	//$(".ct option[value='X']").remove(); remover opcion
 }
 function jsEvtSel2(){
-	
 }
 function jsValidarEmpresa(){
 	var idpersona	= $("#idsocio").val();
@@ -207,6 +212,27 @@ function jsNoConPersona(){
 	}
 	$("#nombrecorto").focus();
 }
+function jsAgregarPersonaNuevaE1(){
+	xG.confirmar({ msg:"¿ PERSONA_ES_FISICA ?", callback: jsAgregarPersonaNuevaF, cancelar: jsAgregarPersonaNuevaM});
+}
+function jsAgregarPersonaNuevaM(){
+	var tel			= "";
+	var mail		= $("#idmail1").val();
+	var nombres		= $("#nombrecorto").val();
+	xG.onLoad("jsSetIDPersona()");
+	xP.goToAgregarMorales({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.empresanomina,telefono:tel,email:mail, otros : "&sinsucursal=true"});
+}
+function jsAgregarPersonaNuevaF(){
+	var tel			= "";
+	var mail		= $("#idmail1").val();
+	var nombres		= $("#nombrecorto").val();
+	xG.onLoad("jsSetIDPersona()");
+	xP.goToAgregarFisicas({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.empresanomina,telefono:tel,email:mail, otros : "&sinsucursal=true"});
+}
+function jsSetIDPersona(){
+	xG.setGVals();
+}
+
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

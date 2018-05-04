@@ -52,8 +52,10 @@ if($clave <= 0){
 	$xFRM->addHTML("<div id='idlistado'></div>");
 	$xFRM->OHidden("clave", 0);
 	$xFRM->setAction("frmdevgarantiaresguardo.php?action=" . MQL_MOD);
+	$xFRM->addCerrar();
+	
 } else {
-	$xFRM->addAtras();
+	//$xFRM->addAtras();
 	$xGar	= new cCreditosGarantias($clave);
 	if($xGar->init() == true){
 		$xFRM->addHElem( $xGar->getFicha() );
@@ -66,6 +68,7 @@ if($clave <= 0){
 				$xFRM->addAvisoRegistroError();
 			}
 			$xFRM->addLog($xGar->getMessages());
+			$xFRM->addCerrar();
 		} else {
 			$xFRM->ODate("idfechaactual", $fecha, "TR.Fecha de resguardo");
 			$xFRM->addObservaciones();

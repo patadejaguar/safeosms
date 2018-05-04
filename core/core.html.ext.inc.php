@@ -45,6 +45,7 @@ class cHDicccionarioDeTablas {
 		if($persona>0){	$xT->setKey(1);}
 		$xT->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
 		$xT->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion(" . HP_REPLACE_ID . ")", $ic->ic()->OK);
+		$xT->OButton("TR.RECHAZADO", "var xC=new CredGen(); xC.getFormaRechazo(" . HP_REPLACE_ID . ")", $ic->ic()->PARAR);
 		$html			= $xT->Show($titulo);
 		$this->mItems	= $xT->getRowCount();
 		return $html;
@@ -530,6 +531,7 @@ class cPanelDeReportes {
 	function setConCajero($force = true){ $this->mForceCajeros = $force; }
 	function setConFechas($fechas = false){ $this->mConFecha = $fechas; }
 	function setConSucursal($force = false){$this->mForceSucursal = $force;}
+	function setConEmpresa($incluir = false){ $this->mConEmpresa = $incluir; }
 	function addFooterBar($html = ""){ $this->mFooterBar .= $html; }
 	function OFRM(){ return $this->mOFRM; }
 	function addControl($html = "", $id="", $jsVar="", $checkbox = false){
@@ -1700,7 +1702,68 @@ class cHPersona {
 			$html	= $xNot->getNoticon($this->mNumCtas,"", $xNot->ic()->AHORRO);
 		}
 		return $html;
-	}	
+	}
+	function getFotografia(){
+		$img		= "tmp/foto_" . $this->mClavePersona;
+		$fname		= PATH_HTDOCS . "/". $img;
+		$src		= "";
+		$st			= "max-width:400px; max-height:400px;";
+		if(file_exists("$fname.jpg")){
+			$src	= "<img src=\"../$img.jpg\" style=\"$st\" />";
+		} else if(file_exists("$fname.png")){
+			$src	= "<img src=\"../$img.png\" style=\"$st\" />";
+		} else {
+			$xPersDoc	= new cPersonasDocumentacion();
+			if($xPersDoc->initByTipo($xPersDoc->TIPO_FOTO, $this->mClavePersona) == true){
+				$ofile	= $xPersDoc->getNombre();
+				$xFS	= new cFileSystem();
+				$xDoc	= new cDocumentos();
+				$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
+				if($cnt){
+					$xDoc->getTipo($ofile);
+					$ext	= $xDoc->getExt();
+					
+					if(file_put_contents($fname . "." . $ext, $cnt)){
+						$src	= "<img src=\"../$fname.$ext\" style=\"$st\" />";
+					}
+				}
+				$cnt	= null;
+			}
+		}
+		
+		return $src;
+	}
+	function getFirma(){
+		$img		= "tmp/firma_" . $this->mClavePersona;
+		$fname		= PATH_HTDOCS . "/". $img;
+		$src		= "";
+		$st			= "max-width:400px; max-height:400px;";
+		if(file_exists("$fname.jpg")){
+			$src	= "<img src=\"../$img.jpg\" style=\"$st\" />";
+		} else if(file_exists("$fname.png")){
+			$src	= "<img src=\"../$img.png\" style=\"$st\" />";
+		} else {
+			$xPersDoc	= new cPersonasDocumentacion();
+			if($xPersDoc->initByTipo($xPersDoc->TIPO_FIRMA, $this->mClavePersona) == true){
+				$ofile	= $xPersDoc->getNombre();
+				$xFS	= new cFileSystem();
+				$xDoc	= new cDocumentos();
+				$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
+				if($cnt){
+					$xDoc->getTipo($ofile);
+					$ext	= $xDoc->getExt();
+					
+					if(file_put_contents($fname . "." . $ext, $cnt)){
+						$src	= "<img src=\"../$fname.$ext\" style=\"$st\" />";
+					}
+				}
+				$cnt	= null;
+			}
+		}
+		
+		return $src;
+	}
+	
 }
 
 class cHTabs{
@@ -1937,7 +2000,7 @@ class cHGrid {
 	function OColFunction($nombre, $titulo, $zsize, $funcion = ""){
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
 		$titulo	= $this->OLang()->getT($titulo);
-		$this->mCampos[$nombre] = array ("title" => $titulo, "width" => $zsize, "function" => "$funcion(data)");
+		$this->mCampos[$nombre] = array ("title" => $titulo, "sorting" => "false", "width" => $zsize, "function" => "$funcion(data)");
 	}
 	function setColSum($nombre){
 		if( isset($this->mCampos[$nombre]) ){
@@ -2101,10 +2164,10 @@ class cHMenu {
 	private $mDisGrupo			= array(2010, 2008, 2030, 2011);
 	private $mDisAML			= array(7000, 71000);
 	private $mDisCredPers		= array(3010);
-	private $mDisLeasing		= array(3040, 2064);
+	private $mDisLeasing		= array(3040, 2064, 1120);
 	private $mDisNomina			= array(2052, 1060, 18800);
 	private $mDisAports			= array(1040, 1008);
-	private $mDisTesofe			= array(9000);
+	private $mDisTesofe			= array(9000, 1010);
 	private $mDisables			= array();
 	private $mNumDis			= 0;
 

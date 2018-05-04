@@ -183,7 +183,8 @@ var Configuracion = {
 	personas : {
 		tipoingreso : {
 			otros : 900,
-			usuario : 800
+			usuario : 800,
+			empresanomina : 906
 		},
 		consanguinidad : {
 			conyuge : 3
@@ -191,6 +192,17 @@ var Configuracion = {
 		tiporelacion:{
 			conyuge : 3
 		}
+	},
+	session : {
+		reloadform : "v1.reload.this.form",
+		reloadfunc : "v1.reload.this.func"
+	},
+	moneda : {
+		simbolo : "<?php echo OPERACION_MONEDA_SIMBOLO; ?>",
+		iso : "<?php echo AML_CLAVE_MONEDA_LOCAL; ?>",
+		nombre : "<?php echo OPERACION_MONEDA_NOMBRE; ?>"
 	}
 }
+
+var CNF = Configuracion;
 

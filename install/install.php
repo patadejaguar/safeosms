@@ -36,6 +36,8 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 		if($rs == false){
 			$msg	.= "ERROR(". $cnn->error . ") \r\n";
 		} else {
+			
+			
 			$fileconfig		= "<?php\r\n";
 			$fileconfig		.= "\$V_0a744893951e0d1706ff74	= \"$usrmysql\";\r\n";
 			$fileconfig		.= "\$V_9003d1df22eb4d38200150	= \"$pwdmysql\";\r\n";
@@ -56,6 +58,7 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 			//$fileconfig		.= "//\$fecha_de_inicio_operaciones	= \"\$VFecha\";\r\n";
 			$fileconfig		.= "\r\n";
 			$fileconfig		.= "\r\n?>";
+			
 			if(file_put_contents($privateconfig, $fileconfig, FILE_TEXT | LOCK_EX) == false){
 				$msg	.= "ERROR AL GUARDAR EL ARCHIVO  \r\n";
 			} else {
@@ -210,7 +213,11 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
     <input class='first' placeholder='Usuario MySQL' type='text' name='idusuario'>
     <input class='last' placeholder='Contraseña MySQL' type='text' name='idpassword'>
   </div>
-  
+
+  <div class='name'>
+    <input class='last' placeholder='Contraseña ROOT MySQL' type='password' name='idroot'>
+  </div>
+    
 
   <div class='name'>
     <input class='first' placeholder='Servidor MySQL como 127.0.0.1' type='text' name='idservidor'>

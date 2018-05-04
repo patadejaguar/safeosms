@@ -23,7 +23,7 @@ $xODT		= new cHDicccionarioDeTablas();
 $xLog		= new cCoreLog();
 
 $UsarRedir	= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
-
+$UsarFotos	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_FOTOS);		//regla de negocio
 $jsTabs		= "";
 $idempresa	= 0;
 $oficial 	= elusuario($iduser);
@@ -180,9 +180,14 @@ function jsaAddDescuento($idpersona, $descuento){
 
 
 function jsaSetEnviarParaAsociada($idpersona){
-	$xSoc		= new cSocio($idpersona); $xSoc->init();
-	$xSoc->setMontoAhorroPreferente(0);
-	return $xSoc->getMessages();	
+	$xSoc		= new cSocio($idpersona);
+	if($xSoc->init() == true){
+		$xSoc->getExportarAsociada(TPERSONAS_GENERALES);
+		$xSoc->getExportarAsociada(TPERSONAS_DIRECCIONES);
+		$xSoc->getExportarAsociada(TPERSONAS_ACTIVIDAD_ECONOMICA);
+	}
+	
+	return $xSoc->getMessages(OUT_HTML);	
 }
 
 function jsaGetOperaciones($idpersona, $fecha){
@@ -290,12 +295,12 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	
 	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CAPT) == true OR getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){ 
 		//Agregar otra opciones
-		$xFRM->addToolbar( $xBtn->getBasic("TR.Actualizar Datos", "updateDat()", "editar", "edit-socio", false ) );
+		$xFRM->OButton("TR.Actualizar Datos", "updateDat()", $xFRM->ic()->EDITAR, "edit-socio", "editar");
 		if(PERSONAS_CONTROLAR_POR_EMPRESA == true AND MODULO_CAPTACION_ACTIVADO == true){
 			$xFRM->addToolbar( $xBtn->getBasic("TR.Agregar Descuento Solicitado", "jsAddDescuento()", "dinero", "edit-descuento", false ) );
 		}
 		if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
-			$xFRM->addToolbar( $xBtn->getBasic("TR.Enviar a Empresa Asociada", "jsaSetEnviarParaAsociada()", $xBtn->ic()->EXPORTAR , "edit-aasoc", false ) );
+			$xFRM->OButton("TR.EXPORTAR", "jsSetEnviarParaAsociada()", $xBtn->ic()->EXPORTAR , "edit-aasoc", "yellow");
 		}
 	}
 
@@ -326,24 +331,26 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xTblD->OButton("TR.VER", "var xP=new PersGen();xP.getDocumento({id:" . HP_REPLACE_ID . "})", $xTblD->ODicIcons()->VER, "idview");
 	$xHTabs->addTab("TR.DOCUMENTOS", $xTblD->Show()); //tabs
 	
-	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
-		$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
-		
-		$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
-		$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
-		$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
-
-		$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
-		
-		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
-
-		
-		$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
-		$jsTabs	.= ",\n selected: 6\n";
+	if(MODULO_AML_ACTIVADO == true){
+		if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
+			$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
+			
+			$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
+			$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
+			$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
+	
+			$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
+			
+			$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
+	
+			
+			$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
+			$jsTabs	.= ",\n selected: 6\n";
+		}
 	}
 	//========================== Datos de personas Morales.
 	if($xSoc->getEsPersonaFisica() == false){
-		$xFRM->OButton("TR.DATOS PERSONA_MORAL", "var xP=new PersGen();xP.goToDatosPM($idsocio, true)", $xFRM->ic()->EMPRESA, "cmddatospm", "blue2");
+		$xFRM->OButton("TR.DATOS PERSONA_MORAL", "var xP=new PersGen();xP.goToDatosPM($idsocio, true)", $xFRM->ic()->LEGAL, "cmddatospm", "blue2");
 	}
 	//Arbol de relaciones y perfil transaccional
 	if(MODULO_AML_ACTIVADO == true){
@@ -459,14 +466,14 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	
 	if((MODO_CORRECION == true OR MODO_MIGRACION == true OR MODO_DEBUG == true) OR (getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_GERENTE) ){
-		$xStats	= new cPersonasEstadisticas($idsocio);
+		$xStats			= new cPersonasEstadisticas($idsocio);
 		$xStats->initDatosDeCredito(true);
 		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR, "cmdbajapersona", "orange");
 		if($xStats->getTotalCompromisos()== 0){
 			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 		} else {
 			//$xFRM->addAviso(, "", true, "warning");
-			$xLog->add("WARN\tLa persona tiene " . $xStats->getTotalCompromisos() . " Contratos Activos, no se debe eliminar\r\n");
+			$xFRM->addTag("Compromisos #<strong>" . $xStats->getTotalCompromisos() . "</strong>.No Eliminar", "error");
 			if(MODO_DEBUG == true){
 				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
 			}
@@ -606,6 +613,31 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if($xSoc->getCreditosComprometidos()>0){
 		$mny	= getFMoney($xSoc->getCreditosComprometidos());
 		$xFRM->addTag("Creditos Avalados <strong>$ $mny</strong>", "warning");
+	}
+	$GFisicas	= $xSoc->getGarantiasFisicasDepositadas();
+	if($GFisicas>0){
+		$mny	= getFMoney($GFisicas);
+		$xFRM->addTag("Garantias Reales: <strong>$ $mny</strong>", "success");
+	}
+	$GMonto		= $xSoc->getGarantiasLiquidasDepositadas();
+	if($GMonto > 0){
+		$mny	= getFMoney($GMonto);
+		$xFRM->addTag("Garantia Liquida: <strong>$ $mny</strong>", "success");
+	}
+	//===================================== Agregar Fotos
+	if($UsarFotos == true){
+		$xTT	= new cHTabla("idimagenes", "listado");
+
+		$xFRM->OButton("TR.AGREGAR FOTOGRAFIA", "jsAddNewPhoto()", "fa-camera", "addnewphoto");
+		$xHPers	= new cHPersona($xSoc->getClaveDePersona());
+		$xTT->addTH("TR.FOTOGRAFIA");
+		$xTT->addTH("TR.FIRMA");
+		$xTT->initRow();
+		$xTT->addTD($xHPers->getFotografia(), " style='max-width:33%;with:300px' ");
+		$xTT->addTD($xHPers->getFirma(), " style='max-width:50%;width:300px;' ");
+		$xTT->endRow();
+		
+		$xFRM->addHElem( $xTT->get() );
 	}
 	//===================================== 
 	$xFRM->addHTML($xHTabs->get());
@@ -782,8 +814,13 @@ function jsRequiereDatosExtranjero(id){
 		msg : 'PERSONA_FALTA_DEXTRA'
 	});
 }
-
-
+function jsAddNewPhoto(){
+	var xrl		= "../frmsocios/personas_documentos.frm.php?tipo=710&persona=" + mSocio;
+	xG.w({ url: xrl, tiny : true }); 	
+}
+function jsSetEnviarParaAsociada(){
+	xG.confirmar({msg: "MSG_CONFIRMA_ENVIO", callback : jsaSetEnviarParaAsociada});
+}
 
 
 </script>

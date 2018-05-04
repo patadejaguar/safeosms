@@ -257,6 +257,7 @@ class cReglasDeNegocioLista {
 	public $PERSONAS_ACTIVIDAD_SIN_SCIAN		= "PERSONAS.ACTIVIDAD_ECONOMICA.SIN_SCIAN";
 	public $PERSONAS_AML_GWS_ACTIVO				= "PERSONAS.CONSULTA.GSW.DEFECTO";
 	public $PERSONAS_OPERAR_ALTO_R				= "PERSONAS.OPERAR.CON_ALTO_RIESGO";
+	public $PERSONAS_USAR_FOTOS					= "PERSONAS.PANEL_CON_FOTOS";
 	
 	public $CREDITOS_AUTORIZACION_SIN_TASA		= "CREDITOS.AUTORIZACION.SIN_TASA";
 	public $CREDITOS_AUTORIZACION_SIN_DISP		= "CREDITOS.AUTORIZACION.SIN_DISPERSION";
@@ -293,6 +294,7 @@ class cReglasDeNegocioLista {
 	
 	public $CREDITOS_NOM_EXT_SEMANA				= "CREDITOS.NOMINA.SEMANAS.EXTRA";
 	public $CREDITOS_NOM_EXT_QNA				= "CREDITOS.NOMINA.QUINCENA.EXTRA";
+	public $CREDITOS_NOM_FORCE_PAGO				= "CREDITOS.NOMINA.FORZAR.PAGO";
 	
 	public $CREDITOS_DESEMBOLSO_SIN_DESC		= "CREDITOS.DESEMBOLSO_SIN_DESCUENTOS";
 	public $CREDITOS_DESEMBOLSO_SIN_CHQ			= "CREDITOS.DESEMBOLSO_SIN_CHEQUE";
@@ -324,11 +326,13 @@ class cReglasDeNegocioLista {
 	public $RECIBOS_USE_TICKETS					= "RECIBOS.USAR_TICKETS";
 	public $RECIBOS_COBRO_BLOQ					= "RECIBOS.COBRO_BLOQUEADO";
 	public $RECIBOS_RPT_USE_FECHAREAL			= "RECIBOS.REPORTE.USAR.FECHA_REAL";
+	public $RECIBOS_APORTSOC_COMP				= "RECIBOS.APORT_SOC_COMP";
 	
 	public $RECIBOS_ELIM_USE_BACK				= "RECIBOS.AL.ELIMINAR.BACKUP_IMP";
 	public $RECIBOS_BLOQ_FECHA_FUT				= "RECIBOS.BLOQ_FECHA_FUTURA";
 	public $RECIBOS_BLOQ_FECHA_ANT				= "RECIBOS.BLOQ_FECHA_ANTERIOR";
-	
+	public $RECIBOS_REST_LETRA					= "RECIBOS.RESTAURAR_LETRA";
+	public $RECIBOS_COBRO_DEXTRA				= "RECIBOS.COBROS_DATO_EXTRA";
 	
 	public $AML_CIERRE_NV_RIESGO				= "AML.CIERRE.NO_VALIDAR_RIESGO";
 	public $AML_AUTOENVIAR_RMS					= "AML.RIESGO_AUTOENVIAR_RMS";
@@ -343,6 +347,7 @@ class cReglasDeNegocioLista {
 	
 	//public $CAPTACION_				= "CAPTACION";
 	public $REPORTES_USAR_EFED					= "REPORTES.USAR_ENTIDADESFED";
+	
 	
 	function getInArray(){
 		$arr	= array();
@@ -436,14 +441,15 @@ class cReglasDeNegocioLista {
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
 		$arr[$this->CREDITOS_PAGO_LETRAF]				= $this->CREDITOS_PAGO_LETRAF;
-		
+			
 		$arr[$this->PRECREDITOS_NUEVO_REG]				= $this->PRECREDITOS_NUEVO_REG;
 		$arr[$this->CREDITOS_NOM_EXT_QNA]				= $this->CREDITOS_NOM_EXT_QNA;
 		$arr[$this->CREDITOS_NOM_EXT_SEMANA]			= $this->CREDITOS_NOM_EXT_SEMANA;
 		$arr[$this->CREDITOS_USE_MORA_BD]				= $this->CREDITOS_USE_MORA_BD;
 		$arr[$this->CREDITOS_NOMINA_NOMORA]				= $this->CREDITOS_NOMINA_NOMORA;
+		$arr[$this->CREDITOS_NOM_FORCE_PAGO]			= $this->CREDITOS_NOM_FORCE_PAGO;
 		
-		//$arr[$this->]			= $this->;
+		
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -454,6 +460,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_COBRO_BLOQ]					= $this->RECIBOS_COBRO_BLOQ;
 		$arr[$this->RECIBOS_BLOQ_FECHA_ANT]				= $this->RECIBOS_BLOQ_FECHA_ANT;
 		$arr[$this->RECIBOS_BLOQ_FECHA_FUT]				= $this->RECIBOS_BLOQ_FECHA_FUT;
+		$arr[$this->RECIBOS_REST_LETRA]					= $this->RECIBOS_REST_LETRA;
+		$arr[$this->RECIBOS_APORTSOC_COMP]				= $this->RECIBOS_APORTSOC_COMP;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -468,7 +476,7 @@ class cReglasDeNegocioLista {
 		$arr[$this->VAL_NO_PERSONA_FALTA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALTA_ACT_ECONOM;
 		$arr[$this->VAL_NO_PERSONA_FALLA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALLA_ACT_ECONOM;
 		$arr[$this->PERSONAS_OPERAR_ALTO_R]				= $this->PERSONAS_OPERAR_ALTO_R;
-
+		$arr[$this->PERSONAS_USAR_FOTOS]				= $this->PERSONAS_USAR_FOTOS;
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->AML_AUTOENVIAR_RMS]					= $this->AML_AUTOENVIAR_RMS;
@@ -718,6 +726,11 @@ class cReglasDeCalificacion {
 	public $CRED_FALTA_GTIALIQ	= "CREDITO_FALTA_GTIALIQ";
 	public $CRED_FALLA_GTIALIQ	= "CREDITO_FALLA_GTIALIQ";
 	
+	public $CRED_FALTA_DREEST	= "CREDITO_FALTA_DREEST";
+	public $CRED_FALTA_DRENOV	= "CREDITO_FALTA_DRENOV";
+	
+	public $CRED_FALTA_EMPRESA	= "CREDITO_FALTA_EMPRESA";
+	
 	public $CRED_FALLA_PERSONA	= "CREDITO_FALLA_PERSONA";
 	
 	public $PERS_FALTA_GRUPO	= "PERSONA_FALTA_GRUPO";
@@ -754,13 +767,15 @@ class cReglasDeCalificacion {
 		$xQL	= new MQL();
 		$data	= (is_array($data)) ? $data : $xQL->getDataRow("SELECT * FROM `entidad_calificacion` WHERE `identidad_calificacion`=". $this->mClave);
 		if(isset($data["identidad_calificacion"])){
-			$this->mObj		= new cEntidad_calificacion(); //Cambiar
+			$xT					= new cEntidad_calificacion();
+			$this->mClave		= $data[$xT->IDENTIDAD_CALIFICACION]; //$data[$xT->];
+			$this->mTipo		= $data[$xT->TIPO_DE_OBJETO];
+			$this->mDocumento	= $data[$xT->CLAVE_DE_DOCUMENTO];
+			$this->mRegla		= $data[$xT->TOPICO];
+			$this->mCumple		= $data[$xT->CUMPLE];
+			
+			$this->mObj			= $xT;
 			$this->mObj->setData($data);
-			$this->mClave	= $this->mObj->identidad_calificacion()->v();
-			$this->mTipo	= $this->mObj->tipo_de_objeto()->v();
-			$this->mDocumento= $this->mObj->clave_de_documento()->v();
-			$this->mRegla	= $this->mObj->topico()->v();
-			$this->mCumple	= $this->mObj->cumple()->v();
 			
 			$this->mInit	= true;
 		}

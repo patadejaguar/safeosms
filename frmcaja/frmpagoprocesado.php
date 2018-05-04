@@ -25,8 +25,10 @@ $xHP				= new cHPage("Cobros de Credito");
 $xSQL				= new cSQLListas();
 $xT					= new cTipos();
 $xF					= new cFecha();
-$xQL					= new MQL();
+$xQL				= new MQL();
 $xLog				= new cCoreLog();
+
+$out				= parametro("out", SYS_DEFAULT); $out = strtolower($out);
 
 $params 			= $_GET["p"];
 $procesado			= (isset($_REQUEST["procesar"])) ? $_REQUEST["procesar"] : SYS_NORMAL;
@@ -61,6 +63,7 @@ $monto_a_operar				= $xT->cFloat( $DPar[4] );
 $operacion					= (isset($DPar[5])) ? $DPar[5] : OPERACION_PAGO_COMPLETO;
 $SRC						= $_POST;
 $abonar_al_final			= 0;
+$notas						= parametro("notas");			//Notas en proceso Automatico
 
 $xCred						= new cCredito($solicitud, $socio);
 $xCred->init();
@@ -76,7 +79,7 @@ if($procesado == SYS_AUTOMATICO){
 	
 	//6 = banco
 	//7 = fecha
-	$SRC["cobservaciones"]	= "($pempresa.$periocidad)L.$parcialidad:" . $xCred->getPagosAutorizados();
+	$SRC["cobservaciones"]	= "($pempresa.$periocidad)L.$parcialidad:" . $xCred->getPagosAutorizados(). ":" . $notas;
 	//cargar credito y datos de la parcialidad
 	$rs						= $xQL->getDataRecord($xSQL->getConceptosDePago($solicitud, $socio, $parcialidad));
 	//setLog($xSQL->getConceptosDePago($solicitud, $socio, $parcialidad));
@@ -228,6 +231,7 @@ if($procesado == SYS_AUTOMATICO OR $pempresa > 0){
 	if($xEmpPer->init() == true){
 		$xEmpPer->setCancelarOperacion($solicitud, $parcialidad, "[$recibo_pago]$icxObs [$fecha_operacion]", $recibo_pago);
 		$xLog->add("WARN\tEliminar Operacion $solicitud, $parcialidad, $recibo_pago]$icxObs [$fecha_operacion \r\n", $xLog->DEVELOPER);
+		$xNRec->setEmpresaAsociada($xEmpPer->getClaveDeEmpresa());
 	}
 }
 
@@ -777,12 +781,21 @@ function jsInitForm(){
 	$saldo	= setNoMenorQueCero($xCred->getSaldoActual());
 	$xNRec->setMontoHistorico($saldo);
 	
-	$xho	= new cHObject();
-	header("Content-type: text/xml");
-	//PRINT XML
-	
-	echo "<?xml version =\"1.0\" ?>\n<resultados>" . $xLog->getMessages() . "</resultados>";
-	
+	if($out === "json"){
+		header('Content-type: application/json');
+		$rs["message"]		= $xLog->getMessages(OUT_TXT);
+		$rs["recibo"]		= $recibo_pago;
+		$rs["error"]		= false;
+		if(strpos($xLog->getMessages(), "ERROR.CANCELADO") !== false){
+			$rs["error"]	= true;
+		}
+		echo json_encode($rs);
+	} else {
+		//$xho	= new cHObject();
+		header("Content-type: text/xml");
+		//PRINT XML
+		echo "<?xml version =\"1.0\" ?>\n<resultados>" . $xLog->getMessages() . "</resultados>";
+	}
 }
 //=========================== Amortizar Rentas
 

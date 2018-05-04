@@ -746,11 +746,14 @@ class cSystemPermissions{
 	private $mInit				= false;
 	private $mPermisos			= array();
 	public $IDCACHE_PUEDEN		= "sistema_permisos-tabla";
-	public $DEF_PERMISOS		= "";
+	public $DEF_PERMISOS		= DEFAULT_PERMISOS;
+	public $DIV_PERMISOS		= ",";
+	private $mParentID			= 0;
+	private $mTabla				= "general_menu";
 	
 	function __construct($id = false){
 		$this->mID				= setNoMenorQueCero($id);
-		$this->DEF_PERMISOS		= DEFAULT_PERMISOS;
+		//$this->DEF_PERMISOS		= DEFAULT_PERMISOS;
 	/*
 	 1000	Caja
 	 2000	Personas
@@ -771,6 +774,7 @@ class cSystemPermissions{
 		$msg	= "";
 		$iReg 	= 0;
 		$cT		= new cTipos();
+		$xQL	= new MQL();
 
 		if ($gestor) {
 			while (!feof($gestor)) {
@@ -786,7 +790,7 @@ class cSystemPermissions{
 							$perms			= html_entity_decode($datos[1]);
 							$sql			= "UPDATE general_menul SET menu_rules = \"$perms\" WHERE idgeneral_menu = $indice ";
 							$msg			.= "Cargando el Indice $indice con Permisos ($perms)\r\n";
-							my_query($sql);
+							$xQL->setRawQuery($sql);
 						}
 					}
 				$iReg++;
@@ -813,23 +817,26 @@ class cSystemPermissions{
 		return $mFile;		
 	}
 	function getMessages($put =OUT_TXT){ $xH		= new cHObject(); return $xH->Out($this->mMessages, $put); }
-	function init(){
-		if($this->getOMenu($this->mID) !== null){
-			$this->mInit		= true;
-			$txt	= $this->getOMenu()->menu_rules()->v();
-			$txt	= str_replace($this->mRO, "", $txt);
-			$txt	= str_replace($this->mRW, "", $txt);
-			$this->mPermisos	= explode(",", $this->getOMenu()->menu_rules()->v());
-			//sort($this->mPermisos, SORT_NATURAL);
-			natsort($this->mPermisos);
-			$pm		= array();
-			foreach ($this->mPermisos as $idx => $cnt){
-				$cnt			= setNoMenorQueCero($cnt);
-				if($cnt > 0){ $pm[$cnt.$this->mRW]		= $cnt.$this->mRW; }
+	function init($data = false){
+		$xT				= new cGeneral_menu();
+		$xCache			= new cCache();
+		$inCache		= true;
+		$idx			= $this->mTabla . "-" . $this->mID;
+		if(!is_array($data)){
+			$data		= $xCache->get($idx);
+			if(!is_array($data)){
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow("SELECT * FROM `general_menu` WHERE `idgeneral_menu`=" . $this->mID . " LIMIT 0,1");
+				$inCache = false;
 			}
-			$this->mPermisos	= $pm;
-			$pm					= null;
-			
+		}
+		if(isset($data[$xT->IDGENERAL_MENU])){
+			$this->mInit		= true;
+			$this->mParentID	= $data[$xT->MENU_PARENT];
+			$this->mPermisos	= $this->setDecompilePermisos($data[$xT->MENU_RULES]);
+			if($inCache == false){
+				$xCache->set($idx, $data);
+			}
 		}
 		return $this->mInit;
 	}
@@ -844,26 +851,55 @@ class cSystemPermissions{
 		return $this->mObj;
 	}
 	private function getCompilePermisos(){ 
-		$txt	= "";
-		foreach ($this->mPermisos as $id => $val){
-			if(setNoMenorQueCero($val)>0){
-				$txt	.= ($txt == "") ? $id : ",$id";
+		$txt		= "";
+		$arrPerms	= array();
+		
+		foreach ($this->mPermisos as $id2 => $val2){
+			$idx	= setNoMenorQueCero($val2);
+			//setLog($idx);
+			$arrPerms[$idx]	= $idx;
+		}
+		//setLog($arrPerms);
+		asort($arrPerms);
+		foreach ($arrPerms as $id => $val){
+			$val	= setNoMenorQueCero($val);
+			if($val > 0){
+				$np		= $val . $this->mRW;
+				$txt	.= ($txt == "") ? $np : $this->DIV_PERMISOS . $np;
 			}
 		}
-		
+		//setLog($txt);
+		$this->setDecompilePermisos($txt);
 		return $txt;
+	}
+	private function setDecompilePermisos($str){
+		$arr		= explode($this->DIV_PERMISOS, $str);
+		$pm			= array();
+		
+		foreach ($arr as $id => $val){
+			$cnt	= setNoMenorQueCero($val);
+			if($cnt > 0){
+				$pm[$cnt.$this->mRW]		= $cnt.$this->mRW;
+			}
+		}
+		$arr		= $pm;
+		$pm			= null;
+		asort($arr);
+		return $arr;
 	}
 	function setAgregarPermiso($niveldeusuario, $id = false){
 		$niveldeusuario	= setNoMenorQueCero($niveldeusuario);
 		$id			= setNoMenorQueCero($id);
-		$id			= ($id <=0) ? $this->mID : $id;
+		$id			= ($id <= 0) ? $this->mID : $id;
+		
 		$this->mID	= $id;
 		if($this->mInit == false){ $this->init(); }
 
-		unset($this->mPermisos[$niveldeusuario.$this->mRO]);
-		unset($this->mPermisos[$niveldeusuario.$this->mRW]);		
+		unset($this->mPermisos[$niveldeusuario.$this->mRO]); //old
+		unset($this->mPermisos[$niveldeusuario.$this->mRW]); //old
 		
 		$this->mPermisos[$niveldeusuario . $this->mRW] 	= $niveldeusuario . $this->mRW;
+		//setLog($this->mPermisos);
 		$permisos				= $this->getCompilePermisos();
 		
 		//setLog(print_r($this->mPermisos, true));
@@ -883,29 +919,41 @@ class cSystemPermissions{
 		return $this->setPermisos($permisos, $id);
 	}	
 	function setPermisos($permisos, $id = false){
-		$msg	= "";
-		$id		= setNoMenorQueCero($id);
-		$id		= ($id <=0) ? $this->mID : $id;
+		$xQL		= new MQL();
+		$msg		= "";
+		$id			= setNoMenorQueCero($id);
+		$id			= ($id <=0) ? $this->mID : $id;
 		$this->mID	= $id;
+		if($this->mInit == false){ $this->init(); }
 		
-		$xQL	= new MQL();
-		$gl		= $this->mGlobalM;
-		//actualizar padres y parent
-		$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $gl) AND (menu_parent=$id OR `idgeneral_menu` = $id )";
-		$ics	= $xQL->setRawQuery($sql);
-		//setLog($sql);
-		$msg	.= "OK\tAplicacion Recursiva de $id " . $xQL->getNumberOfRows() . "\r\n";
-		
-		$sql2	= "SELECT * FROM general_menu WHERE menu_parent=$id";
-		$rs		= $xQL->getDataRecord($sql2);
+		if($this->mParentID == $this->mGlobalM){
+			$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE `idgeneral_menu` = $id ";
+			$ics	= $xQL->setRawQuery($sql);
+			if($ics === false){
 				
-		$xMen	= new cGeneral_menu();
-		foreach ($rs as $row){
-			$xMen->setData($row);
-			$ide	= $xMen->idgeneral_menu()->v();
-			$sqlP 	= "UPDATE general_menu SET menu_rules='$permisos' WHERE menu_parent=$ide OR `idgeneral_menu` = $ide ";
-			$idcs 	= $xQL->setRawQuery($sqlP);
-			$msg	.= "OK\tSubmenu $ide padre $id " . $idcs["rows"] . "\r\n";
+			} else {
+				$msg	.= "OK\tActualizacion de permisos para $id\r\n";
+			}
+		} else {
+			$gl		= $this->mGlobalM;
+			//actualizar padres y parent
+			$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $gl) AND (menu_parent=$id OR `idgeneral_menu` = $id )";
+			//setLog("UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $gl) AND (menu_parent=$id OR `idgeneral_menu` = $id )");
+			$ics	= $xQL->setRawQuery($sql);
+			//setLog($sql);
+			$msg	.= "OK\tAplicacion Recursiva de $id " . $xQL->getNumberOfRows() . "\r\n";
+			
+			$sql2	= "SELECT * FROM general_menu WHERE menu_parent=$id";
+			$rs		= $xQL->getDataRecord($sql2);
+					
+			$xMen	= new cGeneral_menu();
+			foreach ($rs as $row){
+				$xMen->setData($row);
+				$ide	= $xMen->idgeneral_menu()->v();
+				$sqlP 	= "UPDATE general_menu SET menu_rules='$permisos' WHERE menu_parent=$ide OR `idgeneral_menu` = $ide ";
+				$idcs 	= $xQL->setRawQuery($sqlP);
+				$msg	.= "OK\tSubmenu $ide padre $id " . $idcs["rows"] . "\r\n";
+			}
 		}
 		$this->mMessages	.= $msg;
 		//setLog($msg);
@@ -960,6 +1008,17 @@ class cSystemPermissions{
 		
 		return $perms;
 	}
+	function setCrearNuevoNivel($nuevo, $heredarDe = 0){
+		$nuevo	= setNoMenorQueCero($nuevo);
+		$hg		= setNoMenorQueCero($heredarDe);
+		
+		
+		$rs		= $this->getPermitidos($nuevo);
+		foreach ($rs as $rw){
+			$this->init($rw);
+			$this->setAgregarPermiso($nuevo);
+		}
+	}
 	function getPermitidos($nivel, $superior = false, $buscar = ""){
 
 		$xQL	= new MQL();
@@ -968,7 +1027,7 @@ class cSystemPermissions{
 		
 		$rs		= $xQL->getDataRecord("SELECT * FROM `general_menu` 
 				WHERE FIND_IN_SET('$nivel@rw',`menu_rules`) >0 $wS $wF
-				ORDER BY `general_menu`.`menu_type` DESC, `menu_parent`, `general_menu`.`menu_title` ");
+				ORDER BY `general_menu`.`menu_type` DESC, `menu_parent`,`menu_order`, `general_menu`.`menu_title` ");
 		return $rs;
 	}
 	function getNegados($nivel, $superior = false, $buscar = ""){
@@ -991,7 +1050,8 @@ class cSystemPermissions{
 		//"personas.svc.php" => true,
 		$PSVC		= array("personas.actividades.economicas.php" => true,
 				"listanegra.svc.php" => true, "equivalente.moneda.svc.php" => true,
-				"cantidad_en_letras.php" => true, "peps.svc.php" => true, "cotizador.plan.svc.php" => true, "pc.svc.php" => true
+				"cantidad_en_letras.php" => true, "peps.svc.php" => true, "cotizador.plan.svc.php" => true, "pc.svc.php" => true, 
+				"importar.svc.php" => true, "exportar.svc.php" => true
 		);			//servicios publicos
 		return $PSVC;
 	}
@@ -1072,6 +1132,9 @@ class cSystemPermissions{
 			$xQL	= null;
 		}
 		return $arr;
+	}
+	function setCuandoSeActualiza(){
+		
 	}
 }
 

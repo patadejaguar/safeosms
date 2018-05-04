@@ -1,5 +1,6 @@
 <?php
 include_once("core.config.inc.php");
+
 include_once("entidad.datos.php");
 
 @include_once ("../libs/medoo.min.php");
@@ -245,14 +246,15 @@ class cSQLListas {
 						return $sql;
 	}
 	function getListadoDeSocios($where = "", $limit = "0,50", $extras=""){
-	$where	= ($where == "") ? "" : " WHERE $where ";
-	$Ofecha	= ($where == "") ? " fechaalta DESC, " : "";
-	$sql	= "SELECT
+		$where	= ($where == "") ? "" : " WHERE $where ";
+		$Ofecha	= ($where == "") ? " fechaalta DESC, " : "";
+		$sql	= "SELECT
 					`socios_general`.`codigo`          AS `codigo`,
 					`socios_general`.`apellidopaterno` AS `apellido_paterno`,
 					`socios_general`.`apellidomaterno` AS `apellido_materno`,
 					`socios_general`.`nombrecompleto`  AS `nombres`,
 					`socios_general`.`curp`
+					
 					$extras
 					FROM
 					`socios_general` `socios_general`
@@ -263,8 +265,31 @@ class cSQLListas {
 					`socios_general`.`apellidomaterno`,
 					`socios_general`.`nombrecompleto`
 					LIMIT $limit";
-	
-					return $sql;
+		//setLog($sql);
+		return $sql;
+	}
+	function getListadoDePersonasV2($where = "", $limit = "0,50", $extras=""){
+		//$where	= ($where == "") ? "" : " WHERE $where ";
+		$Ofecha	= ($where == "") ? " fechaalta DESC, " : "";
+		$sql	= "SELECT
+		`socios_general`.`codigo`          AS `codigo`,
+		IF(`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_MORAL . ", `socios_general`.`nombrecompleto` ,
+		TRIM(CONCAT(`socios_general`.`apellidopaterno`,' ',`socios_general`.`apellidomaterno`,' ',`socios_general`.`nombrecompleto`)))
+		AS `nombre`,
+		IF(`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_MORAL . ", `socios_general`.`rfc`, `socios_general`.`curp`) AS `curp`
+		
+		$extras
+		FROM `socios_general` INNER JOIN `socios_figura_juridica`  ON `socios_general`.`personalidad_juridica` = `socios_figura_juridica`.`idsocios_figura_juridica`
+		WHERE `socios_general`.`codigo` > 0 
+		$where
+		ORDER BY
+		$Ofecha
+		`socios_general`.`apellidopaterno`,
+		`socios_general`.`apellidomaterno`,
+		`socios_general`.`nombrecompleto`
+		LIMIT $limit";
+		//setLog($sql);
+		return $sql;
 	}
 	function getListadoDeBusquedaSocios($Nombre = "",$PrimerAp = "", $SegundoAp = "",  $CURP = "", $RFC = "", $OmitirID = 0, $limit = "0,50"){
 		$PrimerAp 	= substr(setCadenaVal($PrimerAp),0,5);
@@ -468,7 +493,7 @@ class cSQLListas {
 		$socio		= setNoMenorQueCero($socio);
 		$credito	= setNoMenorQueCero($credito);
 		$tipo		= setNoMenorQueCero($tipo);
-		$archivado		= setNoMenorQueCero($archivado);
+		$archivado	= setNoMenorQueCero($archivado);
 		
 		$BySocio	= ($socio > DEFAULT_SOCIO) ? " AND (`socios_memo`.`numero_socio` =$socio) " : "";
 		$ByCredito	= ($credito > DEFAULT_CREDITO) ? " AND `socios_memo`.`numero_solicitud` = $credito " : "";
@@ -1301,7 +1326,7 @@ class cSQLListas {
 					`socios`.`nombre`,	`letras`.`docto_afectado`,	`letras`.`periodo_socio` ";
 		return $sql;
 	}
-	function getListadoDeLetrasVista($persona = false, $credito = false, $periodo = false){
+	function getListadoDeLetrasVista($persona = false, $credito = false, $periodo = false, $fecha_final = false, $otros = ""){
 		$ByPersona		= $this->OFiltro()->OperacionesPorPersona($persona);
 		$ByCredito		= $this->OFiltro()->OperacionesPorDocumento($credito);
 		$ByPeriodo		= $this->OFiltro()->OperacionesPorPeriodo($periodo);
@@ -1309,6 +1334,14 @@ class cSQLListas {
 		if($periodo === null){
 			$ByPeriodo	= "";
 			$GByPeriodo	= "";
+		}
+		$ByFecha		= "";
+		$markFecha		= "getFechaDeCorte()";
+		if($fecha_final !== false){
+			$xF			= new cFecha();
+			$fecha_final= $xF->getFechaISO($fecha_final);
+			$markFecha	= "'$fecha_final'";
+			$ByFecha	= " AND (`operaciones_mvtos`.`fecha_afectacion` <= $markFecha) ";
 		}
 		$sql	= "SELECT
 				  `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` AS `codigo_de_base`,
@@ -1331,33 +1364,33 @@ class cSQLListas {
 				MAX(IF((`operaciones_mvtos`.`tipo_operacion` < 410 OR `operaciones_mvtos`.`tipo_operacion` > 413),`operaciones_mvtos`.`tipo_operacion`,0)) AS `clave_otros`,
 				
 
-SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()) ,`operaciones_mvtos`.`afectacion_real`,0)) AS `capital_exigible`,
-SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 411 AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),`operaciones_mvtos`.`afectacion_real`,0)) AS `interes_exigible`,
-SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 413  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),`operaciones_mvtos`.`afectacion_real`,0)) AS `iva_exigible`,
-SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 412  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),`operaciones_mvtos`.`afectacion_real`,0)) AS `ahorro_exigible`,
-SUM(IF(((`operaciones_mvtos`.`tipo_operacion` < 410 OR `operaciones_mvtos`.`tipo_operacion` > 413)  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()) , `operaciones_mvtos`.`afectacion_real`,0)) AS `otros_exigible`,
+SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha) ,`operaciones_mvtos`.`afectacion_real`,0)) AS `capital_exigible`,
+SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 411 AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),`operaciones_mvtos`.`afectacion_real`,0)) AS `interes_exigible`,
+SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 413  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),`operaciones_mvtos`.`afectacion_real`,0)) AS `iva_exigible`,
+SUM(IF((`operaciones_mvtos`.`tipo_operacion` = 412  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),`operaciones_mvtos`.`afectacion_real`,0)) AS `ahorro_exigible`,
+SUM(IF(((`operaciones_mvtos`.`tipo_operacion` < 410 OR `operaciones_mvtos`.`tipo_operacion` > 413)  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha) , `operaciones_mvtos`.`afectacion_real`,0)) AS `otros_exigible`,
 
 ROUND(SUM(
-IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),
-((`operaciones_mvtos`.`afectacion_real` * DATEDIFF(getFechaDeCorte(), `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),
+((`operaciones_mvtos`.`afectacion_real` * DATEDIFF($markFecha, `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
 , 0 )),2) AS `interes_moratorio`,
 
 
 ROUND(SUM(
-IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),
-((`operaciones_mvtos`.`afectacion_real` * DATEDIFF(getFechaDeCorte(), `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),
+((`operaciones_mvtos`.`afectacion_real` * DATEDIFF($markFecha, `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
 , 0 )),2) AS `mora`,
 
 ROUND(
 (SUM(
-IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),
-((`operaciones_mvtos`.`afectacion_real` * DATEDIFF(getFechaDeCorte(), `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),
+((`operaciones_mvtos`.`afectacion_real` * DATEDIFF($markFecha, `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_moratorio`) ) / getDivisorDeInteres())
 , 0 ))*getTasaIVAGeneral()),2) AS `iva_moratorio`,
 
 
 SUM(
-IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < getFechaDeCorte()),
-(DATEDIFF(getFechaDeCorte(), `operaciones_mvtos`.`fecha_afectacion`))
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $markFecha),
+(DATEDIFF($markFecha, `operaciones_mvtos`.`fecha_afectacion`))
 , 0 )) AS `dias`
 
 				
@@ -1375,12 +1408,12 @@ IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_a
 				AND `operaciones_mvtos`.`tipo_operacion` != 420
 				AND `operaciones_mvtos`.`tipo_operacion` != 431
 				AND `operaciones_mvtos`.`tipo_operacion` != 146 /*gastos de cobranza*/ 
-				$ByPersona $ByCredito $ByPeriodo 
+				$ByPersona $ByCredito $ByPeriodo $ByFecha
 				GROUP BY `operaciones_mvtos`.`docto_afectado` $GByPeriodo
 				ORDER BY
 				`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
-				`operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio`";
-		
+				`operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio` ";
+		//setLog($sql);
 		return $sql;
 	}
 	
@@ -1400,7 +1433,7 @@ IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_a
 		$ByProducto	= $this->OFiltro()->CreditosPorProducto($Producto);
 		$ByPeriocidad= $this->OFiltro()->CreditosPorFrecuencia($Periocidad);
 		//AND `letras`.`fecha_de_pago` <= getFechaDeCorte()
-		$wAhorro	= (MODULO_CAPTACION_ACTIVADO == true) ? " `letras`.`ahorro`, " : "";
+		$wAhorro	= (CREDITO_USAR_AHORRO == true) ? " `letras`.`ahorro`, " : "";
 		//Filtrar por saldo
 		//+ `creditos_solicitud`.`tasa_interes`
 		$patch_001	= " AND (`letras`.`fecha_de_pago` != `creditos_solicitud`.`fecha_ministracion`) ";
@@ -1452,7 +1485,7 @@ FROM
 		$ByPeriocidad	= $this->OFiltro()->CreditosPorFrecuencia($Periocidad);
 		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut();
 		//$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`creditos_letras_del_dia`.`ahorro`)        AS `ahorro`, " : "";
-		$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
+		$wAhorro		= (CREDITO_USAR_AHORRO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
 		
 		$sql		= "SELECT
 	`letras`.`persona`,
@@ -1496,8 +1529,10 @@ FROM
 		$ByPeriocidad
 		$ByProducto $BySucAut
 		$otros
-		GROUP BY
-			`letras`.`credito`	
+		GROUP BY `letras`.`credito`
+
+HAVING total > " . TOLERANCIA_SALDOS . "
+	
 		ORDER BY MIN(`letras`.`fecha_de_pago`)	
 		";
 		
@@ -1513,7 +1548,7 @@ FROM
 		$ByPeriocidad	= $this->OFiltro()->CreditosPorFrecuencia($Periocidad);
 		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut();
 		//$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`creditos_letras_del_dia`.`ahorro`)        AS `ahorro`, " : "";
-		$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
+		$wAhorro		= (CREDITO_USAR_AHORRO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
 		
 		$sql		= "SELECT
 		`letras`.`persona`,
@@ -1554,8 +1589,10 @@ INNER JOIN `creditos_causa_de_vencimientos`  ON `creditos_causa_de_vencimientos`
 		$ByPeriocidad
 		$ByProducto $BySucAut
 		$otros
-		GROUP BY
-		`letras`.`credito`
+		GROUP BY `letras`.`credito`
+
+HAVING total > " . TOLERANCIA_SALDOS . "
+
 		ORDER BY MIN(`letras`.`fecha_de_pago`)
 		";
 		
@@ -2120,14 +2157,14 @@ INNER JOIN `creditos_causa_de_vencimientos`  ON `creditos_causa_de_vencimientos`
 		$SActivos	= ($ConActivos == false) ? "": ", getNominaMontoAct(`empresas_operaciones`.`idempresas_operaciones`) AS `saldo_activo`";
 		$ByTipo		= ($tipo === false) ? "": " AND (`tipo_de_operacion` = $tipo ) ";
 		$sql	= "SELECT
-			`empresas_operaciones`.`idempresas_operaciones` AS 'codigo',
+			MAX(IF(`empresas_operaciones`.`tipo_de_operacion`= -1,0,`empresas_operaciones`.`idempresas_operaciones`)) AS 'codigo',
 			$DEmpresa
 			`empresas_operaciones`.`periodo_marcado`                 AS `periodo`,
 			`creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `nombre_periocidad`,
-			SUM(`empresas_operaciones`.`monto` * `empresas_operaciones`.`tipo_de_operacion`)                      AS `saldo`,
-			MIN( IF( ISNULL(`fecha_inicial`), `fecha_de_operacion`, `fecha_inicial`))              AS `fecha_inicial`,
-			MAX( IF( ISNULL(`fecha_final`), `fecha_de_operacion`, `fecha_final`) )                AS `fecha_final`,
-			MAX(IF( ISNULL(`fecha_de_cobro`), `fecha_de_operacion`,`fecha_de_cobro`) )             AS `fecha_de_cobro`,
+			SUM(IF(`empresas_operaciones`.`tipo_de_operacion`= -1,0,getNominaMontoAct(`empresas_operaciones`.`idempresas_operaciones`) ))       AS `saldo`,
+			MIN(IF( ISNULL(`fecha_inicial`), `fecha_de_operacion`, `fecha_inicial`))              	AS `fecha_inicial`,
+			MAX(IF( ISNULL(`fecha_final`), `fecha_de_operacion`, `fecha_final`) )                	AS `fecha_final`,
+			MAX(IF( ISNULL(`fecha_de_cobro`), `fecha_de_operacion`,`fecha_de_cobro`) )             	AS `fecha_de_cobro`,
 			 `empresas_operaciones`.`periocidad`
 			$SActivos
 			FROM     `empresas_operaciones` 
@@ -2200,12 +2237,14 @@ INNER JOIN `creditos_causa_de_vencimientos`  ON `creditos_causa_de_vencimientos`
 	function getListadoDeCobranza($periodo, $estado = SYS_TODAS, $CamposExt = ""){
 		$ByEstado	= ($estado == SYS_TODAS) ? "": " AND `empresas_cobranza`.`estado` = $estado ";
 		$periodo	= setNoMenorQueCero($periodo);
+		
 		$sql	= "SELECT
 		creditos_solicitud.numero_socio AS 'persona',
 		CONCAT(
 		socios_general.nombrecompleto, ' ',
 		socios_general.apellidopaterno, ' ',
-		socios_general.apellidomaterno,	(CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN ' [?]' ELSE '' END )
+		socios_general.apellidomaterno,	(CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN 
+		CONCAT('[?] -', getAliasEmpresa(socios_general.dependencia)) ELSE '' END )
 		) AS 'nombre',
 		
 		creditos_solicitud.numero_solicitud AS 'credito',
@@ -2216,7 +2255,7 @@ INNER JOIN `creditos_causa_de_vencimientos`  ON `creditos_causa_de_vencimientos`
 		`empresas_cobranza`.`saldo_inicial`,
 		`empresas_cobranza`.`monto_enviado` AS `monto`,
 		(`empresas_cobranza`.`saldo_inicial` - `empresas_cobranza`.`monto_enviado`) AS 'saldo_final',
-		(CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN CONCAT('Posible diferencia con clave de Empleador.', `empresas_cobranza`.`observaciones`) ELSE `empresas_cobranza`.`observaciones` END ) AS `observaciones`
+		(CASE WHEN (socios_general.dependencia != creditos_solicitud.persona_asociada) THEN CONCAT('', `empresas_cobranza`.`observaciones`) ELSE `empresas_cobranza`.`observaciones` END ) AS `observaciones`
 		$CamposExt
 		FROM
 		`creditos_solicitud` `creditos_solicitud`
@@ -2344,7 +2383,7 @@ ORDER BY
 	`general_log`.`hour_log`,
 	`general_log`.`type_error`
 			
-		LIMIT 0,100
+		LIMIT 0,1000
 		";
 		return $setSql;	
 	}
@@ -2496,7 +2535,7 @@ ORDER BY
 		`socios_grupossolidarios`.`clave_de_persona`               AS `persona` 
 	FROM
 		`socios_grupossolidarios` `socios_grupossolidarios`
-		WHERE `socios_grupossolidarios`.`idsocios_grupossolidarios` > 0
+		WHERE `socios_grupossolidarios`.`idsocios_grupossolidarios` != " . FALLBACK_CLAVE_DE_GRUPO . "
 				$ByGrupo $WhereOther ";
 		
 		return $sql;
@@ -2519,7 +2558,7 @@ ORDER BY
 		`creditos_sdpm_historico` `creditos_sdpm_historico`
 		WHERE
 		(`creditos_sdpm_historico`.`numero_de_credito` =$credito) ORDER BY
-		`creditos_sdpm_historico`.`fecha_actual` ";
+		`creditos_sdpm_historico`.`fecha_actual` " . $this->mOrderASC . " ";
 		return $sql;
 	}
 	function getListadoDeSDPMCaptacion($cuenta){
@@ -3998,7 +4037,7 @@ class cSQLVistas  {
 		$sql	= $this->getVistaLetras($credito, false, false, false, " AND `operaciones_mvtos`.`periodo_socio` >0 ", " total_sin_otros>0 ");
 		return $sql;
 	}
-	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $otros="", $having=""){
+	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $otros="", $having="", $where = ""){
 		$credito	= setNoMenorQueCero($credito);
 		$periodo	= setNoMenorQueCero($periodo);
 		$having		= ($having == "") ? "" : " HAVING $having ";
@@ -4059,7 +4098,7 @@ class cSQLVistas  {
 		FROM `operaciones_mvtos` `operaciones_mvtos` INNER JOIN `creditos_solicitud` `creditos_solicitud` ON `operaciones_mvtos`.`docto_afectado` = `creditos_solicitud`.`numero_solicitud` INNER JOIN `eacp_config_bases_de_integracion_miembros` `eacp_config_bases_de_integracion_miembros` ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro`
 		WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2601)
 		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146 $ByCredito $ByPeriodo $otros
-		
+		$where
 		GROUP BY `operaciones_mvtos`.`docto_afectado`,`operaciones_mvtos`.`periodo_socio`
 		$having
 		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio`";
@@ -4470,74 +4509,6 @@ class cSQLTabla {
 	function obj(){
 		$mObj	= null;
 		switch($this->mTabla){
-			
-			case TPERSONAS_RELACIONES:
-				$mObj	= new cSocios_relaciones();
-				break;
-			case TBANCOS_CUENTAS:
-				$mObj	= new cBancos_cuentas();
-				break;
-			case TOPERACIONES_RECIBOS:
-				$mObj	= new cOperaciones_recibos();
-				break;
-			case TOPERACIONES_MVTOS:
-				$mObj	= new cOperaciones_mvtos();
-				break;
-			case TBANCOS_OPERACIONES:
-				$mObj	= new cBancos_operaciones();
-				break;
-			case TBANCOS_CUENTAS:
-				$mObj	= new cBancos_cuentas();
-				break;
-			case TCREDITOS_REGISTRO:
-				$mObj	= new cCreditos_solicitud();
-				break;
-			case TCREDITOS_DESTINO_DETALLE:
-				$mObj	= new cCreditos_destino_detallado();
-				break;
-			case "creditos_garantias":
-				$mObj	= new cCreditos_garantias();
-				$this->mCampoDesc = $mObj->descripcion()->get();
-				break;
-			case "creditos_productos_promo":
-				$mObj	= new cCreditos_productos_promo();
-				//$this->mCampoDesc = $mObj->condiciones()->get();
-				break;
-			case "creditos_productos_req":
-				$mObj	= new cCreditos_productos_req();
-				$this->mCampoDesc = $mObj->descripcion()->v();
-				break;
-			case "creditos_causa_de_vencimientos":
-				$mObj	= new cCreditos_causa_de_vencimientos();
-				$this->mCampoDesc = $mObj->DESCRIPCION_DE_LA_CAUSA;
-			break;
-			/* Tesoreria */
-			case TTESORERIA_MVTOS:
-				$mObj	= new cTesoreria_cajas_movimientos();
-				break;
-			case "tesoreria_monedas":
-				$mObj	= new cTesoreria_monedas();
-				$this->mCampoDesc = $mObj->nombre_de_la_moneda()->get();
-				break;
-			case "tesoreria_valoracion_diaria":
-				$mObj	= new cTesoreria_valoracion_diaria();
-				break;
-			case TCATALOGOS_EMPRESAS:
-				$mObj	= new cSocios_aeconomica_dependencias();
-				$this->mCampoDesc = $mObj->nombre_corto()->get();
-				break;
-			case TCATALOGOS_RELACIONES:
-				$mObj	= new cSocios_relacionestipos();
-				$this->mCampoDesc = $mObj->descripcion_relacionestipos()->get();
-				break;
-			case TCATALOGOS_ACTIVIDADES_ECONOMICAS:
-				$mObj	= new cPersonas_actividad_economica_tipos();
-				$this->mCampoDesc = $mObj->nombre_de_la_actividad()->get();
-				break;
-			case TCATALOGOS_LOCALIDADES:
-				$mObj	= new cCatalogos_localidades();
-				$this->mCampoDesc = $mObj->nombre_de_la_localidad()->get();
-				break;
 			case TCAPTACION_CUENTAS:
 				$mObj	= new cCaptacion_cuentas();
 				break;
@@ -4551,10 +4522,60 @@ class cSQLTabla {
 			case "captacion_sdpm_historico":
 				$mObj	= new cCaptacion_sdpm_historico();
 				break;
-			case TCATALOGOS_PAISES:
-				$mObj	= new cPersonas_domicilios_paises();
-				$this->mCampoDesc = $mObj->nombre_oficial()->get();
-				break;				
+				
+			case "captacion_cuentastipos":
+				$mObj	= new cCaptacion_cuentastipos();
+				$this->mCampoDesc = $mObj->DESCRIPCION_CUENTASTIPOS;
+				break;
+			case "captacion_tipotitulo":
+				$mObj	= new cCaptacion_tipotitulo();
+				$this->mCampoDesc = $mObj->DESCRIPCION_TIPOTITULO;
+				break;
+			
+
+			case TBANCOS_CUENTAS:
+				$mObj	= new cBancos_cuentas();
+				break;
+			case TBANCOS_OPERACIONES:
+				$mObj	= new cBancos_operaciones();
+				break;
+				
+			case TOPERACIONES_RECIBOS:
+				$mObj	= new cOperaciones_recibos();
+				break;
+			case TOPERACIONES_MVTOS:
+				$mObj	= new cOperaciones_mvtos();
+				break;
+
+			case TBANCOS_CUENTAS:
+				$mObj	= new cBancos_cuentas();
+				break;
+			case "operaciones_recibostipo":
+				$mObj	= new cOperaciones_recibostipo();
+				$this->mCampoDesc = $mObj->descripcion_recibostipo()->get();
+				break;
+			/* Tesoreria */
+			case TTESORERIA_MVTOS:
+				$mObj	= new cTesoreria_cajas_movimientos();
+				break;
+			case "tesoreria_monedas":
+				$mObj	= new cTesoreria_monedas();
+				$this->mCampoDesc = $mObj->nombre_de_la_moneda()->get();
+				break;
+			case "tesoreria_valoracion_diaria":
+				$mObj	= new cTesoreria_valoracion_diaria();
+				break;
+			case "tesoreria_tipos_de_pago":
+				$mObj	= new cTesoreria_tipos_de_pago();
+				$this->mCampoDesc = $mObj->descripcion()->get();
+				break;
+				
+
+			/*----------- Personas ---------*/
+			case TPERSONAS_RELACIONES:
+				$mObj	= new cSocios_relaciones();
+				break;
+				
 			case TPERSONAS_DIRECCIONES:
 				$mObj	= new cSocios_vivienda();
 				break;
@@ -4590,29 +4611,33 @@ class cSQLTabla {
 				$mObj				= new cPersonas_proveedores();
 				$this->mCampoDesc 	= $mObj->ALIAS;
 				break;
+			case "personas_perfil_transaccional_tipos":
+				$mObj				= new cPersonas_perfil_transaccional_tipos();
+				$this->mCampoDesc 	= $mObj->nombre_del_perfil()->get();
+				break;
+			case "personas_regimen_fiscal":
+				$mObj				= new cPersonas_regimen_fiscal();
+				$this->mCampoDesc 	= $mObj->nombre_del_regimen()->get();
+				break;
+			case "socios_aeconomica_sector":
+				$mObj				= new cSocios_aeconomica_sector();
+				$this->mCampoDesc 	= $mObj->descripcion_aeconomica_sector()->get();
+				break;
+			case "socios_baja_razones":
+				$mObj				= new cSocios_baja_razones();
+				$this->mCampoDesc 	= $mObj->DESCRIPCION_RAZON_DE_BAJA;
+				break;
 			case "socios_tipoingreso":
 				$mObj				= new cSocios_tipoingreso();
 				$this->mCampoDesc 	= $mObj->descripcion_tipoingreso()->get();
 				break;
-			//Seguimiento
-			case TSEGUMIENTO_LLAMADAS:
-				$mObj	= new cSeguimiento_llamadas();
-				break;
-			case TSYSTEM_LOG:
-				$mObj	= new cGeneral_log();
-				break;
-			case "sistema_permisos":
-				$mObj				= new cSistema_permisos();
-				$this->mCampoDesc 	= $mObj->descripcion()->get();
-				break;
-
-			case TOPERACIONES_TIPOS:
-				$mObj	= new cOperaciones_tipos();
-				$this->mCampoDesc = $mObj->descripcion_operacion()->get();
+			case "socios_consanguinidad":
+				$mObj				= new cSocios_consanguinidad();
+				$this->mCampoDesc 	= $mObj->DESCRIPCION_CONSANGUINIDAD;
 				break;
 			case TPERSONAS_ACTIVIDAD_ECONOMICA:
 				$mObj	= new cSocios_aeconomica();
-			break;
+				break;
 			case "personas_actividad_economica_tipos":
 				$mObj	= new cPersonas_actividad_economica_tipos();
 				$this->mCampoDesc = $mObj->nombre_de_la_actividad()->get();
@@ -4624,6 +4649,87 @@ class cSQLTabla {
 				$mObj	= new cPersonas_aseguradoras();
 				$this->mCampoDesc = $mObj->alias()->get();
 				break;
+			case "socios_estadocivil":
+				$mObj				= new cSocios_estadocivil();
+				$this->mCampoDesc 	= $mObj->descripcion_estadocivil()->get();
+				break;
+			case "personas_aports_tipos":
+				$mObj				= new cPersonas_aports_tipos();
+				break;
+			/*case "socios_genero":
+				$mObj				= new cSocios_genero();
+				$this->mCampoDesc 	= $mObj->DESCRIPCION_GENERO;
+				break;*/
+			/*case "socios_memotipos":
+				$mObj				= new cSocios_memotipos();
+				$this->mCampoDesc 	= $mObj->descripcion_memo()->get();
+				break;*/
+			/*case "socios_patrimoniotipo":
+				$mObj				= new cSocios_patrimoniotipo();
+				break;*/
+			/*case "socios_patrimonioestatus":
+				$mObj				= new cSocios_patrimonioestatus();
+				break;*/
+			/*case "socios_regimenvivienda":
+				$mObj				= new cSocios_regimenvivienda();
+				break;*/
+			/*case "socios_relacionesestatus":
+				$mObj				= new cSocios_relacionesestatus();
+			break;*/
+			/*case "socios_tiempo":
+				$mObj				= new cSocios_tiempo();
+				break;*/
+			/*case "socios_viviendatipo":
+				$mObj				= new cSocios_viviendatipo();
+				break;*/
+				
+			case "personas_documentacion":
+				$mObj	= new cPersonas_documentacion();
+				$this->mCampoDesc = $mObj->archivo_de_documento()->get();
+				break;
+			case "creditos_firmantes":
+				$mObj	= new cCreditos_firmantes();
+				
+				break;
+			case "empresas_cobranza":
+				$mObj	= new cEmpresas_cobranza();
+				$this->mCampoDesc	= $mObj->observaciones()->get();
+				break;
+			case "empresas_operaciones":
+				$mObj	= new cEmpresas_operaciones();
+				break;
+			case TCATALOGOS_EMPRESAS:
+				$mObj	= new cSocios_aeconomica_dependencias();
+				$this->mCampoDesc = $mObj->nombre_corto()->get();
+				break;
+			case TCATALOGOS_RELACIONES:
+				$mObj	= new cSocios_relacionestipos();
+				$this->mCampoDesc = $mObj->descripcion_relacionestipos()->get();
+				break;
+			case TCATALOGOS_ACTIVIDADES_ECONOMICAS:
+				$mObj	= new cPersonas_actividad_economica_tipos();
+				$this->mCampoDesc = $mObj->nombre_de_la_actividad()->get();
+				break;
+			case TCATALOGOS_LOCALIDADES:
+				$mObj	= new cCatalogos_localidades();
+				$this->mCampoDesc = $mObj->nombre_de_la_localidad()->get();
+				break;
+				
+			case TCATALOGOS_PAISES:
+				$mObj	= new cPersonas_domicilios_paises();
+				$this->mCampoDesc = $mObj->nombre_oficial()->get();
+				break;	
+			/*------------------ Segumiento ---------------------*/
+			case TSEGUMIENTO_LLAMADAS:
+				$mObj	= new cSeguimiento_llamadas();
+				break;
+
+
+			case TOPERACIONES_TIPOS:
+				$mObj	= new cOperaciones_tipos();
+				$this->mCampoDesc = $mObj->descripcion_operacion()->get();
+				break;
+
 			case TUSUARIOS_NOTAS:
 				$mObj	= new cUsuarios_web_notas();
 				break;
@@ -4672,14 +4778,7 @@ class cSQLTabla {
 				$mObj	= new cCreditos_otros_datos();
 				$this->mCampoDesc = $mObj->clave_de_parametro()->get();
 				break;
-			case "entidad_pagos_perfil":
-				$mObj	= new cEntidad_pagos_perfil();
-				//$this->mCampoDesc	= $mObj->
-				break;
-			case "entidad_reglas":
-				$mObj	= new cEntidad_reglas();
-				$this->mCampoDesc	= $mObj->nombre()->get();
-				break;
+
 			case "creditos_productos_costos":
 				$mObj	= new cCreditos_productos_costos();
 				break;
@@ -4690,34 +4789,115 @@ class cSQLTabla {
 			case "creditos_sic_notas":
 				$mObj	= new cCreditos_sic_notas();
 				break;
-			case "personas_documentacion":
-				$mObj	= new cPersonas_documentacion();
-				$this->mCampoDesc = $mObj->archivo_de_documento()->get();
+			case TCREDITOS_REGISTRO:
+				$mObj	= new cCreditos_solicitud();
 				break;
-			case "creditos_firmantes":
-				$mObj	= new cCreditos_firmantes();
+			case TCREDITOS_DESTINO_DETALLE:
+				$mObj	= new cCreditos_destino_detallado();
+				break;
+			case "creditos_garantias":
+				$mObj	= new cCreditos_garantias();
+				$this->mCampoDesc = $mObj->descripcion()->get();
+				break;
+			case "creditos_productos_promo":
+				$mObj	= new cCreditos_productos_promo();
+				//$this->mCampoDesc = $mObj->condiciones()->get();
+				break;
+			case "creditos_productos_req":
+				$mObj	= new cCreditos_productos_req();
+				$this->mCampoDesc = $mObj->descripcion()->v();
+				break;
+			case "creditos_causa_de_vencimientos":
+				$mObj	= new cCreditos_causa_de_vencimientos();
+				$this->mCampoDesc = $mObj->DESCRIPCION_DE_LA_CAUSA;
+				break;
+			case "creditos_datos_originacion":
+				$mObj	= new cCreditos_datos_originacion();
 				
 				break;
-			case "empresas_cobranza":
-				$mObj	= new cEmpresas_cobranza();
-				$this->mCampoDesc	= $mObj->observaciones()->get();
-				break;
-			case "empresas_operaciones":
-				$mObj	= new cEmpresas_operaciones();
-				break;
 
-			case TUSUARIOS_REGISTRO:
-				$mObj	= new cT_03f996214fba4a1d05a68b18fece8e71();
-				break;
+
+
 			case "creditos_preclientes":
 				$mObj	= new cCreditos_preclientes();
+				break;
+			case "catalogo_creditos_productos_otros_parametros":
+				$mObj	= new cCatalogo_creditos_productos_otros_parametros();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_DEL_PARAMETRO;
+				break;
+			case "catalogos_tipo_de_dispersion":
+				$mObj	= new cCatalogos_tipo_de_dispersion();
+				$this->mCampoDesc	= $mObj->DESCRIPCION;
+				
+				break;
+			case "creditos_destinos":
+				$mObj	= new cCreditos_destinos();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_DESTINOS;
+				break;
+			case "creditos_estatus":
+				$mObj	= new cCreditos_estatus();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_ESTATUS;
+				break;
+			case "creditos_etapas":
+				$mObj	= new cCreditos_etapas();
+				$this->mCampoDesc	= $mObj->DESCRIPCION;
+				
+				break;
+			case "creditos_garantiasestatus":
+				$mObj				= new cCreditos_garantiasestatus();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_GARANTIASESTATUS;
+				break;
+			case "creditos_modalidades":
+				$mObj				= new cCreditos_modalidades();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_MODALIDADES;
 				break;
 			case "creditos_causa_de_vencimientos":
 				$mObj	= new cCreditos_causa_de_vencimientos();
 				$this->mCampoDesc	= $mObj->DESCRIPCION_DE_LA_CAUSA;
 				break;
+			case "creditos_nivelesriesgo":
+				$mObj	= new cCreditos_nivelesriesgo();
+				$this->mCampoDesc	= $mObj->descripcion_nivelesriesgo()->get();
+				break;
+			case "creditos_origenflujo":
+				$mObj	= new cCreditos_origenflujo();
+				$this->mCampoDesc	= $mObj->descripcion_origenflujo()->get();
+				break;
+			case "creditos_periocidadflujo":
+				$mObj	= new cCreditos_periocidadflujo();
+				$this->mCampoDesc	= $mObj->descripcion_periocidadflujo()->get();
+				break;
+			case "creditos_periocidadpagos":
+				$mObj	= new cCreditos_periocidadpagos();
+				$this->mCampoDesc	= $mObj->descripcion_periocidadpagos()->get();
+				break;
+			case "creditos_rechazos_tipo":
+				$mObj	= new cCreditos_rechazos_tipo();
+				$this->mCampoDesc	= $mObj->DESCRIPCION;
+				break;
+			case "creditos_tgarantias":
+				$mObj	= new cCreditos_tgarantias();
+				$this->mCampoDesc	= $mObj->descripcion_tgarantias()->get();
+				break;
+			case "creditos_tipo_de_autorizacion":
+				$mObj	= new cCreditos_tipo_de_autorizacion();
+				$this->mCampoDesc	= $mObj->descripcion_tipo_de_autorizacion()->get();
+				break;
+			case "creditos_tipo_de_dispersion":
+				$mObj	= new cCreditos_tipo_de_dispersion();
+				$this->mCampoDesc	= $mObj->DESCRIPCION;
+				break;
+			case "creditos_tipo_de_pago":
+				$mObj	= new cCreditos_tipo_de_pago();
+				$this->mCampoDesc	= $mObj->DESCRIPCION;
+				break;
+			case "creditos_tvaluacion":
+				$mObj	= new cCreditos_tvaluacion();
+				$this->mCampoDesc	= $mObj->descripcion_tvaluacion()->get();
+				break;
 			case "leasing_originadores_tipos":
 				$mObj	= new cLeasing_originadores_tipos();
+				$this->mCampoDesc	= $mObj->nombre_tipo_originador()->get();
 				break;
 			case "leasing_comisiones":
 				$mObj	= new cLeasing_comisiones();
@@ -4779,7 +4959,14 @@ class cSQLTabla {
 				$mObj	= new cVehiculos_usos();
 				$this->mCampoDesc	= $mObj->descripcion_uso()->get();
 				break;
-				
+			case "general_municipios":
+				$mObj	= new cGeneral_municipios();
+				$this->mCampoDesc	= $mObj->NOMBRE_DEL_MUNICIPIO;
+				break;
+			case "general_estados":
+				$mObj	= new cGeneral_estados();
+				$this->mCampoDesc	= $mObj->NOMBRE;
+				break;
 			case "general_contratos":
 				$mObj	= new cGeneral_contratos();
 				$this->mCampoDesc	= $mObj->titulo_del_contrato()->get();
@@ -4795,6 +4982,24 @@ class cSQLTabla {
 			case "eacp_config_bases_de_integracion_miembros":
 				$mObj				= new cEacp_config_bases_de_integracion_miembros();
 				$this->mCampoDesc	= $mObj->descripcion_de_la_relacion()->get();
+				break;
+			case TUSUARIOS_REGISTRO:
+				$mObj	= new cT_03f996214fba4a1d05a68b18fece8e71();
+				break;
+			case "entidad_pagos_perfil":
+				$mObj	= new cEntidad_pagos_perfil();
+				//$this->mCampoDesc	= $mObj->
+				break;
+			case "entidad_reglas":
+				$mObj	= new cEntidad_reglas();
+				$this->mCampoDesc	= $mObj->nombre()->get();
+				break;
+			case TSYSTEM_LOG:
+				$mObj	= new cGeneral_log();
+				break;
+			case "sistema_permisos":
+				$mObj				= new cSistema_permisos();
+				$this->mCampoDesc 	= $mObj->descripcion()->get();
 				break;
 			default:
 				$mObj	= null;
@@ -4824,10 +5029,12 @@ class SystemDB {
 }
 
 class cSystemPatch {
-	private $mMessages	= "";
-
+	private $mMessages		= "";
+	private $mForcedVersion	= 0;
 	function __construct(){  }
-
+	function setForceVersion($id){ 
+		$this->mForcedVersion = $id; 
+	}
 	function patch($force = false, $version_inicial = false, $soloIdioma = false){
 		$xCache		= new cCache();
 		$xCache->clean(false);
@@ -4835,14 +5042,19 @@ class cSystemPatch {
 		$ql			= new MQL();
 		$xConf		= new cConfiguration();
 		$localver	= $xConf->get("safe_osms_database_version");
-		
+		if($this->mForcedVersion > 0){
+			$localver	= $this->mForcedVersion;
+		}		
 		//Actualiza la configuracion
 		//if($force == true){			$xConf->set("safe_osms_database_version", $version);		}
 		if(FORCE_UPDATES_ON_BOOT == true OR $force == true){
 			//Ejecutar Vistas y Functions
 			if($soloIdioma == false){	$this->setAplicarScripts(); }
 			
-			$current	= ($version_inicial === false) ? intval(SAFE_DB_VERSION) : $version_inicial; //201406.01 
+			$current	= ($version_inicial === false) ? intval(SAFE_DB_VERSION) : $version_inicial; //201406.01
+			if($this->mForcedVersion > 0){
+				$current	= $this->mForcedVersion;
+			}
 			$dbversion	= intval(SAFE_VERSION . SAFE_REVISION);
 			$sqlMenu	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_type`, `menu_order`) VALUES ";
 	
@@ -4946,10 +5158,13 @@ class cSystemPatch {
 		$xLng	= new cSistema_lenguaje();
 		$idioma	= strtoupper($idioma);
 		//verificar si existe la palabra
-		$sql	= "SELECT *, COUNT(`idsistema_lenguaje`) as 'existen' FROM	`sistema_lenguaje` WHERE (`sistema_lenguaje`.`equivalente` ='$palabra') AND (`sistema_lenguaje`.`idioma` ='$idioma')";
-		$mql	= new MQL();
-		$d		= $mql->getDataRow($sql);
-		 $existen = ( setNoMenorQueCero($d["existen"]) > 0) ? true : false;
+		$sql		= "SELECT *, COUNT(`idsistema_lenguaje`) as 'existen' FROM	`sistema_lenguaje` WHERE (`sistema_lenguaje`.`equivalente` ='$palabra') AND (`sistema_lenguaje`.`idioma` ='$idioma')";
+		$xQL		= new MQL();
+		$d			= $xQL->getDataRow($sql);
+		$existen	= false;
+		if(isset($d["existen"])){
+			$existen = ( setNoMenorQueCero($d["existen"]) > 0) ? true : false;
+		}
 		if($existen == false){
 			$xLng->idsistema_lenguaje( $xLng->query()->getLastID() );
 			$xLng->idioma($idioma);
@@ -4957,7 +5172,7 @@ class cSystemPatch {
 			$xLng->traduccion($traduccion);
 			$xLng->query()->insert()->save();
 			//setLog($xLng->query()->insert()->get());
-			$this->mMessages	.= "LANG\tAgregar $palabra con traduccion $traduccion\r\n";
+			$this->mMessages	.= "LANG\t$idioma\tAgregar $palabra con traduccion $traduccion\r\n";
 		} else {
 			$id 	= $d["idsistema_lenguaje"];
 			$xLng->idsistema_lenguaje($id);
@@ -4965,7 +5180,7 @@ class cSystemPatch {
 			$xLng->equivalente($palabra);
 			$xLng->traduccion($traduccion);
 			$xLng->query()->update()->save($id);
-			$this->mMessages	.= "LANG\tActualizar $id $palabra con traduccion $traduccion\r\n";
+			$this->mMessages	.= "LANG\t$idioma\tActualizar $id $palabra con traduccion $traduccion\r\n";
 		}
 		
 	}
@@ -5011,7 +5226,8 @@ class cSystemPatch {
 		$res			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_vistas);
 		$res 			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_funcs);
 		return $res;
-	}	
+	}
+	function getMessages($put = OUT_TXT){ $xH	 = new cHObject(); return $xH->Out($this->mMessages, $put);	}
 }
 
 

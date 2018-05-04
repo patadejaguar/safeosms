@@ -38,7 +38,7 @@ function jsaGetCobranza($empresa, $idperiodo){
     $xT->setKey(2);
     $xT->setWidthTool("240px");
     $xT->setKeyTable("creditos_solicitud");
-    $xT->setEventKey("jsGetRecibosByCredito");
+    $xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
     $xT->addEspTool("<span>&nbsp;&nbsp;&nbsp;</span>");
     $xT->addEspTool("<div class='coolCheck'><input type='checkbox' id='chk_REPLACE_ID_' onclick='jsSetAlimentarCobros(this, _REPLACE_ID_)' /><label for='chk_REPLACE_ID_'></label></div>");
     
@@ -49,11 +49,12 @@ function jsaGetCobranza($empresa, $idperiodo){
 	$xT->OButton("TR.Cobranza", "jsSetParaCobros(_REPLACE_ID_)", $xBtn->ic()->DINERO);
 	$xT->OButton("TR.ESTADO_DE_CUENTA", "getEstadoDeCuenta(_REPLACE_ID_)", $xBtn->ic()->REPORTE);
 
+	$xT->OInput("observaciones");
+	
 	$xT->setResumidos("observaciones");
 	$xT->setOmitidos("saldo_inicial");
 	
 	$xT->setWithMetaData();
-	
 	//5 => "letra",
     $xT->setFootSum(array( 5 => "monto"));
     return  $xT->Show();
@@ -106,18 +107,20 @@ function jsaGetDatosEmpresa($idEmpresa){
 		$idclave			= $rw["codigo"];
 		$saldo				= $rw["saldo_activo"];
 		if($saldo>0){
-			$xPer				= $xEmp->getOPeriodo(false, false, $idclave);
-			if($periodo == $xPer->periodo_marcado()->v() AND $periocidad == $xPer->periocidad()->v()){
+			//$xPer				= $xEmp->getOPeriodo(false, false, $idclave);
+			$xPer			= new cEmpresasCobranzaPeriodos($idclave);
+			$xPer->init();
+			if($periodo == $xPer->getPeriodoAnnio() AND $periocidad == $xPer->getPeriocidad()){
 				$control		= $idclave;
-				$periodo 		= $xPer->periodo_marcado()->v();
-				$periocidad 	= $xPer->periocidad()->v();
-				$fecha_final	= $xPer->fecha_final()->v();
-				$fecha_inicial	= $xPer->fecha_inicial()->v();
+				$periodo 		= $xPer->getPeriodoAnnio();
+				$periocidad 	= $xPer->getPeriocidad();
+				$fecha_final	= $xPer->getFechaFinal();
+				$fecha_inicial	= $xPer->getFechaInicial();
 				$idsel			= " selected=\"true\" ";
 			}		
 			
 			if($contar <= $max){
-				$opts .= "<option value=\"" .$idclave . " \"$idsel>" . $rw["nombre_periocidad"] ."[" . $xPer->periodo_marcado()->v(). "]";
+				$opts .= "<option value=\"" .$idclave . " \"$idsel>" . $rw["nombre_periocidad"] ."[" . $xPer->getPeriodoAnnio(). "]";
 				$opts .= "  - DEL: " . $xF->getFechaCorta($rw["fecha_inicial"]) . " - " . $xF->getFechaCorta($rw["fecha_final"]) .  " SALDO " . getFMoney($rw["saldo"]) . ".- ID $idclave </option>";
 			}
 			$contar++;
@@ -421,11 +424,13 @@ function getPago(mObj, itms, callback){
 	var periocidad		= $("#idperiocidad").val();
 	var mcallback		= (typeof callback == "undefined")? function(){} : callback;
 	var isCheck			= $('#chk' + credito).prop('checked');
+	var idobserva		= $("#observaciones-" + credito).val();
+	
 	//$("#chk" + credito).attr('checked', false);
 	//socio|solicitud|parcialidad|[deprecated]periocidad|monto a operar|[optional]operacion
 	//tipo-de-pago|banco|fecha-de-deposito
 		if(flotante(montoLetra) > 0 && isCheck == true){
-			var url	= "../frmcaja/frmpagoprocesado.php?p=" + claveSocio + "|" + credito + "|" + parcialidad + "|" + montoLetra + "|plc|" + tipoPago + "|" + banco + "|" + fdeposit + "&procesar=automatico&periodoempresa=" + periodo + "&periocidad=" + periocidad;
+			var url	= "../frmcaja/frmpagoprocesado.php?p=" + claveSocio + "|" + credito + "|" + parcialidad + "|" + montoLetra + "|plc|" + tipoPago + "|" + banco + "|" + fdeposit + "&procesar=automatico&periodoempresa=" + periodo + "&periocidad=" + periocidad + "&notas=" + idobserva;
 			//setLog(url);
 			$.ajax({
 			    url: url, // relative path to www folder
@@ -468,7 +473,9 @@ function getCorteDeRecibos(){
     $("#octl").html('<a onclick="getCorteDeRecibos()"><img src="../images/cash_stack_add.png" />Obtener Corte<mark id="saldocorte"></mark></a>');
     var iddep		= $("#idcodigodeempresas").val();
     var ff			= $("#idfecha-0").val();
-    var url			= "../rpttesoreria/rpt_caja_corte_sobre_recibos.php?dependencia=" + iddep + "&on=" + ff + "&off=" + ff;
+    var idper		= $("#idperiodo").val();
+    
+    var url			= "../rpttesoreria/envio-nomina-recibos.rpt.php?dependencia=" + iddep + "&idnomina=" + idper;
     xg.w({ url : url, full:true });
     
 }
@@ -489,7 +496,9 @@ function jsGetCobranza(){
 		//establecer Numero y monto original
 		//setTimeout("setEstablacerSumasIniciales()",1000);
     } else {
-        xG.alerta({msg: "NOMINA_PERIODO_REQ", type : "error"});
+    	
+        xG.requiere({msg: "NOMINA_PERIODO_REQ", type : "error",callback:jsCargarDatosIniciales });
+        
     }
 }
 function jsGetCobranzaPost(){
@@ -521,8 +530,7 @@ function getRecibo(){
     var peri	= $("#idperiodo").val();
     var iF1		= $("#idfecha-10").val();
     var iF2		= $("#idfecha-11").val();
-        
-    var url	= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + peri + "&on=" + iF1 + "&off=" + iF2;
+    var url		= "../rptcreditos/orden_de_cobranza.recibos.rpt.php?r=" + idr + "&p=" + per + "&v=" + vari + "&o=" + obs + "&periodo=" + peri + "&on=" + iF1 + "&off=" + iF2;
     xg.w({ url : url, tab : true });
 }
 //function jsSaveExcel() {    tableToExcel( document.getElementById("sqltable")); }
@@ -588,7 +596,6 @@ function jsGetRecibosByCreditoPeriodo(credito) {
 function jsGetEdoCuentaGeneral(){	var id = $("#idcodigodeempresas").val(); xEmp.getEstadoDeCuenta(id); }
 function jsListaDeNominas(){ var id = $("#idperiodo").val();  xEmp.getOrdenDeCobranza(id);	}
 function jsSetCerrarNomina(){
-	
 	xG.confirmar({
 		msg: "Al cerrar la Nomina las operaciones se cancelan, no se muestran de nuevo",
 		callback: jsSetCerrarNominaConfirm

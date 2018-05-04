@@ -19,27 +19,36 @@ $xHP		= new cHPage("TR.CARGA DE DOCUMENTO", HP_FORM);
 $xDoc		= new cDocumentos();
 $xF			= new cFecha();
 $xLi		= new cSQLListas();
+$xPDoc		= new cPersonasDocumentacion();
 
 $DDATA		= $_REQUEST;
-$persona	= ( isset($DDATA["persona"]) ) ? $DDATA["persona"] : DEFAULT_SOCIO;
-$action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
-$idcontrato	= parametro("idcontrato", 0, MQL_INT);
+//$persona	= ( isset($DDATA["persona"]) ) ? $DDATA["persona"] : DEFAULT_SOCIO;
+//$action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
 
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);$action	= strtolower($action);
+$observaciones	= parametro("idobservaciones"); $observaciones	= parametro("observaciones", $observaciones);
+
+$idcontrato		= parametro("idcontrato", 0, MQL_INT);
+$tipodedocto	= parametro("idtipodedocto", 0, MQL_INT); $tipodedocto	= parametro("tipo", $tipodedocto, MQL_INT);
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 
 echo $xHP->getHeader();
 
-$jsb	= new jsBasicForm("frmdocumentos");
+//$jsb		= new jsBasicForm("frmdocumentos");
 //$jxc ->drawJavaScript(false, true);
-$ByType	= "";
+
+$ByType			= "";
 echo $xHP->setBodyinit();
 if($persona != DEFAULT_SOCIO){
 	$xSoc	= new cSocio($persona);
 	$xSoc->init();
 	$ByType	= ($xSoc->getEsPersonaFisica() == true) ? BASE_DOCTOS_PERSONAS_FISICAS : BASE_DOCTOS_PERSONAS_MORALES;
 }
+
+
 $xFRM	= new cHForm("frmfirmas", "personas_documentos.frm.php?action=" . SYS_UNO . "&persona=$persona");
 $xFRM->setEnc("multipart/form-data");
 $xFRM->setTitle($xHP->getTitle());
@@ -50,15 +59,20 @@ $xTxt2	= new cHText();
 $xTxtF	= new cHText();
 $xSel	= new cHSelect();
 $xImg	= new cHImg();
+
 $xFRM->setNoAcordion();
 $xFRM->setTitle($xHP->getTitle());
 
-if($action == SYS_CERO){
+if($action == SYS_NINGUNO){
 	$xFRM->addSeccion("iddivar", "TR.ARCHIVO");
 	$xTxtF->setDivClass("");
 	//$xTxtF->setProperty("class", "")
-	$xFRM->OFile("idnuevoarchivo","", "TR.Cargar Documento");
-	
+	if($tipodedocto == $xPDoc->TIPO_FOTO){
+		$xFRM->OFileImages("idnuevoarchivo","", "");
+	} else {
+		$xFRM->OFileDoctos("idnuevoarchivo","", "");
+	}
+	//accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
 	$items	= count($xDoc->FTPListFiles());
 	if($items>0){
 		$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
@@ -66,30 +80,40 @@ if($action == SYS_CERO){
 		$xFRM->OHidden("nombrearchivo", "");
 	}
 	$xFRM->endSeccion();
+	
 	$xFRM->addSeccion("iddotros", "TR.DATOS");
-	$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType)->get(true) );
-	$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE EMISION");
-	$xFRM->OText_13("idnumeropagina", 0, "TR.Numero de Documento");
-	
-	$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
-	$xSelCP->addEspOption("0", "NINGUNO");
-	
-	$xFRM->addHElem($xSelCP->get(true));
-	
+	if($tipodedocto == $xPDoc->TIPO_FOTO){
+		$xFRM->OHidden("idtipodedocto", $tipodedocto);
+		$xFRM->OHidden("idfechacarga", false);
+		$xFRM->OHidden("idnumeropagina", 0);
+		$xFRM->OHidden("idcontrato",0);
+		$xFRM->setTitle($xFRM->getT("TR.FOTOGRAFIA"));
+	} else {
+		$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType)->get(true) );
+		$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE_EMISION");
+		$xFRM->OText_13("idnumeropagina", 0, "TR.PAGINA");
+		
+		$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
+		$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
+		
+		$xFRM->addHElem($xSelCP->get(true));
+	}
+
 	//$xFRM->ODate("idfechavencimiento", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
 	$xFRM->addObservaciones();
 	$xFRM->addGuardar();
 	$xFRM->endSeccion();
+	
 } else {
 	$xFRM->addCerrar();
 	$nombrearchivo	= parametro("nombrearchivo", "", MQL_RAW);
-	$observaciones	= (isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
-	$tipodedocto	= (isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";
+	//$observaciones	= (isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
+	//$tipodedocto	= (isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";
 	$pagina			= parametro("idnumeropagina", "");
 	$archivonuevo	= (isset($_FILES["idnuevoarchivo"])) ? $_FILES["idnuevoarchivo"] : null;
 	$fechacarga		= parametro("idfechacarga", false, MQL_DATE);
-	
 	$fechavenc		= false; //parametro("idfechavencimiento", $xF->getFechaMaximaOperativa(), MQL_DATE);
+	
 	if(isset($_FILES["idnuevoarchivo"])){
 		if(trim($_FILES["idnuevoarchivo"]["name"]) == ""){ $archivoenviado = null; }
 	}

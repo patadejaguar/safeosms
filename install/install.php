@@ -8,7 +8,8 @@ $dir			= $_SERVER["DOCUMENT_ROOT"];
 $privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 
 if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
-include_once ("libs/importer.php");
+include_once ("./libs/importer.php");
+ini_set("max_execution_time", 900);
 
 $msg			= "";
 //======================== Checar
@@ -268,8 +269,5 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 }
 
 
-
-
 //var_dump($_REQUEST);
-
 ?>

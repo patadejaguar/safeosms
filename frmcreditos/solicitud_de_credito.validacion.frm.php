@@ -24,6 +24,8 @@
 $xHP		= new cHPage("TR.Validar Creditos");
 $xHP->init();
 $xFRM		= new cHForm("frm", "./");
+$xLog		= new cCoreLog();
+
 $msg		= "";
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);

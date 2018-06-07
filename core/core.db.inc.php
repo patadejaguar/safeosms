@@ -692,7 +692,7 @@ class cSQLListas {
 	}
 	function getListadoDeOperacionesBancarias($operacion = "", $cuenta = "", $cajero = "", $fecha_inicial = false, $fecha_final = false, $extra = ""){
 	$ByCuenta		= ($cuenta != SYS_TODAS AND $cuenta != "") ? " AND `bancos_cuentas`.`idbancos_cuentas`=$cuenta " : "";
-	$ByOperacion		= ($operacion != SYS_TODAS AND $operacion != "") ? " AND `bancos_operaciones`.`tipo_operacion`='$operacion' " : "";
+	$ByOperacion	= ($operacion != SYS_TODAS AND $operacion != "") ? " AND `bancos_operaciones`.`tipo_operacion`='$operacion' " : "";
 	$ByFecha		= "";
 	$ByFecha		= ($fecha_inicial == false) ? "" : " AND (`bancos_operaciones`.`fecha_expedicion`>='$fecha_inicial') ";
 	$ByFecha		.= ($fecha_final == false) ? "" : " AND (`bancos_operaciones`.`fecha_expedicion`<='$fecha_final') ";
@@ -702,6 +702,7 @@ class cSQLListas {
 	`bancos_cuentas`.`descripcion_cuenta`     AS `cuenta`,
 	`bancos_operaciones`.`recibo_relacionado` AS `recibo`,
 	`bancos_operaciones`.`numero_de_socio`    AS `persona`,
+	`bancos_operaciones`.`documento_de_origen` AS `contrato`,
 	`bancos_operaciones`.`tipo_operacion`     AS `operacion`,
 	`bancos_operaciones`.`fecha_expedicion`   AS `fecha`,
 	`bancos_operaciones`.`beneficiario`       AS `beneficiarios`,
@@ -718,7 +719,7 @@ class cSQLListas {
 	$ByOperacion
 	$extra
 	ORDER BY
-	`bancos_operaciones`.`fecha_expedicion`,
+	`bancos_operaciones`.`fecha_expedicion` DESC,
 	`bancos_operaciones`.`tipo_operacion`,
 	`bancos_operaciones`.`beneficiario`
 	";
@@ -1119,7 +1120,16 @@ class cSQLListas {
 	
 	function getListadoDeAvales($credito, $persona = ""){
 		$persona	= setNoMenorQueCero($persona);
-		$ByPersona	= ($persona == 0) ? "" : " AND (`socio_relacionado` = $persona) ";
+		$credito	= setNoMenorQueCero($credito);
+		
+		$By			= " AND (`socios_relaciones`.`credito_relacionado`=$credito) ";
+		if($persona> DEFAULT_SOCIO){
+			$By		= " AND ((`socios_relaciones`.`credito_relacionado`=$credito) OR ((`socio_relacionado` = $persona) AND (`socios_relaciones`.`tipo_relacion` = " . PERSONAS_REL_RES_SOLIDARIO . ")) )"; 
+		}
+		if($credito <= DEFAULT_CREDITO AND $persona > DEFAULT_SOCIO){
+			//$By	= " AND (`socios_relaciones`.`socio_relacionado` = " .  $persona . ") ";
+			$By	= " AND ((`socio_relacionado` = $persona) AND (`socios_relaciones`.`tipo_relacion` = " . PERSONAS_REL_RES_SOLIDARIO . ")) ";
+		}
 		$sql	= "SELECT DISTINCT socios_relaciones.idsocios_relaciones AS 'num',
 						socios_relacionestipos.descripcion_relacionestipos AS 'relacion',
 						socios_consanguinidad.descripcion_consanguinidad AS 'consanguinidad',
@@ -1141,11 +1151,7 @@ class cSQLListas {
 								ON `socios_relaciones`.`consanguinidad` =
 								`socios_consanguinidad`.`idsocios_consanguinidad`
 				WHERE
-					(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =5002)
-				AND
-					((`socios_relaciones`.`credito_relacionado` = " .  $credito . ")
-				OR (`socios_relaciones`.`tipo_relacion` = " . PERSONAS_REL_RES_SOLIDARIO . "))
-				$ByPersona					
+					(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =5002) AND (`socios_relaciones`.`estatus`=10) $By					
 				ORDER BY
 					`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
 					`socios_relaciones`.`credito_relacionado`";
@@ -1777,10 +1783,18 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 	}	
 	
 	function getListadoResumenTesoreria($cajero = "", $fecha_inicial = "", $fecha_final = "" ){
-		$ByUsuario2			= ($cajero == SYS_TODAS OR $cajero == "") ? "" : " AND (`tesoreria_cajas_movimientos`.`idusuario` = $cajero) ";
-		$ByFecha			= ($fecha_inicial == "" ) ? "" : " AND (`tesoreria_cajas_movimientos`.`fecha` >='$fecha_inicial') ";
-		$ByFecha			.= ($fecha_final == "" ) ? "" : " AND (`tesoreria_cajas_movimientos`.`fecha` <='$fecha_final')";
-		$sqlTi	= "SELECT
+		//$cajero		= setNoMenorQueCero($cajero);
+		$xFil		= new cSQLFiltros();
+		$ByFecha	= $xFil->TesoreriaOperacionesPorFechas($fecha_inicial, $fecha_final);
+		$ByUsuario	= $xFil->TesoreriaOperacionesPorCajero($cajero);
+		$ByFecha2	= $xFil->TesoreriaCajasPorFechas($fecha_inicial, $fecha_final);
+		$ByUsuario2	= $xFil->TesoreriaCajasPorCajero($cajero);
+		//$ByUsuario	= ($cajero <= 0) ? "" : " AND (`tesoreria_cajas_movimientos`.`idusuario` = $cajero) ";
+		/*$ByFecha	= ($fecha_inicial == "" ) ? "" : " AND (`tesoreria_cajas_movimientos`.`fecha` >='$fecha_inicial') ";
+		$ByFecha	.= ($fecha_final == "" ) ? "" : " AND (`tesoreria_cajas_movimientos`.`fecha` <='$fecha_final')";*/
+		$uu			= "";
+		
+		$sqlTi		= "SELECT
 		`tesoreria_cajas_movimientos`.`tipo_de_exposicion` AS 'forma_de_pago',
 		`tesoreria_cajas_movimientos`.`fecha`,
 		SUM((`tesoreria_cajas_movimientos`.`monto_del_movimiento`*`tipo_de_movimiento`)) AS `operacion`,
@@ -1791,11 +1805,13 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		WHERE
 			(`tesoreria_cajas_movimientos`.`idtesoreria_cajas_movimientos` !=0)
 			$ByFecha
-			$ByUsuario2
+			$ByUsuario
 		GROUP BY
 		`tesoreria_cajas_movimientos`.`tipo_de_exposicion`,
-		`tesoreria_cajas_movimientos`.`fecha` ";
-				
+		`tesoreria_cajas_movimientos`.`fecha` UNION
+		SELECT getTrad('FONDODECAJA'), `tesoreria_cajas`.`fecha_inicio`, `fondos_iniciales`, `fondos_iniciales`, 0 FROM `tesoreria_cajas` WHERE `tesoreria_cajas`.`idusuario` > 0 $ByFecha2 $ByUsuario2";
+		//setLog($sqlTi);
+		
 		return $sqlTi;
 	}
 	function getListadoDeCajaEnBanco($tipo = "", $cuenta = "", $cajero = "", $fecha_inicial = "", $fecha_final = ""){
@@ -2598,6 +2614,7 @@ ORDER BY
 		$sql	= "SELECT		`operaciones_recibos`.*,		`operaciones_recibostipo`.*
 		FROM		`operaciones_recibos` `operaciones_recibos`		INNER JOIN `operaciones_recibostipo` `operaciones_recibostipo`		ON `operaciones_recibos`.`tipo_docto` = `operaciones_recibostipo`.`idoperaciones_recibostipo`
 		WHERE		(`operaciones_recibos`.`idoperaciones_recibos` = $recibo)		$BySocio		LIMIT 0,1";
+		
 		return $sql;
 	}
 	function getInicialDeCreditos(){
@@ -3917,7 +3934,7 @@ FROM
 		INNER JOIN `leasing_originadores`  ON `originacion_leasing`.`originador` = `leasing_originadores`.`idleasing_originadores` 
 		INNER JOIN `vehiculos_segmento`  ON `originacion_leasing`.`segmento` = `vehiculos_segmento`.`idvehiculos_segmento` 
 		INNER JOIN `vehiculos_gps`  ON `originacion_leasing`.`tipo_gps` = `vehiculos_gps`.`idvehiculos_gps`
-		WHERE `originacion_leasing`.`estatus` = 1 $ByOriginador $BySub ORDER BY `originacion_leasing`.`fecha_origen`, `originacion_leasing`.`idoriginacion_leasing`";
+		WHERE `originacion_leasing`.`estatus` = 1 $ByOriginador $BySub ORDER BY `originacion_leasing`.`fecha_origen` DESC, `originacion_leasing`.`idoriginacion_leasing`";
 		
 		//setLog($sql);
 		return $sql;
@@ -5009,7 +5026,323 @@ class cSQLTabla {
 		return $mObj;
 	}
 }
-
+class cSysTablas {
+	public $AML_ALERTS 	 = "aml_alerts";
+	public $AML_INSTRUMENTOS_FINANCIEROS 	 = "aml_instrumentos_financieros";
+	public $AML_LISTANEGRA_INT 	 = "aml_listanegra_int";
+	public $AML_PERFIL_EGRESOS_POR_PERSONA 	 = "aml_perfil_egresos_por_persona";
+	public $AML_PERFIL_EGRESOS_POR_PERSONA_RT 	 = "aml_perfil_egresos_por_persona_rt";
+	public $AML_PERFIL_INGRESOS_POR_PERSONA 	 = "aml_perfil_ingresos_por_persona";
+	public $AML_PERSONAS_DESCARTADAS 	 = "aml_personas_descartadas";
+	public $AML_PERSONAS_VIGILADAS 	 = "aml_personas_vigiladas";
+	public $AML_RIESGO_MATRICES 	 = "aml_riesgo_matrices";
+	public $AML_RIESGO_PERFILES 	 = "aml_riesgo_perfiles";
+	public $AML_RIESGO_PRODUCTO 	 = "aml_riesgo_producto";
+	public $AML_RISK_CATALOG 	 = "aml_risk_catalog";
+	public $AML_RISK_LEVELS 	 = "aml_risk_levels";
+	public $AML_RISK_REGISTER 	 = "aml_risk_register";
+	public $AML_RISK_TYPES 	 = "aml_risk_types";
+	public $AML_TIPOS_DE_OPERACION 	 = "aml_tipos_de_operacion";
+	public $BANCOS_CUENTAS 	 = "bancos_cuentas";
+	public $BANCOS_ENTIDADES 	 = "bancos_entidades";
+	public $BANCOS_OPERACIONES 	 = "bancos_operaciones";
+	public $CAJEROS 	 = "cajeros";
+	public $CAPTACION_CUENTAS 	 = "captacion_cuentas";
+	public $CAPTACION_CUENTASESTATUS 	 = "captacion_cuentasestatus";
+	public $CAPTACION_CUENTASORIGEN 	 = "captacion_cuentasorigen";
+	public $CAPTACION_CUENTASTIPOS 	 = "captacion_cuentastipos";
+	public $CAPTACION_DATOS_CONTABLES 	 = "captacion_datos_contables";
+	public $CAPTACION_SALDOS_COMPARADOS 	 = "captacion_saldos_comparados";
+	public $CAPTACION_SDPM_HISTORICO 	 = "captacion_sdpm_historico";
+	public $CAPTACION_SUBPRODUCTOS 	 = "captacion_subproductos";
+	public $CAPTACION_TASAS 	 = "captacion_tasas";
+	public $CAPTACION_TIPOTITULO 	 = "captacion_tipotitulo";
+	public $CATALOGO_CREDITOS_PRODUCTOS_OTROS_PARAMETROS 	 = "catalogo_creditos_productos_otros_parametros";
+	public $CATALOGOS_LOCALIDADES 	 = "catalogos_localidades";
+	public $CATALOGOS_TIPO_DE_DISPERSION 	 = "catalogos_tipo_de_dispersion";
+	public $CONTABLE_CATALOGO 	 = "contable_catalogo";
+	public $CONTABLE_CATALOGO_PERFIL 	 = "contable_catalogo_perfil";
+	public $CONTABLE_CATALOGORELACION 	 = "contable_catalogorelacion";
+	public $CONTABLE_CATALOGOTIPOS 	 = "contable_catalogotipos";
+	public $CONTABLE_CENTRODECOSTOS 	 = "contable_centrodecostos";
+	public $CONTABLE_EQUIVALENCIAS 	 = "contable_equivalencias";
+	public $CONTABLE_MOVIMIENTOS 	 = "contable_movimientos";
+	public $CONTABLE_MOVIMIENTOSDIARIOS 	 = "contable_movimientosdiarios";
+	public $CONTABLE_POLIZAS 	 = "contable_polizas";
+	public $CONTABLE_POLIZAS_PERFIL 	 = "contable_polizas_perfil";
+	public $CONTABLE_POLIZAS_PROFORMA 	 = "contable_polizas_proforma";
+	public $CONTABLE_POLIZASDIARIOS 	 = "contable_polizasdiarios";
+	public $CONTABLE_SALDOS 	 = "contable_saldos";
+	public $CREDITOS 	 = "creditos";
+	public $CREDITOS_A_FINAL_DE_PLAZO 	 = "creditos_a_final_de_plazo";
+	public $CREDITOS_ABONOS_ACUMULADOS 	 = "creditos_abonos_acumulados";
+	public $CREDITOS_ABONOS_PARCIALES 	 = "creditos_abonos_parciales";
+	public $CREDITOS_ABONOS_POR_MES 	 = "creditos_abonos_por_mes";
+	public $CREDITOS_CAUSA_DE_VENCIMIENTOS 	 = "creditos_causa_de_vencimientos";
+	public $CREDITOS_DATOS_CONTABLES 	 = "creditos_datos_contables";
+	public $CREDITOS_DATOS_CONTABLES_POR_DESTINO 	 = "creditos_datos_contables_por_destino";
+	public $CREDITOS_DATOS_ORIGINACION 	 = "creditos_datos_originacion";
+	public $CREDITOS_DESTINO_DETALLADO 	 = "creditos_destino_detallado";
+	public $CREDITOS_DESTINOS 	 = "creditos_destinos";
+	public $CREDITOS_DIAS_DE_PAGO 	 = "creditos_dias_de_pago";
+	public $CREDITOS_ESTATUS 	 = "creditos_estatus";
+	public $CREDITOS_ETAPAS 	 = "creditos_etapas";
+	public $CREDITOS_EVENTOS 	 = "creditos_eventos";
+	public $CREDITOS_FIRMANTES 	 = "creditos_firmantes";
+	public $CREDITOS_FLUJOEFVO 	 = "creditos_flujoefvo";
+	public $CREDITOS_GARANTIAS 	 = "creditos_garantias";
+	public $CREDITOS_GARANTIASESTATUS 	 = "creditos_garantiasestatus";
+	public $CREDITOS_LETRAS_DEL_DIA 	 = "creditos_letras_del_dia";
+	public $CREDITOS_LETRAS_MOROSAS 	 = "creditos_letras_morosas";
+	public $CREDITOS_LETRAS_PENDIENTES 	 = "creditos_letras_pendientes";
+	public $CREDITOS_LETRAS_PENDIENTES_RT 	 = "creditos_letras_pendientes_rt";
+	public $CREDITOS_LINEAS 	 = "creditos_lineas";
+	public $CREDITOS_MODALIDADES 	 = "creditos_modalidades";
+	public $CREDITOS_MONTOS 	 = "creditos_montos";
+	public $CREDITOS_MVTOS_ASDPM 	 = "creditos_mvtos_asdpm";
+	public $CREDITOS_MVTOS_ASDPM_PLANES 	 = "creditos_mvtos_asdpm_planes";
+	public $CREDITOS_NIEVELESDERESERVA 	 = "creditos_nievelesdereserva";
+	public $CREDITOS_NIVELESDEGRUPO 	 = "creditos_nivelesdegrupo";
+	public $CREDITOS_NIVELESRIESGO 	 = "creditos_nivelesriesgo";
+	public $CREDITOS_NO_CASTIGADOS 	 = "creditos_no_castigados";
+	public $CREDITOS_NO_CASTIGADOS_CONCILIADOS 	 = "creditos_no_castigados_conciliados";
+	public $CREDITOS_NOTARIOS 	 = "creditos_notarios";
+	public $CREDITOS_OPERACIONES_EN_PERIODOS_DETALLE 	 = "creditos_operaciones_en_periodos_detalle";
+	public $CREDITOS_ORIGENFLUJO 	 = "creditos_origenflujo";
+	public $CREDITOS_OTROS_DATOS 	 = "creditos_otros_datos";
+	public $CREDITOS_PARAMETROS_NEGOCIADOS 	 = "creditos_parametros_negociados";
+	public $CREDITOS_PARCIALIDADES 	 = "creditos_parcialidades";
+	public $CREDITOS_PERIOCIDADFLUJO 	 = "creditos_periocidadflujo";
+	public $CREDITOS_PERIOCIDADPAGOS 	 = "creditos_periocidadpagos";
+	public $CREDITOS_PERIODOS 	 = "creditos_periodos";
+	public $CREDITOS_PLAN_DE_PAGOS 	 = "creditos_plan_de_pagos";
+	public $CREDITOS_PRECLIENTES 	 = "creditos_preclientes";
+	public $CREDITOS_PRESUPUESTOS 	 = "creditos_presupuestos";
+	public $CREDITOS_PRODUCTOS_COSTOS 	 = "creditos_productos_costos";
+	public $CREDITOS_PRODUCTOS_ETAPAS 	 = "creditos_productos_etapas";
+	public $CREDITOS_PRODUCTOS_OTROS_PARAMETROS 	 = "creditos_productos_otros_parametros";
+	public $CREDITOS_PRODUCTOS_PROMO 	 = "creditos_productos_promo";
+	public $CREDITOS_PRODUCTOS_REQ 	 = "creditos_productos_req";
+	public $CREDITOS_PROXIMAS_PARCIALIDADES 	 = "creditos_proximas_parcialidades";
+	public $CREDITOS_RECHAZADOS 	 = "creditos_rechazados";
+	public $CREDITOS_RECHAZOS_TIPO 	 = "creditos_rechazos_tipo";
+	public $CREDITOS_RECONVENIO 	 = "creditos_reconvenio";
+	public $CREDITOS_SALDO_MENSUALES 	 = "creditos_saldo_mensuales";
+	public $CREDITOS_SALDOS_POR_EJERCICIO 	 = "creditos_saldos_por_ejercicio";
+	public $CREDITOS_SDPM_ACUMULADO 	 = "creditos_sdpm_acumulado";
+	public $CREDITOS_SDPM_HISTORICO 	 = "creditos_sdpm_historico";
+	public $CREDITOS_SIC_NOTAS 	 = "creditos_sic_notas";
+	public $CREDITOS_SOLICITUD 	 = "creditos_solicitud";
+	public $CREDITOS_TFLUJO 	 = "creditos_tflujo";
+	public $CREDITOS_TGARANTIAS 	 = "creditos_tgarantias";
+	public $CREDITOS_TIPO_DE_AUTORIZACION 	 = "creditos_tipo_de_autorizacion";
+	public $CREDITOS_TIPO_DE_CALCULO_DE_INTERES 	 = "creditos_tipo_de_calculo_de_interes";
+	public $CREDITOS_TIPO_DE_DISPERSION 	 = "creditos_tipo_de_dispersion";
+	public $CREDITOS_TIPO_DE_PAGO 	 = "creditos_tipo_de_pago";
+	public $CREDITOS_TIPOCONVENIO 	 = "creditos_tipoconvenio";
+	public $CREDITOS_TVALUACION 	 = "creditos_tvaluacion";
+	public $DIAS_EN_MORA 	 = "dias_en_mora";
+	public $DOMICILIOS 	 = "domicilios";
+	public $EACP_CONFIG_BASES_DE_INTEGRACION 	 = "eacp_config_bases_de_integracion";
+	public $EACP_CONFIG_BASES_DE_INTEGRACION_MIEMBROS 	 = "eacp_config_bases_de_integracion_miembros";
+	public $EMPRESAS_COBRANZA 	 = "empresas_cobranza";
+	public $EMPRESAS_OPERACIONES 	 = "empresas_operaciones";
+	public $ENTIDAD_AUTORIZACIONES 	 = "entidad_autorizaciones";
+	public $ENTIDAD_CALIFICACION 	 = "entidad_calificacion";
+	public $ENTIDAD_CONFIGURACION 	 = "entidad_configuracion";
+	public $ENTIDAD_CREDITOS_PROYECCIONES 	 = "entidad_creditos_proyecciones";
+	public $ENTIDAD_NIVELES_DE_RIESGO 	 = "entidad_niveles_de_riesgo";
+	public $ENTIDAD_PAGOS_PERFIL 	 = "entidad_pagos_perfil";
+	public $ENTIDAD_REGLAS 	 = "entidad_reglas";
+	public $ENTIDAD_REPORTES_PROPS 	 = "entidad_reportes_props";
+	public $GARANTIA_LIQUIDA 	 = "garantia_liquida";
+	public $GENERAL_COLONIAS 	 = "general_colonias";
+	public $GENERAL_CONTRATOS 	 = "general_contratos";
+	public $GENERAL_DEPARTAMENTOS 	 = "general_departamentos";
+	public $GENERAL_DIAS_FESTIVOS 	 = "general_dias_festivos";
+	public $GENERAL_ERROR_CODIGOS 	 = "general_error_codigos";
+	public $GENERAL_ESTADOS 	 = "general_estados";
+	public $GENERAL_FOLIOS 	 = "general_folios";
+	public $GENERAL_FOLIOS_POLIZA 	 = "general_folios_poliza";
+	public $GENERAL_FORMULAS 	 = "general_formulas";
+	public $GENERAL_IMPORT 	 = "general_import";
+	public $GENERAL_LOG 	 = "general_log";
+	public $GENERAL_MENU 	 = "general_menu";
+	public $GENERAL_MUNICIPIOS 	 = "general_municipios";
+	public $GENERAL_NIVELES 	 = "general_niveles";
+	public $GENERAL_REPORTS 	 = "general_reports";
+	public $GENERAL_SQL_STORED 	 = "general_sql_stored";
+	public $GENERAL_STRUCTURE 	 = "general_structure";
+	public $GENERAL_SUCURSALES 	 = "general_sucursales";
+	public $GENERAL_TMP 	 = "general_tmp";
+	public $GENERAL_UTILERIAS 	 = "general_utilerias";
+	public $GRUPOS_SOLICITUD 	 = "grupos_solicitud";
+	public $HISTORIAL_DE_PAGOS 	 = "historial_de_pagos";
+	public $INTERES 	 = "interes";
+	public $INTERES_DEVENGADO_POR_COBRAR 	 = "interes_devengado_por_cobrar";
+	public $INTERES_NORMAL_DEVENGADO 	 = "interes_normal_devengado";
+	public $INTERES_NORMAL_DEVENGADO_SIN_ICA 	 = "interes_normal_devengado_sin_ica";
+	public $INTERES_NORMAL_DEVENGADO_SOLO_ICA 	 = "interes_normal_devengado_solo_ica";
+	public $LEASING_ACTIVOS 	 = "leasing_activos";
+	public $LEASING_BONOS 	 = "leasing_bonos";
+	public $LEASING_COMISIONES 	 = "leasing_comisiones";
+	public $LEASING_ESCENARIOS 	 = "leasing_escenarios";
+	public $LEASING_FINANCIERO 	 = "leasing_financiero";
+	public $LEASING_ORIGINADORES 	 = "leasing_originadores";
+	public $LEASING_ORIGINADORES_TIPOS 	 = "leasing_originadores_tipos";
+	public $LEASING_PLAZOS 	 = "leasing_plazos";
+	public $LEASING_RENTAS 	 = "leasing_rentas";
+	public $LEASING_RESIDUAL 	 = "leasing_residual";
+	public $LEASING_TASAS 	 = "leasing_tasas";
+	public $LEASING_TIPO_COMISION 	 = "leasing_tipo_comision";
+	public $LEASING_TIPO_RAC 	 = "leasing_tipo_rac";
+	public $LEASING_TRAMITES_CAT 	 = "leasing_tramites_cat";
+	public $LEASING_USUARIOS 	 = "leasing_usuarios";
+	public $LETRAS 	 = "letras";
+	public $LISTADO_DE_INGRESOS 	 = "listado_de_ingresos";
+	public $MERCADEO_CAMPANA 	 = "mercadeo_campana";
+	public $MERCADEO_ENVIOS 	 = "mercadeo_envios";
+	public $MIGRACION_CREDITOS_POR_SOCIO 	 = "migracion_creditos_por_socio";
+	public $NUM_OPERACIONES_POR_DOCTO 	 = "num_operaciones_por_docto";
+	public $NUM_OPERACIONES_POR_REC 	 = "num_operaciones_por_rec";
+	public $OFICIALES 	 = "oficiales";
+	public $OPERACIONES 	 = "operaciones";
+	public $OPERACIONES_ARCHIVO_DE_FACTURAS 	 = "operaciones_archivo_de_facturas";
+	public $OPERACIONES_DETALLE 	 = "operaciones_detalle";
+	public $OPERACIONES_DETALLE_NE 	 = "operaciones_detalle_ne";
+	public $OPERACIONES_MVTOS 	 = "operaciones_mvtos";
+	public $OPERACIONES_MVTOS_ARCH 	 = "operaciones_mvtos_arch";
+	public $OPERACIONES_MVTOSESTATUS 	 = "operaciones_mvtosestatus";
+	public $OPERACIONES_NO_ESTADISTICAS 	 = "operaciones_no_estadisticas";
+	public $OPERACIONES_PROMOCIONES 	 = "operaciones_promociones";
+	public $OPERACIONES_RECIBOS 	 = "operaciones_recibos";
+	public $OPERACIONES_RECIBOS_ARCH 	 = "operaciones_recibos_arch";
+	public $OPERACIONES_RECIBOSTIPO 	 = "operaciones_recibostipo";
+	public $OPERACIONES_SUMAS 	 = "operaciones_sumas";
+	public $OPERACIONES_TIPOS 	 = "operaciones_tipos";
+	public $ORIGINACION_GRUPOS 	 = "originacion_grupos";
+	public $ORIGINACION_LEASING 	 = "originacion_leasing";
+	public $ORIGINACION_REQUISITOS 	 = "originacion_requisitos";
+	public $PERSONAS 	 = "personas";
+	public $PERSONAS_ACTIVIDAD_ECONOMICA_TIPOS 	 = "personas_actividad_economica_tipos";
+	public $PERSONAS_AE_SCIAN 	 = "personas_ae_scian";
+	public $PERSONAS_APORTS_TIPOS 	 = "personas_aports_tipos";
+	public $PERSONAS_ASEGURADORAS 	 = "personas_aseguradoras";
+	public $PERSONAS_CHECKLIST 	 = "personas_checklist";
+	public $PERSONAS_CONSULTA_CENTRALRIESGOS 	 = "personas_consulta_centralriesgos";
+	public $PERSONAS_CONSULTA_LISTA 	 = "personas_consulta_lista";
+	public $PERSONAS_CREDITO_MAXIMO 	 = "personas_credito_maximo";
+	public $PERSONAS_DATOS_COLEGIACION 	 = "personas_datos_colegiacion";
+	public $PERSONAS_DATOS_EXTRANJERO 	 = "personas_datos_extranjero";
+	public $PERSONAS_DOCUMENTACION 	 = "personas_documentacion";
+	public $PERSONAS_DOCUMENTACION_TIPOS 	 = "personas_documentacion_tipos";
+	public $PERSONAS_DOMICILIOS_PAISES 	 = "personas_domicilios_paises";
+	public $PERSONAS_EN_PRESUPUESTOS 	 = "personas_en_presupuestos";
+	public $PERSONAS_MEMBRESIA_TIPO 	 = "personas_membresia_tipo";
+	public $PERSONAS_MORALES_ANX 	 = "personas_morales_anx";
+	public $PERSONAS_OPERACIONES_RECURSIVAS 	 = "personas_operaciones_recursivas";
+	public $PERSONAS_PAGOS_PERFIL 	 = "personas_pagos_perfil";
+	public $PERSONAS_PAGOS_PLAN 	 = "personas_pagos_plan";
+	public $PERSONAS_PERFIL_TRANSACCIONAL 	 = "personas_perfil_transaccional";
+	public $PERSONAS_PERFIL_TRANSACCIONAL_TIPOS 	 = "personas_perfil_transaccional_tipos";
+	public $PERSONAS_PROVEEDORES 	 = "personas_proveedores";
+	public $PERSONAS_RANGO_DE_INGRESOS 	 = "personas_rango_de_ingresos";
+	public $PERSONAS_REGIMEN_FISCAL 	 = "personas_regimen_fiscal";
+	public $PERSONAS_RELACIONES_RECURSIVAS 	 = "personas_relaciones_recursivas";
+	public $PERSONAS_SHARE 	 = "personas_share";
+	public $PERSONAS_XCLASIFICACION 	 = "personas_xclasificacion";
+	public $PERSONAS_YCLASIFICACION 	 = "personas_yclasificacion";
+	public $PERSONAS_ZCLASIFICACION 	 = "personas_zclasificacion";
+	public $PRIMERAS_LETRAS 	 = "primeras_letras";
+	public $PROGRAMACION_DE_AVISOS 	 = "programacion_de_avisos";
+	public $RECIBOS_DATOS_BANCARIOS 	 = "recibos_datos_bancarios";
+	public $RECUPERACIONES_NETAS 	 = "recuperaciones_netas";
+	public $REPORTE_FEDERACION 	 = "reporte_federacion";
+	public $RIESGOS_CHEQUEO 	 = "riesgos_chequeo";
+	public $RIESGOS_CONSECUENCIAS 	 = "riesgos_consecuencias";
+	public $RIESGOS_MEDIDAS 	 = "riesgos_medidas";
+	public $RIESGOS_PROBABILIDAD 	 = "riesgos_probabilidad";
+	public $RIESGOS_REPORTE 	 = "riesgos_reporte";
+	public $SEGUIMIENTO_COMPROMISOS 	 = "seguimiento_compromisos";
+	public $SEGUIMIENTO_LLAMADAS 	 = "seguimiento_llamadas";
+	public $SEGUIMIENTO_LUGAR_DE_COMPROMISO 	 = "seguimiento_lugar_de_compromiso";
+	public $SEGUIMIENTO_NOTIFICACIONES 	 = "seguimiento_notificaciones";
+	public $SISTEMA_AVISOS_DB 	 = "sistema_avisos_db";
+	public $SISTEMA_CATALOGO 	 = "sistema_catalogo";
+	public $SISTEMA_ELIMINADOS 	 = "sistema_eliminados";
+	public $SISTEMA_EQUIVALENCIAS 	 = "sistema_equivalencias";
+	public $SISTEMA_LENGUAJE 	 = "sistema_lenguaje";
+	public $SISTEMA_MENSAJES 	 = "sistema_mensajes";
+	public $SISTEMA_PERMISOS 	 = "sistema_permisos";
+	public $SISTEMA_PROGRAMACION_DE_AVISOS 	 = "sistema_programacion_de_avisos";
+	public $SISTEMAS_MODIFICADOS 	 = "sistemas_modificados";
+	public $SOCIOS 	 = "socios";
+	public $SOCIOS_AECONOMICA 	 = "socios_aeconomica";
+	public $SOCIOS_AECONOMICA_DEPENDENCIAS 	 = "socios_aeconomica_dependencias";
+	public $SOCIOS_AECONOMICA_SECTOR 	 = "socios_aeconomica_sector";
+	public $SOCIOS_AECONOMICA_TIPOS 	 = "socios_aeconomica_tipos";
+	public $SOCIOS_APORTACIONES 	 = "socios_aportaciones";
+	public $SOCIOS_APORTACIONESORIGEN 	 = "socios_aportacionesorigen";
+	public $SOCIOS_BAJA 	 = "socios_baja";
+	public $SOCIOS_BAJA_RAZONES 	 = "socios_baja_razones";
+	public $SOCIOS_CAJALOCAL 	 = "socios_cajalocal";
+	public $SOCIOS_CONSANGUINIDAD 	 = "socios_consanguinidad";
+	public $SOCIOS_ESTADOCIVIL 	 = "socios_estadocivil";
+	public $SOCIOS_ESTATUS 	 = "socios_estatus";
+	public $SOCIOS_FIGURA_JURIDICA 	 = "socios_figura_juridica";
+	public $SOCIOS_FIRMAS 	 = "socios_firmas";
+	public $SOCIOS_GENERAL 	 = "socios_general";
+	public $SOCIOS_GENERO 	 = "socios_genero";
+	public $SOCIOS_GRUPOSSOLIDARIOS 	 = "socios_grupossolidarios";
+	public $SOCIOS_MEMO 	 = "socios_memo";
+	public $SOCIOS_MEMOTIPOS 	 = "socios_memotipos";
+	public $SOCIOS_OTROS_PARAMETROS 	 = "socios_otros_parametros";
+	public $SOCIOS_PATRIMONIO 	 = "socios_patrimonio";
+	public $SOCIOS_PATRIMONIOESTATUS 	 = "socios_patrimonioestatus";
+	public $SOCIOS_PATRIMONIOTIPO 	 = "socios_patrimoniotipo";
+	public $SOCIOS_REGIMENVIVIENDA 	 = "socios_regimenvivienda";
+	public $SOCIOS_REGION 	 = "socios_region";
+	public $SOCIOS_RELACIONES 	 = "socios_relaciones";
+	public $SOCIOS_RELACIONESESTATUS 	 = "socios_relacionesestatus";
+	public $SOCIOS_RELACIONESTIPOS 	 = "socios_relacionestipos";
+	public $SOCIOS_SCORING_SIMPLE 	 = "socios_scoring_simple";
+	public $SOCIOS_TIEMPO 	 = "socios_tiempo";
+	public $SOCIOS_TIPOINGRESO 	 = "socios_tipoingreso";
+	public $SOCIOS_VIVIENDA 	 = "socios_vivienda";
+	public $SOCIOS_VIVIENDATIPO 	 = "socios_viviendatipo";
+	public $SOLICITUDES 	 = "solicitudes";
+	public $T_03F996214FBA4A1D05A68B18FECE8E71 	 = "t_03f996214fba4a1d05a68b18fece8e71";
+	public $TESORERIA_CAJA_ARQUEOS 	 = "tesoreria_caja_arqueos";
+	public $TESORERIA_CAJAS 	 = "tesoreria_cajas";
+	public $TESORERIA_CAJAS_MOVIMIENTOS 	 = "tesoreria_cajas_movimientos";
+	public $TESORERIA_MONEDAS 	 = "tesoreria_monedas";
+	public $TESORERIA_RECIBOS_PAGADOS 	 = "tesoreria_recibos_pagados";
+	public $TESORERIA_TIPOS_DE_DENOMINACIONES 	 = "tesoreria_tipos_de_denominaciones";
+	public $TESORERIA_TIPOS_DE_PAGO 	 = "tesoreria_tipos_de_pago";
+	public $TESORERIA_VALORACION_DIARIA 	 = "tesoreria_valoracion_diaria";
+	public $TESORERIA_VALORACION_DOLAR 	 = "tesoreria_valoracion_dolar";
+	public $TESORERIA_VALORACION_UDI 	 = "tesoreria_valoracion_udi";
+	public $USUARIOS 	 = "usuarios";
+	public $USUARIOS_WEB 	 = "usuarios_web";
+	public $USUARIOS_WEB_CONNECTED 	 = "usuarios_web_connected";
+	public $USUARIOS_WEB_NOTAS 	 = "usuarios_web_notas";
+	public $VEHICULOS_GPS 	 = "vehiculos_gps";
+	public $VEHICULOS_GPS_COSTEO 	 = "vehiculos_gps_costeo";
+	public $VEHICULOS_MARCAS 	 = "vehiculos_marcas";
+	public $VEHICULOS_SEGMENTO 	 = "vehiculos_segmento";
+	public $VEHICULOS_TENENCIA 	 = "vehiculos_tenencia";
+	public $VEHICULOS_USOS 	 = "vehiculos_usos";
+	
+	function isLog($tt){
+		$tlog	= array(
+				$this->SOCIOS_GENERAL => true,
+				$this->CREDITOS_SOLICITUD => true,
+				$this->LEASING_ACTIVOS => true
+		);
+		
+		return (isset($tlog[$tt])) ? true : false;
+	}
+}
 
 class SystemDB {
 	private $mCNX		= false;

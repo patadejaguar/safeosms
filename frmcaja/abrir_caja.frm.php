@@ -79,7 +79,7 @@ if($action == SYS_UNO){
 	$txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");
 	$xFRM->OText_13("oficial", "", "TR.JEFE_DE_CAJA");
 	$xFRM->addHElem( $txtP->getPassword("password", "TR.Password", "") );
-	$xFRM->OMoneda("fondodecaja", 0, "TR.FONDO DE CAJA", true);
+	$xFRM->OMoneda("fondodecaja", 0, "TR.FONDODECAJA", true);
 	$xFRM->addSubmit();
 }
 echo $xFRM->get();

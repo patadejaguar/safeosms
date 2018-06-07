@@ -30,7 +30,7 @@ class cUtileriasParaCreditos{
 	 * Funcion que establece un estatus segun los criterios sobre politicas de creditos
 	 *
 	 * @param integer $recibo		//Numero numero de recibo al que se agregan los movimientos
-	 * @param date $fecha			//Fecha de Operacion
+	 * @param variant $fecha			//Fecha de Operacion
 	 * @param bool $AppSucursal		//si Aplica para todas las sucursales
 	 * @param int $credito			Numero de credito en particular
 	 * @param bool $EnCierre		Si es solo el cierre, no se ejecutan los triggers del credito
@@ -150,6 +150,7 @@ class cUtileriasParaCreditos{
 		return $msg;
 	}
 	function setReestructurarICA($fecha_corte){
+		$xQL					= new MQL();
 		$periodo_de_calculo		= date("m", strtotime($fecha_corte));
 		$ejercicio				= date("Y", strtotime($fecha_corte));
 		$fecha_operacion		= $fecha_corte;
@@ -160,12 +161,12 @@ class cUtileriasParaCreditos{
 		 */
 
 		$sqlUICA = "UPDATE creditos_solicitud SET sdo_int_ant=0";
-		my_query($sqlUICA);
+		$xQL->setRawQuery($sqlUICA);
 		/**
 		 * Eliminar el ica
 		 */
 				$sqlDEL = "DELETE FROM operaciones_mvtos WHERE tipo_operacion = 451 AND periodo_mensual<=$periodo_de_calculo AND periodo_anual <= $ejercicio";
-				$myq = my_query($sqlDEL);
+				$myq 	= $xQL->setRawQuery($sqlDEL);
 
 		/**
 		 * Agregar el Recibo
@@ -201,8 +202,8 @@ class cUtileriasParaCreditos{
 						`creditos_solicitud`.`fecha_ministracion`
 					";
 			//echo $sqlConICA;
-			$rs = mysql_query($sqlConICA, cnnGeneral());
-			while($rw = mysql_fetch_array($rs)){
+			$rs 		= $xQL->getRecordset($sqlConICA);
+			while($rw 	= $rs->fetch_assoc()){
 				$socio				= $rw["numero_socio"];
 				$solicitud			= $rw["numero_solicitud"];
 				$monto_ministrado	= $rw["monto_autorizado"];
@@ -253,7 +254,7 @@ class cUtileriasParaCreditos{
 
 						$UICA_sql = "UPDATE creditos_solicitud SET sdo_int_ant = $ica
 						WHERE numero_solicitud=$solicitud AND numero_socio=$socio";
-						my_query($UICA_sql);
+						$xQL->setRawQuery($UICA_sql);
 
 				}
 				$msg	.= date("Y-m-d") . "\t$socio\t$solicitud\tMonto: $saldo_historico, Tasa: $tasa_interes, Factor: $factor_interes, Tasa ICA $porcentaje_ica\r\n";
@@ -771,7 +772,7 @@ class cUtileriasParaCreditos{
 					$xLog->add("$credito\tFecha de Ministracion a $FECHA_DE_ULTIMO_PAGO\r\n", $xLog->DEVELOPER);
 				}
 				
-				if($EliminarTodo == false){ my_query("DELETE FROM creditos_sdpm_historico WHERE numero_de_credito = $credito $wFecha2"); }
+				if($EliminarTodo == false){ $ql->setRawQuery("DELETE FROM creditos_sdpm_historico WHERE numero_de_credito = $credito $wFecha2"); }
 				if($IsGlobal == true){
 					//si la fecha es actual, buscar el ultimo pago
 					if($FECHA_DE_ULTIMO_PAGO == $xCred->getFechaUltimoMvtoCapital() OR ($xF->getInt($fechaCorte) > $xF->getInt($xCred->getFechaUltimoMvtoCapital())) ){
@@ -1143,6 +1144,7 @@ class cUtileriasParaCreditos{
 		return $xLog->getMessages();	
 	}
 	function setCleanCreditosConAhorro(){
+		$xQL	= new MQL();
 		$msg	= "============== DEPURANDO CREDITOS CON CUENTAS DE CAPTACION GLOBALES ========\r\n";
 	$sql_sentencia =  "SELECT
 						`creditos_solicitud`.*,
@@ -1168,8 +1170,8 @@ class cUtileriasParaCreditos{
 								WHERE numero_cuenta=creditos_solicitud.contrato_corriente_relacionado) = 0
 						)";
 						//echo $sql_sentencia;
-	$rsUCTA		= mysql_query($sql_sentencia, cnnGeneral() );
-		while ( $rw = mysql_fetch_array($rsUCTA) ) {
+	$rsUCTA		= $xQL->getRecordset($sql_sentencia);
+	while ( $rw = $rsUCTA->fetch_assoc() ) {
 			$socio				= $rw["numero_socio"];
 			$credito			= $rw["numero_solicitud"];
 			$cuenta_relacionada = $rw["contrato_corriente_relacionado"];
@@ -1221,9 +1223,9 @@ class cUtileriasParaCreditos{
     								0, 0, 0, 'ALTA_AUTOMATICA_POR_CREDITO',
     								$def_origen, 99, $subproducto, '', '',
     								0, 0, '$fecha_de_chequeo', '" . getSucursal() . "', 0)";
-    				$xICta	= my_query($SQLNCta);
+    				$xICta	= $xQL->setRawQuery($SQLNCta);
     				$cuenta_relacionada	= $cuenta_nueva;
-    					if ($xICta["stat"] == false ){
+    					if ($xICta === false ){
     						$msg	.= date("Y-m-d H:i:s") . "\tERROR AL EFECTUAR EL ALTA: EL SISTEMA DEVOLVIO . " . $xICta["error"] . "\r\n";
     					}
     			} else {
@@ -1234,8 +1236,8 @@ class cUtileriasParaCreditos{
 				$sql_update_credito = "UPDATE creditos_solicitud
 										SET contrato_corriente_relacionado=$cuenta_relacionada
 										WHERE numero_solicitud=$credito";
-				$x = my_query($sql_update_credito);
-					if( $x["stat"] == false ){
+				$x = $xQL->setRawQuery($sql_update_credito);
+					if( $x === false ){
 							$msg	.= date("Y-m-d H:i:s") . "\tERROR : EL SISTEMA DEVOLVIO . " . $x["error"] . "\r\n";
 					} else {
 							$msg	.= date("Y-m-d H:i:s") . "\t$socio\t$credito\tSe Actualizo la Cuenta Relacionada a la NUM $cuenta_relacionada (" . $x["info"] . ")\r\n";
@@ -1249,7 +1251,7 @@ class cUtileriasParaCreditos{
 		$msg				= "";
 		$arrPagosF			= array();
 		$arrPagosM			= array();
-			    
+		$xQL				= new MQL();	    
 		//==============================================================================
 			$sqlP			= "SELECT
 								`operaciones_mvtos`.`socio_afectado`       AS `socio`,
@@ -1267,10 +1269,10 @@ class cUtileriasParaCreditos{
 							GROUP BY
 								`operaciones_mvtos`.`docto_afectado`,
 								`operaciones_mvtos`.`tipo_operacion` ";
-			$rsP			= mysql_query($sqlP, cnnGeneral());
+			$rsP			= $xQL->getRecordset($sqlP);
 			$msg			.= "============ ULTIMOS MVTOS HASTA LA FECHA $fecha_final \r\n";
 				
-			while ( $rwP	= mysql_fetch_array($rsP) ){
+			while ( $rwP	= $rsP->fetch_assoc() ){
 				$mSocio			= $rwP["socio"];
 				$mCredito		= $rwP["documento"];
 				$mFecha			= $rwP["fecha"];
@@ -1307,14 +1309,14 @@ class cUtileriasParaCreditos{
 								(`creditos_solicitud`.`estatus_actual` !=50)
 							
 								 ";
-			$rsMx				= mysql_query($sql, cnnGeneral() );
+			$rsMx				= $xQL->getRecordset($sql);
 			//$msg				.= $sql ."\r\n" . $sqlDM  . "\r\n";
 			$msg				.= "============ GENERANDO MOVIMIENTOS 999: Saldos al Fin del mes \r\n";	
 			$xF					= new cFecha();
 
 
 				
-			while ( $rw	= mysql_fetch_array($rsMx) ){
+			while ( $rw	= $rsMx->fetch_assoc() ){
 				//corregir cuando yo me acuerde
 				//Corregi accion de forzado... que mas?
 				$solicitud				= $rw["numero_solicitud"];
@@ -1337,7 +1339,7 @@ class cUtileriasParaCreditos{
 					$sqlUC				= "UPDATE creditos_solicitud SET saldo_conciliado=$saldo_conciliado, fecha_conciliada='$fecha_conciliada'
 									    	WHERE numero_solicitud=$solicitud ";
 					$msg				.= "$i\t$socio\t$solicitud\tActualizar Saldo a $saldo_conciliado, Fecha a $fecha_conciliada, Ministrado: $montoMinistrado, Monto Pagado: $pagos\r\n";
-					my_query($sqlUC);
+					$xQL->setRawQuery($sqlUC);
 				}
 
 		return $msg;
@@ -2520,6 +2522,15 @@ class cSQLFiltros {
 		}
 		return $w;
 	}
+	function TesoreriaCajasPorCajero($usuario = false){
+		$w			= "";
+		$usuario	= setNoMenorQueCero($usuario);
+		
+		if($usuario > 0){
+			$w	= " AND (`tesoreria_cajas`.`idusuario` = $usuario) ";
+		}
+		return $w;
+	}
 	function TesoreriaOperacionesPorCajero($cajero = false){
 		$cajero	= setNoMenorQueCero($cajero);
 		$w		= "";
@@ -3080,6 +3091,7 @@ class cCreditosProceso {
 	public $PASO_AUTORIZADO		= 98;
 	
 	public $PASO_VIGENTE		= 10;
+	public $PASO_ADESEMBOLSO	= 501;
 	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }

@@ -27,6 +27,7 @@ $xT					= new cTipos();
 $xF					= new cFecha();
 $xQL				= new MQL();
 $xLog				= new cCoreLog();
+$xOrgOps			= new cOperacionesTipoOrigenCbza();
 
 $out				= parametro("out", SYS_DEFAULT); $out = strtolower($out);
 
@@ -35,6 +36,8 @@ $procesado			= (isset($_REQUEST["procesar"])) ? $_REQUEST["procesar"] : SYS_NORM
 $pempresa			= parametro("periodoempresa", 0, MQL_INT);// (isset($_REQUEST["periodoempresa"])) ? $_REQUEST["periodoempresa"] : "";
 $sumaoperaciones	= parametro("idtotaloperaciones", 0, MQL_FLOAT);
 $montodesglose		= parametro("idplandesglose", 0, MQL_FLOAT);
+$origencobranza		= parametro("idorigencbza",$xOrgOps->TIPO_ENVENTANILLA, MQL_INT);
+$oficialcbza		= parametro("oficialcobranza",getUsuarioActual(), MQL_INT);
 $xBase				= new cBases();
 
 
@@ -98,6 +101,11 @@ if($procesado == SYS_AUTOMATICO){
 			$curOps++;
 		}
 	}
+	//si el periodo de la empresa es mayor a cero, se toma como origen
+	if($pempresa>0){
+		$origencobranza		= $xOrgOps->TIPO_ENPLANILLA;
+	}
+	
 	if($curOps < 2){
 	//Cancelar si no hay Movientos
 		$xho		= new cHObject();
@@ -221,7 +229,10 @@ $xNRec			= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO);
 $xNRec->setNuevoRecibo($socio, $solicitud, $fecha_operacion, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, $observaciones,
 		       $cheque, $tipo_pago, $recibo_fiscal, $grupo, false, AML_CLAVE_MONEDA_LOCAL, 0, $empresa, $parcialidad);
 
+$xNRec->setDatosOrigen($origencobranza, $oficialcbza);
+
 $xLog->add($xNRec->getMessages(OUT_TXT), $xLog->DEVELOPER);
+
 $recibo_pago		= $xNRec->getCodigoDeRecibo();
 if($procesado == SYS_AUTOMATICO OR $pempresa > 0){
 	$icxObs			= $SRC["cobservaciones"];
@@ -308,6 +319,7 @@ if($procesado != SYS_AUTOMATICO){
 			$MContable	= TM_ABONO;
 			$m[$id] 	= (isset($SRC["c-$id"]) ) ? $SRC["c-$id"] : 0;
 			$p[$id]		= (isset($SRC["p-$id"]) ) ? $SRC["p-$id"] : 0;
+			//setLog("$id --- " . $m[$id] . " --- " . $p[$id]);
 			$mextra		= $m[$id];
 			$pextra		= $p[$id];
 			//Modificar el Movimiento en caso de ser negativo
@@ -440,9 +452,13 @@ $baseM246 			= $m[OPERACION_CLAVE_CARGOS_VARIOS];
 $baseM120 			= $capital + $m[410];
 $baseM151 			= $m[1201] + $m[413] + $ivaintereses + $m[1203];
 $baseM152 			= $m[1202] + $ivaotros + $m[1204];
-$baseM303 			= $m[801] + $m[802] + $m[803];
+
 $baseM220 			= $m[412];
+
 $baseM352 			= $interesanticipado;
+$baseM303 			= $m[801] + $m[802] + $m[OPERACION_CLAVE_BON_VARIAS];
+$baseM353			= $m[OPERACION_CLAVE_DEV_GLIQ];
+
 //================================================================ PARCHE 09/Mayo/2016
 	//$xCred->setAbonoCapital($baseM120, $parcialidad, $cheque, $tipo_pago, $recibo_fiscal, $observaciones, $grupo, $fecha_operacion, $recibo_pago);
 /*Tipo de Operacion 146.- Pago Fortaleciemiento ha cambiado a 246 2017-01-31  */ 
@@ -456,6 +472,21 @@ setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM152, OPE
 setNuevoMvto($socio, $contrato_captacion, $recibo_pago, $fecha_operacion,  $baseM220, OPERACION_CLAVE_PAGO_CAPTACION, $parcialidad, $observaciones);
 
 if($baseM303 >0){
+	if(isset($m[801])){
+		$m[801] = $m[801] * -1;
+	} else {
+		$m[801] = 0;
+	}
+	if(isset($m[802])){
+		$m[802] = $m[802] * -1;
+	} else {
+		$m[802] = 0;
+	}
+	if(isset($m[OPERACION_CLAVE_BON_VARIAS])){
+		$m[OPERACION_CLAVE_BON_VARIAS] = $m[OPERACION_CLAVE_BON_VARIAS] * -1;
+	} else {
+		$m[OPERACION_CLAVE_BON_VARIAS] = 0;
+	}
 	$BonMora	= setNoMenorQueCero($m[801], 2);
 	$BonInt		= setNoMenorQueCero($m[802], 2);
 	$BonOtro	= setNoMenorQueCero($m[OPERACION_CLAVE_BON_VARIAS], 2);
@@ -550,8 +581,17 @@ $SQLX = "SELECT * FROM captacion_cuentas WHERE numero_cuenta = $contrato_captaci
 
 //**************************************************************************************
 $arrUCredito		= array();
-setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM303, 303, $parcialidad, $observaciones);
-setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM352, 352, $parcialidad, $observaciones);
+if($baseM303 !== 0){
+	$baseM303	= $baseM303 * -1;
+	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM303, 303, $parcialidad, $observaciones, TM_ABONO);
+}
+if($baseM353 !== 0){
+	$baseM353	= $baseM353 * -1;
+	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM353, OPERACION_CLAVE_DEV_GLIQ, $parcialidad, $observaciones, TM_ABONO);
+}
+if($baseM352 !== 0){
+	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM352, 352, $parcialidad, $observaciones);
+}
 
 //======================================== PURGAR LOS DEMAS MOVIENTOS Y GENERAR CARGOS X
 unset($m[142]); unset($m[420]); unset($m[421]); unset($m[411]); unset($m[415]);
@@ -560,8 +600,10 @@ unset($m[601]); unset($m[600]);
 unset($m[410]);
 unset($m[1201]); unset($m[413]); unset($m[1203]);
 unset($m[1202]); unset($m[1204]); 
-unset($m[801]); unset($m[802]); unset($m[803]);
+unset($m[801]); unset($m[802]); unset($m[OPERACION_CLAVE_BON_VARIAS]);
 unset($m[412]);
+unset($m[OPERACION_CLAVE_DEV_GLIQ]);
+
 //====================================== Los remanentes se envian a sus respectivos IDS
 foreach ($m as $idx => $vv){
 	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $vv, $idx, $parcialidad, $observaciones);

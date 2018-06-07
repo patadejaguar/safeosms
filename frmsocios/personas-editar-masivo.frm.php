@@ -92,7 +92,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	$xIc				= new cHImg();
 	$xT					= new cTipos();
 	$todos				= $xT->cBool($todos);
-	$w1					= ($todos == true) ? "" : " AND (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
+	$w1					= ($todos == true) ? " " : " AND (tipoingreso != " . TIPO_INGRESO_SDN ." AND tipoingreso != " . TIPO_INGRESO_PEP ." AND tipoingreso != " . TIPO_INGRESO_USUARIO ." AND tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
 	
 	
 	if($tipoingreso > 0){
@@ -208,7 +208,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 			
 			$strTbls .= $table_s->Show("TR.CREDITOS");
 		} else {
-			if($todos == true){$WSoc = " `socios_general`.`codigo` >0 $WSoc ";}
+			//if($todos == true){$WSoc = " `socios_general`.`codigo` >0 $WSoc ";}
 			$sqllike = $sqlL->getListadoDePersonasV2($w1 . $WSoc, "0,100", $extras);
 			$table_s = new cTabla($sqllike);
 			//$table_s->setEventKey("setSocio");
@@ -245,7 +245,7 @@ $xTxt2		= new cHText();
 $xChk		= new cHCheckBox();
 $xChk->setDivClass("");
 $xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
-$xFRM->addToolbar($xChk->get("TR.TODO", "idtodo", true));
+$xFRM->addToolbar($xChk->get("TR.TODO", "idtodo", false));
 
 $xFRM->OButton("TR.MODIFICAR BATCH", "jsEjecutarBatch()", $xFRM->ic()->EJECUTAR, "idmodbatch", "green");
 $xFRM->OButton("TR.EXPORTAR", "jsEjecutarExportar()", $xFRM->ic()->EJECUTAR, "idexp", "blue2");

@@ -199,7 +199,7 @@ function jsaGetCostos($entidad, $precio, $clave, $olvidar, $nuevo){
 
 	return $tab -> getString();
 }
-function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave, $olvidar, $nuevo, $rac){
+function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave, $olvidar, $nuevo, $rac, $admin){
 	$xEmul		= new cLeasingEmulaciones($plazo, 0 ,0);
 	$xEsc		= new cLeasingEscenarios();
 	$tab 		= new TinyAjaxBehavior();
@@ -268,12 +268,11 @@ function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave
 			$PRes	= setNoMenorQueCero($DTasa[0]);
 			$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
 			$TRes	= setNoMenorQueCero($TRes);
-			
-			$res 	= $xEmul->getValorResidual($precio, $aliado, $PRes, $TRes, $anticipo);
+			//Valor residual a cero
+			$res 	= $xEmul->getValorResidual($precio, $aliado, $PRes, $TRes, $anticipo, $admin);
+	
 			$tab->add(TabSetValue::getBehavior("residual_$PRes", $res ));
-			
 			//setError($TRes);
-			
 			//$tab->add(TabSetValue::getBehavior("tasaresidual_$PRes", $TRes ));
 			
 			if($PRes == $plazo){
@@ -321,7 +320,7 @@ $jxc ->exportFunction('jsaGetTasa', array('tipo_rac', 'plazo', 'idoriginacion_le
 $jxc ->exportFunction('jsaGetComision', array('originador','idoriginacion_leasing','idolvidar', 'idnuevo', 'suboriginador'));
 $jxc ->exportFunction('jsaGetCostoGPS', array('plazo', 'tipo_gps', 'monto_gps','idoriginacion_leasing','idolvidar', 'idnuevo'));
 $jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehiculo','idoriginacion_leasing', 'idolvidar', 'idnuevo'));
-$jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac'));
+$jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac', 'administrado'));
 
 $jxc ->exportFunction('jsaAsociar', array('persona', 'idoriginacion_leasing'), "#idavisos");
 $jxc ->exportFunction('jsaActualizarCredito', array('credito', 'total_credito'), "#idavisos");
@@ -504,7 +503,7 @@ if($xUser->getEsOriginador() == false){
 			$xFRM->OHidden("comision_apertura", $xTabla->comision_apertura()->v());
 		} else {
 			$xFRM->OMoneda("comision_originador", $xTabla->comision_originador()->v(), "TR.COMISION ORIGINADOR");
-			$xFRM->OMoneda2("comision_apertura", $xTabla->comision_apertura()->v(), "TR.COMISION_POR_APERTURA");
+			$xFRM->ONumero("comision_apertura", $xTabla->comision_apertura()->v(), "TR.COMISION_POR_APERTURA");
 		}
 		
 	} else {
@@ -570,7 +569,7 @@ if($xTabla->persona()->v() > DEFAULT_SOCIO){
 				//Validar Si existe Dato del Vehiculo
 				$xArr	= new cCreditosLeasing($clave);
 				if($xArr->init() == true){
-					$xFRM->OButton("TR.AGREGAR FLOTA", "jsAgregarDatosVehiculo()", $xFRM->ic()->TRUCK);
+					$xFRM->OButton("TR.FLOTA", "jsAgregarDatosVehiculo()", $xFRM->ic()->TRUCK);
 				}
 				//======================== Plan Cliente
 				$xFRM->OButton("TR.PLAN_DE_PAGOS CLIENTE", "jsGetPlanCliente()", $xFRM->ic()->CALENDARIO1);
@@ -879,6 +878,7 @@ foreach ($rs as $rw){
 	$xEsc->setData($rw);
 	$idx	= $xEsc->plazo()->v();
 	
+	//$xFRM->ONumero("residual_$idx", 0, "Residual $idx");
 	$xFRM->OHidden("residual_$idx", 0);
 	$xFRM->OHidden("valorvec_$idx", 0);
 	$xFRM->OHidden("monto_gps_$idx", 0);
@@ -930,6 +930,8 @@ if($OlvidarTodo == true){
 		$tt		.= "<td>" . $xTxt->getDeMoneda("tasavec_$idx", "", $xLeas->getTasaVec($idx)) . "</td>";
 	}
 	$tt		.= "</tr>";
+	
+	
 }
 
 
@@ -1143,6 +1145,7 @@ if($EsOriginador == false){
 	}
 	$tt		.= "</tr>";
 
+	
 }
 //==================================================== Aliado
 /*$tt		.= "<tr>";
@@ -1470,6 +1473,7 @@ function jsCalcularEscenariosII(){
 				$("#tasavec-" + p_).html( getFTasa($("#tasavec_" + p_).val()) );
 				//==================== Mostrar Tasa RES
 				$("#tasaresidual-" + p_).html( getFTasa($("#tasaresidual_" + p_).val()) );
+				
 				jsCalcular(p_);
 			}
 		}
@@ -1500,7 +1504,8 @@ function jsCalcular(idx){
 	var financia_seguro		= ($("#financia_seguro").val() == 1) ? true : false;
 	var financia_tenencia	= ($("#financia_tenencia").val() == 1) ? true : false;
 	var domicilia			= ($("#domicilia").val() == 1) ? true : false;
-	
+
+	var plazoactual			= entero($("#plazo").val());
 	var idsiniva			= false;
 	var idconredondeo		= false;
 	var idsolo				= false;
@@ -1813,8 +1818,8 @@ function jsActualizaResiduales(vDesde){
 	if(vDesde > 0){ //Se origina desde el Control de tasa_compra
 		$("#tasavec_" + pzo).val(vDesde);
 		//Condicionar la regla de que el VEC no puede ser mayor al Residual
-		var ttv	= redondear($("#tasavec_" + pzo).val(),2);
-		var ttr	= redondear($("#tasaresidual_" + pzo).val(),2);
+		var ttv	= redondear($("#tasavec_" + pzo).val(),3);
+		var ttr	= redondear($("#tasaresidual_" + pzo).val(),3);
 		if(ttv < ttr){
 			$("#tasavec_" + pzo).val(ttr);
 			xG.alerta({msg:"La TASAVEC no puede ser menor a la Tasa Residual", type: "warn"});
@@ -1823,8 +1828,10 @@ function jsActualizaResiduales(vDesde){
 		var acnt 		= vEscenarios.length;
 		for (var i_ = 0; i_ < acnt; i_++) {
 			var p_		= vEscenarios[i_];
-			var ttv		= redondear($("#tasavec_" + p_).val(),2);
-			var ttr		= redondear($("#tasaresidual_" + p_).val(),2);
+			var ttv		= redondear($("#tasavec_" + p_).val(),3);
+			var ttr		= redondear($("#tasaresidual_" + p_).val(),3);
+			$("#tasavec-" + p_).html( getFTasa(ttv) );
+			 
 			if(ttv < ttr){
 				$("#tasavec_" + p_).val(ttr);
 				xG.alerta({msg:"La TASAVEC no puede ser menor a la Tasa Residual en el Plazo " + p_, type: "warn"});
@@ -1841,11 +1848,13 @@ function jsActualizaResiduales(vDesde){
 	$("#residuales").val(xx);
 	if(onEdit == true){
 		//Guardar Tasas
-		xG.save({nomsg: true, tabla:"originacion_leasing", id: idcotiza, content: "tasas=" + yy + "&vecs=" + ww + "&residuales=" + xx });
+		xG.save({nomsg: true, tabla:"originacion_leasing", id: idcotiza, content: "tasas=" + yy + "&vecs=" + ww + "&residuales=" + xx, callback:jsActualizaResidualesPost });
 	}
 	return true;
 }
-
+function jsActualizaResidualesPost(){
+	
+}
 function jsGetPlanCliente(){
 	var idcredito	= $("#credito").val();
 	xG.w({url:"../frmarrendamiento/leasing-plan_cliente.frm.php?credito=" + idcredito, tab:true});

@@ -1,6 +1,6 @@
 <?php
 use Enhance\Language;
-use Respect\Validation\Exceptions\PrivateAbstractNestedException;
+//use Respect\Validation\Exceptions\PrivateAbstractNestedException;
 use Dompdf\Dompdf;
 //use Enhance\Language;
 /**
@@ -40,14 +40,22 @@ class cHDicccionarioDeTablas {
 		$ic				= new cHButton();
 		$fecha 			= $xD->getFechaISO($fecha);
 		$sql			= $xL->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_SOLICITADO, false, false, false, false, false, false, $persona);
-		$xT				= new cTabla($sql, 3);
+		//$xT				= new cTabla($sql, 3);
 		//$xT->setKeyField("numero_de_solicitud");
-		if($persona>0){	$xT->setKey(1);}
-		$xT->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
-		$xT->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion(" . HP_REPLACE_ID . ")", $ic->ic()->OK);
-		$xT->OButton("TR.RECHAZADO", "var xC=new CredGen(); xC.getFormaRechazo(" . HP_REPLACE_ID . ")", $ic->ic()->PARAR);
-		$html			= $xT->Show($titulo);
-		$this->mItems	= $xT->getRowCount();
+		//if($persona>0){	$xT->setKey(1);}
+		$this->mOTable->setSQL($sql);
+		$this->mOTable->setKey(3);
+		if($persona>0){	$this->mOTable->setKey(1); }
+		
+		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
+		$this->mOTable->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion(" . HP_REPLACE_ID . ")", $ic->ic()->OK);
+		$this->mOTable->OButton("TR.RECHAZADO", "var xC=new CredGen(); xC.getFormaRechazo(" . HP_REPLACE_ID . ")", $ic->ic()->PARAR);
+		$this->mOTable->setFootSum(array(
+				5 => "monto_solicitado"
+		));
+		
+		$html			= $this->mOTable->Show($titulo);
+		$this->mItems	= $this->mOTable->getRowCount();
 		return $html;
 	}
 	function getCreditosPorMinistrar($fecha, $persona = false, $titulo = ""){
@@ -57,20 +65,22 @@ class cHDicccionarioDeTablas {
 		$fecha 			= $xD->getFechaISO($fecha);
 		$ic				= new cHButton();
 		$sql			= $xL->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_AUTORIZADO, true, false, false, false, false, false, $persona);
-		$xT				= new cTabla($sql, 3);
+		//$xT				= new cTabla($sql, 3);
 		//$xT->setKeyField("numero_de_solicitud");
-		if($persona>0){	$xT->setKey(1);}
-		$xT->setWithMetaData();
-		$xT->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
-		$xT->OButton("TR.MINISTRAR", "var xC=new CredGen();xC.getFormaMinistracion(" . HP_REPLACE_ID . ")", $ic->ic()->DINERO);
+		$this->mOTable->setSQL($sql);
+		$this->mOTable->setKey(3);
+		if($persona>0){	$this->mOTable->setKey(1); }
+		$this->mOTable->setWithMetaData();
+		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
+		$this->mOTable->OButton("TR.MINISTRAR", "var xC=new CredGen();xC.getFormaMinistracion(" . HP_REPLACE_ID . ")", $ic->ic()->DINERO);
 		
-		$xT->setFootSum(array(
+		$this->mOTable->setFootSum(array(
 				5 => "monto_solicitado",
-				14 => "monto_autorizado" 
+				13 => "monto_autorizado" 
 		));
 		//$xT->OButton("TR.Panel", "var xC=new CredGen(); xC.goToPanelControl(" . HP_REPLACE_ID . ")", $ic->ic()->CONTROL);
-		$html			= $xT->Show($titulo);
-		$this->mItems	= $xT->getRowCount();
+		$html			= $this->mOTable->Show($titulo);
+		$this->mItems	= $this->mOTable->getRowCount();
 		return $html;
 	}
 	function getLlamadas($fecha_inicial = false, $fecha_final = false, $De = 0 , $efectuadas = false, $canceladas = false, $vencidas = false){
@@ -498,6 +508,7 @@ class cPanelDeReportes {
 		$this->mOFRM	= new cHForm("frmpanel");
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
 		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", $this->mOFRM->ic()->REPORTE, "cmdgetreporte", "green2");
+		$this->mOFRM->addCerrar();
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
 		$SqlRpt			= "SELECT * FROM general_reports WHERE aplica='" . $this->mFiltro . "' AND `estatus`=1 ORDER BY `descripcion_reports`,`order_index` ASC ";
 		$cSRpt			= new cSelect("idreporte", "idreporte", $SqlRpt );
@@ -1584,7 +1595,7 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 		foreach ($this->mLabels as $k => $v){
 			$this->mLbl	.= ($this->mLbl == "") ? "'$v'" : ",'$v'";
 		}
-		$maxWidth = max( array_map( 'count',  $this->mSeries ) );
+		$maxWidth 		= max( array_map( 'count',  $this->mSeries ) );
 		//setLog($maxWidth);
 		foreach ($this->mSeries as $kx => $cnt){
 			$sr			= "";
@@ -1666,6 +1677,36 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 			$this->mSeries[$texto]			= array($texto=> $valor);
 		}
 		
+	}
+	function addSQL($sql, $colTitle, $colValue){
+		$xQL	= new MQL();
+		$rsD	= $xQL->getDataRecord($sql);
+		$tItems	= $xQL->getNumberOfRows();
+		$cItems	= 1;
+		$aCols	= array();
+		
+		foreach ($rsD as $rw){
+			$aCols[$cItems]	= $rw[$colTitle];
+			
+			for($ix = 1; $ix <= $tItems; $ix++){
+				if($ix == $cItems){
+					$this->addData($rw[$colValue], $rw[$colTitle]);
+					//setLog($rw[$colTitle]. "---- $ix / $cItems");
+				} else {
+					//setLog($aCols[$cItems] . "---- $ix / $cItems");
+					$this->addData(0, $aCols[$cItems]);
+				}
+			}
+			
+			
+			$cItems++;
+			//
+		}
+		//setLog($cItems);
+		//setLog($aCols);
+		//setLog($this->mSeries);
+		$rsD	= null;
+		$xQL	= null;
 	}
 }
 
@@ -2124,12 +2165,13 @@ class cHGrid {
 		$sinit		= ($init == false) ? "" : "jsLG" . $this->mId . "();";
 		$pg			= ($this->mPaginacion == true) ? "pageSize:50, paging:true," : "";
 		$str		= "";
+		$strOnCh	= "";// "selectionChanged: function (){var \$selectedRows = $('#" . $this->mId . "').jtable('selectedRows'); if (\$selectedRows.length > 0){ \$selectedRows.each(function(){ var record = $(this).data('record'); CurrentCallback(record); }); }  },";
 		//$fn1		= "";
 		//$fn2		= ($this->mFooterCallback == "") ? "" : ",\n\tfooterCallback:" . $this->mFooterCallback . "";
 		/*sorting: true,*/
 		$str		.= "$('#" . $this->mId . "').jtable({
         title: '" . $this->mTitle . "',$pg
-        actions: { $acts }, selecting:true,$sorting tableId:'tbl_" . $this->mId . "',
+        actions: { $acts }, selecting:true,$sorting tableId:'tbl_" . $this->mId . "',$strOnCh
         fields: { $flds }$tbars });\n $('#". $this->mId . "').jtable('load'); ";
 		$str		= "$sinit\nfunction jsLG" . $this->mId . "(str){\nstr =(typeof str == 'undefined') ? '' : str;\n$str\n}";
 		return ($enclose == false) ? $str: "<script>$str</script>";

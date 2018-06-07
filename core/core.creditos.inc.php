@@ -192,7 +192,10 @@ class cCredito {
 	private $mValorResidual			= 0;
 	private $mEsLeasingPuro			= false;
 	private $mRespetaPlan			= true;
-	
+	private $mClaveDeRechazo		= 0;
+	private $mRechazoNota			= "";
+	private $mFechaDesvinculo		= false;
+	private $mEmpDesvinculo		= false;
 	                                   // protected $mOtrosParams = array();
 	                                   // protected $mSaldoAtrasado = 0;
 	function __construct($numero_de_credito = false, $numero_de_socio = false) {
@@ -370,11 +373,14 @@ class cCredito {
 			$this->mArrDatosDeCredito 			= $DCredito;
 			unset ( $DCredito );
 			//Inicializar Montos
-			
+			//Inicializar Datos de Rechazo
+			if($this->getEsRechazado() == true){
+				$this->initDatosDeRechazo();
+			}
 			// Inicializa el Credito
-			$this->mCreditoInicializado = true;
+			$this->mCreditoInicializado 		= true;
 		} else {
-			$this->mCreditoInicializado = false;
+			$this->mCreditoInicializado 		= false;
 		}
 		return $this->mCreditoInicializado;
 	}
@@ -390,6 +396,14 @@ class cCredito {
 				break;
 		}
 	}
+	private function initDatosDeRechazo(){
+		$xCredR	= new cCreditosRechazos();
+		if($xCredR->initByCredito($this->getClaveDeCredito()) == true){
+			$this->mClaveDeRechazo	= $xCredR->getTipo();
+			$this->mRechazoNota		= $xCredR->getNota();
+		}
+	}
+	function getNotaDeRechazo(){ return $this->mRechazoNota; }
 	/**
 	 * Funcion que Busca un Fecha por el Numero de Pagos por el que debe llevar
 	 * @param integer $pago_buscado pago del cual se debe buscar la fecha
@@ -548,7 +562,7 @@ class cCredito {
 	 * Muestra el Plan de Pagos en Texto, o HTML, Simple o Completo
 	 * @param string $InOut de Salida, por Defecto HTML
 	 * @param boolean $simple Imprime el Plan de Pagos sin detallarla Lista
-	 * @param boolen $NoExtend es a TRue solo muestra el Plan de pagos
+	 * @param boolean $NoExtend es a TRue solo muestra el Plan de pagos
 	 * @return string de Pagos en Formto definido en OUT
 	 */
 	function getPlanDePago($InOut = OUT_HTML, $simple = false, $NoExtender = false, $tools = false) {
@@ -870,9 +884,9 @@ class cCredito {
 	}
 	/**
 	 * Funcion que Envia a Creditos Vigentes un Vencido
-	 * @param $fecha Fecha de Movimiento
-	 * @param $parcialidad Parcialidad en que se envia a vencido
-	 * @param $recibo Numero de Recibo que Carga el Movimiento
+	 * @param variant $fecha Fecha de Movimiento
+	 * @param integer $parcialidad Parcialidad en que se envia a vencido
+	 * @param integer $recibo Numero de Recibo que Carga el Movimiento
 	 * @return string del proceso.
 	 */
 	function setEnviarVigente($fecha, $parcialidad, $recibo = false) {
@@ -906,7 +920,7 @@ class cCredito {
 	}
 	/**
 	 * Funcion que Efectua los pasos necesarios para que un credito esté vencido.
-	 * @param date $fecha	        	Proceso
+	 * @param variant $fecha	        	Proceso
 	 * @param integer $parcialidad  	Parcialidad
 	 * @param integer $recibo	      	Recibo al que se agrega el movimiento, si es false se crea uno.
 	 * @return string del proceso.
@@ -1089,10 +1103,11 @@ class cCredito {
 			//Numero de Avales
 			$NumAvales	= $OConv->getNumeroDeAvales();
 			if($NumAvales > 0){
-				$xAval		= new cCreditosAvales();
-				$xAval->initByCredito($this->getClaveDeCredito());
+				$xAval				= new cCreditosAvales();
+				$xAval->initByCredito($this->getClaveDeCredito(), $this->getClaveDePersona());
 				$xAval->initArbolAvalesDirectos();
 				$NumAvalesPorCred	= $xAval->getNumeroAvalesDirectos();
+				
 				if($NumAvalesPorCred < $NumAvales){
 					$xLog->add ( "ERROR\tEl Numero de Avales del Credito $NumAvalesPorCred es menor al requerido $NumAvales\r\n" );
 					$xLog->add ( $xAval->getMessages () );
@@ -1258,14 +1273,14 @@ class cCredito {
 						if($cuentas <= 0){
 							$xReg->add($xReg->CRED_FALTA_GTIALIQ);
 							$this->mValidacionERRS++;
-							$xLog->add("ERROR\tFalta la Garantia Liquida\r\n");
+							$xLog->add("ERROR\tFalta la Garantia Liquida\ en Cuentasr\n");
 						} else {
 							$xVista	= new cCuentaALaVista(false);
 							$res	= $xVista->initCuentaPorProducto($this->getClaveDePersona(), CAPTACION_PRODUCTO_GARANTIALIQ);
 							if($res == false){
 								$xReg->add($xReg->CRED_FALTA_GTIALIQ);
 								$this->mValidacionERRS++;
-								$xLog->add("ERROR\tFalta la Garantia Liquida\r\n");
+								$xLog->add("ERROR\tFalta la Garantia Liquida en Cuentas\r\n");
 							} else {
 								$LoQueHay	= $xVista->getSaldoActual();
 								if($LoQueHay < $MontoGtiaLiq ){
@@ -1281,11 +1296,75 @@ class cCredito {
 						}
 					} else {
 						//Sumar Operaciones de garantia Liquida
-						$SdoGtiaLiq		= $this->getGarantiaLiquidaPagada();
+						$SdoGtiaLiq		= round($this->getGarantiaLiquidaPagada(),2);
+						if($SdoGtiaLiq >= $MontoGtiaLiq){
+							$xReg->add($xReg->CRED_FALTA_GTIALIQ, true);
+						} else {
+							$xLog->add("ERROR\tGarantia Liquida ($SdoGtiaLiq) Insuficiente\r\n");
+							$this->mValidacionERRS++;
+							$xReg->add($xReg->CRED_FALTA_GTIALIQ);
+						}
 					}
 					//$xCapta			= new cCuentaDeCaptacion(false)
 				}
 				//Otros de captacion
+			}
+			//========================== Por Pasos
+			switch ($PasoCredito){
+				case $xPasos->PASO_ADESEMBOLSO:
+					if($OConv->getAplicaGtosNot() == true){
+						$gastos_not_pagados = $this->getPagoDeGastosNotariales ();
+						if ($gastos_not_pagados < TOLERANCIA_SALDOS) {
+							$xLog->add("ERROR\tNo ha Pagado sus Gastos Notariales\r\n");
+							$valido 	= false;
+							$this->mValidacionERRS++;
+						}
+					}
+					$montomin = $this->getSumMovimiento ( OPERACION_CLAVE_MINISTRACION );
+					if ($montomin >= TOLERANCIA_SALDOS) {
+						$xLog->add("ERROR\tEl credito se ha ministrado de forma parcial / Total, o se ha forzado su edicion; el Monto Ministrado es $montomin \r\n");
+						$valido 		= false;
+						$this->mValidacionERRS++;
+					}
+					// verificar si pago su fondo de defuncion. // SI ES DIFERENTE A AUTOMATIZADO
+					
+					$fondo_def_ob 	= $OConv->getMontoFondoDefuncion();
+					if($fondo_def_ob > 0){
+						$fondo_def_pag 		= $xSoc->getFondoDeDefuncion();
+						if($fondo_def_pag < $fondo_def_pag) {
+							$xLog->add("ERROR\tNo ha Pagado sus Fondo de Defuncion por $fondo_def_pag, ha pagado $fondo_def_pag \r\n");
+							$valido 		= false;
+							$this->mValidacionERRS++;
+						}
+					}
+					// VERIFICA LA GARANTIA SEGUN TIPO CONVENIO.- La seleccion se hace segun el Numero de Socio y no debe estar entregada
+					// NO APLICA EN GRUPOS SOLIDARIOS
+					$razon_garantias = $OConv->getRazonGarantia();
+					if ($razon_garantias > 0){
+						$monto_garantizado 		= $xSoc->getGarantiasFisicasDepositadas ();
+						$monto_a_garantizar 	= $this->getMontoAutorizado() * $razon_garantias;
+						if ($monto_garantizado < $monto_a_garantizar) {
+							$xLog->add("ERROR\tNo ha garantizado el Total del Credito, se debe garantizar $monto_a_garantizar y solamente se tiene en resguardo $monto_garantizado \r\n");
+							$valido 			= false;
+							$this->mValidacionERRS++;
+						}
+					}
+					// verificar si tiene aportaciones sociales
+					/*if ($this->mForceMinistracion == false) {
+						$aportaciones = $xSocio->getAportacionesSociales ();
+						$cuotas = $xSocio->getOTipoIngreso ()->getParteSocial () + $xSocio->getOTipoIngreso ()->getPartePermanente (); // $DIngreso["parte_social"] + $DIngreso["parte_permanente"];
+						if ($aportaciones < $cuotas) {
+							$xLog->add("ERROR\tNo ha Pagado sus Cuotas Sociales por $cuotas, ha pagado $aportaciones \r\n");
+							$sucess = false;
+						}
+					}
+					*/
+					if($this->getNumeroDePlanDePagos()<= 0){
+						$xLog->add("ERROR\tNo se ha Generado el PLAN DE PAGOS \r\n");
+						$valido = false;
+						$this->mValidacionERRS++;
+					}
+					break;
 			}
 		} else {
 			$xLog->add ("ERROR\tError al Iniciar a la Persona\r\n" );
@@ -1658,6 +1737,11 @@ class cCredito {
 		}
 		return $PorPagar;
 	}
+	/**
+	 * Garantia Liquida por el Total del credito
+	 * @param boolean $ForcePagados
+	 * @return number
+	 */
 	function getGarantiaLiquida($ForcePagados = false) {
 		if($this->mCreditoInicializado == false) { $this->initCredito(); }
 		
@@ -2095,6 +2179,7 @@ class cCredito {
 		$msg 			= "";
 		$xLog			= new cCoreLog();
 		$xF				= new cFecha();
+		$xPaso			= new cCreditosProceso();
 		// $tipo_de_pago = TESORERIA_PAGO_CHEQUE;
 		$recibo 		= setNoMenorQueCero ( $recibo );
 		$DConvenio 		= $this->getDatosDeProducto ();
@@ -2144,94 +2229,12 @@ class cCredito {
 		/* --------------------------------------------------------------------------------------------------------- */
 		
 		$OConv = $this->getOProductoDeCredito ( $tipoconvenio );
-		if ($this->mForceMinistracion == false) {
-			// Checa si el credito ya fue Ministrado
-			// Modificar
-			$montomin = $this->getSumMovimiento ( OPERACION_CLAVE_MINISTRACION );
-			
-			if ($montomin > 1) {
-				$xLog->add("ERROR\tEl credito se ha ministrado de forma parcial / Total, o se ha forzado su edicion; el Monto Ministrado es $montomin \r\n");
-				$sucess = false;
-			}
-		}
-		// verificar si tiene aportaciones sociales
-		if ($this->mForceMinistracion == false) {
-			$aportaciones = $xSocio->getAportacionesSociales ();
-			$cuotas = $xSocio->getOTipoIngreso ()->getParteSocial () + $xSocio->getOTipoIngreso ()->getPartePermanente (); // $DIngreso["parte_social"] + $DIngreso["parte_permanente"];
-			if ($aportaciones < $cuotas) {
-				$xLog->add("ERROR\tNo ha Pagado sus Cuotas Sociales por $cuotas, ha pagado $aportaciones \r\n");
-				$sucess = false;
-			}
-		}
-		// verificar si pago su fondo de defuncion. // SI ES DIFERENTE A AUTOMATIZADO
-		if ($this->mForceMinistracion == false) {
-			$fondo_def_ob = $DConvenio ["monto_fondo_obligatorio"];
-			$fondo_def_pag = $xSocio->getFondoDeDefuncion ();
-			
-			if ($fondo_def_pag < $fondo_def_pag) {
-				$xLog->add("ERROR\tNo ha Pagado sus Fondo de Defuncion por $fondo_def_pag, ha pagado $fondo_def_pag \r\n");
-				$sucess = false;
-			}
-		}
-		// condiciones del credito autorizado por sesion de credito.
 		
-		// si el convenio Aplica Gtos Notariales
-		$aplica_gtos_not = $DConvenio ["aplica_gastos_notariales"];
-		if (($aplica_gtos_not == 1) and ($this->mForceMinistracion == false)) {
-			$gastos_not_pagados = $this->getPagoDeGastosNotariales ();
-			if ($gastos_not_pagados < TOLERANCIA_SALDOS) {
-				$xLog->add("ERROR\tNo ha Pagado sus Gastos Notariales\r\n");
-				$sucess = false;
-			}
-		}
-		// verificar si tiene garantia liquida
-		$porc_garantia_liquida = $OConv->getTasaDeGarantiaLiquida ();
-		if (($porc_garantia_liquida > 0) and ($this->mForceMinistracion == false)) {
-			$xLog->add("WARN\tLa Garantia Liquida es de $porc_garantia_liquida sobre el Monto Autorizado\r\n");
-			if ($OConv->getEsProductoDeGrupos () == true) {
-				$condicionante_de_garantia_liquida = " (`socios_general`.`grupo_solidario` = $elgrupo) ";
-				$xLog->add("WARN\tLa Garantia Liquida es valuado por GRUPO \r\n");
-			} else {
-				$condicionante_de_garantia_liquida = " (`socios_general`.`codigo` = $idsocio)";
-				$xLog->add("WARN\tLa Garantia Liquida es valuado por Persona \r\n");
-			}
-			
-			$tgtia 							= $this->getMontoAutorizado() * $porc_garantia_liquida;
-			$subproducto_de_ahorro_inicial 	= CAPTACION_PRODUCTO_GARANTIALIQ;
-			$sqlSUMDepInicial = "
-												SELECT
-													`socios_general`.`grupo_solidario`,
-													SUM(`captacion_cuentas`.`saldo_cuenta`) AS 'sumas'
-												FROM
-													`socios_general` `socios_general`
-														INNER JOIN `captacion_cuentas` `captacion_cuentas`
-														ON `socios_general`.`codigo` = `captacion_cuentas`.`numero_socio`
-												WHERE
-													(`captacion_cuentas`.`tipo_subproducto` =$subproducto_de_ahorro_inicial)
-													AND
-													$condicionante_de_garantia_liquida
-												GROUP BY
-													`socios_general`.`grupo_solidario`,
-													`captacion_cuentas`.`tipo_cuenta` ";
-			
-			$garliq = mifila ( $sqlSUMDepInicial, "sumas" );
-			
-			if ($garliq < ($tgtia - TOLERANCIA_SALDOS)) {
-				$xLog->add("ERROR\tNo ha depositado el su totalidad la Garantia Liquida, ha Depositado $garliq de un total de $tgtia \r\n");
-				$xLog->add("WARN\tRecuerde que el DEPOSITO DE LA GARANTIA LIQUIDA se efectua en el Modulo de Captacion \r\n");
-				$sucess = false;
-			}
-		} // END: verificar Garantia
-		  
-		// VERIFICA LA GARANTIA SEGUN TIPO CONVENIO.- La seleccion se hace segun el Numero de Socio y no debe estar entregada
-		  // NO APLICA EN GRUPOS SOLIDARIOS
-		$razon_garantias = $DConvenio ["razon_garantia"];
-		
-		if (($razon_garantias > 0) and ($this->mForceMinistracion == false)) {
-			$monto_garantizado 		= $xSocio->getGarantiasFisicasDepositadas ();
-			$monto_a_garantizar 	= $this->getMontoAutorizado() * $razon_garantias;
-			if ($monto_garantizado < $monto_a_garantizar) {
-				$xLog->add("ERROR\tNo ha garantizado el Total del Credito, se debe garantizar $monto_a_garantizar y solamente se tiene en resguardo $monto_garantizado \r\n");
+		// Varificar la validez
+		if($this->mForceMinistracion == false){
+			$valido		= $this->setVerificarValidez(false, $xPaso->PASO_ADESEMBOLSO);
+			if($this->mValidacionERRS > 0){
+				//$xLog->add();
 				$sucess = false;
 			}
 		}
@@ -2258,26 +2261,7 @@ class cCredito {
 				$sucess = false;
 			}
 		}
-		// VERIFICA EL ICA A PAGAR
-		$razon_interes_anticipado 	= $DConvenio ["porcentaje_ica"];
-		$iva_incluido 				= $DConvenio ["iva_incluido"];
-		$tasa_iva 					= $DConvenio ["tasa_iva"];
-		
-		// RULE: Modificar segun el Tipo de pago
-		if (($razon_interes_anticipado > 0) and ($this->mForceMinistracion == false)) {
-			// verifica si tiene el Pago de Int Anticipado
-			$sumia 		= $dsol["sdo_int_ant"];
-			$mIntDiario = ($this->getMontoAutorizado() * $tasa_ordinaria_de_interes) / EACP_DIAS_INTERES;
-			$mntia		= (($mIntDiario * $diasa) * $razon_interes_anticipado) - TOLERANCIA_SALDOS;
-			$MontoICA 	= $mntia;
-			if ($iva_incluido == '1') {
-				$MontoICA = $MontoICA * (1 / (1 + $tasa_iva));
-			}
-			if ($sumia < $MontoICA) {
-				$xLog->add("ERROR\tNo se ha cubierto el Interes Anticipado, se ha pagado $sumia de $MontoICA \r\n");
-				$sucess = false;
-			}
-		}
+
 		if ($this->mForceMinistracion == true) {
 			$sucess = true;
 			$xLog->add("WARN\tLa Ministracion es FORZADA \r\n");
@@ -2332,7 +2316,7 @@ class cCredito {
 					case $xOrg->ORIGEN_ARRENDAMIENTO:
 						$xLeas	= new cCreditosLeasing($this->getClaveDeOrigen());
 						if($xLeas->init() == true){
-							$xPaso	= new cCreditosProceso();
+							
 							$xLeas->setPaso($xPaso->PASO_VIGENTE);
 							
 						}
@@ -2451,19 +2435,7 @@ class cCredito {
 	/**
 	 * Obtiene un monto de Gatos Notariales Pagados
 	 */
-	function getPagoDeGastosNotariales(){
-		$socio = $this->mNumeroSocio;
-		// verificar si tiene pago de gastos notariales
-		$sqlgtos = "SELECT
-					MAX(`operaciones_mvtos`.`fecha_afectacion`) AS `fecha_de_pago`,
-					SUM(`operaciones_mvtos`.`afectacion_real`)  AS `monto_pagado`
-					FROM operaciones_mvtos
-					WHERE socio_afectado=$socio
-					AND tipo_operacion=1001
-					AND docto_neutralizador='1'";
-		$monto 	= mifila ( $sqlgtos, "monto_pagado" );
-		return $monto;
-	}
+	function getPagoDeGastosNotariales(){ return $this->getSumMovimiento(OPERACION_CLAVE_PAGO_NOT);	}
 	function setForceMinistracion($force = true){$this->mForceMinistracion = $force;}
 	
 	/**
@@ -2762,10 +2734,10 @@ class cCredito {
 	 * 
 	 * @param float $interes        	
 	 * @param float $moratorio        	
-	 * @param date $FechaAnterior        	
+	 * @param variant $FechaAnterior        	
 	 * @param float $saldo        	
 	 * @param integer $estatus        	
-	 * @param date $fecha        	
+	 * @param variant $fecha        	
 	 * @param float $operacion        	
 	 */
 	function addSDPM($interes = 0, $moratorio = 0, $FechaAnterior = false, $saldo = false, $estatus = false, $fecha = false, $operacion = false, $saldo_calculado = false, $periodo = false, $dias = false) {
@@ -3614,6 +3586,7 @@ class cCredito {
 			$ready		= $this->setUpdate(array(
 					$xT->OFICIAL_SEGUIMIENTO => $oficial
 			));
+			$xT		= null;
 		}
 		return ($ready == false) ? false : true;
 	}
@@ -3625,11 +3598,12 @@ class cCredito {
 			$ready		= $this->setUpdate(array(
 					$xT->OFICIAL_CREDITO => $oficial
 			));
+			$xT		= null;
 		}
 		return ($ready == false) ? false : true;
 	}
 	function getNumeroReciboDeMinistracion() {
-		$sql = "SELECT idoperaciones_recibos FROM operaciones_recibos WHERE tipo_docto = 1 AND docto_afectado= " . $this->mNumeroCredito . " LIMIT 0,1";
+		$sql = "SELECT idoperaciones_recibos FROM operaciones_recibos WHERE tipo_docto = " . RECIBOS_TIPO_MINISTRACION . " AND docto_afectado= " . $this->mNumeroCredito . " LIMIT 0,1";
 		$numero = mifila ( $sql, "idoperaciones_recibos" );
 		return $numero;
 	}
@@ -3828,7 +3802,7 @@ class cCredito {
 	}
 	/**
 	 * Funcion que determina es Estatus de un Credito segun su Tipo de Pago
-	 * @param date $fecha_de_corte de Estimación
+	 * @param variant $fecha_de_corte de Estimación
 	 * @param boolean $explain	Estatus
 	 */
 	function setDetermineDatosDeEstatus($fecha_de_corte = false, $explain = false, $actualizar = false, $DPagos = false, $EnCierre = false) {
@@ -4489,7 +4463,9 @@ class cCredito {
 			if($report == true OR getEnCierre() == true){
 				$sql			= "SELECT `periodo_socio`,`fecha_de_pago`,`total`,`interes_normal`,`interes_moratorio`,`otros`,`capital`,`impuesto` FROM `tmp_creditos_abonos_parciales` WHERE `docto_afectado`=" . $this->mNumeroCredito;
 			} else {
-				$sql			= "SELECT `periodo_socio`,`fecha_de_pago`,`total`,`interes_normal`,`interes_moratorio`,`otros`,`capital`,`impuesto` FROM `creditos_abonos_parciales` WHERE `docto_afectado`=" . $this->mNumeroCredito;
+				$xVis			= new cSQLVistas();
+				$sql			= $xVis->CreditoPagosAcumulados($this->mNumeroCredito);
+				//$sql			= "SELECT `periodo_socio`,`fecha_de_pago`,`total`,`interes_normal`,`interes_moratorio`,`otros`,`capital`,`impuesto` FROM `creditos_abonos_parciales` WHERE `docto_afectado`=" . $this->mNumeroCredito;
 			}
 			//$xCache				= new cCache();
 			
@@ -4757,6 +4733,14 @@ class cCredito {
 		}
 		return $afectar;
 	}
+	function getEsDeDespedido(){
+		$es	= false;
+		if($this->getClaveDeProducto() == SYS_PRODUCTO_FUERA_NOMINA OR $this->getClaveDeProducto() == SYS_PRODUCTO_DESCARTADOS){
+			$this->initDatosDesvinculacion();
+			$es	= true;
+		}
+		return $es;
+	}
 	function getFactorRedondeo() {
 		$zero = floor($this->getMontoDeParcialidad());
 		$zero = round(($this->getMontoDeParcialidad() - $zero),2);
@@ -4926,6 +4910,14 @@ class cCredito {
 						
 					} else {
 						$ultima		= ($this->isAFinalDePlazo() == true) ? $xOp->getNumeroAbonos() : $xOp->getProxLetraCap() -1; //Si es final, la ultima letra es el numero de pagos
+						//Si la letra de pago de Interes es Menor a la Letra de Pago de Capital, se tomara la Menor
+						if($this->isAFinalDePlazo() == false){
+							if($xOp->getProxLetraInt()<$xOp->getProxLetraCap()){
+								$ultima			= $xOp->getProxLetraInt() -1;
+							}
+						}
+						
+						
 						if($ultima !== $ActualLetra){
 							if($this->isAFinalDePlazo() == true){
 								$xMontos->setPeriodos($xOp->getNumeroAbonos(), ($xOp->getNumeroAbonos() + 1));;
@@ -5047,6 +5039,13 @@ class cCredito {
 	}
 	function getClaveCredVincRenov(){ return ($this->getEsRenovado() == false) ? 0 : $this->getClaveDeOrigen(); }
 	function getMontoCredVincRenov(){ return ($this->getEsRenovado() == false) ? 0 : $this->getMontoDeOrigen(); }
+	private function initDatosDesvinculacion(){
+		$xMem	= new cPersonasMemos();
+		if($xMem->initByDoctoTipo($this->getClaveDeCredito(), MEMOS_TIPO_DESVINCULACION) == true){
+			$this->mFechaDesvinculo	= $xMem->getFechaDeMemo();
+		}
+	}
+	function getFechaDesvinculo(){ return $this->mFechaDesvinculo; }
 } // END CLASS
 
 
@@ -5865,6 +5864,8 @@ class cPlanDePagos{
 		$xFor			= new cFormula();
 		//$xUsr			= new cSystemUser();$xUser->in
 		$ConCeros		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_CEROS);		//regla de negocio
+		$LetraFija		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAGO_LETRAF);
+		$xUsr			= new cSystemUser(); $xUsr->init();
 		$xF->init(FECHA_FORMATO_MX);
 		$xF->setSeparador("/");
 		$html			= "";
@@ -6035,7 +6036,7 @@ class cPlanDePagos{
 					}
 //============ Herramientas					
 					if($tools == true){
-						$nnivel	= getUsuarioActual(SYS_USER_NIVEL);
+						$nnivel	= $xUsr->getTipoEnSistema();
 						//==== Penas y Mora
 						$mora 		= 0;
 						$penas 		= 0;
@@ -6091,11 +6092,12 @@ class cPlanDePagos{
 
 						
 						//si hay saldo por pagar
-						if($total > 0 AND $nnivel >= USUARIO_TIPO_CAJERO){
+						if($total > 0 AND $xUsr->getPuedeCobrar() == true AND $LetraFija == false){
 							$xLi->li($xMin->getBasic("TR.Pagar", "var xC=new CredGen();xC.goToCobrosDeCredito({credito:$idcredito,periodo:$idparc});", $xMin->ic()->DINERO, "", false, true));
 						}
-						if( $nnivel >= USUARIO_TIPO_OFICIAL_CRED){
-							//$xLi->li($xMin->getBasic("TR.Eliminar", "var xP=new PlanGen();xP.setEliminarLetra({credito:$idcredito,periodo:$idparc});", $xMin->ic()->ELIMINAR, "", false, true));
+						
+						if( $xUsr->getEnDesarrollo() == true){
+							$xLi->li($xMin->getBasic("TR.Eliminar", "var xP=new PlanGen();xP.setEliminarLetra({credito:$idcredito,periodo:$idparc});", $xMin->ic()->ELIMINAR, "", false, true));
 						}
 						
 						$ttol		= $xLi->get();
@@ -6124,7 +6126,7 @@ class cPlanDePagos{
 					$PlanHead	.= ($conSdoCap == true) ? "<th>" . $xL->getT("TR.saldo capital"). "</th>" : "<th>" . $xL->getT("TR.saldo insoluto"). "</th>";
 				}
 				//Header.- Herramientas
-				if($tools == true AND getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_OFICIAL_CRED){
+				if($tools == true ){
 					$PlanHead	.= "<th>" . $xL->getT("TR.CARGOS_POR_ATRASOS"). "</th>";
 					$PlanHead	.="	<th>" . $xL->getT("TR.TITULO1PLAN") . "</th>";
 					$PlanHead	.= ($conSdoCap == true) ? "<th>" . $xL->getT("TR.saldo capital"). "</th>" : "<th>" . $xL->getT("TR.saldo insoluto"). "</th>";					
@@ -6271,40 +6273,106 @@ class cProductoDeCredito {
 	private $mRazonGarantia			= 0;
 	private $mAplicaPenas			= false;
 	private $mDiasTolerados			= 0;
+	private $mAplicaGastosPorMora	= 0;
+	private $mTasaIncluyeIVA		= false;
+	private $mBaseCalculoInt		= 0;
+	private $mTipoDeContratoCR		= 0;
+	private $mNumeroPagosDef		= 0;
+	private $mNumeroPagosMin		= 0;
+	private $mNumeroPagosMax		= 0;
+	private $mPeriodicidadDef		= 0;
+	private $mTasaInteres			= 0;
+	private $mTasaMora				= 0;
+	private $mMontoMaximo			= 0;
+	private $mTasaGtiaLiq			= 0;
+	private $mOficialSeg			= 0; 
+	private $mAplicaGtosNots		= false;
+	private $mMontoFondoDef			= 0;
 	
 	public $COSTOS_EN_TASA			= 1;
 	
 	function __construct($mClaveDeConvenio = false){ $this->mClaveDeConvenio	= setNoMenorQueCero($mClaveDeConvenio); }
 	function init(){
-		$cT							= new cTipos();
-		$xCache						= new cCache();
-		$xQL						= new MQL();
-		$code						= $this->mClaveDeConvenio;
-		$this->mArrDatos			= $xCache->get("producto-credito-" . $this->mClaveDeConvenio);
-		if($this->mArrDatos == null){
-			$sql					= "SELECT * FROM creditos_tipoconvenio WHERE `idcreditos_tipoconvenio` = $code LIMIT 0,1";
-			$this->mArrDatos		= $xQL->getDataRow($sql);
+		$cT				= new cTipos();
+		$xCache			= new cCache();
+		$xQL			= new MQL();
+		$xT				= new cCreditos_tipoconvenio();
+		$code			= $this->mClaveDeConvenio;
+		$idx			= "producto-credito-" . $this->mClaveDeConvenio;
+		$inCache		= true;
+		$data			= $xCache->get($idx);
+		if(!is_array($data)){
+			$sql		= "SELECT * FROM creditos_tipoconvenio WHERE `idcreditos_tipoconvenio` = $code LIMIT 0,1";
+			$data		= $xQL->getDataRow($sql);
+			$inCache	= false;
 		}
 		
-		if(isset($this->mArrDatos["tasa_ahorro"])){
-			//Guardar en Cache
-			$xCache->set("producto-credito-" . $this->mClaveDeConvenio, $this->mArrDatos);
+		if(isset($data[$xT->IDCREDITOS_TIPOCONVENIO])){
+			if($inCache == false){
+				$data[$xT->TASA_AHORRO]					= $cT->cFloat($data[$xT->TASA_AHORRO]);
+				$data[$xT->TOLERANCIA_DIAS_NO_PAGO]		= setNoMenorQueCero($data[$xT->TOLERANCIA_DIAS_NO_PAGO]);
+				$data[$xT->NUMERO_AVALES]				= setNoMenorQueCero($data[$xT->NUMERO_AVALES]);
+				$data[$xT->IVA_INCLUIDO]				= setNoMenorQueCero($data[$xT->IVA_INCLUIDO]);
+				$data[$xT->TIPO_DE_INTEGRACION]			= setNoMenorQueCero($data[$xT->TIPO_DE_INTEGRACION]);
+				$data[$xT->NUMERO_DE_PAGOS_PREFERENTE]	= setNoMenorQueCero($data[$xT->NUMERO_DE_PAGOS_PREFERENTE]);
+				//$data[$xT->]
+				//$data[$xT->]							= $cT->cFloat($data[$xT->]);
+				$data[$xT->INTERES_NORMAL]				= $cT->cFloat($data[$xT->INTERES_NORMAL]);
+				$data[$xT->INTERES_MORATORIO]			= $cT->cFloat($data[$xT->INTERES_MORATORIO]);
+				$data[$xT->MAXIMO_OTORGABLE]			= setNoMenorQueCero($data[$xT->MAXIMO_OTORGABLE]);
+				$data[$xT->OFICIAL_SEGUIMIENTO]			= setNoMenorQueCero($data[$xT->OFICIAL_SEGUIMIENTO]);
+				if($data[$xT->OFICIAL_SEGUIMIENTO]<= 0){
+					$data[$xT->OFICIAL_SEGUIMIENTO]		= DEFAULT_USER;
+				}
+				$data[$xT->APLICA_GASTOS_NOTARIALES]	= setNoMenorQueCero($data[$xT->APLICA_GASTOS_NOTARIALES]);
+			}
 			
-			$this->mTasaAhorro			= $cT->cFloat($this->mArrDatos["tasa_ahorro"]);
-			$this->mOB					= new cCreditos_tipoconvenio();
-			$this->mOB->setData($this->mArrDatos);
-			$this->mTipoEnSistema		= $this->mOB->tipo_en_sistema()->v();
-			$this->mTipoDeIntegracion	= $this->mOB->tipo_de_integracion()->v();
-			$this->mTasaComPorApertura	= $this->mOB->comision_por_apertura()->v();
-			$this->mNombre				= $this->mOB->descripcion_tipoconvenio()->v();
-			$this->mNumeroDeAvales		= $this->mOB->numero_avales()->v();
-			$this->mRazonGarantia		= $this->mOB->razon_garantia()->v();
-			$this->mDiasTolerados		= setNoMenorQueCero($this->mOB->tolerancia_dias_no_pago()->v());
+			//Guardar en Cache
+			$this->mArrDatos		= $data;
+			$xT->setData($data);
+			
+			
+			
+			
+			$this->mClaveDeConvenio		= $data[$xT->IDCREDITOS_TIPOCONVENIO];
+			$this->mTasaAhorro			= $data[$xT->TASA_AHORRO];
+			$this->mDiasTolerados		= $data[$xT->TOLERANCIA_DIAS_NO_PAGO];
+			
+			$this->mTipoEnSistema		= $data[$xT->TIPO_EN_SISTEMA];
+			$this->mTipoDeIntegracion	= $data[$xT->TIPO_DE_INTEGRACION];
+			$this->mTasaComPorApertura	= $data[$xT->COMISION_POR_APERTURA];
+			$this->mNombre				= $data[$xT->DESCRIPCION_TIPOCONVENIO];
+			$this->mNumeroDeAvales		= $data[$xT->NUMERO_AVALES];
+			$this->mRazonGarantia		= $data[$xT->RAZON_GARANTIA];
+			$this->mAplicaGastosPorMora	= $data[$xT->APLICA_MORA_POR_COBRANZA];
+			$this->mTasaIncluyeIVA		= ($data[$xT->IVA_INCLUIDO] <= 0) ? false : true;
+			$this->mTipoDeIntegracion	= $data[$xT->TIPO_DE_INTEGRACION];
+			$this->mBaseCalculoInt		= $data[$xT->BASE_DE_CALCULO_DE_INTERES];
+			$this->mTipoDeContratoCR	= $data[$xT->CLAVE_DE_TIPO_DE_PRODUCTO];
+			$this->mNumeroPagosDef		= $data[$xT->NUMERO_DE_PAGOS_PREFERENTE];
+			$this->mPeriodicidadDef		= $data[$xT->TIPO_DE_PERIOCIDAD_PREFERENTE];
+			$this->mNumeroPagosMin		= ($this->mPeriodicidadDef !== CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) ? 2 : 1;
+			$this->mNumeroPagosMax		= $data[$xT->PAGOS_MAXIMO];
+			$this->mTasaInteres			= $data[$xT->INTERES_NORMAL];
+			$this->mTasaMora			= $data[$xT->INTERES_MORATORIO];
+			$this->mMontoMaximo			= $data[$xT->MAXIMO_OTORGABLE];
+			$this->mTasaGtiaLiq			= $data[$xT->PORCIENTO_GARANTIA_LIQUIDA];
+			$this->mOficialSeg			= $data[$xT->OFICIAL_SEGUIMIENTO];
+			$this->mAplicaGtosNots		= ($data[$xT->APLICA_GASTOS_NOTARIALES] <= 0) ? false : true;
+			$this->mMontoFondoDef		= $data[$xT->MONTO_FONDO_OBLIGATORIO];
+			
+			$this->mOB					= $xT;
+			
 			//Correccion de errores en carga de creditos Iniciales.
-			if($this->mOB->tipo_convenio()->v() !== $this->mClaveDeConvenio){
+			if($data[$xT->TIPO_CONVENIO] !== $this->mClaveDeConvenio){
 				//Se corrige.- Cagada de SQL Inicial de Creditos
 				$xQL->setRawQuery("UPDATE creditos_tipoconvenio SET tipo_convenio=$code WHERE `idcreditos_tipoconvenio` = $code ");
 			}
+			
+			if($inCache == false){
+				$xCache->set($idx, $data);
+			}
+			
 			$this->initOtrosDatos();
 			$this->initOtrosCargos();
 			$this->mInit				= true;
@@ -6340,26 +6408,23 @@ class cProductoDeCredito {
 	}
 	function setOtrosParametros($Parametro, $Valor, $FechaDeExpiracion = false){ $this->getOOtrosParametros()->set($Valor, $Parametro, false, $FechaDeExpiracion);	}
 	function obj(){
-		if( $this->mOB == null){
-			$this->mOB	= new cCreditos_tipoconvenio();
-			$this->mOB->setData( $this->mOB->query()->initByID($this->mClaveDeConvenio) );
-		}
+		if( $this->mOB == null){ $this->init(); }
 		return $this->mOB;	
 	}
-	function getAplicaMoraPorGastos(){ return $this->obj()->aplica_mora_por_cobranza()->v();	}
+	function getAplicaMoraPorGastos(){ return $this->mAplicaGastosPorMora;	}
 	function getAplicaPenas(){ return $this->mAplicaPenas;	}
 	function getDiasTolerados(){
 		$DIAS_TOLERADOS = $this->mDiasTolerados;
 		//TODO: Considerar Formula.- Productos de credito.- dias tolerados
 		return ($DIAS_TOLERADOS == 0)? 1 : $DIAS_TOLERADOS;
 	}
-	function getTasaIncluyeIVA(){ return (intval($this->obj()->iva_incluido()->v()) == 1)? true : false; }
-	function getTipoDeIntegracion(){ return intval($this->obj()->tipo_de_integracion()->v()); }
-	function getTipoDeBaseCalc(){ return intval($this->obj()->base_de_calculo_de_interes()->v()); }
-	function getTipoDeContratoCR(){ return $this->obj()->clave_de_tipo_de_producto()->v(); }
-	function getPeriocidadPrefente(){ return $this->obj()->tipo_de_periocidad_preferente()->v(); }
-	function getPagosMaximos(){ return $this->obj()->pagos_maximo()->v(); }
-	function getPagosMinimo(){ return ($this->getPeriocidadPrefente() != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ) ? 2 : 1; }
+	function getTasaIncluyeIVA(){ return $this->mTasaIncluyeIVA; }
+	function getTipoDeIntegracion(){ return $this->mTipoDeIntegracion; }
+	function getTipoDeBaseCalc(){ return $this->mBaseCalculoInt; }
+	function getTipoDeContratoCR(){ return $this->mTipoDeContratoCR; }
+	function getPeriocidadPrefente(){ return $this->mPeriodicidadDef; }
+	function getPagosMaximos(){ return $this->mNumeroPagosMax; }
+	function getPagosMinimo(){ return $this->mNumeroPagosMin; }
 	function getRazonGarantia(){ return $this->mRazonGarantia; }	
 	function getNombre(){return $this->mNombre;}
 	function getNumeroDeAvales(){ return $this->mNumeroDeAvales; }
@@ -6398,7 +6463,7 @@ class cProductoDeCredito {
 	}
 
 	function getNumeroPagosPreferente(){
-		$pagos	=  setNoMenorQueCero( $this->obj()->numero_de_pagos_preferente()->v());
+		$pagos	= $this->mNumeroPagosDef;
 		$pagos	= ($pagos <= 0) ? $this->getPagosMinimo() : $pagos; 
 		return $pagos;
 	 }
@@ -6410,7 +6475,8 @@ class cProductoDeCredito {
 	}
 	function getEsProductoDeGrupos(){
 		$res	= false;
-		if($this->mTipoEnSistema == CREDITO_PRODUCTO_GRUPOS OR $this->mTipoDeIntegracion > 2){ $res	= true; }
+		
+		if($this->mTipoEnSistema == SYS_PRODUCTO_GRUPOS OR $this->mTipoDeIntegracion > 2){ $res	= true; }
 		return $res;		
 	}
 	function getEsProductoDeArrendamientoP(){
@@ -6421,7 +6487,7 @@ class cProductoDeCredito {
 	function getTipoEnSistema(){ return $this->mTipoEnSistema; }
 	function getTasaDeInteres(){
 		/*eval( $this->getPreModInteres() );*/
-		$TASA_NORMAL	= $this->obj()->interes_normal()->v();
+		$TASA_NORMAL	= $this->mTasaInteres;
 		/*eval( $this->getPosModInteres() );*/
 		return $TASA_NORMAL;
 	}
@@ -6439,8 +6505,8 @@ class cProductoDeCredito {
 		return $this->getOOtrosParametros(); 
 	}
 	function getTasaComisionApertura(){ $this->initOtrosDatos(); return $this->mTasaComPorApertura;	}
-	function getOficialDeSeguimiento(){ return $this->obj()->oficial_seguimiento()->v(); }
-	function getTasaDeGarantiaLiquida(){ return $this->obj()->porciento_garantia_liquida()->v(); }
+	function getOficialDeSeguimiento(){ return $this->mOficialSeg; }
+	function getTasaDeGarantiaLiquida(){ return $this->mTasaGtiaLiq; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function add($id, $nombre, $copiarde = false){
 		$copiarde	= setNoMenorQueCero($copiarde);
@@ -6461,42 +6527,51 @@ class cProductoDeCredito {
 	function getPreModInteres(){ return $this->obj()->pre_modificador_de_interes()->v(OUT_TXT);	}
 	function getPosModInteres(){ return $this->obj()->pos_modificador_de_interes()->v(OUT_TXT);	}	
 	function getFormulaInteresNormal($idproceso = "", $posEvento = false){
+		if($this->mOB == null){ $this->init(); }
+		
 		//XXX: L4955.-core.creditos getFormulaInteresNormal : Terminar y evaluar funcionalidades
 		$xStep	= new cCreditosEventos();
 		$xF		= new cFormula();
 		$txt	= "";
-		//que va aplicar
-		switch ($idproceso){
-			case $xStep->AUTORIZACION:
-				$txt	= $this->mOB->pre_modificador_de_autorizacion()->v(OUT_TXT);
-				break;
-			case $xStep->MINISTRACION:
-				$txt	= $this->mOB->pre_modificador_de_ministracion()->v(OUT_TXT);
-				break;
-			default:
-				$txt	= ($posEvento == true) ? $this->mOB->pos_modificador_de_interes()->v(OUT_TXT) : $this->mOB->pre_modificador_de_interes()->v(true);
-				break;
+		if($this->mOB === null){
+			
+		} else {
+			//que va aplicar
+			switch ($idproceso){
+				case $xStep->AUTORIZACION:
+					$txt	= $this->mOB->pre_modificador_de_autorizacion()->v(OUT_TXT);
+					break;
+				case $xStep->MINISTRACION:
+					$txt	= $this->mOB->pre_modificador_de_ministracion()->v(OUT_TXT);
+					break;
+				default:
+					$txt	= ($posEvento == true) ? $this->mOB->pos_modificador_de_interes()->v(OUT_TXT) : $this->mOB->pre_modificador_de_interes()->v(true);
+					break;
+			}
 		}
 		return $txt;
 	}
 	function getFormulaInteresMoratorio($idproceso = "", $posEvento = false){
+		if($this->mOB == null){ $this->init(); }
 		$xStep	= new cCreditosEventos();
 		$xF		= new cFormula();
 		$txt	= "";
-		if($this->mOB == null){ $this->init(); }
+		
 		//que va aplicar
-		switch ($idproceso){
-			case $xStep->AUTORIZACION:
-				$txt	= ($this->mOB ===null) ? "" : $this->mOB->pre_modificador_de_autorizacion()->v(OUT_TXT);
-				break;
-			case $xStep->MINISTRACION:
-				$txt	= ($this->mOB ===null) ? "" : $this->mOB->pre_modificador_de_ministracion()->v(OUT_TXT);
-				break;
-			default:
-				if($this->mOB !== null){
+		if($this->mOB === null){
+			
+		} else {
+			switch ($idproceso){
+				case $xStep->AUTORIZACION:
+					$txt	= $this->mOB->pre_modificador_de_autorizacion()->v(OUT_TXT);
+					break;
+				case $xStep->MINISTRACION:
+					$txt	= $this->mOB->pre_modificador_de_ministracion()->v(OUT_TXT);
+					break;
+				default:
 					$txt	= ($posEvento == true) ? $this->mOB->pos_modificador_de_interes()->v(OUT_TXT) : $this->mOB->pre_modificador_de_interes()->v(true);
-				}
-				break;
+					break;
+			}
 		}
 		return $txt;	
 	}
@@ -6573,7 +6648,8 @@ class cProductoDeCredito {
 		return $txt;
 	}	
 		
-	function getMontoMaximoOtorgable(){ return $this->mOB->maximo_otorgable()->v(); }
+	function getMontoMaximoOtorgable(){ return $this->mMontoMaximo; }
+	function getMontoFondoDefuncion(){ return $this->mMontoFondoDef; }
 	function initOtrosCargos($fecha = false){
 		if($this->mInitOCargos == false OR $fecha !== false){
 			$xCach	= new cCache();
@@ -6597,21 +6673,35 @@ class cProductoDeCredito {
 			$sumaL	= 0;
 			foreach ($rs as $rw){
 				$xCT->setData($rw);
-				$monto	= ($xCT->unidad_de_medida()->v() == 0) ? $xCT->unidades()->v() : $xCT->unidades()->v() /100; //0 = peso
-				
-				if($xCT->clave_de_operacion()->v() == OPERACION_CLAVE_COMISION_APERTURA){
-					//si la comision es cero
-					if($this->mTasaComPorApertura == 0 AND $xCT->unidad_de_medida()->v() == $this->COSTOS_EN_TASA){
-						$this->mTasaComPorApertura = $monto;
-					}
+				$tipooperacion	= $rw[$xCT->CLAVE_DE_OPERACION];
+				$unidades		= $rw[$xCT->UNIDADES];
+				$EsTasa			= (setNoMenorQueCero($rw[$xCT->UNIDAD_DE_MEDIDA]) <= 0 ) ? false : true;
+				$monto			= ($EsTasa == false) ? $unidades : $unidades /100; //0 = peso
+				$EnPlan			= (setNoMenorQueCero($rw[$xCT->EN_PLAN]) <=0 ) ? false : true;
+				//if($xCT->clave_de_operacion()->v() == OPERACION_CLAVE_COMISION_APERTURA){
+				switch ($tipooperacion){
+					case OPERACION_CLAVE_COMISION_APERTURA:
+						if($this->mTasaComPorApertura == 0 AND $rw[$xCT->UNIDAD_DE_MEDIDA] == $this->COSTOS_EN_TASA){
+							$this->mTasaComPorApertura = $monto;
+						}
+						break;
+					case OPERACION_CLAVE_PAGO_NOT:
+						$this->mAplicaGtosNots	= true;	//Si es mayor a 0
+						break;
 				}
-				if($xCT->en_plan()->v() == 1){
-					if($xCT->unidad_de_medida()->v() != 0){ //solo porcentajes.- Si no, causa error en el calculo del CAT
-						$this->mDOtrosCargosParcs[$xCT->clave_de_operacion()->v()]	= $monto;
-						$sumaL														+= $monto;
+				//TODO: AGREGAR POR MONTO FONDO OBLIGATORIO
+				//$this->mMontoFondoDef		= $data[$xT->MONTO_FONDO_OBLIGATORIO];
+				//if($rw[$xCT->CLAVE_DE_OPERACION] == OPERACION_CLAVE_COMISION_APERTURA){
+					//si la comision es cero
+					//if($this->mTasaComPorApertura == 0 AND $xCT->unidad_de_medida()->v() == $this->COSTOS_EN_TASA){
+				//}
+				if($EnPlan == true){
+					if($EsTasa == false){ //solo porcentajes.- Si no, causa error en el calculo del CAT
+						$this->mDOtrosCargosParcs[$tipooperacion]	= $monto;
+						$sumaL										+= $monto;
 					}
 				} else {
-					$this->mDOtrosCargos[$xCT->clave_de_operacion()->v()]		= $monto;
+					$this->mDOtrosCargos[$tipooperacion]			= $monto;
 				}
 			}
 			//Sumar Cargos en Letras y COnvertirlos en porcentaje
@@ -6646,7 +6736,7 @@ class cProductoDeCredito {
 	function getListaOtrosCargosEnParcs(){ return $this->mDOtrosCargosParcs;}
 	function getListaOtrosCargosEnParcsRaw(){ return $this->mDOtrosCargosPRaw;}
 	function getSumaOtrosCargosEnParcs(){ return $this->mSumaOtrosCargosP; }
-	function getEsGrupal(){ return ($this->mTipoDeIntegracion ==3) ? true : false; }
+	function getEsGrupal(){ return $this->getEsProductoDeGrupos(); }
 	function getCATFijo(){
 		$cat 	= $this->getOtrosParametros($this->getOOtrosParametros()->CAT_FIJO);
 		$cat	= setNoMenorQueCero($cat,1);
@@ -6665,6 +6755,7 @@ class cProductoDeCredito {
 		}
 		return $riesgo;
 	}
+	function getAplicaGtosNot(){ return $this->mAplicaGtosNots; }
 }
 class cProductoDeCreditoOtrosDatosCatalogo {
 	public $SIC_TIPO_DE_RESPONSABILIDAD = "SIC_TIPO_DE_RESPONSABILIDAD";
@@ -7438,6 +7529,7 @@ class cCreditosGarantiasLiquidas {
 				$monto	= $xQL->getDataValue($sql, SYS_MONTO);
 			}
 		}
+		//setLog($sql);
 		$this->mMessages .= $msg;
 		return $monto;
 	}

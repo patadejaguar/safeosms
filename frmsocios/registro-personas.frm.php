@@ -131,10 +131,12 @@ $idlugardenacimiento	= ($identidadfederativanac != "") ? "$identidadfederativana
 //verificar si es persona moral
 $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 	if($xFJ->isFisica() == false){
+		$xLog->add("WARN\tSe registra una Persona Fisica($idfigurajuridica) como $razonSocial", $xLog->DEVELOPER);
 		$idnombrecompleto	= $razonSocial;
 		//rfc completo
 		$idapellidopaterno	= "";
 		$idapellidomaterno	= "";
+		
 	}
 	$agregardom				= (trim($calle) == "") ? false : true;
 	if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
@@ -143,7 +145,7 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 		$idcajalocal		= parametro("idcajalocal", $xSuc->getCajaLocalResidente(), MQL_INT);
 	}
 	if(trim($idnombrecompleto . $idapellidopaterno) == ""){
-		$xLog->add("ERROR\tNo existe la persona en alta\r\n");
+		$xLog->add("ERROR\tLa Persona debe tener al menos Nombre($idnombrecompleto)  y Primer Apellido($idapellidopaterno)\r\n");
 		$ready			= false;
 	}
 	if($ready == true){
@@ -409,13 +411,11 @@ $xFJ					= new cPersonaFiguraJuridica($idfigurajuridica);
 		$xLog->add($xSoc->getMessages(), $xLog->DEVELOPER);
 		
 	} else {
-		$xFRM->addCerrar();
-		$xFRM->addAvisoRegistroError();
+		//$xFRM->addCerrar();
+		$xFRM->addAvisoRegistroError($xLog->getMessages());
 	}
 	if(MODO_DEBUG == true){
 		$xFRM->addLog($xLog->getMessages());
-	} else {
-		$xFRM->addAviso($xLog->getMessages());
 	}
 	
 

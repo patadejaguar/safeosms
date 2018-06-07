@@ -21,14 +21,27 @@ $msg		= "";
 
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
-$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
-$parcialidad= parametro("idparcialidad", 0, MQL_INT); $parcialidad = parametro("periodo", $parcialidad, MQL_INT); $parcialidad = parametro("parcialidad", $parcialidad, MQL_INT);
-$Fecha		= parametro("idfecha-0", false);
-$Fecha		= parametro("fecha", $Fecha, MQL_DATE); $Fecha = parametro("idfechaactual", $Fecha, MQL_DATE);
-$Fecha		= $xF->getFechaISO($Fecha);
+$persona			= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito			= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$parcialidad		= parametro("idparcialidad", 0, MQL_INT); $parcialidad = parametro("periodo", $parcialidad, MQL_INT); $parcialidad = parametro("parcialidad", $parcialidad, MQL_INT);
+$Fecha				= parametro("idfecha-0", false);
+$Fecha				= parametro("fecha", $Fecha, MQL_DATE); $Fecha = parametro("idfechaactual", $Fecha, MQL_DATE);
+$Fecha				= $xF->getFechaISO($Fecha);
+
+$AplicarGarantia	= parametro("aplicagarantia", false, MQL_BOOL);
+$defaultPago		= parametro("tipodepago");
+$SinTiposDePago		= false;
+
+if($defaultPago	== ""){
+	
+} else {
+	$SinTiposDePago	= true;
+}
+$defaultPago		= strtolower($defaultPago);
 
 echo $xHP->getHeader( true );
+
+
 $jsNoValido			= "<script>	jsRegresarConTemporizador({
 		url: '../index.xul.php?p=../frmcaja/frmcobrosdecreditos.php',
 		msg : 'Credito No Operable ($persona|$credito)' });	</script>";
@@ -79,19 +92,25 @@ $xFRM->addRefrescar("jsCargarFrame()");
 
 
 
-$defaultPago	= OPERACION_PAGO_COMPLETO;
+
 switch($periocidad){
 	case CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO:
-		$xFRM->OButton("TR.ABONOS", "jsGetPago('ao')", $xFRM->ic()->ACTUAL, "pc2", "white");
-		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
+		if($defaultPago == ""){
+			$xFRM->OButton("TR.ABONOS", "jsGetPago('ao')", $xFRM->ic()->ACTUAL, "pc2", "white");
+			$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
+			$defaultPago	= OPERACION_PAGO_COMPLETO;
+		}
 		$montoapagar	= $xCred->getSaldoActual();
 		break;
 	default:
-		$xFRM->OButton("TR.LETRA COMPLETA", "jsGetPago('plc')", $xFRM->ic()->ACTUAL, "pc2", "white");
-		$xFRM->OButton("TR.LETRA VARIABLE", "jsAjustarPagoF()", $xFRM->ic()->RANDOM, "pc3", "yellow");
-		//$xFRM->OButton("TR.LETRA VARIABLE", "jsGetPago('pli')", $xFRM->ic()->RANDOM, "pc3", "yellow");
-		$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
-		$defaultPago	= OPERACION_PAGO_LETRA_COMPLETA;
+		if($defaultPago == ""){
+			$xFRM->OButton("TR.LETRA COMPLETA", "jsGetPago('plc')", $xFRM->ic()->ACTUAL, "pc2", "white");
+			$xFRM->OButton("TR.LETRA VARIABLE", "jsAjustarPagoF()", $xFRM->ic()->RANDOM, "pc3", "yellow");
+			//$xFRM->OButton("TR.LETRA VARIABLE", "jsGetPago('pli')", $xFRM->ic()->RANDOM, "pc3", "yellow");
+			$xFRM->OButton("TR.PAGO COMPLETO", "jsGetPago('pc')", $xFRM->ic()->LLENO, "pc1", "blue3");
+			$defaultPago	= OPERACION_PAGO_LETRA_COMPLETA;
+		}
+		
 		$xLetra			= new cParcialidadDeCredito();
 		$xLetra->init($xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), $parcialidad);
 		$montoapagar	= $xLetra->getTotal();
@@ -150,6 +169,7 @@ var mTipoPago	= "<?php echo $defaultPago; ?>";
 var oTipoPago	= $("#idtipo_pago");
 var oReciboFis	= $("#id-foliofiscal");
 var xGen		= new Gen();
+var xG			= new Gen();
 var sURI 		= "";
 var iFr 		= document.getElementById("idFPrincipal");
 var iWFram		= document.getElementById('idFPrincipal').contentWindow;
@@ -162,7 +182,7 @@ function jsAsLoaded(){
 	xGen.verControl("cmdimprimir", false);
 	jsCargarFrame();
 }
-function jsRegresar(){ var g	= new Gen(); g.w({url: "frmcobrosdecreditos.php"}); }
+function jsRegresar(){ xG.go({url: "../frmcaja/frmcobrosdecreditos.php"}); }
 function jsGetPago(vTipoPago, vMonto){
 	vTipoPago			= (typeof vTipoPago == "undefined") ? mTipoPago : vTipoPago;
 	vMonto				= (typeof vMonto == "undefined") ? mTotalPag : vMonto;

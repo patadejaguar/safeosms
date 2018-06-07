@@ -15,10 +15,12 @@ Mexico.prototype.jsConsultarCURP  = function (){
 }
 Mexico.prototype.jsValidarRFC 	= function(rfc){ var exp 	= /^[a-zA-Z]{3,4}(\d{6})((\D|\d){3})?$/; return exp.test(rfc); }
 Mexico.prototype.jsGetCURP	= function (nombre, paterno, materno, fecha, genero, estado) {
-	var mNombre 	= new String(nombre);
-	var mPaterno 	= new String(paterno);
+	var mNombre 	= new String( normalize(nombre) );
+	var mPaterno 	= new String( normalize(paterno) );
+	var mMaterno 	= new String( normalize(materno) );
+	
 	var mFecha 		= new String(fecha);
-	var mMaterno 	= new String(materno);
+	
 	var curp 		= new String();
 	//varlidar genero mayo a cero
 	if (flotante(genero) > 0) {

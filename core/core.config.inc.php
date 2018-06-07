@@ -12,8 +12,8 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "Devian"; //AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201804";
+$codename 								= "Leonel"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201805";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
@@ -455,6 +455,8 @@ define("OPERACION_CLAVE_PAGO_CAPITAL",		120);
 define("OPERACION_CLAVE_PAGO_INTERES",		140);
 define("OPERACION_CLAVE_PAGO_MORA",			141);
 define("OPERACION_CLAVE_PAGO_CBZA",			145);
+define("OPERACION_CLAVE_PAGO_NOT",			177);
+
 define("OPERACION_CLAVE_PAGO_GLIQ",			901);
 define("OPERACION_CLAVE_DEV_GLIQ",			353);
 
@@ -501,20 +503,21 @@ define("RECIBOS_TIPO_PAGO_CREDITO",		2);
 define("RECIBOS_TIPO_MINISTRACION",		1);
 define("RECIBOS_TIPO_DISPOCISION",		102);
 define("RECIBOS_TIPO_PLAN_DE_PAGO",		11);
-define("RECIBOS_TIPO_PAGO_APORTACIONES",		5);
-define("RECIBOS_TIPO_DEPOSITO_VISTA",		3);
+define("RECIBOS_TIPO_PAGO_APORTACIONES",5);
+define("RECIBOS_TIPO_DEPOSITO_VISTA",	3);
 define("RECIBOS_TIPO_RETIRO_VISTA",		4);
-define("RECIBOS_TIPO_TERCEROS",		20);
+define("RECIBOS_TIPO_TERCEROS",			20);
 define("RECIBOS_TIPO_OINGRESOS",		99);
-define("RECIBOS_TIPO_OEGRESOS",		98);
+define("RECIBOS_TIPO_OEGRESOS",			98);
 define("RECIBOS_TIPO_PRIMERPAG",		301);
+define("RECIBOS_TIPO_DEVCOLOC",			16);	//Devolucione de Colocacion
 
 define("RECIBOS_TIPO_PAGOSPENDS",		22);
 
 define("RECIBOS_TIPO_CARGOSPENDS",		97);
 
 define("RECIBOS_TIPO_BONIFPENDS",		96);
-define("RECIBOS_TIPO_CIERRE",		12);
+define("RECIBOS_TIPO_CIERRE",			12);
 define("RECIBOS_TIPO_PAGOCARGOS",		22);
 define("RECIBOS_TIPO_TRASPCTAS",		9);
 
@@ -1142,6 +1145,7 @@ define("INTERES_VENCIDO_RENOVADO", "INTERES_VENCIDO_RENOVADO");
 //============================================ NIVELES DE USUARIOS ===================================================================
 define("USUARIO_TIPO_GERENTE", 						9);
 define("USUARIO_TIPO_CAJERO", 						4);
+define("USUARIO_TIPO_JEFECAJA",						5);
 define("USUARIO_TIPO_OFICIAL_CRED", 				7);
 define("USUARIO_TIPO_OFICIAL_CAPT", 				8);
 define("USUARIO_TIPO_OFICIAL_AML", 					10);
@@ -1547,6 +1551,13 @@ class cCache {
 			if(isset($_SESSION[$this->mGID_Errors])){
 				$this->mErrors = $_SESSION[$this->mGID_Errors];
 				//syslog(E_NOTICE, "MIERDA ::: " . $this->mErrors);
+			} else { 
+				$this->mErrors = 1;
+				//syslog(E_NOTICE, "MIERDA-II ::: " . $this->mErrors);
+			}
+		} else {
+			if(is_null($this->cnn())){
+				$this->mErrors = 1;
 			}
 		}
 		return $this->mErrors;

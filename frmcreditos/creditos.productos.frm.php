@@ -129,17 +129,22 @@ switch ($opcion){
 		break;		
 	case "tasas":
 		$xFRM->addGuardar();
-		$xFRM->OMoneda("interes_moratorio", $xTabla->interes_moratorio()->v(), "TR.Tasa anualizada de interes moratorio");
-		$xFRM->OMoneda("interes_normal", $xTabla->interes_normal()->v(), "TR.Tasa anualizada del interes normal");
+		$xFRM->OTasa("interes_moratorio", $xTabla->interes_moratorio()->v(), "TR.Tasa anualizada de interes moratorio");
+		$xFRM->OTasa("interes_normal", $xTabla->interes_normal()->v(), "TR.Tasa anualizada del interes normal");
 		$d34 	= $ql->getArrayRecord("SELECT * FROM `creditos_tipo_de_calculo_de_interes`");
 		$xFRM->OSelect("base_de_calculo_de_interes", $xTabla->base_de_calculo_de_interes()->v(), "TR.base de calculo de interes", $d34);
 
-		$xFRM->OMoneda("porcentaje_ica", $xTabla->porcentaje_ica()->v(), "TR.tasa de Interes Cobrado por Anticipado");
-		$xFRM->OMoneda("porcentaje_otro_credito", $xTabla->porcentaje_otro_credito()->v(), "TR.porcentaje para obtener otro credito");
-		$xFRM->OMoneda("porciento_garantia_liquida", $xTabla->porciento_garantia_liquida()->v(), "TR.Porcentaje de deposito en garantia liquida");		
+		//$xFRM->OTasa("porcentaje_ica", $xTabla->porcentaje_ica()->v(), "TR.TASA Cobrado por Anticipado");
+		$xFRM->OHidden("porcentaje_ica", $xTabla->porcentaje_ica()->v());
 		
-		$xFRM->OMoneda("tasa_ahorro", $xTabla->tasa_ahorro()->v(), "TR.TASA de Ahorro condicionado sobre el Credito");
-		$xFRM->OMoneda("tasa_iva", $xTabla->tasa_iva()->v(), "TR.Tasa de Impuesto_al_Consumo");
+		$xFRM->OTasa("porcentaje_otro_credito", $xTabla->porcentaje_otro_credito()->v(), "TR.Tasa para obtener otro credito");
+		$xFRM->OTasa("porciento_garantia_liquida", $xTabla->porciento_garantia_liquida()->v(), "TR.Tasa garantia liquida");		
+		if(MODULO_CAPTACION_ACTIVADO == true){
+			$xFRM->OTasa("tasa_ahorro", $xTabla->tasa_ahorro()->v(), "TR.TASA de Ahorro");
+		} else {
+			$xFRM->OHidden("tasa_ahorro", $xTabla->tasa_ahorro()->v());
+		}
+		$xFRM->OTasa("tasa_iva", $xTabla->tasa_iva()->v(), "TR.Tasa de Impuesto_al_Consumo");
 		$xFRM->OSelect("iva_incluido", $xTabla->iva_incluido()->v() , "TR.impuesto_al_consumo en la Tasa de Interes", $dSN);
 		break;
 	case "dias":

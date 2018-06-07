@@ -29,24 +29,48 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
-$xHP->init("jsInit()");
+$xHP->init(); //"jsInit()"
 
 $xFRM		= new cHForm("frm", "./");
 
 $msg		= "";
 
+//$xFRM->setNoAcordion(false);
+
 /*$xFRM->addJsBasico();
 $xFRM->addCreditBasico();
 $xFRM->addSubmit();*/
+$xFRM->addSeccion("idtphp", "php");
+$xFRM->addHElem("<code id='php-code' class=\"php\"></code>");
+$xFRM->endSeccion();
 
-$xFRM->OTextArea("idtexto", "", "TR.Texto");
+$xFRM->addSeccion("idtjs", "Inputs");
+$xFRM->addHElem("<code id='js-code' class=\"javascript\"></code>");
+$xFRM->endSeccion();
+//$xFRM->OTextArea("idtexto", "", "TR.Texto");
 
 echo $xFRM->get();
 ?>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
 <script>
-function jsInit(){
-	$("#idtexto").val(session("var.serialize"));
-}
+/*function jsInit(){
+	$("#php-code").html(session("var.serialize.php"));
+	$("#js-code").html(session("var.serialize.js"));
+	//hljs.initHighlightingOnLoad();
+	//$("#idtexto").val(session("var.serialize"));
+}*/
+$(document).ready(function() {
+	$("#php-code").html(session("var.serialize.php"));
+	$("#js-code").html(session("var.serialize.js"));
+	
+	  $('code').each(function(i, block) {
+	    hljs.highlightBlock(block);
+	  });
+});
 </script>
 <style>
 	#idtexto {

@@ -23,15 +23,16 @@ $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
 
 
-function jsaRevalidar($idcredito){
+function jsaRevalidar($idcredito, $pasocredito){
 	$xCred	= new cCredito($idcredito);
 	$msg	= "";
 	if($xCred->init() == true){
-		$msg	= $xCred->setVerificarValidez(OUT_HTML);
+		$msg	= $xCred->setVerificarValidez(OUT_HTML, $pasocredito);
 	}
 	return $msg;
 }
-$jxc ->exportFunction('jsaRevalidar', array('idcredito'), "#idmsg");
+
+$jxc ->exportFunction('jsaRevalidar', array('idcredito', 'idpasocredito'), "#idmsg");
 
 
 $jxc ->process();
@@ -47,6 +48,8 @@ $empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", 
 $grupo			= parametro("idgrupo", 0, MQL_INT); $grupo		= parametro("grupo", $grupo, MQL_INT);
 $ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 $observaciones	= parametro("idobservaciones");
+
+$pasocredito	= parametro("pasocredito", 0, MQL_INT);
 
 $xHP->init();
 
@@ -64,6 +67,7 @@ if($credito <= DEFAULT_CREDITO){
 	$xCred	= new cCredito($credito);
 	
 	$xFRM->OHidden("idcredito", $credito);
+	$xFRM->OHidden("idpasocredito", $pasocredito);
 	
 	if($xCred->init() == true){
 		$xFRM->OButton("TR.REVALIDAR", "jsaRevalidar()", $xFRM->ic()->VALIDAR);

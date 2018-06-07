@@ -26,6 +26,11 @@ $xHP				= new cHPage("TR.Solicitud de Credito .- Modulo de Validacion");
 $xHP->setNoCache();
 $xFecha				= new cFecha();
 $xCred				= new cCredito();
+$xVals				= new cReglasDeValidacion();
+$xRuls				= new cReglaDeNegocio();
+$OffByUsr			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_USR);		//regla de negocio
+$OffByHer			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_HER);		//regla de negocio
+$OffByProd			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_PROD);		//regla de negocio
 
 $msg				= "";
 $persona			= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -127,11 +132,22 @@ if($sucess == true){
 			$grupo_asociado, $amp_destino, $observaciones, $oficial_de_credito, $fecha_solicitud, $tipo_de_pago,
 			$xConv->getTipoDeBaseCalc(), $TasaDeInteres,  $fecha_ministracion, $xSoc->getClaveDeEmpresa(), $TipoDeAutorizacion, $idorigen, $origen);
 	
-	if ( USE_OFICIAL_BY_PRODUCTO == true AND $result == true ){
-		$oficial_de_seguimiento		= $xConv->getOficialDeSeguimiento();
+	if($result !== false){
+		if ( USE_OFICIAL_BY_PRODUCTO == true){
+			$oficial_de_seguimiento		= $xConv->getOficialDeSeguimiento();
+			
+		}
+		if($OffByProd == true){
+			$oficial_de_credito			= $xConv->getOficialDeSeguimiento();
+			$xCred->setCambiarOficialCred($oficial_de_credito);
+		}
+		if($OffByUsr == true){
+			$oficial_de_credito			= getUsuarioActual();
+			$oficial_de_seguimiento		= getUsuarioActual();
+			$xCred->setCambiarOficialCred($oficial_de_credito);
+		}
 		$xCred->setCambiarOficialSeg($oficial_de_seguimiento);
-	}	
-	
+	}
 	if($result == false){
 		$xFRM->addToolbar($xBtn->getRegresar("solicitud_de_credito.frm.php", true) );
 		$xFRM->addAviso($xHP->lang(MSG_ERROR_SAVE));
@@ -145,7 +161,7 @@ if($sucess == true){
 		if($TipoLugarCobro > 0){
 			$xCred->setTipoDeLugarDeCobro($TipoLugarCobro, true);
 		}
-		$xCred				= new cCredito($xCred->getNumeroDeCredito());
+		$xCred						= new cCredito($xCred->getNumeroDeCredito());
 		$xCred->init(); $credito	= $xCred->getNumeroDeCredito();
 		//Si es Automatizado
 		$xCat						= new cCreditosOtrosDatos();

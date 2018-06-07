@@ -24,6 +24,8 @@ $xF			= new cFecha();
 $query		= new MQL();
 $xFil		= new cSQLFiltros();
 
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+
 //===========  General
 $out 			= parametro("out", SYS_DEFAULT);
 $FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
@@ -40,6 +42,10 @@ $ica				= parametro("ica", false, MQL_BOOL);
 
 $idx				= date("Ym", $xF->getInt());
 $idi				= date("Ym", $xF->getInt($FechaInicial));
+
+
+$ByPersona			= $xFil->CreditoPorPersona($persona);
+
 
 switch($ica){
 	case true:
@@ -94,7 +100,7 @@ WHERE
 AND
 (`$InTable`.`ejercicio` <=$anno)
 AND (`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . ")
-
+$ByPersona
 ORDER BY
 `creditos_solicitud`.`estatus_actual`,
 `creditos_tipoconvenio`.`tipo_autorizacion` DESC,
@@ -142,7 +148,7 @@ WHERE
 (`$InTable`.`indice` >= $idi)
 AND
 (`$InTable`.`indice` <= $idx)
-
+$ByPersona
 AND (`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . ")
 GROUP BY `creditos_solicitud`.`numero_solicitud`
 ORDER BY
@@ -199,12 +205,15 @@ AND
 (`creditos_solicitud`.`saldo_conciliado` >" . TOLERANCIA_SALDOS . ")
 AND
 (`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . ")
+
+$ByPersona
+
 GROUP BY
 `creditos_solicitud`.`numero_solicitud`
 ORDER BY
-	`creditos_solicitud`.`estatus_actual`,
-	`creditos_solicitud`.`tipo_convenio`,
-	`socios`.`codigo`,
+	/*`creditos_solicitud`.`estatus_actual`,
+	`creditos_solicitud`.`tipo_convenio`,*/
+	`socios`.`nombre`,
 	`creditos_solicitud`.`numero_solicitud` ";
 
 $sql			= (isset($sSql[$tipo])) ? $sSql[$tipo] : $sSql[2];
@@ -226,7 +235,9 @@ $xT->setOmitidos("ultima_operacion");
 $xT->setOmitidos("fecha_conciliada");
 $xT->setOmitidos("saldo_conciliado");
 $xT->setOmitidos("tipo_autorizacion");
-$xT->setOmitidos("codigo");
+//$xT->setOmitidos("codigo");
+$xT->setTitulo("periodo", "MES");
+
 //$xT->setOmitidos("indice");
 $xT->setTitulo("indice", "PERCONT");
 

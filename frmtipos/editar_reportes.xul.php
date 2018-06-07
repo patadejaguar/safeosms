@@ -59,6 +59,7 @@ $xHG->setSQL("SELECT * FROM `general_reports` ORDER BY `general_reports`.`aplica
 $xHG->addList();
 //$xHG->col("idgeneral_reports", "TR.IDGENERAL REPORTS", "10%");
 $xHG->addKey("idreport");
+$xHG->setOrdenar();
 
 $xHG->col("descripcion_reports", "TR.NOMBRE", "60%");
 $xHG->col("aplica", "TR.CLASIFICACION", "20%");

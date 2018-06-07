@@ -277,8 +277,7 @@ class cFecha {
 	 * 
 	 * @param integer $index
 	 *        	de ID del Control de fecha
-	 * @param date $fecha
-	 *        	del control
+	 * @param variant $fecha del control
 	 * @return Null No retorna nada, por lo pronto
 	 */
 	function __construct($index = 0, $fecha = false) {
@@ -576,11 +575,9 @@ class cFecha {
 	/**
 	 * Devguelve un HTML:SELECT con horas selecionables
 	 * 
-	 * @param $ret Retornar?        	
-	 * @param $ctrl Nombre
-	 *        	Control, propiedad HTML:name
-	 * @param $id ID
-	 *        	Control, propiedad HTML:id
+	 * @param boolean $ret Retornar?        	
+	 * @param string $ctrl Nombre Control, propiedad HTML:name
+	 * @param string $id ID Control, propiedad HTML:id
 	 * @return string compatible
 	 */
 	function getSelectHour($ret = false, $ctrl = false, $id = false) {
@@ -648,7 +645,7 @@ class cFecha {
 	/**
 	 * Funcion que devuelve la Fecha Actual segun Formato dado
 	 * 
-	 * @return date Actual
+	 * @return variant Actual
 	 *        
 	 */
 	function get($format = false) {
@@ -658,10 +655,8 @@ class cFecha {
 	/**
 	 * funcion que resta dos fechas en formato ISO
 	 * 
-	 * @param date $FechaSustraendo
-	 *        	a la que se resta
-	 * @param date $FechaMinuendo
-	 *        	restada
+	 * @param variant $FechaSustraendo a la que se resta
+	 * @param variant $FechaMinuendo restada
 	 * @return integer de Dias
 	 */
 	function setRestarFechas($FechaSustraendo, $FechaMinuendo) {
@@ -684,11 +679,9 @@ class cFecha {
 	/**
 	 * Suma Dias a una Fecha en formato ISO
 	 * 
-	 * @param $dias Dias
-	 *        	sumar
-	 * @param $fecha Fecha
-	 *        	la que se va a sumar
-	 * @return date en formato ISO AAAA-MM-DD
+	 * @param integer $dias Dias sumar
+	 * @param variant $fecha Fecha la que se va a sumar
+	 * @return variant en formato ISO AAAA-MM-DD
 	 */
 	function setSumarDias($dias, $fecha = false) {
 		if ($fecha == false) {
@@ -699,11 +692,9 @@ class cFecha {
 	/**
 	 * resta dias a una Fecha en formato ISO
 	 * 
-	 * @param $dias Dias
-	 *        	restar
-	 * @param $fecha Fecha
-	 *        	la que se va a restar
-	 * @return date en formato ISO AAAA-MM-DD
+	 * @param integer $dias Dias restar
+	 * @param variant $fecha Fecha la que se va a restar
+	 * @return Variant Fecha en formato ISO AAAA-MM-DD
 	 */
 	function setRestarDias($dias, $fecha = false) {
 		$fecha = ($fecha == false) ? $this->mFecha : $fecha;
@@ -722,8 +713,7 @@ class cFecha {
 	/**
 	 * Devuelve el nombre del dia de la semana en Español
 	 * 
-	 * @param $date [OPCIONAL]Fecha
-	 *        	obtener el nombre
+	 * @param variant $date [OPCIONAL]Fecha obtener el nombre
 	 * @return string del día de la semana en Español
 	 */
 	function getDayName($date = false) {
@@ -736,9 +726,8 @@ class cFecha {
 	/**
 	 * Obtiene una fecha evaluada que es LABORABLE, seleccionando de una Tabla/DB datos previamente guardado
 	 * 
-	 * @param date $dia_a_evaluar
-	 *        	se evalua
-	 * @return date Laborable
+	 * @param variant $dia_a_evaluar se evalua
+	 * @return variant Laborable
 	 */
 	function getDiaHabil($dia_a_evaluar = false) {
 		if ($dia_a_evaluar == false) {

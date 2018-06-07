@@ -91,6 +91,8 @@ class cReciboDeOperacion{
 	private $mAfectaEnCaja			= false;
 	private $mTiempo				= 0;
 	private $mDoctoAnterior			= 0;	//Documento Anterior
+	private $mOficialCbza			= 0;
+	private $mOrigenCbza			= 0;
 	
 	public $ORIGEN_CAPTACION		= "captacion";
 	public $ORIGEN_COLOCACION		= "colocacion";
@@ -155,7 +157,7 @@ class cReciboDeOperacion{
 	/**
 	 * Funcion que inicializa el Recibo
 	 * @param array $arrInicial
-	 * @return unknown_type
+	 * @return boolean
 	 */
 	function init($arrInicial = false){
 			$DR			= array();
@@ -205,6 +207,9 @@ class cReciboDeOperacion{
 				$this->mSucursal			= $ORec->sucursal()->v();
 				$this->mCuentaBancaria		= $ORec->cuenta_bancaria()->v();
 				$this->mSaldoHistorico		= $ORec->montohist()->v();
+				$this->mOficialCbza			= $DR[$ORec->IDUSUARIO_CBZA];
+				$this->mOrigenCbza			= $DR[$ORec->IDTIPOCBZA];
+				
 				$this->setIDcache($ORec->idoperaciones_recibos()->v());
 				$xCache->set($this->mIDCache, $DR);
 				unset($DR);
@@ -1405,6 +1410,20 @@ class cReciboDeOperacion{
 		$this->init();
 		$this->setFinalizarRecibo(false, true);
 	}
+	function setDatosOrigen($tipocbza, $idoficialcobro){
+		$idoficialcobro		= setNoMenorQueCero($idoficialcobro);
+		$tipocbza			= setNoMenorQueCero($tipocbza);
+		$recibo				= $this->getCodigoDeRecibo();
+		if($tipocbza<= 0){
+			$tipocbza		= 1;
+		}
+		if($idoficialcobro <= 0){
+			$idoficialcobro	= getUsuarioActual();
+		}
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `idtipocbza`=$tipocbza, `idusuario_cbza`=$idoficialcobro WHERE `idoperaciones_recibos`=$recibo ");
+		return ($res === false ) ? false : true;
+	}
 	function getDatosDeCobro(){
 		$OTipo		= $this->getOTipoRecibo();
 		$info		= "";
@@ -1524,6 +1543,14 @@ class cReciboDeOperacion{
 			$this->mMessages	.= "WARN\tNo pagable " . $this->mTipoDePago . "\r\n";
 			$pagable = false;
 		}
+		//Cargar datos si es de credito
+		if($this->getEsDeCredito() == true AND $this->getEsDeEmpresa() == true){
+			$xOrg		= new cOperacionesTipoOrigenCbza();
+			if($this->getTipoOrigenCbza() == $xOrg->TIPO_ENPLANILLA){
+				$pagable	= false;
+			}
+		}
+		
 		return $pagable;
 	}
 	function getOTipoRecibo(){
@@ -1891,6 +1918,15 @@ class cReciboDeOperacion{
 		}
 		return $res;
 	}
+	function getEsDeEmpresa(){
+		$xVal		= new cReglasDeValidacion();
+		$empresa	= setNoMenorQueCero($this->mClavePersonAsoc);
+		$si			= false;
+		if($xVal->empresa($empresa) == true){
+			$si		= true;
+		}
+		return $si;
+	}
 	//function getOCuentaCaptacion(){}
 	//function getOCredito(){}
 	function setEmpresaAsociada($empresa){
@@ -1908,6 +1944,8 @@ class cReciboDeOperacion{
 			}
 		}
 	}
+	function getOficialDeCobranza(){ return $this->mOficialCbza; }
+	function getTipoOrigenCbza(){ return $this->mOrigenCbza; }
 }
 
 class cMovimientoDeOperacion{

@@ -56,7 +56,7 @@ input, select, textarea { border-radius: 5px 0 5px 0; }
 input:required:valid { background-color: #CAED9E; }
 .fieldform{ max-width:1108px; text-align: center;	margin: 0 auto; }
 
-input[type="text"], input[type="number"], input[type="email"], input[type="phone"] {
+input[type="text"], input[type="number"], input[type="email"], input[type="tel"] {
 	border: 1px solid #ccc;
     border-top: 1px solid #444;
     border-left: 1px solid #444;
@@ -648,7 +648,6 @@ ol.rounded-list a:before{
 	cursor: pointer;
 	background-color: #808080;
 }
-
 .ui-tooltip .formoid-default .element-text,.ui-tooltip .formoid-default .element-select,.ui-tooltip .formoid-default .element-input,
 .ui-tooltip .formoid-default .tx4, .ui-tooltip .formoid-default .element-text,
 	.ui-tooltip.tx4 { width: 98%; display: inline-block; max-width: 98%}
@@ -1527,4 +1526,17 @@ background-color: #38495A;
 }
 #btn_confirm_si, #btn_confirm_no, #btn_alert_ok, #btn_diag_aceptar,#btn_diag_cancelar,#btn_diag_si,#btn_diag_no  {
     min-width: 4em;
+}
+.btn_mini {
+	max-width: 28px;
+	min-height: 28px;
+}
+
+.button-mini {
+  background-color: #65656533;
+  padding: 2px;
+  border-radius: 3px;
+}
+.button-mini:hover {
+  background-color: #C8C8C8;
 }

@@ -425,7 +425,7 @@ class cTipos {
 	/**
 	 * Devuelve un Tipo de Operacion a partir de una Tipo de Pago de recibos
 	 * @param string $TipoDePago
-	 * @return		Tipo de Operacion
+	 * @return	string Tipo de Operacion
 	 * @deprecated @since 2014.09.09
 	 */
 	function getTipoOperacionByTipoPago($TipoDePago = "efectivo"){
@@ -1329,8 +1329,8 @@ class cTableStructure{
 	}
 	/**
 	 * Funcion que crea o actualiza una tabla en el sistema
-	 * @param $NTable	Nombre de la Tabla la cual desea trabajar
-	 * @param $TCond	Tipo de Operacion 0 = nueva Estructura, 1 = Actaulizacion de la estructura
+	 * @param integer $TCond	Tipo de Operacion 0 = nueva Estructura, 1 = Actaulizacion de la estructura
+	 * @param array $options COndiciones varias
 	 * @return	null
 	 **/
 	function setStructureTableByDemand( $TCond = 0, $options = array() ){
@@ -1346,15 +1346,16 @@ class cTableStructure{
 			//Elimna los registros anteriores
 			$sql_d_reg = "DELETE FROM general_structure WHERE tabla='$NTable'";
 			if($TCond == $this->NUEVO){
-				my_query($sql_d_reg);
+				$xMQ->setRawQuery($sql_d_reg);
 			}
 	
 			//ahora a grabar
 				$sql_fields = "SHOW FIELDS IN $NTable";
-				$rs_fields 	= mysql_query($sql_fields, cnnGeneral());
+				$rs_fields 	= $xMQ->getRecordset($sql_fields);
+				
 				$i			= 0;
 				$goKey		= false;
-				while($rowf = mysql_fetch_array($rs_fields)){
+				while($rowf = $rs_fields->fetch_array($rs_fields)){
 					$valor 				= $rowf[4];
 					$titulo				= ucfirst(str_replace("_", " ", $rowf[0]));
 					$ctrl 				= "text";
@@ -1429,7 +1430,8 @@ class cTableStructure{
 					//echo "<p class='aviso'>$sql_i_d</p>";
 					$i++;
 				}
-			@mysql_free_result($rs_fields);
+			$rs_fields->free();
+			
 		return $msg;
 	}
 	function setActualizar(){
@@ -3066,7 +3068,23 @@ class cFolios {
 	function __destruct(){ $this->mQ	= null;	}
 }
 
-
+function setCambio($tabla, $campo, $clave, $antes, $despues){
+	if($antes == $despues){
+		return false;
+	}
+	$xT	= new cSistemas_modificados();
+	$xT->idobjeto($tabla);
+	$xT->identificador($clave);
+	$xT->idsistemas_modificados("NULL");
+	$xT->idsubobjeto($campo);
+	$xT->idtipoobjeto("T"); //T=TABLA
+	$xT->idusuario(getUsuarioActual());
+	$xT->tiempo(time());
+	$xT->v_antes($antes);
+	$xT->v_despues($despues);
+	$res	= $xT->query()->insert()->save();
+	return ($res === false) ? false : true;
+}
 
 
 /**

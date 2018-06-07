@@ -24,13 +24,16 @@
 $xHP		= new cHPage("TR.Solicitud de Credito");
 //$oficial 	= elusuario($iduser);
 $jxc		= new TinyAjax();
-$xRuls		= new cReglaDeNegocio();
-$xVals		= new cReglasDeValidacion();
-
+$xRuls				= new cReglaDeNegocio();
+$xVals				= new cReglasDeValidacion();
+$xUsr				= new cSystemUser(); $xUsr->init();
 //$SinDatosDispersion	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_AUTORIZACION_SIN_DISP);		//regla de negocio
 $SinFinalPlazo		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PRODUCTOS_SIN_FINALPZO);		//regla de negocio
 $SinLugarPag		= false; //ACTUALIZAR
 $ConOrigen			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_SOLICITUD_CON_ORIGEN);		//regla de negocio
+$OffByUsr			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_USR);		//regla de negocio
+$OffByHer			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_HER);		//regla de negocio
+$OffByProd			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_PROD);		//regla de negocio
 
 $persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
@@ -295,8 +298,18 @@ if($ready == true){
 	}
 	$xFRM->endSeccion();
 	//====================================== Otros
+	//-- Oficial de Credito
+	
 	$xFRM->addSeccion("iddivotros", "TR.OTROS");
-	$xFRM->addHElem($xSel->getListaDeOficiales("oficial",SYS_USER_ESTADO_ACTIVO, $oficial)->get(true));
+	if($OffByHer == true OR $OffByProd == true OR $OffByUsr == true){
+		if($OffByUsr == true){
+			$oficial	= getUsuarioActual();
+		}
+		$xFRM->OHidden("oficial", $oficial);
+	} else {
+		$xFRM->addHElem($xSel->getListaDeOficiales("oficial",SYS_USER_ESTADO_ACTIVO, $oficial)->get(true));
+	}
+	
 	$xFRM->addObservaciones();
 	$xFRM->endSeccion();
 		
@@ -310,6 +323,7 @@ if($ready == true){
 		$xFRM->addDisabledInit("idtipodepago");
 		$xFRM->addDisabledInit("idproducto");
 		$xFRM->addDisabledInit("idperiocidad");
+		
 	}
 	
 	if($tipoorigen == $xCred->ORIGEN_LINEAS AND $idorigen > 0){
@@ -319,7 +333,9 @@ if($ready == true){
 		$xFRM->addDisabledInit("idproducto");
 		$xFRM->addDisabledInit("idperiocidad");
 	}
-	
+	if($OffByUsr == true){
+		$xFRM->addTag($xFRM->getT("TR.OFICIAL_DE_CREDITO" . " : " . $xUsr->getAlias()) );
+	}
 	$xFRM->addAviso(" ");
 }
 

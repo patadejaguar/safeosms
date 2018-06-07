@@ -728,8 +728,10 @@ function jsObtenCURP(){
 		if (String($("#idcurp").val() ).length > 10) {
 			//code
 		} else {
-			$("#idcurp").val( xMx.jsGetCURP(idnombrecompleto, idapellidopaterno, idapellidomaterno, idfechanacimiento, idgenero, identidadfederativa ) );
-			$("#idrfc").val( String($("#idcurp").val() ).substring(0,10) );
+			var mCurp		= xMx.jsGetCURP(idnombrecompleto, idapellidopaterno, idapellidomaterno, idfechanacimiento, idgenero, identidadfederativa );
+			
+			$("#idcurp").val( mCurp );
+			$("#idrfc").val( String(mCurp).substring(0,10) );
 		}
 	}
 	return true;

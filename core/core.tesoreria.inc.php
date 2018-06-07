@@ -458,6 +458,8 @@ class cCaja{
 	
 	function getMonedaActiva(){ return $this->mMonedaActiva; }
 	function getChequeActivo(){ return $this->mChequeActivo; }
+	function getMontoInicial(){ return $this->mFondoInicial; }
+	
 	function getLinkDeCorte(){
 		$fecha	= $this->mFecha;
 		$cajero	= $this->mCajero;
@@ -477,6 +479,7 @@ class cCaja{
 		$fecha_inicial	= $this->mFecha;
 		$fecha_final	= $this->mFecha;
 		$cajero			= $this->mCajero;
+		$fondoInicial	= $this->getMontoInicial();
 		//==================================================================== TOTAL CORTE
 		$resumen		.= "<h3>" . $xLn->getT("TR.Resumen de caja") . "</h3>";
 		$sqlTi 			= $xSQL->getListadoResumenTesoreria($cajero, $fecha_inicial, $fecha_final);
@@ -486,8 +489,12 @@ class cCaja{
 		$resumen		.=$xT->Show("TR.Resumen");
 		$resumen		.="<input type='hidden' id='idsumacaja' value='" . $xT->getFieldsSum("recibido") . "' />";
 		
-		$resumen		.= "<h3>" . $xLn->getT("TR.Efectivo") . "</h3>";
+		
+		//==================================================================== Fondo Inicial
+		$resumen		.= "<h3>" . $xLn->getT("TR.FONDODECAJA") . " :  " . getFMoney($fondoInicial) .  "" . AML_CLAVE_MONEDA_LOCAL . "</h3>";
+		$this->mSumaRecibos	+= $fondoInicial;
 		//==================================================================== EFECTIVO
+		$resumen		.= "<h3>" . $xLn->getT("TR.Efectivo") . "</h3>";
 		$sqlTE			= $xSQL->getListadoResumenOperaciones($fecha_inicial, $fecha_final, $cajero, TESORERIA_COBRO_EFECTIVO);
 		$xTE			= new cTabla($sqlTE); $xTE->setTdClassByType();
 		$xTE->setFootSum(array( 5 =>"total" ));
@@ -495,7 +502,9 @@ class cCaja{
 		$this->mSumaRecibos	+= $xTE->getFieldsSum("total");
 		
 		$sqlTG			= $xSQL->getListadoResumenOperaciones($fecha_inicial, $fecha_final, $cajero, TESORERIA_PAGO_EFECTIVO);
-		$xTG			= new cTabla($sqlTG); $xTG->setTdClassByType();
+		$xTG			= new cTabla($sqlTG); 
+		$xTG->setTdClassByType();
+		
 		$xTG->setFootSum(array( 5 =>"total" ));
 		$resumen		.=$xTG->Show("TR.Gastos en Efectivo");
 		
@@ -567,9 +576,9 @@ class cCaja{
 		$resumen		.= "<input type='hidden' id='idsumacobros' value='" .  $this->mSumaCobros . "' />";
 		$xNot			= new cHNotif();
 		if($this->mSumaRecibos > $this->mSumaCobros){
-			$resumen		.= $xNot->get($xLn->get("FALTANTE") . "" . getFMoney(($this->mSumaRecibos-$this->mSumaCobros)), "idavisodif", $xNot->ERROR);
+			$resumen		.= $xNot->get($xLn->get("FALTANTE") . " : " . getFMoney(($this->mSumaRecibos-$this->mSumaCobros)), "idavisodif", $xNot->ERROR);
 		} else if($this->mSumaRecibos < $this->mSumaCobros){
-			$resumen		.= $xNot->get($xLn->get("SOBRANTE") . "" . getFMoney(($this->mSumaCobros - $this->mSumaRecibos)), "idavisodif", $xNot->WARNING);
+			$resumen		.= $xNot->get($xLn->get("SOBRANTE") . " : " . getFMoney(($this->mSumaCobros - $this->mSumaRecibos)), "idavisodif", $xNot->WARNING);
 		} else {
 			$resumen		.= $xNot->get($xLn->getT("TR.Caja Cuadrada"), "idavisodif", $xNot->SUCCESS);
 		}
@@ -636,7 +645,7 @@ class cCuentaBancaria{
 	 * @param string $beneficiario
 	 * @param float $monto
 	 * @param integer $socio
-	 * @param date $fecha
+	 * @param variant $fecha
 	 * @param integer $autorizo
 	 * @param float $descuento
 	 * @param integer $cuenta
@@ -842,6 +851,7 @@ class cOperacionBancaria {
 	public $TRASPASO			= "traspaso";
 	
 	public $AUTORIZADO			= "autorizado";
+	public $NOAUTORIZADO		= "noautorizado";
 	
 	function __construct($clave = false){
 		$this->mCodigo		= $clave;

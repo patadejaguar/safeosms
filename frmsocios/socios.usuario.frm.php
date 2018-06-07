@@ -34,19 +34,34 @@ function jsaSavePin($pin, $idusuario){
 	
 	return $xUser->getMessages(OUT_HTML);
 }
+function jsaNivel($idusuario, $idnivel){
+	$idnivel					= setNoMenorQueCero($idnivel);
+	if($idnivel > 0){
+		$_SESSION["tmp.nivel.de.user"]	= $idnivel;
+		$_SESSION[SYS_USER_NIVEL] 		= $idnivel;
+		$_SESSION["log_nivel"] 			= $idnivel;
+	}
+	return "echo!";
+}
 
 $jxc->exportFunction('jsaSavePin', array('idpin', 'usuario'), "#idmsg");
+if(MODO_DEBUG == true){
+	$jxc->exportFunction('jsaNivel', array('usuario', 'idnivel'), "#idmsg");
+}
+
+
 $jxc->process();
 
-$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
-$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
-$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
-$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
-$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
-$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
-$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
+
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto			= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
 $grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
 $ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 $usuario		= parametro("usuario", 0, MQL_INT);
@@ -54,6 +69,7 @@ $observaciones	= parametro("idobservaciones");
 $pass1			= parametro("idpass1", "", MQL_RAW);
 $pass2			= parametro("idpass2", "", MQL_RAW);
 $idpin			= parametro("idpin", 0, MQL_INT);
+
 
 $xHP->init();
 
@@ -156,6 +172,19 @@ if($xSoc->init() == true){
 				
 				$xTbl->endRow();
 			}
+			//Cambiar Nivel
+			/*if(MODO_DEBUG == true){
+				$xTbl->initRow();
+				$xTbl->addTD("Nivel");
+				$nivel	= getUsuarioActual(USR_NIVEL);
+				$xSelN	= $xSel->getListaDeNivelDeUsuario("idnivel", false, $nivel);
+				$xSelN->addEvent("onchange", "jsaNivel()");
+				$xSelN->setLabel("");
+				$xTbl->addTD($xSelN->get());
+				$xTbl->endRow();
+			}*/
+			
+			
 			
 			$xFRM->addSeccion("idx", "TR.OPCIONES");
 			$xFRM->addHElem($xTbl->get());

@@ -1394,8 +1394,8 @@ class cMigracionSIBANCS extends cMigracion {
 
 /**
  * Funcion que crea o actualiza una tabla en el sistema
- * @param $NTable	Nombre de la Tabla la cual desea trabajar
- * @param $TCond	Tipo de Operacion 0 = nueva Estructura, 1 = Actaulizacion de la estructura
+ * @param string $NTable Nombre de la Tabla la cual desea trabajar
+ * @param integer $TCond Tipo de Operacion 0 = nueva Estructura, 1 = Actaulizacion de la estructura
  * @return	null
  **/
 function setStructureTableByDemand($NTable, $TCond = 0, $options = array() ){
@@ -2417,6 +2417,9 @@ class cReglasDeValidacion  {
 				$ok	= false;			
 			}
 		}
+		if($empresa <= 0){
+			$ok = false;
+		}
 		return $ok;
 	}
 	function cuenta($clave = false){
@@ -2457,6 +2460,9 @@ class cReglasDeValidacion  {
 			if($v == DEFAULT_GRUPO OR $v == FALLBACK_CLAVE_DE_GRUPO ){
 				$ok		= false;
 			}
+		}
+		if($v <= 0){
+			$ok	= false;
 		}
 		return $ok;
 	}

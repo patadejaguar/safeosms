@@ -159,6 +159,12 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 					$str		= $xFil->cleanTextoBuscado($texto, 7);
 					$WSoc		= " AND (curp LIKE '$str%') ";
 				break;
+				//CURP
+				case "r":
+					$str		= $xFil->cleanTextoBuscado($texto, 7);
+					$WSoc		= " AND (rfc LIKE '$str%') ";
+					break;
+					
 			//IDInterno
 				case "idi":
 					$str		= $xFil->cleanTextoBuscado($texto);
@@ -234,8 +240,9 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 				$table_s->setWithMetaData();
 				$strTbls .= $table_s->Show("TR.CREDITOS");
 			} else {
+				
 				if($todos == true){
-					$WSoc = $WSoc;// " `socios_general`.`codigo` >0 $WSoc ";
+					//$WSoc = $WSoc;// " `socios_general`.`codigo` >0 $WSoc ";
 				}
 				$sqllike = $sqlL->getListadoDePersonasV2($w1 . $WSoc, "0,100", $extras);
 				$table_s = new cTabla($sqllike);
@@ -300,9 +307,10 @@ $xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
 $xFRM->addToolbar($xChk->get("TR.Todos", "idtodo"));
 $xTxt->addEvent("jsGetPersonasByKey(this)", "onkeyup");$xTxt2->addEvent("jsGetPersonasByKey2(this)", "onkeyup");
 $xTxt->setDivClass("");
+//"nc"=>$xFRM->getT("TR.Nombre desde un Formulario"),
 $xHSel->addOptions(array(
 		"n" => "Nombre/Iniciales(Paterno Materno Nombre)",
-		"nc"=>$xFRM->getT("TR.Nombre desde un Formulario"),
+		
 		"e"=>$xFRM->getT("TR.POR EMPRESA"),
 		"idi"=>$xFRM->getT("TR.IDINTERNO"),
 		"s"=>$xFRM->getT("TR.CLAVE_DE_PERSONA"),
@@ -335,6 +343,8 @@ $xFRM->OHidden("tipodeingreso", $tipo_de_ingreso);
 
 $xFRM->OHidden("idempresaadd", $empresa);
 $xFRM->OHidden("idgrupoadd", $grupo);
+
+$xFRM->addCerrar();
 
 echo $xFRM->get();
 

@@ -8,16 +8,27 @@ $dir			= $_SERVER["DOCUMENT_ROOT"];
 $privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 
 if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
+include_once ("./libs/importer.php");
+ini_set("max_execution_time", 900);
+
+
+//ini_set('display_errors', 1);
+//ini_set('display_startup_errors', 1);
+//error_reporting(E_ALL);
+
+
 
 $msg			= "";
 //======================== Checar
 //si guardar iniciar al index
-$localaction	= (isset($_REQUEST["action"])) ?  $_REQUEST["action"] : "";
+$action			= (isset($_REQUEST["action"])) ?  $_REQUEST["action"] : "";
 
 $usrmysql		= (isset($_REQUEST["idusuario"])) ?  $_REQUEST["idusuario"] : "";
 $pwdmysql		= (isset($_REQUEST["idpassword"])) ?  $_REQUEST["idpassword"] : "";
 $srvmysql		= (isset($_REQUEST["idservidor"])) ?  $_REQUEST["idservidor"] : "localhost";
 $dbmysql		= (isset($_REQUEST["iddb"])) ?  $_REQUEST["iddb"] : "";
+
+$pwdroot		= (isset($_REQUEST["idpwdroot"])) ?  $_REQUEST["idpwdroot"] : "";
 
 //$sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 $urlsys			= (isset($_REQUEST["idurl"])) ?  $_REQUEST["idurl"] : $_SERVER['SERVER_NAME'];
@@ -27,12 +38,36 @@ $srvmysql		= ($srvmysql == "") ? "127.0.0.1" : $srvmysql;
 
 if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $action == "" ){
 	
-	$cnn = new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);
+	//Importar la base de datos
+	$mysqlImport = new MySQLImporter($srvmysql, "root", $pwdroot);
+	$mysqlImport->doImport("./db/safe-osms.sql",$dbmysql,true);
+	
+	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
+	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	
+	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
+	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	
+	//========================= Agregar Usuario y contraseña
+	$cnn 		= new mysqli($srvmysql, "root", $pwdroot, $dbmysql);
+	if ($cnn->connect_errno) {
+		$msg	.= "ERROR EN LA CONEXION ROOT: ". $cnn->connect_error . " \n";
+		exit;
+	} else {
+		$rs		= $cnn->query("CREATE USER '$usrmysql'@'localhost' IDENTIFIED BY '$pwdmysql'");
+		$rs		= $cnn->query("GRANT ALL PRIVILEGES ON $dbmysql.* To '$usrmysql'@'localhost' IDENTIFIED BY '$pwdmysql'");
+	}
+	$cnn		= null;
+	//=========================
+	
+	$cnn 		= new mysqli($srvmysql, $usrmysql, $pwdmysql, $dbmysql);
+	
 	if ($cnn->connect_errno) {
 		$msg	.= "ERROR EN LA CONEXION : ". $cnn->connect_error . " \n";
 		exit;
 	} else {
 		$rs		= $cnn->query("SHOW TABLES IN $dbmysql");
+		
 		if($rs == false){
 			$msg	.= "ERROR(". $cnn->error . ") \r\n";
 		} else {
@@ -215,7 +250,7 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
   </div>
 
   <div class='name'>
-    <input class='last' placeholder='Contraseña ROOT MySQL' type='password' name='idroot'>
+    <input class='last' placeholder='Contraseña ROOT MySQL' type='password' name='idpwdroot'>
   </div>
     
 
@@ -251,8 +286,5 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 }
 
 
-
-
 //var_dump($_REQUEST);
-
 ?>

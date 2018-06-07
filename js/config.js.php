@@ -201,6 +201,12 @@ var Configuracion = {
 		simbolo : "<?php echo OPERACION_MONEDA_SIMBOLO; ?>",
 		iso : "<?php echo AML_CLAVE_MONEDA_LOCAL; ?>",
 		nombre : "<?php echo OPERACION_MONEDA_NOMBRE; ?>"
+	},
+	css : {
+		warn : "warn",
+		ok : "success",
+		error : "error",
+		info : "info"
 	}
 }
 

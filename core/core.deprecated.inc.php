@@ -268,10 +268,8 @@ function updatemvto_sp($iddocto, $tipomvto, $periodo=0, $value=30, $campo="estat
 //	return $trsql;
 }
 /**
- * Elimina Mvtos segun Parametro dado
- * @param long $iddocto
- * @param int $tipomvto
- * @param int $periodo
+ * 
+ * @deprecated @since 2016.0101
  */
 function eliminar_mvtos($iddocto, $tipomvto, $periodo=0) {
 	$thin = "";
@@ -848,8 +846,9 @@ function the_row( $sql="" ){
 }
 /**
  * Ejecuta un Query  y devuelve una seria de informacion en un array
- * @param sttring $sqlMQ
+ * @param string $sqlMQ
  * @param string $debug_warns
+ * @deprecated @since 2016.01.01
  * @return array
  */
 function my_query($sqlMQ = "", $debug_warns = false) {
@@ -997,8 +996,6 @@ function set_decrypt($char=""){
 }
 /**
  * Obtiene una fecha evaluada que es LABORABLE, seleccionando de una Tabla/DB datos previamente guardado
- * @param	date	$dia_a_evaluar		Fecha que se evalua
- * @return	date	Dia Laborable
  * @deprecated 2012.03.02
  */
 function set_no_festivo($dia_a_evaluar){

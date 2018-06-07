@@ -50,6 +50,7 @@ $xSel		= new cHSelect();
 
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
+$xFRM->OButton("TR.AGREGAR", "jsAdd()", $xFRM->ic()->AGREGAR, "cmdaddprecli", "green");
 
 $xFRM->addSeccion("idasig", "TR.CREDITOSNOASIGNADOS");
 $sql		= "SELECT
@@ -119,11 +120,67 @@ $xFRM->endSeccion();
 
 
 echo $xFRM->get();
+
+
+
+
+/* ===========		GRID JS		============*/
+/*
+$xHG	= new cHGrid("iddivpreclientes",$xHP->getTitle());
+
+$xHG->setSQL("SELECT * FROM `creditos_preclientes` LIMIT 0,100");
+$xHG->addList();
+$xHG->addKey("idcontrol");
+$xHG->col("nombres", "TR.NOMBRES", "10%");
+$xHG->col("apellido1", "TR.APELLIDO1", "10%");
+$xHG->col("apellido2", "TR.APELLIDO2", "10%");
+$xHG->col("rfc", "TR.RFC", "10%");
+$xHG->col("curp", "TR.CURP", "10%");
+$xHG->col("telefono", "TR.TELEFONO", "10%");
+$xHG->col("fecha_de_registro", "TR.FECHA DE REGISTRO", "10%");
+$xHG->col("producto", "TR.PRODUCTO", "10%");
+$xHG->col("periocidad", "TR.PERIOCIDAD", "10%");
+$xHG->col("pagos", "TR.PAGOS", "10%");
+$xHG->col("aplicacion", "TR.APLICACION", "10%");
+$xHG->col("notas", "TR.NOTAS", "10%");
+$xHG->col("monto", "TR.MONTO", "10%");
+$xHG->col("email", "TR.EMAIL", "10%");
+$xHG->col("idpersona", "TR.IDPERSONA", "10%");
+$xHG->col("idcredito", "TR.IDCREDITO", "10%");
+$xHG->col("idorigen", "TR.IDORIGEN", "10%");
+$xHG->col("idestado", "TR.IDESTADO", "10%");
+$xHG->col("idoficial", "TR.IDOFICIAL", "10%");
+$xHG->col("idexterno", "TR.IDEXTERNO", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idcontrol +')", "edit.png");
+$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idcontrol +')", "delete.png");
+$xFRM->addHElem("<div id='iddivpreclientes'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+echo $xFRM->get();
+?>
+<script>
+var xG	= new Gen();
+function jsEdit(id){
+	xG.w({url:"../frmcreditos/creditos-preclientes.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivpreclientes});
+}
+function jsAdd(){
+	xG.w({url:"../frmcreditos/creditos-preclientes.new.frm.php?", tiny:true, callback: jsLGiddivpreclientes});
+}
+function jsDel(id){
+	xG.rmRecord({tabla:"creditos_preclientes", id:id, callback:jsLGiddivpreclientes});
+}
+</script>
+<?php
+*/
 ?>
 <script>
 var xG	= new Gen();
 function jsGoPanel(id){
 	xG.w({url: "../frmcreditos/creditos-preclientes.panel.frm.php?clave=" + id, tab:true});
+}
+function jsAdd(){
+	xG.w({url:"../frmcreditos/creditos-preclientes.new.frm.php?", tiny:true}); //, callback: jsLGiddivpreclientes
 }
 </script>
 <?php

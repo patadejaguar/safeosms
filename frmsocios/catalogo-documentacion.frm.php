@@ -56,13 +56,15 @@ $xHG->addKey("clave_de_control");
 $xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "10%");
 $xHG->col("clasificacion", "TR.CLASIFICACION", "10%");
 $xHG->col("vigencia_dias", "TR.VIGENCIA", "10%");
-$xHG->col("almacen", "TR.ALMACEN", "10%");
+$xHG->col("almacen", "TR.ARCHIVO", "10%");
+$xHG->col("estatus", "TR.ESTATUS", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
 $xFRM->addHElem("<div id='iddivcattip'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
+
 echo $xFRM->get();
 ?>
 <script>
@@ -78,8 +80,6 @@ function jsDel(id){
 }
 </script>
 <?php
-
-
 
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();

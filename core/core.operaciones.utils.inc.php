@@ -152,4 +152,78 @@ class cUtileriasParaOperaciones{
 		return $msg;
 	}	
 }
+
+
+
+
+
+class cOperacionesTipoOrigenCbza {
+	
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "catalogos_tipo_de_dispersion";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	public $TIPO_PORDEFECTO		= 1;
+	public $TIPO_ENVENTANILLA	= 100;
+	public $TIPO_ENPLANILLA		= 101;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCatalogos_tipo_de_dispersion();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+}
+
+
 ?>

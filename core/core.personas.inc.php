@@ -242,22 +242,26 @@ class cPersonasFlujoDeEfectivoTipos {
 
 
 class cPersonasMemos {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mTxt		= "";
-	private $mMessages	= "";
+	private $mClave				= false;
+	private $mObj				= null;
+	private $mInit				= false;
+	private $mTxt				= "";
+	private $mMessages			= "";
+	private $mFechaDeMem		= false;
 	public $TIPO_RECIBO_ELIM	= 14;
 	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); }
 	function init($data = false){
+		$xT		= new cSocios_memo();
 		$xQL	= new MQL();
 		$data	= (is_array($data)) ? $data : $xQL->getDataRow("SELECT * FROM `socios_memo` WHERE `idsocios_memo`=". $this->mClave);
 		if(isset($data["idsocios_memo"])){
-			$this->mObj		= new cSocios_memo(); //Cambiar
+			$this->mObj			= $xT; //Cambiar
 			$this->mObj->setData($data);
-			$this->mTxt		= $this->mObj->texto_memo()->v();
+			$this->mTxt			= $this->mObj->texto_memo()->v();
+			$this->mFechaDeMem	= $data[$xT->FECHA_MEMO];
+			
 			$this->mInit	= true;
 		}
 		return $this->mInit;
@@ -275,6 +279,23 @@ class cPersonasMemos {
 		$xQL	= new MQL();
 		$xQL->setRawQuery("UPDATE `socios_memo` SET `archivado`=1 WHERE `idsocios_memo`=". $this->mClave);
 	}
+	function initByPersonaTipo($idpersona, $tipo){
+		$idpersona	= setNoMenorQueCero($idpersona);
+		$tipo		= setNoMenorQueCero($tipo);
+		$xQL		= new MQL();
+		$datos		= $xQL->getDataRow("SELECT * FROM `socios_memo` WHERE `numero_socio`=$idpersona AND `tipo_memo`=$tipo ORDER BY `fecha_memo` DESC LIMIT 0,1");
+		$xQL		= null;
+		return $this->init($datos);
+	}
+	function initByDoctoTipo($iddocto, $tipo){
+		$iddocto	= setNoMenorQueCero($iddocto);
+		$tipo		= setNoMenorQueCero($tipo);
+		$xQL		= new MQL();
+		$datos		= $xQL->getDataRow("SELECT * FROM `socios_memo` WHERE `numero_solicitud`=$iddocto AND `tipo_memo`=$tipo ORDER BY `fecha_memo` DESC LIMIT 0,1");
+		$xQL		= null;
+		return $this->init($datos);
+	}
+	function getFechaDeMemo(){ return $this->mFechaDeMem; }
 }
 
 class cPersonasMembresiasTipos {

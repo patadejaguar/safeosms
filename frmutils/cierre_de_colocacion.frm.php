@@ -86,6 +86,8 @@ include_once("../core/core.html.inc.php");
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_parciales`()");	//Abonos mes y tipo columna
 	$xQL->setRawQuery("CALL `proc_creds_prox_letras`()");			//Abonos mes y tipo columna
 	
+	$xQL->setRawQuery("UPDATE operaciones_mvtos SET afectacion_real=0 AND afectacion_estadistica=0 WHERE (tipo_operacion=410 OR tipo_operacion=411 OR tipo_operacion=412 OR tipo_operacion=413) AND (afectacion_real>0) AND getEsCreditoPagado(docto_afectado) = TRUE");
+	
 	if($PurgarSDPM == true){
 		$xQL->setRawQuery("CALL `proc_purge_sdpm` ");
 	}
@@ -132,6 +134,10 @@ include_once("../core/core.html.inc.php");
 		$xPers->add("$ejercicio-01-01", $xF2->getFechaFinAnnio());
 		$messages		.= $xPers->getMessages();
 	}	
+	if(MODULO_LEASING_ACTIVADO == true){
+		$limDate		= $xF->setRestarDias(CREDITO_LEASING_DIAS_VIG_COT, $fechaop);
+		$xQL->setRawQuery("UPDATE `originacion_leasing` SET `estatus`=0 WHERE `fecha_origen`<='$limDate' AND `paso_proceso`=1");
+	}
 	
 	$xRec->setFinalizarRecibo(true);
 

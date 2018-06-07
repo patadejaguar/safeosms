@@ -307,8 +307,8 @@ class cCreditosLeasing {
 			$this->mMontoPlacas			= $xT->monto_placas()->v();
 			$this->mMontoNotario		= $xT->monto_notario()->v();
 			$this->mMontoGestoria		= $xT->monto_gestoria()->v();
-			$this->mMontoDepositoGarantia 	= $xT->renta_deposito()->v();
-			$this->mMontoRentaProporcional	= $xT->renta_proporcional()->v();
+			$this->mMontoDepositoGarantia 	= $data[$xT->RENTA_DEPOSITO];// $xT->renta_deposito()->v();
+			$this->mMontoRentaProporcional	= $data[$xT->RENTA_PROPORCIONAL]; //$xT->renta_proporcional()->v();
 			$this->mMontoComision			= $xT->monto_comision()->v();
 			$this->mCuotaGtiaExtendida		= $xT->cuota_garantia()->v();
 			$this->mTipoRAC					= $xT->tipo_rac()->v();
@@ -344,7 +344,7 @@ class cCreditosLeasing {
 				$DTasa	= explode("-", $dres);
 				$PRes	= setNoMenorQueCero($DTasa[0]);
 				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
-				$TRes	= setNoMenorQueCero($TRes);
+				$TRes	= setNoMenorQueCero($TRes,3);
 				
 				$this->mArrResiduales[$PRes]	= $TRes;
 			}
@@ -353,7 +353,7 @@ class cCreditosLeasing {
 				$DTasa	= explode("-", $vres);
 				$PRes	= setNoMenorQueCero($DTasa[0]);
 				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
-				$TRes	= setNoMenorQueCero($TRes);
+				$TRes	= setNoMenorQueCero($TRes,3);
 				$this->mArrVecs[$PRes]			= $TRes;
 			}
 			$arrTas						= explode(",", $xT->tasas()->v());
@@ -361,7 +361,7 @@ class cCreditosLeasing {
 				$DTasa	= explode("-", $tres);
 				$PRes	= setNoMenorQueCero($DTasa[0]);
 				$TRes	= (isset($DTasa[1])) ? $DTasa[1] : 0;
-				$TRes	= setNoMenorQueCero($TRes);
+				$TRes	= setNoMenorQueCero($TRes,3);
 				$this->mArrTasas[$PRes]			= $TRes;
 			}
 			
@@ -1426,7 +1426,7 @@ class cLeasingEmulaciones {
 	function __construct($plazo, $TasaInteres, $Frecuencia, $TasaIVA = 0){
 		$this->mPlazo 		= setNoMenorQueCero($plazo,0);
 		$this->mTasaIVA		= setNoMenorQueCero($TasaIVA, 4);
-		$this->mTasaAnual	= setNoMenorQueCero($TasaInteres, 4);
+		$this->mTasaAnual	= setNoMenorQueCero($TasaInteres, 6);
 		$this->mFrecuencia	= setNoMenorQueCero($Frecuencia,0);
 	}
 	function getCuotaRenta($precio, $anticipo, $residual, $aliado = 0, $costeGPS = 0){
@@ -1509,7 +1509,7 @@ class cLeasingEmulaciones {
 			return 0;
 		}
 	}
-	function getValorResidual($precio, $aliado, $plazo = 0, $TasaResidual = 0, $anticipo = 0){
+	function getValorResidual($precio, $aliado, $plazo = 0, $TasaResidual = 0, $anticipo = 0, $admin = false){
 		$xRes		= new cLeasingValorResidual();
 		$xRuls		= new cReglaDeNegocio();
 		$ConAnt		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_ARREND_RES_CON_ANT);
@@ -1524,7 +1524,9 @@ class cLeasingEmulaciones {
 		
 		$residual		= 0;
 		if($xRes->initByPlazoTipo($plazo) == true){
+			if($admin == false){
 			$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
+			}
 			
 			$FactorIVA	= (1/(1+TASA_IVA));
 			$coste		= ($precio+$aliado);
@@ -2403,12 +2405,13 @@ class cCreditosRechazos {
 	function getNombre(){return $this->mNombre; }
 	function getClave(){return $this->mClave; }
 	function getTipo(){ return $this->mTipo; }
+	function getNota(){ return $this->mTexto; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
 	function initByCredito($credito = false){
 		$xQL	= new MQL();
 		$credito	= setNoMenorQueCero($credito);
-		$data	= $xQL->getDataRow("SELECT * FROM `creditos_rechazados` WHERE `estatusactivo`=1 AND `numero_de_credito`=$credito  LIMIT 0,1");
+		$data	= $xQL->getDataRow("SELECT * FROM `creditos_rechazados` WHERE `estatusactivo`=1 AND `numero_de_credito`=$credito ORDER BY `tiempo` DESC LIMIT 0,1");
 		return $this->init($data);
 	}
 	function getUsuario(){ return $this->mUsuario; }

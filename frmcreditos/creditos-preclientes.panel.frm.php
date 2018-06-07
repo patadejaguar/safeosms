@@ -72,11 +72,11 @@ $xFRM->OHidden("idcredito", $xTabla->idcredito()->v());
 $xFRM->OText("fecha_de_registro", $xTabla->fecha_de_registro()->v(), "TR.FECHA DE REGISTRO");
 
 $xFRM->OText("nombres", $xTabla->nombres()->v(), "TR.NOMBRE_COMPLETO");
-$xFRM->OText("apellido1", $xTabla->apellido1()->v(), "TR.PRIMER_APELLIDO");
-$xFRM->OText("apellido2", $xTabla->apellido2()->v(), "TR.SEGUNDO_APELLIDO");
+$xFRM->OText_13("apellido1", $xTabla->apellido1()->v(), "TR.PRIMER_APELLIDO");
+$xFRM->OText_13("apellido2", $xTabla->apellido2()->v(), "TR.SEGUNDO_APELLIDO");
 
-$xFRM->OText("rfc", $xTabla->rfc()->v(), "TR.RFC");
-$xFRM->OText("curp", $xTabla->curp()->v(), "TR.CURP");
+$xFRM->OText_13("rfc", $xTabla->rfc()->v(), "TR.RFC");
+$xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.CURP");
 
 $xFRM->OMoneda("telefono", $xTabla->telefono()->v(), "TR.TELEFONO");
 $xFRM->OText("email", $xTabla->email()->v(), "TR.EMAIL");

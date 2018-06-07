@@ -707,6 +707,7 @@ class cPersonasBuscadores {
 		if($solobuscar == true){ $datos	= (isset($datos["codigo"])) ? true : false; }
 		return $datos;
 	}
+	
 }
 
 class cPersonasShare {

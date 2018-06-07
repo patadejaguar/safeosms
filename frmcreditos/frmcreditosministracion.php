@@ -29,6 +29,9 @@ $xF			= new cFecha();
 $jxc 		= new TinyAjax();
 $xCaja		= new cCaja();
 $xRuls		= new cReglaDeNegocio();
+//$xPaso		= new cCreditosEtapas();
+$xPaso		= new cCreditosProceso();
+
 $SinDatosDescuentos	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_DESEMBOLSO_SIN_DESC);		//regla de negocio
 $SinRecFiscal		= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_SIN_VERSIONIMP);		//regla de negocio
 
@@ -82,6 +85,8 @@ $xNot		= new cHNotif();
 $xTxt		= new cHText();
 $jsSum		= "";
 $sum		= 0;
+$etapa		= $xPaso->PASO_ADESEMBOLSO;
+
 $xFRM->addDataTag("role", "ministracion");
 $xFRM->setTitle($xHP->getTitle() );
 $xFRM->setNoAcordion();
@@ -110,7 +115,7 @@ if($credito <= DEFAULT_CREDITO){
 			$persona=$xCred->getClaveDePersona();
 		
 			$xFRM->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred($credito);", $xFRM->ic()->CALENDARIO1);
-			$xFRM->OButton("TR.Validacion", "var xGen=new CredGen(); xGen.getFormaValidacion($credito);", $xFRM->ic()->CHECAR, "", "green");
+			$xFRM->OButton("TR.Validacion", "var xGen=new CredGen(); xGen.getFormaValidacion($credito, $etapa);", $xFRM->ic()->CHECAR, "", "green");
 			
 			$xFRM->OHidden("idsolicitud", $credito);
 			$xFRM->OHidden("idsocio", $persona);

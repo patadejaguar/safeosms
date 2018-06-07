@@ -2221,9 +2221,9 @@ class cCreditosMontos {
 				}
 			}
 			$xF		= new cFecha();
-			if(isset($rw["clave_de_credito"])){
+			if(isset($rw[$xMM->CLAVE_DE_CREDITO])){
 				$xMM->setData($rw);
-				$this->mInteresNormalDevengado		= $xMM->interes_n_dev()->v();
+				$this->mInteresNormalDevengado		= $rw[$xMM->INTERES_N_DEV];// $xMM->interes_n_dev()->v();
 				$this->mInteresMoratorioCorriente	= $xMM->interes_m_corr()->v();
 				$this->mFechaDePrimerAtraso			= $xMM->f_primer_atraso()->v();
 				$this->mFechaDeUltimoAtraso			= $xMM->f_ultimo_atraso()->v();
@@ -3564,13 +3564,13 @@ class cCreditosPagos {
 
 
 class cCreditosAvales {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mNombre	= "";
-	private $mMessages	= "";
-	private $mCredito	= false;
-	private $mPersona	= false;
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mCredito		= false;
+	private $mPersona		= false;
 	private $mRelacionado	= false;
 	private $mNumeroPorCred	= 0;
 	
@@ -3594,16 +3594,27 @@ class cCreditosAvales {
 	function getNombre(){return $this->mNombre;}
 	function getClave(){return $this->mClave;}
 	function add(){}
-	function initByCredito($credito){
-		$credito		= setNoMenorQueCero($credito);
-		$this->mCredito	= $credito;
+	function initByCredito($credito, $persona = false){
+		$credito	= setNoMenorQueCero($credito);
+		$persona	= setNoMenorQueCero($persona);
+		if($persona<= DEFAULT_SOCIO OR $credito<= DEFAULT_CREDITO){
+			$xCred				= new cCredito($credito);
+			if($xCred->init() == true){
+				$this->mCredito	= $xCred->getClaveDeCredito();
+				$this->mPersona	= $xCred->getClaveDePersona();
+			}
+		} else {
+			$this->mCredito		= $credito;
+			$this->mPersona		= $persona;
+		}
 	}
 	function initArbolAvalesDirectos(){
 		$xLi		= new cSQLListas();
 		$xQL		= new MQL();
-		$sqlAvales	= $xQL->getDataRecord($xLi->getListadoDeAvales($this->mCredito));
+		$sqlAvales	= $xQL->getDataRecord($xLi->getListadoDeAvales($this->mCredito, $this->mPersona));
 		$this->mNumeroPorCred	= $xQL->getNumberOfRows();
-		
+		$xQL		= null;
+		$xLi		= null;
 	}
 	function getNumeroAvalesDirectos(){ return $this->mNumeroPorCred; }
 }
@@ -3857,5 +3868,69 @@ class cCreditosPlanDePagosArchivo {
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
 	
+}
+
+
+class cCreditosTipoDestDispersion {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_tipo_de_dispersion";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCreditos_tipo_de_dispersion();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
 }
 ?>

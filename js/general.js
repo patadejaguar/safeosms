@@ -1,5 +1,6 @@
-DIV_DEC 		= ".";
-DIV_MIL			= ",";
+
+DIV_DEC 			= ".";
+DIV_MIL				= ",";
 SEPARADOR_DECIMAL	= ".";
 var IMG_LOADING		= "<span><img src=\"../images/loading.gif\" ></span>";
 var SCREENW			= window.innerWidth;
@@ -328,11 +329,13 @@ Gen.prototype.w	= function(opts){
 	var otags	= (typeof opts.tags == "undefined") ? true : opts.tags;
 	var isBlank	= (typeof opts.blank == "undefined") ? false : opts.blank;
 	var isTab	= (typeof opts.tab == "undefined") ? false : opts.tab;
+	var isPrinc	= (typeof opts.principal == "undefined") ? false : opts.principal;
+	
 	var ajsAlto	= (typeof opts.ajusteAlto == "undefined") ? false : opts.ajusteAlto;
 	var wm		= this;
 	var isMob	= session(Configuracion.variables.sistema.isMobile);
 	isMob		= (isMob === null) ? false : isMob;
-
+	var self	= this;
 	var tiny	= (typeof opts.tiny == "undefined") ? false : opts.tiny;
 	tiny		= (isMob == "true") ? false  : tiny;
 	//if(isMob == "true"){ console.log("mobile.."); } else { console.log( Configuracion.variables.sistema.isMobile + ": " +  session(Configuracion.variables.sistema.isMobile) ); }
@@ -357,27 +360,56 @@ Gen.prototype.w	= function(opts){
 	var oargs	= precallF();
 
 	url			= url + oargs;
-
-	if(tiny == false){
-		if (isBlank == true) {
-			//name = "tabshifted";
-			name 	= "_blank";
-		}
-		if (isTab == true) {
-			specs 	= "";
-			name 	= "_blank";
-		}
-		UPDWIN		= window.open(url,name,specs);
-		if (UPDWIN == null) {
-			wm.alerta({ msg : "TR.Error al Abrir la Ventana"});
-		} else {
-			UPDWIN.focus();
-		}
+	if(isPrinc == true){
+		self.go(opts);
 	} else {
-		if (otags == true) { url	= url + "&tinybox=true"; }
-		if(wd > 1120){ wd = 1120; }
-		TINY.box.show({iframe: url ,boxid:'frameless', width:wd, height:hg, fixed:false, maskid:'bluemask',maskopacity:40,closejs: callbackF });
-        $('html,body').animate({ scrollTop: 0 }, 700);
+		if(tiny == false){
+			if (isBlank == true) {
+				//name = "tabshifted";
+				name 	= "_blank";
+			}
+			if (isTab == true) {
+				specs 	= "";
+				name 	= "_blank";
+			}
+			UPDWIN		= window.open(url,name,specs);
+			if (UPDWIN == null) {
+				wm.alerta({ msg : "TR.Error al Abrir la Ventana"});
+			} else {
+				UPDWIN.focus();
+			}
+		} else {
+			if (otags == true) { url	= url + "&tinybox=true"; }
+			if(wd > 1120){ wd = 1120; }
+			TINY.box.show({iframe: url ,boxid:'frameless', width:wd, height:hg, fixed:false, maskid:'bluemask',maskopacity:40,closejs: callbackF });
+			$('html,body').animate({ scrollTop: 0 }, 700);
+		}
+	}
+}
+Gen.prototype.go 	= function (opts){
+	opts = (typeof opts == "undefined" ) ? {} : opts;
+	var page	= (typeof opts.url == "undefined") ? "" : opts.url;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var delay	= (typeof opts.delay == "undefined") ? 4000 : opts.delay;
+	var self	= this;
+	var isFrame	= false;
+	//var mfunc	= function(){ top.location	= url; };
+	if (msg != "") { this.alerta({msg:msg}); }
+	//var mopts	= {};
+	var msrc	= null;
+	if (window.parent){ msrc = window.parent.document; }
+	if (opener){ msrc = opener.document; }
+	if (window!=window.top) { isFrame = true; }
+	if(msrc == null){} else {}
+	//top.location	= "../index.xul.php" + page;
+	if(String(top.location).indexOf("index") != -1 && isFrame == true){
+		var mFrame	= window.top.document.getElementById("idFPrincipal");
+		if(page == ""){ page = "../utils/frm_calendar_tasks.php"; }
+		mFrame.src	= page;
+		//set frame
+		//self.QFrame({ url : page, id : 'idFPrincipal' });
+	} else {
+		top.location= SAFE_HOST_URL +  page;
 	}
 }
 Gen.prototype.rz	= function(opts){
@@ -480,7 +512,7 @@ Gen.prototype.letras	= function(opts){
 }
 Gen.prototype.equivalencia	= function(opts){
 	//DroidError("Query " + this.getIn() + oper);
-	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var callb	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var mid		= (typeof opts.id == "undefined") ? "" : opts.id;
 	var mny		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
 	var mon		= (typeof opts.moneda == "undefined") ? AML_CLAVE_MONEDA_LOCAL : opts.moneda;
@@ -490,7 +522,7 @@ Gen.prototype.equivalencia	= function(opts){
 		success		: function(rs){
 			if (typeof rs.equivalencia != "undefined") {
 				if (mid != ""){ $("#" + mid).val(rs.equivalencia); }
-				callback(rs);
+				callb(rs);
 			} else {
 				console.log("Error en conversion");
 			}
@@ -541,17 +573,30 @@ Gen.prototype.winTip 	= function (opts){
 	var delay	= (typeof opts.delay == "undefined") ? 4000 : opts.delay;
 	var mTitle	= (typeof opts.title == "undefined") ? "Window" : opts.title;
 	var content	= (typeof opts.content == "undefined") ? false : opts.content;
+	var type	= (typeof opts.type == "undefined") ? "" : opts.type;
 	var self	= this;
 
 	var xG		= new Gen();
 	var w		= entero((xG.ancho()/2));
-
 	//var content  = $(id).closest("form");
+
 	if(content){
 		session(Configuracion.opciones.dialogID, content.attr("id"));
 	}
-
-	content.dialog({resizable: false,height: "auto", width: w, modal: true, title: mTitle, position: ['center', 20] });
+	var vOpts	= {resizable: false,height: "auto", width: w, modal: true, title: mTitle, position: ['center', 20] };
+	if(type == Configuracion.css.warn){
+		vOpts.dialogClass	= "diag-orange";
+	}
+	if(type == Configuracion.css.ok){
+		vOpts.dialogClass	= "diag-green";
+	}
+	if(type == Configuracion.css.error){
+		vOpts.dialogClass	= "diag-red";
+	}
+	if(type == Configuracion.css.info){
+		vOpts.dialogClass	= "diag-yellow";
+	}
+	content.dialog(vOpts);
 
 }
 Gen.prototype.inputMD5	= function(evt){ evt.value	= hex_md5(evt.value); }
@@ -721,7 +766,7 @@ Number.prototype.formatMoney = function(c, d, t){
 };
 function getInMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
 function getFMoney(vF){ var xG = new Gen(); return xG.moneda(vF); }
-function getFTasa(vF){ var xG = new Gen(); return "% " + xG.moneda(vF); }
+function getFTasa(vF){ var xG = new Gen(); return "% " + xG.moneda(vF,3); }
 function NativoFloat(vF) {
 		if (SEPARADOR_DECIMAL != DIV_DEC) {
 			var v	= new Number(vF);
@@ -1029,7 +1074,7 @@ Gen.prototype.QFrame	= function(opts){
 
 Gen.prototype.QList	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
-	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var callb	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var id		= (typeof opts.id == "undefined") ? null : opts.id;
 	var Func	= (typeof opts.func == "undefined") ? "console.log" : opts.func;
 	//Func		= (typeof opts.callback == "undefined") ? Func : opts.callback;
@@ -1053,7 +1098,7 @@ Gen.prototype.QList	= function(opts){
 
 		  $("#dlg").html(str);
 
-		  self.winTip({content : $("#dlg"), title:tit });
+		  self.winTip({content : $("#dlg"), title:tit, type: Configuracion.css.info });
 		});
 }
 Gen.prototype.DataList	= function(opts){
@@ -1176,32 +1221,7 @@ Gen.prototype.close	= function(opts){
 		if (process == false) { self.go(); }
 	} //end run
 }
-Gen.prototype.go 	= function (opts){
-	opts = (typeof opts == "undefined" ) ? {} : opts;
-	var page	= (typeof opts.url == "undefined") ? "" : opts.url;
-	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
-	var delay	= (typeof opts.delay == "undefined") ? 4000 : opts.delay;
-	var self	= this;
-	var isFrame	= false;
-	//var mfunc	= function(){ top.location	= url; };
-	if (msg != "") { this.alerta({msg:msg}); }
-	//var mopts	= {};
-	var msrc	= null;
-	if (window.parent){ msrc = window.parent.document; }
-	if (opener){ msrc = opener.document; }
-	if (window!=window.top) { isFrame = true; }
-	if(msrc == null){} else {}
-	//top.location	= "../index.xul.php" + page;
-	if(String(top.location).indexOf("index") != -1 && isFrame == true){
-		var mFrame	= window.top.document.getElementById("idFPrincipal");
-		if(page == ""){ page = "../utils/frm_calendar_tasks.php"; }
-		mFrame.src	= page;
-		//set frame
-		//self.QFrame({ url : page, id : 'idFPrincipal' });
-	} else {
-		top.location= SAFE_HOST_URL +  page;
-	}
-}
+
 Gen.prototype.error	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var msg	= (typeof opts.msg == "undefined") ? "" : opts.msg;
@@ -1226,7 +1246,7 @@ Gen.prototype.lang	= function(words){
 }
 Gen.prototype.confirmar	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
-	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var msg		= (typeof opts.msg == "undefined") ? "MSG_CONFIRMA_GUARDAR" : opts.msg;
 	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
 	var evalF 	= (typeof opts.evaluador == "undefined") ? true : opts.evaluador;
 	var canc 	= (typeof opts.cancelar == "undefined") ? function(){} : opts.cancelar;
@@ -1244,6 +1264,19 @@ Gen.prototype.confirmar	= function(opts){
 	}
 }
 Gen.prototype.aviso	= function(opts){
+	var self	= this;
+	var tit		= (typeof opts.title == "undefined") ? self.lang("Aviso") : opts.title;
+	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
+	opts.title	= tit;
+	
+	this.requiere(opts);
+}
+Gen.prototype.informar	= function(opts){
+	var self	= this;
+	var tit		= (typeof opts.title == "undefined") ? self.lang("Informacion") : opts.title;
+	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
+	opts.title	= tit;
+	
 	this.requiere(opts);
 }
 Gen.prototype.requiere	= function(opts){
@@ -1257,10 +1290,17 @@ Gen.prototype.requiere	= function(opts){
 	lvl			= (typeof opts.tipo == "undefined") ? lvl : opts.tipo;
 	lvl			= (typeof opts.type == "undefined") ? lvl : opts.type;
 	var tit		= (typeof opts.title == "undefined") ? "Dato requerido:" : opts.title;
+	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
+	
 	var icn		= (typeof opts.icon == "undefined") ? "" : opts.icon;
 	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
 	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
 	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
+	var b64		= (typeof opts.b64 == "undefined") ? false : opts.b64;
+	
+	if(b64 == true){
+		msg		= base64.decode(msg);
+	}
 	
 	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
 
@@ -1416,8 +1456,11 @@ Gen.prototype.notificar	= function(opts){
 	var raw		= (typeof opts.raw == "undefined") ? false : opts.raw;
 	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
 	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
+	var b64		= (typeof opts.b64 == "undefined") ? false : opts.b64;
 	var self	= this;
-	
+	if(b64 == true){
+		msg		= base64.decode(msg);
+	}
 	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
 
 	var mth 	= "awesome blue";
@@ -1500,16 +1543,23 @@ Gen.prototype.save	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
 	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
-	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
+	var callB	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var content	= (typeof opts.content == "undefined") ? "" : opts.content;
 	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
 	var nclos	= (typeof opts.close == "undefined") ? false : opts.close;
 	var evt		= (typeof opts.evt == "undefined") ? null : opts.evt;
 	var noMsg	= (typeof opts.nomsg == "undefined") ? false : opts.nomsg;
 	var ask		= (typeof opts.preguntar == "undefined") ? false : opts.preguntar;
+	
+	//var jjson	= (typeof opts.jjson == "undefined") ? "" : opts.jjson;
+	
 	var tt		= this;
 	var self	= this;
 	$.cookie.json 	= true;
+	//-------------------------------
+	//if(typeof jjson == "object" && content == ""){
+		//content		= 
+	//}
 	//Guardar Accion: jsAccionPostGuardarRegistro
 	//Actualizar las formas de Moneda
 	tt.aMonedaForm();
@@ -1535,7 +1585,10 @@ Gen.prototype.save	= function(opts){
 					}
 					//
 					if(nclos == true){
-						var idFC = function(){ tt.close(); }
+						var idFC = function(){
+							setTimeout(callB,10);	//------------------callback
+							tt.close();
+						}
 						setTimeout(idFC,1000);
 					} else {
 						if(evt != null){
@@ -1543,6 +1596,7 @@ Gen.prototype.save	= function(opts){
 							var src = evt.target || evt.srcElement;
 							$('#' +  src.id).css('pointer-events', 'none');
 						}
+						setTimeout(callB,10);	//------------------ callback
 					}
 				 }
 				}
@@ -1550,6 +1604,7 @@ Gen.prototype.save	= function(opts){
 		}
 	};
 	var mFunc_	= function(){ self.spinInit(); setTimeout(mFunc,2000); };
+	
 	if(noMsg == true){
 		setTimeout(mFunc_,5);	
 	} else {
@@ -1879,9 +1934,14 @@ CredGen.prototype.getImprimirCaratula	= function(idcredito){
 	var gURL = "../frmcreditos/creditos.formatos.frm.php?action=caratula&credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 750 });
 }
-CredGen.prototype.goToPanelControl	= function(idcredito){
-	var gURL = "../frmcreditos/creditos.panel.frm.php?credito=" + idcredito;
-	var xGen	= new Gen(); xGen.w({ url : gURL, tab:true });
+CredGen.prototype.goToPanelControl	= function(idcredito, opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var gURL 	= "../frmcreditos/creditos.panel.frm.php?credito=" + idcredito;
+	var ttabs	= (typeof opts.tab == "undefined") ? true : opts.tab;
+	opts.url	= gURL;
+	opts.tab	= ttabs;
+	
+	var xGen	= new Gen(); xGen.w(opts);
 }
 CredGen.prototype.getFormatoSIC	= function(idcredito){
 	var gURL	= "../rpt_formatos/autorizacion-sic.rpt.php?credito=" + idcredito;
@@ -2182,8 +2242,9 @@ CredGen.prototype.getImprimirPolizaCheque	= function(idcredito){
 	var gURL = "../rpt_formatos/poliza.cheque.rpt.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, full:true });
 }
-CredGen.prototype.getFormaValidacion	= function(idCredito){
-	var gURL = "../frmcreditos/creditos.validacion.frm.php?credito=" + idCredito;
+CredGen.prototype.getFormaValidacion	= function(idCredito, etapa){
+	etapa		= (typeof etapa == "undefined") ? "" : "&pasocredito=" + etapa;
+	var gURL = "../frmcreditos/creditos.validacion.frm.php?credito=" + idCredito + etapa;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 750, tiny:true });
 }
 CredGen.prototype.getCalculadora	= function(idCredito){
@@ -3344,25 +3405,7 @@ GroupGen.prototype.getDescripcion	= function(idgrupo, dest){
 	});
 }
 
-function serializeForm(idfrm) {
-	var fields = $(idfrm).serializeArray();
-	var txt		= "";
-	var jsq		= "";
-	var total = fields.length;
 
-	jQuery.each( fields, function( i, field ) {
-		str		= '$' + field.name  + '\t= parametro(\"' + field.name +  '\"';
-		//console.log(field)
-		str		+= ');\n';
-		txt		+= str;
-		jsq		+= 'var ' + field.name  + '\t= $("#' + field.name  + '").val();\n';
-		if (i === (total - 1) ) {
-			session("var.serialize", txt + "\n\n\n" + jsq);
-			var xG		= new Gen();
-			xG.w({ url : "../tools/serialize.dev.php?", tiny : true, h: 600, w : 800 });
-		}
-	});
-}
 DomGen.prototype.getBuscarColonias	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var ccb		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
@@ -3743,7 +3786,6 @@ SegGen.prototype.setAgregarNotaLlamada	= function(id){
 	//6 Reporte de Llamada, 7 compromiso
 	xPer.setAgregarMemo({docto: mObj.credito, persona: mObj.codigo, otros : "&idtipodememo=6"});
 }
-
 SegGen.prototype.getDetalleDeCompromiso = function (opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	//var estado	= (typeof opts.estado == "undefined") ? "" : "&estado=" + opts.estado;

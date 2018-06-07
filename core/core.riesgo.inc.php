@@ -135,8 +135,8 @@ function getRiesgoPorEdad($edad){
 }
 /**
  * @param int $socio
- * @return float
- * @see obtiene e� riesgo en monto por el promedio de creditos
+ * Obtiene el riesgo en monto por el promedio de creditos
+ * @return float 
  */
 function getRiesgoDeRetrasoDePago($socio){
 
@@ -274,6 +274,12 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_SOLICITUD_SIN_FECHA_ANT	= "CREDITOS.SOLICITUD.SIN_FECHA_PASADA";
 	public $CREDITOS_SOLICITUD_SIN_PERIODO_ANT	= "CREDITOS.SOLICITUD.SIN_PERIODO_PASADO";
 	public $CREDITOS_SOLICITUD_CON_ORIGEN		= "CREDITOS.SOLICITUD.REQUIEREN_ORIGEN";
+	
+	public $CREDITOS_OFICIAL_POR_PROD			= "CREDITOS.OFICIAL.POR_PRODUCTO";
+	public $CREDITOS_OFICIAL_POR_HER			= "CREDITOS.OFICIAL.POR_HERENCIA";
+	public $CREDITOS_OFICIAL_POR_USR			= "CREDITOS.OFICIAL.POR_USUARIO";
+	
+	
 	public $CREDITOS_NOMINA_NOMORA				= "CREDITOS.NOMINA.NO_MORA";
 	
 	public $CREDITOS_ARREND_RES_CON_ANT			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_ANT";
@@ -448,7 +454,9 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_USE_MORA_BD]				= $this->CREDITOS_USE_MORA_BD;
 		$arr[$this->CREDITOS_NOMINA_NOMORA]				= $this->CREDITOS_NOMINA_NOMORA;
 		$arr[$this->CREDITOS_NOM_FORCE_PAGO]			= $this->CREDITOS_NOM_FORCE_PAGO;
-		
+		$arr[$this->CREDITOS_OFICIAL_POR_PROD]			= $this->CREDITOS_OFICIAL_POR_PROD;
+		$arr[$this->CREDITOS_OFICIAL_POR_HER]			= $this->CREDITOS_OFICIAL_POR_HER;
+		$arr[$this->CREDITOS_OFICIAL_POR_USR]			= $this->CREDITOS_OFICIAL_POR_USR;
 		
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;

@@ -29,6 +29,10 @@ $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 $LockCobros	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
 $NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
 
+$interes_a_pagar	= 0;
+
+
+
 function jsaActualizarLetra($persona, $credito, $letra, $monto){
 	$monto	= setNoMenorQueCero($monto);
 	$NLetra	= $letra +1;
@@ -535,7 +539,7 @@ foreach ($rsm as $rwm ){
 //===================== PENAS
 			//interes normal
 			if($monto_penas > 0 and $monto_a_operar>0){
-				$idx					= 148;//clave de operacion
+				$idx					= OPERACION_CLAVE_PAGO_PENAS;//clave de operacion
 				//Evauar pendiente
 				$pendiente 				= 0;
 				$monto 					= $monto_penas;
@@ -693,6 +697,35 @@ $xBtn		= new cHButton();
 if($cargos_mora > 0){
 	$xFRM->OButton("TR.SIN MORA", "jsEliminarCargos()", $xFRM->ic()->RESTAR, "idsinmora", "white");
 }
+
+//============================================ INIT.- COBRO DE GARANTIA LIQUIDA
+
+if(GARANTIA_LIQUIDA_EN_CAPTACION == false AND $pago_total == true){
+	if($xCred->getGarantiaLiquidaPagada() > 0){
+		$gtia_Liquida		= $xCred->getGarantiaLiquidaPagada();
+
+		$monto				= number_format($gtia_Liquida, 2, '.', '')*-1;
+		$pendiente			= 0;
+		$MTipo				= OPERACION_CLAVE_DEV_GLIQ;
+		$xOp				= new cTipoDeOperacion($MTipo); $xOp->init();
+		$title				= $xOp->getNombre();
+		//class='tags green'
+		$tds 				= $tds . "
+			<tr>
+				<th>$MTipo</th>
+				<td>$title</td>
+				<th>
+					<input type=\"text\" name=\"c-$MTipo\" id=\"id-$MTipo\" value=\"$monto\" data-original=\"$monto\" class='mny' onfocus=\"pushMny(event);\" onchange=\"jsEval(this);\" />
+					<input type=\"hidden\" name=\"p-$MTipo\" id=\"idp-$MTipo\" value=\"$pendiente\"/>
+				</th>
+			</tr>";
+
+		$total		+= $monto;
+	}
+}
+
+
+//============================================ END.- COBRO DE GARANTIA LIQUIDA
 //$xFRM->OButton("Vista Previa", "showVistaPago()", $xFRM->ic()->VER, "idprev");
 
 $xFRM->OHidden("idtotaloperaciones", 0);
@@ -750,6 +783,10 @@ var mSaldoCred		= <?php echo $xCred->getSaldoActual(); ?>;
 var desdeAjuste		= false;
 var mMontoCapital	= <?php echo $mAfectCapital; ?>;
 var mCapitalAmort	= 0;
+var mInteresAmort	= 0;
+var mCapitalPend	= 0;
+var mInteresPend	= 0;
+
 var EsFinalPlazo	= <?php echo ($xCred->isAFinalDePlazo() == true) ? "true" : "false"; ?>;
 var LockCobro		= <?php echo ($LockCobros == true) ? "true" : "false"; ?>;
 <?php
@@ -768,9 +805,14 @@ echo "var BaseGravadosO = new Array($strOGrav);\n";
 ?>
 var aIvaCalculado 	= new Array("id-ivaintereses", "id-ivaotros", "id-413", "id-1201", "id-1202", "id-1203", "id-1204");
 var aCapital 		= new Array("id-410", "id-capital");
+var aInteres 		= new Array("id-411", "id-corriente");
 var xG				= new Gen();
-//No es efectivo, no causa IVA
 
+
+var vPuedeSoloCap	= false;
+var oInfo			= {errors:0};
+var oEsta			= {pendiente : "idp-", normal: "id-"};
+//No es efectivo, no causa IVA
 function pushMny(evt){
 	mMny 		= evt.target.value; 
 	var idevt	= evt.target.id;
@@ -788,10 +830,13 @@ function pushMny(evt){
 function getTotal(){
 	//Recalcula el IVA
 	recalcIVA();
-	var neto 	= new Number(0);	//suma de cobros
-  	var isLims 	= Frm.elements.length - 1;
-	var dynCap	= redondear(mSaldoCred,2);
-	var mCaptAb	= 0;				//Capital abonado en el recibo
+	var neto 		= new Number(0);	//suma de cobros
+  	var isLims 		= Frm.elements.length - 1;
+	var dynCap		= redondear(mSaldoCred,2);
+	var mCaptAb		= 0;				//Capital abonado en el recibo
+	var mIntAb		= 0;				//Interes abonado en el recibo
+	var mIntPend	= 0;				//Interes pendiente en el recibo
+	
 	for(var i=0; i<=isLims; i++){
   	  		try {
 	  			var mNam = Frm.elements[i].getAttribute("name");
@@ -800,9 +845,18 @@ function getTotal(){
 					var mCurrVal	= redondear(Frm.elements[i].value, 2);
 					//verificar capital
 					var osid	= Frm.elements[i].getAttribute("id");
+					
+					if( $.inArray(osid, aInteres) != -1 ){
+						var idpend	= jsGetIDRaw(osid); idpend = oEsta.pendiente + idpend;
+						mIntPend	+= redondear($("#" + idpend).val(),2);
+						mIntAb		+= mCurrVal;
+					}
 					if( $.inArray(osid, aCapital) != -1 ){
 						if (redondear(mCurrVal,2) > redondear(dynCap,2) ) {
-							xG.alerta({msg : "No puede Abonar un cantidad Mayor al Saldo de Credito de " + mSaldoCred});
+							
+							xG.informar({msg : "No puede Abonar un cantidad Mayor al Saldo de Credito de " + mSaldoCred});
+							
+							oInfo.errors++;
 							
 							mCurrVal	= redondear(dynCap, 2);		//cambiar cantidad a saldo
 							$("#" + osid).val(mCurrVal);	//set id a saldo
@@ -813,6 +867,7 @@ function getTotal(){
 						}
 						mCaptAb	+= mCurrVal;			//Sumar Capital abonado
 					}
+					
 				neto += mCurrVal;
 	  			}
   	  		} catch(e){
@@ -820,6 +875,14 @@ function getTotal(){
   	  		}
 	}
 	mCapitalAmort		= redondear(mCaptAb);			//Actualizar el Capital Abonado
+	mInteresAmort		= redondear(mIntAb);			//Actualizar el Interes Abonado
+	if(mIntPend > 0){
+		if(mCapitalAmort > 0){
+			xG.informar({msg : "ALERT_PAGAR_ANTES_INT : " + getFMoney(mIntPend)});
+			oInfo.errors++;
+		} 
+	}
+	//setLog("Error... " + oInfo.errors);
   	Frm.ctotal.value	= redondear(neto);
   	$("#idtotaloperaciones").val( redondear(neto) );
   	
@@ -833,6 +896,10 @@ function getTotal(){
 }
 function FormSucess(){
 	getTotal();
+	if(oInfo.errors >0){
+		xG.informar({msg : "MSG_NO_DATA"});
+		return false;
+	}
 	//Verificar si los montos son validos
   	var isLims = Frm.elements.length - 1;
   		for(i=0; i<=isLims; i++){
@@ -994,6 +1061,12 @@ function addEspMvto(id, OpValue, vTitle){
 }
 function initComponents(){ setTimeout("getTotal()", 1000); }
 function getEdoCtaCredito(){ Wo.w({url: "../rpt_edos_cuenta/rptestadocuentacredito.php?credito=" + mCredito}); }
+function jsGetIDRaw(str){
+	str	= String(str).replace("id-", "");
+	str	= String(str).replace("idp-", "");
+	
+	return str;
+}
 function jsEval(origen){
 
 	var org		= origen;
@@ -1005,6 +1078,7 @@ function jsEval(origen){
 	var nomod	= (typeof $(origen).attr("data-nomod") == "undefined") ? false : true;
 	var morg	= flotante($(origen).val());
 	var psrc	= "idp-" + dsrc[1];
+	//========================================== Montos Pendientes
 	
 	if(document.getElementById(psrc)){
 		if(nomod ==  true){

@@ -582,7 +582,7 @@ class cSucursal{
 	}
 	/**
 	 * Funcion que retorna false?true si un credito existe
-	 * @param $credito	Numero de Credito
+	 * @param int $credito	Numero de Credito
 	 * @return boolean	False/True
 	 */
 	function existeCredito($credito){
@@ -595,7 +595,7 @@ class cSucursal{
 	}
 	/**
 	 * Funcion que retorna false?true si un credito existe
-	 * @param $cuenta	Numero de Credito
+	 * @param int $cuenta Numero de Credito
 	 * @return boolean	False/True
 	 */
 	function existeCuenta($cuenta, $tipo = false){
@@ -2553,8 +2553,8 @@ class cSocio{
 	 * @param string $DocumentoProbatorio
 	 * @param string $Descripcion
 	 * @param string $Observaciones
-	 * @param date $Expira
-	 * @param date $Fecha
+	 * @param variant $Expira
+	 * @param variant $Fecha
 	 */
 	function addPatrimonio($Tipo, $Monto, $Estado, $Afectacion = 1, $DocumentoProbatorio = "", $Descripcion = "",
 			$Observaciones = "", $Expira = false, $Fecha = false){
@@ -2810,7 +2810,7 @@ class cSocio{
 	}
 	/**
 	 * Funcion que retorna false?true si un socio existe
-	 * @param $socio	Numero de Socio
+	 * @param integer $socio	Numero de Socio
 	 * @return boolean	False/True
 	 */
 	function existe($socio = false){
@@ -2830,7 +2830,7 @@ class cSocio{
 	}
 	/**
 	 * Funcion que retorna false?true si un credito del socio existe
-	 * @param $credito	Numero de Credito
+	 * @param integer $credito	Numero de Credito
 	 * @return boolean	False/True
 	 */
 	function existeCredito($credito){
@@ -2839,7 +2839,7 @@ class cSocio{
 	}
 	/**
 	 * Funcion que retorna false?true si un credito del socio existe
-	 * @param $cuenta	Numero de Credito
+	 * @param integer $cuenta	Numero de Credito
 	 * @return boolean	False/True
 	 */
 	function existeCuenta($cuenta, $tipo = false){
@@ -4196,6 +4196,15 @@ class cSocio{
 			$this->setUpdate($arr);
 		}
 	}
+	function getEsDespedido(){
+		$res	= false;
+		$xMem	= new cPersonasMemos();
+		if($xMem->initByPersonaTipo($this->getClaveDePersona(), MEMOS_TIPO_DESVINCULACION) == true){
+			
+			$res	= true;
+		}
+		return $res;
+	}
 }
 /**
  * Clase de Manejo de Tipo de Ingreso
@@ -4270,7 +4279,7 @@ class cOficial{
 	}
 	/**
 	 * Agrega una Nota al Oficial de Destino
-	 * @return boolena Estatus de la Operacion
+	 * @return bool Estatus de la Operacion
 	 */
 	function addNote($tipo, $oficial, $socio, $docto, $texto, $fecha = false){
 		$xF					= new cFecha();
@@ -5894,8 +5903,10 @@ class cPersonasVivienda{
 			$this->mOB				= $xT;
 			$this->mOB->setData($datos);
 			
-			$this->setIDCache($this->mIDCargado);
-			$xCache->set($this->mIDCache, $datos);
+			if($inCache == false){
+				$this->setIDCache($this->mIDCargado);
+				$xCache->set($this->mIDCache, $datos);
+			}
 			//$xT->setSaveOnCache();
 			
 			//setLog($this->mCodigoPostal);
@@ -6238,6 +6249,7 @@ class cPersonasVivienda{
 					}
 				}
 			}
+			$this->setCuandoSeActualiza();
 		}
 		$this->mMessages	= $xLog->getMessages();
 		return ($rs == false) ? false: true;

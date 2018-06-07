@@ -127,8 +127,8 @@ TotalElementosCuentaReportados
 NombreOtorgante
 DomicilioDevolucion
 */
-$TotalSaldosActuales				= 1;
-$TotalSaldosVencidos				= 0;
+$TotalSaldosActuales				= 1;			//TODO: Si es saldo vigente, reportar 1.- Es suma
+$TotalSaldosVencidos				= 0;			//TODO: Suma.- saldo si es vencido
 $TotalElementosNombres				= 1;
 $TotalElementosDireccion			= 1;
 $TotalElementosEmpleo				= 1;
@@ -146,7 +146,7 @@ $LimSQL					= "";//" LIMIT 0,500";
 
 
 $IdentificadorMedio		= 1;
-$NotaOtorgante			= "";
+$NotaOtorgante			= ""; //Nota de otorgante .- texto libre.
 $xSTb					= new cSQLTabla(TCREDITOS_REGISTRO);
 $sql 			= $mql->getQueryInicialDeCreditos("", "", " 	AND (`creditos_solicitud`.`fecha_ministracion` <= '" . $FechaFinal . "' )
 				AND
@@ -488,7 +488,7 @@ foreach($datos as $rw){
 	$TipoDeCuenta				= isset($DTConv["SIC_TIPO_DE_CUENTA"]) ? $DTConv["SIC_TIPO_DE_CUENTA"] : "F";					//Pagos fijos
 	$TipoDeContrato				= strtoupper($xCred->getOProductoDeCredito()->getTipoDeContratoCR());// isset($DTConv["SIC_TIPO_DE_CONTRATO"]) ? $DTConv["SIC_TIPO_DE_CONTRATO"] : "DESCONOCIDO";
 	$ClaveUnidadMonetaria		= "MX";
-	$ValorActivoValuacion		= 0;
+	$ValorActivoValuacion		= 0;	//Monto total de las garantias
 	$NumeroDePagos				= $xCred->getPagosAutorizados();
 	$FrecuenciaDePagos			= $xCR->getEPeriocidad( $xCred->getPeriocidadDePago() );
 	$MontoPagar					= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));		//Acabar, valor de la letra actual o saldo?
@@ -569,7 +569,8 @@ foreach($datos as $rw){
 					$PagoActual						= "01";
 					$SaldoVencido					= $SaldoActual;
 					$NumeroPagosVencidos			= "01";
-					$FechaDePrimerIncumplimiento	= $xCR->getDate($xCred->getFechaDeVencimiento());
+					$FechaDePrimerIncumplimiento	= $xCR->getDate($xCred->getFechaDeVencimiento()); //TODO: Corregir .- Debe validarse el estatus y verificar si esta vencido, si no... reportarse vacio
+					
 				} else {
 					if( setNoMenorQueCero($xCred->getNumeroDePlanDePagos()) > 0){
 						$xPlan					= $xCred->getOPlanDePagos();// new cPlanDePagos($xCred->getNumeroDePlanDePagos());
@@ -642,7 +643,7 @@ foreach($datos as $rw){
 
 	
 	
-	$TotalPagosReportados		= 0;
+	$TotalPagosReportados		= 0; //Total de pagos hechos por el cliente durante el periodo del reporte
 	$ClaveOtorganteAnterior		= ""; //ENTIDAD_CLAVE_SIC;
 	$NombreOtorganteAnterior	= ""; //
 	$NumeroOtorganteAnterior	= "";

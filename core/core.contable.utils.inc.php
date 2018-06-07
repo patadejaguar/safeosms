@@ -597,7 +597,7 @@ class cUtileriasParaContabilidad{
 	function getIDPoliza(){ return $this->mIDDePoliza;	}
 	/**
 	 * Genera las polizas del dia por Cajero
-	 * @param date $fecha
+	 * @param variant $fecha
 	 */
 	function setGenerarPolizasAlCierre($fecha = false){
 		$xLi		= new cSQLListas();

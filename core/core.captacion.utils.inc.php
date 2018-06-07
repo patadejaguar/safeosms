@@ -32,7 +32,7 @@ class cUtileriasParaCaptacion {
 	/**
 	 * Genera Saldos diarios de las Cuentas de Captacion
 	 * @deprecated	1.9.24
-	 * @param date $fecha
+	 * @param variant $fecha
 	 * @return string
 	 */
 	function setSaldosDiarios($fecha = false){
@@ -161,7 +161,7 @@ class cUtileriasParaCaptacion {
 /**
  * Genera las Inversiones Automaticas
  * @param integer	$recibo numero de recvio al que se agrega los movimientos
- * @param date		$fecha	Fecha de Inversión
+ * @param variant		$fecha	Fecha de Inversión
  */
 	function inversiones_automaticas($recibo = false, $fecha = false){
 		$xF					= new cFecha();

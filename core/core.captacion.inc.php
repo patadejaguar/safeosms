@@ -470,7 +470,7 @@ class cCuentaInversionPlazoFijo  extends cCuentaDeCaptacion {
 /**
  * Genera un reinversion
  *
- * @param date $fecha		Fecha de Cierre se refiere a la fecha que que se efectua la Reinversion
+ * @param variant $fecha		Fecha de Cierre se refiere a la fecha que que se efectua la Reinversion
  * @param boolean $cerrar	Cerrar, indica si se cierra la inversion.
  * @param float $tasa
  * @param int $dias
@@ -1153,7 +1153,7 @@ class cCuentaDeCaptacion {
 	function setFechaDeOperacion($Fecha){ $this->mFechaOperacion	= $Fecha; }
 	/**
 	 * Obtiene el Maximo a Retirar por Cuenta
-	 * @param date $fecha 	Fecha del Retiro
+	 * @param variant $fecha 	Fecha del Retiro
 	 * @return float 		Monto Maximo permitido
 	 */
 	function getMaximoRetirable($fecha = false){
@@ -1236,8 +1236,8 @@ class cCuentaDeCaptacion {
 	}
 	/**
 	 * Funcion que agrega una nueva Cuenta
-	 * @param $origen					Origen de la cuenta, lavado de dinero
-	 * @param $subproducto				Subproducto al que pertenece
+	 * @param integer $origen Origen de la cuenta, lavado de dinero
+	 * @param integer $subproducto Subproducto al que pertenece
 	 * @param $socio
 	 * @param $observaciones
 	 * @param $credito

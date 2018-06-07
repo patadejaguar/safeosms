@@ -20,6 +20,8 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xTxt		= new cHText();
+
 //$jxc 		= new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -39,9 +41,14 @@ $xHP->init();
 $xFRM	= new cHForm("frmempresas", "empresas.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
-
-
 $xFRM->addCerrar();
+
+
+$xTxt->addEvent("jsGetEmpresas(event)", "onkeyup");
+//$xTxt->setDiv13();
+$xFRM->addHElem($xTxt->get("idbuscar", false, "TR.BUSCAR"));
+
+
 
 $xHG	= new cHGrid("iddivempresas",$xHP->getTitle());
 
@@ -55,6 +62,7 @@ $xHG->addList();
 
 		
 $xHG->addKey("clave");
+$xHG->col("clave", "TR.CLAVE", "10%");
 $xHG->col("clave_de_persona", "TR.CLAVE_DE_PERSONA", "10%");
 $xHG->col("alias", "TR.NOMBRE_CORTO", "20%");
 $xHG->col("nombre", "TR.NOMBRE", "40%");
@@ -105,6 +113,16 @@ function jsGoTodas(){
 }
 function jsGoNormal(){
 	xG.go({url: "../frmempresas/empresas.frm.php" });
+}
+function jsGetEmpresas(evt){
+	var txt		= $("#idbuscar").val();
+	
+	if(xG.isKey({evt:evt}) == true){
+		$('#iddivempresas').jtable('destroy');
+		var str	= " AND (`socios_aeconomica_dependencias`.`descripcion_dependencia` LIKE '%" + txt + "%' OR `socios_aeconomica_dependencias`.`nombre_corto` LIKE '%" + txt + "%' ) ";
+		str		= "&w=" + base64.encode(str);
+		jsLGiddivempresas(str);
+	}
 }
 </script>
 <?php

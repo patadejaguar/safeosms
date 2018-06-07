@@ -85,7 +85,7 @@ class dbStructUpdater
 
 	/**
 	* merges current updater config with the given one
-	* @param assoc_array $config new configuration values
+	* @param array $config new configuration values
 	*/
 	function setConfig($config=array())
 	{
@@ -378,8 +378,8 @@ class dbStructUpdater
 	/**
 	* returns array of fields or keys definitions that differs in the given tables structure
 	* @access private
-	* @param sring $sourceSql table structure
-	* @param sring $destSql right table structure
+	* @param string $sourceSql table structure
+	* @param string $destSql right table structure
 	* supports some $options
 	* @return array
 	* 	- [0]

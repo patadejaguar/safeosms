@@ -75,8 +75,9 @@ $txtP		= new cHText();
 $txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");
 
 $xFRM->OButton("TR.Cerrar Caja", "jsCerrarCaja()", "bloquear", "cmdlock");
-$xFRM->OButton("TR.Guardar Arqueo", "jsRegistrarArqueo()", "guardar", "cmdcerrar");
-$xFRM->OButton("TR.Eliminar Arqueo", "jsEliminarArqueo()", $xFRM->ic()->ELIMINAR, "cmddel");
+$xFRM->OButton("TR.Guardar Arqueo", "jsRegistrarArqueo()", $xFRM->ic()->GUARDAR, "cmdcerrar","whiteblue");
+
+$xFRM->OButton("TR.Eliminar Arqueo", "jsEliminarArqueo()", $xFRM->ic()->ELIMINAR, "cmddel", "red");
 $xFRM->addToolbar("<span id='cajacerrada'></span>");
  
 $lsCajas	= $xSel->getListaDeCajasAbiertas("", "", $fecha);

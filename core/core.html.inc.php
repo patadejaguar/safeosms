@@ -481,6 +481,8 @@ class cHPage {
 				if(defined("MODO_DEBUG")){
 					if(MODO_DEBUG == true){
 						$this->addJsFile("$path/js/dev.js");
+						$this->addJsFile("$path/js/faker/faker.min.js");
+						$this->addJsFile("$path/js/LocalFaker.js");
 					}
 				}
 				//validation
@@ -1256,7 +1258,12 @@ class cHForm {
 		$footerbar	= (trim($this->mFooterBar) == "") ? "" : "<div class='footer-bar pendiente' id='fb_" . $this->mName . "'>" . $this->mFooterBar . "</div>";
 		
 		//if(MODO_DEBUG == true ){if(count($this->mTools)>0) { $this->OButton("TR.VER", "serializeForm('#" . $this->mID ."');", "ejecutar"); } }
-		
+		if(MODO_DEBUG == true){
+			if(count($this->mTools)>0){
+				$this->OButton("Serializar", "serializeForm('#" . $this->mID ."');", $this->ic()->RANDOM,"cmdserialize", "ggreen");
+				$this->OButton("Rellenar", "var xFk=new LocalFaker();xFk.run('" . $this->mID ."');", $this->ic()->AUTOMAGIC,"cmdrellenar", "gred"); 
+			} 
+		}
 		
 		foreach($this->mTools as $clave => $valor){
 			$nTools	.= $valor;
@@ -1295,6 +1302,7 @@ class cHForm {
 		<script>
 		var xG			= new Gen();
 		var wOrigen		= xG.winOrigen();
+		var CurrentData	= {};
 		$(document).ready(function(){
 			$jsKeyPress" . $wJs . "\n" . $valids . "\n" . $nJQDates . "\n$jsMes\n" . $this->mJSInit . "\n" . $this->mJSOtros . "\n});
 		$js</script>
@@ -1659,6 +1667,22 @@ class cHForm {
 		}
 		return $xTxt;
 	}
+	function OEntero($id, $valor, $titulo,$maximo = 999999){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("tx4 tx18");
+		$this->addHElem( $xTxt->getDeConteo($id, $titulo, $valor, $maximo) );
+		
+		
+		return $xTxt;
+	}
+	function OTelefono($id, $valor, $titulo){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("tx4 tx18");
+		$this->addHElem( $xTxt->getDeTelefono($id, $titulo, $valor) );
+		
+		
+		return $xTxt;
+	}
 	function OMoneda2($id, $valor, $titulo, $letras = false, $add = true){
 		$xTxt	= new cHText();
 		
@@ -1671,11 +1695,20 @@ class cHForm {
 		return $xTxt;
 	}
 	
-	function OTasa($id, $valor, $titulo){
+	function OTasa($id, $valor, $titulo=""){
+		$titulo	= ($titulo == "") ? "TR.TASA" : $titulo;
 		$xTxt	= new cHText();
 		$xTxt->setDivClass("tx4 tx18");
 		$this->addHElem( $xTxt->getDeTasa($id, $titulo, $valor) );
-		
+		$xTxt	= null;
+		return $xTxt;
+	}
+	function OTasaInt($id, $valor, $titulo=""){
+		$titulo	= ($titulo == "") ? "TR.TASA" : $titulo;
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("tx4 tx18");
+		$this->addHElem( $xTxt->getDeTasaInt($id, $titulo, $valor) );
+		$xTxt	= null;
 		return $xTxt;
 	}
 	function OButton($titulo, $event, $icon = "", $id = "", $class=""){
@@ -1698,11 +1731,13 @@ class cHForm {
 		}
 		return $xTxt;
 	}
-	function ODate($id, $valor, $titulo, $add = true){
+	function ODate($id, $valor, $titulo = "", $add = true){
 		$xDate		= new cHDate();
 		$xDate->setDivClass("tx4 tx18 blue");
 		$xDate->setID($id);
-		
+		if($titulo == ""){
+			$titulo		= "TR.FECHA";
+		}
 		if($add == true){
 			$this->addHElem( $xDate->get($titulo, $valor ));
 		}
@@ -1866,7 +1901,7 @@ class cHForm {
 			}
 		}
 	}
-	function setNoAcordion(){ $this->mAccLock	= true; }
+	function setNoAcordion($res=true){ $this->mAccLock	= $res; }
 	function setNoJsEvtKeyForm(){ $this->mNoKeyForm = true; }
 	function addCRUD($tabla, $cerrar = false, $callback=""){
 		$cls	= ($cerrar == true) ? ",close:true": "";
@@ -1911,6 +1946,9 @@ class cHForm {
 	function addButtonPlanDePagos($idnumeroplan){
 		$this->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagos($idnumeroplan);", $this->ic()->CALENDARIO1, "idcmdprintplan", "whiteblue");
 	}
+	function addBuscar($evt){
+		$this->OButton("TR.BUSCAR", $evt, $this->ic()->BUSCAR, "idcmdbuscarx", "blue");
+	}
 	function addTag($txt, $tipo = "", $evt=""){
 		$xNot		= new cHNotif();
 		if($tipo == "err" OR $tipo == "error"){
@@ -1918,6 +1956,10 @@ class cHForm {
 			
 		}
 		$this->addHElem( $xNot->getTag($txt, "", $tipo, $evt) );
+	}
+	function getEnDesarrollo(){
+		$xUsr	= new cSystemUser(); $xUsr->init();
+		return $xUsr->getEnDesarrollo();
 	}
 }
 class cHTextArea {
@@ -2285,6 +2327,30 @@ class cHText extends cHInput {
 		}
 		return $ctrl;
 	}
+	function getDeTasaInt($id = "", $Titulo = "", $value = 0){
+		$this->setClearProperties();
+		//$this->setClearEvents();
+		$ctrl						= "";
+		$id							= ( $id == "" ) ? $this->mId : $id;
+		$this->mArrProp["type"]		= "number";
+		$this->mArrProp["class"]	= "mny";
+		$this->mArrProp["name"]		= $id; $this->mLIDs[]	= $id;
+		$this->mArrProp["value"]	= $value;
+		$this->mArrProp["step"]		= "0.001";
+		
+		$this->mArrProp["maxlength"]= 10;
+		$this->mArrProp["max"]		= "999";
+		$this->mArrProp["min"]		= "0";
+		$this->mArrProp["style"]	= "width:8em;max-width:8em";
+		
+		$this->mValue				= $value;
+		$this->mLbl					= $Titulo;
+		$this->mId					= $id;
+		$this->mIncLabel			= ($Titulo == "" ) ? false : true;
+		//agrega un control con Letras
+		$ctrl						= $this->get();
+		return $ctrl;
+	}
 	function getDeMoneda2($id = "", $Titulo = "", $value = 0, $AgregarEnLetras = false){
 		$this->setClearProperties();
 		$ctrl							= "";
@@ -2365,6 +2431,8 @@ class cHText extends cHInput {
 		$this->mValue				= $value;
 		$this->mLbl					= $Titulo;
 		$this->mId					= $id;
+		$ln							= $ln +1;
+		
 		$this->mArrProp["style"]	= "width:" . $ln . "em;max-width:" . $ln . "em";
 		$this->mIncLabel			= ($Titulo == "" ) ? false : true;
 
@@ -2372,6 +2440,7 @@ class cHText extends cHInput {
 		
 		return $ctrl;
 	}
+
 	function getDeTasa($id = "", $Titulo = "", $value = 0, $AgregarEnLetras = false){
 		$this->setClearProperties();
 
@@ -2381,7 +2450,7 @@ class cHText extends cHInput {
 		$this->mArrProp["class"]		= "mny";
 		$this->mArrProp["name"]			= $id; $this->mLIDs[]	= $id;
 		
-		$this->mArrProp["step"]			= "0.01";
+		//$this->mArrProp["step"]			= "0.01";
 		$value2							= ($value*100);
 		
 		$this->mValue					= $value2;
@@ -2762,6 +2831,33 @@ class cHText extends cHInput {
 			$this->mLbl		= $this->getOLang()->getT($this->mLbl);
 		}		 
 		return "<label for=\"" . $this->mId . "\">" . $this->mLbl . "</label>";
+	}
+	function getDeTelefono($id = "", $Titulo = "", $value = 0){
+		$this->setClearProperties();
+		$Titulo						= ($Titulo == "") ? "TR.TELEFONO" : $Titulo;
+		$ctrl						= "";
+		//$ln							= strlen("$Maximo")+1;
+		$id							= ( $id == "" ) ? $this->mId : $id;
+		$this->mArrProp["type"]		= "tel";
+		//$this->mArrProp["class"]	= "";
+		$this->mArrProp["name"]		= $id; $this->mLIDs[]	= $id;
+		$this->mArrProp["value"]	= $value;
+		$this->mArrProp["step"]		= "1";
+		$this->mArrProp["maxlength"]= "10";//9811098164
+		$this->mArrProp["minlength"]= "7";//9811098164
+		
+		//$this->mArrProp["max"]		= $Maximo;
+		//$this->mArrProp["min"]		= 0;
+		
+		$this->mValue				= $value;
+		$this->mLbl					= $Titulo;
+		$this->mId					= $id;
+		//$this->mArrProp["style"]	= "width:" . $ln . "em;max-width:" . $ln . "em";
+		$this->mIncLabel			= ($Titulo == "" ) ? false : true;
+		
+		$ctrl		= $this->get();
+		
+		return $ctrl;
 	}
 }
 
@@ -3934,9 +4030,13 @@ class cHSelect {
 		$id		= ($id == "") ? "idcaja" : $id; $this->mLIDs[]	= $id;
 		$xli		= new cSQLListas();
 		$usr		= false;
-		if(getUsuarioActual(SYS_USER_NIVEL) <= USUARIO_TIPO_CAJERO){
+		$xUsr		= new cSystemUser();
+		$xUsr->init();
+		
+		if($xUsr->getPuedeCerrarCajas() == false){
 			$usr	= getUsuarioActual();
 		}
+		
 		$sqlSc		= $xli->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA, $fecha, $usr);
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.Caja");
@@ -4271,6 +4371,24 @@ class cHSelect {
 		
 		return $cCta;
 	}
+	function getListaDeEstadoMvtosDeCtasBancs($id = "", $agregar_especiales = false, $select = false){
+		$id		= ($id == "") ? "idestatusobancs" : $id; $this->mLIDs[]	= $id;
+		
+		$select	= ($select == false) ? SYS_TODAS : $select;
+		$cCta 	= new cSelect($id, $id, "");
+		$cCta->setNoMayus();
+		$cCta->addTodas();
+		$cCta->addEspOption("autorizado", "TR.AUTORIZADO");
+		$cCta->addEspOption("noautorizado", "TR.NO AUTORIZADO");
+		$cCta->addEspOption("cancelado", "TR.CANCELADO");
+		
+		$cCta->setOptionSelect($select);
+		
+		$cCta->setEsSql();
+		$cCta->setLabel("TR.ESTATUS");
+		
+		return $cCta;
+	}
 	function getListaDeDiarioDeMvtosContables($id = "", $default = DEFAULT_CONTABLE_DIARIO_MVTOS){
 		$sqlSc		= "SELECT * FROM `contable_movimientosdiarios` ";
 		$id			= ($id == "") ? "iddiariomvtos" : $id; $this->mLIDs[]	= $id;
@@ -4556,6 +4674,7 @@ class cHSelect {
 	
 		if($selected != false){	$xS->setOptionSelect($selected);	}
 		$xS->setEsSql();
+		$xS->setDivClass("tx4 tx18");
 		$xS->setLabel("TR.Tipo de Operacion");
 		return $xS;
 	}
@@ -5173,6 +5292,20 @@ GROUP BY `operaciones_mvtos`.`recibo_afectado`";
 		$xS->setLabel("TR.MUNICIPIO");
 		return $xS;
 	}
+	function getListaDeBasesDelSis($id = "", $selected = 0, $tipo = "", $real=false, $inactivos = false){
+		$id			= ($id == "") ? "idbase" : $id; $this->mLIDs[]	= $id;
+		$ByStat		= ($tipo == "" OR $tipo == SYS_TODAS) ? "" : " AND (`tipo_de_base` = '$tipo' ) ";
+		$ByAct		= ($inactivos == true) ? "" : " AND (`estatus` = 1) ";
+		$SqlRpt		= "SELECT `codigo_de_base`, CONCAT(`codigo_de_base`, '-',`descripcion`) AS `descripcion` FROM `eacp_config_bases_de_integracion` WHERE (`codigo_de_base`>0) $ByStat $ByAct";
+		
+		$xS 		= new cSelect($id, $id, $SqlRpt);
+		$xS->setEsSql();
+		$xS->setDivClass("tx4 green");
+		$selected	= setNoMenorQueCero($selected);
+		$xS->setOptionSelect($selected);
+		$xS->setLabel("TR.BASE");
+		return $xS;
+	}
 } //END
 
 
@@ -5616,6 +5749,7 @@ class cTabla {
 	private $mEspTool		= array();		//Herramientas con comandos especiales
 	private $mShowProp;
 	private $mFieldSum		= array();		//Array assoc
+	private $mFieldSum2		= array();		//Array assoc
 	private $arrWithTilde;
 	private $arrTypesPHP	= array();
 	private $arrRowCSS		= array();
@@ -6087,6 +6221,10 @@ LONGTEXT: 252
 				}
 				$tths				= $xLng->getT("TR.$tths");
 				if(strpos($tths, "[") !== false){ $tths		= $xLng->getT("TR.$nombre");	}
+				
+				//Asignar Nombre a la columna
+				$this->mEsq[$nombre]["NNN"]		= $tths;
+				
 				$cssTh				= ($index == $this->mKey) ? " class='key' " : "";
 				$scope				= ($this->mPrepareChart == true) ? " scope='col' " : "";
 				if(isset($this->mTHStyles[$fname]) ){
@@ -6274,7 +6412,9 @@ LONGTEXT: 252
 								if($isNumero == false){
 									
 									if($this->mPrepareChart == false AND strlen($currVal) > $this->mMaxRed){
-										$currVal	= "<details><summary>" . substr($currVal, 0,$this->mMaxRed) . "</summary>". substr($currVal,$this->mMaxRed) . "</details>";
+										$ttInfo		= $this->mEsq[$nombre]["NNN"];
+										//$currVal	= "<details><summary>" . substr($currVal, 0,$this->mMaxRed) . "</summary>". substr($currVal,$this->mMaxRed) . "</details>";
+										$currVal	= "<img class='x24 button-mini' src='../images/ellipsis.png' onclick=\"var xG=new Gen();xG.informar({b64:true, msg: '" . base64_encode($currVal) . "', title:'$ttInfo'});\" />";
 									}
 								} else {
 									if($this->mPrepareChart == false){
@@ -6488,6 +6628,12 @@ class cSelect{
 		$this->addEspOption("", "-");
 		if($select == true){
 			$this->setOptionSelect("");
+		}
+	}
+	function addTodas($select = false){
+		$this->addEspOption(SYS_TODAS, SYS_TEXTO_TODAS);
+		if($select == true){
+			$this->setOptionSelect(SYS_TODAS);
 		}
 	}
 	function addEvent($event, $func, $value = false){
@@ -6998,7 +7144,7 @@ class cHFormatoRecibo {
 			$empresa		= $xRec->getPersonaAsociada();
 			$pagable		= $xRec->isPagable();
 			
-			//Cargar datos si es de credito
+
 			/*if($xRec->getEsDeCredito() == true){
 				$xCred		= new cCredito($xRec->getCodigoDeDocumento());
 				if($xCred->init() == true){
@@ -7013,6 +7159,8 @@ class cHFormatoRecibo {
 			$xCache->clean("creditos_solicitud-$docto");
 			$xCache->clean("creditos_montos-$docto");
 			$xCache->clean("captacion_cuentas-$docto");
+			//checar si existe en una empresa
+			//if($xRec->getEsDeEmpresa() == true){}
 			//
 			//TODO: Resolver ajuste y permisos de ajuste
 			
@@ -7723,6 +7871,7 @@ class cFormato {
 			}
 			$head			.= "</tr></thead>";
 			$tbl			= ($this->mOut == OUT_TXT) ? $h2 . $tbl . "\r\n" : "<table>$head<tbody>$tbl</tbody></table>";
+			
 			$this->mTxt		= str_replace("_AREA_DE_MOVIMIENTOS_", $tbl, $this->mTxt);
 		}
 		
@@ -8145,7 +8294,7 @@ class cFormato {
 			$this->mArr["variable_datos_del_pago"]				= $xRec->getDatosDeCobro();
 			$this->mArr["variable_numero_de_recibo"]			= $recibo;
 			$this->mArr["variable_docto_fecha_larga_actual"] 	= $xF->getFechaLarga( $xRec->getFechaDeRecibo());
-			$this->mArr["variable_observacion_del_recibo"] 		= $xRec->getObservaciones();
+			$this->mArr["variable_observacion_del_recibo"] 		= str_replace("---", " - ", $xRec->getObservaciones());
 			$this->mArr["variable_monto_del_recibo_en_letras"]	= $xCant->letras();
 			$this->mArr["variable_monto_del_recibo"] 			= $xCant->moneda();
 			$this->mArr["variable_numero_del_recibo"]			= $xRec->getCodigoDeRecibo();
@@ -8196,6 +8345,7 @@ class cFormato {
 				
 				$this->mDataMvto[]	= $rwx;
 			}
+			
 			$rs		= null;
 		}
 	}
@@ -10033,7 +10183,7 @@ class cFormato {
 		$inicialSub			+= $xCredOrg->getTenenciaInicial()+$xCredOrg->getSeguroInicial();
 		
 		$SumaSinAnticipos	= $inicialSub;
-		
+		//setLog("$pzo ---- $SumaSinAnticipos");
 		//Cuotas proporcionales
 		$inicialSub		+= $xCredOrg->getMontoDepositoGarantia()+$xCredOrg->getMontoRentaProporcional();
 		
@@ -10053,7 +10203,8 @@ class cFormato {
 		
 		
 		//Subtotal Iniciales
-		$inicialSub		= $xT->monto_anticipo()->v() + $xCredOrg->getMontoComision() + $xT->monto_gestoria()->v() + $xCredOrg->getSeguroInicial() + $xT->monto_notario()->v() + $xT->renta_proporcional()->v();
+		$inicialSub		= $xT->monto_anticipo()->v() + $xCredOrg->getMontoComision() + $xT->monto_gestoria()->v() + $xCredOrg->getSeguroInicial() + $xT->monto_notario()->v();
+		$inicialSub		+= $xT->renta_proporcional()->v();
 		$inicialSub		+= $xCredOrg->getTenenciaInicial();
 		$inicialSubO	= $inicialSub;
 		
@@ -10137,7 +10288,7 @@ class cFormato {
 			$xCalc->setMontoComisionAgen($xCredOrg->getMontoComisionAgencia());
 			$xCalc->setMontoComisionOrg($xCredOrg->getMontoComisionOrigen());
 			
-			$residual		= $xCalc->getValorResidual($xCredOrg->getMontoVehiculo(), $xCredOrg->getMontoAliado(), $pzo, $TasaResPzo, $xCredOrg->getMontoAnticipo(true) );//  $xT->monto_residual()->v();
+			$residual		= $xCalc->getValorResidual($xCredOrg->getMontoVehiculo(), $xCredOrg->getMontoAliado(), $pzo, $TasaResPzo, $xCredOrg->getMontoAnticipo(true), $xCredOrg->getEsAdministrado() );//  $xT->monto_residual()->v();
 			
 			$MontoGPS		= $xCalc->getMontoGPS($xCredOrg->getClaveDePlanGPS());
 			$CuotaRenta		= $xCalc->getCuotaRenta($xT->precio_vehiculo()->v(), $xT->monto_anticipo()->v(), $residual, $xT->monto_aliado()->v(), $MontoGPS);
@@ -10148,9 +10299,6 @@ class cFormato {
 			$CuotaMtto		= $xCalc->getCuotaMtto($xT->monto_mtto()->v());
 			$CuotaAcc		= $xCalc->getCuotaAccesorios($xT->monto_accesorios()->v());
 			
-
-			
-			
 			$SumarRenta		= true;
 			$RentaEnDep		= $xCalc->getMontoRentaDeposito();
 			
@@ -10158,6 +10306,7 @@ class cFormato {
 				$SumarRenta	= false;
 				$RentaEnDep	= 0;
 			}
+			//setLog("$pzo $RentaEnDep ");
 			//setError($xCredOrg->getMontoDepositoGarantia());
 			
 			$CuotaServs		= $xCredOrg->getMontoAjuste();
@@ -10167,6 +10316,7 @@ class cFormato {
 				$RentaProp		= $xCalc->getMontoRentaProp();
 			}
 			
+			//$RentaEnDep			= 0;
 			
 			$tasares		= $xCredOrg->getTasaResidualPzo($pzo);
 			//No Aliado
@@ -10184,6 +10334,7 @@ class cFormato {
 			if($RentaSinIva == true){
 				$Iva		= 0;
 			}
+			//setLog("$pzo --- $tasares");
 			
 			$this->mArr["var_leasing_" . $pzo . "_cuota_renta" ]		= getFMoney($CuotaRenta);
 			$this->mArr["var_leasing_" . $pzo . "_cuota_seguro" ]		= getFMoney($CuotaSeguro);
@@ -10197,11 +10348,11 @@ class cFormato {
 			
 			$this->mArr["var_leasing_" . $pzo . "_cuota_na_renta" ]		= getFMoney($CuotaRentaNA);
 			$this->mArr["var_leasing_" . $pzo . "_cuota_aliado" ]		= getFMoney($CuotaAliado);
-			$pzoresidual												= $xCalc->getValorResidual($xT->precio_vehiculo()->v(), $xT->monto_aliado()->v(), $pzo, $tasares, $xCredOrg->getMontoAnticipo(true));
+			$pzoresidual												= $xCalc->getValorResidual($xT->precio_vehiculo()->v(), $xT->monto_aliado()->v(), $pzo, $tasares, $xCredOrg->getMontoAnticipo(true), $xCredOrg->getEsAdministrado());
 			$this->mArr["var_leasing_" . $pzo . "_residual" ]			= getFMoney($pzoresidual);
 			
 			$this->mArr["var_leasing_" . $pzo . "_proporcional" ]		= getFMoney($xT->renta_proporcional()->v());
-			
+			//setLog("$pzo ---- $pzoresidual ");
 			
 			
 			
@@ -10235,15 +10386,17 @@ class cFormato {
 			$pp_renta_disminuida= ($SumarRenta == false) ? $RentaEnDep : 0;
 			
 			$pp_subtotal_iva	= ($SumaSinAnticipos + $RentaProp) * $factorIVA;	//Quitar la renta y sacar el IVA
-
 			
-			$pp_subtotal		= $pp_subtotal_iva + $RentaProp; 					//Suma con renta de deposito
+			
+			$pp_subtotal		= $pp_subtotal_iva + $RentaEnDep; 					//Suma con renta de deposito
+			
 			$pp_iva				= $pp_subtotal_iva * $mIVA;							//Calcular el IVA
 			$pp_total			= $pp_subtotal + $pp_iva;
 			
 			if($SumarRenta == false){
-				$pp_subtotal 	= $pp_subtotal - $pp_renta_disminuida;
-				$pp_total		= $pp_total - $pp_renta_disminuida;
+				//$pp_subtotal 	= $pp_subtotal - $pp_renta_disminuida;
+				//$pp_total		= $pp_total - $pp_renta_disminuida;
+				//setError("$pp_subtotal - $pp_renta_disminuida");
 			}
 			
 			$this->mArr["var_leasing_" . $pzo . "_pp_subtotal"]		= getFMoney($pp_subtotal);			//Agregado a la lista
@@ -10413,7 +10566,7 @@ class cFIcons {
 	public $REGISTROS 	= "registros";
 	public $CONTABLE 	= "contabilidad";
 	public $TIPO 		= "perfil";
-	public $PERSONA 	= "fa-user-circle";
+	public $PERSONA 	= "fa-address-card-o";
 	public $ELIMINAR	= "fa-trash";
 	public $DESCARTAR	= "fa-ban";
 	public $BANCOS		= "fa-university";
@@ -10428,10 +10581,10 @@ class cFIcons {
 	public $LIBERAR		= "fa-unlock";
 	public $LISTA		= "fa-th-list";
 	public $SALDO		= "saldo";
-	public $CERRAR		= "cerrar";
+	public $CERRAR		= "fa-window-close-o";
 	public $COBROS		= "caja";
 	public $EMAIL		= "envelope-e";
-	public $CREDITO		= "fa-money";
+	public $CREDITO		= "fa-credit-card";
 	public $RECIBO		= "fa-bars";
 	public $RESTAR		= "fa-minus";
 	public $AHORRO		= "fa-university";
@@ -10458,6 +10611,7 @@ class cFIcons {
 	public $ACTUAL		= "fa-map-marker";
 	public $CALENDARIO	= "fa-calendar";
 	public $CALENDARIO1	= "fa-calendar-o";
+	public $PLANDEPAGOS	= "fa-calendar-o";
 	public $EXCEL		= "fa-file-excel-o";
 	public $VER			= "ver";
 	public $HOME		= "fa-home";
@@ -10481,7 +10635,7 @@ class cFIcons {
 	public $EMPLEADOR	= "fa-building-o";
 	public $RELACIONES	= "fa-user-plus";
 	public $RIESGO		= "fa-road";
-	public $SALIR		= "fa-power-off";
+	public $SALIR		= "fa-sign-out";
 	public $GENERAR		= "fa-bolt";
 	public $VINCULAR	= "fa-plug";
 	public $VALIDAR		= "fa-check-circle-o";
@@ -10492,6 +10646,10 @@ class cFIcons {
 	public $BAJA		= "fa-thumbs-o-down";
 	public $AUTOMAGIC	= "fa-magic";
 	public $ESCUELA		= "fa-graduation-cap";
+	public $GRAFICO1	= "fa-pie-chart";
+	public $GRAFICO2	= "fa-line-chart";
+	public $GRAFICO3	= "fa-bar-chart";
+	public $LEASING		= "fa-bus";
 	//public $CALCULAR	= "fa-superscript";
 	/*	private $mIcons	= array("editar" => "fa-edit",
 						"referencias" => "fa-group",

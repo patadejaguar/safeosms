@@ -5,6 +5,8 @@ include_once("core.error.inc.php");
 include_once("core.security.inc.php");
 include_once("core.db.inc.php");
 include_once("core.db.dic.php");
+include_once("core.init.inc.php");
+
 @include_once ("../libs/aes.php");
 
 function goLogged($camposolicitado, $username) {
@@ -32,7 +34,10 @@ function goLogged($camposolicitado, $username) {
 	}
 	return $D;
 }
-
+/**
+ * @deprecated @since 2018.01.01
+ * 
+ * */
 function getStatusConnected($iduser) {
 $stat	= true;
 
@@ -41,39 +46,37 @@ $stat	= true;
 			$logpwd 	= PWD_LOGIN;
 			$logdb 		= MY_DB_IN;
 			$loghost 	= WORK_HOST;
-
-			$logcnn = mysql_connect($loghost, $loguser, $logpwd);
-				if (!$logcnn) {
-						$stat = true;
-					}
-
-			$logdbo = mysql_select_db($logdb, $logcnn);
-
-			$iduser	= md5($iduser);
-			$fecha	= date("Y-m-d");
-			$sqllog = "SELECT count(webid) AS 'connected'
-						FROM usuarios_web_connected
-						WHERE webid='$iduser'
-						AND
-						option1='$fecha' ";
-			$rslog = mysql_query($sqllog, $logcnn);
-				if (!isset($rslog)) {
-					$stat = false;
+			$mCnx 		= new mysqli( WORK_HOST , USR_LOGIN, PWD_LOGIN, MY_DB_IN, PORT_HOST);
+			if(!$mCnx){
+				return true;
+			} else {
+				$iduser	= md5($iduser);
+				$fecha	= date("Y-m-d");
+				$sqllog = "SELECT count(webid) AS 'connected'
+				FROM usuarios_web_connected
+				WHERE webid='$iduser'
+				AND
+				option1='$fecha' ";
+				$mCnx->set_charset("utf8");
+				
+				$rs		= $mCnx->query($sqllog);
+				if(!$rs){
+					return true;
 				} else {
-					$counts = mysql_result($rslog, 0, "connected");
-
-					if ( !isset($counts) or $counts == 0 ){
-						$stat = false;
+					$row 		= $rs->fetch_assoc();
+					if(isset($row["connected"])){
+						$val	= $row["connected"];
+						if($val > 0){
+							return true;
+						} else {
+							return false;
+						}
 					} else {
-						$stat = true;
+						return true;
 					}
+					$rs->free();
 				}
-
-			@mysql_free_result($rslog);
-			@mysql_close($logcnn);
-			unset($logcnn);
-			unset($logdbo);
-			unset($rslog);
+			}
 
 	} else {
 		$stat = true;

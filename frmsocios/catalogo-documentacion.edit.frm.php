@@ -86,8 +86,8 @@ $xFRM->OMoneda("vigencia_dias", $xTabla->vigencia_dias()->v(), "TR.VIGENCIA DIAS
 
 $xFRM->addHElem($xSel2->get("checklist", "TR.CHECKLIST",$xTabla->checklist()->v()) );
 
-$xFRM->OSiNo("TR.Guardar","almacen", $xTabla->almacen()->v());
-
+$xFRM->OSiNo("TR.ARCHIVO","almacen", $xTabla->almacen()->v());
+$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
 
 //$xFRM->addCRUD($xTabla->get(), true);
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);

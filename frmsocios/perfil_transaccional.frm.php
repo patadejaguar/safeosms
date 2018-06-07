@@ -59,12 +59,17 @@ $xSel		= new cHSelect();
 
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addSeccion("idadd", "TR.AGREGAR PERFIL_TRANSACCIONAL");
-$xFRM->addHElem( $xSel->getListaDePerfilTransaccional()->get("TR.tipo de perfil", true  ) );
 $xFRM->addHElem( $xSel->getListaDePaises()->get("TR.pais de origen", true  ) );
+
+$xFRM->addHElem( $xSel->getListaDePerfilTransaccional()->get("TR.tipo de perfil", true  ) );
+
 $xTxt->setDivClass("");
-$xFRM->addDivSolo($xTxt->get("idorigen", "", "TR.ORIGEN DE LOS RECURSOS"), $xTxt->get("idfinalidad", "", "TR.APLICACION DE LOS RECURSOS"), "tx24", "tx24");
-$xFRM->OMoneda("idmonto", 0, "TR.monto maximo de operaciones mensuales");
-$xFRM->OMoneda("idnumero", 0, "TR.numero maximo de operaciones mensuales");
+
+$xFRM->OMoneda("idmonto", 0, "TR.MAXMONTO de operaciones");
+$xFRM->OMoneda("idnumero", 0, "TR.MAXNUMERO de operaciones");
+
+$xFRM->addDivSolo($xTxt->get("idorigen", "", "TR.DESCRIPCION ORIGEN"), $xTxt->get("idfinalidad", "", "TR.DESCRIPCION DESTINO"), "tx24", "tx24");
+
 $xFRM->addObservaciones();
 $xFRM->endSeccion();
 $QL		= new cSQLListas();
@@ -85,8 +90,15 @@ $jxc ->drawJavaScript(false, true);
 ?>
 <!-- HTML content -->
 <script>
+var xG	= new Gen();
 function setGuardarRegistro(){
-	jsaGuardarPerfil();
+	xG.confirmar({
+		callback : function(){
+			jsaGuardarPerfil(); xG.postajax("jsOnFin()");			
+		}
+	});
+}
+function jsOnFin(){
 	document.getElementById("id-frmperfiltransaccional").reset();
 }
 </script>

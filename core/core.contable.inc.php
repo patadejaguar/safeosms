@@ -1094,7 +1094,7 @@ class cCuentaContable{
 	}
 	/**
 	 * Genera los Saldos segun una Cuenta Superior, Copiando todo los datos de la cuenta Suerior, Generalmente usados en altas de Cuentas nuevas
-	 * @param real $cuenta_superior		//Numero de Cuenta Superior
+	 * @param int $cuenta_superior		//Numero de Cuenta Superior
 	 */
 	function setHeredarSaldos($cuenta_superior = false){
 		$cuenta				= $this->mCuenta;
@@ -1234,7 +1234,7 @@ class cCuentaContable{
 	}
 	/**
 	 * Funcion que Obtiene un Digito segun el Nivel de Cuenta
-	 * @param real $cuenta 	Numero de Cuenta a Obtener, Opcional
+	 * @param int $cuenta 	Numero de Cuenta a Obtener, Opcional
 	 * @return integer		Numero de Nivel de la Cuenta
 	 */
 	function getDigitoAgrupador($cuenta = false){ $cuenta	= ($cuenta == false ) ? $this->mCuenta : $cuenta; $xEs	= new cCuentaContableEsquema($cuenta);	return $xEs->NIVEL_ACTUAL;	}
@@ -1550,7 +1550,7 @@ class cPoliza{
 	/**
 	 * Agrega una nueva Poliza Contable
 	 * @param string 	$Concepto		Concepto de la Poliza		
-	 * @param date 		$FechaDePoliza	[Fecha de la Poliza]
+	 * @param variant 		$FechaDePoliza	[Fecha de la Poliza]
 	 * @param integer 	$NumeroDePoliza	[Numero de Poliza]
 	 * @param float 	$Totalcargos	[Total de Cargos]
 	 * @param float 	$TotalAbonos	[Total de Abonos]
@@ -1926,7 +1926,7 @@ class cPoliza{
 	 * @param string $referencia
 	 * @param string $concepto
 	 * @param integer $NumMvto
-	 * @param date $Fecha
+	 * @param variant $Fecha
 	 */
 	function addMovimiento($cuenta, $cargo = 0, $abono = 0, $referencia = "", $concepto = "", $NumMvto = false, $Fecha = false){
 		//if($this->mPolizaIniciada == false){ $this->init(); }

@@ -29,3 +29,29 @@ SafeDev.prototype.recordRAW	= function(opts){
 	var xG		= new Gen();
 	xG.w({url: "../tools/json.dev.php?tabla=" + tbl + "&id=" + id, tiny: true});
 }
+
+function serializeForm(idfrm) {
+	var fields = $(idfrm).serializeArray();
+	var txt		= "";
+	var jsq		= "";
+	var jsq2	= "";
+
+	var total = fields.length;
+
+	jQuery.each( fields, function( i, field ) {
+		str		= '$' + field.name  + '\t= parametro(\"' + field.name +  '\"';
+		//console.log(field)
+		str		+= ');\n<br />';
+		txt		+= str;
+		jsq		+= 'var ' + field.name  + '\t= $("#' + field.name  + '").val();\n<br/>';
+		jsq2		+= '$("#' + field.name  + '").val();\n<br/>';
+		if (i === (total - 1) ) {
+			session("var.serialize.php", txt);
+			session("var.serialize.js", jsq + jsq2);
+			
+			var xG		= new Gen();
+			xG.w({ url : "../tools/serialize.dev.php?", full:true });
+		}
+	});
+}
+

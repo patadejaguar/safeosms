@@ -4035,9 +4035,53 @@ $sql["20180401"][]	= "SELECT setNuevoPermisoX('contrato.css.php')";
 $sql["20180401"][]	= "SELECT setNuevoPermisoX('recibo.css.php')";
 $sql["20180401"][]	= "SELECT setNuevoPermisoX('local.css.php')";
 
-//$sql["20180401"][]	= "";
+$sql["20180501"][]	= "ALTER TABLE `operaciones_recibos` CHANGE COLUMN `idusuario` `idusuario` INT(6) UNSIGNED NOT NULL DEFAULT '99' ,CHANGE COLUMN `cadena_distributiva` `cadena_distributiva` VARCHAR(150) NULL DEFAULT 'N/A' COMMENT 'beneficiario|datoa|datob' ,ADD COLUMN `idtipocbza` INT(4) NULL DEFAULT '1' AFTER `tiempo`,ADD COLUMN `idusuario_cbza` INT(6) NULL DEFAULT '1' AFTER `idtipocbza` ";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('creditos.datos-origen.new.frm.php')";
 
-//SELECT setNuevoPermisoX('')
+$sql["20180501"][]	= "CREATE TABLE IF NOT EXISTS `sistemas_modificados` ( `idsistemas_modificados` INT NOT NULL AUTO_INCREMENT,  `tiempo` INT(11) NULL,  `idusuario` INT(5) NULL DEFAULT '0',  `idtipoobjeto` VARCHAR(4) NULL DEFAULT 'T',  `idobjeto` VARCHAR(40) NULL,  `identificador` VARCHAR(25) NULL DEFAULT '0',  `idsubobjeto` VARCHAR(40) NULL,  `v_antes` VARCHAR(100) NULL,  `v_despues` VARCHAR(100) NULL,  PRIMARY KEY (`idsistemas_modificados`)) ENGINE = INNODB";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('subir-archivo.frm.php')";
+$sql["20180501"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('2010', 'MSG_CONFIRMA_ACTIVACION', '¿ Confirma la Activacion de este Registro ?')";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('creditos-preclientes.add.frm.php')";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('creditos-preclientes.edit.frm.php')";
+$sql["20180501"][]	= "ALTER TABLE `creditos_preclientes` ADD COLUMN `tipocuota_id` INT(2) NULL DEFAULT '2' AFTER `idexterno`,ADD COLUMN `tasa_interes` FLOAT(6,3) NULL DEFAULT '0.00' AFTER `tipocuota_id`";
+$sql["20180501"][]	= "UPDATE `eacp_config_bases_de_integracion` SET `estatus` = '0' WHERE `codigo_de_base` = '2612'";
+$sql["20180501"][]	= "UPDATE `eacp_config_bases_de_integracion` SET `estatus` = '0' WHERE `codigo_de_base` = '7001'";
+$sql["20180501"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('1085', '1080', 'Retiro de Garantia Liquida', 'frmcreditos/creditos.garantia-liq-dev.frm.php', 'Retiro / Devolucion de Garantia Liquida', 'fa-retweet', 'command', '1085', '1085', 'true')";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'CAPITAL.- APORTACIONES' WHERE `idoperaciones_recibostipo` = '5'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'INVERSION.- RENOVACION' WHERE `idoperaciones_recibostipo` = '6'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'INVERSION.- DEPOSITO' WHERE `idoperaciones_recibostipo` = '7'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'INVERSION.- RETIRO' WHERE `idoperaciones_recibostipo` = '8'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'CAPTACION.- TRASPASO' WHERE `idoperaciones_recibostipo` = '9'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'OPERACIONES.- ESTADISTICO' WHERE `idoperaciones_recibostipo` = '10'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'GRUPOS.- PROGRAMACION' WHERE `idoperaciones_recibostipo` = '14'";
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'COLOCACION.- ANTICIPADOS' WHERE `idoperaciones_recibostipo` = '15'"; 
+$sql["20180501"][]	= "UPDATE `operaciones_recibostipo` SET `descripcion_recibostipo` = 'COLOCACION.- DEVOLUCIONES' , `detalles_del_concepto` = 'Devoluciones de Colocacion' WHERE `idoperaciones_recibostipo` = '16'";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('personas-buscar.svc.php')";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('desembolsos_por_clientes.rpt.php')";
+$sql["20180501"][]	= "INSERT INTO `general_reports` (`idgeneral_reports`, `descripcion_reports`, `aplica`, `idreport`, `explicacion`, `order_index`) VALUES ('../rptcreditos/desembolsos_por_clientes.rpt.php?ext=true&', 'Creditos.- Clientes Atendidos por Fechas', 'general_creditos', '10010', 'Muestra los clientes por un rango de Fecha', '10010')";
+$sql["20180501"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('609', 'FORM', 'CREDITOS.OFICIAL.POR_PRODUCTO', '', '', '', '')";
+$sql["20180501"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('610', 'FORM', 'CREDITOS.OFICIAL.POR_HERENCIA', '', '', '', '')";
+$sql["20180501"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('611', 'FORM', 'CREDITOS.OFICIAL.POR_USUARIO', '', '', '', '')";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('walook-creditos.frm.php')";
+$sql["20180501"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('9017', 'ALERT_PAGAR_ANTES_INT', 'Necesita pagar cargos e Intereses antes de Aplicar Capital')";
+$sql["20180501"][]	= "ALTER TABLE `creditos_preclientes` CHANGE COLUMN `telefono` `telefono` VARCHAR(20) NULL DEFAULT '0'";
+$sql["20180501"][]	= "ALTER TABLE `personas_perfil_transaccional` CHANGE COLUMN `recurso_aplicacion` `recurso_aplicacion` VARCHAR(100) NULL DEFAULT '' ,ADD COLUMN `res_origen_id` INT(4) NULL DEFAULT '1' AFTER `recurso_aplicacion`,ADD COLUMN `res_aplicacion_id` INT(4) NULL DEFAULT '1' AFTER `res_origen_id`";
+$sql["20180501"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('1007', 'MSG_CONFIRMA_GUARDAR', '¿Confirma Guardar el Registro?')";
+$sql["20180501"][]	= "ALTER TABLE `personas_perfil_transaccional_tipos` CHANGE COLUMN `idpersonas_perfil_transaccional_tipos` `idpersonas_perfil_transaccional_tipos` INT(6) NOT NULL ,CHANGE COLUMN `tipo_de_exhibicion` `tipo_de_exhibicion` VARCHAR(40) NULL DEFAULT NULL COMMENT 'EFECTIVO CHEQUE PLASTICO TRANSACCION' ,CHANGE COLUMN `afectacion` `afectacion` INT(2) NULL DEFAULT '1' ";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('banco-operaciones.edit.frm.php')";
+$sql["20180501"][]	= "SELECT setNuevoPermisoX('banco-operaciones.new.frm.php')";
+$sql["20180501"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('641','1001','353','-1','','0')";
+$sql["20180501"][]	= "insert into `eacp_config_bases_de_integracion_miembros` (`ideacp_config_bases_de_integracion_miembros`, `codigo_de_base`, `miembro`, `afectacion`, `descripcion_de_la_relacion`, `subclasificacion`) values('642','1000','353','-1','','0')";
+$sql["20180501"][]	= "ALTER TABLE `operaciones_recibos_arch`   ADD COLUMN `idtipocbza` INT(4) DEFAULT 1 NULL AFTER `tiempo`,  ADD COLUMN `idusuario_cbza` INT(6) DEFAULT 1 NULL AFTER `idtipocbza`";
+$sql["20180501"][]	= "UPDATE `general_menu` SET `menu_parent` = '5070' , `menu_image` = 'fa-area-chart' , `menu_order` = '5098' , `menu_help_id` = '5098' WHERE `idgeneral_menu` = '5098'";
+$sql["20180501"][]	= "INSERT INTO `general_reports` (`idgeneral_reports`, `descripcion_reports`, `aplica`, `idreport`, `explicacion`, `order_index`, `estatus`, `tags`) VALUES ('../rptcontables/rpt_intereses_devengados_no_pagados_mensual.php?', 'Interes Devengado No Pagado en un Rango de Fechas', 'contable_general', '50101', '', '5', '1', '')";
+//$sql["20180501"][]	= "";
+//$sql["20180501"][]	= "";
+//$sql["20180501"][]	= "SELECT setNuevoPermisoX('personas-buscar.svc.php')";
+
+//$sql["20180501"][]	= "";
+
+
 
 foreach ($sql as $idx => $cnt){
 	if($idx >= $version){

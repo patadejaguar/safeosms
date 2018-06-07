@@ -88,7 +88,7 @@ $msg	= "====================== GENERAR_NOTIFICACIONES_POR_CREDITOS_NO_360 \r\n";
 /**
  * Genera Llamadas por Creditos Morosos y Vencidos fon vencimiento a FINAL DE PLAZO
  * @deprecated @since 2015.07.01
- * @param date $fecha_operacion
+ * @param variant $fecha_operacion
  * @return string Mensaje del Log
  */
 function setLlamadasDiariasCreditos360($fecha_operacion){
@@ -99,8 +99,8 @@ function setLlamadasDiariasCreditos360($fecha_operacion){
 }
 /**
  * Funcion que agrega una Llamada por Credito con VENCIMIENTO EN PAGO PERIODICO
- * @param $fecha_operacion	fecha en que agrega la llamada
- * @param $recibo			numero de recibo al que se agrega[si aplica]
+ * @param variant $fecha_operacion	fecha en que agrega la llamada
+ * @param integer $recibo			numero de recibo al que se agrega[si aplica]
  * @return string			Log de acciones
  */
 function setLlamadasDiariasCreditosNo360($fecha_operacion, $recibo = 0){

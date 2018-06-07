@@ -88,6 +88,26 @@ class cSystemUser{
 	function getPuedeUsarPrintPOS(){
 		return $this->getReglaDeUsuario($this->mOListaRules->ACTIVE_PRINTER_POS);
 	}
+	function getPuedeCerrarCajas(){
+		if($this->getTipoEnSistema() == USUARIO_TIPO_JEFECAJA){
+			return true;
+		}
+		return $this->getReglaDeUsuario($this->mOListaRules->PUEDE_CERRAR_CAJAS);
+	}
+	function getPuedeCobrar(){
+		$res	= false;
+		if($this->getTipoEnSistema() == USUARIO_TIPO_JEFECAJA OR $this->getTipoEnSistema() == USUARIO_TIPO_CAJERO){
+			return true;
+		}
+		return $res;
+	}
+	function getPuedeOperarCreditos(){
+		$res	= false;
+		if($this->getTipoEnSistema() == USUARIO_TIPO_OFICIAL_CRED OR $this->getTipoEnSistema() == USUARIO_TIPO_ORIGINADOR){
+			return true;
+		}
+		return $res;
+	}
 	private function getReglaDeUsuario($regla = ""){
 		//$this->mOListaRules
 		if($this->mReglasAsInit == false){  $this->getUserRules(); }
@@ -204,7 +224,11 @@ class cSystemUser{
 			$this->mNombreCompleto	= $D["apellidopaterno"] . " " . $D["apellidomaterno"] . " " . $D["nombres"];
 			$this->mOptions			= $D["opciones"];
 			$this->mUserIniciado	= true;
-			
+			if($this->mNivel == 99){
+				if( isset($_SESSION["tmp.nivel.de.user"]) ){
+					$this->mNivel	= setNoMenorQueCero($_SESSION["tmp.nivel.de.user"]);
+				}
+			}
 			//procesar reglas
 			$this->initOptions();
 			if($inCache == false){
@@ -636,6 +660,7 @@ class cSystemUser{
 	function getEsOriginador(){
 		return($this->mNivel == USUARIO_TIPO_ORIGINADOR) ? true : false;
 	}
+	
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	private function setCleanCache(){
 		if($this->mIDCache !== ""){
@@ -710,14 +735,20 @@ class cSystemUser{
 		}
 		return $sucursal;
 	}
-
+	function getEnDesarrollo(){
+		$res	= false;
+		if(MODO_DEBUG == true AND (MODO_CORRECION == true OR MODO_MIGRACION == true) ){
+			return true;
+		}
+		return $res;
+	}
 }
 class cSystemUserRulesList {
 	public $PUEDE_EDITAR_USUARIOS 	= "PUEDE_EDITAR_USUARIOS";
 	public $PUEDE_AGREGAR_USUARIOS 	= "PUEDE_AGREGAR_USUARIOS";
 	public $PUEDE_ELIMINAR_RECS 	= "PUEDE_ELIMINAR_RECIBOS";
 	public $PUEDE_EDITAR_RECS 		= "PUEDE_EDITAR_RECIBOS";
-	
+	public $PUEDE_CERRAR_CAJAS 		= "PUEDE_CERRAR_CAJAS";
 	
 	public $ACTIVE_PRINTER_POS 		= "IMPRESORA_POS_ACTIVA";
 	

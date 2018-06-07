@@ -44,8 +44,8 @@ $xFRM->setTitle($xHP->getTitle());
 
 $ById		= ($idleasing >0 ) ? " AND `leasing_activos`.`clave_leasing` = $idleasing " : "";
 $xFRM->OHidden("idleasing", $idleasing);
-$xFRM->addCerrar();
 
+$xFRM->addCerrar();
 
 $ByStatus	= ($todas == true) ? "" : " AND (`leasing_activos`.`status`= " . $xAc->ESTADO_ACTIVO . ") ";
 
@@ -61,8 +61,9 @@ $xHG->col("clave_leasing", "TR.IDLEASING", "10%");
 //$xHG->col("persona", "TR.PERSONA", "10%");
 $xHG->col("credito", "TR.CREDITO", "10%");
 $xHG->col("placas", "TR.PLACAS", "15%");
-
 $xHG->col("descripcion", "TR.DESCRIPCION", "50%");
+
+$xHG->OColFunction("estatus", "TR.ESTATUSACTIVO", "8%", "jsRendEstatus");
 
 $xHG->setOrdenar();
 
@@ -121,10 +122,19 @@ function jsDel(id){
 	xG.rmRecord({tabla:"leasing_activos", id:id, callback:jsLGiddivactivos});
 }
 function jsBaja(id){
-	//dd 	= base64.decode(dd);
-	//dd	= JSON.parse(dd);
-	xG.w({url:"../frmarrendamiento/leasing-activos.baja.frm.php?clave=" + id, tiny:true, callback: jsLGiddivactivos});
-	//console.log(dd);
+	var $row = $('#iddivactivos').jtable('getRowByKey', id);
+	if ($row.length > 0){
+        $row.each(function () {
+			var record = $(this).data('record');
+			if(record.status == 0){
+				xG.confirmar({msg : "MSG_CONFIRMA_ACTIVACION", callback: function(){
+					xG.save({tabla: "leasing_activos", id: id, nomsg:true, content: "status=1", callback: jsLGiddivactivos});
+				}});
+			} else {
+				xG.w({url:"../frmarrendamiento/leasing-activos.baja.frm.php?clave=" + id, tiny:true, callback: jsLGiddivactivos});
+			}
+        });		
+	}
 }
 function getActivos(){
 	//var idfecha	= xF.get($("#idfechaactual").val());
@@ -136,12 +146,23 @@ function getActivos(){
 	//jsLGiddiveliminados(str);	
 }
 function jsGoTodas(){
-	xG.go({url: "../frmarrendamiento/leasing-activos.frm.php?todas=true" });
+	var idleasing	= $("#idleasing").val();
+	
+	xG.go({url: "../frmarrendamiento/leasing-activos.frm.php?todas=true&idleasing=" + idleasing });
 }
 function jsGoNormal(){
-	xG.go({url: "../frmarrendamiento/leasing-activos.frm.php" });
+	var idleasing	= $("#idleasing").val();
+	
+	xG.go({url: "../frmarrendamiento/leasing-activos.frm.php?idleasing=" + idleasing });
 }
-
+function jsRendEstatus(dd){
+	
+	if(dd.record.status == 0){
+		return "<img class='x24' src='../images/busy.png' />";
+	} else {
+		return "<img class='x24' src='../images/check.png' />";
+	}
+}
 </script>
 <?php
 

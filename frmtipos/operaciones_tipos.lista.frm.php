@@ -70,6 +70,21 @@ $xLR->setOptionSelect(SYS_TODAS);
 $xLR->addEvent("onchange", "jsFiltrarByRecibo()");
 
 $xFRM->addHElem($xLR->get(true) );
+$xTxt	= new cHText();
+$xTxt->addEvent("jsTxtBuscar(event)", "onkeyup");
+
+$xFRM->addHElem($xTxt->get("txtbuscar"));
+
+$xLB	= $xSel->getListaDeBasesDelSis("", 0, "de_operaciones");
+$xLB->addEspOption(SYS_TODAS);
+$xLB->setOptionSelect(SYS_TODAS);
+$xLB->addEvent("onchange", "jsFiltrarByBase()");
+
+$xFRM->addHElem($xLB->get(true) );
+
+$xB		= new cBases();
+
+
 
 /* ===========		GRID JS		============*/
 
@@ -101,7 +116,6 @@ $xHG->col("nombre_corto", "TR.ALIAS", "12%");
 if($todos == true){
 	$xHG->col("estatus", "TR.ESTATUS", "8%");
 }
-
 
 $xHG->col("recibo_de_operacion", "TR.RECIBO", "12%");
 //$xHG->ColMoneda("precio", "TR.PRECIO", "10%");
@@ -171,10 +185,19 @@ function jsActionGo(id, action){
 function jsAdd(){
 	xG.w({url:"../frmoperaciones/operaciones_tipos.frm.php?", tiny:true, w:800});
 }
+function jsTxtBuscar(evt){
+	if(xG.isKey({evt:evt}) ==  true){
+		var txt		= $("#txtbuscar").val();
+		var str		= " AND ((`operaciones_tipos`.`descripcion_operacion` LIKE '%" + txt + "%') OR (`operaciones_tipos`.`nombre_corto` LIKE '%" + txt + "%')) ";
+		str			= "&w="  + base64.encode(str);
+		$("#iddiv").jtable("destroy");
+		jsLGiddiv(str);
+	}
+}
 function jsListAddBases(id){
 	$("#idoperando").val(id);
 	
-	var q	= "<?php echo base64_encode("SELECT   `eacp_config_bases_de_integracion`.`codigo_de_base`, CONCAT(`eacp_config_bases_de_integracion`.`codigo_de_base`, '-',`eacp_config_bases_de_integracion`.`descripcion`) AS `descripcion` FROM     `eacp_config_bases_de_integracion` WHERE (`eacp_config_bases_de_integracion`.`tipo_de_base` = 'de_operaciones' ) AND `estatus` = 1
+	var q	= "<?php echo base64_encode("SELECT   `eacp_config_bases_de_integracion`.`codigo_de_base`, CONCAT(`eacp_config_bases_de_integracion`.`codigo_de_base`, '-',`eacp_config_bases_de_integracion`.`descripcion`) AS `descripcion` FROM     `eacp_config_bases_de_integracion` WHERE (`eacp_config_bases_de_integracion`.`tipo_de_base` = 'de_operaciones' ) AND (`estatus` = 1)
 AND (SELECT COUNT(*) FROM `eacp_config_bases_de_integracion_miembros` WHERE ( `eacp_config_bases_de_integracion_miembros`.`miembro` = ?) AND `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`= `eacp_config_bases_de_integracion`.`codigo_de_base`) <= 0 "); ?>";
 
 		xG.QList({key: "codigo_de_base", label: "descripcion", url:"../svc/datos.svc.php?q=" + q + "&vars=" + id, element : $("#dlg"),func:'addNewBase', title: "Nueva Base"  });
@@ -208,6 +231,19 @@ function jsFiltrarByRecibo(){
 	
 	$('#iddiv').jtable('destroy');
 	if(idti == "todas"){
+		jsLGiddiv();
+	} else {
+		jsLGiddiv(str);
+	}
+}
+function jsFiltrarByBase(){
+	
+	var idb		= $("#idbase").val();
+	var str		= " AND (SELECT COUNT(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`) FROM `eacp_config_bases_de_integracion_miembros` INNER JOIN `eacp_config_bases_de_integracion`  ON `eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = `eacp_config_bases_de_integracion`.`codigo_de_base` WHERE (`eacp_config_bases_de_integracion_miembros`.`miembro` = `operaciones_tipos`.`idoperaciones_tipos`) AND `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`=" + idb + ")>0 ";
+	str			= "&w="  + base64.encode(str);
+	
+	$('#iddiv').jtable('destroy');
+	if(idb == "todas"){
 		jsLGiddiv();
 	} else {
 		jsLGiddiv(str);

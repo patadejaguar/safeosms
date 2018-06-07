@@ -18,34 +18,32 @@ include_once("../core/core.fechas.inc.php");
 include_once("../libs/sql.inc.php");
 include_once("../core/core.config.inc.php");
 include_once("../reports/PHPReportMaker.php");
-
-$oficial = elusuario($iduser);
 //=====================================================================================================
-$input 				= $_GET["out"];
-	if (!$input) {
-		$input = "default";
-	}
+$xHP		= new cHPage("TR.INTDEV por Mes ", HP_REPORT);
 
-$mes			 	= $_GET["m"];
-$anno				= $_GET["a"];
-$modalidad			= $_GET["t"];
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
+
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false); $FechaInicial	= parametro("fecha-0", $FechaInicial); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false); $FechaFinal	= parametro("fecha-1", $FechaFinal); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+
+$mes			 	= parametro("m", $xF->mes(), MQL_INT);
+$anno				= parametro("a", $xF->anno(), MQL_INT);
+$tipo				= parametro("t", SYS_TODAS, MQL_INT);
+$ica				= parametro("ica", false, MQL_BOOL);
+
+$idx				= date("Ym", $xF->getInt($FechaFinal));
+$idi				= date("Ym", $xF->getInt($FechaInicial));
 
 
-$sqlO = "SELECT
-	`interes_normal_devengado`.`docto_afectado` AS `credito`,
-	`interes_normal_devengado`.`socio_afectado` AS `socio`,
-	MAX(`interes_normal_devengado`.`periodo`)   AS `mes`,
-	MAX(`interes_normal_devengado`.`ejercicio`) AS `anno`,
-	SUM(`interes_normal_devengado`.`interes`) 
-FROM
-	`interes_normal_devengado` `interes_normal_devengado` 
-WHERE
-	(`interes_normal_devengado`.`periodo` <=2005) AND
-	(`interes_normal_devengado`.`ejercicio` <=2008) 
-GROUP BY
-	`interes_normal_devengado`.`docto_afectado`,
-	`interes_normal_devengado`.`socio_afectado` ";
-
+$ByPersona			= $xFil->CreditoPorPersona($persona);
 
 
 	$setSql = " SELECT
@@ -63,9 +61,9 @@ GROUP BY
 
 	`creditos_solicitud`.`fecha_conciliada`,
 	`creditos_solicitud`.`saldo_conciliado`,
-	`interes_normal_devengado`.`ejercicio`,
-	`interes_normal_devengado`.`periodo`,
-	`interes_normal_devengado`.`interes`
+	`interes_devengado_por_cobrar`.`ejercicio`,
+	MAX(`interes_devengado_por_cobrar`.`periodo`) AS `periodo`,
+	SUM(`interes_devengado_por_cobrar`.`interes`) AS `interes`
 FROM
 	`socios` `socios`
 		INNER JOIN `creditos_solicitud` `creditos_solicitud`
@@ -73,22 +71,75 @@ FROM
 			INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio`
 			ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.
 			`idcreditos_tipoconvenio`
-				INNER JOIN `interes_normal_devengado` `interes_normal_devengado`
+				INNER JOIN `interes_devengado_por_cobrar` `interes_devengado_por_cobrar`
 				ON `creditos_solicitud`.`numero_solicitud` =
-				`interes_normal_devengado`.`docto_afectado`
+				`interes_devengado_por_cobrar`.`docto_afectado`
 WHERE
-	(`interes_normal_devengado`.`periodo` =$mes)
+
+	(`interes_devengado_por_cobrar`.`indice` >= $idi)
 	AND
-	(`interes_normal_devengado`.`ejercicio` =$anno)
+	(`interes_devengado_por_cobrar`.`indice` <=$idx)
+	
+	$ByPersona
+AND
+(`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_CASTIGADO . ")
+GROUP BY `creditos_solicitud`.`numero_solicitud`
+
+HAVING interes > 0
+
 ORDER BY
-	`creditos_tipoconvenio`.`tipo_autorizacion` DESC,
-	`creditos_solicitud`.`tipo_convenio`,
-	`interes_normal_devengado`.`ejercicio`,
-	`interes_normal_devengado`.`periodo`,
-	`socios`.`codigo`,
+	
+	`socios`.`nombre`,
 	`creditos_solicitud`.`numero_solicitud`
+
 ";
 
 //exit( $setSql );
 
+	$sql			= $setSql;
+	$titulo			= "";
+	$archivo		= "";
+	
+	//setLog($sql);
+	
+	$xRPT			= new cReportes($titulo);
+	$xRPT->setFile($archivo);
+	$xRPT->setOut($out);
+	$xRPT->setSQL($sql);
+	$xRPT->setTitle($xHP->getTitle());
+	//============ Reporte
+	$xT		= new cTabla($sql, 2);
+	$xT->setOmitidos("estatus_actual");
+	$xT->setOmitidos("saldo_insoluto");
+	$xT->setOmitidos("ultima_operacion");
+	$xT->setOmitidos("fecha_conciliada");
+	$xT->setOmitidos("saldo_conciliado");
+	$xT->setOmitidos("tipo_autorizacion");
+	//$xT->setOmitidos("codigo");
+	//$xT->setOmitidos("indice");
+	$xT->setTitulo("indice", "PERCONT");
+	$xT->setTitulo("periodo", "MES");
+	$xT->setFechaCorte($FechaFinal);
+	$xT->setTipoSalida($out);
+	$xT->setOmitidos("periodo");
+	$xT->setOmitidos("periocidad");
+	$xT->setFootSum(array( 9 => "interes" ));
+	
+	$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+	$xRPT->setBodyMail($body);
+	
+	$xRPT->addContent($body);
+	
+	//$xT->setEventKey("jsGoPanel");
+	//$xT->setKeyField("creditos_solicitud");
+	$xRPT->addContent( $xT->Show(  ) );
+	//============ Agregar HTML
+	//$xRPT->addContent( $xHP->init($jsEvent) );
+	//$xRPT->addContent( $xHP->end() );
+	
+	
+	$xRPT->setResponse();
+	$xRPT->setSenders($senders);
+	echo $xRPT->render(true);
+	
 ?>

@@ -17,7 +17,7 @@ $ql			= new MQL();
 $lis		= new cSQLListas();
 $xF			= new cFecha();
 $xLog		= new cCoreLog();
-
+$xTT		= new cSysTablas();
 
 
 $tabla		= parametro("tabla", null, MQL_RAW);
@@ -99,22 +99,38 @@ if($tabla != null AND $clave != null){
 			$xCache->clean("$tabla-$clave");
 			
 			$res				= $obj->query()->update()->save("$key='$clave'");
+			//Logea si se habilita
+			
+			if($xTT->isLog($tabla) == true){
+				foreach ($aDiffD as $idxD => $vvD){
+					$vva		= $antes[$idxD];
+					setCambio($tabla, $idxD, $clave, $vva, $vvD);
+				}
+			}
+			
 			switch ($tabla){
+				
 				case TPERSONAS_GENERALES:
 					//setLog($aDespues);
-					if( isset($aDiffD["sucursal"]) ){
+					$xT			= new cSocios_general();
+					if( isset($aDiffD[$xT->SUCURSAL]) ){
+						//Guardar cambio de sucursal
 						//$xSE	= new cPersonasRelaciones(false, $clave);
 						$xQL	= new MQL();
 						$rs		= $xQL->getDataRecord("SELECT `numero_socio` FROM `socios_relaciones` WHERE `socio_relacionado` = $clave LIMIT 0,50");
-						$xsuc	= $aDiffD["sucursal"];
+						$xsuc	= $aDiffD[$xT->SUCURSAL];
 						
 						foreach ($rs as $rw){
 							$idsoc	= $rw["numero_socio"];
-							$xQL->setRawQuery("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc"); setLog("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc");
+							$xQL->setRawQuery("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc"); //setLog("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc");
+							setCambio($tabla, $xT->SUCURSAL, $clave, "", $xsuc);
+							$xCache->clean("socios_general-$idsoc");
 						}
 						
 					}
+					
 					break;
+
 			}
 			if($res === false){
 				$rs["error"]		= true;

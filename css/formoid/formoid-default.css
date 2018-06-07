@@ -368,6 +368,7 @@ Not advised to edit stuff below this line
 .formoid-default input[type=email],
 .formoid-default input[type=url],
 .formoid-default input[type=number],
+.formoid-default input[type=tel],
 .formoid-default textarea {
 	width: 99%;
 	margin-bottom: 2px;
@@ -615,7 +616,7 @@ overflow: hidden;
 
 }
 /*Temas de Botones*/
-.toolnav li a.blue {
+.toolnav li a.blue,.diag-blue .ui-widget-header {
 	text-shadow: 0 -1px 3px #0066cc;
 	background: #2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x
 }
@@ -623,11 +624,41 @@ overflow: hidden;
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
 }
+.toolnav li a.orange2 {
+	text-shadow: 0 -1px 3px #cc0000;
+	background: #D16713;
+}
+.toolnav li a.gorange {
+	/*text-shadow: none;*/
+	text-shadow: 0 0 0 #A8122B;
+	color: #D16713;
+	font-weight: 500;
+	background: #F9FAF6;
+}
+.toolnav li a.ggreen {
+	text-shadow: 0 0 0 #354F00;
+	color: #1e8e3e;
+	font-weight: 500;
+	background: #F9FAF6;
+}
+
+.toolnav li a.gblue {
+	text-shadow: 0 0 0 #2C4770;
+	color: #1a73e8;
+	font-weight: 500;
+	background: #F9FAF6;
+}
+.toolnav li a.gred {
+	text-shadow: 0 0 0 #A8122B;
+	color: #d93025;
+	font-weight: 500;
+	background: #F9FAF6;
+}
 .toolnav li a.chocolate {
 	text-shadow: none;
 	background: #001121 url(../../images/ui/ui-bg_gloss-wave_30_44372c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.green {
+.toolnav li a.green,.diag-green .ui-widget-header {
 	text-shadow: 0 -1px 3px #468847;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
 }
@@ -635,14 +666,14 @@ overflow: hidden;
 text-shadow: none; color: #901429;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 }
-.toolnav li a.red {
+.toolnav li a.red, .diag-red .ui-widget-header {
 color: #ffffff; text-shadow: 0 -1px 3px #510814;
 background: linear-gradient(to bottom, #901429 0%,#B5122D 100%);
 }
 .toolnav li a.dark {
 background: #001121;
 }
-.toolnav li a.yellow, h3.yellow {
+.toolnav li a.yellow, h3.yellow,.diag-yellow .ui-widget-header  {
 text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
@@ -687,13 +718,17 @@ color: #FFFFFF; background: #00B6E3;
 
 
 .toolnav li a.persona {
-text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
-background: #4464AF;
+text-shadow:  0 -1px 3px #0080E3;
+color: #FFFFFF;
+/*background: #4464AF;*/
+background: #2C4770;
 }
 .toolnav li a.credito {
-	text-shadow: 0 -1px 3px #468847;
-	background: #257433;
-	
+	/*text-shadow: 0 -1px 3px #468847;*/
+	/*background: #257433;*/
+	text-shadow: 0 -1px 3px #324F00;
+	background: #354F00;
+	/*color: #C7E99B;*/
 }
 .toolnav li a.green2 {
 	text-shadow: 0 1px 0 rgba(0,0,0,0.2); color: #fff;

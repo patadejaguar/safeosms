@@ -20,6 +20,7 @@ $xBtn				= new cHButton("");
 $xLoc				= new cLocal();
 $xLi				= new cSQLListas();
 $xSys				= new cSystemTask();
+$xQL				= new MQL();
 
 
 function jsaRespaldarDB($fecha){ 
@@ -289,12 +290,31 @@ function jsaSetToLocalHost($fecha, $version){
 	$lurl .= '://'.$_SERVER['HTTP_HOST'] . "/";
 	// Get path to script
 	//$myUrl .= $_SERVER['REQUEST_URI'];
+	$mailpass		= "Pruebas014";
+	$mailid			= "pruebas@opencorebanking.com";
 	
-	
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl/' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
-	$xQL->setRawQuery("UPDATE `sistema_programacion_de_avisos` SET `destinatarios` = 'CORREO:luis.balam@opencorebanking.com|'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
+	$xQL->setRawQuery("UPDATE `sistema_programacion_de_avisos` SET `destinatarios` = 'CORREO:$mailid|'");
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '127.0.0.1' WHERE `nombre_del_parametro` = 'url_del_servidor_ftp'");
-	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = 'luis.balam@opencorebanking.com' WHERE `codigo` = '1901850'");
+	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '1901850'");
+	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '10000'");
+	
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_administrador' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_archivo' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_la_entidad' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_mercadeo' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_nominas' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'facturacion.email_de_almacenamiento' ");
+	
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailpass' WHERE `nombre_del_parametro` = 'password_del_email_del_administrador'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'mail.opencorebanking.com' WHERE `nombre_del_parametro` = 'servidor_smtp_para_notificaciones'");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'system_pay_email_register' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
+	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '587' WHERE `nombre_del_parametro` = 'puerto_smtp_para_notificaciones' ");
+	//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
+	//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
+	
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'");
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'");
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'http://pruebas:pruebas@localhost:5984/' WHERE `nombre_del_parametro` = 'svc_url_couchdb'");
@@ -329,7 +349,7 @@ function jsaSetActualizarSys($version){
 	$xSys		= new cSystemPatch();
 	
 	
-	$xSys		= new cSystemPatch();
+	
 	if($version>0){
 		$xSys->setForceVersion($version);
 	}
@@ -337,6 +357,17 @@ function jsaSetActualizarSys($version){
 	$xCache->clean();
 	return $xSys->getMessages(OUT_HTML);
 }
+
+function jsaSetRunContabilidad(){
+	$xUt	= new cSystemTask();
+	$subdir	= PATH_HTDOCS . "/install/db/";
+	$xUt->setRunSQLPatchByFile($subdir , "purgar_contable.sql");//purgar_contable.sql
+	$xUt->setRunSQLPatchByFile($subdir , "contable-estable.sql");//purgar_contable.sql
+	$xUt->setRunSQLPatchByFile($subdir , "contabilidad-pruebas.sql");//purgar_contable.sql
+	
+}
+
+
 $jxc ->exportFunction('jsaShowCalendarTasks', array('idDateValue'), "#tcalendar-task");
 
 $jxc ->exportFunction('jsaGetLetrasAVencer', array('idDateValue', 'idproducto'), "#tcalendar-task");
@@ -368,10 +399,14 @@ $jxc ->exportFunction('jsaSetToLocalHost', array('idDateValue', 'idclave'), "#id
 
 $jxc ->exportFunction('jsaSetActualizarSys', array('idclave'), "#idavisos");
 
+$jxc ->exportFunction('jsaSetRunContabilidad', array('idclave'), "#idavisos");
+
 //jsaRespaldarDB
 $jxc ->process();
 
 $xHP->addChartSupport();
+$xHP->addJsFile("https://help.sipakal.com/js/compiled/chat_popup.js");
+
 $xHP->init();
 
 $xFRM		= new cHForm("frmcalendartask");
@@ -439,6 +474,8 @@ $xCEs	= new cCreditosEstadisticas();
 	//$xFRM->addHElem( $xNotif->getDash("TR.Creditos Por Ministrar", $xCEs->getNumeroCreditosPorMinistrar(), "fa-circle-o", $xNotif->NOTICE) );
 	
 }
+//==================== Cartera de Credito
+$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3");
 //==================== Proyecciones del Sistema
 $xChProy	= new cChart("idproymens");
 $xProy		= new cCreditosProyecciones();
@@ -609,17 +646,24 @@ if(MODO_DEBUG == true){
 	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR, "cmdupdate", "green2");
 	$xFRM->OButton("TR.ACTUALIZAR EL SISTEMA", "jsSetActualizarSys()", $xFRM->ic()->EJECUTAR, "cmdusys", "yellow");
 	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php'});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
-}
-
-if($xFRM->getEnDesarrollo() == true){
+	
 	$xFRM->OButton("TR.PRODUCTO CREDITO", "var xG=new Gen();xG.w({url:'../frmcreditos/frmdatos_de_convenios_de_creditos.xul.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
 	$xFRM->OButton("TR.OPERACIONES", "var xG=new Gen();xG.w({url:'../frmtipos/operaciones_tipos.lista.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
-
+	
 	$xFRM->OButton("TR.USUARIOS", "var xG=new Gen();xG.w({url:'../frmsecurity/usuarios-edicion.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn102", "green2");
 	
 	
 	$xFRM->OButton("TR.PERMISOS", "var xG=new Gen();xG.w({url:'../frmsecurity/permisos.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
+	
+	
+}
+
+$xFRM->addToolbar('<a id="mibew-agent-button" class="yellow" href="https://help.sipakal.com/chat?locale=es" target="_blank" onclick="Mibew.Objects.ChatPopups[\'5b287945db28a4bc\'].open();return false;"><i class="fa fa-question-circle fa-2x"></i>' . $xFRM->getT("TR.AYUDA") . '</a>');
+
+
+if($xFRM->getEnDesarrollo() == true){
 	//$xFRM->OButton("TR.", "var xG=new Gen();xG.w({url:''});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
+	$xFRM->OButton("TR.LIMPIAR CONTABILIDAD", "var xG=new Gen();xG.confirmar({msg:'¿ Confirma limpiar contabilidad ?', callback: jsaSetRunContabilidad});", $xFRM->ic()->CONTABLE, "cmdbtncont01", "green2");
 }
 
 $idpersona	= $xUsr->getClaveDePersona();
@@ -631,7 +675,7 @@ $xFRM->OButton("TR.Salir", "var xG = new Gen(); xG.salir()", $xFRM->ic()->SALIR,
 
 $xFRM->endSeccion();
 
-
+$horasql		= $xQL->getDataValue("SELECT NOW() AS 'tiempo' ", "tiempo");
 
 $sysinfo		= "";
 
@@ -665,6 +709,7 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	->li("Estado : " . $xLoc->DomicilioEstado())
 	->li("Clave Estado : " . $xLoc->DomicilioEstadoClaveABC() )
 	->li("C.P. : " . $xLoc->DomicilioCodigoPostal())
+	->li("Tiempo SQL : " . $horasql)
 	->end();
 	
 	$xFRM->addSeccion("idmaslogs", "TR.Configuracion del Sistema");
@@ -736,11 +781,17 @@ echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
 ?>
 
+
+<!--  <a id="mibew-agent-button" href="https://help.sipakal.com/chat?locale=es" target="_blank" onclick="Mibew.Objects.ChatPopups['5b287945db28a4bc'].open();return false;">
+<img src="https://help.sipakal.com/b?i=mgreen&amp;lang=es" border="0" alt="" /></a> -->
+
+
 <script>
 var xG		= new Gen();
 var xCred	= new CredGen();
 var xP		= new PersGen();
 $(document).ready( function(){
+	Mibew.ChatPopup.init({"id":"5b287945db28a4bc","url":"https:\/\/help.sipakal.com\/chat?locale=es","preferIFrame":true,"modSecurity":false,"forceSecure":true,"width":640,"height":640,"resizable":true,"styleLoader":"https:\/\/help.sipakal.com\/chat\/style\/popup\/\/force_secure"});
 	//$('#idDateValue').pickadate({format: 'dd-mm-yyyy',formatSubmit:'yyyy-mm-dd'});
 	window.localStorage.clear();
 });
@@ -791,6 +842,11 @@ function jsGetChart(mType){
 	   .appendTo('#tcalendar-task')
 	   .trigger('visualizeRefresh');
 }
+
+function jsGetCarteraGtiaLiquida(){
+	xG.w({url:"../frmcreditos/cartera-gtia-liquida.frm.php?", tiny: false , h: 600, w : 480, tab:true});
+}
+
 function jsCalcularPlanPagos(){
 	xG.w({url:"../frmcreditos/calculadora.plan.frm.php?", tiny: false , h: 600, w : 480, tab:true});
 }

@@ -56,6 +56,8 @@ $xHG->setSQL("SELECT   `idsocios_relacionestipos`,
          `tags`
 FROM     `socios_relacionestipos` LIMIT 0,100");
 $xHG->addList();
+$xHG->setOrdenar();
+
 $xHG->addKey("idsocios_relacionestipos");
 $xHG->col("descripcion_relacionestipos", "TR.NOMBRE", "10%");
 $xHG->col("subclasificacion", "TR.CLASIFICACION", "10%");

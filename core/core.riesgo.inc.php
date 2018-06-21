@@ -223,6 +223,7 @@ class cReglasDeNegocioLista {
 	public $RN_CREDITOS_ESTADOCTA_EXEC			= "CREDITOS.CUANDO_EDOCTA_EXEC";
 	public $RN_CREDITOS_AL_AUTORIZAR			= "CREDITOS.CUANDO_SE_AUTORIZA";
 	public $RN_CREDITOS_AL_RECHAZAR				= "CREDITOS.CUANDO_SE_RECHAZA";
+	public $RN_RECIBOS_GTIALIQ					= "RECIBOS.GARANTIA_LIQUIDA_DEV";
 	
 	//=========== Reglas sin accion
 	public $ELIMINAR_PERIODO_NOMINA				= "NOMINA.ELIMINAR_PERIODO";
@@ -325,6 +326,8 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ECUENTA_VALIDADOR			= "CREDITOS.ESTADO_DE_CUENTA.VALIDADOR";  //valida cada segmento del estado de cuenta
 	
 	public $CREDITOS_PAGO_LETRAF				= "CREDITOS.PAGOS_LETRA_FIJA";
+	public $CREDITOS_DEV_INTNOM_V				= "CREDITOS.DEV.INT_NORMAL.VENCIDO";
+	public $CREDITOS_AUTOPURGE_MINS				= "CREDITOS.AUTOPURGAR.MINIMOS";
 	
 	public $PRECREDITOS_NUEVO_REG				= "PRECREDITOS.NUEVO_REGISTRO";
 	
@@ -369,6 +372,9 @@ class cReglasDeNegocioLista {
 		$arr[$this->RN_CREDITOS_AL_LIQUIDAR]		= $this->RN_CREDITOS_AL_LIQUIDAR;
 		$arr[$this->RN_CREDITOS_AL_AUTORIZAR]		= $this->RN_CREDITOS_AL_AUTORIZAR;
 		$arr[$this->RN_CREDITOS_AL_RECHAZAR]		= $this->RN_CREDITOS_AL_RECHAZAR;
+		$arr[$this->RN_RECIBOS_GTIALIQ]				= $this->RN_RECIBOS_GTIALIQ;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		
 		$arr[$this->RN_ELIMINAR_PERSONA]				= $this->RN_ELIMINAR_PERSONA;
 		$arr[$this->RN_CASTIGAR_CREDITO]				= $this->RN_CASTIGAR_CREDITO;
@@ -443,7 +449,11 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_PAG_PURGE_DSPM]			= $this->CREDITOS_PAG_PURGE_DSPM;
 		$arr[$this->CREDITOS_ARREND_ANT_NOAPP]			= $this->CREDITOS_ARREND_ANT_NOAPP;
 		$arr[$this->CREDITOS_ARREND_SUM_COMS]			= $this->CREDITOS_ARREND_SUM_COMS;
+		$arr[$this->CREDITOS_DEV_INTNOM_V]				= $this->CREDITOS_DEV_INTNOM_V;
+		$arr[$this->CREDITOS_AUTOPURGE_MINS]			= $this->CREDITOS_AUTOPURGE_MINS;
 		//$arr[$this->]			= $this->;
+		
+		
 		//$arr[$this->CREDITOS_ESTADO_CUENTA_EMULA]		= $this->CREDITOS_ESTADO_CUENTA_EMULA;
 		$arr[$this->CREDITOS_ARREND_FRM_DIS]			= $this->CREDITOS_ARREND_FRM_DIS;
 		$arr[$this->CREDITOS_PAGO_LETRAF]				= $this->CREDITOS_PAGO_LETRAF;

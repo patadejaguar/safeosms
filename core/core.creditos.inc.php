@@ -3109,6 +3109,7 @@ class cCredito {
 	function getTipoDeCalculoDeInteres(){ return $this->mTipoDeCalculoDeInteres; }
 	function getTipoDeBaseDeInteres(){ return $this->mTipoDeCalculoDeInteres; }
 	function getTipoDeDiasDePago(){ return $this->mTipoDeDiasDePago; }
+	function getTipoDeCuotaDePago(){ return $this->mTipoDeDiasDePago; }
 	function getTipoDeAutorizacion(){ return $this->mTipoDeAutorizacion; }
 	function getPathDelContrato() {
 		return $this->mContrato_URL . $this->getNumeroDeCredito ();
@@ -3326,7 +3327,7 @@ class cCredito {
 		return $msg;
 	}
 	function setCambiarMontoMinistrado($monto, $force = false) {
-		$monto		= setNoMenorQueCero($monto);
+		$monto		= setNoMenorQueCero($monto,2);
 		$solicitud 	= $this->mNumeroCredito;
 		// no permitir si el total de abonos es mayos
 		$abonos 	= $this->mMontoAutorizado - $this->mSdoCapitalInsoluto;
@@ -4063,10 +4064,17 @@ class cCredito {
 								<th class='izq'>" . $xLng->getT ( "TR.Pagos Efectuados" ) . "</th><td>$letra_actualmente_pagada</td>
 								<th class='izq'>" . $xLng->getT ( "TR.Pagos Pendientes" ) . "</th><td>$pagos_pendientes</td>
 							</tr>
+
 							<tr>
 								<th class='izq'>" . $xLng->getT ( "TR.Dias" ) . "</th><td>" . $this->getDiasSolicitados () . "</td>
 								<th class='izq'>" . $xLng->getT ( "TR.Dias Autorizados" ) . "</th><td>" . $this->getDiasAutorizados () . "</td>
-							</tr>							
+							</tr>
+							
+							<tr>
+								<th class='izq'>" . $xLng->getT ( "TR.Dias Tolerados Mora" ) . "</th><td>" . $dias_para_mora . "</td>
+								<th class='izq'>" . $xLng->getT ( "TR.Dias Tolerados vencimiento" ) . "</th><td>" . $dias_tolerados_para_vencer . "</td>
+							</tr>
+
 							<tr>
 								<th class='izq'>Fecha de Inicio de Calculo</th><td>" . $xF->getFechaCorta ( $mFechaDeInicio ) . "</td>
 								<th class='izq'>Fecha de Mora</th><td>" . $xF->getFechaCorta ( $mFechaDeMora ) . "</td>
@@ -4089,7 +4097,8 @@ class cCredito {
 				$res = $stat;
 			}
 		}
-		$this->mMessages .= $xLog->getMessages ();
+		//setLog($xLog->getMessages());
+		$this->mMessages .= $xLog->getMessages();
 		return $res;
 	} // END FUNCTION
 	function getInteresDevengado($fecha_de_calculo = false, $parcialidad = false, $fecha_anterior = false, $solo_mora_corriente = false) {
@@ -4330,14 +4339,16 @@ class cCredito {
 		$xT 			= new cTipos ();
 		$xLog 			= new cCoreLog ();
 		$xQL 			= new MQL ();
+		$xF				= new cFecha();
 		$procesar		= true;
 	
 		$socio 			= $this->getClaveDePersona ();
 		$solicitud 		= $this->getNumeroDeCredito ();
 		$xCUtils 		= new cUtileriasParaCreditos ();
 
-		$FechaFinal 	= ($FechaFinal == false) ? fechasys () : $FechaFinal;
-		$FechaInicial 	= ($FechaInicial == false) ? $this->getFechaDeMinistracion() : $FechaInicial;
+		$FechaFinal 	= $xF->getFechaISO($FechaFinal);
+		
+		$FechaInicial 	= ($FechaInicial === false) ? $this->getFechaDeMinistracion() : $FechaInicial;
 		if($this->getEsAfectable() == true AND $procesar == true){
 			if(($this->getTipoDePago() == CREDITO_TIPO_PAGO_UNICO) or ($this->getPeriocidadDePago () == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO)) {
 				//Eliminar si son a final de Plazo
@@ -4763,6 +4774,9 @@ class cCredito {
 			}
 		}
 		if($this->getEsArrendamientoPuro() == true){
+			$zero	= 0;
+		}
+		if($this->getPagosAutorizados() == 1){
 			$zero	= 0;
 		}
 		return $zero;
@@ -6710,7 +6724,8 @@ class cProductoDeCredito {
 			$this->mDOtrosCargosPRaw	= $this->mDOtrosCargosParcs;
 			
 			foreach ($xcgo as $idx => $vv){
-				$this->mDOtrosCargosParcs[$idx]	= round( ($vv/$sumaL), 3 );
+				$this->mDOtrosCargosParcs[$idx]	= ( $sumaL > 0) ? round( ($vv/$sumaL), 3 ) : 0;
+				
 				//setLog("CARGO $idx A " . $this->mDOtrosCargosParcs[$idx]);
 			}
 			//Si es Arrendamiento

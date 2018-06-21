@@ -898,7 +898,7 @@ class cPanelDeReportes {
 		return ($close == true) ? "<script>\r\n" . $this->mJsVars . "\r\n</script>" : $this->mJsVars;
 	}
 	function addCheckBox($title = "", $parametro = "", $checked = false){
-		$xChk	= new cHCheckBox();
+		$xChk			= new cHCheckBox();
 		$this->mJsVars	.= "var id$parametro	= $('#id$parametro').prop('checked');\r\n";
 
 		$this->mURL		.= " + \"&$parametro=\" + id$parametro ";

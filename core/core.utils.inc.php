@@ -85,7 +85,7 @@ class cSystemTask{
 		$xConf		= new cSAFEConfiguracion();
 		if($xConf->SISTEMA_RESPALDO_POR_MAIL == true){
 			$fecha		= date("Y-m-d");
-			$lns		= exec($this->mSystemCommands["respaldar_la_base_de_datos"]);
+			$lns		= system($this->mSystemCommands["respaldar_la_base_de_datos"]);
 			//Enviar el Mail SAFE-OSMS Respaldo de la Base de Datos
 			$subject	= "SAFE-OSMS Respaldo de la Base de Datos $fecha";
 			$body		= "<h3>S.A.F.E. OSMS</h3><h4>Demonio CRON</h4><p>Se Anexa repaldo de la Fecha $fecha</p><hr /><h5>SysAdmin</h5>";
@@ -121,11 +121,11 @@ class cSystemTask{
 	function getMessages(){return $this->mMessages;}
 	function setBackupTable($table){
 		$file		= PATH_BACKUPS .  MY_DB_IN . "_$table_" . date("Y-m-d") . ".sql.gz";
-		$ce			= exec("mysqldump --opt -h " . WORK_HOST . " -u " . USR_DB ." --password=" . PWD_DB . " " . MY_DB_IN . " $table| gzip > $file");
+		$ce			= system("mysqldump --opt -h " . WORK_HOST . " -u " . USR_DB ." --password=" . PWD_DB . " " . MY_DB_IN . " $table| gzip > $file");
 		return $file;
 	}
 	function setPowerOff(){
-		exec($this->mSystemCommands["apagar_el_servidor"]);
+		return true;
 	}
 	/**
 	 * funcion que envia un Correo Electronico al Admin con un Archivo
@@ -276,6 +276,18 @@ class cSystemTask{
 	function runcmd($orden){
 		$res	= shell_exec($orden);
 		return ($res === false) ? false : true;
+	}
+	/**
+	 * Ejecuta un Archivo a SQL
+	 * @param string $archivo /path/to/file.sql
+	 */
+	function setRunSQLPatchByFile($subdir, $archivo){
+		//"mysqldump --opt --add-drop-table --skip-triggers -h  -u  --password= | gzip > " . $this->mBackupFile . ""
+		$oldfile	= $subdir . $archivo;
+		$newfile	= "/tmp/" . $archivo;
+		if(copy($oldfile, $newfile)){
+			$this->runcmd("mysql --host=" . WORK_HOST . " --user=" . USR_DB ." --password=" . PWD_DB . " --force --database=" . MY_DB_IN . " < $newfile");
+		}
 	}
 }
 
@@ -1444,6 +1456,7 @@ class cRegressionLineal {
 	}
 }
 class cMath {
+	private $mArrDias	= array(30 => 12, 7=>52, 15=>24, 360=>1, 365 => 1, 10 => 36, 14=>26, 60 => 6, 90 => 4, 180 => 2, 1 => 365);
 	function irr ($investment, $flow) {
 		$n		= 0;
 		$it 	= count($flow);
@@ -1487,7 +1500,7 @@ class cMath {
 	 * @return number
 	 */
 	function getPagoPresumido($TasaAnual,$NumeroDePagos,$Capital,$Frecuencia = 30, $prec=2){
-		$arrEq		= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$arrEq		= $this->mArrDias;
 		$EquiFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
 		if ($TasaAnual !=0 AND $EquiFreq >0) {
 			$semilla 		= 1/(1+$TasaAnual/$EquiFreq);
@@ -1498,7 +1511,7 @@ class cMath {
 		return round($PagoPresumido, $prec);
 	}
 	function getValorPresente($TasaAnual,$NumeroDePagos,$Capital,$Frecuencia = 30,$prec=2){
-		$arrEq		= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$arrEq		= $this->mArrDias;
 		$EquiFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
 		if ($TasaAnual !=0 AND $EquiFreq >0) {
 			$tem	=  pow((1+$TasaAnual), (1/$EquiFreq) ) -1;
@@ -1509,8 +1522,9 @@ class cMath {
 		return round($PV, $prec);
 	}
 	function getPagoLease($TasaAnual,$NumeroPagos,$Capital, $Frecuencia, $Residual = 0.00, $Tipo = 0){
-		$arrEq	= array(30 => 12, 7=>52, 15=>24, 360=>1, 365,1, 10 => 36, 14=>26, 60 => 6);
+		$arrEq	= $this->mArrDias;
 		$EqFreq	= isset($arrEq[$Frecuencia]) ? $arrEq[$Frecuencia] : 0;
+		
 		$Tasa	= ($TasaAnual / $EqFreq);
 		
 		$P = (- $Capital * pow(1+$Tasa,$NumeroPagos) + $Residual) /	((1 + $Tasa * $Tipo)*((pow((1 + $Tasa),$NumeroPagos) - 1) / $Tasa));
@@ -2168,7 +2182,13 @@ class cDocumentos {
 		}
 		return $conn_id;		
 	}
-	function FTPListFiles($dir = ""){
+	/**
+	 * Develve un array de los archivos existente en un directorio, opcionalmente pueden solo archivos
+	 * @param string $dir Subdirectorio
+	 * @param string $ext Extension
+	 * @return array
+	 */
+	function FTPListFiles($dir = "", $ext = ""){
 		$xCache			= new cCache();
 		$this->mPrePath	= $dir;
 		$mPath			= ($dir == "") ? "." : "./$dir/";
@@ -2182,11 +2202,22 @@ class cDocumentos {
 			$cnt 		= ($this->mReady == true) ? ftp_nlist($this->mCnnFTP, $mPath) : array();
 			$contents	= array();
 			foreach ($cnt as $idx => $nn){
-				$nn		= str_replace($mPath, "", $nn);
+				if($mPath !== "."){
+					$nn		= str_replace($mPath, "", $nn);
+				}
+				
+				
 				$contents[$nn]	= $nn;
 			}
 			$cnt		= null;
 			$xCache->set($this->mIdxFileL . $this->mPrePath, $contents);
+		}
+		if($ext !== ""){
+			foreach ($contents as $idn => $nm){
+				if(strpos($nm, $ext) == false){
+					unset($contents[$idn]);	//eliminar el nodo sine extension
+				}				
+			}
 		}
 		return $contents;		
 	}
@@ -2198,21 +2229,68 @@ class cDocumentos {
 		$ready				= true;
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
 		$documento			= ($documento == false) ? $this->mNombreArchivo : $documento;
+		
+		$persona			= setNoMenorQueCero($persona);
+		$persona			= ($persona <= DEFAULT_SOCIO) ? $this->mPersona : $persona;
 		$this->mPersona		= $persona;
-		if(!ftp_chdir($this->mCnnFTP, $persona)){
-			$this->FTPMakeDir($persona);
-			ftp_chdir($this->mCnnFTP, $persona);
+		if($persona<= DEFAULT_SOCIO){
+			$ready = false;
+		} else {
+			if(!ftp_chdir($this->mCnnFTP, $persona)){
+				$this->FTPMakeDir($persona);
+				ftp_chdir($this->mCnnFTP, $persona);
+			}
+			if(!ftp_rename($this->mCnnFTP, "../$documento", "./$documento")){
+				$ready			= false;
+				//setError("../$documento", "./$documento");
+			}
 		}
-		if(!ftp_rename($this->mCnnFTP, "../$documento", "./$documento")){
-			$ready			= false;
-			//setError("../$documento", "./$documento");
+		if($ready == true){
+			//Limpiar Cache
+			$this->setCleanCache();
+		}
+		
+		return $ready;
+		
+	}
+	function FTPPersonaMvDoc($persona, $doc, $from, $to = ""){
+		$persona			= setNoMenorQueCero($persona);
+		$doc				= ($doc == false) ? $this->mNombreArchivo : $doc;
+		
+		$persona			= setNoMenorQueCero($persona);
+		$persona			= ($persona <= DEFAULT_SOCIO) ? $this->mPersona : $persona;
+		$this->mPersona		= $persona;
+		$ready				= false;
+		
+		if($persona > DEFAULT_SOCIO){
+			$odir			= "";
+			$ndir			= "$persona" . "/" . "$to";
+			if(!ftp_chdir($this->mCnnFTP, $persona)){
+				$this->FTPMakeDir($persona);
+				//ftp_chdir($this->mCnnFTP, $persona);
+			}
+			if(!ftp_chdir($this->mCnnFTP, $ndir)){
+				$this->FTPMakeDir($ndir);
+			}
+			//Regresar al root
+			ftp_chdir($this->mCnnFTP, '~');
+			
+			if(!ftp_rename($this->mCnnFTP, $from . $doc , $ndir . $doc )){
+				$ready			= false;
+				//setError("../$documento", "./$documento");
+			} else {
+				$this->mMessages .= "$persona\tMoviendo $doc de $from a $ndir\r\n";
+				$ready			= true;
+			}
+			//ftp_chdir($ftp_conn, '~');
+			//ftp_chdir($this->mCnnFTP, $ndir);
+			
 		}
 		if($ready == true){
 			//Limpiar Cache
 			$this->setCleanCache();
 		}
 		return $ready;
-		
 	}
 	function FTPUpload($documento, $newName="", $prePath = ""){
 		$sucess			= true;
@@ -2272,9 +2350,9 @@ class cDocumentos {
 		//setError($this->mMessages);
 		return $sucess;
 	}
-	function cleanNombreArchivo($f){
+	function cleanNombreArchivo($f, $cleanExt=false){
 		$xFS	= new cFileSystem();
-		return $xFS->cleanNombreArchivo($f);
+		return $xFS->cleanNombreArchivo($f, $cleanExt);
 	}
 	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $fichero = "", $fecha = false, $Vencimiento = false){
 		$persona	= setNoMenorQueCero($persona);
@@ -2347,6 +2425,18 @@ class cDocumentos {
 			$this->mExt	= "pdf";
 		}
 		return $existe;
+	}
+	function getFileList($search, $prePath = ""){
+		$arrLst		= array();
+		$aFiles		= $this->FTPListFiles($prePath);
+		//setLog($aFiles);
+		foreach($aFiles as $ff => $ffid){
+			
+			if(strpos($ffid,$search) !== false){
+				$arrLst[$ffid]	= $ffid;
+			}
+		}
+		return $arrLst;
 	}
 	private function setCleanCache(){
 		$xCache	= new cCache();

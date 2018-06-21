@@ -12,7 +12,7 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "Leonel"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$codename 								= "Devian-Leonel"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
 $version 								= "201805";
 $revision 								= "01";
 
@@ -20,12 +20,18 @@ define("SAFE_VERSION",                  $version);
 define("SAFE_REVISION",                 $revision);
 define("SAFE_FIRM",                  	"SAFE-OSMS-$version.$revision $codename");
 define("SAFE_CLEAN_LANG",                 false);
+if(defined("SAFE_USE_MCACHE")){
+	
+} else {
+	$usecc								= (isset($os_en_memcache)) ? $os_en_memcache : false;
+	define("SAFE_USE_MCACHE",           $usecc);
+}
 //======================================= INCLUDE RUNTIME
 ini_set("include_path", $os_path_includes_str);
 //======================================= HOST DE TRABAJO
 define ("CURRENT_EACP", 1);
 define ("DEFAULT_SUCURSAL", $sucursal);
-$url_host				= $V_cf1e8c14e54505f60aa10c;
+$url_host								= $V_cf1e8c14e54505f60aa10c;
 define("WORK_HOST",                     $V_67e92c8765a9bc7fb2d335);
 define("PORT_HOST",                     "3306");
 //======================================= MODULOS DEL SISTEMA
@@ -1542,7 +1548,9 @@ class cCache {
 		}
 	}
 	function isReady(){
-		//return false;
+		if(SAFE_USE_MCACHE == false){
+			return false;
+		}
 		
 		return ($this->getErrorsCount() >= 1) ? false : true;
 	}
@@ -1550,10 +1558,10 @@ class cCache {
 		if(isset($_SESSION)){
 			if(isset($_SESSION[$this->mGID_Errors])){
 				$this->mErrors = $_SESSION[$this->mGID_Errors];
-				//syslog(E_NOTICE, "MIERDA ::: " . $this->mErrors);
+				//syslog(E_NOTICE, "MdA ::: " . $this->mErrors);
 			} else { 
 				$this->mErrors = 1;
-				//syslog(E_NOTICE, "MIERDA-II ::: " . $this->mErrors);
+				//syslog(E_NOTICE, "MdA-II ::: " . $this->mErrors);
 			}
 		} else {
 			if(is_null($this->cnn())){

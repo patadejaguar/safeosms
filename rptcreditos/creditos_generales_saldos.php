@@ -61,11 +61,12 @@ SELECT
 	`creditos_solicitud`.`monto_autorizado`   AS `monto`,
 	`creditos_solicitud`.`fecha_ministracion` AS `fecha` ,
 	COUNT(`operaciones_mvtos`.`tipo_operacion`) AS `operaciones`,
+
 	MAX(`operaciones_mvtos`.`fecha_afectacion`) AS `fecha`,
 	SUM(
 	IF(`operaciones_mvtos`.`tipo_operacion` = 120,	`operaciones_mvtos`.`afectacion_real`, 0	)
 	)  AS `abonos`,
-	(`creditos_solicitud`.`monto_autorizado`  - 	SUM(
+	(`creditos_solicitud`.`monto_autorizado`  - SUM(
 	IF(`operaciones_mvtos`.`tipo_operacion` = 120,	`operaciones_mvtos`.`afectacion_real`, 0	)
 	)) AS 'saldo'
 FROM
@@ -93,11 +94,18 @@ ORDER BY `creditos_solicitud`.`fecha_ministracion` ";
 //$sql				= "CALL sp_saldos_al_cierre('$fechaFinal')";
 //exit($sql);
 $xTbl					= new cTabla($sql);
+
+/*
 $xTbl->setFootSum(array(
 		4 => "monto",
 		8 => "abonos",
 		9 => "saldo"
-		));
+));
+*/
+$xTbl->setColSum("monto");
+$xTbl->setColSum("abonos");
+$xTbl->setColSum("saldo");
+
 
 /*$xTbl->setFootSum(array(
 	3 => "monto_autorizado",

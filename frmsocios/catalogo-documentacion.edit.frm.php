@@ -88,6 +88,7 @@ $xFRM->addHElem($xSel2->get("checklist", "TR.CHECKLIST",$xTabla->checklist()->v(
 
 $xFRM->OSiNo("TR.ARCHIVO","almacen", $xTabla->almacen()->v());
 $xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
+$xFRM->OSiNo("TR.ES IDENTIFICACION_OFICIAL","estatus", $xTabla->es_ident()->v());
 
 //$xFRM->addCRUD($xTabla->get(), true);
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);

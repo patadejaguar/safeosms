@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
- * @version 1.0
+ * @version 0.0.01
  * @package
  */
 //=====================================================================================================
@@ -15,92 +15,90 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("Propiedades Contables de Destinos de Credito", HP_GRID);
-$xHP->setIncludes();
+$xHP		= new cHPage("Destinos de Credito.- Propiedades Contables", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+
+$observaciones= parametro("idobservaciones");
+$xHP->addJTableSupport();
+$xHP->init();
 
 
-$parent 	= ( isset($_POST["c"]) ) ? $_POST["c"] : false;
+
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
 
 
-	$filtro1			= "";
-	$filtro2			= "";
-		
-
-	//HTML Object Init	
-	$xHP->addJsFile(GRID_SOURCE . "javascript/javascript.js");
-	$xHP->addCSS("../css/grid.css");
-	$xHP->addJsFile(GRID_SOURCE . "server.php?client=all");
-	$xHP->addHSnip("<script> HTML_AJAX.defaultServerUrl = '" . GRID_SOURCE. "server.php';	</script>");
-
-	$xHP->setNoDefaultCSS();
-	
-	echo $xHP->getHeader(true);
-	//HTML Object END
-	
-	echo '<body onmouseup="SetMouseDown(false);" ><div id="onGrid">';
-        // Define your grid
-	$_SESSION["grid"]->SetDatabaseConnection(MY_DB_IN, USR_DB, PWD_DB);
-	//Propiedades del GRID
-	$mGridTitulo		= "Destinos de Credito.- Propiedades Contables";
-	$mGridKeyField		= "idcreditos_destinos";	//Nombre del Campo Unico
-	$mGridKeyEdit		= false;					//Es editable el Campo
-	$mGridTable			= "creditos_destinos";	//Nombre de la tabla
-	$mGridSQL			= "idcreditos_destinos, descripcion_destinos, capital_vencido_renovado, capital_vencido_reestructurado, capital_vencido_normal, capital_vigente_renovado, capital_vigente_reestructurado, capital_vigente_normal, interes_vencido_renovado, interes_vencido_reestructurado, interes_vencido_normal, interes_vigente_renovado, interes_vigente_reestructurado, interes_vigente_normal, interes_cobrado, moratorio_cobrado";
-	$mGridWhere			= "";
-	//layout: [Campo] => Titulo, Editable, Tamaño
-	$mGridProp			= array();
-	//Obtiene el Grid de la Tabla de general_description
-	if( $mGridTable != "" ){
-		$xTs			= new cTableStructure($mGridTable);
-		$xAF			= explode(",", $mGridSQL);
-		
-		foreach ($xAF as $key => $value) {
-			$DField							= $xTs->getInfoField( trim($value) );
-			$mGridProp[ $DField["campo"] ]	=  $DField["titulo"]  .",true," . $DField["longitud"] ; 
-		}
-		unset($xAF, $key, $value);
-	}
-	//===========================================================================================================
-	
-	$_SESSION["grid"]->SetSqlSelect($mGridSQL, $mGridTable, $mGridWhere);
-	$_SESSION["grid"]->SetUniqueDatabaseColumn($mGridKeyField, $mGridKeyEdit);
-	$_SESSION["grid"]->SetTitleName($mGridTitulo);
-	$_SESSION["grid"]->SetEditModeAdd(false);
-	
-	$_SESSION["grid"]->SetDatabaseColumnEditable("descripcion_destino", false);
-	$_SESSION["grid"]->SetDatabaseColumnName("descripcion_destino", "Tipo de Destino");
-	//interes_vencido_renovado, interes_vencido_reestructurado, interes_vencido_normal, interes_vigente_renovado, interes_vigente_reestructurado, interes_vigente_normal
+$xFRM->addCerrar();
 
 
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_cobrado", "Interes Cobrado");
-	$_SESSION["grid"]->SetDatabaseColumnName("moratorio_cobrado", "Moratorios Cobrados");	
-	
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vencido_normal", "Capital Vigente");
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vigente_normal", "Capital Vencido");
+/* ===========        GRID JS        ============*/
 
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vigente_reestructurado", "Cap. Reest. Vigente");
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vencido_reestructurado", "Cap. Reest. Vencido");
-	
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vigente_renovado", "Cap. Renov. Vigente");
-	$_SESSION["grid"]->SetDatabaseColumnName("capital_vencido_renovado", "Cap. Renov. Vencido");
-	
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vencido_normal", "Interes Vigente");
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vigente_normal", "Interes Vencido");
+$xHG    = new cHGrid("iddivdestinocont",$xHP->getTitle());
 
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vigente_reestructurado", "Int. Reest. Vigentes");
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vencido_reestructurado", "Int. Reest. Vencidos");
-	
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vigente_renovado", "Int. Renov Vigente");
-	$_SESSION["grid"]->SetDatabaseColumnName("interes_vencido_renovado", "Int. Renov Vencidos");
-	
+$xHG->setSQL("SELECT idcreditos_destinos, descripcion_destinos, capital_vencido_renovado, capital_vencido_reestructurado, capital_vencido_normal, capital_vigente_renovado, capital_vigente_reestructurado, capital_vigente_normal, interes_vencido_renovado, interes_vencido_reestructurado, interes_vencido_normal, interes_vigente_renovado, interes_vigente_reestructurado, interes_vigente_normal, interes_cobrado, moratorio_cobrado FROM creditos_destinos");
+$xHG->addList();
+$xHG->setOrdenar();
+$xHG->col("idcreditos_destinos", "TR.CLAVE", "10%");
+$xHG->col("descripcion_destinos", "TR.DESCRIPCION", "50%");
+
+/*$xHG->col("capital_vencido_renovado", "TR.CAPITAL VENCIDO RENOVADO", "10%");
+$xHG->col("capital_vencido_reestructurado", "TR.CAPITAL VENCIDO REESTRUCTURADO", "10%");
+$xHG->col("capital_vencido_normal", "TR.CAPITAL VENCIDO NORMAL", "10%");
+$xHG->col("capital_vigente_renovado", "TR.CAPITAL VIGENTE RENOVADO", "10%");
+$xHG->col("capital_vigente_reestructurado", "TR.CAPITAL VIGENTE REESTRUCTURADO", "10%");
+$xHG->col("capital_vigente_normal", "TR.CAPITAL VIGENTE NORMAL", "10%");
+$xHG->col("interes_vencido_renovado", "TR.INTERES VENCIDO RENOVADO", "10%");
+$xHG->col("interes_vencido_reestructurado", "TR.INTERES VENCIDO REESTRUCTURADO", "10%");
+$xHG->col("interes_vencido_normal", "TR.INTERES VENCIDO NORMAL", "10%");
+$xHG->col("interes_vigente_renovado", "TR.INTERES VIGENTE RENOVADO", "10%");
+$xHG->col("interes_vigente_reestructurado", "TR.INTERES VIGENTE REESTRUCTURADO", "10%");
+$xHG->col("interes_vigente_normal", "TR.INTERES VIGENTE NORMAL", "10%");
+$xHG->col("interes_cobrado", "TR.INTERES COBRADO", "10%");
+$xHG->col("moratorio_cobrado", "TR.MORATORIO COBRADO", "10%");*/
+
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idcreditos_destinos +')", "edit.png");
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idcreditos_destinos +')", "delete.png");
+
+$xFRM->addHElem("<div id='iddivdestinocont'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
 
 
-	//===========================================================================================================
-	$_SESSION["grid"]->SetMaxRowsEachPage(25);
-	$_SESSION["grid"]->PrintGrid(MODE_EDIT);
 
-	//Create the grid.
+echo $xFRM->get();
+?>
 
-echo "</div></body>";
-echo $xHP->end();
+<script>
+var xG    = new Gen();
+function jsEdit(id){
+    xG.w({url:"../frmcontabilidad/creditos-destino-cont.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivdestinocont});
+}
+
+
+</script>
+<?php
+
+//$jxc ->drawJavaScript(false, true);
+$xHP->fin();
+
+
+
 ?>

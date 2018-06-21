@@ -76,6 +76,7 @@ $(document).ready(function() {
 	#idtexto {
 		min-height: 400px;
 	}
+	code { text-align: left; }
 </style>
 <?php
 //$jxc ->drawJavaScript(false, true);

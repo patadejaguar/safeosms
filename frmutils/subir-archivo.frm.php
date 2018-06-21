@@ -83,10 +83,10 @@ $xDocs			= new cDocumentos();
 $prepath		= $xDocs->getPathPorTipo($tipo);
 $xBtn			= new cHButton();
 
+
 foreach ($rs as $rw){
 	$tipodoc	= $rw["clave_de_control"];
-	$titulo		= setCadenaVal($rw["nombre_del_documento"]);
-	$titulo		= str_replace(" ", "_", $titulo);
+	$titulo		= $xDocs->cleanNombreArchivo($rw["nombre_del_documento"], true);// setCadenaVal($rw["nombre_del_documento"]);
 	$titulo		= $tipo . "_" . $clave . "_" . $tipodoc . "_" . strtolower($titulo);
 
 	
@@ -102,7 +102,8 @@ foreach ($rs as $rw){
 				<div class='progress'><span class='green' style='width:100%' id='pgr-$titulo'></span></div>
 				</div>");
 	} else {
-		$xFRM->addDivMedio($xFil->getBasic($titulo, "", "Cargar " . $rw["nombre_del_documento"]) );
+		
+		$xFRM->addDivMedio($xFil->getBasic($titulo, "", $xFRM->getT("TR.ENVIAR") . " " . $rw["nombre_del_documento"]) );
 	}
 	
 	//$xFil->setDivClass("");
@@ -113,6 +114,10 @@ foreach ($rs as $rw){
 	//$xFRM->addHTML("<div class=\"button\"><input type=\"file\" name=\"upload\"/></div>");
 	//$xFRM->addHTML('<div class="element-file"><label class="title"></label><label class="large"><div class="button">Choose Photo</div><input class="file_input" name="file" type="file"><div class="file_text">No photo selected</div></label></div>');
 }
+
+
+
+
 
 //$xFRM->addAviso("", "idmsg");
 $xFRM->addAviso("", "idmsg", false, "notice");
@@ -131,6 +136,8 @@ $(document).ready(function(){
 		$(this).simpleUpload("../svc/updoc-req.svc.php?id=" + gid + "&tipo=" + vTipo, {
 
 			start: function(file){
+				var sz	= file.size;
+				//if(sz >
 				//upload started
 				$('#idmsg').html(file.name);
 				$('#iderror').html("");

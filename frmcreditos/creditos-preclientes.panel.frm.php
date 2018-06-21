@@ -53,7 +53,7 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
-$xHP->init();
+$xHP->init("jsInitComponents()");
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
@@ -69,7 +69,7 @@ $xFRM->OHidden("idcontrol", $xTabla->idcontrol()->v());
 $xFRM->OHidden("idpersona", $xTabla->idpersona()->v());
 $xFRM->OHidden("idcredito", $xTabla->idcredito()->v());
 
-$xFRM->OText("fecha_de_registro", $xTabla->fecha_de_registro()->v(), "TR.FECHA DE REGISTRO");
+$xFRM->ODate("fecha_de_registro", $xTabla->fecha_de_registro()->v(), "TR.FECHA DE REGISTRO");
 
 $xFRM->OText("nombres", $xTabla->nombres()->v(), "TR.NOMBRE_COMPLETO");
 $xFRM->OText_13("apellido1", $xTabla->apellido1()->v(), "TR.PRIMER_APELLIDO");
@@ -81,25 +81,28 @@ $xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.CURP");
 $xFRM->OMoneda("telefono", $xTabla->telefono()->v(), "TR.TELEFONO");
 $xFRM->OText("email", $xTabla->email()->v(), "TR.EMAIL");
 
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddcreds", "TR.CREDITO");
+
 $xFRM->addHElem($xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v())->get(true));
-
 $xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v())->get(true));
+$xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v() )->get(true) );
+$xFRM->OTasaInt("tasa_interes", $xTabla->tasa_interes()->v(), "TR.TASA");
 
-$xFRM->OMoneda("pagos", $xTabla->pagos()->v(), "TR.PAGOS");
-
-$xFRM->OMoneda("monto", $xTabla->monto()->v(), "TR.MONTO");
+$xFRM->OEntero("pagos", $xTabla->pagos()->v(), "TR.PAGOS",100);
+$xFRM->OMoneda2("monto", $xTabla->monto()->v(), "TR.MONTO");
 
 $xFRM->addHElem($xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v())->get(true));
 $xFRM->addHElem($xSel->getListaDeOficiales("idoficial",SYS_USER_ESTADO_ACTIVO, $xTabla->idoficial()->v())->get(true));
 
-$xFRM->OTextArea("notas", $xTabla->notas()->v(), "TR.NOTAS");
+$xFRM->OText("notas", $xTabla->notas()->v(), "TR.NOTAS");
 
 //$xFRM->OMoneda("idpersona", $xTabla->idpersona()->v(), "TR.IDPERSONA");
 //$xFRM->OMoneda("idcredito", $xTabla->idcredito()->v(), "TR.IDCREDITO");
 
-$xFRM->addCRUDSave($xTabla->get(), $clave);
+$xFRM->addCRUDSave($xTabla->get(), $clave, false, true);
 
-$xFRM->OButton("TR.DESCARTAR", "jsSetDesactivar()", $xFRM->ic()->DESCARTAR);
+$xFRM->OButton("TR.DESCARTAR", "jsSetDesactivar()", $xFRM->ic()->DESCARTAR, "cmdremove", "red");
 
 $xFRM->addAviso("", "idavisos");
 
@@ -107,8 +110,8 @@ $xFRM->addAviso("", "idavisos");
 $xFRM->endSeccion();
 
 if($xTabla->idpersona()->v() <= DEFAULT_SOCIO){
-	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
-	$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
+	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdpersonaadd", "persona");
+	$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA, "cmdpersonalink", "persona");
 	
 	$xFRM->addSeccion("idlstparece", "TR.SIMILARES");
 	$sqlTT	= $xLi->getListadoDeBusquedaSocios($xTabla->nombres()->v(), $xTabla->apellido1()->v(), $xTabla->apellido2()->v(), "", "");
@@ -116,27 +119,33 @@ if($xTabla->idpersona()->v() <= DEFAULT_SOCIO){
 	$xTT2->OButton("TR.VINCULAR", "jsSetAsociar(" . HP_REPLACE_ID. ")", $xFRM->ic()->VINCULAR);
 	$xFRM->addHElem($xTT2->Show());
 } else {
-	$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA);
+	$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA, "cmdviewpersona", "persona");
 	$xFRM->addSeccion("ididper", "TR.PERSONA ASOCIADA");
 	$xSoc	= new cSocio($xTabla->idpersona()->v());
 	if($xSoc->init() == true){
 		$xFRM->addHElem($xSoc->getFicha(false, true, "", true));
 		//Agregar Credito en caso de que exista
 		if($xTabla->idcredito()->v() > DEFAULT_CREDITO){
-			$xFRM->OButton("TR.VER CREDITO", "jsVerCredito()", $xFRM->ic()->CREDITO);
+			$xFRM->OButton("TR.VER CREDITO", "jsVerCredito()", $xFRM->ic()->CREDITO, "cmdcreditoview", "credito");
 			$xCred	= new cCredito($xTabla->idcredito()->v());
 			if($xCred->init() == true){
 				$xFRM->addHElem($xCred->getFichaMini());
 			}
 		} else {
-			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
-			$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->DINERO);
+			$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA, "cmdpersonalink", "persona");
+			$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->DINERO, "cmdcreditoadd", "credito");
 		}
 	} else {
-		$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
-		$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA);
+		$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdpersonaadd", "persona");
+		$xFRM->OButton("TR.VINCULAR PERSONA", "jsVincularPersona()", $xFRM->ic()->PERSONA, "cmdpersonalink", "persona");
 	}
 }
+
+$xFRM->addHElem("<div id='idcalendar'></div>");
+
+$xFRM->OButton("TR.PLAN_DE_PAGOS", "jsCalcularPlan()", $xFRM->ic()->PLANDEPAGOS, "cmdgenplan", "whiteblue");
+$xFRM->OButton("TR.IMPRIMIR", "jsVerCotizacion()", $xFRM->ic()->IMPRIMIR, "idimprimir");
+
 $xFRM->endSeccion();
 
 echo $xFRM->get();
@@ -145,6 +154,11 @@ echo $xFRM->get();
 var xG		= new Gen();
 var xC		= new CredGen();
 var xP		= new PersGen();
+
+
+function jsInitComponents(){
+	xG.desactiva("#idimprimir");
+}
 
 function jsSetAsociar(idp){
 	$("#idpersona").val(idp);
@@ -220,6 +234,70 @@ function jsVerCredito(){
 function onRefresh(){
 	window.location.reload();
 }
+
+function jsCalcularPlan(){
+
+	$("#btn_guardar").click();
+
+	var fecha_de_registro = $("#fecha_de_registro").val();
+
+	var producto 		= $("#producto").val();
+	
+	var pagos 			= $("#pagos").val();
+	var aplicacion 		= $("#aplicacion").val();
+
+	var idcontrol 		= $("#idcontrol").val();
+	var idpersona 		= $("#idpersona").val();
+	var idcredito 		= $("#idcredito").val();
+	
+	var idmonto			= $("#monto").val();
+	var idpagos			= $("#pagos").val();
+	var idtasa			= $("#tasa_interes").val();
+	var idfrecuencia	= $("#periocidad").val();
+	
+	var tipocuota_id 	= $("#tipocuota_id").val(); 
+	//$("#yourdropdownid option:selected").text();
+//$("#idtipodepago option[value='1']").remove();
+	//var hd = (session("data.head") == null) ? "" : base64.decode(session("data.head")) ;
+	//$("#idheader").html( hd );
+	var nombrec			= $.trim($("#nombres").val() + " " + $("#apellido1").val() + " " + $("#apellido2").val());
+	var email			= $("#email").val();
+	var idcontrol		= $("#idcontrol").val();
+	var txt				= "";//"<h4>Cotizacion # " + idcontrol + "</h4>";		
+	txt					+= "<table>";
+	txt					+= "<tr><th>Nombre</th><td>" + nombrec + "</td></tr>";
+
+	txt					+= "<tr><th>Pagos</th><td>" + idpagos + "</td></tr>";
+	txt					+= "<tr><th>Tasa</th><td>" + idtasa + "</td></tr>";
+	
+	idperdesc			= $("#tipocuota_id option:selected").text();
+	txt					+= "<tr><th>Frecuencia:</th><td>" + idperdesc + "</td></tr>";
+	
+	txt					+= "</table>";
+	
+	session("data.head", base64.encode(txt));
+	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&redondeo=true&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&tipocuota=" + tipocuota_id;
+   $.ajax(urlm, {
+      success: function(data) {
+	//alert(data.monto);
+         //$('#main').html($(data).find('#main *'));
+         //$('#notification-bar').text('The page has been successfully loaded');
+		//$("#idletra").html("Cuota de Pago : $ " + getFMoney(data.monto));
+		$("#idcalendar").html( base64.decode(data.html) );
+		session("data.plan", data.html);
+		xG.activa("#idimprimir");
+      },
+      error: function() {
+         //$('#notification-bar').text('An error occurred');
+      }
+   });
+}
+function jsVerCotizacion(){
+	//var idnn			= $("#idconatencion").val();
+	var urlm		= "../rpt_formatos/cotizador.plan.rpt.php?conuser=true";
+	xG.w({url:urlm});
+}
+
 </script>
 <?php
 

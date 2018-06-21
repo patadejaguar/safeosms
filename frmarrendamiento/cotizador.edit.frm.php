@@ -401,9 +401,18 @@ if($clave >0){
 	if($EsOriginador == false){
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdagregarpersona", "persona");
-
+			$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			
 		} else {
 			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA, "cmdverpersona", "persona");
+			if($xTabla->credito()->v() > DEFAULT_CREDITO){
+				$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "var xC=new CredGen();xC.setAgregarDocumentos(" . $xTabla->credito()->v() . ")", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			} else {
+				$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "var xP=new PersGen();xP.setAgregarDocumentos(" . $xTabla->persona()->v() . ")", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			}
+			//Agregar Nuevos Documentos
+			
+			//$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS);
 		}
 		//Si el credito no ha sido asignado
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
@@ -416,6 +425,9 @@ if($clave >0){
 	} else {
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			//$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
+			
+			$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			
 		}
 	}
 	//Si es Administrado
@@ -426,7 +438,7 @@ if($clave >0){
 	$xLeas	= new cCreditosLeasing($clave);
 	$xLeas->init();
 	
-	$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS);
+	
 }
 
 

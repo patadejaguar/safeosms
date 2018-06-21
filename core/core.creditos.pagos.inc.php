@@ -353,7 +353,12 @@ class cPlanDePagosGenerador {
 	function setSaldoInicial($cantidad){ $this->mSaldoInicial = $cantidad; }
 	function setTipoDeCreditoEnSistema($TipoEnSistema){ $this->mTipoCreditoSis = $TipoEnSistema; }
 	function setSaldoFinal($cantidad){ $this->mSaldoFinal = $cantidad; }
+	/**
+	 * @deprecated @since 2018.05.01
+	 */
 	function setTipoDePago($tipo){ $this->mTipoDePagos	= $tipo; }
+	function setTipoDeCuota($tipo){ $this->mTipoDePagos	= $tipo; }
+	
 	function setFechaArbitraria($fecha){ $xF	 = new cFecha(); $this->mFechaArbitraria = $xF->getFechaISO($fecha); }
 	function setFechaDesembolso($fecha){$xF	 = new cFecha(); $this->mFechaMinistracion = $xF->getFechaISO($fecha);	}	
 	//$xPlan->getFechaDePago($fecha_de_referencia, $simletras1);
@@ -1091,12 +1096,14 @@ class cPlanDePagosGenerador {
 				$ctrl		= $c;
 				break;
 			case CREDITO_TIPO_PERIOCIDAD_MENSUAL:
-				$xTxt->setDiv13();
-				$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
+				//$xTxt->setDiv13();
+				$xTxt->setDivClass("tx4 tx18 red");
+				$c			= $xTxt->getDeConteo("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1, 30);
 				$ctrl		= $c;
 				break;
 			default:
-				$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
+				$xTxt->setDivClass("tx4 tx18 green");
+				$c			= $xTxt->getDeConteo("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1, 30);
 				$ctrl		= $c;					
 				break;
 				
@@ -2254,10 +2261,13 @@ class cCreditosMontos {
 		return $this->mInit;
 	}
 	function setCrear(){
+		$xF		= new cFecha();
 		$id		= false;
 		$xQL	= new MQL();
+		$fecha	= $xF->getFechaMaximaOperativa();
 		$tiempo	= time();
-		$sql	= "INSERT INTO `creditos_montos` SET `clave_de_credito`=" . $this->mCredito . ", `sucursal`='" . getSucursal() . "',`usuario`=" . getUsuarioActual() . ", `marca_tiempo`=$tiempo, `marca_acceso`=$tiempo ";
+		$sql	= "INSERT INTO `creditos_montos` ( `clave_de_credito`, `f_primer_atraso`, `f_ultimo_atraso`, `sucursal`, `usuario`)
+					VALUES ( " . $this->mCredito . ", '$fecha', '$fecha', '" . getSucursal() . "',  " . getUsuarioActual() . ")";
 		$id		= $xQL->setRawQuery($sql);
 		if($id !== false){
 			$this->init();

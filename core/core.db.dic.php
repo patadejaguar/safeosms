@@ -3776,22 +3776,25 @@ class cCreditos_garantias {
 /*	ORM: Tabla:	personas_documentacion_tipos	-	Generado:	[09/12/2016 11:30]	*/
 /*	ORM: Tabla:	personas_documentacion_tipos	-	Generado:	[23/2/2017 16:02]	*/
 /*	ORM: Tabla:	personas_documentacion_tipos	-	Generado:	[04/6/2018 11:35]	*/
+/* ORM: Tabla: personas_documentacion_tipos - Generado: [14/6/2018 18:21] */
 class cPersonas_documentacion_tipos {
-	private $mCampos	= array("clave_de_control" => array("N"=>"clave_de_control","T"=>"INT","V"=>"","L"=>11),"nombre_del_documento" => array("N"=>"nombre_del_documento","T"=>"VARCHAR","V"=>"","L"=>100),"clasificacion" => array("N"=>"clasificacion","T"=>"VARCHAR","V"=>"","L"=>4),"vigencia_dias" => array("N"=>"vigencia_dias","T"=>"INT","V"=>"90","L"=>4),"almacen" => array("N"=>"almacen","T"=>"INT","V"=>"1","L"=>2),"checklist" => array("N"=>"checklist","T"=>"VARCHAR","V"=>"","L"=>10),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>60),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2));
-	public $CLAVE_DE_CONTROL = "clave_de_control"; public $NOMBRE_DEL_DOCUMENTO = "nombre_del_documento"; public $CLASIFICACION = "clasificacion"; public $VIGENCIA_DIAS = "vigencia_dias"; public $ALMACEN = "almacen"; public $CHECKLIST = "checklist"; public $TAGS = "tags"; public $ESTATUS = "estatus";
+	private $mCampos = array("clave_de_control" => array("N"=>"clave_de_control","T"=>"INT","V"=>"","L"=>11),"nombre_del_documento" => array("N"=>"nombre_del_documento","T"=>"VARCHAR","V"=>"","L"=>100),"clasificacion" => array("N"=>"clasificacion","T"=>"VARCHAR","V"=>"","L"=>4),"vigencia_dias" => array("N"=>"vigencia_dias","T"=>"INT","V"=>"90","L"=>4),"almacen" => array("N"=>"almacen","T"=>"INT","V"=>"1","L"=>2),"checklist" => array("N"=>"checklist","T"=>"VARCHAR","V"=>"","L"=>10),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>60),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"es_ident" => array("N"=>"es_ident","T"=>"INT","V"=>"0","L"=>2));
+	public $CLAVE_DE_CONTROL = "clave_de_control"; public $NOMBRE_DEL_DOCUMENTO = "nombre_del_documento"; public $CLASIFICACION = "clasificacion"; public $VIGENCIA_DIAS = "vigencia_dias"; public $ALMACEN = "almacen"; public $CHECKLIST = "checklist"; public $TAGS = "tags"; public $ESTATUS = "estatus"; public $ES_IDENT = "es_ident";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "personas_documentacion_tipos";}
 	function getKey(){ return "clave_de_control";}
-	function clave_de_control($v = false){ if($v !== false){$this->mCampos["clave_de_control"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_de_control"]);}
-	function nombre_del_documento($v = false){ if($v !== false){$this->mCampos["nombre_del_documento"]["V"] =  $v; } return new MQLCampo($this->mCampos["nombre_del_documento"]);}
-	function clasificacion($v = false){ if($v !== false){$this->mCampos["clasificacion"]["V"] =  $v; } return new MQLCampo($this->mCampos["clasificacion"]);}
-	function vigencia_dias($v = false){ if($v !== false){$this->mCampos["vigencia_dias"]["V"] =  $v; } return new MQLCampo($this->mCampos["vigencia_dias"]);}
-	function almacen($v = false){ if($v !== false){$this->mCampos["almacen"]["V"] =  $v; } return new MQLCampo($this->mCampos["almacen"]);}
-	function checklist($v = false){ if($v !== false){$this->mCampos["checklist"]["V"] =  $v; } return new MQLCampo($this->mCampos["checklist"]);}
-	function tags($v = false){ if($v !== false){$this->mCampos["tags"]["V"] =  $v; } return new MQLCampo($this->mCampos["tags"]);}
-	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatus"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	function clave_de_control($v = false){ if($v !== false){$this->mCampos["clave_de_control"]["V"] = $v; } return new MQLCampo($this->mCampos["clave_de_control"]);}
+	function nombre_del_documento($v = false){ if($v !== false){$this->mCampos["nombre_del_documento"]["V"] = $v; } return new MQLCampo($this->mCampos["nombre_del_documento"]);}
+	function clasificacion($v = false){ if($v !== false){$this->mCampos["clasificacion"]["V"] = $v; } return new MQLCampo($this->mCampos["clasificacion"]);}
+	function vigencia_dias($v = false){ if($v !== false){$this->mCampos["vigencia_dias"]["V"] = $v; } return new MQLCampo($this->mCampos["vigencia_dias"]);}
+	function almacen($v = false){ if($v !== false){$this->mCampos["almacen"]["V"] = $v; } return new MQLCampo($this->mCampos["almacen"]);}
+	function checklist($v = false){ if($v !== false){$this->mCampos["checklist"]["V"] = $v; } return new MQLCampo($this->mCampos["checklist"]);}
+	function tags($v = false){ if($v !== false){$this->mCampos["tags"]["V"] = $v; } return new MQLCampo($this->mCampos["tags"]);}
+	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] = $v; } return new MQLCampo($this->mCampos["estatus"]);}
+	function es_ident($v = false){ if($v !== false){$this->mCampos["es_ident"]["V"] = $v; } return new MQLCampo($this->mCampos["es_ident"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey()); }
+	function setData($datos){ $mql = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
 }
 
 /*	ORM: Tabla:	personas_perfil_transaccional	-	Generado:	[02/2/2016 16:22]	*/
@@ -5255,22 +5258,14 @@ class cT_03f996214fba4a1d05a68b18fece8e71 {
 }
 
 /*	ORM: Tabla:	catalogos_localidades	-	Generado:	[07/5/2015 17:15]	*/
+/*	ORM: Tabla:	catalogos_localidades	-	Generado:	[08/6/2018 10:38]	*/
 class cCatalogos_localidades {
-	private $mCampos	= array(
-			"clave_unica" => array("N"=>"clave_unica","T"=>"INT","V"=>"","L"=>11),
-			"nombre_de_la_localidad" => array("N"=>"nombre_de_la_localidad","T"=>"VARCHAR","V"=>"","L"=>45),
-			"clave_de_estado" => array("N"=>"clave_de_estado","T"=>"INT","V"=>"0","L"=>4),
-			"clave_de_municipio" => array("N"=>"clave_de_municipio","T"=>"INT","V"=>"0","L"=>10),
-			"clave_de_localidad" => array("N"=>"clave_de_localidad","T"=>"VARCHAR","V"=>"0","L"=>20),
-			"longitud" => array("N"=>"longitud","T"=>"VARCHAR","V"=>"","L"=>45),
-			"altitud" => array("N"=>"altitud","T"=>"VARCHAR","V"=>"","L"=>45),
-			"latitud" => array("N"=>"latitud","T"=>"VARCHAR","V"=>"","L"=>45),
-			"clave_de_pais" => array("N"=>"clave_de_pais","T"=>"VARCHAR","V"=>"MX","L"=>20),
-
-	);
+	private $mCampos	= array("clave_unica" => array("N"=>"clave_unica","T"=>"INT","V"=>"","L"=>11),"nombre_de_la_localidad" => array("N"=>"nombre_de_la_localidad","T"=>"VARCHAR","V"=>"","L"=>45),"clave_de_estado" => array("N"=>"clave_de_estado","T"=>"INT","V"=>"0","L"=>4),"clave_de_municipio" => array("N"=>"clave_de_municipio","T"=>"INT","V"=>"0","L"=>10),"clave_de_localidad" => array("N"=>"clave_de_localidad","T"=>"VARCHAR","V"=>"0","L"=>20),"longitud" => array("N"=>"longitud","T"=>"VARCHAR","V"=>"","L"=>45),"altitud" => array("N"=>"altitud","T"=>"VARCHAR","V"=>"","L"=>45),"latitud" => array("N"=>"latitud","T"=>"VARCHAR","V"=>"","L"=>45),"clave_de_pais" => array("N"=>"clave_de_pais","T"=>"VARCHAR","V"=>"MX","L"=>20));
+	public $CLAVE_UNICA = "clave_unica"; public $NOMBRE_DE_LA_LOCALIDAD = "nombre_de_la_localidad"; public $CLAVE_DE_ESTADO = "clave_de_estado"; public $CLAVE_DE_MUNICIPIO = "clave_de_municipio"; public $CLAVE_DE_LOCALIDAD = "clave_de_localidad"; public $LONGITUD = "longitud"; public $ALTITUD = "altitud"; public $LATITUD = "latitud"; public $CLAVE_DE_PAIS = "clave_de_pais";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "catalogos_localidades";}
 	function getKey(){ return "clave_unica";}
+	
 	function clave_unica($v = false){ if($v !== false){$this->mCampos["clave_unica"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_unica"]);}
 	function nombre_de_la_localidad($v = false){ if($v !== false){$this->mCampos["nombre_de_la_localidad"]["V"] =  $v; } return new MQLCampo($this->mCampos["nombre_de_la_localidad"]);}
 	function clave_de_estado($v = false){ if($v !== false){$this->mCampos["clave_de_estado"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_de_estado"]);}
@@ -5282,7 +5277,6 @@ class cCatalogos_localidades {
 	function clave_de_pais($v = false){ if($v !== false){$this->mCampos["clave_de_pais"]["V"] =  $v; } return new MQLCampo($this->mCampos["clave_de_pais"]);}
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
 }
 
 /*	ORM: Tabla:	catalogos_tipo_de_dispersion	-	Generado:	[03/4/2018 22:36]	*/

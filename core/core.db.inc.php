@@ -5770,6 +5770,7 @@ class MQL {
 		if($this->cnn ==  null){
 			$this->cnn = new mysqli( MQL_SERVER, MQL_USER, MQL_PASS, MQL_DB);
 			$this->cnn->set_charset("utf8");
+			//$this->cnn->query("SET TIMESTAMP=UNIX_TIMESTAMP('2018-05-31 00:00:00')");
 		}
 		if ($this->cnn->connect_errno) {
 			if($this->mDebug == true){ $this->mMessages	.= "ERROR EN LA CONEXION : ". $this->cnn->connect_error . " \n"; $this->getDebug();	}
@@ -6037,6 +6038,14 @@ class MQL {
 		} else {
 			if(isset($cnn->insert_id)){
 				$this->mInsertID	= $cnn->insert_id;
+			}
+			/*try{
+				$rs->free();
+			} catch (Exception $e) {
+				
+			}*/
+			if(is_object($rs)){
+				$rs->free();
 			}
 		}
 		//$cnn->close();

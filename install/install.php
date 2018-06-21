@@ -7,7 +7,7 @@ include_once ("core/html.inc.php");*/
 $dir			= $_SERVER["DOCUMENT_ROOT"];
 $privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 
-if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
+//if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
 include_once ("./libs/importer.php");
 ini_set("max_execution_time", 900);
 
@@ -33,20 +33,48 @@ $pwdroot		= (isset($_REQUEST["idpwdroot"])) ?  $_REQUEST["idpwdroot"] : "";
 //$sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 $urlsys			= (isset($_REQUEST["idurl"])) ?  $_REQUEST["idurl"] : $_SERVER['SERVER_NAME'];
 $urlpath		= (isset($_REQUEST["idpath"])) ?  $_REQUEST["idpath"] : $dir;
+$nocache		= (isset($_REQUEST["idnocache"])) ?  $_REQUEST["idnocache"] : 0;
+if($nocache == 1){
+	$nocache	= true;
+} else {
+	$nocache	= false;
+}
 
 $srvmysql		= ($srvmysql == "") ? "127.0.0.1" : $srvmysql;
 
 if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $action == "" ){
 	
+	$FS_TMP		= "/tmp";
+	$F1			= "$FS_TMP/safe-osms.sql";
+	$F2			= "$FS_TMP/xx.vistas.sql";
+	$F3			= "$FS_TMP/xx.functions.sql";
+	//ejecutar si no existe el archivo
+	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/safe-osms.sql -O $F1");
+	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/xx.vistas.sql -O $F2");
+	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/xx.functions.sql -O $F3");
+	
+	if(!file_exists($F1)){
+		exit("No existen los archivos de importacion");
+	}
+	
 	//Importar la base de datos
 	$mysqlImport = new MySQLImporter($srvmysql, "root", $pwdroot);
-	$mysqlImport->doImport("./db/safe-osms.sql",$dbmysql,true);
+	$mysqlImport->doImport($F1,$dbmysql,true);
 	
-	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
-	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F2");
+	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F3");
 	
-	$mysqlImport->doImport("./db/xx.vistas.sql",$dbmysql,true);
-	$mysqlImport->doImport("./db/xx.functions.sql",$dbmysql,true);
+	
+	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F2");
+	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F3");
+	
+	//$CMDMYSQL --host=localhost --user=root --password=$ROOTPWD --force --database=$SUCURSAL < $PATH_HOME/$FILEFUNC
+	
+	//$mysqlImport->doImport($F2,$dbmysql);
+	//$mysqlImport->doImport($F3,$dbmysql);
+	
+	//$mysqlImport->doImport($F2,$dbmysql);
+	//$mysqlImport->doImport($F3,$dbmysql);
 	
 	//========================= Agregar Usuario y contraseña
 	$cnn 		= new mysqli($srvmysql, "root", $pwdroot, $dbmysql);
@@ -64,7 +92,7 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 	
 	if ($cnn->connect_errno) {
 		$msg	.= "ERROR EN LA CONEXION : ". $cnn->connect_error . " \n";
-		exit;
+		exit($msg);
 	} else {
 		$rs		= $cnn->query("SHOW TABLES IN $dbmysql");
 		
@@ -91,6 +119,12 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 			$fileconfig		.= "\$V_cf1e8c14e54505f60aa10c	= \"$urlsys\";\r\n";
 			$fileconfig		.= "\$V_67e92c8765a9bc7fb2d335	= \"$srvmysql\";\r\n";
 			//$fileconfig		.= "//\$fecha_de_inicio_operaciones	= \"\$VFecha\";\r\n";
+			if($nocache == true){
+				$fileconfig		.= "\$os_en_memcache\t\t\t\t= false;\r\n";
+				
+			} else {
+				$fileconfig		.= "\$os_en_memcache\t\t\t\t= true;\r\n";
+			}
 			$fileconfig		.= "\r\n";
 			$fileconfig		.= "\r\n?>";
 			
@@ -263,7 +297,8 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
 </div>
       
 <div class='contact'>
-    <input class='email' placeholder='Ruta Completa del Servidor como /var/www/sistema' type='text' name='idpath'>
+    <input type="hidden" name="idnocache" value="1" />
+    <input type="checkbox" name="idnocache" value="0">Usar Memcache<br>
 </div>      
       
   <!--  <div class='contact'>

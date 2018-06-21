@@ -106,8 +106,9 @@ function jsGetTable(){
 	var idmnu	= $("#idmenu").val();
 	var idtit	= $("#idtitle").val();
 	var idrt	= $("#idruta").val();
+	var idsql	= base64.encode($("#idsql").val());
 	
-	xG.w({url: "../tools/orm.php?tabla=" + n + "&idgrid=" + idgrid + "&nombrefile=" + idfil + "&nombreforma=" + idfrm + "&menuparent=" + idpar + "&menu=" + idmnu + "&title=" + idtit + "&ruta=" + idrt,  tab: true});
+	xG.w({url: "../tools/orm.php?tabla=" + n + "&idgrid=" + idgrid + "&nombrefile=" + idfil + "&nombreforma=" + idfrm + "&menuparent=" + idpar + "&menu=" + idmnu + "&title=" + idtit + "&ruta=" + idrt + "&idsql=" + idsql,  tab: true});
 }
 </script>
 <?php

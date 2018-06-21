@@ -417,6 +417,9 @@ class cUtileriasParaCreditos{
 		$xLog			= new cCoreLog();
 		$xF				= new cFecha();
 		$xQL			= new MQL();
+		$xRuls				= new cReglaDeNegocio();
+		$DevengarVencidos	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_DEV_INTNOM_V);
+		
 		$creditoFiltrado= setNoMenorQueCero($creditoFiltrado);
 		
 		$fechaCorte		= $xF->getFechaISO($fechaCorte);
@@ -448,6 +451,8 @@ class cUtileriasParaCreditos{
 		$sql 				= "SELECT $ByRTM `creditos_mvtos_asdpm_planes`.* FROM `creditos_mvtos_asdpm_planes` 
 		WHERE $wCredito1 $wFecha1 $ByO360 $BySaldo ORDER BY `creditos_mvtos_asdpm_planes`.`documento`, `creditos_mvtos_asdpm_planes`.`fecha` ";
 		
+		//setLog($sql);
+		
 		//$rs					= $xQL->getDataRecord($sql);
 		$rs					= $xQL->getRecordset($sql);
 		//setLog(Memory_Usage());
@@ -471,6 +476,8 @@ class cUtileriasParaCreditos{
 		$sucursal				= getSucursal();
 		$MONTO_AUTORIZADO		= 0;
 		$FECHA_CORTE_MORA		= $fechaCorte;
+		$ES_CREDITO_PAGADO		= false;	//Si el credito es pagado
+		$ES_CREDITO_MORA		= false;	//Si el Credito entro en mora, por defecto no
 		//$FECHA_DE_PRIMER_AT
 		while($rw = $rs->fetch_assoc()){
 		//foreach ( $rs as $rw ){
@@ -480,6 +487,7 @@ class cUtileriasParaCreditos{
 			$periodo			= setNoMenorQueCero($rw["periodo"]);
 			$afectacion			= $rw["afectacion"];
 			$monto				= setNoMenorQueCero($rw["monto"], 2);
+			$monto_nomut		= $monto;
 			$fecha				= $xF->getFechaISO( $rw["fecha"]);
 			
 			$nota				= "";
@@ -526,7 +534,9 @@ class cUtileriasParaCreditos{
 				if($xCred->getEsPagado() == true){
 					$FECHA_CORTE_MORA	= $xCred->getFechaUltimoMvtoCapital();
 					$FECHA_CORTE_MORA	= $xF->getFechaISO($FECHA_CORTE_MORA);
+					$ES_CREDITO_PAGADO	= true;
 				}
+				$ES_CREDITO_MORA		= false;
 			} else {
 				$IsCredNew			= false;
 			}
@@ -597,6 +607,7 @@ class cUtileriasParaCreditos{
 			} else {
 				$interes				= 0;
 			}
+			
 			if($operacion == OPERACION_CLAVE_PAGO_MORA){
 				if($moratorio >0){
 					$moratorio	= $monto - $moratorio;
@@ -619,23 +630,35 @@ class cUtileriasParaCreditos{
 			} else {
 				$monto					= 0;
 			}
+			//Si es pago de interes, no pagado y la fecha actual es mayor a la de hoy
+			if($DevengarVencidos == true AND $ES_CREDITO_MORA == true){
+				//Si es interes de plan y hay saldo de credito
+				if($operacion == OPERACION_CLAVE_PLAN_INTERES AND $saldo> 0){
+					//Si la fecha de la operacion es menor a la de corte
+					if( $xF->getInt($fecha) <= $xF->getInt($fechaCorte) ){
+						$interes				= $monto_nomut;
+					}
+				}
+			}
 			//Venciendo la primera fecha
 			if( isset($FECHA_DE_COMPROMISO) AND $ESTADO_APLICADO == false){
 				$dias_de_atraso			= setNoMenorQueCero($xF->setRestarFechas($fechaCorte, $FECHA_DE_COMPROMISO));
 				if($dias_de_atraso > 1){ 
 					$ESTADO_ACTUAL		= CREDITO_ESTADO_MOROSO; 
-					$ESTADO_APLICADO 	= true; 
+					$ESTADO_APLICADO 	= true;
+					$ES_CREDITO_MORA	= true;				//Marcar a Mora
 				}		//Cambiar a Moroso
 				if($dias_de_atraso > $DIAS_PARA_VENCIMIENTO){
 					$ESTADO_ACTUAL		= CREDITO_ESTADO_VENCIDO;
 					$ESTADO_APLICADO 	= true;
+					$ES_CREDITO_MORA	= true;				//Mrcar a Mora
 					$xLog->add( "WARN\t$periodo\tPeriodo a Vencido por $dias_de_atraso Dias de Atraso con $DIAS_PARA_VENCIMIENTO Dias Tolerados\r\n", $xLog->DEVELOPER);
 				}
 			}
 			if($creditoFiltrado > DEFAULT_CREDITO){ 
 				$txt	.= "$socio\t$credito\t$fecha\t$monto\t$saldo\t$dias_transcurridos\t$operacion\t$ESTADO_ACTUAL\t$interes\t $moratorio \t$nota\r\n";
 			}
-
+			
 			$mm							= round(($monto + $interes + $moratorio),2);
 			$periodo					= setNoMenorQueCero($periodo);
 			if(($xF->getInt($fecha) <= $xF->getInt($fechaCorte) AND ($mm >0 ) )){
@@ -716,6 +739,9 @@ class cUtileriasParaCreditos{
 			//Eliminar el 360
 			$wFecha1	= " AND (`fecha` <='$fechaCorte') ";
 			$wFecha2	= " AND (`fecha_actual`<='$fechaCorte')";
+			$By360		= "";
+			$ByO360		= "";
+			
 		}
 		//Eliminar el SDPM
 		if($EliminarTodo == true){
@@ -736,7 +762,9 @@ class cUtileriasParaCreditos{
 		FROM `creditos_mvtos_asdpm`	WHERE $wCredito1 $wFecha1 $ByO360 ";
 		//setLog($sql);
 		
-		$rsM					= $ql->getDataRecord($sql);
+		//$rsM					= $ql->getDataRecord($sql);
+		$rsM					= $ql->getRecordset($sql);
+		
 		$saldo					= 0;
 		$creditoA				= 0;
 		$xT						= new cTipos();
@@ -749,136 +777,138 @@ class cUtileriasParaCreditos{
 		$DCred					= array();
 		$IsCredNew				= true;
 		$xCred					= null;
-	
-		foreach ($rsM as $rw){
-				
-			$socio			= $xT->cInt($rw["socio"]);
-			$credito		= setNoMenorQueCero($rw["documento"]);
-			$fecha			= $rw["fecha"];
-			$nota			= "";
-			//
-			$IsCredNew		= true;
-			if( $creditoA != $credito ){
-				$saldo					= 0;
-				$FECHA_DE_ULTIMO_PAGO	= $fecha;
-				$ESTADO_ACTUAL			= CREDITO_ESTADO_VIGENTE;
-				$xCred					= new cCredito($credito); $xCred->init();
-				$DCred					= $xCred->getDatosDeCredito();
-				$CREDITO_SALDO_ANTERIOR	= 0;
-				$xLog->add("-- \tINIT_CREDITO : $credito ($creditoA)\r\n");
-				//si es Ministracion
-				if($MvtoAnterior	== OPERACION_CLAVE_MINISTRACION){ 
-					$FECHA_DE_ULTIMO_PAGO	= $xCred->getFechaDeMinistracion();
-					$xLog->add("$credito\tFecha de Ministracion a $FECHA_DE_ULTIMO_PAGO\r\n", $xLog->DEVELOPER);
-				}
-				
-				if($EliminarTodo == false){ $ql->setRawQuery("DELETE FROM creditos_sdpm_historico WHERE numero_de_credito = $credito $wFecha2"); }
-				if($IsGlobal == true){
-					//si la fecha es actual, buscar el ultimo pago
-					if($FECHA_DE_ULTIMO_PAGO == $xCred->getFechaUltimoMvtoCapital() OR ($xF->getInt($fechaCorte) > $xF->getInt($xCred->getFechaUltimoMvtoCapital())) ){
-						$sqlpagoanterior		= "SELECT	MAX(`operaciones_mvtos`.`fecha_operacion`) AS 'fecha', SUM(`operaciones_mvtos`.`afectacion_real`) AS `abonos`  FROM	`operaciones_mvtos`
-										WHERE (`operaciones_mvtos`.`fecha_operacion` < '$fecha') AND (`operaciones_mvtos`.`docto_afectado` = $credito) AND
-											(`operaciones_mvtos`.`tipo_operacion` =". OPERACION_CLAVE_PAGO_CAPITAL . ") GROUP BY `operaciones_mvtos`.`docto_afectado` ";
-						$DPag				= $ql->getDataRow($sqlpagoanterior);
-						if(isset($DPag["fecha"])){
-							$xLog->add("Fecha anterior : $FECHA_DE_ULTIMO_PAGO a " . $DPag["fecha"] . "\r\n");
-							$FECHA_DE_ULTIMO_PAGO		= $DPag["fecha"];
-							//Ajustar fecha de Ultimo corte de Mes
-							if($xF->getInt($FECHA_DE_ULTIMO_PAGO) < $xF->getInt($xF->getDiaInicial()) ){
-								$FECHA_DE_ULTIMO_PAGO	= $xF->setRestarDias(1, $xF->getDiaInicial());
+		
+		if($rsM){
+			while ($rw = $rsM->fetch_assoc() ){
+					
+				$socio			= $xT->cInt($rw["socio"]);
+				$credito		= setNoMenorQueCero($rw["documento"]);
+				$fecha			= $rw["fecha"];
+				$nota			= "";
+				//
+				$IsCredNew		= true;
+				if( $creditoA != $credito ){
+					$saldo					= 0;
+					$FECHA_DE_ULTIMO_PAGO	= $fecha;
+					$ESTADO_ACTUAL			= CREDITO_ESTADO_VIGENTE;
+					$xCred					= new cCredito($credito); $xCred->init();
+					$DCred					= $xCred->getDatosDeCredito();
+					$CREDITO_SALDO_ANTERIOR	= 0;
+					$xLog->add("-- \tINIT_CREDITO : $credito ($creditoA)\r\n");
+					//si es Ministracion
+					if($MvtoAnterior	== OPERACION_CLAVE_MINISTRACION){ 
+						$FECHA_DE_ULTIMO_PAGO	= $xCred->getFechaDeMinistracion();
+						$xLog->add("$credito\tFecha de Ministracion a $FECHA_DE_ULTIMO_PAGO\r\n", $xLog->DEVELOPER);
+					}
+					
+					if($EliminarTodo == false){ $ql->setRawQuery("DELETE FROM creditos_sdpm_historico WHERE numero_de_credito = $credito $wFecha2"); }
+					if($IsGlobal == true){
+						//si la fecha es actual, buscar el ultimo pago
+						if($FECHA_DE_ULTIMO_PAGO == $xCred->getFechaUltimoMvtoCapital() OR ($xF->getInt($fechaCorte) > $xF->getInt($xCred->getFechaUltimoMvtoCapital())) ){
+							$sqlpagoanterior		= "SELECT	MAX(`operaciones_mvtos`.`fecha_operacion`) AS 'fecha', SUM(`operaciones_mvtos`.`afectacion_real`) AS `abonos`  FROM	`operaciones_mvtos`
+											WHERE (`operaciones_mvtos`.`fecha_operacion` < '$fecha') AND (`operaciones_mvtos`.`docto_afectado` = $credito) AND
+												(`operaciones_mvtos`.`tipo_operacion` =". OPERACION_CLAVE_PAGO_CAPITAL . ") GROUP BY `operaciones_mvtos`.`docto_afectado` ";
+							$DPag				= $ql->getDataRow($sqlpagoanterior);
+							if(isset($DPag["fecha"])){
+								$xLog->add("Fecha anterior : $FECHA_DE_ULTIMO_PAGO a " . $DPag["fecha"] . "\r\n");
+								$FECHA_DE_ULTIMO_PAGO		= $DPag["fecha"];
+								//Ajustar fecha de Ultimo corte de Mes
+								if($xF->getInt($FECHA_DE_ULTIMO_PAGO) < $xF->getInt($xF->getDiaInicial()) ){
+									$FECHA_DE_ULTIMO_PAGO	= $xF->setRestarDias(1, $xF->getDiaInicial());
+								}
+								$saldo						= setNoMenorQueCero(($xCred->getMontoAutorizado() - setNoMenorQueCero($DPag["abonos"])));
 							}
-							$saldo						= setNoMenorQueCero(($xCred->getMontoAutorizado() - setNoMenorQueCero($DPag["abonos"])));
 						}
 					}
+				} else {
+					$IsCredNew		= false;
 				}
-			} else {
-				$IsCredNew		= false;
-			}
-			$OProd					= $xCred->getOProductoDeCredito();
-	
-			$recibo					= $rw["recibo"];
-			$operacion				= $rw["operacion"];
-			$afectacion				= $rw["afectacion"];
-			$monto					= $xT->cFloat($rw["monto"], 2);
-			$periocidad				= $xCred->getPeriocidadDePago();
-			$FechaVencimiento		= $xCred->getFechaDeVencimiento(); //(!isset( $DCred["fecha_vencimiento_dinamico"])) ? $xCred->getFechaDeVencimiento() : $DCred["fecha_vencimiento_dinamico"];
-	
-			$DiaInteresMax			= $xF->setSumarDias(INTERES_DIAS_MAXIMO_A_DEVENGAR, $FechaVencimiento);
-			$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
-			$saldo_calculado		= setNoMenorQueCero( ($dias_transcurridos * $saldo), 2);
-			//No poner la afectacion
-			$saldo					+= $xT->cFloat( ($monto * $afectacion), 2 );
-			// si es normal, calcular normal, si es mora: Calcular mora y normal, si es vencido: calcular normal y mora
-			$interes					= 0;
-			$moratorio					= 0;
-			$TASA_NORMAL				= $xCred->getTasaDeInteres();
-			$TASA_MORA					= $xCred->getTasaDeMora();
-			$TIPO_DE_PAGO				= $xCred->getTipoDePago();
-			$PAGOS_SIN_CAPITAL			= $xCred->getPagosSinCapital();
-			$MONTO_ORIGINAL_DE_CREDITO	= $xCred->getMontoAutorizado();
-			$saldoBase					= $xT->cFloat($saldo, 2 );
-	
-			if ( ($operacion == OPERACION_CLAVE_PAGO_CAPITAL) AND ($saldo == 0)  ){	$saldoBase			= $CREDITO_SALDO_ANTERIOR; }
-			if($MvtoAnterior == OPERACION_CLAVE_MINISTRACION){
-				$saldoBase			= $CREDITO_SALDO_ANTERIOR;
-				$saldo_calculado	= $dias_transcurridos * $CREDITO_SALDO_ANTERIOR;
-			}
-			$SALDO_ACTUAL			= $xCred->getSaldoActual();
-			$BASE_NORMAL			= $saldo_calculado;
-			$BASE_MORA				= $saldo_calculado;
-			eval($OProd->getPreModInteres());
-	
-			
-			//considerar si es un maximo de x dias devengar en vencidos
-			switch( $ESTADO_ACTUAL ){
-				case CREDITO_ESTADO_VIGENTE:
-					$interes		= ($BASE_NORMAL * $TASA_NORMAL) / $DIVISOR_DE_INTERESES;
-					break;
-				case CREDITO_ESTADO_VENCIDO:
-					//validar si tiene un maximo de dias transcurridos de devengado
-					if( $xF->getInt($fecha) <= $xF->getInt($DiaInteresMax) ){
+				$OProd					= $xCred->getOProductoDeCredito();
+		
+				$recibo					= $rw["recibo"];
+				$operacion				= $rw["operacion"];
+				$afectacion				= $rw["afectacion"];
+				$monto					= $xT->cFloat($rw["monto"], 2);
+				$periocidad				= $xCred->getPeriocidadDePago();
+				$FechaVencimiento		= $xCred->getFechaDeVencimiento(); //(!isset( $DCred["fecha_vencimiento_dinamico"])) ? $xCred->getFechaDeVencimiento() : $DCred["fecha_vencimiento_dinamico"];
+		
+				$DiaInteresMax			= $xF->setSumarDias(INTERES_DIAS_MAXIMO_A_DEVENGAR, $FechaVencimiento);
+				$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
+				$saldo_calculado		= setNoMenorQueCero( ($dias_transcurridos * $saldo), 2);
+				//No poner la afectacion
+				$saldo					+= $xT->cFloat( ($monto * $afectacion), 2 );
+				// si es normal, calcular normal, si es mora: Calcular mora y normal, si es vencido: calcular normal y mora
+				$interes					= 0;
+				$moratorio					= 0;
+				$TASA_NORMAL				= $xCred->getTasaDeInteres();
+				$TASA_MORA					= $xCred->getTasaDeMora();
+				$TIPO_DE_PAGO				= $xCred->getTipoDePago();
+				$PAGOS_SIN_CAPITAL			= $xCred->getPagosSinCapital();
+				$MONTO_ORIGINAL_DE_CREDITO	= $xCred->getMontoAutorizado();
+				$saldoBase					= $xT->cFloat($saldo, 2 );
+		
+				if ( ($operacion == OPERACION_CLAVE_PAGO_CAPITAL) AND ($saldo == 0)  ){	$saldoBase			= $CREDITO_SALDO_ANTERIOR; }
+				if($MvtoAnterior == OPERACION_CLAVE_MINISTRACION){
+					$saldoBase			= $CREDITO_SALDO_ANTERIOR;
+					$saldo_calculado	= $dias_transcurridos * $CREDITO_SALDO_ANTERIOR;
+				}
+				$SALDO_ACTUAL			= $xCred->getSaldoActual();
+				$BASE_NORMAL			= $saldo_calculado;
+				$BASE_MORA				= $saldo_calculado;
+				eval($OProd->getPreModInteres());
+		
+				
+				//considerar si es un maximo de x dias devengar en vencidos
+				switch( $ESTADO_ACTUAL ){
+					case CREDITO_ESTADO_VIGENTE:
+						$interes		= ($BASE_NORMAL * $TASA_NORMAL) / $DIVISOR_DE_INTERESES;
+						break;
+					case CREDITO_ESTADO_VENCIDO:
+						//validar si tiene un maximo de dias transcurridos de devengado
+						if( $xF->getInt($fecha) <= $xF->getInt($DiaInteresMax) ){
+							$interes		= ($BASE_NORMAL * $TASA_NORMAL) / $DIVISOR_DE_INTERESES;
+							$moratorio		= ($BASE_MORA * $TASA_MORA) / $DIVISOR_DE_INTERESES;
+						} else {
+							$interes		= 0;
+							$moratorio		= 0;
+							$nota			= "Despues del $DiaInteresMax no se acumula Interes, Vencimiento : $FechaVencimiento";
+						}
+						break;
+					case CREDITO_ESTADO_MOROSO:
 						$interes		= ($BASE_NORMAL * $TASA_NORMAL) / $DIVISOR_DE_INTERESES;
 						$moratorio		= ($BASE_MORA * $TASA_MORA) / $DIVISOR_DE_INTERESES;
-					} else {
-						$interes		= 0;
-						$moratorio		= 0;
-						$nota			= "Despues del $DiaInteresMax no se acumula Interes, Vencimiento : $FechaVencimiento";
-					}
-					break;
-				case CREDITO_ESTADO_MOROSO:
-					$interes		= ($BASE_NORMAL * $TASA_NORMAL) / $DIVISOR_DE_INTERESES;
-					$moratorio		= ($BASE_MORA * $TASA_MORA) / $DIVISOR_DE_INTERESES;
-					break;
-			} //END_SWITCH
-			$interes			= $xT->cFloat($interes, 2);
-			if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO){
-				$moratorio			= $xT->cFloat($moratorio, 2);//0; //2012-04-10
-			} else {
-				//$moratorio			= 0;
+						break;
+				} //END_SWITCH
+				$interes			= $xT->cFloat($interes, 2);
+				if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO){
+					$moratorio			= $xT->cFloat($moratorio, 2);//0; //2012-04-10
+				} else {
+					//$moratorio			= 0;
+				}
+				eval($OProd->getPosModInteres());
+				$xLog->add("$socio\t$credito\t$fecha\t$monto\t$saldo\t$dias_transcurridos\t$operacion\t$ESTADO_ACTUAL\t$interes\t$moratorio\t$nota\r\n", $xLog->DEVELOPER);
+				
+				if($xF->getInt($fecha) <= $xF->getInt(SYS_FECHA_DE_MIGRACION) ){
+					$interes				= 0;
+					$moratorio				= 0;
+					$xLog->add("WARN\tOMITIR Interes $interes y MORA por $moratorio por estar antes de la migracion $fecha\r\n", $xLog->DEVELOPER);
+				}
+				
+				if($xF->getInt($fecha) <= $xF->getInt($fechaCorte)){
+					$msgSDPM				= $xCred->addSDPM($interes, $moratorio, $FECHA_DE_ULTIMO_PAGO, $saldo, $ESTADO_ACTUAL, $fecha, $operacion, $saldo_calculado);
+				}
+		
+				if ( ($saldo <= TOLERANCIA_SALDOS) ){ $xLog->add( "--\tEND_CREDITO : $credito\r\n", $xLog->DEVELOPER); }
+				$creditoA					= $credito;
+				$FECHA_DE_ULTIMO_PAGO		= $fecha;
+				$CREDITO_SALDO_ANTERIOR		= $saldo;
+				$MvtoAnterior				= $operacion;
+				/*
+				 * si existe la operacion de cambio de estatus, validar en el array, y actualizar el valor
+				* Este estatus se aplicara en el siguiente
+				*/
+				if ( in_array($operacion, $arrEstatusD ) ){ $ESTADO_ACTUAL		= $arrEstatus[$operacion]; }
 			}
-			eval($OProd->getPosModInteres());
-			$xLog->add("$socio\t$credito\t$fecha\t$monto\t$saldo\t$dias_transcurridos\t$operacion\t$ESTADO_ACTUAL\t$interes\t$moratorio\t$nota\r\n", $xLog->DEVELOPER);
-			
-			if($xF->getInt($fecha) <= $xF->getInt(SYS_FECHA_DE_MIGRACION) ){
-				$interes				= 0;
-				$moratorio				= 0;
-				$xLog->add("WARN\tOMITIR Interes $interes y MORA por $moratorio por estar antes de la migracion $fecha\r\n", $xLog->DEVELOPER);
-			}
-			
-			if($xF->getInt($fecha) <= $xF->getInt($fechaCorte)){
-				$msgSDPM				= $xCred->addSDPM($interes, $moratorio, $FECHA_DE_ULTIMO_PAGO, $saldo, $ESTADO_ACTUAL, $fecha, $operacion, $saldo_calculado);
-			}
-	
-			if ( ($saldo <= TOLERANCIA_SALDOS) ){ $xLog->add( "--\tEND_CREDITO : $credito\r\n", $xLog->DEVELOPER); }
-			$creditoA					= $credito;
-			$FECHA_DE_ULTIMO_PAGO		= $fecha;
-			$CREDITO_SALDO_ANTERIOR		= $saldo;
-			$MvtoAnterior				= $operacion;
-			/*
-			 * si existe la operacion de cambio de estatus, validar en el array, y actualizar el valor
-			* Este estatus se aplicara en el siguiente
-			*/
-			if ( in_array($operacion, $arrEstatusD ) ){ $ESTADO_ACTUAL		= $arrEstatus[$operacion]; }
 		}
 		$rsM							= null;
 		$this->mMessages				.= $xLog->getMessages();
@@ -951,9 +981,10 @@ class cUtileriasParaCreditos{
 					`creditos_sdpm_historico` `creditos_sdpm_historico`
 					WHERE `creditos_sdpm_historico`.`numero_de_credito` >0 
 		$wDLimit $wSDPM ORDER BY `creditos_sdpm_historico`.`numero_de_credito`, `creditos_sdpm_historico`.`fecha_actual`";
-		$rs 		= $xQL->getDataRecord($sqlM);
+		//$rs 		= $xQL->getDataRecord($sqlM);
+		$rs 		= $xQL->getRecordset($sqlM);
 	
-		foreach ($rs as $rw ){
+		while ($rw = $rs->fetch_assoc() ){
 			$socio			= $rw["numero_de_socio"];
 			$solicitud		= $rw["numero_de_credito"];
 			$observaciones	= "";
@@ -1021,43 +1052,47 @@ class cUtileriasParaCreditos{
 		$recibo		= ($recibo <= 0) ? DEFAULT_RECIBO : $recibo;
 		//Eliminar Operaciones
 		$xQL->setRawQuery("DELETE FROM `operaciones_mvtos` WHERE `tipo_operacion` = " . OPERACION_CLAVE_FIN_DE_MES . " $W2Cred ");
-		$rs			= $xQL->getDataRecord($sql);
+		$rs			= $xQL->getRecordset($sql);
 		$xRec		= new cReciboDeOperacion(false, false, $recibo);
 		$xRec->init();
-		foreach ($rs as $rw){
-			$credito		= $rw["numero_solicitud"];
-			$xCred			= new cCredito($credito);
-			$xCred->init($rw);
-			$persona		= $xCred->getClaveDePersona();
-			//$date = strtotime(date("Y-m-d", strtotime($date)) . " +1 month");
-			$meses			= ceil( $xF->setRestarFechas($fecha_final, $xCred->getFechaDeMinistracion()) / SYS_FACTOR_DIAS );
-			$IntInit		= ($xF->getInt($fecha_inicial) >= $xF->getInt($xCred->getFechaDeMinistracion()) ) ?  $xF->getInt($fecha_inicial): $xF->getInt($xCred->getFechaDeMinistracion());
-			$xLog->add("======= CREDITO $credito Persona $persona en Meses $meses\r\n");
-			for($i = 0; $i <= $meses; $i++){
-				$FechaMes	= ($i == 0 ) ? $xF->getDiaFinal($xCred->getFechaDeMinistracion()) : $xF->setSumarMeses(1, $FechaMes);
-				//$xF->set($FechaMes);
-				//$xLog->add("WARN\t$persona\t$credito\tFecha Omitida $FechaMes\r\n", $xLog->DEVELOPER);
-				//obtener abonos segun 
-				if($xF->getInt($FechaMes) >= $IntInit AND $xF->getInt($FechaMes) <= $IntMes){
-					$currInt			= $xF->getInt($FechaMes);
-					$annio 				= date("Y", $currInt);
-					$mmes				= date("m", $currInt);
-					$DQL				= $xQL->getDataRow("SELECT SUM(`abonos`) AS 'monto', MAX(`fecha`) AS 'fecha' FROM `creditos_abonos_por_mes` WHERE `credito`= $credito AND periodo <=$annio$mmes");
-					$fechaMov			= date("Y-m-t", strtotime("$annio-$mmes-01"));
-					$observaciones		= "Cierre a Fin de mes $fechaMov";
-					$monto_al_cierre	= setNoMenorQueCero(($xCred->getMontoAutorizado() - $DQL["monto"]), 2);
-					if($monto_al_cierre >= TOLERANCIA_SALDOS){
-						$operacion		= $xRec->setNuevoMvto($fechaMov, $monto_al_cierre, OPERACION_CLAVE_FIN_DE_MES, 1, $observaciones, 0, TM_CARGO, $persona, $credito);
-						$xLog->add("OK\t$persona\t$credito\t$fechaMov\t$monto_al_cierre\r\n");
+		if($rs){
+			while ($rw = $rs->fetch_assoc() ){
+				$credito		= $rw["numero_solicitud"];
+				$xCred			= new cCredito($credito);
+				$xCred->init($rw);
+				$persona		= $xCred->getClaveDePersona();
+				//$date = strtotime(date("Y-m-d", strtotime($date)) . " +1 month");
+				$meses			= ceil( $xF->setRestarFechas($fecha_final, $xCred->getFechaDeMinistracion()) / SYS_FACTOR_DIAS_MES );
+				$IntInit		= ($xF->getInt($fecha_inicial) >= $xF->getInt($xCred->getFechaDeMinistracion()) ) ?  $xF->getInt($fecha_inicial): $xF->getInt($xCred->getFechaDeMinistracion());
+				$xLog->add("======= CREDITO $credito Persona $persona en Meses $meses\r\n");
+				for($i = 0; $i <= $meses; $i++){
+					$FechaMes	= ($i == 0 ) ? $xF->getDiaFinal($xCred->getFechaDeMinistracion()) : $xF->setSumarMeses(1, $FechaMes);
+					//$xF->set($FechaMes);
+					//$xLog->add("WARN\t$persona\t$credito\tFecha Omitida $FechaMes\r\n", $xLog->DEVELOPER);
+					//obtener abonos segun 
+					if($xF->getInt($FechaMes) >= $IntInit AND $xF->getInt($FechaMes) <= $IntMes){
+						$currInt			= $xF->getInt($FechaMes);
+						$annio 				= date("Y", $currInt);
+						$mmes				= date("m", $currInt);
+						$DQL				= $xQL->getDataRow("SELECT SUM(`abonos`) AS 'monto', MAX(`fecha`) AS 'fecha' FROM `creditos_abonos_por_mes` WHERE `credito`= $credito AND periodo <=$annio$mmes");
+						//setLog("SELECT SUM(`abonos`) AS 'monto', MAX(`fecha`) AS 'fecha' FROM `creditos_abonos_por_mes` WHERE `credito`= $credito AND periodo <=$annio$mmes");
+						$fechaMov			= date("Y-m-t", strtotime("$annio-$mmes-01"));
+						$observaciones		= "Cierre a Fin de mes $fechaMov";
+						$monto_al_cierre	= setNoMenorQueCero(($xCred->getMontoAutorizado() - $DQL["monto"]), 2);
+						if($monto_al_cierre >= TOLERANCIA_SALDOS){
+							$operacion		= $xRec->setNuevoMvto($fechaMov, $monto_al_cierre, OPERACION_CLAVE_FIN_DE_MES, 1, $observaciones, 0, TM_CARGO, $persona, $credito);
+							$xLog->add("OK\t$persona\t$credito\t$fechaMov\t$monto_al_cierre\r\n");
+						} else {
+							$xLog->add("OMITIDO\t$persona\t$credito\t$fechaMov\t$monto_al_cierre\r\n", $xLog->DEVELOPER);
+						}
+						//$xLog->add("$i\t$socio\t$solicitud\t$fecha\t$fin_de_mes\t$saldoActual\t$operacion\r\n");
 					} else {
-						$xLog->add("OMITIDO\t$persona\t$credito\t$fechaMov\t$monto_al_cierre\r\n", $xLog->DEVELOPER);
+						$xLog->add("WARN\t$persona\t$credito\tFecha Omitida $FechaMes\r\n", $xLog->DEVELOPER);
 					}
-					//$xLog->add("$i\t$socio\t$solicitud\t$fecha\t$fin_de_mes\t$saldoActual\t$operacion\r\n");
-				} else {
-					$xLog->add("WARN\t$persona\t$credito\tFecha Omitida $FechaMes\r\n", $xLog->DEVELOPER);
 				}
 			}
 		}
+		//setLog($xLog->getMessages());
 		return $xLog->getMessages();
 	}
 	function setAcumularIntereses($Forzar = false, $credito = false, $todos = false){

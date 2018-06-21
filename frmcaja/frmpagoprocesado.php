@@ -588,6 +588,15 @@ if($baseM303 !== 0){
 if($baseM353 !== 0){
 	$baseM353	= $baseM353 * -1;
 	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM353, OPERACION_CLAVE_DEV_GLIQ, $parcialidad, $observaciones, TM_ABONO);
+	
+	//============================================== Alerta de Compensacion de Garantia Liquida
+	if($baseM353>0){
+		$xAlert	= new cAlertasDelSistema();
+		//$xRuls	= new cReglasDeNegocioLista();
+		$arr	= array("monto" => $baseM353);
+		$xAlert->setDataByRecibo($recibo_pago);
+		$xAlert->setProcesarProgramacion(120, $arr);
+	}
 }
 if($baseM352 !== 0){
 	setNuevoMvto($socio, $solicitud, $recibo_pago, $fecha_operacion,  $baseM352, 352, $parcialidad, $observaciones);

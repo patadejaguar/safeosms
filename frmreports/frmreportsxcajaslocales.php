@@ -34,10 +34,12 @@ $xRPT->setConSucursal(true);
 $xRPT->addListReports();
 //$xRPT->addFechaInicial();
 //$xRPT->addFechaFinal();
+$xRPT->addCheckBox("TR.SOLO CLIENTES", "soloclientes", true);
 
 $xRPT->setConOperacion(false);
 $xRPT->setConCajero(false);
 $xRPT->setConRecibos(false);
+
 
 echo $xRPT->get();
 

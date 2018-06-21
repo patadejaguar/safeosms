@@ -51,9 +51,10 @@ $xDoc			= new cDocumentos();
 $prepath		= $xDoc->getPathPorTipo($tipoupload);
 
 
+
 $archivo		= (isset($_FILES[$clave])) ? $_FILES[$clave] : null;
 if($archivo === null){
-	$rs["message"]	= "El Archivo no existe";
+	$rs["message"]	= "El Archivo no existe (Id: $clave) ";
 	//$xDoc->add($tipo, $pagina, $observaciones)
 } else {
 	$ok			= $xDoc->FTPUpload($archivo, $clave, $prepath);

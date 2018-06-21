@@ -252,6 +252,7 @@ function jsInitComponents(){
 	var dia_tercer_abono	= $("#dia_tercer_abono").val();
 	var idfechaministracion	= $("#idfechaministracion").val();
 	var idperiocidad		= entero($("#idperiocidad").val());
+	$("#idtipodepago option[value='1']").remove();
 	/*var xd					= new XDate( xF.get(idprimerafecha) );
 	var ready				= false;
 	var mMDia				= xd.getDate();

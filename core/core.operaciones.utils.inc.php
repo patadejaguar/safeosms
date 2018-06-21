@@ -20,6 +20,8 @@ include_once("core.fechas.inc.php");
 
 //=====================================================================================================
 class cUtileriasParaOperaciones{
+	private $mMessages		= "";
+	
 	function __construct(){
 		
 	}
@@ -150,7 +152,28 @@ class cUtileriasParaOperaciones{
 			unset($DFol);
 		}
 		return $msg;
-	}	
+	}
+	function setEliminarRecibosPorFechas($FechaInicial, $FechaFinal){
+		$xF				= new cFecha();
+		$FechaInicial	= $xF->getFechaISO($FechaInicial);
+		$FechaFinal		= $xF->getFechaISO($FechaFinal);
+		
+		$msg = "============= PURGANDO RECIBOS POR FECHA DE $FechaInicial al $FechaFinal\r\n";
+		
+		$sql 			= "SELECT `idoperaciones_recibos` FROM `operaciones_recibos` WHERE `fecha_operacion` >='$FechaInicial' AND `fecha_operacion`<='$FechaFinal' ";
+		$xQL			= new MQL();
+		$rs 			= $xQL->getRecordset($sql);
+		
+		while($rw = $rs->fetch_Assoc()){
+			$idrecibo	= $rw["idoperaciones_recibos"];
+			$xRec		= new cReciboDeOperacion(false, false, $idrecibo);
+			if($xRec->init() == true){
+				$xRec->setRevertir(true);
+			}
+			$msg		.= $xRec->getMessages();
+		}
+		return $msg;
+	}
 }
 
 

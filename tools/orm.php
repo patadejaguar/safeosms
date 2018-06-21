@@ -1,7 +1,35 @@
 <?php
-include_once("../core/core.config.inc.php");
-include_once("../core/core.db.inc.php");
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
+//=====================================================================================================
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
 include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.CODIGO", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+
+
+$xHP->init();
+
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+
+
+
 $idgrid		= parametro("idgrid", "", MQL_RAW);
 $tabla		= parametro("tabla", "", MQL_RAW);
 $nombreForm	= parametro("nombreforma", "", MQL_RAW);
@@ -10,107 +38,10 @@ $menuid		= parametro("menu",0, MQL_INT);
 $menuparent	= parametro("menuparent",9999, MQL_INT);
 $idtit		= parametro("title", "", MQL_RAW);
 $idruta		= parametro("ruta", "", MQL_RAW);
+$idsql		= parametro("idsql", "", MQL_RAW);
+
 $menuid		= ($menuid <=0 ) ? "NULL" : $menuid;
-/*	ORM: Tabla:	general_structure	-	Generado:	[08/1/2014 10:36]	*/
-/*class cGeneral_structure {
-	private $mCampos	= array(
-			"index_struct" => array("N"=>"index_struct","T"=>"INT","V"=>"","L"=>11),
-			"tabla" => array("N"=>"tabla","T"=>"VARCHAR","V"=>"","L"=>100),
-			"campo" => array("N"=>"campo","T"=>"VARCHAR","V"=>"","L"=>100),
-			"valor" => array("N"=>"valor","T"=>"VARCHAR","V"=>"","L"=>250),
-			"tipo" => array("N"=>"tipo","T"=>"VARCHAR","V"=>"","L"=>20),
-			"longitud" => array("N"=>"longitud","T"=>"INT","V"=>"0","L"=>4),
-			"descripcion" => array("N"=>"descripcion","T"=>"VARCHAR","V"=>"","L"=>200),
-			"titulo" => array("N"=>"titulo","T"=>"VARCHAR","V"=>"","L"=>100),
-			"control" => array("N"=>"control","T"=>"ENUM","V"=>"|text|textarea|select|hidden|","L"=>0),
-			"sql_select" => array("N"=>"sql_select","T"=>"TINYTEXT","V"=>"","L"=>0),
-			"orientacion" => array("N"=>"orientacion","T"=>"ENUM","V"=>"|izquierda|derecha|","L"=>0),
-			"order_index" => array("N"=>"order_index","T"=>"INT","V"=>"0","L"=>10),
-			"script_field" => array("N"=>"script_field","T"=>"TEXT","V"=>"","L"=>0),
-			"help_text" => array("N"=>"help_text","T"=>"TEXT","V"=>"","L"=>0),
-			"tab_num" => array("N"=>"tab_num","T"=>"VARCHAR","V"=>"","L"=>25),
-			"css_class" => array("N"=>"css_class","T"=>"VARCHAR","V"=>"normalfield","L"=>20),
-			"input_events" => array("N"=>"input_events","T"=>"VARCHAR","V"=>"","L"=>120),
 
-	);
-	function __construct(){}
-	function get(){ return "general_structure";}
-	function getKey(){ return "index_struct";}
-	function index_struct($v=false){
-		if($v!==false){$this->mCampos["index_struct"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["index_struct"]);
-	}
-	function tabla($v=false){
-		if($v!==false){$this->mCampos["tabla"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["tabla"]);
-	}
-	function campo($v=false){
-		if($v!==false){$this->mCampos["campo"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["campo"]);
-	}
-	function valor($v=false){
-		if($v!==false){$this->mCampos["valor"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["valor"]);
-	}
-	function tipo($v=false){
-		if($v!==false){$this->mCampos["tipo"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["tipo"]);
-	}
-	function longitud($v=false){
-		if($v!==false){$this->mCampos["longitud"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["longitud"]);
-	}
-	function descripcion($v=false){
-		if($v!==false){$this->mCampos["descripcion"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["descripcion"]);
-	}
-	function titulo($v=false){
-		if($v!==false){$this->mCampos["titulo"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["titulo"]);
-	}
-	function control($v=false){
-		if($v!==false){$this->mCampos["control"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["control"]);
-	}
-	function sql_select($v=false){
-		if($v!==false){$this->mCampos["sql_select"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["sql_select"]);
-	}
-	function orientacion($v=false){
-		if($v!==false){$this->mCampos["orientacion"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["orientacion"]);
-	}
-	function order_index($v=false){
-		if($v!==false){$this->mCampos["order_index"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["order_index"]);
-	}
-	function script_field($v=false){
-		if($v!==false){$this->mCampos["script_field"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["script_field"]);
-	}
-	function help_text($v=false){
-		if($v!==false){$this->mCampos["help_text"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["help_text"]);
-	}
-	function tab_num($v=false){
-		if($v!==false){$this->mCampos["tab_num"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["tab_num"]);
-	}
-	function css_class($v=false){
-		if($v!==false){$this->mCampos["css_class"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["css_class"]);
-	}
-	function input_events($v=false){
-		if($v!==false){$this->mCampos["input_events"]["V"] =  $v; }
-		return new MQLCampo($this->mCampos["input_events"]);
-	}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){
-		$mql	= new MQL($this->get(), $this->mCampos, $this->getKey());
-		$this->mCampos	= $mql->setData($datos);
-	}
-
-}*/
 
 
 	$mEquivalencias	= array(
@@ -148,6 +79,30 @@ $create				= ( isset($_GET["create"]) ) ? true : false;
 
 $cmdForms			= ( isset($_GET["forms"]) ) ? true : false;
 $cmdReplace			= ( isset($_GET["sql"]) ) ? true : false;
+
+//========================= Testea si la DB Existe
+$isSQL				= false;
+
+if(strlen($idsql) >32 ){
+	
+	$idsql		= base64_decode($idsql);
+	
+	$nuevatabla	= "tmp_" . crc32($idsql);
+	
+	$res	= $xQL->setRawQuery("CREATE TEMPORARY TABLE IF NOT EXISTS $nuevatabla AS $idsql");
+	if($res === false){
+			exit ("No se pudo crear la tabla $nuevatabla con el SQL[ $idsql ]");
+	} else {
+		$tabla		= $nuevatabla;
+		$isSQL		= true;
+	}
+	
+}
+
+$strcode			= ""; //$strcode	.=
+$codeclass			= "";
+$codemenu			= "";
+
 $estructura			= "";
 $estructura2		= "";
 
@@ -162,6 +117,12 @@ $loader				= "";
 $nombreFile2		= ($nombreFile == "") ? "$tabla.frm.php" : "$nombreFile.frm.php";
 $nombreForm			= ($nombreForm == "") ? "frm$tabla" : $nombreForm;
 $gridF				= "";
+$CODE_CLASS_1		= "";
+$CODE_CLASS_2		= "";
+
+$FRM_CLASS_1		= "";
+$FRM_CLASS_2		= "";
+
 
 if($tabla != ""){
 		$NTable			= $tabla;
@@ -186,10 +147,10 @@ if($tabla != ""){
 		$formahead		.= "\$xFRM\t= new cHForm(\"$nombreForm\", \"$nombreFile2?action=\$action\");\n";
 			//ahora a grabar
 				$sql_fields = "SHOW FIELDS IN $NTable";
-				$cnn		= mysqli_connect(MQL_SERVER, MQL_USER, MQL_PASS, MQL_DB);
-				$rs_fields 	= $cnn->query($sql_fields);
+				//$cnn		= mysqli_connect(MQL_SERVER, MQL_USER, MQL_PASS, MQL_DB);
+				$rs_fields 	=  $xQL->getRecordset($sql_fields);//$cnn->query($sql_fields);
 				$i			= 0;
-				while($rowf = mysqli_fetch_array($rs_fields)){
+				while($rowf = $rs_fields->fetch_array()){ //mysqli_fetch_array($rs_fields)
 					$nombre				= $rowf[0];
 					$valor 				= $rowf[4];
 					$titulo				= ucfirst(str_replace("_", " ", $nombre));
@@ -332,22 +293,23 @@ if($tabla != ""){
 			
 			$estructura2				.= "\n}\n";
 			
-			header("Content-type: text/plain");
-			echo  $estructura;
-			echo "\n\n\n\n\n";
-			echo  $estructura2;
-			echo "\n\n\n\n\n";
-			echo "\n\n\n\n/* ===========\t\tFORMULARIO EDICION \t\t============*/\n";
+			//header("Content-type: text/plain");
+			//$strcode	.=  $estructura;
+			$CODE_CLASS_1				= $estructura;
+			
+			//
+			//$strcode	.= "\n\n\n\n\n";
+			//$strcode	.=  $estructura2;
+			//$strcode	.= "\n\n\n\n\n";
+			$FRM_CLASS_1	.= "/* ===========\t\tFORMULARIO EDICION \t\t============*/\n";
 			//ksort($controles);
 			//ksort($receivers);
 			//echo "\$clave\t\t= parametro(\"$loader\", null, MQL_INT);\n";
 			//echo "\$xTabla\t\t= new c" . ucfirst($tabla). "();\nif(\$clave != null){\$xTabla->setData( \$xTabla->query()->initByID(\$clave));}\n\$xTabla->setData(\$_REQUEST);\n";
-			echo "\$xTabla\t\t= new c" . ucfirst($tabla). "();\n\$xTabla->setData( \$xTabla->query()->initByID(\$clave));\n";
+			$FRM_CLASS_1	.= "\$xTabla\t\t= new c" . ucfirst($tabla). "();\n\$xTabla->setData( \$xTabla->query()->initByID(\$clave));\n";
 			//echo "if(\$action == MQL_ADD){\n} else if(\$action == MQL_MOD){}\n\n\n";
 			//\$clave\t\t= parametro(\"id\", null, MQL_INT);
-			echo "$formahead
-			\$xFRM->setTitle(\$xHP->getTitle());
-			\$xSel\t\t= new cHSelect();
+			$FRM_CLASS_1	.= "$formahead\r\n\$xFRM->setTitle(\$xHP->getTitle());\r\n\$xSel\t\t= new cHSelect();
 			
 ";
 /*
@@ -377,25 +339,31 @@ if($tabla != ""){
 			/*foreach($receivers as $id => $cnt){
 				echo $cnt;
 			}*/
-$idgrid		= ($idgrid == "") ? $tabla : $idgrid;
+			
+			
+			
+			$idgrid		= ($idgrid == "") ? $tabla : trim($idgrid);
 			echo $forma;
 			foreach($controles as $id => $cnt){
-				echo $cnt;
+				$FRM_CLASS_1	.= $cnt;
 			}
-	echo "\n\$xFRM->addCRUD(\$xTabla->get(), true);\n\$xFRM->addCRUDSave(\$xTabla->get(), \$clave, true);\necho \$xFRM->get();";
+			$FRM_CLASS_1	.= "\n\$xFRM->addCRUD(\$xTabla->get(), true);\n\$xFRM->addCRUDSave(\$xTabla->get(), \$clave, true);\necho \$xFRM->get();";
 	
 	//echo "\n\n\n\n/* ===========\t\tGRID OLD\t\t============*/\n";
 	//echo $pgrid;
 	//echo "\n\$mGridSQL			= \"$cgrid\";";
-	echo "\n\n\n\n/* ===========\t\tGRID JS\t\t============*/\n";
-	echo "\n\$xHG\t= new cHGrid(\"$idgrid\",\$xHP->getTitle());\r\n";
-	echo "\n\$xHG->setSQL(\"SELECT * FROM `$tabla` LIMIT 0,100\");\r\n\$xHG->addList();\r\n";	
-	echo $gridF;
+			$FRM_CLASS_2	.= "/* ===========\t\tGRID JS\t\t============*/\n";
+			$FRM_CLASS_2	.= "\n\$xHG\t= new cHGrid(\"$idgrid\",\$xHP->getTitle());\r\n";
+			$gen_sql1	= "\"SELECT * FROM `$tabla` LIMIT 0,100\"";
+			if($isSQL == true){
+				$gen_sql1	= "\"$idsql\"";
+			}
+			$FRM_CLASS_2	.= "\n\$xHG->setSQL($gen_sql1);\r\n\$xHG->addList();\r\n\$xHG->setOrdenar();\r\n";	
+			$FRM_CLASS_2	.= $gridF;
 	
-	echo "\n\$xHG->OToolbar(\"TR.AGREGAR\", \"jsAdd()\", \"grid/add.png\");\r\n\$xHG->OButton(\"TR.EDITAR\", \"jsEdit('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG->OButton(\"TR.ELIMINAR\", \"jsDel('+ data.record.$loader +')\", \"delete.png\");
-\$xFRM->addHElem(\"<div id='$idgrid'></div>\");\r\n\$xFRM->addJsCode( \$xHG->getJs(true) );\r\necho \$xFRM->get();
-?>
-<script>
+			$FRM_CLASS_2	.= "\n\$xHG->OToolbar(\"TR.AGREGAR\", \"jsAdd()\", \"grid/add.png\");\r\n\$xHG->OButton(\"TR.EDITAR\", \"jsEdit('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG->OButton(\"TR.ELIMINAR\", \"jsDel('+ data.record.$loader +')\", \"delete.png\");
+\$xFRM->addHElem(\"<div id='". $idgrid . "'></div>\");\r\n\$xFRM->addJsCode( \$xHG->getJs(true) );\r\necho \$xFRM->get();\r\n?>
+\r\n<script>
 var xG	= new Gen();
 function jsEdit(id){
 	xG.w({url:\"../$idruta/$nombreFile.edit.frm.php?clave=\" + id, tiny:true, callback: jsLG$idgrid});
@@ -404,20 +372,78 @@ function jsAdd(){
 	xG.w({url:\"../$idruta/$nombreFile.new.frm.php?\", tiny:true, callback: jsLG$idgrid});
 }
 function jsDel(id){
-	xG.rmRecord({tabla:\"$tabla\", id:id, callback:jsLG$idgrid});
+	xG.rmRecord({tabla:\"$tabla\", id:id, callback:jsLG$idgrid });
 }
 </script>
 <?php
 	";
 	
-	echo "\n\n\n\n/* ===========\t\tStructure\t\t============*/\n\r\n\r\n";
-	echo $txtReplace;
+			$codemenu	.= "/* ===========\t\tStructure\t\t============*/\n\r\n\r\n";
+			$codemenu	.= $txtReplace;
 	
 	//Menu
 	$mmnu	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_type`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ($menuid, $menuparent, '$idtit', '$idruta/$nombreFile2', '$idtit', 'fa-list-alt', 'command', '$menuid', '$menuid', 'true') ";
 	
-	echo "\n\n\n\n/* ===========\t\tMenu\t\t============*/\n\r\n\r\n";
-	echo $mmnu;
+	$codemenu	.= "\n\n\n\n/* ===========\t\tMenu\t\t============*/\n\r\n\r\n";
+	$codemenu	.= $mmnu;
 }
+
+
+
+
+
+$xFRM->addSeccion("idfrmphp-0", "Class Code");
+$code0	= highlight_string($CODE_CLASS_1, true);
+$xFRM->addHElem($code0);
+$xFRM->endSeccion();
+
+
+/*$xFRM->addSeccion("idtphp2", "Clase 2");
+$xFRM->addHElem("<code id='php-code-2' class=\"php\">" . nl2br($CODE_CLASS_2) . "</code>");
+$xFRM->endSeccion();*/
+
+
+
+$xFRM->addSeccion("idfrmphp-1", "Form Class 1");
+$code1	= highlight_string($FRM_CLASS_1, true);
+$xFRM->addHElem($code1);
+$xFRM->endSeccion();
+
+$xFRM->addSeccion("idfrmphp-2", "Form Class 2");
+$code2	= highlight_string($FRM_CLASS_2, true);
+$xFRM->addHElem($code2);
+$xFRM->endSeccion();
+
+
+$xFRM->addSeccion("idtsql", "sql");
+$xFRM->addHElem("<code id='sql-code' class=\"sql\">" . nl2br($codemenu) . "</code>");
+$xFRM->endSeccion();
+
+
+echo $xFRM->get();
+
+
+
+
+
+?>
+<!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script> -->
+
+<script>
+/*$(document).ready(function() {
+	  $('code').each(function(i, block) {
+	    hljs.highlightBlock(block);
+	  });
+});*/
+</script>
+<style>
+.fieldform code span { text-align: left; }
+.formoid-default .formoid-section { text-align: left; }
+</style>
+<?php
+
+
+$xHP->fin();
 //Ahora de puro SQL
 ?>

@@ -1,9 +1,9 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
- * @version 0.0.01
- * @package
- */
+* @version 0.0.01
+* @package
+*/
 //=====================================================================================================
 include_once("../core/go.login.inc.php");
 include_once("../core/core.error.inc.php");
@@ -45,7 +45,7 @@ if($OlvidarTodo == true){
 	$xHP->setTitle("TR.COTIZADOR .- ADMINISTRADOR");
 }
 
-$xFormu->init($xFormu->JS_LEAS_COT_VARS);
+$xFormu->init($xFormu->JS_LEAS_COT_VARS);	
 $jsFormulaPrec	= $xFormu->getFormula();
 
 $originador		= 1;
@@ -56,7 +56,7 @@ $OnEdit			= false;
 $TasaComision	= 0;
 $EsOriginador	= false;
 $EsAdministrado	= false;
-$EsRecalc		= true; //Indica si se recalcula
+$EsRecalc		= true; //Indica si se recalcula 
 //$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
@@ -117,7 +117,7 @@ function jsaGetTasa($rac, $plazo, $clave, $olvidar, $nuevo){
 			}
 			
 		}
-		
+
 	}
 	return $tab->getString();
 }
@@ -163,7 +163,7 @@ function jsaGetCostoGPS($plazo, $plan, $montogps, $clave, $olvidar, $nuevo){
 		$xGPS	= new cLeasingGPSCosteo();
 		if($xGPS->initByPlazoTipo($idx, $plan) == true){
 			$monto		= $xGPS->getMonto();
-			if($idx == $plazo){ //Si es igual al plazo actual, evaluar si es mayor
+			if($idx == $plazo){ //Si es igual al plazo actual, evaluar si es mayor 
 				$monto	= ($monto >= $montogps) ? $monto : $montogps;
 			}
 			$tab->add(TabSetValue::getBehavior("monto_gps_$idx", $xGPS->getMonto() ));
@@ -178,7 +178,7 @@ function jsaGetCostos($entidad, $precio, $clave, $olvidar, $nuevo){
 	$xQL		= new MQL();
 	$xT			= new cVehiculos_tenencia();
 	$xT->setData($xQL->getDataRow($sql));
-	
+
 	$tenencia	= $precio  * ($xT->tenencia()->v()/100);
 	$tenencia	= round($tenencia,2);
 	if($tenencia > $xT->limitetenencia()->v()){
@@ -196,7 +196,7 @@ function jsaGetCostos($entidad, $precio, $clave, $olvidar, $nuevo){
 	$tab -> add(TabSetValue::getBehavior("monto_tenencia_mny", getFMoney($tenencia) ));
 	
 	//$tab -> add(TabSetValue::getBehavior("monto_notario", 0)); //Pendiente de aclarar
-	
+
 	return $tab -> getString();
 }
 function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave, $olvidar, $nuevo, $rac, $admin){
@@ -270,7 +270,7 @@ function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave
 			$TRes	= setNoMenorQueCero($TRes);
 			//Valor residual a cero
 			$res 	= $xEmul->getValorResidual($precio, $aliado, $PRes, $TRes, $anticipo, $admin);
-			
+	
 			$tab->add(TabSetValue::getBehavior("residual_$PRes", $res ));
 			//setError($TRes);
 			//$tab->add(TabSetValue::getBehavior("tasaresidual_$PRes", $TRes ));
@@ -401,9 +401,18 @@ if($clave >0){
 	if($EsOriginador == false){
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA, "cmdagregarpersona", "persona");
+			$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
 			
 		} else {
 			$xFRM->OButton("TR.VER PERSONA", "jsVerPersona()", $xFRM->ic()->PERSONA, "cmdverpersona", "persona");
+			if($xTabla->credito()->v() > DEFAULT_CREDITO){
+				$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "var xC=new CredGen();xC.setAgregarDocumentos(" . $xTabla->credito()->v() . ")", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			} else {
+				$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "var xP=new PersGen();xP.setAgregarDocumentos(" . $xTabla->persona()->v() . ")", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			}
+			//Agregar Nuevos Documentos
+			
+			//$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS);
 		}
 		//Si el credito no ha sido asignado
 		if($xTabla->credito()->v() <= DEFAULT_CREDITO){
@@ -416,6 +425,9 @@ if($clave >0){
 	} else {
 		if($xTabla->persona()->v() <= DEFAULT_SOCIO){
 			//$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersona()", $xFRM->ic()->PERSONA);
+			
+			$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS, "cmdaddfiles", "whiteblue");
+			
 		}
 	}
 	//Si es Administrado
@@ -426,7 +438,7 @@ if($clave >0){
 	$xLeas	= new cCreditosLeasing($clave);
 	$xLeas->init();
 	
-	$xFRM->OButton("TR.AGREGAR DOCUMENTOS", "jsAgregarDocumentos()", $xFRM->ic()->ARCHIVOS);
+	
 }
 
 
@@ -687,15 +699,15 @@ if($xUser->getEsOriginador() == false){
 if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true) AND $OlvidarTodo == false){
 	$xFRM->OHidden("tipo_gps", $xTabla->tipo_gps()->v() );
 } else {
-	
-	$xSelGPS	= $xSel->getListaDeVehiculosGPS("tipo_gps", $xTabla->tipo_gps()->v());
-	$xSelGPS->addEvent("onblur", "jsaGetCostoGPS()");
-	$xFRM->addHElem($xSelGPS->get(true) );
-	
+
+$xSelGPS	= $xSel->getListaDeVehiculosGPS("tipo_gps", $xTabla->tipo_gps()->v());
+$xSelGPS->addEvent("onblur", "jsaGetCostoGPS()");
+$xFRM->addHElem($xSelGPS->get(true) );
+
 }
 
 if($xUser->getEsOriginador() == false){
-	
+
 	if(($xRuls->getInArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_FRM_DIS, "tipo_gps") == true) AND $OlvidarTodo == false){
 		$xFRM->OHidden("monto_gps", $xTabla->monto_gps()->v());
 	} else {
@@ -735,16 +747,16 @@ if($xUser->getEsOriginador() == false){
 		$arr["0"]	= SYS_NINGUNO;
 		foreach ($ArrAjustes as $idx => $idm){
 			$arr[$idm] = getFMoney($idm);		}
-			$xSelS->addOptions($arr);
-			
-			$xFRM->addHElem( $xSelS->get("montoajuste", "TR.SERVICIOS", $xTabla->montoajuste()->v()) );
-			
+		$xSelS->addOptions($arr);
+		
+		$xFRM->addHElem( $xSelS->get("montoajuste", "TR.SERVICIOS", $xTabla->montoajuste()->v()) );
+		
 	} else {
 		$xFRM->OHidden("montoajuste", $xTabla->montoajuste()->v());
 	}
 	//==================
 	$xFRM->OMoneda2("monto_seguro", $xTabla->monto_seguro()->v(), "TR.AUTOSEGURO");
-	
+		
 	$xFRM->OMoneda2("monto_placas", $xTabla->monto_placas()->v(), "TR.COSTOPLACAS");
 	
 	$xFRM->OMoneda2("monto_notario", $xTabla->monto_notario()->v(), "TR.GASTOSNOTARIALES");
@@ -819,7 +831,7 @@ if($xUser->getEsOriginador() == false){
 	$xFRM->addTag("Monto Com. Originador: <strong id='idtagcomorg_m'></strong>", $xHNot->NOTICE);
 	
 	if(MODO_DEBUG == true){
-		
+
 		if($NoUsarResidual == true){
 			$xFRM->addTag("No residual en <strong>Calculo</strong>", $xHNot->ERROR);
 		}
@@ -874,7 +886,7 @@ $tt		= "<table>";
 $tt		.= "<tr>";
 $tt		.= "<th>" . $xFRM->getT("TR.PLAZO") . "</th>";
 foreach ($rs as $rw){
-	
+
 	$xEsc->setData($rw);
 	$idx	= $xEsc->plazo()->v();
 	
@@ -888,9 +900,9 @@ foreach ($rs as $rw){
 		$xFRM->OHidden("tasavec_$idx", $xLeas->getTasaVec($idx));
 	}
 	$xChk		= new cHCheckBox();
-	
+
 	$xChk->addEvent("jsAddOmitidos($idx)", "onchange");
-	
+
 	$txtsi		= "";
 	if($OnEdit == false){
 		$xFRM->OHidden("idactive$idx", "false");
@@ -947,7 +959,7 @@ foreach ($rs as $rw){
 	$D		= $xQL->getDataRow("SELECT * FROM `leasing_residual` WHERE $idx >=`limite_inferior` AND $idx <= `limite_superior` ");
 	$li		= setNoMenorQueCero($D["porciento_residual"]);
 	$ls		= setNoMenorQueCero($D["porciento_final"]);
-	
+
 	if($OlvidarTodo == true){
 		$xTxt	= new cHText();
 		$xTxt->setDivClass("");
@@ -959,7 +971,7 @@ foreach ($rs as $rw){
 		
 		
 	} else {
-		
+	
 		if($li == $ls){
 			//Agregar control de solo lectura
 			$tr		= $xLeas->getTasaResidualPzo($idx);
@@ -967,7 +979,7 @@ foreach ($rs as $rw){
 			$tt		.= "<td class='tit' id='tasaresidual-$idx'>$tr</td>";
 			$xFRM->OHidden("tasaresidual_$idx", $tr);
 		} else {
-			
+		
 			if($ls <= $li){ $ls	= $li + 20;	}
 			$arrOpts= array();
 			
@@ -990,7 +1002,7 @@ foreach ($rs as $rw){
 			}
 			
 			$tt		.= "<th>" . $xHS->get("tasaresidual_$idx") . "</th>";
-			
+		
 		}
 	}
 	//Suma JS
@@ -1120,21 +1132,21 @@ foreach ($rs as $rw){
 	$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
 	$tt		.= "<td class='mny' id='monto_gps-$idx'></td>";
 }
-$tt		.= "</tr>";
-
-
+ $tt		.= "</tr>";
+ 
+ 
 //==================================================== Tasas de Interes
 if($EsOriginador == false){
 	$tt		.= "<tr>";
 	$tt		.= "<th>" . $xFRM->getT("TR.TASA_ANUALIZADA") . "</th>";
 	foreach ($rs as $rw){
-		$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
-		$tt		.= "<td class='mny' id='tasa_credito-$idx'></td>";
+	 	$xEsc->setData($rw);$idx	= $xEsc->plazo()->v();
+	 	$tt		.= "<td class='mny' id='tasa_credito-$idx'></td>";
 	}
 	$tt		.= "</tr>";
-	
-	//==================================================== Tasas de Vec
-	
+
+//==================================================== Tasas de Vec
+
 	$tt		.= "<tr>";
 	$tt		.= "<th>" . $xFRM->getT("TR.TASAVEC") . "</th>";
 	foreach ($rs as $rw){
@@ -1144,7 +1156,7 @@ if($EsOriginador == false){
 		$tt		.= "<td class='mny' id='tasavec-$idx'>" . $tvc . "</td>";
 	}
 	$tt		.= "</tr>";
-	
+
 	
 }
 //==================================================== Aliado
@@ -1194,7 +1206,7 @@ if($clave > 0){
 			$paso	= $xCProc->PASO_ATENDIDO;
 		}
 	}
-	
+
 	//Editar Bonos
 	$xFRM->OButton("TR.BONOS", "jsEditarBonos()", $xFRM->ic()->DINERO);
 	

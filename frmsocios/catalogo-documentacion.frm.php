@@ -52,16 +52,24 @@ $xHG	= new cHGrid("iddivcattip",$xHP->getTitle());
 
 $xHG->setSQL("SELECT * FROM `personas_documentacion_tipos` LIMIT 0,100");
 $xHG->addList();
+$xHG->setOrdenar();
 $xHG->addKey("clave_de_control");
-$xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "10%");
-$xHG->col("clasificacion", "TR.CLASIFICACION", "10%");
-$xHG->col("vigencia_dias", "TR.VIGENCIA", "10%");
-$xHG->col("almacen", "TR.ARCHIVO", "10%");
-$xHG->col("estatus", "TR.ESTATUS", "10%");
+
+
+$xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "40%");
+$xHG->col("clasificacion", "TR.CLASIFICACION", "8%");
+//$xHG->col("vigencia_dias", "TR.VIGENCIA", "8%");
+$xHG->col("almacen", "TR.ARCHIVO", "8%");
+$xHG->col("estatus", "TR.ESTATUS", "8%");
+$xHG->col("es_ident", "TR.IDENTIFICACION_OFICIAL", "8%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+
+
+if(MODO_DEBUG == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+}
 $xFRM->addHElem("<div id='iddivcattip'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 

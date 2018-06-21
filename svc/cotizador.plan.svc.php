@@ -39,14 +39,16 @@ $siniva			= parametro("siniva", false, MQL_BOOL);
 $tasa			= parametro("tasa", 0.6, MQL_FLOAT);
 $anticipo		= parametro("anticipo", 0, MQL_FLOAT);
 $residual		= parametro("residual", 0, MQL_FLOAT);
+$tipocuota		= parametro("tipocuota", 0, MQL_INT);
 
 $tasaiva		= parametro("iva", TASA_IVA, MQL_FLOAT);
 $tasaiva		= ($siniva == true) ? 0 : $tasaiva;
 
 $tasa			= ($tasa/100);
 $soloint		= parametro("solointeres", false, MQL_BOOL);
-
 $redondeo		= ($redondeo == true) ? 100 : 0;
+
+
 
 $rs				= array();
 $rs["error"]	= true;
@@ -62,9 +64,13 @@ $xGen->setFechaDesembolso(fechasys());
 
 
 if($soloint == true){
-	$xGen->setTipoDePago(CREDITO_TIPO_PAGO_INTERES_COMERCIAL);
+	$xGen->setTipoDeCuota(CREDITO_TIPO_PAGO_INTERES_COMERCIAL);
 } else {
-	$xGen->setTipoDePago(CREDITO_TIPO_PAGO_PERIODICO);
+	$xGen->setTipoDeCuota(CREDITO_TIPO_PAGO_PERIODICO);
+}
+
+if($tipocuota>0){
+	$xGen->setTipoDeCuota($tipocuota);
 }
 
 $xGen->setSoloTest(true);

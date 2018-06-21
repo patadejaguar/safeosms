@@ -31,6 +31,18 @@ $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("obser
 
 $idcontrato		= parametro("idcontrato", 0, MQL_INT);
 $tipodedocto	= parametro("idtipodedocto", 0, MQL_INT); $tipodedocto	= parametro("tipo", $tipodedocto, MQL_INT);
+
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+
+if($persona<= DEFAULT_SOCIO AND $credito> DEFAULT_CREDITO){
+	$xCred		= new cCredito($credito);
+	if($xCred->init() == true){
+		$idcontrato	= $credito;
+		$persona	= $xCred->getClaveDePersona();
+	}
+}
+
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -73,8 +85,8 @@ if($action == SYS_NINGUNO){
 		$xFRM->OFileDoctos("idnuevoarchivo","", "");
 	}
 	//accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-	$items	= count($xDoc->FTPListFiles());
-	if($items>0){
+	$itemsPDF	= count($xDoc->FTPListFiles("", ".pdf"));
+	if($itemsPDF > 0){
 		$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
 	} else {
 		$xFRM->OHidden("nombrearchivo", "");
@@ -89,14 +101,18 @@ if($action == SYS_NINGUNO){
 		$xFRM->OHidden("idcontrato",0);
 		$xFRM->setTitle($xFRM->getT("TR.FOTOGRAFIA"));
 	} else {
-		$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType)->get(true) );
+		$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType, $xSoc->getClaveDePersona())->get(true) );
 		$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE_EMISION");
 		$xFRM->OText_13("idnumeropagina", 0, "TR.PAGINA");
-		
-		$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
-		$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
-		
-		$xFRM->addHElem($xSelCP->get(true));
+
+		if($idcontrato>0){
+			$xFRM->OHidden("idcontrato", $idcontrato);
+			$xFRM->addTag($xFRM->getT("TR.CONTRATO") . " : $idcontrato");
+		} else {
+			$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
+			$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
+			$xFRM->addHElem($xSelCP->get(true));
+		}
 	}
 
 	//$xFRM->ODate("idfechavencimiento", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
@@ -105,7 +121,7 @@ if($action == SYS_NINGUNO){
 	$xFRM->endSeccion();
 	
 } else {
-	$xFRM->addCerrar();
+	$xFRM->addCerrar("", 3);
 	$nombrearchivo	= parametro("nombrearchivo", "", MQL_RAW);
 	//$observaciones	= (isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
 	//$tipodedocto	= (isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";

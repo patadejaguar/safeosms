@@ -652,7 +652,7 @@ class cAlertasDelSistema {
 			}
 		}
 	}
-	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function getMessages($out = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $out);	}
 	function getDay($fecha, $periocidad, $variable){
 		$valor_dia	= 24*60*60;
 		$fechaMark	= strtotime($fecha);
@@ -705,6 +705,7 @@ class cAlertasDelSistema {
 		$xT					= new cTipos();
 		$xLog				= new cCoreLog();
 		$arrVars			= ($arrVars == false) ? $this->mArrVars : $arrVars;
+		$arrVars			= array_merge($this->mArrVars, $arrVars);
 		
 		//idprograma, nombre_del_aviso, forma_de_creacion, programacion, destinatarios, microformato, tipo_de_medios, intent_check, intent_command 
 		$sql				= "SELECT *	FROM sistema_programacion_de_avisos WHERE idprograma=$id LIMIT 0,1";
@@ -836,6 +837,7 @@ class cAlertasDelSistema {
 		foreach ($arrVars as $variable => $valor){
 			$texto	= str_replace("{" . $variable . "}", $valor, $texto);
 		}
+		
 		if($enviar == true){
 			$url	= $mOb->intent_command()->v(OUT_TXT);
 			//2 procesado del comando
@@ -884,6 +886,7 @@ class cAlertasDelSistema {
 		//setLog($this->mMessages);
 		$this->mObProgAv		= $mOb;
 		//return $this->mObProgAv;
+		
 	}
 	function getTipoDeProgramacion(){
 		$arrPers		= array(
@@ -1036,6 +1039,19 @@ class cAlertasDelSistema {
 	}
 	function getArrMails(){ return $this->mArrMails; }
 	function getArrTels(){ return $this->mArrTels; }
+	function setDataByRecibo($idrecibo){
+		if($idrecibo > 0){
+			$xFM	= new cFormato();
+			$xFM->setRecibo($idrecibo);
+			$vars	= $xFM->getVariables();
+			if(is_array($vars)){
+				$vars["clave_de_credito"]	= $vars["variable_recibo_id_contrato"];
+				$vars["nombre_de_persona"]	= $vars["variable_nombre_del_socio"];
+				
+				$this->mArrVars		= array_merge($vars, $this->mArrVars);
+			}
+		}
+	}
 }
 
 
@@ -1187,13 +1203,15 @@ class cNotificaciones {
 			
 			//Ask for HTML-friendly debug output
 			$mail->Debugoutput 		= 'echo'; //html
+			
 			//Set the hostname of the mail server
 			$mail->Host      		= $this->mMailSrv;
 			//Set the SMTP port number - 587 for authenticated TLS, a.k.a. RFC4409 SMTP submission
 			$mail->Port       		= $this->mMailSrvPort;
 			//Set the encryption system to use - ssl (deprecated) or tls
-			if($this->mMailSrvTLS == true OR $this->mMailSrvTLS == "tls" OR $this->mMailSrvPort == 587){
-				$mail->SMTPSecure 	= 'tls';//$this->mMailSrvTLS;//
+			if($this->mMailSrvTLS == "true" OR $this->mMailSrvTLS == "tls"){
+				$mail->SMTPSecure 	= 'tls';
+				$omsg	.= "WARN\tTLS Activado\r\n";
 			}
 			//Whether to use SMTP authentication
 			$mail->SMTPAuth   		= true;
@@ -1236,14 +1254,17 @@ class cNotificaciones {
 	
 			//Send the message, check for errors
 			if(!$mail->Send()) {
-				$omsg	.= "ERROR\t$to\t" . $mail->ErrorInfo . "\r\n";
+				$omsg	.= "ERROR\t$to\tInfo: " . $mail->ErrorInfo . "\r\n";
+				$omsg	.= "ERROR\t$to\tServer: " . $this->mMailSrv . "\r\n";
+				$omsg	.= "ERROR\t$to\tPort: " . $this->mMailSrvPort . "\r\n";
+				$omsg	.= "ERROR\t$to\tUser: " . $this->mMailSrvUsr . "\r\n";
 			} else {
 				$omsg	.= "OK\tMensaje Enviado a $to con exito.\r\n";
 			}
 		} else {
 			$omsg	.= "ERROR\tCorreo Invalido $to\r\n";
 		}
-		//if(MODO_DEBUG == true){ setLog($omsg); }
+		if(MODO_DEBUG == true){ setLog($omsg); }
 		return $omsg;
 	}
 	function sendCloudMessage($mensaje){

@@ -1566,6 +1566,16 @@ $xHP->init();
 				$xop				= new cUtileriasParaOperaciones();
 				$msg				.= $xop->setGenerarRecibosGlobales();
 				break;
+				
+				
+			case 502:
+				$FechaInicial		= $id;
+				$FechaFinal			= $id2;
+				$xOp				= new cUtileriasParaOperaciones();
+				$msg				.= $xOp->setEliminarRecibosPorFechas($FechaInicial, $FechaFinal);
+				
+				break;
+				
 			case 13001:
 				$ForzarCorreccion	= ( strtoupper($id) == "SI") ? true : false;
 				$xPerUtils			= new cPersonas_utils();

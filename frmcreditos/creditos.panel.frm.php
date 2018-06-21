@@ -35,7 +35,7 @@ $idsocio			= $persona;
 $idsolicitud		= $credito;
 $idrecibo			= DEFAULT_RECIBO;
 $CargarEstado		= false;
-
+$xUsr				= new cSystemUser(); $xUsr->init();
 
 echo $xHP->getHeader();
 $oFrm				= new cHForm("frmextrasol", "creditos.panel.frm.php");
@@ -310,34 +310,50 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				}
 			}
 			//$oFrm
-			if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
+			//if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
 				//Castigos
 				if($xCred->getEstadoActual() == CREDITO_ESTADO_VENCIDO){
 					$oFrm->OButton("TR.Castigos", "jsCastigos($idsolicitud)", "error");
 				}
 				//============= Tabla de Operaciones
-				$sql		= $mSQL->getListadoDeOperaciones("", $idsolicitud);
+				$recsotros	= (MODO_DEBUG == true) ? "" :  " AND ( `operaciones_tipos`.`es_estadistico` = '0' ) ";
+				$sql		= $mSQL->getListadoDeOperaciones("", $idsolicitud, "", $recsotros);
 				$cEdit		= new cTabla($sql);
-				$cEdit->addTool(SYS_UNO);
-				$cEdit->addTool(SYS_DOS);
+
+				if(MODO_DEBUG == true){
+					$cEdit->addEliminar();
+					$cEdit->addEditar();
+				}
+				
 				$cEdit->setTdClassByType();
 				$cEdit->setKeyField("idoperaciones_mvtos");
 				$HOperaciones=$cEdit->Show();
 				if($cEdit->getRowCount()>0){ $xHTabs->addTab("TR.Operaciones", $HOperaciones); }
 				
 				$mSQL->setInvertirOrden();
-				$cMovs		= new cTabla($mSQL->getListadoDeSDPMCredito($idsolicitud));
+				$cMovs		= new cTabla($mSQL->getListadoDeSDPMCredito($idsolicitud), 0, "idtablesaldos");
+				
+				$cMovs->setColSum("interes_moratorio");
+				$cMovs->setColSum("interes_normal");
+				$cMovs->setColSum("monto_calculado");
+				//$cMovs->setColSum("");
+				//$cMovs->setColSum("");
+				//$cMovs->setColSum("");
+				
+				$cMovs->setUsarNullPorCero();
+				$cMovs->setOmitidos("fecha_anterior");
 				$cMovs->setOmitidos("numero_de_credito");
 				$cMovs->setTitulo("dias_transcurridos", "dias");
 				
 				$HSDPM		= $cMovs->Show();
 				if($cMovs->getRowCount()>0){ $xHTabs->addTab("TR.Historial", $HSDPM); }				
-			}
+			//}
 			if(MODO_DEBUG == true){
 			
 				$xHTabs->addTab("TR.Sistema", $xCred->getMessages(OUT_HTML));
 				$oFrm->addLog($xCred->getMessages());
-			}			
+			}
+			
 			$oFrm->addHTML( $xHTabs->get() );
 		}
 
@@ -353,6 +369,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 		$oFrm->OButton("TR.VER FLOTA", "jsGetFlota(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->TRUCK);
 	}
 	
+	$oFrm->addCerrar();
 	
 	echo $oFrm->get();
 ?>

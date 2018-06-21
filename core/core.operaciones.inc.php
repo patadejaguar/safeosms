@@ -1256,14 +1256,22 @@ class cReciboDeOperacion{
 		}
 	}
 	function setTotalPorProrrateo($total){
+		
 		if(setNoMenorQueCero($total)>0){
+			$xQL				= new MQL();
 			$recibo				= $this->mCodigoDeRecibo;
 			$factor				= $total / $this->getTotal(); //2500 / 8000 = 
-			$this->mMessages	.= "CHANGES\tCambiar " . $this->getTotal() . " a $total\r\n";
-			$rec				= my_query("UPDATE operaciones_recibos SET total_operacion=(total_operacion*$factor) WHERE idoperaciones_recibos=$recibo");
-			$ops				= my_query("UPDATE operaciones_mvtos SET afectacion_real=(afectacion_real*$factor), afectacion_cobranza=(afectacion_cobranza*$factor), afectacion_contable=(afectacion_contable*$factor), afectacion_estadistica=(afectacion_estadistica*$factor) WHERE recibo_afectado=$recibo");
-			$this->mMessages	.= $rec[SYS_INFO];
-			$this->mMessages	.= $ops[SYS_INFO];
+			$this->mMessages	.= "WARN\t$recibo\tCambiar " . $this->getTotal() . " a $total\r\n";
+			$rec				= $xQL->setRawQuery("UPDATE operaciones_recibos SET total_operacion=(total_operacion*$factor) WHERE idoperaciones_recibos=$recibo");
+			$ops				= $xQL->setRawQuery("UPDATE operaciones_mvtos SET afectacion_real=(afectacion_real*$factor), afectacion_cobranza=(afectacion_cobranza*$factor), afectacion_contable=(afectacion_contable*$factor), afectacion_estadistica=(afectacion_estadistica*$factor) WHERE recibo_afectado=$recibo");
+			if($rec === false){
+				$this->mMessages	.= "ERROR\t$recibo\tFallo al actualizar el Recibo al prorrateo\r\n";
+			}
+			if($ops === false){
+				$this->mMessages	.= "ERROR\t$recibo\tFallo al actualizar el Operaciones al prorrateo\r\n";
+			}
+			//$this->mMessages	.= $rec[SYS_INFO];
+			//$this->mMessages	.= $ops[SYS_INFO];
 		}
 	}
 	function getBancoPorOperacion(){

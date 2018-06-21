@@ -422,9 +422,30 @@ class cCreditosLeasing {
 	function setPersona($persona){
 		$persona	= setNoMenorQueCero($persona);
 		$xQL		= new MQL();
+		$xCred		= new cCredito();
+		
 		$xQL->setRawQuery("UPDATE `originacion_leasing` SET `persona`=$persona WHERE `idoriginacion_leasing`=" . $this->mClave);
 		$xCP		= new cCreditosProceso();
 		$this->setPaso($xCP->PASO_CON_PERSONA);
+		
+		//Importar Documentos por ID de origen
+		
+		$xDoc			= new cDocumentos();
+		$pref			= $xCred->ORIGEN_ARRENDAMIENTO;
+		$prepath		= $xDoc->getPathPorTipo($pref) . "/";
+		//$xDoc->getFileExists($file);
+		$idxBusq		= "281_" . $this->mClave  . "_";
+		$arrFRels		= $xDoc->getFileList($idxBusq, $prepath);
+		foreach ($arrFRels as $idx => $nm){
+			if($xDoc->FTPPersonaMvDoc($persona, $nm, $prepath) == true){
+				$dinfo	= explode("_", $nm, 4);
+				$obs	= "Leasing ID " . $this->mClave;
+				
+				$tipo	= setNoMenorQueCero($dinfo[2]); //origen _ clave_origen _ tipo _ nombre
+				$xDoc->add($tipo, 0, $obs, false, $persona, $nm);
+			}
+			$this->mMessages	.= $xDoc->getMessages();
+		}
 		
 		$xQL		= null;
 		$this->setCuandoSeActualiza();

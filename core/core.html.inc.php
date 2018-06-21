@@ -1626,6 +1626,21 @@ class cHForm {
 		}
 		return $xTxt;
 	}
+	function OBuscar($id, $valor, $titulo = "", $funcion = "", $html = ""){
+		$xTxt	= new cHText();
+		$xTxt->setDivClass("tx4 blue");
+		if($titulo == ""){
+			$titulo = "TR.BUSCAR";
+		}
+		if($funcion !== ""){
+			$xTxt->addEvent("var xG=new Gen();xG.isKey({evt:event,ambos:true, callback:$funcion });", "onkeyup");
+		}
+		
+		$this->addHElem( $xTxt->getNormal($id, $valor, $titulo, $html) );
+		
+		return $xTxt;
+	}
+	
 	function OMail($id, $valor, $titulo = "", $add = true, $html = ""){
 		$xTxt	= new cHText();
 		if($add == true){
@@ -1911,8 +1926,9 @@ class cHForm {
 		//$this->addJsCode("function jsClose");
 		$this->setHappyButton("btn_guardar");
 	}
-	function addCRUDSave($tabla, $clave, $cerrar = false){
+	function addCRUDSave($tabla, $clave, $cerrar = false, $noask = false){
 		$cls	= ($cerrar == true) ? ",close:true": "";
+		$cls	.= ($noask == true) ? ",nomsg:true" : ""; 
 		$this->addGuardar("var xG=new Gen();xG.save({evt:event,form:'" . $this->mID . "',tabla:'$tabla', id:'$clave'$cls})", "", "TR.ACTUALIZAR");
 		//$this->addJsCode("function jsClose");
 		$this->setHappyButton("btn_guardar");
@@ -2137,6 +2153,7 @@ class cHCobros {
 class cHFile extends cHInput {
 	private $mLIDs			= array();
 	private $mUseProgress	= false;
+	private $mAccepts		= "image/jpeg,image/png,application/pdf";
 	function getBasic($id, $valor, $titulo="",$css=""){
 		$this->setClearProperties();
 		$titulo 					= ($titulo == "") ? "TR.Archivo" : $titulo;
@@ -2147,6 +2164,9 @@ class cHFile extends cHInput {
 		$this->mIncLabel			= ($titulo!="") ? true : false;
 		$this->mArrProp["value"]	= $valor;
 		$this->mValue				= $valor;
+		if(!isset($this->mArrProp["accept"])){
+			$this->mArrProp["accept"]	= $this->mAccepts;
+		}
 		$css						= ($css == "") ? $this->mDivClass : $css;
 		$this->setDivClass($css);
 		//, "<span id=\"na-$id\"><i class=\"fa fa-file\"></i></span>"
@@ -3249,16 +3269,25 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
-	function getTiposDeDoctosPersonales($id = "", $tipo = ""){
+	function getTiposDeDoctosPersonales($id = "", $tipo = "", $persona = false, $tags = ""){
 		$id			= ($id == "") ? "idtipodedocto" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		=  "SELECT `clave_de_control`, `nombre_del_documento` FROM personas_documentacion_tipos";
+		$persona	= setNoMenorQueCero($persona);
 		
+		$sqlSc		=  "SELECT `clave_de_control`, `nombre_del_documento` FROM personas_documentacion_tipos";
+		$sqlSc		.= " WHERE `estatus`=1 ";
 		if($tipo == BASE_DOCTOS_PERSONAS_FISICAS){
-			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IP') OR (`personas_documentacion_tipos`.`clasificacion` ='DG') ";
+			$sqlSc	.= " AND ((`personas_documentacion_tipos`.`clasificacion` ='IP') OR (`personas_documentacion_tipos`.`clasificacion` ='DG')) ";
 		}
 		if($tipo == BASE_DOCTOS_PERSONAS_MORALES){
-			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IPM') OR (`personas_documentacion_tipos`.`clasificacion` ='DG') ";
-		}		
+			$sqlSc	.= " AND ((`personas_documentacion_tipos`.`clasificacion` ='IPM') OR (`personas_documentacion_tipos`.`clasificacion` ='DG')) ";
+		}
+		if($persona>DEFAULT_SOCIO){
+			$sqlSc	.= " AND getEsDoctoEntregadoByP($persona,`clave_de_control`) = false ";
+		}
+		if($tags !== ""){
+			$sqlSc	.= " AND (`tags`LIKE '%tags%') ";
+		}
+		
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setEsSql();
 		$xS->setLabel("TR.Tipo de Documento");
@@ -3544,11 +3573,11 @@ class cHSelect {
 		$sqlSc		=  "SELECT `clave_de_control`, `nombre_del_documento` FROM personas_documentacion_tipos";
 		
 		if($tipo == BASE_DOCTOS_PERSONAS_FISICAS){
-			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IP')";
+			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IP') AND `personas_documentacion_tipos`.`es_ident`=1 ";
 		}
 		// OR (`personas_documentacion_tipos`.`clasificacion` ='DG')
 		if($tipo == BASE_DOCTOS_PERSONAS_MORALES){
-			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IPM') ";
+			$sqlSc	.= " WHERE (`personas_documentacion_tipos`.`clasificacion` ='IPM') AND `personas_documentacion_tipos`.`es_ident`=1 ";
 		}		
 		
 		$xS 	= new cSelect($id, $id, $sqlSc);
@@ -3711,6 +3740,12 @@ class cHSelect {
 		$xS->setEliminarOption(180);
 		return $xS;
 	}
+	/**
+	 * Tipo de cuota de pago
+	 * @param string $id nombre del control
+	 * @param integer $select Item seleccionado
+	 * @return cSelect
+	 */
 	function getListaDeTipoDePago($id = "", $select = false){
 		$select	= setNoMenorQueCero($select);
 		$select	= ($select <= 0) ? CREDITO_TIPO_PAGO_PERIODICO : $select;
@@ -4788,7 +4823,8 @@ class cHSelect {
 		$xL			= new cLang();
 		$xS->addEspOption( TM_ABONO,  $xL->getT("TR.ABONOS") );
 		$xS->addEspOption( TM_CARGO,  $xL->getT("TR.CARGOS") );
-	
+		$xS->setDivClass("tx14 tx18 blue");
+		
 		if($selected != 0){	$xS->setOptionSelect($selected);	}
 		$xS->setEsSql();
 		$xS->setLabel("TR.Tipo de Asiento");
@@ -5789,6 +5825,7 @@ class cTabla {
 	private $mMaxRed		= 6;
 	
 	private $mFechaCorte	= false;//Fecha de Corte SQL para reportes
+	private $mArrColSums	= array();
 	/**
 	 * Inicializador de la Clase
 	 * @param string	$vSql	SQL que genera la Tabla
@@ -5864,12 +5901,17 @@ class cTabla {
 	*/
 	function setFootSum($arr){
 		if( is_bool($arr) ){
-			$this->mSumFoot	= $arr;
+			$this->mSumFoot		= $arr;
 		}
 		if( is_array($arr) ){
 			$this->mSumFoot		= true;
-			$this->mFootSums	= $arr;
+			foreach ($arr as $idx => $kx){
+				$this->mArrColSums[$kx]	= $kx;
+			}
 		}
+	}
+	function setColSum($nombre){
+		$this->mArrColSums[$nombre]	= $nombre;
 	}
 	function setSQL($vSql){ $this->mSql = $vSql; }
 	/**
@@ -6104,7 +6146,7 @@ LONGTEXT: 252
 			if($vCaption!="" AND $this->mTipoSalida == OUT_EXCEL){ $capTable	= "<caption>$vCaption</caption>"; }
 			//Clase de la Tabla
 			if($this->mClassT != "") {
-				$this->mClassT	= " ". $this->mClassT;
+				$this->mClassT		= " ". $this->mClassT;
 			}
 			$vClassT = "class=\"listado" . $this->mClassT . "\" ";
 			//Contar Tools
@@ -6131,7 +6173,7 @@ LONGTEXT: 252
 			//======================================================================
 			//============================= Formato de Columnas y otras propiedades
 			//======================================================================
-			if($rs){ //=== IF RS 
+			if($rs){ //=== IF RS
 				while($obj	= $rs->fetch_field()){
 					if(!isset($this->mOmitidos[$obj->name])){
 					$this->mEsq[$obj->name]["N"] 		= $obj->name;
@@ -6161,6 +6203,8 @@ LONGTEXT: 252
 					}
 					//Visualizar
 					$items++;
+					//End Omitidos
+					
 					} else {
 						//Generar Campos Omitidos
 						$CamposOmi[$obj->name]	= $obj->name;
@@ -6469,25 +6513,28 @@ LONGTEXT: 252
 				}
 		
 			}
-			$this->vFields 			= $rw;
-			// --------------------------------------------------------------
-			$rs->free();
+				$this->vFields 			= $rw;
+				// --------------------------------------------------------------
+				$rs->free();
 			}
-			$ism	= $this->mFootSums;
-			//sumas
+			$ccinx	= 0;
 			$tfoot	= "";
-			for($i=0; $i<=$ifl; $i++){
-				if(isset($ism[$i]) ){
+			foreach ($this->mEsq as $nombre => $col){
+				$fnombre			= $col["N"];
+				
+				if(isset( $this->mArrColSums[$fnombre] ) ){
 					if($this->mTipoSalida == OUT_EXCEL){
-						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<td>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</td>" : "<td></td>";
+						$tfoot	.= ( isset($this->mFieldSum[ $fnombre ]) ) ? "<td>" . getFMoney($this->mFieldSum[ $fnombre ]) . "</td>" : "<td></td>";
 					} else {
-						$tfoot	.= ( isset($this->mFieldSum[ $ism[$i] ]) ) ? "<td class='total'><input type='hidden' id='idsum-" .  $ism[$i] . "' value='" . $this->mFieldSum[ $ism[$i] ] . "' /><span id='sum-" .  $ism[$i] . "'>" . getFMoney($this->mFieldSum[ $ism[$i] ]) . "</span></td>" : "<td></td>";
+						$tfoot	.= ( isset($this->mFieldSum[ $fnombre ]) ) ? "<td class='total'><input type='hidden' id='idsum-" .  $fnombre . "' value='" . $this->mFieldSum[ $fnombre ] . "' /><span id='sum-" .  $fnombre . "'>" . getFMoney($this->mFieldSum[ $fnombre ]) . "</span></td>" : "<td></td>";
 					}
 				} else {
-					$tfoot		.= ($i==0 AND $this->mRowCount > 0 AND $this->mNoFilas == false) ? "<th>Filas: " . $this->mRowCount . "</th>" : "<td>" . $this->mOpTitleFoot . "</td>";
-					 
+					$tfoot		.= ($ccinx==0 AND $this->mRowCount > 0 AND $this->mNoFilas == false) ? "<th>Filas: " . $this->mRowCount . "</th>" : "<td>" . $this->mOpTitleFoot . "</td>";
+					
 				}
+				$ccinx++;
 			}
+			
 			$tfoot				.= ($tht == "") ? "" : "<td></td>"; //corrige columna fatante el tools
 			$tfoot				= ($oldTags == true) ? "<tr>$tfoot</tr>" : "<tfoot><tr>$tfoot</tr></tfoot>";
 			
@@ -8299,6 +8346,7 @@ class cFormato {
 			$this->mArr["variable_monto_del_recibo"] 			= $xCant->moneda();
 			$this->mArr["variable_numero_del_recibo"]			= $xRec->getCodigoDeRecibo();
 			$this->mArr["variable_recibo_sdo_historico"]		= $xRec->getSaldoHistorico();
+			$this->mArr["variable_recibo_id_contrato"]			= $xRec->getCodigoDeDocumento();
 			///$this->mArr["variable_nombre_del_cajero"] 			= $xRec->getOUsuario()->getNombreCompleto();
 			$this->mEsRecibo									= true;
 			$this->setUsuario($xRec->getCodigoDeUsuario());

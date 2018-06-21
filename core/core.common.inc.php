@@ -2052,7 +2052,7 @@ class cSocio{
 				if($this->mSocioIniciado == false){ $this->init(); }
 				$xNot			= new cNotificaciones();
 				$xNot->sendMail("$sucursal - $mTit [$tipo]", $txt, $this->getCorreoElectronico());
-				if($sms == true){
+				/*if($sms == true){
 					$xLoc		= new cReglasDePais();
 					$xWap		= new cSeguimientoWathsApp();
 					$telMovil	= $xLoc->getTelMovil($this->getTelefonoPrincipal());
@@ -2062,7 +2062,9 @@ class cSocio{
 					}
 					$this->mMessages	.= $xNot->getMessages();
 					$this->mMessages	.= $xLoc->getMessages();
-				}
+				}*/
+				
+				$this->mMessages	.= $xNot->getMessages();
 			} else {
 				$msg	.= "OK\tNota Agregada : $txt\r\n";
 			}
@@ -6500,6 +6502,7 @@ class cPersonaActividadEconomica {
 	public $ESTADO_NOVERIFICADO		= 99;
 	public $ESTADO_VERIFICADO		= 1;
 	public $ESTADO_ANTERIOR			= 0;
+	private $mTable					= "socios_aeconomica";
 	//private $mNumero		= "";
 	//private $mCalle			= "";
 	
@@ -6529,7 +6532,30 @@ class cPersonaActividadEconomica {
 		}
 	}
 	function isInit(){ return $this->mInit; }
-	function setID($id){ $this->mIDCargado = setNoMenorQueCero($id); }
+	function setID($id, $init=false){ 
+		$this->mIDCargado = setNoMenorQueCero($id);
+		if($init == true AND $this->mIDCargado > 0){
+			$sql		= "SELECT * FROM `socios_aeconomica` WHERE `idsocios_aeconomica`="  . $this->mIDCargado . " LIMIT 0,1";
+			$xCache		= new cCache();
+			$xT			= new cSocios_aeconomica();
+			$idx		= $this->mTable . "-" . $this->mIDCargado;
+			$data		= $xCache->get($idx);
+			$run		= true;
+			if(is_array($data)){
+				if( isset($data[$xT->SOCIO_AECONOMICA]) ){
+					$this->mPersona	= $data[$xT->SOCIO_AECONOMICA];
+				}
+			} else {
+				$xQL	= new MQL();
+				$data	= $xQL->getDataRow($sql);
+				if( isset($data[$xT->SOCIO_AECONOMICA]) ){
+					$this->mPersona	= $data[$xT->SOCIO_AECONOMICA];
+					$xCache->set($idx, $data);
+				}
+			}
+			
+		}
+	}
 	function setIDCache($clave = 0, $persona = 0){
 		if($clave > 0){
 			$this->mIDCache		= TPERSONAS_ACTIVIDAD_ECONOMICA . "-" . $clave;
@@ -6544,14 +6570,15 @@ class cPersonaActividadEconomica {
 	}	
 	function init($data = false){
 		
-		$xCache		= new cCache();
-		$xT			= new cSocios_aeconomica();
-		$inCache	= true;
+		$xCache				= new cCache();
+		$xT					= new cSocios_aeconomica();
+		$inCache			= true;
+		$this->mIDCargado	= setNoMenorQueCero($this->mIDCargado);
 		
 		if($this->mPersona > 0){
 			$ByTipo							= "";
 			
-			$ByID							= (setNoMenorQueCero($this->mIDCargado) > 1)? " AND `idsocios_aeconomica` = " . $this->mIDCargado : "";
+			$ByID							= ($this->mIDCargado > 1)? " AND `idsocios_aeconomica` = " . $this->mIDCargado : "";
 			if(!is_array($data)){
 				$data						= $xCache->get($this->mIDCache);
 				if(!is_array($data)){
@@ -6704,6 +6731,10 @@ class cPersonaActividadEconomica {
 		if($evaluar == true ){ $this->mPuesto = $xClean->cleanEmpleo($this->mPuesto, $PorDefecto); } 
 		return $this->mPuesto;	
 	}
+	/**
+	 * Clave de Domicilio Vinculado
+	 * @return integer
+	 */
 	function getDomicilio(){  return $this->mDomicilio; }
 	function getNombreEmpresa(){ return $this->mNombreEmpresa; }
 	function getTelefono(){ return $this->mTelefono; }

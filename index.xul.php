@@ -121,6 +121,7 @@ $xHP->setNoCache();
 echo $xHP->getHeader();
 
 ?>
+
 <style>
 	html, body, object  {
 		padding: 0 !important;

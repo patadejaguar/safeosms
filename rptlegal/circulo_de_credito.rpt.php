@@ -491,7 +491,16 @@ foreach($datos as $rw){
 	$ValorActivoValuacion		= 0;	//Monto total de las garantias
 	$NumeroDePagos				= $xCred->getPagosAutorizados();
 	$FrecuenciaDePagos			= $xCR->getEPeriocidad( $xCred->getPeriocidadDePago() );
-	$MontoPagar					= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));		//Acabar, valor de la letra actual o saldo?
+	
+	if($xCred->getEsPagado() == true){
+		$MontoPagar				= 0;
+	} else {
+		if($xCred->isAFinalDePlazo() == true){
+			$MontoPagar			= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));		//Acabar, valor de la letra actual o saldo?
+		} else {
+			$MontoPagar			= $xCR->getMonto($xCred->getMontoDeParcialidad());		//Va el monto de la parcialidad
+		}
+	}
 	$FechaAperturaCuenta		= $xCR->getDate($xCred->getFechaDeMinistracion() );
 	$FechaUltimoPago			= $xCred->getFechaUltimoDePago();
 	//setLog("1....$FechaUltimoPago");

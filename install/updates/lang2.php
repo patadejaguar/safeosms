@@ -631,7 +631,8 @@ $lang["20180401"][]	= array("ASIGNADO", "Asignado", "Assigned");
 $lang["20180501"][]	= array("FONDODECAJA", "Fondo Inicial", "Cash Fund");
 $lang["20180501"][]	= array("MAXVALOR", "Monto Max.", "Max Value");
 $lang["20180501"][]	= array("MAXNUMERO", "Num. Max.", "Max Number");
-//$lang["20180501"][]	= array("", "", "");
+$lang["20180501"][]	= array("CARTERA", "Portafolio", "Portafolio");
+$lang["20180501"][]	= array("AYUDA", "Ayuda", "Help");
 //$lang["20180501"][]	= array("", "", "");
 
 

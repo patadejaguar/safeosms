@@ -15,19 +15,30 @@
 $xHP			= new cHPage("TR.COTIZADOR", HP_REPORT);
 $nombre			= parametro("nombre");
 $logo			= parametro("logo", true, MQL_BOOL);
+$conuser		= parametro("conuser", false, MQL_BOOL);
 
 $xHP->addJsFile("../js/base64.js");
 $xHP->init("importHTML()");
 if($logo == true){
 	echo getRawHeader();
 }
+$quiengenera		= "___________________________";
+$xUsr				= new cSystemUser(); $xUsr->init();
+if($conuser == true){
+	$quiengenera	.= "<br />". $xUsr->getNombreCompleto();
+} else {
+	
+}
 //echo "<table><tbody><tr><th>At'n:</th><td>$nombre</td></tr></tbody></table>";
-echo "<h2 style='text-align:left'>At'n: $nombre</h2>";
+if($nombre !== ""){
+	echo "<h2 style='text-align:left'>At'n: $nombre</h2>";
+}
 echo "<h3>Cotizacion</h3>";
 echo "<div id=\"idheader\"></div>";
+echo "<hr />";
 echo "<div id=\"idcalendar\"></div>";
 
-echo "<p>Promotor de Ventas</p><br /><br /><br /><br /><p>___________________________</p>";
+echo "<p>Promotor de Ventas</p><br /><br /><br /><br /><p>$quiengenera</p>";
 
 if($logo == true){
 	echo getRawFooter();

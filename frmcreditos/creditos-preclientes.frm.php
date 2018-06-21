@@ -41,7 +41,7 @@ $observaciones	= parametro("idobservaciones");
 $forcesync		= parametro("sync", false, MQL_BOOL);
 
 
-
+$xHP->addJTableSupport();
 $xHP->init();
 
 $xFRM		= new cHForm("frm", "./");
@@ -52,37 +52,42 @@ $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 $xFRM->OButton("TR.AGREGAR", "jsAdd()", $xFRM->ic()->AGREGAR, "cmdaddprecli", "green");
 
+
+
 $xFRM->addSeccion("idasig", "TR.CREDITOSNOASIGNADOS");
-$sql		= "SELECT
-	`creditos_preclientes`.`idcontrol` AS `clave`,
-	`creditos_preclientes`.`fecha_de_registro` AS `fecha`,
-	CONCAT(`creditos_preclientes`.`nombres`, ' ',
-	`creditos_preclientes`.`apellido1`, ' ',
-	`creditos_preclientes`.`apellido2`)  AS `nombre`,
-	`creditos_preclientes`.`telefono`,
-	`creditos_preclientes`.`email`,
-	`creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `periocidad`,
-	`creditos_preclientes`.`pagos`,
-	`creditos_preclientes`.`monto` 
-FROM
-	`creditos_preclientes` `creditos_preclientes` 
-		INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos` 
-		ON `creditos_preclientes`.`periocidad` = `creditos_periocidadpagos`.
-		`idcreditos_periocidadpagos` 
-			INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` 
-			ON `creditos_preclientes`.`producto` = `creditos_tipoconvenio`.
-			`idcreditos_tipoconvenio` 
-WHERE
-	(`creditos_preclientes`.`idestado` = ". SYS_UNO .") AND (`creditos_preclientes`.`idoficial` = 0) ";
+$xHG = new cHGrid("iddivpreclientes",$xHP->getTitle());
+
+$xHG->setSQL("SELECT
+`creditos_preclientes`.`idcontrol` AS `clave`,
+`creditos_preclientes`.`fecha_de_registro` AS `fecha`, CONCAT(`creditos_preclientes`.`nombres`, ' ',`creditos_preclientes`.`apellido1`, ' ',`creditos_preclientes`.`apellido2`) AS `nombre`,
+`creditos_preclientes`.`telefono`,`creditos_preclientes`.`email`,`creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `periocidad`,`creditos_preclientes`.`pagos`, `creditos_preclientes`.`monto`
+FROM `creditos_preclientes` `creditos_preclientes`
+INNER JOIN `creditos_periocidadpagos` `creditos_periocidadpagos` ON `creditos_preclientes`.`periocidad` = `creditos_periocidadpagos`.`idcreditos_periocidadpagos`
+INNER JOIN `creditos_tipoconvenio` `creditos_tipoconvenio` ON `creditos_preclientes`.`producto` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+WHERE (`creditos_preclientes`.`idestado` =" . SYS_UNO . ") AND (`creditos_preclientes`.`idoficial` = 0) ");
+$xHG->addList();
+$xHG->setOrdenar();
 
 
-$xT			= new cTabla($sql);
-//$xT->setEventKey("jsGoPanel");
+$xHG->col("clave", "TR.CLAVE", "8%");
+$xHG->col("fecha", "TR.FECHA", "8%");
+$xHG->col("nombre", "TR.NOMBRE", "40%");
+//$xHG->col("telefono", "TR.TELEFONO", "8%");
+$xHG->col("email", "TR.EMAIL", "8%");
+$xHG->col("periocidad", "TR.PERIOCIDAD", "10%");
+$xHG->col("pagos", "TR.PAGOS", "8%");
+$xHG->col("monto", "TR.MONTO", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+
+$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+
+$xFRM->addHElem("<div id=\"iddivpreclientes\"></div>");
+
+$xFRM->addJsCode( $xHG->getJs(true) );
 
 
-$xT->OButton("TR.PANEL", "jsGoPanel(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
-
-$xFRM->addHElem($xT->Show());
 $xFRM->endSeccion();
 $xFRM->addSeccion("idasig", "TR.CREDITOSASIGNADOS");
 $sql		= "SELECT
@@ -176,6 +181,19 @@ function jsDel(id){
 ?>
 <script>
 var xG	= new Gen();
+
+
+function jsEdit(id){
+    xG.w({url:"../frmcreditos/creditos-preclientes.panel.frm.php?clave=" + id, tab:true, callback: jsLGiddivpreclientes});
+}
+function jsAdd(){
+    xG.w({url:"../frmcreditos/creditos-preclientes.new.frm.php?", tiny:true, callback: jsLGiddivpreclientes});
+}
+function jsDel(id){
+    xG.rmRecord({tabla:"creditos_preclientes", id:id, callback:jsLGiddivpreclientes });
+}
+
+
 function jsGoPanel(id){
 	xG.w({url: "../frmcreditos/creditos-preclientes.panel.frm.php?clave=" + id, tab:true});
 }

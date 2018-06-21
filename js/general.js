@@ -70,11 +70,26 @@ Gen.prototype.isKey	= function(opts){
 	}
 	var callbackF 	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var mNum 		= (typeof opts.numerico == "undefined") ? false : true;
+	var mAmbos		= (typeof opts.ambos == "undefined") ? false : true;
+	
 	var isKeyCode	= false;
-	if(mNum == true){
-		if ((charCode >= 48 && charCode <= 57)||(charCode >= 96 && charCode <= 105)){	setTimeout(callbackF, 0); isKeyCode		= true;	}
+	
+	if(mAmbos == true){
+		if ( (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105) || (charCode >= 65 && charCode <= 90) ){
+			setTimeout(callbackF, 10);
+			isKeyCode		= true;
+		}		
 	} else {
-		if (charCode >= 65 && charCode <= 90){	setTimeout(callbackF, 0); isKeyCode		= true;	}
+		if(mNum == true){
+			if ( (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105) ){
+				setTimeout(callbackF, 10);
+				isKeyCode		= true;
+			}
+		} else {
+			if (charCode >= 65 && charCode <= 90){
+				setTimeout(callbackF, 0); isKeyCode		= true;
+			}
+		}
 	}
 	return isKeyCode;
 }
@@ -2267,6 +2282,10 @@ CredGen.prototype.getHistorialNomina	= function(idCredito){
 CredGen.prototype.getDocumentos	= function(idcredito){
 	var gURL	= "../frmcreditos/creditos-documentos.frm.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, blank:true, full:true, tab : true });
+}
+CredGen.prototype.setAgregarDocumentos	= function(idcredito){
+	var sURL ="../frmsocios/personas_documentos.frm.php?credito=" + idcredito;
+	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true });
 }
 CredGen.prototype.getCuotaDePago	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;

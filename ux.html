@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="es-mx">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+	content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<title>MAE DEL GOLFO S.A.P.I. DE C.V. SOFOM, ENR{matriz} -
+	S.A.F.E. V 201706</title>
+
+<link href="./css/general.css" rel="stylesheet">
+<link href="./css/jquery-ui/jquery-ui.css" rel="stylesheet">
+<link href="./css/formoid/formoid-default.css" rel="stylesheet">
+<link href="./css/jquery.qtip.css" rel="stylesheet">
+<link href="./css/picker/default.css" rel="stylesheet">
+<link href="./css/picker/default.date.css" rel="stylesheet">
+<link href="./css/picker/default.time.css" rel="stylesheet">
+<link href="./css/visualize.css" rel="stylesheet">
+<link href="./css/visualize-light.css" rel="stylesheet">
+<link href="./css/font-awesome.min.css" rel="stylesheet">
+<link href="./css/tinybox.css" rel="stylesheet">
+<link href="./css/amaran.min.css" rel="stylesheet">
+<link href="css/jmenu.css" rel="stylesheet">
+<script src="./js/lang.js.php"></script>
+<script src="./js/config.js.php"></script>
+<script src="./js/jquery/jquery.js"></script>
+<script src="./js/jquery/excanvas.js"></script>
+<script src="./js/jquery/jquery.cookie.js"></script>
+<script src="./js/base64.js"></script>
+<script src="./js/jquery/all-jquery.ui.js"></script>
+<script src="./js/general.js?20170601"></script>
+<script src="./js/jquery/jquery.qtip.min.js"></script>
+<script src="./js/jquery/visualize.jQuery.js"></script>
+<script src="./js/jquery/jquery.accordion.js"></script>
+<script src="./js/picker.js"></script>
+<script src="./js/picker.date.js"></script>
+<script src="./js/picker.time.js"></script>
+<script src="./js/tinybox.js"></script>
+<script src="./js/deprecated.js"></script>
+<script src="./js/md5.js"></script>
+<script src="./js/jscrypt/aes.js"></script>
+<script src="./js/jquery/jquery.amaran.min.js"></script>
+<script src="./js/jquery/jquery.jpanelmenu.min.js"></script>
+<script src="./js/spin.min.js"></script>
+<script src="./js/moment.min.js"></script>
+<script src="./js/picker-lang/es_ES.js"></script>
+<script src="./js/dev.js"></script>
+<script src="./js/happy.js"></script>
+<script src="./js/happy.methods.js"></script>
+<script src="./js/xdate.js"></script>
+<script src="./js/xdate.i18n.js"></script>
+
+<script src="js/jmenu/jMenu.jquery.js"></script>
+
+<script src="./js/mexico.js"></script>
+
+<link href="./css/jquery.mmenu.all.css" rel="stylesheet">
+
+<script src="./js/jquery.mmenu.all.js"></script>
+
+
+
+</head>
+<style>
+html, body, object {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+#header {
+	text-align: center !important;
+}
+
+#banner {
+	right: 0;
+	bottom: 0;
+	position: fixed !important;
+}
+
+#wprincipal {
+	width: 100%;
+	max-width: 100%;
+}
+</style>
+<body onload="jsInitComponents();">
+
+
+
+
+			<div class="header">
+				<a href="#menu"><span>AQUIIII</span></a>
+				Demo
+			</div>
+			<div class="content">
+				<p><strong>This is a demo.</strong><br />
+				
+				</p>
+			</div>
+				
+				
+	<nav id='menu'>
+		<ul id="jMenu">
+			<li id="md_1000"><a id="amenu_1000" data-key="1000">&nbsp;Caja&nbsp;</a>
+			<ul>
+					<li id="md_1003"><a id="amenu_1003"
+						onclick="setInFrame('frmcaja/abonos-a-parcialidades.frm.php', event)"><i
+							class="fa fa-usd fa-lg"></i>&nbsp;Masivo de Parcialidades&nbsp;<span>1003</span></a></li>
+					<li id="md_1002"><a id="amenu_1002"
+						onclick="setInFrame('frmcaja/frmcobrosdecreditos.php', event)"><i
+							class="fa fa-usd fa-lg"></i>&nbsp;Cobros de Credito&nbsp;<span>1002</span></a></li>
+					<li id="md_1080"><a id="amenu_1080" data-key="1080"><i
+							class="fa fa-money fa-lg"></i>&nbsp;Operaciones con
+							Creditos&nbsp;<span>1080</span></a>
+					<ul>
+							<li id="md_1081"><a id="amenu_1081"
+								onclick="setInFrame('frmcreditos/creditos-por-ministrar.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Desembolso de
+									Creditos&nbsp;<span>1081</span></a></li>
+							<li id="md_1083"><a id="amenu_1083"
+								onclick="setInFrame('frmcaja/creditos-disposicion.frm.php', event)"><i
+									class="fa fa-money fa-lg"></i>&nbsp;Disposicion de
+									Credito&nbsp;<span>1083</span></a></li>
+							<li id="md_1082"><a id="amenu_1082"
+								onclick="setInFrame('frmcaja/cobro_de_comisiones.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cobro de
+									Comisiones&nbsp;<span>1082</span></a></li>
+						</ul></li>
+					<li id="md_1060"><a id="amenu_1060" data-key="1060"><i
+							class="fa fa-building fa-lg"></i>&nbsp;Empleadores&nbsp;<span>1060</span></a>
+					<ul>
+							<li id="md_1063"><a id="amenu_1063"
+								onclick="setInFrame('frmcreditos/orden_de_cobranza.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Orden de
+									Cobranza&nbsp;<span>1063</span></a></li>
+							<li id="md_1067"><a id="amenu_1067"
+								onclick="setInFrame('frmcreditos/envios_de_cobranza.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Envios de
+									Cobranza&nbsp;<span>1067</span></a></li>
+							<li id="md_2061"><a id="amenu_2061"
+								onclick="setInFrame('frmcreditos/registro_de_pagos.empresa.frm.php', event)"><i
+									class="fa fa-usd fa-lg"></i>&nbsp;Registro de Pagos&nbsp;<span>2061</span></a></li>
+							<li id="md_1062"><a id="amenu_1062"
+								onclick="setInFrame('frmcaja/convenios_factura_rapida.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Factura Rapida de
+									Convenios&nbsp;<span>1062</span></a></li>
+							<li id="md_1061"><a id="amenu_1061"
+								onclick="setInFrame('frmcaptacion/vista.carga-masiva.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Factura Rapida de
+									ahorros&nbsp;<span>1061</span></a></li>
+						</ul></li>
+					<li id="md_1073"><a id="amenu_1073"
+						onclick="setInFrame('frmcaja/frmingresosvarios.php', event)"><i
+							class="fa fa-ellipsis-v fa-lg"></i>&nbsp;Ingresos Varios&nbsp;<span>1073</span></a></li>
+					<li id="md_1004"><a id="amenu_1004"
+						onclick="setInFrame('frmcaja/cobrar-promociones.frm.php', event)"><i
+							class="fa fa-gift fa-lg"></i>&nbsp;Cobrar Promociones&nbsp;<span>1004</span></a></li>
+					<li id="md_1070"><a id="amenu_1070" data-key="1070"><i
+							class="fa fa-money fa-lg"></i>&nbsp;Cobranza de Otros&nbsp;<span>1070</span></a>
+					<ul>
+							<li id="md_1074"><a id="amenu_1074"
+								onclick="setInFrame('frmcaja/frmfondodefuncion.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cuotas de
+									Defuncion&nbsp;<span>1074</span></a></li>
+							<li id="md_1071"><a id="amenu_1071"
+								onclick="setInFrame('frmcaja/frmgastosnotariales.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cobro de Gastos
+									Notariales&nbsp;<span>1071</span></a></li>
+							<li id="md_1072"><a id="amenu_1072"
+								onclick="setInFrame('frmcaja/frmcobrodemultas.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cobro de Multas&nbsp;<span>1072</span></a></li>
+							<li id="md_1075"><a id="amenu_1075"
+								onclick="setInFrame('frmcaja/empresas-pagos.frm.php', event)"><i
+									class="fa fa-money fa-lg"></i>&nbsp;Retiro de Empleadores&nbsp;<span>1075</span></a></li>
+						</ul></li>
+					<li id="md_1090"><a id="amenu_1090" data-key="1090"><i
+							class="fa fa-usd fa-lg"></i>&nbsp;Devoluciones Y Gastos&nbsp;<span>1090</span></a>
+					<ul>
+							<li id="md_1092"><a id="amenu_1092"
+								onclick="setInFrame('frmcaja/frmgastoefvo.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Egresos Varios&nbsp;<span>1092</span></a></li>
+						</ul></li>
+					<li id="md_9000"><a id="amenu_9000" data-key="9000"><i
+							class="fa fa-bank fa-lg"></i>&nbsp;Bancos/Chequera&nbsp;<span>9000</span></a>
+					<ul>
+							<li id="md_9001"><a id="amenu_9001"
+								onclick="setInFrame('frmbancos/bancos.entidades.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Alta a Entidades
+									Bancarias&nbsp;<span>9001</span></a></li>
+							<li id="md_9002"><a id="amenu_9002"
+								onclick="setInFrame('frmbancos/lista-de-cuentas-bancarias.frm.php', event)"><i
+									class="fa fa-university fa-lg"></i>&nbsp;Cuentas
+									Bancarias&nbsp;<span>9002</span></a></li>
+							<li id="md_9003"><a id="amenu_9003"
+								onclick="setInFrame('frmbancos/movimientos_bancarios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Listado de Movimientos
+									Bancarios&nbsp;<span>9003</span></a></li>
+							<li id="md_9004"><a id="amenu_9004"
+								onclick="setInFrame('frmbancos/movimientos_bancarios.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Movimientos
+									Bancarios&nbsp;<span>9004</span></a></li>
+						</ul></li>
+					<li id="md_1010"><a id="amenu_1010" data-key="1010"><i
+							class="fa fa-lock fa-lg"></i>&nbsp;Operaciones de Tesoreria&nbsp;<span>1010</span></a>
+					<ul>
+							<li id="md_1012"><a id="amenu_1012"
+								onclick="getNewTiny('frmcaja/cerrar_caja.frm.php', event)"><i
+									class="fa fa-lock fa-lg"></i>&nbsp;Cerrar Sesion de Caja&nbsp;<span>1012</span></a></li>
+							<li id="md_1013"><a id="amenu_1013"
+								onclick="setInFrame('frmtesoreria/cajas.operaciones.frm.php', event)"><i
+									class="fa fa-archive fa-lg"></i>&nbsp;Operaciones con
+									Sesiones&nbsp;<span>1013</span></a></li>
+							<li id="md_1011"><a id="amenu_1011"
+								onclick="getNewTiny('frmcaja/abrir_caja.frm.php', event)"><i
+									class="fa fa-unlock fa-lg"></i>&nbsp;Abrir Session de
+									Caja&nbsp;<span>1011</span></a></li>
+						</ul></li>
+					<li id="md_1050"><a id="amenu_1050" data-key="1050"><i
+							class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogos de
+							Tesoreria&nbsp;<span>1050</span></a>
+					<ul>
+							<li id="md_1051"><a id="amenu_1051"
+								onclick="setInFrame('frmtesoreria/catalogo.equivalencias.grid.php', event)"><i
+									class="fa fa-plug fa-lg"></i>&nbsp;Catalogo de Valores&nbsp;<span>1051</span></a></li>
+							<li id="md_1053"><a id="amenu_1053"
+								onclick="setInFrame('frmtesoreria/catalogo.monedas.grid.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de
+									Monedas&nbsp;<span>1053</span></a></li>
+							<li id="md_1054"><a id="amenu_1054"
+								onclick="setInFrame('frmtesoreria/valores-diarios.frm.php', event)"><i
+									class="fa fa-line-chart fa-lg"></i>&nbsp;Valores Diarios&nbsp;<span>1054</span></a></li>
+							<li id="md_11203"><a id="amenu_11203"
+								onclick="setInFrame('frmoperaciones/tipos_de_recibo.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de
+									Recibos&nbsp;<span>11203</span></a></li>
+							<li id="md_7024"><a id="amenu_7024"
+								onclick="setInFrame('frmsocios/pagos_por_membresia.frm.php', event)"><i
+									class="fa fa-users fa-lg"></i>&nbsp;Editar Pagos por
+									Membresia&nbsp;<span>7024</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_2000"><a id="amenu_2000" data-key="2000">&nbsp;Personas&nbsp;</a>
+			<ul>
+					<li id="md_2001"><a id="amenu_2001"
+						onclick="setInFrame('frmsocios/registro-personas_fisicas.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Registro de Personas
+							Fisicas&nbsp;<span>2001</span></a></li>
+					<li id="md_20002"><a id="amenu_20002"
+						onclick="setInFrame('frmsocios/registro-personas_morales.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Registro de Personas
+							Morales&nbsp;<span>20002</span></a></li>
+					<li id="md_2013"><a id="amenu_2013"
+						onclick="setInFrame('frmsocios/registro-personas_morales.frm.php?tipodeingreso=905', event)"><i
+							class="fa fa-hospital-o fa-lg"></i>&nbsp;Registro de
+							Proveedores&nbsp;<span>2013</span></a></li>
+					<li id="md_2003"><a id="amenu_2003"
+						onclick="setInFrame('frmsocios/socios.panel.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Panel de Control de
+							Personas&nbsp;<span>2003</span></a></li>
+					<li id="md_2050"><a id="amenu_2050" data-key="2050"><i
+							class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogos para
+							Personas&nbsp;<span>2050</span></a>
+					<ul>
+							<li id="md_2051"><a id="amenu_2051"
+								onclick="setInFrame('frmtipos/socios_caja_local.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar Puntos de
+									Acceso&nbsp;<span>2051</span></a></li>
+							<li id="md_20521"><a id="amenu_20521"
+								onclick="setInFrame('frmsocios/personas.catalogo-actividades.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de
+									Actividades Economicas&nbsp;<span>20521</span></a></li>
+							<li id="md_2053"><a id="amenu_2053"
+								onclick="setInFrame('frmsocios/socio_tipo_de_ingreso.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogos de Tipos de
+									Persona&nbsp;<span>2053</span></a></li>
+							<li id="md_2054"><a id="amenu_2054"
+								onclick="setInFrame('frmtipos/socios_regiones.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de
+									Regiones&nbsp;<span>2054</span></a></li>
+							<li id="md_2055"><a id="amenu_2055"
+								onclick="setInFrame('frmtipos/colonias.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de
+									Colonias&nbsp;<span>2055</span></a></li>
+							<li id="md_2056"><a id="amenu_2056"
+								onclick="getNewTiny('frmsocios/catalogo_regimen_fiscal.grid.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de Regimen
+									Fiscal&nbsp;<span>2056</span></a></li>
+							<li id="md_2058"><a id="amenu_2058"
+								onclick="getNewTiny('frmsocios/catalogo_paises.grid.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de
+									Paises&nbsp;<span>2058</span></a></li>
+							<li id="md_20511"><a id="amenu_20511"
+								onclick="getNewTiny('frmsocios/xcatalogo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Clasificador 1&nbsp;<span>20511</span></a></li>
+							<li id="md_20512"><a id="amenu_20512"
+								onclick="getNewTiny('frmsocios/ycatalogo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Clasificador 2&nbsp;<span>20512</span></a></li>
+							<li id="md_20513"><a id="amenu_20513"
+								onclick="getNewTiny('frmsocios/zcatalogo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Clasificador 3&nbsp;<span>20513</span></a></li>
+							<li id="md_20514"><a id="amenu_20514"
+								onclick="setInFrame('frmsocios/catalogo-documentacion.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Tipos de
+									Documentacion&nbsp;<span>20514</span></a></li>
+							<li id="md_20515"><a id="amenu_20515"
+								onclick="setInFrame('frmsocios/catalogo-tipos-relacion.frm.php', event)"><i
+									class="fa fa-list fa-lg"></i>&nbsp;Catalogo Tipos de
+									Relacion&nbsp;<span>20515</span></a></li>
+						</ul></li>
+					<li id="md_2060"><a id="amenu_2060" data-key="2060"><i
+							class="fa fa-building fa-lg"></i>&nbsp;Empresas&nbsp;<span>2060</span></a>
+					<ul>
+							<li id="md_2052"><a id="amenu_2052"
+								onclick="setInFrame('frmsocios/agregar-empresas.frm.php', event)"><i
+									class="fa fa-building-o fa-lg"></i>&nbsp;Catalogo de
+									Empleadores&nbsp;<span>2052</span></a></li>
+							<li id="md_2063"><a id="amenu_2063"
+								onclick="setInFrame('frmsocios/personas-proveedores.frm.php', event)"><i
+									class="fa fa-building fa-lg"></i>&nbsp;Proveedores&nbsp;<span>2063</span></a></li>
+							<li id="md_2064"><a id="amenu_2064"
+								onclick="setInFrame('frmsocios/personas-aseguradoras.frm.php', event)"><i
+									class="fa fa-building fa-lg"></i>&nbsp;Aseguradoras&nbsp;<span>2064</span></a></li>
+						</ul></li>
+					<li id="md_20100"><a id="amenu_20100" data-key="20100"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Operaciones
+							Auxiliares&nbsp;<span>20100</span></a>
+					<ul>
+							<li id="md_2002"><a id="amenu_2002"
+								onclick="setInFrame('frmsocios/frmadmitirsocios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Autorizar
+									Personas&nbsp;<span>2002</span></a></li>
+							<li id="md_2005"><a id="amenu_2005"
+								onclick="setInFrame('frmsocios/frmhistorialdesocios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar Notas a
+									Personas&nbsp;<span>2005</span></a></li>
+							<li id="md_2007"><a id="amenu_2007"
+								onclick="setInFrame('frmsocios/frm_baja_de_socios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Baja/Bloqueo de
+									Personas&nbsp;<span>2007</span></a></li>
+							<li id="md_20101"><a id="amenu_20101"
+								onclick="setInFrame('frmsocios/personas-editar-masivo.frm.php', event)"><i
+									class="fa fa-object-group fa-lg"></i>&nbsp;Edicion Masiva de
+									Personas&nbsp;<span>20101</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_3000"><a id="amenu_3000" data-key="3000">&nbsp;Creditos&nbsp;</a>
+			<ul>
+					<li id="md_3001"><a id="amenu_3001"
+						onclick="setInFrame('frmcreditos/solicitud_de_credito.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Solicitud de
+							Credito&nbsp;<span>3001</span></a></li>
+					<li id="md_3002"><a id="amenu_3002"
+						onclick="setInFrame('frmcreditos/creditos.panel.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Panel de Control de
+							Creditos&nbsp;<span>3002</span></a></li>
+					<li id="md_3003"><a id="amenu_3003"
+						onclick="setInFrame('frmcreditos/frmscoring_de_creditos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Scoring de
+							Creditos&nbsp;<span>3003</span></a></li>
+					<li id="md_3004"><a id="amenu_3004"
+						onclick="setInFrame('frmcreditos/plan_de_pagos.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Generar Plan de
+							Pagos&nbsp;<span>3004</span></a></li>
+					<li id="md_3005"><a id="amenu_3005" data-key="3005"><i
+							class="fa fa-list-ol fa-lg"></i>&nbsp;Presupuesto de
+							Creditos&nbsp;<span>3005</span></a>
+					<ul>
+							<li id="md_300501"><a id="amenu_300501"
+								onclick="getNewTiny('frmcreditos/presupuesto-de-credito.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Presupuesto por
+									Aplicacion&nbsp;<span>300501</span></a></li>
+						</ul></li>
+					<li id="md_3006"><a id="amenu_3006"
+						onclick="setInFrame('frmcreditos/creditos-preclientes.frm.php', event)"><i
+							class="fa fa-shopping-basket fa-lg"></i>&nbsp;Pre-Solicitudes&nbsp;<span>3006</span></a></li>
+					<li id="md_3016"><a id="amenu_3016"
+						onclick="setInFrame('frmcreditos/autorizacion-de-creditos.frm.php', event)"><i
+							class="fa fa-list-ol fa-lg"></i>&nbsp;Autorizacion de
+							Creditos&nbsp;<span>3016</span></a></li>
+					<li id="md_3020"><a id="amenu_3020" data-key="3020"><i
+							class="fa fa-plug fa-lg"></i>&nbsp;Lineas de Creditos&nbsp;<span>3020</span></a>
+					<ul>
+							<li id="md_3021"><a id="amenu_3021"
+								onclick="setInFrame('frmcreditos/creditos-lineas.frm.php', event)"><i
+									class="fa fa-braille fa-lg"></i>&nbsp;Lineas de Credito&nbsp;<span>3021</span></a></li>
+						</ul></li>
+					<li id="md_3030"><a id="amenu_3030" data-key="3030"><i
+							class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogos de
+							Colocacion&nbsp;<span>3030</span></a>
+					<ul>
+							<li id="md_3031"><a id="amenu_3031"
+								onclick="setInFrame('frmtipos/frmaddoflujo.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Origenes del Flujo de
+									Efvo&nbsp;<span>3031</span></a></li>
+							<li id="md_3033"><a id="amenu_3033"
+								onclick="setInFrame('frmtipos/frmadddestinoscreditos.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Destino/Aplicacion de
+									Creditos&nbsp;<span>3033</span></a></li>
+							<li id="md_3034"><a id="amenu_3034"
+								onclick="setInFrame('frmcreditos/frmdatos_de_convenios_de_creditos.xul.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de Productos
+									Creditos&nbsp;<span>3034</span></a></li>
+							<li id="md_3035"><a id="amenu_3035"
+								onclick="setInFrame('frmtipos/operaciones_tipos.lista.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Tipo de
+									Operacion&nbsp;<span>3035</span></a></li>
+							<li id="md_3036"><a id="amenu_3036"
+								onclick="setInFrame('frmtipos/frmdiasfestivos.xul.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar Dias
+									Festivos&nbsp;<span>3036</span></a></li>
+						</ul></li>
+					<li id="md_7010"><a id="amenu_7010" data-key="7010"><i
+							class="fa fa-building fa-lg"></i>&nbsp;Operaciones con Garantias
+							Reales&nbsp;<span>7010</span></a>
+					<ul>
+							<li id="md_7011"><a id="amenu_7011"
+								onclick="setInFrame('frmcreditos/frmresguardogarantias.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Resguardo de
+									Garantias&nbsp;<span>7011</span></a></li>
+							<li id="md_7012"><a id="amenu_7012"
+								onclick="setInFrame('frmcreditos/frmdevgarantiaresguardo.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Devolucion de Garantia
+									en Resguardo&nbsp;<span>7012</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_4000"><a id="amenu_4000" data-key="4000">&nbsp;Gestion
+					de Cobranza&nbsp;</a>
+			<ul>
+					<li id="md_4008"><a id="amenu_4008"
+						onclick="setInFrame('frmseguimiento/calendario.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Calendario de
+							Gestion&nbsp;<span>4008</span></a></li>
+					<li id="md_4006"><a id="amenu_4006"
+						onclick="setInFrame('frmseguimiento/calendario.atrasos.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Calendario de
+							atrasos&nbsp;<span>4006</span></a></li>
+					<li id="md_4030"><a id="amenu_4030" data-key="4030"><i
+							class="fa fa-list-ul fa-lg"></i>&nbsp;Operaciones Masivas&nbsp;<span>4030</span></a>
+					<ul>
+							<li id="md_4021"><a id="amenu_4021"
+								onclick="setInFrame('seguimiento/asignar_oficiales.frm.php', event)"><i
+									class="fa fa-users fa-lg"></i>&nbsp;Asignar Oficiales de
+									Credito&nbsp;<span>4021</span></a></li>
+							<li id="md_4031"><a id="amenu_4031"
+								onclick="setInFrame('seguimiento/asignar_causas_de_morosidad.frm.php', event)"><i
+									class="fa fa-indent fa-lg"></i>&nbsp;Asignar Causas de
+									Mora&nbsp;<span>4031</span></a></li>
+							<li id="md_4032"><a id="amenu_4032"
+								onclick="setInFrame('frmseguimiento/creditos.operaciones-masivas.frm.php', event)"><i
+									class="fa fa-list fa-lg"></i>&nbsp;Modificacion Masiva&nbsp;<span>4032</span></a></li>
+						</ul></li>
+					<li id="md_40200"><a id="amenu_40200"
+						onclick="setInFrame('frmseguimiento/generador.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Generador de
+							Gestion&nbsp;<span>40200</span></a></li>
+					<li id="md_4002"><a id="amenu_4002"
+						onclick="setInFrame('seguimiento/frmgastosdecobranza.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cargos por Gestion de
+							Cobranza&nbsp;<span>4002</span></a></li>
+					<li id="md_4003"><a id="amenu_4003"
+						onclick="setInFrame('seguimiento/frmcreditos_descuentos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Descuentos a
+							Creditos&nbsp;<span>4003</span></a></li>
+					<li id="md_4004"><a id="amenu_4004"
+						onclick="setInFrame('frmcreditos/frmcreditosreconvenios.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reconvenios de
+							Creditos&nbsp;<span>4004</span></a></li>
+					<li id="md_4005"><a id="amenu_4005"
+						onclick="setInFrame('seguimiento/frm_agregar_compromisos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar/Editar
+							Compromisos&nbsp;<span>4005</span></a></li>
+					<li id="md_4007"><a id="amenu_4007"
+						onclick="setInFrame('seguimiento/frm_calificar_referencias.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Calificar
+							Referencias&nbsp;<span>4007</span></a></li>
+					<li id="md_4009"><a id="amenu_4009"
+						onclick="setInFrame('frmseguimiento/llamadas.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar Llamadas&nbsp;<span>4009</span></a></li>
+					<li id="md_4010"><a id="amenu_4010" data-key="4010"><i
+							class="fa fa-briefcase fa-lg"></i>&nbsp;Notificaciones&nbsp;<span>4010</span></a>
+					<ul>
+							<li id="md_4011"><a id="amenu_4011"
+								onclick="setInFrame('frmseguimiento/notificaciones.add.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Agregar
+									Notificacion&nbsp;<span>4011</span></a></li>
+							<li id="md_4014"><a id="amenu_4014"
+								onclick="setInFrame('seguimiento/frm_cumplir_notificaciones.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Operaciones
+									Masivas&nbsp;<span>4014</span></a></li>
+						</ul></li>
+					<li id="md_4033"><a id="amenu_4033"
+						onclick="setInFrame('frmcreditos/nota-sic.frm.php', event)"><i
+							class="fa fa-bug fa-lg"></i>&nbsp;Notas SIC&nbsp;<span>4033</span></a></li>
+					<li id="md_40100"><a id="amenu_40100" data-key="40100"><i
+							class="fa fa-info fa-lg"></i>&nbsp;Avisos y Alertas&nbsp;<span>40100</span></a>
+					<ul>
+							<li id="md_40101"><a id="amenu_40101"
+								onclick="setInFrame('frmseguimiento/configurar-alertas.frm.php', event)"><i
+									class="fa fa-bell fa-lg"></i>&nbsp;Configurar Alertas&nbsp;<span>40101</span></a></li>
+						</ul></li>
+					<li id="md_40300"><a id="amenu_40300" data-key="40300"><i
+							class="fa fa-shopping-bag fa-lg"></i>&nbsp;Mercadeo&nbsp;<span>40300</span></a>
+					<ul>
+							<li id="md_40302"><a id="amenu_40302"
+								onclick="setInFrame('frmseguimiento/campannia.frm.php', event)"><i
+									class="fa fa-users fa-lg"></i>&nbsp;Campannia&nbsp;<span>40302</span></a></li>
+							<li id="md_40301"><a id="amenu_40301"
+								onclick="setInFrame('frmseguimiento/enviar-folleto.frm.php', event)"><i
+									class="fa fa-envelope-o fa-lg"></i>&nbsp;Enviar Folleto&nbsp;<span>40301</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_7000"><a id="amenu_7000" data-key="7000">&nbsp;PLD/FT&nbsp;</a>
+			<ul>
+					<li id="md_70010"><a id="amenu_70010"
+						onclick="setInFrame('frmpld/reportar_empleado.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportar Conducta
+							Inadecuada&nbsp;<span>70010</span></a></li>
+					<li id="md_70020"><a id="amenu_70020"
+						onclick="setInFrame('frmpld/registro_persona_riesgosa.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Registrar Persona
+							Riesgosa&nbsp;<span>70020</span></a></li>
+					<li id="md_70015"><a id="amenu_70015"
+						onclick="setInFrame('frmpld/validar_documentos.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Evaluar Documentacion de
+							Personas&nbsp;<span>70015</span></a></li>
+					<li id="md_70050"><a id="amenu_70050"
+						onclick="setInFrame('frmpld/vista_de_alertas.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Registro de
+							Alertas&nbsp;<span>70050</span></a></li>
+					<li id="md_70051"><a id="amenu_70051"
+						onclick="setInFrame('frmpld/vista_de_riesgos.frm.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Vista de Riesgos&nbsp;<span>70051</span></a></li>
+					<li id="md_70052"><a id="amenu_70052"
+						onclick="setInFrame('frmpld/lista-negra-interna.frm.php', event)"><i
+							class="fa fa-ban fa-lg"></i>&nbsp;Lista Negra Interna&nbsp;<span>70052</span></a></li>
+					<li id="md_70053"><a id="amenu_70053"
+						onclick="setInFrame('frmpld/lista-blanca-interna.frm.php', event)"><i
+							class="fa fa-money fa-lg"></i>&nbsp;Lista de No Vigiladas&nbsp;<span>70053</span></a></li>
+					<li id="md_72000"><a id="amenu_72000" data-key="72000"><i
+							class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogos PLD-FT&nbsp;<span>72000</span></a>
+					<ul>
+							<li id="md_72201"><a id="amenu_72201"
+								onclick="setInFrame('frmpld/catalogo.riesgos.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de Riesgos
+									AML&nbsp;<span>72201</span></a></li>
+							<li id="md_72202"><a id="amenu_72202"
+								onclick="setInFrame('frmpld/perfiles-de-riesgo.frm.php', event)"><i
+									class="fa fa-cogs fa-lg"></i>&nbsp;Perfiles de Riesgo
+									Extra&nbsp;<span>72202</span></a></li>
+							<li id="md_72100"><a id="amenu_72100"
+								onclick="setInFrame('frmpld/sdn.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de la Lista
+									SDN&nbsp;<span>72100</span></a></li>
+							<li id="md_72203"><a id="amenu_72203"
+								onclick="setInFrame('frmpld/pep-federales.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Personas PEP
+									Federales&nbsp;<span>72203</span></a></li>
+							<li id="md_72204"><a id="amenu_72204"
+								onclick="setInFrame('frmpld/matriz-de-riesgo.frm.php', event)"><i
+									class="fa fa-sort-amount-asc fa-lg"></i>&nbsp;Matriz de
+									Riesgo&nbsp;<span>72204</span></a></li>
+							<li id="md_72206"><a id="amenu_72206"
+								onclick="setInFrame('frmpld/riesgo-producto.frm.php', event)"><i
+									class="fa fa-cube fa-lg"></i>&nbsp;Riesgo por Producto&nbsp;<span>72206</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_18000"><a id="amenu_18000" data-key="18000">&nbsp;Reportes&nbsp;</a>
+			<ul>
+					<li id="md_18500"><a id="amenu_18500" data-key="18500"><i
+							class="fa fa-user fa-lg"></i>&nbsp;Reportes Por Persona&nbsp;<span>18500</span></a>
+					<ul>
+							<li id="md_2021"><a id="amenu_2021"
+								onclick="setInFrame('frmreports/frmreportsxsocios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes x
+									Personas&nbsp;<span>2021</span></a></li>
+							<li id="md_3072"><a id="amenu_3072"
+								onclick="setInFrame('frmreports/frmreportsxcredito.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Credito
+									Individual&nbsp;<span>3072</span></a></li>
+							<li id="md_8051"><a id="amenu_8051"
+								onclick="setInFrame('frmreports/frmreportsxcuenta.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes x Cuentas de
+									Deposito&nbsp;<span>8051</span></a></li>
+							<li id="md_8052"><a id="amenu_8052"
+								onclick="setInFrame('frmreports/frmreportsxinversion.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes x Cuentas de
+									Inversion&nbsp;<span>8052</span></a></li>
+						</ul></li>
+					<li id="md_2004"><a id="amenu_2004"
+						onclick="getNewTiny('utils/frmbuscarrecibos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Buscar Recibos&nbsp;<span>2004</span></a></li>
+					<li id="md_2006"><a id="amenu_2006"
+						onclick="setInFrame('utils/frmbuscarsocio.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Buscar Personas&nbsp;<span>2006</span></a></li>
+					<li id="md_2020"><a id="amenu_2020" data-key="2020"><i
+							class="fa fa-users fa-lg"></i>&nbsp;Reportes de Personas&nbsp;<span>2020</span></a>
+					<ul>
+							<li id="md_2024"><a id="amenu_2024"
+								onclick="setInFrame('frmreports/frmreportsxcajaslocales.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes por Puntos de
+									Atencion&nbsp;<span>2024</span></a></li>
+							<li id="md_2025"><a id="amenu_2025"
+								onclick="getNewWindow('rptsocios/personas_en_baja.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Personas en
+									Baja&nbsp;<span>2025</span></a></li>
+							<li id="md_2026"><a id="amenu_2026"
+								onclick="getNewWindow('rptsocios/actividades.catalogo.rpt.php', event)"><i
+									class="fa fa-book fa-lg"></i>&nbsp;Lista Actividades
+									Economicas&nbsp;<span>2026</span></a></li>
+							<li id="md_2027"><a id="amenu_2027"
+								onclick="getNewWindow('rptsocios/catalogo.paises.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de
+									Paises&nbsp;<span>2027</span></a></li>
+							<li id="md_2028"><a id="amenu_2028"
+								onclick="getNewWindow('rptsocios/scian.catalogo.rpt.php', event)"><i
+									class="fa fa-book fa-lg"></i>&nbsp;Lista Actividades
+									SCIAN&nbsp;<span>2028</span></a></li>
+							<li id="md_99103"><a id="amenu_99103"
+								onclick="getNewWindow('rptotros/execute.php?x=65', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Lista de Puntos de
+									Atencion&nbsp;<span>99103</span></a></li>
+						</ul></li>
+					<li id="md_3070"><a id="amenu_3070" data-key="3070"><i
+							class="fa fa-files-o fa-lg"></i>&nbsp;Reportes de Creditos&nbsp;<span>3070</span></a>
+					<ul>
+							<li id="md_3071"><a id="amenu_3071"
+								onclick="setInFrame('frmreports/frmreportesdecreditos.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes
+									Detallados&nbsp;<span>3071</span></a></li>
+							<li id="md_4090"><a id="amenu_4090"
+								onclick="setInFrame('frmreports/frmreportseguimiento.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Gestion de
+									Cobranza&nbsp;<span>4090</span></a></li>
+							<li id="md_3073"><a id="amenu_3073"
+								onclick="getNewWindow('rptcreditos/catalogo-productos.rpt.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Catalogo de
+									Productos&nbsp;<span>3073</span></a></li>
+							<li id="md_3076"><a id="amenu_3076"
+								onclick="getNewWindow('rptcreditos/creditos-duplicados.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Creditos
+									Duplicados&nbsp;<span>3076</span></a></li>
+							<li id="md_3077"><a id="amenu_3077"
+								onclick="getNewWindow('rptcreditos/nomina-x2.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Creds. Nomina X2&nbsp;<span>3077</span></a></li>
+						</ul></li>
+					<li id="md_7050"><a id="amenu_7050" data-key="7050"><i
+							class="fa fa-area-chart fa-lg"></i>&nbsp;Reportes de la
+							Administracion&nbsp;<span>7050</span></a>
+					<ul>
+							<li id="md_7051"><a id="amenu_7051"
+								onclick="setInFrame('frmreports/frmreportsacumulados.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes
+									Acumulativos&nbsp;<span>7051</span></a></li>
+							<li id="md_18101"><a id="amenu_18101"
+								onclick="setInFrame('frmreports/reportes_por_sucursal.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes Generales por
+									Sucursal&nbsp;<span>18101</span></a></li>
+						</ul></li>
+					<li id="md_9050"><a id="amenu_9050" data-key="9050"><i
+							class="fa fa-area-chart fa-lg"></i>&nbsp;Reportes de Bancos&nbsp;<span>9050</span></a>
+					<ul>
+							<li id="md_9051"><a id="amenu_9051"
+								onclick="setInFrame('rptbancos/frmmovimientosbancarios.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes de
+									Movimientos Bancarios&nbsp;<span>9051</span></a></li>
+						</ul></li>
+					<li id="md_12000"><a id="amenu_12000" data-key="12000"><i
+							class="fa fa-gavel fa-lg"></i>&nbsp;Reportes Legales&nbsp;<span>12000</span></a>
+					<ul>
+							<li id="md_12301"><a id="amenu_12301"
+								onclick="setInFrame('frmlegal/reporte_prudencial_R0411.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;A0411-Cartera por Tipo
+									de Credito&nbsp;<span>12301</span></a></li>
+							<li id="md_12303"><a id="amenu_12303"
+								onclick="setInFrame('principal.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;B0417-Calc. de Cartera
+									de Cred. y Estimacion &nbsp;<span>12303</span></a></li>
+							<li id="md_12306"><a id="amenu_12306"
+								onclick="setInFrame('principal.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;C0451-Desagregado de
+									Creditos por Tipo&nbsp;<span>12306</span></a></li>
+							<li id="md_12101"><a id="amenu_12101"
+								onclick="getNewWindow('rptprudenciales/R01-A0111-catalogo-minimo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;R01-Catalogo Minimo de
+									Cuentas&nbsp;<span>12101</span></a></li>
+							<li id="md_12201"><a id="amenu_12201"
+								onclick="setInFrame('', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;S03-Resultados de
+									Titulos VVR&nbsp;<span>12201</span></a></li>
+						</ul></li>
+					<li id="md_18200"><a id="amenu_18200" data-key="18200"><i
+							class="fa fa-print fa-lg"></i>&nbsp;Reportes de Operaciones&nbsp;<span>18200</span></a>
+					<ul>
+							<li id="md_18201"><a id="amenu_18201"
+								onclick="setInFrame('frmreports/frmreportesdemovimientos.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes Generales de
+									Movimientos&nbsp;<span>18201</span></a></li>
+						</ul></li>
+					<li id="md_18300"><a id="amenu_18300" data-key="18300"><i
+							class="fa fa-area-chart fa-lg"></i>&nbsp;Reportes de
+							Tesoreria&nbsp;<span>18300</span></a>
+					<ul>
+							<li id="md_18301"><a id="amenu_18301"
+								onclick="setInFrame('frmreports/frmreportsxcajero.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes x
+									Cajero(a)s&nbsp;<span>18301</span></a></li>
+						</ul></li>
+					<li id="md_18400"><a id="amenu_18400" data-key="18400"><i
+							class="fa fa-files-o fa-lg"></i>&nbsp;Reportes por Oficial&nbsp;<span>18400</span></a>
+					<ul>
+							<li id="md_18411"><a id="amenu_18411"
+								onclick="getNewWindow('rptotros/execute.php?x=153', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte Acumulado de
+									Causas de Cartera x Ofic&nbsp;<span>18411</span></a></li>
+							<li id="md_18410"><a id="amenu_18410"
+								onclick="setInFrame('frmreports/reportes_por_oficial.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes de
+									Colocacion&nbsp;<span>18410</span></a></li>
+							<li id="md_18412"><a id="amenu_18412"
+								onclick="setInFrame('frmreports/reportes_indicadores_cartera.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de
+									Operaciones&nbsp;<span>18412</span></a></li>
+						</ul></li>
+					<li id="md_18800"><a id="amenu_18800" data-key="18800"><i
+							class="fa fa-area-chart fa-lg"></i>&nbsp;Reportes por
+							Empleadores&nbsp;<span>18800</span></a>
+					<ul>
+							<li id="md_18810"><a id="amenu_18810"
+								onclick="setInFrame('rptempresas/empresas.reportes.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes de
+									Credito&nbsp;<span>18810</span></a></li>
+							<li id="md_11309"><a id="amenu_11309"
+								onclick="getNewWindow('rptempresas/lista-de-empresas.rpt.php', event)"><i
+									class="fa fa-book fa-lg"></i>&nbsp;Listado de Empleadores&nbsp;<span>11309</span></a></li>
+						</ul></li>
+					<li id="md_71000"><a id="amenu_71000" data-key="71000"><i
+							class="fa fa-file-o fa-lg"></i>&nbsp;Reportes PLD-FT&nbsp;<span>71000</span></a>
+					<ul>
+							<li id="md_71201"><a id="amenu_71201"
+								onclick="setInFrame('rptpld/reportes-aml.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte Generales
+									PLD&nbsp;<span>71201</span></a></li>
+							<li id="md_71202"><a id="amenu_71202"
+								onclick="getNewTiny('rptpld/reportes-legales.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes a Entidad
+									Supervisora&nbsp;<span>71202</span></a></li>
+							<li id="md_71100"><a id="amenu_71100"
+								onclick="getNewWindow('rptpld/riesgos_catalogo.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de
+									Riesgos&nbsp;<span>71100</span></a></li>
+							<li id="md_71101"><a id="amenu_71101"
+								onclick="getNewWindow('rptpld/documentacion_tipos_catalogo.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de
+									Documentacion&nbsp;<span>71101</span></a></li>
+							<li id="md_71108"><a id="amenu_71108"
+								onclick="getNewWindow('rptpld/perfil_transaccional_tipos.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de Perfil
+									Transaccional&nbsp;<span>71108</span></a></li>
+							<li id="md_71102"><a id="amenu_71102"
+								onclick="getNewWindow('rptpld/riesgos_tipos_catalogo.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de Tipos de
+									Riesgos&nbsp;<span>71102</span></a></li>
+							<li id="md_71103"><a id="amenu_71103"
+								onclick="getNewWindow('rptpld/personas-con_actividades_riesgosas.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Personas con
+									Actividades de Alto Riesgo&nbsp;<span>71103</span></a></li>
+							<li id="md_71104"><a id="amenu_71104"
+								onclick="getNewWindow('rptpld/personas-con_actividades_pep.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Personas que por su
+									Actividad son PEP&nbsp;<span>71104</span></a></li>
+							<li id="md_71105"><a id="amenu_71105"
+								onclick="getNewWindow('rptpld/personas-pep.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Personas PEP y
+									Relacionados&nbsp;<span>71105</span></a></li>
+							<li id="md_71106"><a id="amenu_71106"
+								onclick="getNewWindow('rptpld/personas-propietarios_reales.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Lista de Propietarios
+									Reales&nbsp;<span>71106</span></a></li>
+							<li id="md_71107"><a id="amenu_71107"
+								onclick="getNewWindow('rptpld/personas-proveedores_de_recursos.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Lista de Proveedores
+									de Recursos&nbsp;<span>71107</span></a></li>
+							<li id="md_71112"><a id="amenu_71112"
+								onclick="getNewWindow('rptpld/personas_riesgosas.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Personas de Alto
+									Riesgo&nbsp;<span>71112</span></a></li>
+						</ul></li>
+					<li id="md_11100"><a id="amenu_11100" data-key="11100"><i
+							class="fa fa-coffee fa-lg"></i>&nbsp;Reportes sin
+							Clasificar&nbsp;<span>11100</span></a>
+					<ul>
+							<li id="md_99173"><a id="amenu_99173"
+								onclick="getNewWindow('rptlegal/padron_siip-g.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Padron
+									SIIP-G&nbsp;<span>99173</span></a></li>
+							<li id="md_11102"><a id="amenu_11102"
+								onclick="setInFrame('frmreports/frmreportsgeneral.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reportes Varios&nbsp;<span>11102</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_11000"><a id="amenu_11000" data-key="11000">&nbsp;Herramientas&nbsp;</a>
+			<ul>
+					<li id="md_10000"><a id="amenu_10000" data-key="10000"><i
+							class="fa fa-lock fa-lg"></i>&nbsp;Seguridad&nbsp;<span>10000</span></a>
+					<ul>
+							<li id="md_10010"><a id="amenu_10010" data-key="10010"><i
+									class="fa fa-lock fa-lg"></i>&nbsp;Permisos y usuarios&nbsp;<span>10010</span></a>
+							<ul>
+									<li id="md_10001"><a id="amenu_10001"
+										onclick="setInFrame('frmsecurity/altausuarios.frm.php', event)"><i
+											class="fa fa-users fa-lg"></i>&nbsp;Registro de
+											usuarios&nbsp;<span>10001</span></a></li>
+									<li id="md_10004"><a id="amenu_10004"
+										onclick="setInFrame('frmsecurity/usuarios-edicion.frm.php', event)"><i
+											class="fa fa-user-times fa-lg"></i>&nbsp;Lista de
+											Usuarios&nbsp;<span>10004</span></a></li>
+									<li id="md_10003"><a id="amenu_10003"
+										onclick="setInFrame('frmsecurity/permisos.frm.php', event)"><i
+											class="fa fa-check-square fa-lg"></i>&nbsp;Editar Permisos
+											del Sistema&nbsp;<span>10003</span></a></li>
+									<li id="md_10016"><a id="amenu_10016"
+										onclick="setInFrame('frmsecurity/permisos.respaldo.frm.php', event)"><i
+											class="fa fa-download fa-lg"></i>&nbsp;Respaldo/Restaurar
+											Permisos&nbsp;<span>10016</span></a></li>
+									<li id="md_10005"><a id="amenu_10005"
+										onclick="setInFrame('frmsecurity/sistema-permisos.frm.php', event)"><i
+											class="fa fa-calendar-plus-o fa-lg"></i>&nbsp;Permisos de
+											Informacion&nbsp;<span>10005</span></a></li>
+								</ul></li>
+							<li id="md_10020"><a id="amenu_10020" data-key="10020"><i
+									class="fa fa-search fa-lg"></i>&nbsp;Reportes de
+									Seguridad&nbsp;<span>10020</span></a>
+							<ul>
+									<li id="md_10021"><a id="amenu_10021"
+										onclick="setInFrame('frmsecurity/frm_system_log.php', event)"><i
+											class="fa fa-video-camera fa-lg"></i>&nbsp;Eventos del
+											Sistema&nbsp;<span>10021</span></a></li>
+									<li id="md_10024"><a id="amenu_10024"
+										onclick="setInFrame('frmsecurity/lista_de_logs.frm.php', event)"><i
+											class="fa fa-eye fa-lg"></i>&nbsp;Bitacoras del Sistema&nbsp;<span>10024</span></a></li>
+									<li id="md_10023"><a id="amenu_10023"
+										onclick="setInFrame('frmsecurity/leer_log.frm.php', event)"><i
+											class="fa fa-bug fa-lg"></i>&nbsp;Bitacoras del
+											Servidor&nbsp;<span>10023</span></a></li>
+									<li id="md_10022"><a id="amenu_10022"
+										onclick="getNewWindow('rptsecurity/usuarios.rpt.php', event)"><i
+											class="fa fa-user-secret fa-lg"></i>&nbsp;Reporte de
+											Usuarios&nbsp;<span>10022</span></a></li>
+									<li id="md_10025"><a id="amenu_10025"
+										onclick="setInFrame('frmsecurity/eliminados.frm.php', event)"><i
+											class="fa fa-code fa-lg"></i>&nbsp;Objetos Eliminados&nbsp;<span>10025</span></a></li>
+								</ul></li>
+						</ul></li>
+					<li id="md_7020"><a id="amenu_7020" data-key="7020"><i
+							class="fa fa-sliders fa-lg"></i>&nbsp;Configuracion del
+							Sistema&nbsp;<span>7020</span></a>
+					<ul>
+							<li id="md_7021"><a id="amenu_7021"
+								onclick="setInFrame('install/configuracion.editar.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Datos de la
+									Microfinanciera&nbsp;<span>7021</span></a></li>
+							<li id="md_7022"><a id="amenu_7022"
+								onclick="setInFrame('frmtipos/sucursales.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Alta/Modificacion de
+									Sucursales&nbsp;<span>7022</span></a></li>
+							<li id="md_7023"><a id="amenu_7023"
+								onclick="setInFrame('install/purgar-entidadesfederativas.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Purgar Entidades
+									Federativas&nbsp;<span>7023</span></a></li>
+							<li id="md_7025"><a id="amenu_7025"
+								onclick="setInFrame('frmsecurity/entidad-reglas.frm.php', event)"><i
+									class="fa fa-list fa-lg"></i>&nbsp;Reglas de la Entidad&nbsp;<span>7025</span></a></li>
+							<li id="md_11015"><a id="amenu_11015"
+								onclick="setInFrame('frmutils/crear_bases.frm.php', event)"><i
+									class="fa fa-list-alt fa-lg"></i>&nbsp;Bases del Sistema&nbsp;<span>11015</span></a></li>
+						</ul></li>
+					<li id="md_11002"><a id="amenu_11002"
+						onclick="setInFrame('utils/frmeditor_contratos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editor de Formas y
+							Contratos&nbsp;<span>11002</span></a></li>
+					<li id="md_11010"><a id="amenu_11010" data-key="11010"><i
+							class="fa fa-database fa-lg"></i>&nbsp;Mantenimiento&nbsp;<span>11010</span></a>
+					<ul>
+							<li id="md_11011"><a id="amenu_11011"
+								onclick="setInFrame('utils/frmutilerias.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Utilerias de la Base
+									de Datos&nbsp;<span>11011</span></a></li>
+							<li id="md_11013"><a id="amenu_11013"
+								onclick="setInFrame('utils/frm_edit_structure.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar
+									Estructura&nbsp;<span>11013</span></a></li>
+							<li id="md_11014"><a id="amenu_11014"
+								onclick="setInFrame('frmutils/editar_menu.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar/Agregar
+									Menu&nbsp;<span>11014</span></a></li>
+						</ul></li>
+					<li id="md_11030"><a id="amenu_11030" data-key="11030"><i
+							class="fa fa-settings fa-lg"></i>&nbsp;Operaciones
+							Especiales&nbsp;<span>11030</span></a>
+					<ul>
+							<li id="md_11038"><a id="amenu_11038"
+								onclick="getNewWindow('utils/frmbuscarrecibos.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Buscar Recibos&nbsp;<span>11038</span></a></li>
+							<li id="md_11037"><a id="amenu_11037"
+								onclick="getNewWindow('utils/reimprimir_recibo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reimprimir
+									Recibos&nbsp;<span>11037</span></a></li>
+							<li id="md_11031"><a id="amenu_11031"
+								onclick="setInFrame('utils/frmeliminarrecibos.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Consultar / Eliminar
+									Recibos en Lista&nbsp;<span>11031</span></a></li>
+							<li id="md_11032"><a id="amenu_11032"
+								onclick="setInFrame('frmoperaciones/recibos.panel.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Panel de Control de
+									Recibos&nbsp;<span>11032</span></a></li>
+							<li id="md_11036"><a id="amenu_11036"
+								onclick="setInFrame('frmtesoreria/recibo.general.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Recibo de Captura
+									General&nbsp;<span>11036</span></a></li>
+							<li id="md_11039"><a id="amenu_11039"
+								onclick="setInFrame('frmsocios/socios.editar_mvtos.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Movimientos por
+									Personas&nbsp;<span>11039</span></a></li>
+							<li id="md_11034"><a id="amenu_11034"
+								onclick="setInFrame('frmcaptacion/frmupdatemvtoscaptacion.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Mvtos. de
+									Captacion&nbsp;<span>11034</span></a></li>
+							<li id="md_11033"><a id="amenu_11033"
+								onclick="setInFrame('frmcreditos/frmupdatemvtoscredito.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Mvtos. de
+									Creditos&nbsp;<span>11033</span></a></li>
+						</ul></li>
+					<li id="md_11200"><a id="amenu_11200" data-key="11200"><i
+							class="fa fa-cog fa-lg"></i>&nbsp;Catalogos de Sistema&nbsp;<span>11200</span></a>
+					<ul>
+							<li id="md_11201"><a id="amenu_11201"
+								onclick="setInFrame('frmtipos/editar_reportes.xul.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Datos de
+									Reportes&nbsp;<span>11201</span></a></li>
+							<li id="md_11202"><a id="amenu_11202"
+								onclick="setInFrame('frmtipos/f_4fbce5a2.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Descripcion de
+									Utilerias&nbsp;<span>11202</span></a></li>
+							<li id="md_11204"><a id="amenu_11204"
+								onclick="setInFrame('frmtipos/f_formulas_en_operaciones.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Formulas de
+									Operaciones&nbsp;<span>11204</span></a></li>
+							<li id="md_11205"><a id="amenu_11205"
+								onclick="setInFrame('frmtipos/f_1879d025.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Editar Formulas
+									Generales&nbsp;<span>11205</span></a></li>
+						</ul></li>
+					<li id="md_11400"><a id="amenu_11400" data-key="11400"><i
+							class="fa fa-database fa-lg"></i>&nbsp;Respaldos&nbsp;<span>11400</span></a>
+					<ul>
+							<li id="md_11401"><a id="amenu_11401"
+								onclick="setInFrame('frmutils/matriz.restore_backup.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Cargar Sucursales a la
+									Matriz&nbsp;<span>11401</span></a></li>
+							<li id="md_11402"><a id="amenu_11402"
+								onclick="setInFrame('frmutils/sucursal.backup_offline.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Respaldar Archivos de
+									la Sucursal&nbsp;<span>11402</span></a></li>
+						</ul></li>
+					<li id="md_18550"><a id="amenu_18550" data-key="18550"><i
+							class="fa fa-server fa-lg"></i>&nbsp;Migracion al Sistema&nbsp;<span>18550</span></a>
+					<ul>
+							<li id="md_18556"><a id="amenu_18556"
+								onclick="setInFrame('install/mae.socios.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de
+									Personas&nbsp;<span>18556</span></a></li>
+							<li id="md_18557"><a id="amenu_18557"
+								onclick="setInFrame('install/mae.relaciones.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de
+									Relaciones-Personas&nbsp;<span>18557</span></a></li>
+							<li id="md_18858"><a id="amenu_18858"
+								onclick="setInFrame('install/mae.vivienda.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Datos de
+									Vivienda&nbsp;<span>18858</span></a></li>
+							<li id="md_18859"><a id="amenu_18859"
+								onclick="setInFrame('install/mae.prestamos.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de
+									Prestamos&nbsp;<span>18859</span></a></li>
+							<li id="md_18552"><a id="amenu_18552"
+								onclick="setInFrame('install/inversiones.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de
+									Inversiones&nbsp;<span>18552</span></a></li>
+							<li id="md_18553"><a id="amenu_18553"
+								onclick="setInFrame('install/vista.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Cuentas a la
+									Vista&nbsp;<span>18553</span></a></li>
+							<li id="md_2956"><a id="amenu_2956"
+								onclick="setInFrame('frmsocios/colonias.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga Batch de
+									Colonias&nbsp;<span>2956</span></a></li>
+							<li id="md_2057"><a id="amenu_2057"
+								onclick="setInFrame('install/localidades.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga Batch de
+									Localidades&nbsp;<span>2057</span></a></li>
+							<li id="md_18561"><a id="amenu_18561"
+								onclick="setInFrame('install/operaciones.upload.frm.php', event)"><i
+									class="fa fa-exchange fa-lg"></i>&nbsp;Carga de
+									Operaciones&nbsp;<span>18561</span></a></li>
+							<li id="md_18555"><a id="amenu_18555"
+								onclick="setInFrame('install/contabilidad_import-catalogocw.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Catalogo
+									ContPaQi&nbsp;<span>18555</span></a></li>
+							<li id="md_18559"><a id="amenu_18559"
+								onclick="setInFrame('install/purgar-entidadesfederativas.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Purga de Municipio y
+									Colonias&nbsp;<span>18559</span></a></li>
+							<li id="md_185591"><a id="amenu_185591"
+								onclick="getNewTiny('install/logo.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga del LOGO&nbsp;<span>185591</span></a></li>
+							<li id="md_18551"><a id="amenu_18551"
+								onclick="setInFrame('tools/send-json.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Idioma en
+									JSON&nbsp;<span>18551</span></a></li>
+							<li id="md_18554"><a id="amenu_18554"
+								onclick="setInFrame('install/contabilidad_importar-catalogo.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Catalogo
+									Contable&nbsp;<span>18554</span></a></li>
+							<li id="md_188501"><a id="amenu_188501"
+								onclick="getNewTiny('install/actividades.upload.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Actividades
+									Economicas&nbsp;<span>188501</span></a></li>
+							<li id="md_185558"><a id="amenu_185558"
+								onclick="setInFrame('install/contabilidad_import-catalogo-otros.frm.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Carga de Catalogo
+									Otros&nbsp;<span>185558</span></a></li>
+						</ul></li>
+					<li id="md_11300"><a id="amenu_11300" data-key="11300"><i
+							class="fa fa-file-o fa-lg"></i>&nbsp;Catalogos del Sistema&nbsp;<span>11300</span></a>
+					<ul>
+							<li id="md_11305"><a id="amenu_11305"
+								onclick="getNewWindow('rptotros/execute.php?x=81', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Tipos de
+									Recibos&nbsp;<span>11305</span></a></li>
+							<li id="md_11306"><a id="amenu_11306"
+								onclick="getNewWindow('rptotros/execute.php?x=80', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Integracion
+									de Bases&nbsp;<span>11306</span></a></li>
+							<li id="md_11307"><a id="amenu_11307"
+								onclick="getNewWindow('rptotros/execute.php?x=82', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Tipos de
+									Partes Relacionadas&nbsp;<span>11307</span></a></li>
+							<li id="md_11315"><a id="amenu_11315"
+								onclick="getNewWindow('rpttesoreria/catalogo-de-formas.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de Tipos de
+									Pago y Cobro&nbsp;<span>11315</span></a></li>
+							<li id="md_11301"><a id="amenu_11301"
+								onclick="getNewWindow('rptcatalogos/operaciones_tipos.rpt.php', event)"><i
+									class="fa fa-book fa-lg"></i>&nbsp;Reporte.- Lista de Tipo de
+									Operacion&nbsp;<span>11301</span></a></li>
+							<li id="md_11302"><a id="amenu_11302"
+								onclick="getNewWindow('rptotros/execute.php?x=67', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Tipos de
+									Personas&nbsp;<span>11302</span></a></li>
+							<li id="md_99170"><a id="amenu_99170"
+								onclick="getNewWindow('rptotros/execute.php?x=150', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Tipos
+									Causas de Morosidad&nbsp;<span>99170</span></a></li>
+							<li id="md_11303"><a id="amenu_11303"
+								onclick="getNewWindow('rptotros/execute.php?x=68', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de Tasas de
+									Captacion&nbsp;<span>11303</span></a></li>
+							<li id="md_11304"><a id="amenu_11304"
+								onclick="getNewWindow('rptotros/execute.php?x=69', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Reporte de
+									Destino/Aplicacion de Creditos&nbsp;<span>11304</span></a></li>
+							<li id="md_11311"><a id="amenu_11311"
+								onclick="getNewWindow('rptcatalogos/personas_genero.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo Generos en
+									Personas&nbsp;<span>11311</span></a></li>
+							<li id="md_11312"><a id="amenu_11312"
+								onclick="getNewWindow('rptcatalogos/personas_estado_civil.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Catalogo de Estado
+									Civil en Personas&nbsp;<span>11312</span></a></li>
+							<li id="md_11317"><a id="amenu_11317"
+								onclick="getNewWindow('rptsecurity/codigos_de_error.rpt.php', event)"><i
+									class="fa fa-book fa-lg"></i>&nbsp;Catalogo de Codigos de
+									Error&nbsp;<span>11317</span></a></li>
+							<li id="md_11314"><a id="amenu_11314"
+								onclick="getNewWindow('rptcontables/catalogo-de-naturaleza.rpt.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Contabilidad.-
+									Catalogo de Naturaleza&nbsp;<span>11314</span></a></li>
+						</ul></li>
+				</ul></li>
+			<li id="md_15000"><a id="amenu_15000" data-key="15000">&nbsp;Soporte&nbsp;</a>
+			<ul>
+					<li id="md_11020"><a id="amenu_11020" data-key="11020"><i
+							class="fa fa-hourglass-end fa-lg"></i>&nbsp;Operaciones de
+							Cierre&nbsp;<span>11020</span></a>
+					<ul>
+							<li id="md_11021"><a id="amenu_11021"
+								onclick="setInFrame('utils/frmcierredeldia.php', event)"><i
+									class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Generar Cierre del
+									Dia&nbsp;<span>11021</span></a></li>
+						</ul></li>
+					<li id="md_15010"><a id="amenu_15010"
+						onclick="setInFrame('utils/creditos.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Creditos del
+							Sistema&nbsp;<span>15010</span></a></li>
+					<li id="md_15020"><a id="amenu_15020"
+						onclick="setInFrame('utils/clssalir.php', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Salir del Sistema&nbsp;<span>15020</span></a></li>
+					<li id="md_15001"><a id="amenu_15001"
+						onclick="getNewWindow('http://wiki.opencorebanking.com', event)"><i
+							class="fa fa-ellipsis-h fa-lg"></i>&nbsp;Manual(En Linea)&nbsp;<span>15001</span></a></li>
+				</ul></li>
+		</ul>
+	</nav>
+	
+	<div id='wprincipal'>
+		<iframe id="idFPrincipal" src="./utils/frm_calendar_tasks.php"
+			width='100%' height="100px"></iframe>
+	</div>
+	
+	
+	<div id="banner"></div>
+	
+	
+
+	
+	
+	<script src="../js/TinyAjax.js"></script>
+	<script>
+		var xml_request_type = "GET";
+		var use_iframe = 0;
+		var show_loading = 1;
+		var request_uri = "/index.xul.php";
+
+		//Stub for jsaGetMenu
+		function jsaGetMenu() {
+			if (jsaGetMenu.arguments.length > 0) {
+				return aj_call("jsaGetMenu", jsaGetMenu.arguments);
+			}
+
+			var aj_tmp1 = getValue("id-KeyEditable");
+
+			return aj_call("jsaGetMenu", new Array(aj_tmp1, 'navigator'), false);
+		}
+
+		//Stub for jsaGetMoneyChanges
+		function jsaGetMoneyChanges() {
+			if (jsaGetMoneyChanges.arguments.length > 0) {
+				return aj_call("jsaGetMoneyChanges",
+						jsaGetMoneyChanges.arguments);
+			}
+
+			var aj_tmp1 = getValue("idMoneyExist");
+
+			return aj_call("jsaGetMoneyChanges", new Array(aj_tmp1,
+					'idMoneyExist'), false);
+		}
+
+		function TabAlert(data) {
+			alert(data[1]);
+		}
+		function TabSetValue(data) {
+			if (document.getElementById(data[1])) {
+				document.getElementById(data[1]).value = decodeSpecialChars(data[2]);
+			}
+		}
+		function TabInnerHtml(data) {
+			document.getElementById(data[1]).innerHTML = decodeSpecialChars(data[2]);
+		}
+		function TabInnerHtmlAppend(data) {
+			document.getElementById(data[1]).innerHTML = document
+					.getElementById(data[1]).innerHTML
+					+ decodeSpecialChars(data[2]);
+		}
+		function TabInnerHtmlPrepend(data) {
+			document.getElementById(data[1]).innerHTML = decodeSpecialChars(data[2])
+					+ document.getElementById(data[1]).innerHTML;
+		}
+		function TabAddOption(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options[sel.options.length] = new Option(
+					decodeSpecialChars(data[3]), decodeSpecialChars(data[2]),
+					true, false);
+			if (data[4] != 0)
+				sel.selectedIndex = sel.options.length - 1;
+		}
+		function TabClearOptions(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options.length = 0;
+		}
+		function TabRemoveSelectedOption(data) {
+			var sel = document.getElementById(data[1]);
+			sel.options[sel.options.selectedIndex] = null;
+
+		}
+
+		function aj_process2(data) {
+			var fnc = data[0];
+
+			if (fnc == 'TabAlert') {
+				TabAlert(data);
+			}
+			if (fnc == 'TabSetValue') {
+				TabSetValue(data);
+			}
+			if (fnc == 'TabInnerHtml') {
+				TabInnerHtml(data);
+			}
+			if (fnc == 'TabInnerHtmlAppend') {
+				TabInnerHtmlAppend(data);
+			}
+			if (fnc == 'TabInnerHtmlPrepend') {
+				TabInnerHtmlPrepend(data);
+			}
+			if (fnc == 'TabAddOption') {
+				TabAddOption(data);
+			}
+			if (fnc == 'TabClearOptions') {
+				TabClearOptions(data);
+			}
+			if (fnc == 'TabRemoveSelectedOption') {
+				TabRemoveSelectedOption(data);
+			}
+
+		}
+	</script>
+	<script>
+		var xG = new Gen();
+		var smenu = 42;
+		var mmob = false;
+
+		$(document).ready(function() {
+			
+			$(function() {
+				$('nav#menu').mmenu({
+					navbar : {
+					title : 'Advanced menu'
+				},
+				navbars	: [
+					{
+						position	: 'top',
+						content		: [ 'breadcrumbs', 'close' ]
+					}
+				],
+				onClick : {
+					close : true
+				}
+				});
+			});
+			
+			/*if (mmob == false) {
+				$("#jMenu").jMenu({
+					ulWidth : '200px',
+					effects : {
+						effectSpeedOpen : 200,
+						effectSpeedClose : 200,
+						effectTypeOpen : 'show',
+						effectTypeClose : 'hide',
+						effectOpen : 'slide',
+						effectClose : 'slide'
+					},
+					TimeBeforeOpening : 200,
+					TimeBeforeClosing : 20,
+					animatedText : true,
+					paddingLeft : 1,
+					openClick : false
+				});
+
+			} else {
+				smenu = 8;
+				$("#wprincipal").css("height", xG.alto());
+				jsGetMenu();
+			}*/
+		});
+
+		function setInFrame(sURI, evt) {
+
+			if (mmob == true) {
+				if ($("#navigator").length > 0) {
+					jPanelMenu.close();
+				}
+			} else {
+				if (typeof evt != "undefined") {
+					var idx = $("#" + evt.target.id).parent();
+					var API = $("#menu").data( "mmenu" );
+					API.close();
+				}
+			}
+
+			xG.QFrame({
+				url : sURI,
+				id : 'idFPrincipal'
+			});
+		}
+		function jsGetMenuChilds(id) {
+			var mParent = $("#" + id).attr("data-key");
+			$("#id-KeyEditable").val(mParent);
+
+			session(Configuracion.variables.tinyajax.delay, 500);
+			session(Configuracion.variables.tinyajax.callback,
+					"jsGetMenu(true)");
+
+			jsaGetMenu();
+			jPanelMenu.off();
+
+		}
+
+		function jsGetMenu(tr) {
+			if (typeof tr == "undefined") {
+				tr = false;
+			}
+			jPanelMenu = $.jPanelMenu({
+				menu : '#navmenu',
+				animated : false,
+				closeOnContentClick : false
+			});
+			jPanelMenu.on();
+			if (tr == true) {
+				jPanelMenu.trigger(tr);
+			}
+		}
+		function jsGetParent(parentID) {
+			window.location = "./index.xul.php?m=" + parentID;
+		}
+		function getNewTiny(mFile) {
+			if (mFile) {
+				var xG = new Gen();
+				mFile = mFile + "?";
+				xG.w({
+					url : mFile,
+					tiny : true
+				});
+			}
+		}
+
+		function getNewWindow(mFile) {
+			if (mFile) {
+				var xG = new Gen();
+				xG.w({
+					url : mFile
+				});
+			}
+
+		}
+
+		function jsGetMoneyChanges() {
+			jsaGetMoneyChanges();
+			//Mostrar el Popup
+			setTimeout("jsGetMoneyInBox()", 15000);
+		}
+		function jsGetMoneyInBox() {
+			//setTimeout("jsGetMoneyChanges()", 15000);
+		}
+		function jsEndSession() {
+		}
+		function jsInitComponents() {
+			jsGetMoneyChanges();
+			var mAlto = xG.alto() - (smenu + 5);
+			$("#idFPrincipal").attr("height", mAlto);
+			if ($('#id-KeyEditable').length > 0) {
+				//setTimeout("jsGetMenu()", 500);
+			}
+		}
+	</script>
+</body>
+</html>

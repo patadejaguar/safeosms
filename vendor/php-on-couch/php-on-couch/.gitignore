@@ -1,0 +1,27 @@
+#Netbean project folders
+/nbproject/private/
+/nbproject
+.idea/
+
+
+#Checkstyle reports
+/style-report
+
+#Composer files
+composer.lock
+/vendor
+
+#logs
+/tests/logs/
+
+#Test config
+/tests/_config/_users.php
+
+#Misc
+setup.sh
+
+#Configuration files
+.env
+
+#Doc build files
+doc/_build

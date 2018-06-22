@@ -1,0 +1,197 @@
+<?php
+
+namespace Simplon\Postgres\Manager;
+
+/**
+ * PgSqlQueryBuilder
+ * @package Simplon\Postgres\Manager
+ * @author Tino Ehrich (tino@bigpun.me)
+ */
+class PgSqlQueryBuilder
+{
+    /** @var string */
+    protected $tableName;
+
+    /** @var string */
+    protected $query;
+
+    /** @var bool */
+    protected $enableInsertIgnore = false;
+
+    /** @var array */
+    protected $conditions = array();
+
+    /** @var  string */
+    protected $conditionsQuery;
+
+    /** @var array */
+    protected $data = array();
+
+    /**
+     * @param $query string
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function setQuery($query)
+    {
+        $this->query = $query;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getQuery()
+    {
+        return (string)$this->query;
+    }
+
+    /**
+     * @param $conditions array
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function setConditions($conditions)
+    {
+        $this->conditions = $conditions;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getConditions()
+    {
+        return (array)$this->conditions;
+    }
+
+    /**
+     * @param $key
+     *
+     * @return bool
+     */
+    protected function removeCondition($key)
+    {
+        if (isset($this->conditions[$key]))
+        {
+            unset($this->conditions[$key]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     *
+     * @return PgSqlQueryBuilder
+     */
+    protected function addCondition($key, $value)
+    {
+        if (!isset($this->conditions))
+        {
+            $this->conditions = array();
+        }
+
+        $this->conditions[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string $conditionsQuery
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function setConditionsQuery($conditionsQuery)
+    {
+        $this->conditionsQuery = $conditionsQuery;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getConditionsQuery()
+    {
+        if ($this->conditionsQuery)
+        {
+            return (string)$this->conditionsQuery;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getData()
+    {
+        return (array)$this->data;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasMultiData()
+    {
+        return isset($this->data[0]) && is_array($this->data[0]);
+    }
+
+    /**
+     * @param $tableName string
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function setTableName($tableName)
+    {
+        $this->tableName = $tableName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTableName()
+    {
+        return (string)$this->tableName;
+    }
+
+    /**
+     * @param $insertIgnore
+     *
+     * @return PgSqlQueryBuilder
+     */
+    public function enableInsertIgnore($insertIgnore)
+    {
+        $this->enableInsertIgnore = $insertIgnore;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasInsertIgnore()
+    {
+        return $this->enableInsertIgnore !== false ? true : false;
+    }
+}

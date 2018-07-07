@@ -1,11 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "hash": "dd0882873362ff598aa91b2cef4c6853",
-    "content-hash": "7f8b416715545ba70844659200cb021c",
+    "content-hash": "98b7eae66a517c514c12cb368d50cc4a",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -70,7 +69,7 @@
                 "rest",
                 "web service"
             ],
-            "time": "2018-04-22 15:46:56"
+            "time": "2018-04-22T15:46:56+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -121,7 +120,7 @@
             "keywords": [
                 "promise"
             ],
-            "time": "2016-12-20 10:07:11"
+            "time": "2016-12-20T10:07:11+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -186,7 +185,7 @@
                 "uri",
                 "url"
             ],
-            "time": "2017-03-20 17:10:46"
+            "time": "2017-03-20T17:10:46+00:00"
         },
         {
             "name": "lcobucci/jwt",
@@ -244,7 +243,7 @@
                 "JWS",
                 "jwt"
             ],
-            "time": "2017-09-01 08:23:26"
+            "time": "2017-09-01T08:23:26+00:00"
         },
         {
             "name": "nexmo/client",
@@ -292,54 +291,7 @@
                 }
             ],
             "description": "PHP Client for using Nexmo's API.",
-            "time": "2018-05-01 12:35:27"
-        },
-        {
-            "name": "openpay/sdk",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/open-pay/openpay-php.git",
-                "reference": "fa75e7f3b9555baceb59b53e253512c2f02a45d2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/open-pay/openpay-php/zipball/fa75e7f3b9555baceb59b53e253512c2f02a45d2",
-                "reference": "fa75e7f3b9555baceb59b53e253512c2f02a45d2",
-                "shasum": ""
-            },
-            "require": {
-                "ext-curl": "*",
-                "ext-hash": "*",
-                "php": ">=5.2.1"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "4.8.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Openpay": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Openpay",
-                    "email": "soporte@openpay.mx",
-                    "homepage": "http://www.openpay.mx/docs/libraries.html"
-                },
-                {
-                    "name": "Federico Balderas",
-                    "email": "federico.balderas@foograde.com",
-                    "homepage": "http://foograde.com"
-                }
-            ],
-            "description": "This is a client implementing the payment services for Openpay at openpay.mx",
-            "time": "2018-03-16 01:49:45"
+            "time": "2018-05-01T12:35:27+00:00"
         },
         {
             "name": "pcloud/pcloud-php-sdk",
@@ -373,7 +325,7 @@
                 "MIT"
             ],
             "description": "pCloud SDK for PHP",
-            "time": "2017-01-06 10:00:59"
+            "time": "2017-01-06T10:00:59+00:00"
         },
         {
             "name": "php-http/guzzle6-adapter",
@@ -433,7 +385,7 @@
                 "Guzzle",
                 "http"
             ],
-            "time": "2016-05-10 06:13:32"
+            "time": "2016-05-10T06:13:32+00:00"
         },
         {
             "name": "php-http/httplug",
@@ -489,7 +441,7 @@
                 "client",
                 "http"
             ],
-            "time": "2016-08-31 08:30:17"
+            "time": "2016-08-31T08:30:17+00:00"
         },
         {
             "name": "php-http/promise",
@@ -539,7 +491,7 @@
             "keywords": [
                 "promise"
             ],
-            "time": "2016-01-26 13:27:02"
+            "time": "2016-01-26T13:27:02+00:00"
         },
         {
             "name": "php-on-couch/php-on-couch",
@@ -605,7 +557,7 @@
                 "driver",
                 "nosql"
             ],
-            "time": "2017-11-27 21:26:44"
+            "time": "2017-11-27T21:26:44+00:00"
         },
         {
             "name": "psr/http-message",
@@ -655,7 +607,7 @@
                 "request",
                 "response"
             ],
-            "time": "2016-08-06 14:39:51"
+            "time": "2016-08-06T14:39:51+00:00"
         },
         {
             "name": "simplon/postgres",
@@ -701,7 +653,7 @@
                 "pgsql",
                 "postgres"
             ],
-            "time": "2015-02-15 19:45:15"
+            "time": "2015-02-15T19:45:15+00:00"
         },
         {
             "name": "statickidz/php-google-translate-free",
@@ -760,7 +712,7 @@
                 "translate",
                 "translator"
             ],
-            "time": "2017-02-07 08:52:25"
+            "time": "2017-02-07T08:52:25+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
@@ -810,7 +762,7 @@
                 "env",
                 "environment"
             ],
-            "time": "2016-09-01 10:05:43"
+            "time": "2016-09-01T10:05:43+00:00"
         },
         {
             "name": "zendframework/zend-diactoros",
@@ -862,15 +814,13 @@
                 "psr",
                 "psr-7"
             ],
-            "time": "2018-02-26 15:44:50"
+            "time": "2018-02-26T15:44:50+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "openpay/sdk": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],

@@ -2,7 +2,6 @@
     "require": {
         "php-on-couch/php-on-couch": "^2.0",
         "statickidz/php-google-translate-free": "^1.0",
-        "openpay/sdk": "dev-master",
         "simplon/postgres": "^0.2.6",
         "nexmo/client": "^1.3",
         "pcloud/pcloud-php-sdk": "^1.0"

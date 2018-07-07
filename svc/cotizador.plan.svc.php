@@ -48,6 +48,7 @@ $tasa			= ($tasa/100);
 $soloint		= parametro("solointeres", false, MQL_BOOL);
 $redondeo		= ($redondeo == true) ? 100 : 0;
 
+$destino		= parametro("destino", 0, MQL_INT);
 
 
 $rs				= array();
@@ -58,9 +59,19 @@ $xGen->setPagosAutorizados($pagos);
 $xGen->setMontoActual($monto);
 $xGen->setMontoAutorizado($monto);
 $xGen->setPeriocidadDePago($frecuencia);
+
 $xGen->setTasaDeInteres($tasa);
+
 $xGen->setTasaDeIVA($tasaiva);
+
 $xGen->setFechaDesembolso(fechasys());
+
+if($destino > 0){
+	$xDest	= new cCreditosDestinos($destino);
+	if($xDest->init() == true){
+		$xGen->setTasaDeIVA($xDest->getTasaIVA());
+	}
+}
 
 
 if($soloint == true){

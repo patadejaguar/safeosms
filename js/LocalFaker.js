@@ -31,7 +31,11 @@ LocalFaker.prototype.run = function(frm){
 		case "id-frmvivienda":
 			self.setNuevaVivienda();
 			break;
-		
+		case "id-frmregistrogrupos":
+			
+			self.setNuevoGrupo();
+			
+			break;		
 		default:
 			alert("No hay Prueba para este Formulario");
 			break;
@@ -298,3 +302,30 @@ LocalFaker.prototype.setNuevoPerfilTrans	= function(){
 	$("#idobservaciones").val( faker.random.words()  );
 }
 
+LocalFaker.prototype.setNuevoGrupo = function(){
+	var self	= this;
+	
+	//$("#idsucursal").val();
+	
+	$("#idrazonsocial").val( faker.company.companyName() );
+	
+	//$("#idfechanacimiento").val();
+	
+	$("#identidadfederativanacimiento").val( self.rndSel("identidadfederativanacimiento") );
+	
+	$("#idlugardenacimiento").val( faker.address.state() );
+	
+	$("#idemail").val( faker.internet.email() );
+	$("#idtelefono").val( faker.phone.phoneNumber() );
+	
+	$("#idobservaciones").val( faker.random.words() );
+	
+	//$("#idsocio2").val();
+	//$("#idsocio3").val();
+	//$("#idsocio4").val();
+	//$("#idsocio5").val();
+	//$("#idsocio6").val();
+	//$("#idsocio7").val();
+	//$("#idsocio8").val();
+	//$("#idsocio9").val();
+}

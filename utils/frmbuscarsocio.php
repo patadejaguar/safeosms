@@ -87,7 +87,7 @@ function jsaGetListadoDeProductos(){
 	$cDE->setOptionSelect(DEFAULT_TIPO_CONVENIO);
 	return $cDE->get("", false);
 }
-function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $idempresa = 0, $idgrupo = 0){
+function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $idempresa = 0, $idgrupo = 0, $idnextaction=""){
 	$strTbls			= "";
 	$ByForm				= false;
 	$MostrarGars		= true;
@@ -120,13 +120,19 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 		if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
 			$xEmp	= new cEmpresas($idempresa);
 			if($xEmp->init() == true){
-				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` != " . PERSONAS_ES_FISICA . ") ";
+				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_FISICA . ") ";
+				if($idnextaction == "addempresa"){
+					$w1				.= " AND (`socios_general`.`dependencia` != " . $idempresa . ") ";
+				}
 			}
 		}
 		if(PERSONAS_CONTROLAR_POR_GRUPO == true){
 			$xGpo	= new cGrupo($idgrupo);
 			if($xGpo->init() == true){
-				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` != " . PERSONAS_ES_FISICA . ") ";
+				$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_FISICA . ") ";
+				if($idnextaction == "addgrupo"){
+					$w1				.= " AND (`socios_general`.`grupo_solidario` != " . $idgrupo . ") ";
+				}
 			}
 		}
 		
@@ -282,7 +288,7 @@ function jsaAddPersonaToEmpresa($persona, $Empresa){
 }
 
 
-$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso","idempresaadd","idgrupoadd"), "#divresultado");
+$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso","idempresaadd","idgrupoadd", "idnextaction"), "#divresultado");
 $jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaSetSocioEnSession', array("idsocio"));
@@ -336,6 +342,8 @@ $xFRM->endSeccion();
 $xFRM->addSeccion("idlistabusqueda", "TR.Resultado");
 $xFRM->addHTML("<div id='divresultado'></div>");
 $xFRM->endSeccion();
+
+$xFRM->OHidden("idnextaction", $nextstep);
 
 //Tipo de Ingreso falso
 

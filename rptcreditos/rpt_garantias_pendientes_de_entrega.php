@@ -1,36 +1,64 @@
 <?php
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-include_once("../core/entidad.datos.php");
-include_once("../core/core.deprecated.inc.php");
-include_once("../core/core.fechas.inc.php");
-include_once("../libs/sql.inc.php");
-include_once("../core/core.config.inc.php");
-include_once("../reports/PHPReportMaker.php");
-
-$oficial = elusuario($iduser);
-//=====================================================================================================
-$fecha_inicial 		= $_GET["on"];
-$fecha_final 		= $_GET["off"];
-$f3 				= $_GET["f3"];
-$input 				= $_GET["out"];
-	if (!$input) {
-		$input = "default";
-	}
+$xHP		= new cHPage("TR.GARANTIAS POR ENTREGAR", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$xQL		= new MQL();
+$xFil		= new cSQLFiltros();
 
 
-	$setSql = "SELECT
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT); $frecuencia 	= parametro("frecuencia", $frecuencia, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT); $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
+
+$TipoDePago		= parametro("tipodepago", SYS_TODAS, MQL_RAW); $TipoDePago	= parametro("formadepago", $TipoDePago, MQL_RAW); $TipoDePago	= parametro("pago", $TipoDePago, MQL_RAW);
+$TipoDeRecibo	= parametro("tipoderecibo", 0, MQL_INT); $TipoDeRecibo = parametro("tiporecibo", $TipoDeRecibo, MQL_INT);
+
+$cajero 		= parametro("f3", 0, MQL_INT); $cajero = parametro("cajero", $cajero, MQL_INT); $cajero = parametro("usuarios", $cajero, MQL_INT);
+
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT); $operacion = parametro("tipodeoperacion", $operacion, MQL_INT);
+//===========  Individual
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+
+
+
+$ByFechas		= $xFil->CredsGarantiasPorFechaRes($FechaInicial, $FechaFinal);
+$xGarE			= new cCreditosGarantias();
+
+
+$setSql = "SELECT
 	`socios`.`codigo`,
 	`socios`.`nombre`,
 	`creditos_solicitud`.`numero_solicitud`,
@@ -50,40 +78,35 @@ FROM
 				ON `creditos_garantias`.`tipo_garantia` = `creditos_tgarantias`.
 				`idcreditos_tgarantias`
 WHERE
-	(`creditos_solicitud`.`saldo_actual` <=0)
-	AND
-	(`creditos_garantias`.`fecha_resguardo` >='$fecha_inicial')
-	AND
-	(`creditos_garantias`.`fecha_resguardo` <='$fecha_final')
-	AND
-	(creditos_garantias.estatus_actual = 2) ";
-//			*/
+	(`creditos_solicitud`.`saldo_actual` <=0) $ByFechas
+	AND	(creditos_garantias.estatus_actual = " . $xGarE->ESTADO_RESGUARDO . ") ";
 
-if ($input!=OUT_EXCEL) {
-//echo $setSql;
-	$oRpt = new PHPReportMaker();
-	$oRpt->setDatabase(MY_DB_IN);
-	$oRpt->setUser(RPT_USR_DB);
-	$oRpt->setPassword(RPT_PWD_DB);
-	$oRpt->setSQL($setSql);
-	$oRpt->setXML("../repository/report62.xml");
-	$oOut = $oRpt->createOutputPlugin($input);
-	$oRpt->setOutputPlugin($oOut);
-	$oRpt->run();		//	*/
-} else {
-	$filename = $_SERVER['SCRIPT_NAME'];
-	$filename = str_replace(".php", "", $filename);
-	$filename = str_replace("rpt", "", $filename);
-	$filename = str_replace("-", "", 	$filename);
-  	$filename = "$filename-" . date("YmdHi") . "-from-" .  $iduser . ".xls";
 
-  	header("Content-type: application/x-msdownload");
-	header("Content-Disposition: attachment; filename=$filename");
-	header("Pragma: no-cache");
-	header("Expires: 0");
 
-	$cTbl = new cTabla($setSql);
-	$cTbl->setWidth();
-	$cTbl->Show("", false);
-}
+$sql			= $setSql;
+$titulo			= $xHP->getTitle();
+$archivo		= $xHP->getTitle();
+
+
+
+
+
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+$xRPT->setBodyMail($body);
+
+$xRPT->addContent($body);
+
+$xRPT->setProcessSQL();
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+
 ?>

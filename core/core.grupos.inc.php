@@ -162,6 +162,8 @@ class cGruposCotizacionesDetalle {
 		$xT->monto_solicitado($solicitado);
 		$xT->originacion_grupos_id($idcotizacion);
 		$xT->persona_id($persona);
+		
+		
 		$xT->tiempo(time());
 		$qq		= $xT->query();
 		$res 	= $qq->insert()->save();
@@ -170,6 +172,8 @@ class cGruposCotizacionesDetalle {
 	}
 	
 }
+
+
 
 
 class cGruposNiveles {

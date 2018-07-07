@@ -21,6 +21,30 @@ $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
+$xRuls		= new cReglaDeNegocio();
+
+
+
+$SinDatosFiscales	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_FISCALES);		//regla de negocio
+$SinDatoPoblacional = $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATO_POBLACIONAL);		//regla de negocio
+$SinRegimenMat 		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_REG_MATRIMONIAL);		//regla de negocio
+$SinDatosDocto 		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DATOS_DOCTOS);		//regla de negocio
+$DomicilioSimple	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_DOM_SIMPLE);
+$SinDetalleAcceso 	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DETALLE_ACCESO);
+$EsSimple			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_SIMPLE);
+$TratarComoSalarios	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_ACTIVIDAD_EC_ASALARIADO);
+$xclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_XCLASIFICACION);
+$yclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_YCLASIFICACION);
+$zclass				= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_ZCLASIFICACION);
+$useDExtranjero		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DEXTRANJERO);
+$useDColegiacion	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
+$userNoDNI			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SIN_DNI_INGRESO);
+$RelsSinDom			= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RELS_SIN_DOM);
+$RN_NoValidarCurp	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_NO_VALIDAR_DNI);
+$useDatosAccidente	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DATO_ACCIDENTE);
+$UsarIDInterno		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);
+
+
 function jsaAsociar($idpersona, $idcontrol){
 	$xP		= new cCreditosPreclientes($idcontrol);
 	if($xP->init()){
@@ -58,6 +82,8 @@ $xHP->init("jsInitComponents()");
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
+
+
 $xFRM->setNoAcordion();
 $xFRM->addSeccion("idsolicita", "TR.DATOS");
 
@@ -75,8 +101,17 @@ $xFRM->OText("nombres", $xTabla->nombres()->v(), "TR.NOMBRE_COMPLETO");
 $xFRM->OText_13("apellido1", $xTabla->apellido1()->v(), "TR.PRIMER_APELLIDO");
 $xFRM->OText_13("apellido2", $xTabla->apellido2()->v(), "TR.SEGUNDO_APELLIDO");
 
-$xFRM->OText_13("rfc", $xTabla->rfc()->v(), "TR.RFC");
-$xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.CURP");
+if($SinDatosFiscales === true){
+	$xFRM->OHidden("rfc", "");
+} else {
+	$xFRM->OText_13("rfc", $xTabla->rfc()->v(), "TR.RFC");
+}
+
+if($SinDatoPoblacional == true OR $userNoDNI == true){
+	$xFRM->OHidden("curp", "");
+} else {
+	$xFRM->OText_13("curp", $xTabla->curp()->v(), "TR.CURP");
+}
 
 $xFRM->OMoneda("telefono", $xTabla->telefono()->v(), "TR.TELEFONO");
 $xFRM->OText("email", $xTabla->email()->v(), "TR.EMAIL");
@@ -85,8 +120,8 @@ $xFRM->endSeccion();
 $xFRM->addSeccion("iddcreds", "TR.CREDITO");
 
 $xFRM->addHElem($xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v())->get(true));
-$xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v())->get(true));
-$xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v() )->get(true) );
+$xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v(), false, true)->get(true));
+$xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v(),true )->get(true) );
 $xFRM->OTasaInt("tasa_interes", $xTabla->tasa_interes()->v(), "TR.TASA");
 
 $xFRM->OEntero("pagos", $xTabla->pagos()->v(), "TR.PAGOS",100);
@@ -145,6 +180,7 @@ $xFRM->addHElem("<div id='idcalendar'></div>");
 
 $xFRM->OButton("TR.PLAN_DE_PAGOS", "jsCalcularPlan()", $xFRM->ic()->PLANDEPAGOS, "cmdgenplan", "whiteblue");
 $xFRM->OButton("TR.IMPRIMIR", "jsVerCotizacion()", $xFRM->ic()->IMPRIMIR, "idimprimir");
+$xFRM->OButton("TR.ENVIAR CORREO_ELECTRONICO", "jsSendMail0()", $xFRM->ic()->EMAIL, "idsendmail", "yellow");
 
 $xFRM->endSeccion();
 
@@ -158,6 +194,7 @@ var xP		= new PersGen();
 
 function jsInitComponents(){
 	xG.desactiva("#idimprimir");
+	xG.desactiva("#idsendmail");
 }
 
 function jsSetAsociar(idp){
@@ -236,7 +273,8 @@ function onRefresh(){
 }
 
 function jsCalcularPlan(){
-
+	tomail	= (typeof tomail == "undefined") ? false : tomail;
+	
 	$("#btn_guardar").click();
 
 	var fecha_de_registro = $("#fecha_de_registro").val();
@@ -256,13 +294,14 @@ function jsCalcularPlan(){
 	var idfrecuencia	= $("#periocidad").val();
 	
 	var tipocuota_id 	= $("#tipocuota_id").val(); 
-	//$("#yourdropdownid option:selected").text();
-//$("#idtipodepago option[value='1']").remove();
-	//var hd = (session("data.head") == null) ? "" : base64.decode(session("data.head")) ;
-	//$("#idheader").html( hd );
 	var nombrec			= $.trim($("#nombres").val() + " " + $("#apellido1").val() + " " + $("#apellido2").val());
 	var email			= $("#email").val();
 	var idcontrol		= $("#idcontrol").val();
+
+
+	xG.desactiva("#idimprimir");
+	xG.desactiva("#idsendmail");
+	
 	var txt				= "";//"<h4>Cotizacion # " + idcontrol + "</h4>";		
 	txt					+= "<table>";
 	txt					+= "<tr><th>Nombre</th><td>" + nombrec + "</td></tr>";
@@ -270,14 +309,14 @@ function jsCalcularPlan(){
 	txt					+= "<tr><th>Pagos</th><td>" + idpagos + "</td></tr>";
 	txt					+= "<tr><th>Tasa</th><td>" + idtasa + "</td></tr>";
 	
-	idperdesc			= $("#tipocuota_id option:selected").text();
+	idperdesc			= $("#periocidad option:selected").text();
 	txt					+= "<tr><th>Frecuencia:</th><td>" + idperdesc + "</td></tr>";
 	
 	txt					+= "</table>";
 	
 	session("data.head", base64.encode(txt));
-	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&redondeo=true&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&tipocuota=" + tipocuota_id;
-   $.ajax(urlm, {
+	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&redondeo=true&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&tipocuota=" + tipocuota_id + "&destino=" + aplicacion;
+   	$.ajax(urlm, {
       success: function(data) {
 	//alert(data.monto);
          //$('#main').html($(data).find('#main *'));
@@ -286,6 +325,7 @@ function jsCalcularPlan(){
 		$("#idcalendar").html( base64.decode(data.html) );
 		session("data.plan", data.html);
 		xG.activa("#idimprimir");
+		xG.activa("#idsendmail");
       },
       error: function() {
          //$('#notification-bar').text('An error occurred');
@@ -297,7 +337,25 @@ function jsVerCotizacion(){
 	var urlm		= "../rpt_formatos/cotizador.plan.rpt.php?conuser=true";
 	xG.w({url:urlm});
 }
-
+function jsSendMail0(){
+	xG.confirmar({ msg: "MSG_CONFIRMA_ENVIO", title: "EMAIL", callback:jsSendMail});
+}
+function jsSendMail(){
+	var email		= $("#email").val();
+	var idd1		= session("data.head");
+	var idd2		= session("data.plan");
+	
+	
+	var urlm		= "../svc/mail.svc.php?email=" + email + "&idd1=" + idd1 + "&idd2=" +  idd2;
+   	$.ajax(urlm, {
+      success: function(data) {
+		xG.alerta({msg:data.message});
+      },
+      error: function() {
+        
+      }
+   });
+}
 </script>
 <?php
 

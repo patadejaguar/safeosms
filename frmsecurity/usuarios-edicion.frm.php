@@ -128,21 +128,23 @@ function jsActivarUsuario(id){
 	xG.svc({url:"su.svc.php?action=activar&usuario=" + id, callback: jsAvisos});
 }
 function jsAvisos(data){
-	if(data.msg !== "undefined"){
-		xG.alerta({msg:data.msg});
+	if(data){
+		if(typeof data.msg !== "undefined"){
+			xG.alerta({msg:data.msg, callback: jsReloadGrid});
+		}
 	}
 }
 function jsAgregarUsuario(){
 	var xrl		= "../frmsecurity/altausuarios.frm.php?";
-	xG.w({ url: xrl, tiny : true }); 
+	xG.w({ url: xrl, tiny : true, callback: jsReloadGrid }); 
 }
 function jsEditarUsuario(id){
 	var xrl		= "../frmsecurity/usuarios.edit.frm.php?clave=" + id;
-	xG.w({ url: xrl, tiny : true }); 
+	xG.w({ url: xrl, tiny : true, callback: jsReloadGrid }); 
 }
 function jsVerMiPassword(id){ 
 	var xrl		= "../frmsocios/socios.usuario.frm.php?usuario=" + id;
-	xG.w({ url: xrl, tiny : true }); 	
+	xG.w({ url: xrl, tiny : true, callback: jsReloadGrid }); 	
 }
 function jsActionBaja(id, estatus){
 	//var id	= dd.clave;
@@ -173,6 +175,10 @@ function jsLoadFiltro(){
 		$("#iddiv").jtable("destroy");
 		jsLGiddiv(str);
 	}
+}
+function jsReloadGrid(){
+	$("#iddiv").jtable("destroy");
+	jsLGiddiv();
 }
 </script>
 <?php

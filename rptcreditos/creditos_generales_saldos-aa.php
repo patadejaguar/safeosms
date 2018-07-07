@@ -94,6 +94,9 @@ WHERE
 	AND
 	(`operaciones_mvtos`.`fecha_afectacion` <= '$fechaFinal') 
 	$ByProducto $BySucursal $ByMunicipio
+	
+	AND creditos_solicitud.estatus_actual != " . CREDITO_ESTADO_CASTIGADO . "
+
 GROUP BY
 	`operaciones_mvtos`.`docto_afectado`
 	

@@ -96,13 +96,13 @@ function jsaBuscarCoincidencias($nombre){
 
 $jxc ->exportFunction('jsaGetMunicipios', array('identidadfederativa', 'idpais', 'idcodigopostal'), "#txtmunicipio");
 $jxc ->exportFunction('jsaGetLocalidades', array('identidadfederativa', 'idmunicipio', 'idpais', 'idcodigopostal'), "#txtlocalidad");
-$jxc ->exportFunction('jsaBuscarCoincidencias', array('idrazonsocial'), "#fb_frmsolingreso");
+$jxc ->exportFunction('jsaBuscarCoincidencias', array('idrazonsocial'), "#fb_frmregistropm");
 
 $jxc ->process();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frmsolingreso", "registro-personas.frm.php");
+$xFRM		= new cHForm("frmregistropm", "registro-personas.frm.php");
 $xFRM->setAction("registro-personas.frm.php", true);
 $xFRM->setTitle( $xHP->getTitle() );
 $xFRM->setNoAcordion();
@@ -351,7 +351,7 @@ function jsCheck(){
 	if ( $(".unhappyMessage").length > 0) {
 		alert("Necesita corregir algunos datos para Guardar");
 	} else {
-		$('#id-frmsolingreso').submit();
+		$('#id-frmregistropm').submit();
 	}
 }
 function jsValidarExistePersona(existe){

@@ -17,6 +17,12 @@ $nombre			= parametro("nombre");
 $logo			= parametro("logo", true, MQL_BOOL);
 $conuser		= parametro("conuser", false, MQL_BOOL);
 
+
+
+
+
+
+
 $xHP->addJsFile("../js/base64.js");
 $xHP->init("importHTML()");
 if($logo == true){

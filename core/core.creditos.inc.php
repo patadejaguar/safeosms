@@ -4847,6 +4847,20 @@ class cCredito {
 	function getReciboDeLiquidacion(){ return $this->mReciboDeLiquidacion; }
 	function getReciboDeOperacionAct(){ return $this->mReciboDeOperacion; }
 	function getFechaDeOperacionAct(){ return $this->mFechaOperacion; }
+	function getEsAutorizado(){
+		$es			= false;
+		if($this->getEstadoActual() == CREDITO_ESTADO_AUTORIZADO){
+			$res	= true;
+		}
+		return $es;
+	}
+	function getEsSolicitado(){
+		$es			= false;
+		if($this->getEstadoActual() == CREDITO_ESTADO_SOLICITADO){
+			$res	= true;
+		}
+		return $es;
+	}
 	function getEsAutorizable($fecha = false){
 		$valido 	= $this->getEsValido();
 		if(CREDITO_CONTROLAR_POR_PERIODOS == true){
@@ -6669,7 +6683,7 @@ class cProductoDeCredito {
 			$xCach	= new cCache();
 			$xLi	= new cSQLListas();
 			$xQL	= new MQL();
-			$idx	= ($fecha !== false) ? "rs-productos-costos-d-". $this->mClaveDeConvenio : "rs-productos-costos-". $this->mClaveDeConvenio; 
+			$idx	= ($fecha !== false) ? "rs-productos-costos-d-$fecha-". $this->mClaveDeConvenio : "rs-productos-costos-". $this->mClaveDeConvenio; 
 			$rs		= $xCach->get($idx);
 			if($rs === null){
 				if($fecha !== false ){
@@ -6682,15 +6696,17 @@ class cProductoDeCredito {
 				$rs 		= $xQL->getDataRecord($sql);
 				$xCach->set($idx, $rs);
 			}
-			
+			//setLog($sql);
 			$xCT	= new cCreditos_productos_costos();
 			$sumaL	= 0;
 			foreach ($rs as $rw){
 				$xCT->setData($rw);
 				$tipooperacion	= $rw[$xCT->CLAVE_DE_OPERACION];
 				$unidades		= $rw[$xCT->UNIDADES];
-				$EsTasa			= (setNoMenorQueCero($rw[$xCT->UNIDAD_DE_MEDIDA]) <= 0 ) ? false : true;
-				$monto			= ($EsTasa == false) ? $unidades : $unidades /100; //0 = peso
+				$EsTasa			= (setNoMenorQueCero($rw[$xCT->UNIDAD_DE_MEDIDA]) == 1 ) ? true : false;
+				
+				$monto			= ($EsTasa == false) ? $unidades : $unidades / 100; //0 = peso
+				
 				$EnPlan			= (setNoMenorQueCero($rw[$xCT->EN_PLAN]) <=0 ) ? false : true;
 				//if($xCT->clave_de_operacion()->v() == OPERACION_CLAVE_COMISION_APERTURA){
 				switch ($tipooperacion){
@@ -6700,7 +6716,7 @@ class cProductoDeCredito {
 						}
 						break;
 					case OPERACION_CLAVE_PAGO_NOT:
-						$this->mAplicaGtosNots	= true;	//Si es mayor a 0
+						$this->mAplicaGtosNots			= true;	//Si es mayor a 0
 						break;
 				}
 				//TODO: AGREGAR POR MONTO FONDO OBLIGATORIO
@@ -6710,14 +6726,17 @@ class cProductoDeCredito {
 					//if($this->mTasaComPorApertura == 0 AND $xCT->unidad_de_medida()->v() == $this->COSTOS_EN_TASA){
 				//}
 				if($EnPlan == true){
-					if($EsTasa == false){ //solo porcentajes.- Si no, causa error en el calculo del CAT
+					if($EsTasa == true){ //solo porcentajes.- Si no, causa error en el calculo del CAT
 						$this->mDOtrosCargosParcs[$tipooperacion]	= $monto;
 						$sumaL										+= $monto;
+						//setLog("Otros Cargos Parcialidades $tipooperacion -- $monto");
 					}
 				} else {
 					$this->mDOtrosCargos[$tipooperacion]			= $monto;
+					//setLog("Otros Cargos Tasa : $tipooperacion --  $monto");
 				}
 			}
+			//setLog($this->mDOtrosCargosParcs);
 			//Sumar Cargos en Letras y COnvertirlos en porcentaje
 			$xcgo						= $this->mDOtrosCargosParcs;
 			$this->mSumaOtrosCargosP	= $sumaL;
@@ -7274,15 +7293,15 @@ class cCreditosGarantias {
 	private $mOb			= null;
 	private $mMontoValuado	= 0;
 	private $mFechaResguardo= false;
-	private $mFechaRegistro	= false;
-	private $mInit			= false;
+	private $mFechaRegistro		= false;
+	private $mInit				= false;
+	private $mEstadoGar			= false; 
+	private $mColor				= "";
+	private $mModelo			= "";
+	private $mAnnio				= "";
 	
-	private $mColor			= "";
-	private $mModelo		= "";
-	private $mAnnio			= "";
-	
-	public $TIPO_PRENDARIA	= 2;
-	public $TIPO_INMUEBLE	= 1;
+	public $TIPO_PRENDARIA		= 2;
+	public $TIPO_INMUEBLE		= 1;
 	
 	public $ESTADO_COTEJO		= 1;
 	public $ESTADO_RESGUARDO	= 2;
@@ -7304,20 +7323,23 @@ class cCreditosGarantias {
 	function init($aDIniciales = false){
 		$xF			= new cFecha();
 		if($this->mCodigo != false){
-			$xOb	= new cCreditos_garantias();
-			$data	= ($aDIniciales == false) ? $xOb->query()->initByID($this->mCodigo) : $aDIniciales;
+			$xT		= new cCreditos_garantias();
+			$data	= ($aDIniciales == false) ? $xT->query()->initByID($this->mCodigo) : $aDIniciales;
+			
 			if(isset($data["solicitud_garantia"])){
-				$xOb->setData( $data );
-				$this->mClaveCredito	= $xOb->solicitud_garantia()->v();
-				$this->mClavePersona	= $xOb->socio_garantia()->v();
-				$this->mCodigo			= $xOb->idcreditos_garantias()->v();
-				$this->mMontoValuado	= $xOb->monto_valuado()->v();
-				$this->mFechaRegistro	= $xOb->fecha_recibo()->v();
-				$this->mFechaResguardo	= $xOb->fecha_resguardo()->v();
-				$this->mColor			= $xOb->caracteristica1()->v();
-				$this->mModelo			= $xOb->caracteristica2()->v();
-				$this->mAnnio			= $xOb->caracteristica3()->v();
-				$this->mOb				= $xOb;
+				$xT->setData( $data );
+				$this->mClaveCredito	= $xT->solicitud_garantia()->v();
+				$this->mClavePersona	= $xT->socio_garantia()->v();
+				$this->mCodigo			= $xT->idcreditos_garantias()->v();
+				$this->mMontoValuado	= $xT->monto_valuado()->v();
+				$this->mFechaRegistro	= $xT->fecha_recibo()->v();
+				$this->mFechaResguardo	= $xT->fecha_resguardo()->v();
+				$this->mColor			= $xT->caracteristica1()->v();
+				$this->mModelo			= $xT->caracteristica2()->v();
+				$this->mAnnio			= $xT->caracteristica3()->v();
+				$this->mEstadoGar		= $data[$xT->ESTATUS_ACTUAL];
+				
+				$this->mOb				= $xT;
 				$this->mData			= $data;
 				
 				$this->mInit			= true;
@@ -7374,6 +7396,7 @@ class cCreditosGarantias {
 	function getModelo(){ return $this->mModelo; }
 	function getColor(){ return $this->mColor; }
 	function getAnnio(){ return $this->mAnnio; }
+	function getEstadoGarantia(){ return $this->mEstadoGar; }
 	function setDatosVehiculo($modelo = "", $color = "", $annio = ""){
 		if($this->mOb == null){ $this->init(); }
 		if($this->mOb !== null){
@@ -7395,7 +7418,7 @@ class cCreditosGarantias {
 		$fresguardo	= $xF->getFechaCorta($this->mOb->fecha_resguardo()->v());
 		$fcompra	= $xF->getFechaCorta($this->mOb->fecha_adquisicion()->v());
 		$exoFicha =  "
-		<table>
+		<table class='ficha'>
 		<tbody>
 		<tr>
 			<th class='izq'>" . $xLng->getT("TR.Clave") . "</th><td>" . $this->mOb->idcreditos_garantias()->v() . "</td>
@@ -7459,6 +7482,27 @@ class cCreditosGarantias {
 			$monto	= setNoMenorQueCero($D[SYS_MONTO]);
 		}
 		return $monto;
+	}
+	function getEsPresentado(){
+		$res	= false;
+		if($this->getEstadoGarantia() == $this->ESTADO_COTEJO){
+			$res	= true;
+		}
+		return $res;
+	}
+	function getEsResguardado(){
+		$res	= false;
+		if($this->getEstadoGarantia() == $this->ESTADO_RESGUARDO){
+			$res	= true;
+		}
+		return $res;
+	}
+	function getEsDevuelto(){
+		$res	= false;
+		if($this->getEstadoGarantia() == $this->ESTADO_DEVUELTO){
+			$res	= true;
+		}
+		return $res;
 	}
 }
 

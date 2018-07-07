@@ -25,6 +25,10 @@ $cmd		= parametro("cmd", SYS_NINGUNO, MQL_RAW);
 $rs			= array();
 $xPlan		= null;
 $rs["aviso"]	= "";
+
+
+
+
 switch ($cmd){
 	case MQL_DEL:
 		$xPlan	= new cPlanDePagos();

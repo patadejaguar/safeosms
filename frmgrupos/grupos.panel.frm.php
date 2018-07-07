@@ -57,14 +57,18 @@ $xFRM->setTitle($xHP->getTitle());
 $xGru		= new cGrupo($grupo);
 if($xGru->init() == true){
 	$xFRM->addCerrar();
+	$xFRM->OButton("TR.AGREGAR CREDITO", "jsAddCredito()", $xFRM->ic()->CREDITO, "idaddcrednew", "credito");
+	
 	$xFRM->OHidden("idgrupo", $grupo);
+	
 	
 	$xFRM->addHElem($xGru->getFicha(true));
 	
 	
 	$xHG	= new cHGrid("idintegrantes","TR.INTEGRANTES");
-	$xHG->setSQL($xLi->getListadoDePersonasV2(" ( `socios_general`.`grupo_solidario` = $grupo ) ", "0,100"));
+	$xHG->setSQL($xLi->getListadoDePersonasV2(" AND ( `socios_general`.`grupo_solidario` = $grupo ) ", "0,100"));
 	$xHG->addList();
+	$xHG->setOrdenar();
 	$xHG->addKey("codigo");
 	$xHG->col("codigo", "TR.CODIGO", "10%");
 	$xHG->col("nombre", "TR.NOMBRE_COMPLETO", "60%");
@@ -77,22 +81,23 @@ if($xGru->init() == true){
 	
 	//$xFRM->OButton("TR.AGREGAR INTEGRANTE", "jsAddIntegrante()", $xFRM->ic()->AGREGAR, "idcmdaddint", "blue");
 	$xHT->addTab("TR.INTEGRANTES","", "idintegrantes");
+	
 	//==================== Solicitudes
 	
 	
-	$xHG	= new cHGrid("idsolicitudes","TR.SOLICITUDES");
+	$xHG2	= new cHGrid("idsolicitudes","TR.SOLICITUDES");
+	$xHG2->setSQL("SELECT * FROM socios");
+	$xHG2->addList();
+	$xHG2->addKey("codigo");
+	$xHG2->col("codigo", "TR.CODIGO", "10%");
+	$xHG2->col("nombre", "TR.NOMBRE_COMPLETO", "60%");
+	$xHG2->col("curp", "TR.CURP", "10%");
 	
-	$xHG->setSQL($sql);
-	$xHG->addList();
-	$xHG->addKey("codigo");
-	$xHG->col("codigo", "TR.CODIGO", "10%");
-	$xHG->col("nombre", "TR.NOMBRE_COMPLETO", "60%");
-	$xHG->col("curp", "TR.CURP", "10%");
+	$xHG2->OToolbar("TR.AGREGAR INTEGRANTE", "jsAddIntegrante()", "grid/add.png");
 	
-	$xHG->OToolbar("TR.AGREGAR INTEGRANTE", "jsAddIntegrante()", "grid/add.png");
 	
 	//$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsocios_grupossolidarios +')", "edit.png");
-	$xFRM->addJsCode( $xHG->getJs(true) );
+	//$xFRM->addJsCode( $xHG2->getJs(true) );
 	
 	
 	$xFRM->addHElem( $xHT->get());
@@ -111,6 +116,14 @@ var xP		= new PersGen();
 function jsAddIntegrante(){
 	var idgpo	= entero($("#idgrupo").val());
 	xP.getFormaBusqueda({args : "&grupo=" + idgpo, next : "addgrupo", callback: jsLGidintegrantes});	
+}
+function jsAddCredito(){
+	//var mmsg	= base64.decode(jsonWords.HTML_WARN_GRUPOADDCRED);
+	xG.confirmar({msg: "MSG_CONFIRMA_ADD_CRED", callback: jsConfirmAddCredito});
+}
+function jsConfirmAddCredito(){
+	var idgpo	= entero($("#idgrupo").val());
+	xG.w({url:"../frmgrupos/grupos-add-solicitud.frm.php?grupo=" + idgpo});
 }
 </script>
 <?php

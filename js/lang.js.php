@@ -32,7 +32,15 @@ if($lng === null){
 	while($rw = $rs->fetch_assoc()){
 		$arr[$rw["topico"]] = $rw["mensaje"];
 	}
+	$rs		= $xQL->getRecordset("SELECT * FROM `sistema_msj_largo` ");
+	while($rw = $rs->fetch_assoc()){
+		$arr[$rw["texto_nombre"]] = $rw["texto_mensaje"];
+	}
+	
 	$lng	= "var jsonWords = " . json_encode( $arr ) . ";";
+	
+	
+	
 	
 	$xCache->set($idx, $lng, $xCache->EXPIRA_UNDIA);
 }

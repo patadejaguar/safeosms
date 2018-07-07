@@ -153,17 +153,17 @@ class cCajaLocal{
 	}
 	function setReestablecerNumeracion($mUltimoSocio = false){
 		if ( $mUltimoSocio == false ){
-            $sql 		=  "UPDATE socios_cajalocal SET ultimosocio = (SELECT MAX(codigo) FROM socios_general
-						WHERE cajalocal=socios_cajalocal.idsocios_cajalocal)";
+            $sql 	=  "UPDATE socios_cajalocal SET ultimosocio = (SELECT MAX(codigo) FROM socios_general WHERE cajalocal=socios_cajalocal.idsocios_cajalocal)";
 		} else {
-			$sql 	=  "UPDATE socios_cajalocal SET ultimosocio = " . $mUltimoSocio . "
-						WHERE socios_cajalocal.idsocios_cajalocal = " . $this->mNumeroDeCaja;
+			$sql 	=  "UPDATE socios_cajalocal SET ultimosocio = " . $mUltimoSocio . "	WHERE socios_cajalocal.idsocios_cajalocal = " . $this->mNumeroDeCaja;
 		}
-		$x 		=  my_query($sql);
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= null;
 		//estandarizar numeracion
 		//$xT	= new cTipos(0);
 		
-	    return		$x["info"];
+	    return	"";
 	}
 	/**
 	 * Obtiene el numero de veces que existe un socio
@@ -229,7 +229,9 @@ class cCajaLocal{
 		$sql = "INSERT INTO socios_cajalocal
 				(idsocios_cajalocal, descripcion_cajalocal, ultimosocio, region, sucursal, codigo_postal, localidad, estado, municipio)
 			    VALUES($numero, '$nombre', $ultimo_socio, $region, '$sucursal', $codigo_postal, '$localidad', '$estado', '$municipio')";
-		$x	= my_query($sql);
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= null;
 	}
 	function add($nombre, $numero = false, $region = false, $sucursal = "",
 			$codigo_postal = false, $localidad = "", $estado = "", $municipio = "", $ultimo_socio = false ){
@@ -304,41 +306,45 @@ class cCajaLocal{
 	 */
 	function setAdmitirSocio( $socio ){
 		$sql	= "UPDATE socios_general SET estatusactual=10 WHERE codigo=$socio";
-		$x		= my_query($sql);
-		return $x["stat"];
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= null;
+		
+		return ($res === false) ? false : true;
 	}
 	function setValidar(){
+		$xQL		= new MQL();
 		$msg		= "";
 		$sql1 		= "UPDATE socios_cajalocal SET localidad = UCASE( (SELECT ciudad_colonia FROM general_colonias WHERE codigo_postal=socios_cajalocal.codigo_postal LIMIT 0,1) )";
-		$x1			= my_query($sql1);
+		$x1			= $xQL->setRawQuery($sql1);
 
 		$sql2 		= "UPDATE socios_cajalocal SET localidad = UCASE( descripcion_cajalocal ) WHERE ISNULL(localidad) = TRUE OR localidad = '' " ;
-		$x2			= my_query($sql2);
+		$x2			= $xQL->setRawQuery($sql2);
 
 		$sql3 		= "UPDATE socios_cajalocal SET ultimosocio = CONCAT(idsocios_cajalocal, '0001') WHERE ISNULL(ultimosocio) = TRUE OR ultimosocio = 0";
-		$x3			= my_query($sql3);
+		$x3			= $xQL->setRawQuery($sql3);
 
 		$sql4 		= "UPDATE socios_cajalocal SET estado = UCASE( (SELECT estado_colonia FROM general_colonias WHERE codigo_postal=socios_cajalocal.codigo_postal LIMIT 0,1) )";
-		$x4			= my_query($sql4);
+		$x4			= $xQL->setRawQuery($sql4);
 
 		$sql5 		= " UPDATE socios_cajalocal SET municipio = UCASE( (SELECT municipio_colonia FROM general_colonias WHERE codigo_postal=socios_cajalocal.codigo_postal LIMIT 0,1) )";
-		$x5			= my_query($sql5);
+		$x5			= $xQL->setRawQuery($sql5);
 
-		$msg		.= $x1["info"];
+		/*$msg		.= $x1["info"];
 		$msg		.= $x2["info"];
 		$msg		.= $x3["info"];
 		$msg		.= $x4["info"];
-		$msg		.= $x5["info"];
+		$msg		.= $x5["info"];*/
 		
 		$msg		.= "===============\tSOCIOS A SUS SUCURSALES\r\n";
 		$rs_cl 		= "SELECT * FROM socios_cajalocal";
-		$rsm 		= getRecordset( $rs_cl );
-		while ($rwcl = mysql_fetch_array($rsm)){
+		$rsm 		= $xQL->getRecordset( $rs_cl );
+		while ( $rwcl = $rsm->fetch_array() ){
 			$sql_us = "UPDATE socios_general set sucursal='$rwcl[4]' WHERE cajalocal=$rwcl[0]";
-			my_query($sql_us);
+			$xQL->setRawQuery($sql_us);
 			$msg	.= date("H:i:s") . "\t\tActualizando la sucursal de la caja local $rwcl[0] a $rwcl[4]\r\n";
 		}
-		@mysql_free_result($rsm);
+		
 		$xTbl		= new cSQLTabla();
 		//array de tablas
 		$arrTab		= $xTbl->getTablasConOperaciones();
@@ -354,9 +360,9 @@ class cCajaLocal{
 		$tablaK		= $xTbl->getCampoSocio();
 		
 			$sql_us = "UPDATE $tabla SET $tabla.sucursal = getSucursalBySocio($tablaK)";
-			$t 		= my_query($sql_us);
+			$t 		= $xQL->setRawQuery($sql_us);
 			$msg	.= date("H:i:s") . "\tActualizando la Tabla $tabla\r\n";
-			$msg	.= $t[SYS_MSG] . "\r\n";			
+			//$msg	.= $t[SYS_MSG] . "\r\n";			
 		}
 		return $msg;		
 	}
@@ -620,12 +626,16 @@ class cSucursal{
 		return ( $exist == 0 ) ? false : true;
 	}	
 	function setValidar(){
+		/*		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= null;*/
+		$xQL		= new MQL();
 		$msg		= "";
 		$this->init();
 		$cajaLocalR	= $this->mCajaLocalRes;
       	//Actualiza le socio por default a la actual sucursal
       	$sqlUS		= "UPDATE socios_general SET sucursal = '" . getSucursal() . "', cajalocal = " . $cajaLocalR . " WHERE codigo =" . DEFAULT_SOCIO . " ";
-      	my_query($sqlUS);		
+      	$xQL->setRawQuery($sqlUS);		
 		//NOTE: Verifica si existe el Socio por default
 		$xCL		= new cCajaLocal($cajaLocalR);
 		if ( $xCL->getExistenciaSocio(DEFAULT_SOCIO) == 0 ){
@@ -635,9 +645,8 @@ class cSucursal{
 			99, 99, 99, 99, 99, 1, DEFAULT_GRUPO, "", 1, "0", DEFAULT_SOCIO, getSucursal());
 		}
 		//Actualiza al User 99 a la CURS SUCURSAL
-		$sqlUUserRoot	= "UPDATE t_03f996214fba4a1d05a68b18fece8e71
-							SET sucursal='" . getSucursal() . "' WHERE idusuarios = " . DEFAULT_USER;
-		my_query($sqlUUserRoot);
+		$sqlUUserRoot	= "UPDATE t_03f996214fba4a1d05a68b18fece8e71 SET sucursal='" . getSucursal() . "' WHERE idusuarios = " . DEFAULT_USER;
+		$xQL->setRawQuery($sqlUUserRoot);
 		$msg			.= "" . "\tActualizando ROOT a la sucursal para manejo de Ops. Huerfanas\r\n";		
 		return $msg;		
 	}
@@ -1271,9 +1280,9 @@ class cSocio{
 
 	}
 	function setNuevoScoring($proveedores, $clientes, $organizacion, $laboral, $fecha = false ){
-		if ($fecha == false){
-			$fecha	= fechasys();
-		}
+		$xF		= new cFecha();
+		$xQL	= new MQL();
+		$fecha	= $xF->getFechaISO($fecha);
 
 		//Caracter
 		$sqlCaracter = "SELECT
@@ -1364,7 +1373,7 @@ class cSocio{
 					$capacidad_por_credito,
 					,$caracter,
     			0.5)";
-		$x = my_query($sql);
+		$x = $xQL->setRawQuery($sql);
 
 	}
 	/**
@@ -5864,8 +5873,8 @@ class cPersonasVivienda{
 				$datos[$xT->TIPO_DE_ACCESO] = strtoupper($datos[$xT->TIPO_DE_ACCESO]);
 				$datos[$xT->CONSTRUYE]		= setNoMenorQueCero($datos[$xT->CONSTRUYE]);
 				$datos[$xT->PRINCIPAL]		= setNoMenorQueCero($datos[$xT->PRINCIPAL]);
-				$datos[$xT->ESTADO]			= setNoMenorQueCero($datos[$xT->ESTADO]);
-				$datos[$xT->MUNICIPIO]		= strtoupper($datos[$xT->MUNICIPIO]);
+				//$datos[$xT->ESTADO]			= strtoupper($datos[$xT->ESTADO]);
+				//$datos[$xT->MUNICIPIO]		= strtoupper($datos[$xT->MUNICIPIO]);
 				
 			}			
 
@@ -5985,7 +5994,7 @@ class cPersonasVivienda{
 	function getTelefonoFijo(){ return $this->mTelefonoFijo; }
 	function getTelefonoMovil(){ return $this->mTelefonoMovil; }
 	function setDuplicarDomicilio($persona){
-		$result		= false;
+		$res		= false;
 		if(setNoMenorQueCero($this->mIDCargado) <= 0){
 			
 		} else { /*socio_numero=20100816*/
@@ -5993,10 +6002,11 @@ class cPersonasVivienda{
 					socio_numero, tipo_regimen, calle, numero_exterior, numero_interior, colonia, localidad, estado, municipio, telefono_residencial, telefono_movil, tiempo_residencia, referencia, idusuario, principal, tipo_domicilio, codigo_postal, fecha_alta, codigo, sucursal, eacp, coordenadas_gps, tipo_de_acceso, fecha_de_verificacion, oficial_de_verificacion, estado_actual, clave_de_localidad, clave_de_pais, nombre_de_pais) 
 					SELECT $persona, tipo_regimen, calle, numero_exterior, numero_interior, colonia, localidad, estado, municipio, telefono_residencial, telefono_movil, tiempo_residencia, referencia, idusuario, principal, tipo_domicilio, codigo_postal, fecha_alta, codigo, sucursal, eacp, coordenadas_gps, tipo_de_acceso, fecha_de_verificacion, oficial_de_verificacion, estado_actual, clave_de_localidad, clave_de_pais, nombre_de_pais
 					FROM socios_vivienda WHERE `idsocios_vivienda` = " . $this->mIDCargado . "  LIMIT 0,1";
-			$x		= my_query($sql);
-			$result	= $x[SYS_ESTADO];
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= null;
 		}
-		return $result;
+		return $res;
 	}
 	function getFicha( $telefonoPrincipal = "", $extenso = false, $email ="" ){
 		$xLng		= new cLang();
@@ -6572,6 +6582,7 @@ class cPersonaActividadEconomica {
 		
 		$xCache				= new cCache();
 		$xT					= new cSocios_aeconomica();
+		$xVal				= new cReglasDeValidacion();
 		$inCache			= true;
 		$this->mIDCargado	= setNoMenorQueCero($this->mIDCargado);
 		
@@ -6624,7 +6635,12 @@ class cPersonaActividadEconomica {
 				$this->mIDDomicilio			= $data[$xT->DOMICILIO_VINCULADO];
 				$this->mNombreColonia		= "";
 				//Iniciar Empresa
-				$this->mOEmp				= new cEmpresas( $this->mClaveEmpresa); $this->mOEmp->init();
+				$this->mOEmp				= new cEmpresas( $this->mClaveEmpresa);
+				if($this->mOEmp->init() == true AND $xVal->empresa($this->mClaveEmpresa) == true){
+					$this->mNombreEmpresa	= $this->mOEmp->getNombre();
+				} else {
+					$this->mNombreEmpresa	= $data[$xT->NOMBRE_AE];
+				}
 				$this->mEmpresaClavePersona	= $this->mOEmp->getClaveDePersona();
 				
 				$this->mPuesto				= $data[$xT->PUESTO];
@@ -7359,6 +7375,7 @@ class cGrupo{
 	private $mDatosReciboPlan	= array();
 	private $mReciboPlan		= false;
 	private $mObjPersona		= null;
+	private $mDireccion			= "";
 	
 	private $mTabla				= "socios_grupossolidarios";
 	
@@ -7381,15 +7398,17 @@ class cGrupo{
 			}
 		}
 		if(isset($D[$xT->IDSOCIOS_GRUPOSSOLIDARIOS])){
-			$this->mNombre		= $D["nombre_gruposolidario"];
-			$this->mRepSocio	= $D["representante_numerosocio"];
-			$this->mRepNom		= $D["representante_nombrecompleto"];
-			$this->mGrupoDom	= $D["direccion_gruposolidario"];
-			$this->mVocalNom	= $D["vocalvigilancia_nombrecompleto"];
-			$this->mVocalSocio	= $D["vocalvigilancia_numerosocio"];
-			$this->mNivelActual		= $D["nivel_ministracion"];
-			$this->mSucursal		= $D["sucursal"];
-			$this->mClaveDePersona	= $D["clave_de_persona"];
+			$this->mNombre			= $D["nombre_gruposolidario"];
+			$this->mRepSocio		= $D["representante_numerosocio"];
+			$this->mRepNom			= $D["representante_nombrecompleto"];
+			$this->mGrupoDom		= $D["direccion_gruposolidario"];
+			$this->mVocalNom		= $D["vocalvigilancia_nombrecompleto"];
+			$this->mVocalSocio		= $D["vocalvigilancia_numerosocio"];
+			
+			$this->mNivelActual		= $D[$xT->NIVEL_MINISTRACION];
+			$this->mSucursal		= $D[$xT->SUCURSAL];
+			$this->mClaveDePersona	= $D[$xT->CLAVE_DE_PERSONA];
+			$this->mDireccion		= $D[$xT->DIRECCION_GRUPOSOLIDARIO];
 			//Presume los Niveles de Trabajo
 			if ( $this->mNivelActual > 1){
 				$this->mNivelAnterior	= $this->mNivelActual - 1;
@@ -7486,43 +7505,24 @@ class cGrupo{
 		if($this->mReciboPlan == false){ $this->getDatosDePlaneacionInArray(); }
 		return $this->mReciboPlan;
 	}
-	function getFicha($Fieldset = false, $HTML_tools = ""){
-
-		$vKey 		= $this->mCodigo;
-		$nombreg 	= $this->mNombre;
-		$direccion 	= $this->mGrupoDom;
-		$repre 		= $this->mRepNom;
-		$vocal 		= $this->mVocalNom;
-		$nsrepre 	= $this->mRepSocio;
-		$nsvocal 	= $this->mVocalSocio;
-		$tool 		= $HTML_tools;
-		$wTable		= "";
-
-		$exoFicha =  "
-		<table $wTable border='0'>
-		<tbody>
-		<tr>
-		<th class='izq'>Numero de Grupo</th>
-		<td>$vKey</td>
-		<th class='izq'>Nombre del Grupo</th>
-		<td>$nombreg</td>
-		</tr>
-		<tr>
-		<th class='izq'>Domicilio</th>
-		<td colspan='3'>$direccion</td>
-		</tr>
-		<tr>
-		<th class='izq'>Representante</th>
-		<td>$nsrepre</td><td colspan='2'>$repre</td>
-		</tr>
-		<tr>
-		<th class='izq'>Vocal de Vigilancia</th>
-		<td>$nsvocal</td>
-		<td colspan='2'>$vocal</td>
-		</tr>
-		$tool
-		</tbody>
-		</table>";
+	function getFicha($Fieldset = false, $HTML_tools = "", $simple = false){
+		$xCache		= new cCache();
+		$idx		= ($simple == true) ?  "ficha-grupos-s-" . $this->mCodigo : "ficha-grupos-" . $this->mCodigo;
+		$ff			= $xCache->get($idx);
+		$exoFicha 	= "";
+		
+		if($ff === null){
+			if($simple == true){
+				$exoFicha = "<table border='0'><tbody><tr><th class='izq'>Numero de Grupo</th><td>" . $this->mCodigo . "</td><th class='izq'>Nombre del Grupo</th><td>" . $this->mNombre . "</td></tr></tbody></table>";
+			} else {
+				$xFMT		= new cFormato(1011);
+				$xFMT->setGrupoSolidario($this->mCodigo);
+				$xFMT->setProcesarVars(array("var_ht_tools" => $HTML_tools));
+				$exoFicha	= $xFMT->get();
+			}
+			$xCache->set($idx, $ff);
+		}
+		
 		if ($Fieldset == true){
 			$exoFicha = "<fieldset><legend>&nbsp;&nbsp;&nbsp;INFORMACI&Oacute;N DEL GRUPO&nbsp;&nbsp;&nbsp;</legend>$exoFicha</fieldset>";
 		}
@@ -7567,6 +7567,8 @@ class cGrupo{
 	function add($nombre, $direccion = "", $representante = false, $vocal_de_vigilancia = false, $estatus = 10, $nivel = 1, $numero = false, $sucursal = false, $fecha = false, $clave_de_persona = false ){
 		$xLoc		= new cLocal();
 		$xF			= new cFecha();
+		$xQL		= new MQL();
+		
 		$numero		= false;
 		//codigo postal
 		$colonia	= $xLoc->DomicilioCodigoPostal();
@@ -7612,12 +7614,14 @@ class cGrupo{
 					VALUES
 					($numero, '$nombre', '$colonia', '$direccion', $representante, '$NombreRep', $numero, $vocal_de_vigilancia, '$NombreVoc',
 					$estatus, $nivel, '$sucursal', '$fecha', $clave_de_persona)";
-					$x	= my_query($sql);
-		if($x[SYS_ESTADO] == true){
+					$res	= $xQL->setRawQuery($sql);
+		if($res === false){
+			
+		} else {
 			$this->mCodigo		= $numero;
 			$this->init(false);
 		}
-		return $x[SYS_ESTADO];
+		return $res;
 	}
 					function getLast(){
 					$sqlgp 	= "SELECT MAX(idsocios_grupossolidarios) AS  'maxid' FROM socios_grupossolidarios";
@@ -7827,8 +7831,10 @@ class cGrupo{
 	function setCuandoSeActualiza(){
 		
 	}
-	
+	function getVocalCodigo(){  return $this->mVocalSocio; }
+	function getDireccion(){ return $this->mDireccion; }
 }
+
 /**
  * @deprecated @since 2015.03.01
  */

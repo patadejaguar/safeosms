@@ -20,7 +20,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frmsolingreso", "registro-personas.frm.php");
+$xFRM		= new cHForm("frmregistrogrupos", "registro-personas.frm.php");
 $xFRM->setTitle( $xHP->getTitle() );
 $xFRM->setNoAcordion();
 $xBtn		= new cHButton();
@@ -74,7 +74,8 @@ $sEstados	= $xSel->getListaDeEntidadesFed("identidadfederativanacimiento");
 
 $xFRM->addHElem( $sEstados->get("TR.entidad de Creacion", true) );
 
-$xFRM->addHElem( $xTxt->get("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "TR.localidad de creacion") );
+$xFRM->OText_13("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "TR.localidad de creacion");
+//$xFRM->addHElem( $xTxt->get("idlugardenacimiento", $xLoc->DomicilioMunicipio(), "TR.localidad de creacion") );
 
 //$sCivil		= $xSel->getListaDeEstadoCivil();
 //$xFRM->addHElem( $sCivil->get("TR.estado civil", true) );
@@ -85,9 +86,11 @@ $xFRM->addHElem( $xTxt->get("idlugardenacimiento", $xLoc->DomicilioMunicipio(), 
 //$xFRM->addHElem( $sFJ->get(true) );
 
 //$xFRM->OText("idnumerodocumento","", "TR.Numero de Documento");
+$xFRM->OMail("idemail", "");
+$xFRM->OTelefono("idtelefono", "");
 
-$xFRM->addHElem( $xTxt->getEmail("idemail")  );
-$xFRM->addHElem( $xTxt->getNumero("idtelefono", "", "TR.Telefono")  );
+//$xFRM->addHElem( $xTxt->getEmail("idemail")  );
+//$xFRM->addHElem( $xTxt->getNumero("idtelefono", "", "TR.Telefono")  );
 
 $xTCURP		= new cHText();
 $xTRFC		= new cHText();
@@ -141,7 +144,7 @@ var gn			= new Gen();
 var val			= new ValidGen();
 var errors		= 0;
 $(document).ready(function () {
-	$('#id-frmsolingreso').isHappy({
+	$('#id-frmregistrogrupos').isHappy({
 	    fields: {
 	      '#idrazonsocial': {
 			required : true,
@@ -209,7 +212,7 @@ function jsCheck(){
 	if ( $(".unhappyMessage").length > 0) {
 		alert("Necesita corregir algunos datos para Guardar");
 	} else {
-		$('#id-frmsolingreso').submit();
+		$('#id-frmregistrogrupos').submit();
 	}
 }
 function getListaSocios(msrc, evt) {

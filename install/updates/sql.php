@@ -4116,13 +4116,33 @@ $sql["20180501"][]	= " UPDATE `personas_documentacion_tipos` SET `estatus` = '0'
 $sql["20180501"][]	= " UPDATE `personas_documentacion_tipos` SET `estatus` = '0' WHERE `clave_de_control` = '230'";
 //$sql["20180501"][]	= "SELECT setNuevoPermisoX('contabilidad-install.frm.php')";
 
-//$sql["20180501"][]	= "";
-//$sql["20180501"][]	= "";
-//$sql["20180501"][]	= "";
-//$sql["20180501"][]	= "SELECT setNuevoPermisoX('personas-buscar.svc.php')";
 
-//$sql["20180501"][]	= "";
+$sql["20180502"][]	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_description`, `menu_image`, `menu_order`, `menu_help_id`, `menu_showin_toolbar`) VALUES ('72102', '72000', 'Carga 69-B CFF', 'frmpld/69b-cff.frm.php', 'Carga de Personas con Actividades Simuladas', 'fa-database', '72102', '72102', 'true')";
+$sql["20180502"][]	= "SELECT setNuevoPermisoX('mail.svc.php')";
+$sql["20180502"][]	= "SELECT setNuevoPermisoX('empresas.panel.frm.php')";
+$sql["20180502"][]	= "SELECT setNuevoPermisoX('grupos-add-solicitud.frm.php')";
+//$sql["20180502"][]	= "UPDATE`creditos_productos_costos` SET `unidad_de_medida`=1 WHERE `unidad_de_medida`=0";
+$sql["20180502"][]	= "DELETE FROM general_menu WHERE menu_file='frmgrupos/frmgrupossolidarioscreditos.new.php'";
+$sql["20180502"][]	= "UPDATE `general_menu` SET `menu_title` = 'Agregar Solicitud en Grupo' , `menu_file` = 'frmgrupos/grupos-add-solicitud.frm.php' , `menu_description` = 'Agregar Solicitud de Grupo' , `menu_image` = 'fa-object-group' WHERE `idgeneral_menu` = '2012'";
+$sql["20180502"][]	= "CREATE TABLE IF NOT EXISTS `sistema_msj_largo` ( `idsistema_msj_largo` INT NOT NULL AUTO_INCREMENT, `texto_nombre` VARCHAR(40) NULL, `texto_mensaje` TEXT NULL DEFAULT '', PRIMARY KEY (`idsistema_msj_largo`)) ENGINE = INNODB ";
+$sql["20180502"][]	= "INSERT INTO `sistema_msj_largo` (`idsistema_msj_largo`, `texto_nombre`, `texto_mensaje`) VALUES ('1', 'HTML_WARN_GRUPOADDCRED', 'DQo8aDEgc3R5bGU9InRleHQtYWxpZ246Y2VudGVyIj5BZHZlcnRlbmNpYS48L2gxPg0KDQo8cD5BbCBoYWNlciBlc3RvOjwvcD4NCg0KPG9sPg0KCTxsaT5FbGltaW5hciZhYWN1dGU7IGxhcyBzb2xpY2l0dWRlcyBBY3RpdmFzLjwvbGk+DQoJPGxpPkFncmVnYXImYWFjdXRlOyB1bmEgTnVldmEgU29saWNpdHVkLjwvbGk+DQo8L29sPg=='); ";
+$sql["20180502"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('9018', 'MSG_CONFIRMA_ADD_CRED', '¿ Confirma agregar un nuevo Credito ?')";
+$sql["20180502"][]	= "ALTER TABLE `originacion_grupos` ADD COLUMN `tipo_cuota` INT(4) NULL DEFAULT '0' AFTER `suma_autorizado`,ADD COLUMN `pagos_sol` INT(4) NULL DEFAULT '0' AFTER `tipo_cuota`,ADD COLUMN `frecuencia` INT(4) NULL DEFAULT '0' AFTER `pagos_sol`,ADD COLUMN `tasa_sol` FLOAT(6,3) NULL DEFAULT '0.00' AFTER `frecuencia` ";
+$sql["20180502"][]	= "SELECT setNuevoPermisoX('catalogo-documentacion.new.frm.php')";
+$sql["20180502"][]	= "UPDATE `socios_vivienda` SET `estado` = (SELECT `estado_colonia` FROM `general_colonias` WHERE `codigo_postal`=`socios_vivienda`.`codigo_postal` LIMIT 0,1) WHERE `estado`='0'";
+$sql["20180502"][]	= "INSERT INTO `general_contratos` (`idgeneral_contratos`, `tipo_contrato`, `titulo_del_contrato`, `texto_del_contrato`) VALUES ('1011', '101', 'Grupos.- Ficha', '<table border=\'0\'><tbody>\r\n<tr><th class=\'izq\'>Numero de Grupo</th><td>var_grupo_id</td><th class=\'izq\'>Nombre del Grupo</th><td>var_nombre_gruposolidario</td></tr>\r\n<tr><th class=\'izq\'>Domicilio</th><td colspan=\'3\'>var_direccion_gruposolidario</td></tr>\r\n<tr><th class=\'izq\'>Representante</th><td>var_representante_numerosocio</td><td colspan=\'2\'>var_representante_nombrecompleto</td></tr>\r\n<tr><th class=\'izq\'>Vocal de Vigilancia</th><td>var_vocalvigilancia_numerosocio</td><td colspan=\'2\'>var_vocalvigilancia_nombrecompleto</td></tr>\r\n</tbody></table>'); ";
+$sql["20180502"][]	= "INSERT INTO `personas_documentacion_tipos` (`clave_de_control`, `nombre_del_documento`, `clasificacion`, `tags`) VALUES ('236', 'Analisis de Credito', 'DG', 'analisis,todas,pf,pm')";
 
+$sql["20180503"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('90011', 'MSG_PASS_NO_IGUAL', '! Las Credenciales no son iguales ¡') ";
+$sql["20180503"][]	= "INSERT INTO `sistema_mensajes` (`idsistema_mensajes`, `topico`, `mensaje`) VALUES ('9019', 'MSG_CONFIRM_RM_PARC', '¿ Confirma Eliminar toda la Parcialidad de Credito ?')";
+$sql["20180503"][]	= "ALTER TABLE `creditos_sic_notas` CHANGE COLUMN `texto_nota` `texto_nota` VARCHAR(150) NULL DEFAULT NULL ,CHANGE COLUMN `estatus` `estatus_credito` INT(4) NULL DEFAULT '0' COMMENT 'Estado Actual forzado' ,ADD COLUMN `idusuario` INT(8) NULL DEFAULT '0' AFTER `estatus_credito`,ADD COLUMN `tiempo` INT(10) NULL DEFAULT '0' AFTER `idusuario`,ADD COLUMN `tiempo_mod` INT(10) NULL DEFAULT '0' AFTER `tiempo` ";
+$sql["20180503"][]	= "ALTER TABLE `creditos_sic_notas` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `tiempo_mod` ";
+$sql["20180503"][]	= "SELECT setNuevoPermisoX('creditos-garantias.panel.frm.php')";
+//$sql["20180503"][]	= "";
+//$sql["20180503"][]	= "";
+//$sql["20180503"][]	= "";
+//$sql["20180503"][]	= "";
+//$sql["20180503"][]	= "SELECT setNuevoPermisoX('')";
 
 
 foreach ($sql as $idx => $cnt){

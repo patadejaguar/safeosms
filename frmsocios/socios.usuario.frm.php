@@ -80,6 +80,10 @@ $xChk			= new cHCheckBox();
 
 $xFRM->setTitle($xHP->getTitle());
 $xUser2			= new cSystemUser(); $xUser2->init();
+if($usuario<=0){
+	$usuario	= $xUser2->getID();
+}
+
 if($usuario >0 AND $persona <= DEFAULT_SOCIO){
 	$xUser	= new cSystemUser($usuario); $xUser->init(); $persona = $xUser->getClaveDePersona();
 	
@@ -106,6 +110,10 @@ if($xSoc->init() == true){
 		}
 		if(($xUser2->getID() !== $xUser->getID()) AND $xUser2->getPuedeEditarUsuarios() == false ){
 			$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
+		} else {
+			//Reporte de Eliminados
+			$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
+			
 		}
 		
 		
@@ -113,8 +121,7 @@ if($xSoc->init() == true){
 		$xFRM->OHidden("usuario", $usuario);
 		
 		
-		//Reporte de Eliminados
-		$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
+
 		
 		if($action == SYS_NINGUNO OR ($pass1 !== $pass2)){
 			
@@ -140,7 +147,7 @@ if($xSoc->init() == true){
 			
 			$xFRM->setAction("socios.usuario.frm.php?action=" . MQL_ADD);
 			if($pass1 !== $pass2){
-				$xFRM->addAvisoRegistroError("TR.LA PASSWORD No es igual\r\n");
+				$xFRM->addAvisoRegistroError("MS.MSG_PASS_NO_IGUAL");
 			}
 			
 			$xTbl		= new cHTabla("idtblrules", "listado");
@@ -195,15 +202,16 @@ if($xSoc->init() == true){
 			if($xUser->setPassword($pass1) == true){
 				$xFRM->addAvisoRegistroOk("TR.El password ha cambiado\r\n");
 			} else {
-				$xFRM->addCerrar();
 				$xFRM->addAvisoRegistroError($xUser->getMessages());
 			}
-			
+			$xFRM->addCerrar();
 		}
+		
 	}
 } else {
 	$xFRM->addAvisoInicial("No se puede editar este usuario", true);
 }
+
 echo $xFRM->get();
 ?>
 <script>
@@ -212,6 +220,25 @@ function jsVerEliminados(){
 	var iduser = $("#usuario").val();
 	xG.w({url:"../frmsecurity/eliminados.frm.php?usuario=" +  iduser});
 }
+/*
+function jsPreEnvio(){
+	var idpass1 = $("#idpass1").val();
+	var idpass2 = $("#idpass2").val(); 
+console.log(idpass1);
+console.log(idpass2);
+
+	if(idpass1 == idpass2){
+		return true;
+	} else {
+		xG.aviso({msg: "MSG_PASS_NO_IGUAL", callback: function(){
+				$("#idpass1").val('');
+				$("#idpass2").val('');
+			} 
+		});
+	}
+
+	return false;
+}*/
 function jsSavePin(){
 	xG.confirmar({msg: "CONFIRMA_ACTUALIZACION", callback: jsaSavePin});
 	//var iduser = $("#idpin").val();

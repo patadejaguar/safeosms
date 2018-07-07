@@ -207,6 +207,10 @@ var Configuracion = {
 		ok : "success",
 		error : "error",
 		info : "info"
+	},
+	mql : {
+		del : "<?php echo MQL_DEL; ?>",
+		mod : "<?php echo MQL_MOD; ?>"
 	}
 }
 

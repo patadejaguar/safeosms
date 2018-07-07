@@ -335,6 +335,7 @@ foreach ($rsm as $rwm ){
 					$monto_desglose	= $monto;
 					$arr_desglose	= $OProducto->getListaOtrosCargosEnParcs();	
 					$monto	   		= 0;
+					
 					//Si es Credito es Arrendamiento Puro
 					if($xCred->getEsArrendamientoPuro() == true){
 						$xLeas		= new cCreditosLeasing($xCred->getClaveDeOrigen());

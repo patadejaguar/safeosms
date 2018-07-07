@@ -1250,10 +1250,16 @@ Gen.prototype.lang	= function(words){
 	if (typeof jsonWords != "undefined") {
 		for(i=0; i<words.length; i++) {
 			var mwrd	= String(words[i]).toUpperCase();
+			var mwrd2	= String(words[i]);
+			
 			if (typeof jsonWords[mwrd] != "undefined" ) {
 				wrd += jsonWords[mwrd] + " ";
 			} else {
-				wrd += ""+ mwrd + " ";
+				if(MODO_DEBUG == true){
+					wrd += ""+ mwrd2 + " ";
+				} else {
+					wrd += ""+ mwrd2 + " ";
+				}
 			}
 		}
 	}
@@ -1269,13 +1275,19 @@ Gen.prototype.confirmar	= function(opts){
 	var msgTit	= (typeof opts.titulo == "undefined") ? "SAFE-OSMS" : opts.titulo;
 	msgTit		= (typeof opts.title == "undefined") ? msgTit : opts.title;
 	var onClose	= (typeof opts.close == "undefined") ? function(){} : opts.close;
-	var metaO	= this;
+	var self	= this;
 	if (evalF === true) {
-		if ($.trim(msg) != "") { msg	= metaO.lang(msg);	}
+		if ($.trim(msg) != "") {
+			msg	= self.lang(msg);
+		}
 		//if( confirm(msg) == false){ setTimeout(canc, 10); } else { setTimeout(callB, 10);	}
 		jQuery.confirm(msg, msgTit, callB, canc, onClose);
 	} else {
-		if ($.trim(msgNV) != "") { msg	= metaO.lang(msgNV); metaO.alerta({ msg : msg });	}
+		if ($.trim(msgNV) != "") {
+			msg	= self.lang(msgNV);
+			self.alerta({ msg : msg });
+			
+		}
 	}
 }
 Gen.prototype.aviso	= function(opts){
@@ -1512,6 +1524,15 @@ Gen.prototype.enviar	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
 	var self	= this;
+	
+	if(typeof jsPreEnvio !== "undefined"){
+		if(jsPreEnvio() == true){
+			
+		} else {
+			return false;
+		}
+	}
+	
 	//if(idform !== ""){
 	//	$("#" + idform).submit(function (event) {
 		  // This line prevents the form from actually being submitted

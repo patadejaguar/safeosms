@@ -1265,6 +1265,8 @@ class cNotificaciones {
 			$omsg	.= "ERROR\tCorreo Invalido $to\r\n";
 		}
 		if(MODO_DEBUG == true){ setLog($omsg); }
+		$this->mMessages	.= $omsg;
+		
 		return $omsg;
 	}
 	function sendCloudMessage($mensaje){

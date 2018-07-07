@@ -2061,12 +2061,15 @@ class cMovimientoDeOperacion{
 		$sql		.= (setNoMenorQueCero($persona) <= 0) ?  "" : " AND (socio_afectado=$persona) ";
 		$sql		.= (setNoMenorQueCero($recibo) <= 0 ) ?  "" : " AND (recibo_afectado=$recibo) ";
 		$sql		.= (setNoMenorQueCero($periodo) <= 0 ) ?  "" : " AND (periodo_socio=$periodo) ";
-		$rs			= my_query($sql);
-		$sucess		= $rs[SYS_ESTADO];
-		if($sucess	== true ){
+		$xQL		= new MQL();
+		$sucess		= $xQL->setRawQuery($sql);
+		
+		if($sucess	=== false ){
+			if(MODO_DEBUG == true){ $this->mMessages	.= $xQL->getMessages(); }
+		} else {
 			$this->mMessages	.= "OK\tDEL_MVTO:Operacion Eliminada ($persona-$credito-$recibo-$tipo-$periodo)\r\n";
 		}
-		if(MODO_DEBUG == true){ $this->mMessages	.= $rs[SYS_MSG]; }
+		
 		return $sucess;
 	}
 	function setNeutralizarRAW($tipo = false, $credito = false, $persona = false, $recibo = false, $periodo = false){

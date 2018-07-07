@@ -154,6 +154,8 @@ if($xEmp->init() == true){
 	$xFRM->OButton("TR.Actualizar Empresa", "jsaActualizarEmpresa()", $xFRM->ic()->EJECUTAR);
 	$xFRM->OHidden("idempresa", $empresa);
 	$xFRM->OHidden("idsocio", $xEmp->getClaveDePersona()); $xFRM->OHidden("idmodificado", ""); $xFRM->OHidden("idcantidad", "0");
+	
+	$xFRM->OButton("TR.AGREGAR EMPLEADO", "jsAddEmpleado()", $xFRM->ic()->PERSONA, "idaddnewempleado", "persona");
 
 }
 $xFRM->addAviso("", "idavisos");
@@ -162,6 +164,8 @@ echo $xFRM->get();
 <script>
 var xG		= new Gen();
 var EmpG	= new EmpGen();
+var xP		= new PersGen();
+
 function jsCancelarAccion(){	$(window).qtip("hide");    }
 function jsAddDescuento(){ getModalTip(window, $("#iddivdescuento"), xG.lang(["actualizar", "descuento"]));	}
 function jsListaDeNominas(idnomina){ var EmpG	= new EmpGen(); EmpG.getOrdenDeCobranza(idnomina);	}
@@ -189,6 +193,10 @@ function jsModificarAhorro(evt, idpersona){
 		var siguarda	= confirm("DESEA GUARDAR EL DESCUENTO PREFERENTE POR " + evt.value);
 		if(siguarda){ jsaAddDescuentoDesdeEmpresa();	}
 	}
+}
+function jsAddEmpleado(){
+	var idemp	= entero($("#idempresa").val());
+	xP.getFormaBusqueda({args : "&empresa=" + idemp, next : "addempresa"});	
 }
 </script>
 <?php

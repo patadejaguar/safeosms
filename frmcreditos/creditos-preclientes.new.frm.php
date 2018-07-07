@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.AGREGAR PRECLIENTE", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -38,6 +38,9 @@ $empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", 
 $grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
 $ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("observaciones", $observaciones);
+
+$topanel		= parametro("topanel", false, MQL_BOOL);
+
 
 $xHP->init();
 
@@ -106,10 +109,10 @@ $xFRM->endSeccion();
 $xFRM->addSeccion("idpp", "TR.CREDITO");
 
 $xFRM->addHElem( $xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v(), true)->get(true) );
-$xFRM->addHElem( $xSel->getListaDePeriocidadDePago("periocidad", $xTabla->producto()->v())->get(true));
+$xFRM->addHElem( $xSel->getListaDePeriocidadDePago("periocidad", $xTabla->producto()->v(), false, true)->get(true));
 $xFRM->addHElem( $xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v())->get(true));
 
-$xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v() )->get(true) );
+$xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v(),true )->get(true) );
 $xFRM->OTasaInt("tasa_interes", 0, "TR.TASA");
 //$xFRM->OMoneda("producto", $xTabla->producto()->v(), "TR.PRODUCTO");
 //$xFRM->OMoneda("periocidad", $xTabla->periocidad()->v(), "TR.PERIOCIDAD");
@@ -137,12 +140,28 @@ $xFRM->OHidden("idoficial", $xTabla->idoficial()->v());
 $xFRM->OHidden("idexterno", $xTabla->idexterno()->v());
 
 
-$xFRM->addCRUD($xTabla->get(), true);
+if($topanel == false){
+	$xFRM->addCRUD($xTabla->get(), true);
+} else {
+	$xFRM->addCRUD($xTabla->get(), false, "jsGoToPanel");
+}
+
+
 //$xFRM->OButton("TR.PLAN_DE_PAGOS", "", $xFRM->ic()->PLANDEPAGOS, "cmdgenplan", "whiteblue");
 //$xFRM->addCRUDSave($xTabla->get(), $clave, true);
 
 echo $xFRM->get();
-
+?>
+<script>
+var xG	= new Gen();
+function jsGoToPanel(dd){
+	var id = entero(dd.id);
+	if(id > 0){
+		xG.go({url:"../frmcreditos/creditos-preclientes.panel.frm.php?clave=" + id});
+	}	
+}
+</script>
+<?php
 
 
 //$jxc ->drawJavaScript(false, true);

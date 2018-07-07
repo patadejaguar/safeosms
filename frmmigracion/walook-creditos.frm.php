@@ -540,7 +540,14 @@ foreach ($rs as $rw){
 	$arr["porcentaje_iva"] 				= $xCred->getTasaIVA() * 100;
 	$arr["tipo_integracion"] 			= "individual";
 	$arr["tipo_credito_id"] 			= $tipoDeCredito;
-	$arr["cuenta_desembolso_id"] 		= "1";
+	
+	
+	$idcuentbanc						= $xRecMin->getClaveCuentaBancaria();
+	$xCtaBanc	= new cCuentaBancaria($idcuentbanc); $xCtaBanc->init();
+	
+	
+	$arr["cuenta_desembolso_id"] 		= $idcuentbanc;
+	
 	$arr["tipo_interes_id"] 			= ($xCred->getPagosSinCapital() == true ) ? "1" : "2";
 	$arr["plazo"] 						= $xCred->getPagosAutorizados();
 	$arr["etapa_id"] 					= ($xCred->getEsAfectable() == true) ? "3" : "2";

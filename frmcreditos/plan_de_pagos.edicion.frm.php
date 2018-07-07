@@ -20,7 +20,10 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
-//$jxc 		= new TinyAjax();
+$jxc 		= new TinyAjax();
+
+//function jsaRemParcialidad(){}
+
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
@@ -42,6 +45,14 @@ $observaciones	= parametro("idobservaciones");
 $SinCeros		= parametro("sinceros", false, MQL_BOOL);
 $EsPlan			= parametro("activeplan", false, MQL_BOOL);
 $ByCeros		= ($SinCeros == false) ? "" : " AND `operaciones_mvtos`.`afectacion_real` > 0 ";
+
+if($recibo > 0 AND $documento <= DEFAULT_CREDITO){
+	$xRec		= new cReciboDeOperacion(false, false, $recibo);
+	if($xRec->init() == true){
+		$documento	= $xRec->getCodigoDeDocumento();
+	}
+}
+
 
 $xHP->addJTableSupport();
 $xHP->init();
@@ -90,6 +101,7 @@ $xHG	= new cHGrid("iddivmvtos",$xHP->getTitle());
 $xHG->setSQL($sql);
 $xHG->addList();
 $xHG->addKey("clave");
+$xHG->setOrdenar();
 
 if($ByPersona == "" AND $EsPlan == false){
 	$xHG->col("persona", "TR.NOMBRE_COMPLETO", "20%");
@@ -115,15 +127,29 @@ $xHG->OColFunction("monto", "TR.MONTO", "10%", "jsRenderMonto");
 $xHG->OColFunction("saldo_anterior", "TR.SALDO_INICIAL", "10%", "jsRenderInicial");
 $xHG->OColFunction("saldo_actual", "TR.SALDO_FINAL", "10%", "jsRenderFinal");
 
+
+//$xHG->OColFunction("sucursal", "TR.HERRAMIENTAS", "10%", "jsRenderParc");
 //$xHG->col("sucursal", "TR.SUCURSAL", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+//$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+$xHG->OButton("TR.ELIMINAR PARCIALIDAD", "jsDelParcialidad('+ data.record.periodo +')", "delete-all.png");
+
+
+$xCred	= new  cCredito($documento);
+if($xCred->init() == true){
+	$xFRM->addHElem( $xCred->getFichaMini() );
+}
+
 $xFRM->addHElem("<div id='iddivmvtos'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 
 $xFRM->OHidden("idrecibo", $recibo);
+$xFRM->OHidden("idcredito", $documento);
+
+
+$xFRM->addCerrar();
 
 echo $xFRM->get();
 ?>
@@ -162,6 +188,30 @@ function jsRenderFinal(data){
 function jsDel(id){
 	xG.rmRecord({tabla:"operaciones_mvtos", id:id, callback:jsLGiddivmvtos});
 }
+function jsRenderParc(data){
+	var idx	= data.record.clave;
+	
+	var txt	= '<img src="../images/delete.png" onclick="jsDel(' + idx  +');return false" alt="Eliminar" title="Eliminar" class="jtable-command-button" style="width:2em;height:2em;margin:0.2em">';
+	//txt		+= '<img src="../images/delete-all.png" onclick="jsDel(' + idx  +');return false" alt="Eliminar Parcialidad" title="Eliminar Parcialidad" class="jtable-command-button" style="width:2em;height:2em;margin:0.2em">';
+
+	return txt;
+}
+function jsDelParcialidad(idp){
+	var idp 		= idp;
+	var ops			= CNF.mql.del;
+	var idrecibo 	= $("#idrecibo").val();
+	var idcredito 	= $("#idcredito").val(); 
+	
+	//xG.rmRecord({tabla:"operaciones_mvtos", id:id, callback:jsLGiddivmvtos});
+	xG.confirmar({msg : "MSG_CONFIRM_RM_PARC", callback: function(){
+			xG.svc({url: "letras.svc.php?credito="+ idcredito + "&letra=" + idp + "&cmd=" + ops, callback:jsReloadG });
+		}
+		});
+}
+function jsReloadG(){
+	$('#iddivmvtos').jtable('destroy');
+	jsLGiddivmvtos();
+}
 function jsEdit(id){
 	xG.editar({tabla:'operaciones_mvtos',id:id});	
 }
@@ -184,8 +234,8 @@ function jsAdd(){
 </script>
 <?php
 
-
 //$jxc ->drawJavaScript(false, true);
+
 $xHP->fin();
 
 ?>

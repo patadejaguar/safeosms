@@ -91,7 +91,7 @@ if($action == SYS_CERO){
 	//$xFRM->addHElem("<div class='tx4'><label for='f1'>" . $xFRM->lang("archivo") . "</label><input type='file'  name='f1' id='f1'  /></div>");
 	$xFRM->OFile("f1");
 	//$xFRM->addHElem( $xTxt2->getDeMoneda("idnumeropagina", $xFRM->lang("numero de", "pagina")) );
-	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("tipodeingreso")->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonasGL("tipodeingreso", false, false, SYS_RIESGO_ALTO)->get(true) );
 	
 	//Agregar Tipo de Fuentes
 	$xSel->addOptions(array( "PEPS-POT" => "Directorio POT", 

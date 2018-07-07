@@ -537,7 +537,7 @@ if(MODULO_CAJA_ACTIVADO == true){
 	if($xCaja->initByFechaUsuario(fechasys(), getUsuarioActual()) == true){
 		if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){
 			//cerrar Caja
-			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',tab:true});", $xFRM->ic()->CERRAR);
+			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',principal:true});", $xFRM->ic()->CERRAR);
 			$OnCaja	= true;
 		}
 	}
@@ -621,6 +621,7 @@ $xChart			= new cChart("idivchart");
 $xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO, "cmdcalcplan", "ggreen");
 
 $xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange");
+$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange");
 
 $xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
 $xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
@@ -645,7 +646,7 @@ if(MODO_DEBUG == true){
 	
 	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR, "cmdupdate", "green2");
 	$xFRM->OButton("TR.ACTUALIZAR EL SISTEMA", "jsSetActualizarSys()", $xFRM->ic()->EJECUTAR, "cmdusys", "yellow");
-	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php'});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
+	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php', principal:true});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
 	
 	$xFRM->OButton("TR.PRODUCTO CREDITO", "var xG=new Gen();xG.w({url:'../frmcreditos/frmdatos_de_convenios_de_creditos.xul.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
 	$xFRM->OButton("TR.OPERACIONES", "var xG=new Gen();xG.w({url:'../frmtipos/operaciones_tipos.lista.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
@@ -844,7 +845,7 @@ function jsGetChart(mType){
 }
 
 function jsGetCarteraGtiaLiquida(){
-	xG.w({url:"../frmcreditos/cartera-gtia-liquida.frm.php?", tiny: false , h: 600, w : 480, tab:true});
+	xG.w({url:"../frmcreditos/cartera-gtia-liquida.frm.php?", tab: false , h: 600, w : 480, tab:true});
 }
 
 function jsCalcularPlanPagos(){
@@ -897,22 +898,25 @@ function jsaActualizarProcLetras(){
 }
 function jsVerMiPassword(id){ 
 	var xrl		= "../frmsocios/socios.usuario.frm.php?usuario=" + id;
-	xG.w({ url: xrl, tiny : true }); 	
+	xG.w({ url: xrl, principal : true }); 	
 }
 function jsGoBuscarPersona(){
 	var xrl		= "../utils/frmbuscarsocio.php?a=1";
-	xG.w({ url: xrl, tiny : true });	
+	xG.w({ url: xrl, principal : true });	
 }
 function jsPagoCajaCompleto(id){
 	var obj 	= processMetaData("#tr-letras-" + id);
-	xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total}); 
+	xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total, principal : true}); 
 }
 function jsAgregarTarea(id){
 	var obj 	= processMetaData("#tr-letras-" + id);
-	xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total}); 
+	//xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total}); 
 }
 function jsAgregarLeasing(){
-	xG.w({url:"../frmarrendamiento/cotizador.frm.php"});
+	xG.w({url:"../frmarrendamiento/cotizador.frm.php", tab:true});
+}
+function jsAgregarPrecliente(){
+	xG.w({url:"../frmcreditos/creditos-preclientes.new.frm.php?topanel=true", principal:true});
 }
 </script>
 <?php $xHP->fin(); ?>

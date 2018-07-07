@@ -2022,6 +2022,7 @@ class cSAFEData{
 		$this->setContratoDisEn(811, $enable);
 		$this->setContratoDisEn(812, $enable);
 		$this->setContratoDisEn(800, $enable);
+		$this->setTipoDoctoDisEn(502, $enable);
 		
 	}
 	function setModContableDA($enable = false){
@@ -2048,6 +2049,8 @@ class cSAFEData{
 		$this->setOperacionDisEn(510, $enable);
 		$this->setOperacionDisEn(251, $enable);
 		
+		$this->setTipoDoctoDisEn(510, $enable);
+		$this->setTipoDoctoDisEn(520, $enable);
 	}
 	private function setContratoDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "alta" : "baja";
@@ -2056,6 +2059,10 @@ class cSAFEData{
 	private function setOperacionDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "1" : "0";
 		$this->execQuery("UPDATE `operaciones_tipos` SET `estatus` = '$estatus' WHERE `idoperaciones_tipos` = '$id'");
+	}
+	private function setTipoDoctoDisEn($id, $enable = false){
+		$estatus	= ($enable == true) ? "1" : "0";
+		$this->execQuery("UPDATE `personas_documentacion_tipos` SET `estatus` = '$estatus' WHERE `clave_de_control` = '$id'");
 	}
 	function setModGruposDisEn($enable = false){
 		//$this->setContratoDisEn(3002, $enable);

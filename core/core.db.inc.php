@@ -1154,7 +1154,7 @@ class cSQLListas {
 					(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =5002) AND (`socios_relaciones`.`estatus`=10) $By					
 				ORDER BY
 					`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
-					`socios_relaciones`.`credito_relacionado`";
+					`socios_relaciones`.`credito_relacionado`, socios_relaciones.idsocios_relaciones";
 		//setLog($sql);
 		return $sql;
 	}

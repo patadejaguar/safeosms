@@ -1157,7 +1157,7 @@ class cHForm {
 		if($txtGuardar == ""){ $txtGuardar	= $this->lang("aceptar"); }
 		$eventclose	= ($eventclose == "") ? "if(typeof jsEnd == 'undefined'){var xG=new Gen();xG.close();}else{jsEnd();}" : $eventclose;
 		if ( $event == "" ){ $event		=  "$('#" . $this->mID . "').submit()"; }
-		$this->OButton("TR.SALIR", $eventclose, $this->ic()->SALIR, "", "orange");
+		$this->OButton("TR.CERRAR", $eventclose, $this->ic()->CERRAR, "", "orange");
 		$this->OButton($txtGuardar, $event, $this->ic()->OK, "", "green");
 	}	
 	function addGuardar($EventoGuardar = "", $EventoCerrar = "", $TituloSave = "TR.GUARDAR"){
@@ -1189,11 +1189,22 @@ class cHForm {
 	}
 	function setEnc($enc){ $this->mEnc = $enc;	}
 	function getName(){ return $this->mName; }
-	function addAvisoInicial($txt = "", $error = false){
+	function addAvisoInicial($txt = "", $error = false, $titulo = ""){
+		
 		if($error == false){
-			$this->mAvisosInit[]	= $txt;
+			if($titulo == ""){
+				$this->mAvisosInit[]	= $txt;
+			} else {
+				$idx 	= count($this->mAvisosInit);
+				$this->mAvisosInit["$idx - $titulo"]	= $txt;
+			}
 		} else {
-			$this->mAvisosErrs[]	= $txt;
+			if($titulo == ""){
+				$this->mAvisosErrs[]	= $txt;
+			} else {
+				$idx 	= count($this->mAvisosErrs);
+				$this->mAvisosErrs["$idx - $titulo"]	= $txt;
+			}
 		}
 	}
 	function setValidacion($id, $function, $message = "", $required = false){
@@ -1321,10 +1332,13 @@ class cHForm {
 		$this->addToolbar( $xBtn->getBasic("TR.Imprimir Recibo", "if(typeof printrec == 'undefined'){ if(typeof jsImprimirRecibo == 'undefined'){} else { jsImprimirRecibo(); } } else {printrec();}", "imprimir", "id-printrec", false ) );
 	}
 	function addAvisoRegistroError($msg = ""){
-		$xL		= new cLang();
-		$txt 	= $xL->getTrad(MSG_ERROR_SAVE);
-		$txt 	.= ($msg == "") ? "" : " " . $xL->getT($msg);
-		$this->addAviso($txt, "idmsg-error", true, "error");
+		
+		$txt 	= $this->getT(MSG_ERROR_SAVE);
+		if($msg == ""){
+			$this->addAviso($txt, "idmsg-error", true, "error");
+		} else {
+			$this->addAviso($this->getT($msg), "idmsg-error", true, "error", $txt);
+		}
 	}	
 	function addAvisoRegistroOK($msg = ""){
 		$xL		= new cLang();
@@ -1585,14 +1599,14 @@ class cHForm {
 		return "";	
 		//$this->ODate("idfechaactual", $fecha, "TR.Fecha");
 	}
-	function addAviso($txt, $id = "", $mostrarTip = false, $class = "notice"){
+	function addAviso($txt, $id = "", $mostrarTip = false, $class = "notice", $titulo =""){
 		$xHO	= new cHObject();
 		if($mostrarTip == true){
 			$ntxt	= preg_replace( "/\r|\n/", "", $txt);
 			if($class == "error"){
-				$this->addAvisoInicial($ntxt, true);
+				$this->addAvisoInicial($ntxt, true, $titulo);
 			} else {
-				$this->addAvisoInicial($ntxt);
+				$this->addAvisoInicial($ntxt, false, $titulo);
 			}
 			$ntxt	= null;
 		}
@@ -1690,7 +1704,7 @@ class cHForm {
 		
 		return $xTxt;
 	}
-	function OTelefono($id, $valor, $titulo){
+	function OTelefono($id, $valor = "", $titulo = ""){
 		$xTxt	= new cHText();
 		$xTxt->setDivClass("tx4 tx18");
 		$this->addHElem( $xTxt->getDeTelefono($id, $titulo, $valor) );
@@ -2600,6 +2614,7 @@ class cHText extends cHInput {
 	}
 	function getEmail($id, $valor = "", $titulo = ""){
 		$this->setClearProperties();
+		$this->setDiv13(" orange");
 		$titulo 						= ($titulo == "") ? "TR.correo_electronico" : $titulo;	
 		$this->mArrProp["type"]			= "email";
 		$this->mArrProp["name"]			= $id; $this->mLIDs[]	= $id;
@@ -3527,15 +3542,37 @@ class cHSelect {
 		return $xS;
 	}
 
-	function getListaDeTiposDeIngresoDePersonas($id = "", $tipo = SYS_TODAS, $defaultOpt = DEFAULT_TIPO_INGRESO){
-		$id		= ($id == "") ? "idtipodeingreso" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		= "SELECT * FROM socios_tipoingreso WHERE estado=1 ";
-		$sqlSc		.= ($tipo == SYS_TODAS) ? "" : " AND (tipo_de_persona=0 OR tipo_de_persona=$tipo) ";
+	function getListaDeTiposDeIngresoDePersonas($id = "", $tipo = SYS_TODAS, $selected = DEFAULT_TIPO_INGRESO){
+		return $this->getListaDeTiposDeIngresoDePersonasGL($id, $selected, SYS_TODAS);
+	}
+	/**
+	 * Tipo de ingreso de persona general
+	 * @param string $id ID html
+	 * @param boolean $selected Valor seleccionado
+	 * @param boolean $tipo Tipo de Persona
+	 * @param boolean $riesgo Nivel de Riesgo
+	 * @return cSelect
+	 */
+	function getListaDeTiposDeIngresoDePersonasGL($id = "", $selected = false, $tipo = false, $riesgo = false){
+		$selected	= setNoMenorQueCero($selected);
+		$tipo		= setNoMenorQueCero($tipo);
+		$riesgo		= setNoMenorQueCero($riesgo);
+		$id			= ($id == "") ? "idtipodeingreso" : $id; $this->mLIDs[]	= $id;
+		$sqlSc		= "SELECT * FROM `socios_tipoingreso` WHERE `estado` = 1 ";
+		if($tipo > 0){
+			$sqlSc	.= " AND (`tipo_de_persona` = 0 OR `tipo_de_persona` = $tipo) ";
+		}
+		if($riesgo > 0){
+			$sqlSc	.= " AND (`nivel_de_riesgo`=$riesgo) ";
+		}
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setEsSql();
 		$xS->setDivClass("tx4 tx18 green");
 		$xS->setLabel("TR.TIPO_DE PERSONA");
-		$xS->setOptionSelect( $defaultOpt );
+		
+		if($selected > 0){
+			$xS->setOptionSelect( $selected );
+		}
 		return $xS;
 	}
 	function getListaDeFigurasJuridicas($id = "", $tipo = SYS_TODAS, $selected = false){
@@ -3699,11 +3736,14 @@ class cHSelect {
 		return $xS;
 	}
 	function getIDs(){ return $this->mLIDs; }
-	function getListaDePeriocidadDePago($id = "", $selected = false, $empresa = false){
+	function getListaDePeriocidadDePago($id = "", $selected = false, $empresa = false, $omitir360 = false){
 		$id		= ($id == "") ? "idperiocidad" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
 		$empresa	= setNoMenorQueCero($empresa);
 		$sqlSc		= "SELECT `idcreditos_periocidadpagos`, `descripcion_periocidadpagos` FROM `creditos_periocidadpagos` WHERE (`idcreditos_periocidadpagos` !=99) AND (`estatusactivo`=1) ";
+		if($omitir360 == true){
+			$sqlSc	.= " AND (`idcreditos_periocidadpagos` != " . CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO . ") ";
+		}
 		if($empresa > 0){
 			$sqlSc	= "SELECT   `creditos_periocidadpagos`.`idcreditos_periocidadpagos`,
          `creditos_periocidadpagos`.`descripcion_periocidadpagos`,
@@ -3746,11 +3786,14 @@ class cHSelect {
 	 * @param integer $select Item seleccionado
 	 * @return cSelect
 	 */
-	function getListaDeTipoDePago($id = "", $select = false){
+	function getListaDeTipoDePago($id = "", $select = false, $omitir360 = false){
 		$select	= setNoMenorQueCero($select);
 		$select	= ($select <= 0) ? CREDITO_TIPO_PAGO_PERIODICO : $select;
 		$id		= ($id == "") ? "idtipodepago" : $id; $this->mLIDs[]	= $id;
-		$sqlSc	= " SELECT * FROM `creditos_tipo_de_pago` WHERE (`creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` !=99) ";
+		$sqlSc	= " SELECT * FROM `creditos_tipo_de_pago` WHERE (`idcreditos_tipo_de_pago` !=99) AND (`estatus`=1)";
+		if($omitir360 == true){
+			$sqlSc	.= " AND (`idcreditos_tipo_de_pago` != 1 ) ";
+		}
 		$xS 	= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.Tipo_de Parcialidad");
 		$xS->setDivClass("tx4 tx18 green");
@@ -8501,6 +8544,7 @@ class cFormato {
 			$this->mArr["aval_direccion_colonia"] 		= "";
 			$this->mArr["aval_direccion_codigopostal"] 	= "";
 			
+			
 			$this->mArr["aval_direccion_completa"] 		= "";
 			$this->mArr["aval_ocupacion"] 				= "";
 			$this->mArr["aval_telefono_principal"]		= "";
@@ -8557,10 +8601,17 @@ class cFormato {
 				$this->mArr["variable_aval" . $itx . "_telefono_principal"] = $xSoc->getTelefonoPrincipal();
 				$this->mArr["variable_aval" . $itx . "_email"] 				= $xSoc->getCorreoElectronico();
 				
-				$this->mArr["aval_telefono_principal"]						= $xSoc->getTelefonoPrincipal();	
+				//$this->mArr["aval_telefono_principal"]						= $xSoc->getTelefonoPrincipal();	
 				
 				$xTI	= new cPersonasDocumentacionTipos($xSoc->getTipoDeIdentificacion()); $xTI->init();
 				$this->mListaAvales					.= ($this->mListaAvales == "") ? $xSoc->getNombreCompleto() : ", " . $xSoc->getNombreCompleto();
+				$existeAPrinc						= false;
+				if(isset($this->mArr["aval_nombre_completo"])){
+					if($this->mArr["aval_nombre_completo"] !== ""){
+						$existeAPrinc				= true;
+					}
+				}
+
 				$vars	= array(
 					"aval_nombre_completo" 			=> $xSoc->getNombreCompleto(),
 					"aval_nombres"					=> $xSoc->getNombre(),
@@ -8572,19 +8623,20 @@ class cFormato {
 					"aval_domicilio_localidad" 		=> "",
 					"aval_direccion_calle_y_numero" => "",
 					"aval_direccion_estado" 		=> "",
-					
+						
 					"aval_direccion_colonia" 		=> "",
 					"aval_direccion_municipio" 		=> "",
 					"aval_direccion_codigopostal" 	=> "",
-						
+							
 					"aval_direccion_completa" 		=> $xSoc->getDomicilio(),
 					"aval_ocupacion" 				=> $xSoc->getTituloPersonal(),
 					"aval_telefono_principal"		=> $xSoc->getTelefonoPrincipal(),
+						
 					"aval_fecha_de_nacimiento" 		=> $xF->getFechaCorta($xSoc->getFechaDeNacimiento()),
 					"aval_id_fiscal" 				=> $xSoc->getRFC(true),
 					"aval_id_poblacional" 			=> $xSoc->getCURP(true),
 					"aval_id_identificacion"		=> $xSoc->getClaveDeIdentificacion(),
-					
+						
 					"aval_lugar_de_nacimiento" 		=> $xSoc->getLugarDeNacimiento(),
 					"aval_empresa_de_trabajo" 		=> "",
 					"aval_estado_civil" 			=> $DEstadoCivil->descripcion_estadocivil()->v(),
@@ -8593,24 +8645,27 @@ class cFormato {
 					"aval_tipo_de_identificacion" 	=> $xTI->getNombre(),
 					"aval_porcentaje_relacionado"	=> ($porcentaje * 100)
 				);
+				
 				if($avalDom != null){
-					$vars["aval_direccion_completa"] 							= $avalDom->getDireccionBasica(true);
-					$vars["aval_domicilio_localidad"] 							= $avalDom->getLocalidad(); //TODO: verificar Validez
-					$vars["aval_direccion_calle_y_numero"]						= $avalDom->getCalleConNumero();
-					$vars["aval_direccion_estado"] 								= $avalDom->getEstado(OUT_TXT);
-					$vars["aval_direccion_colonia"] 							= $avalDom->getColonia();
-					$vars["aval_direccion_municipio"] 							= $avalDom->getMunicipio();
-					$vars["aval_direccion_codigopostal"] 						= $avalDom->getCodigoPostal();
 					
-					$this->mArr["variable_aval" . $itx . "_domicilio_completo"] = $vars["aval_direccion_completa"];
-					$this->mArr["variable_aval" . $itx . "_domicilio_localidad"]= $vars["aval_domicilio_localidad"];
-					$this->mArr["variable_aval" . $itx . "_domicilio_estado"] 	= $vars["aval_direccion_estado"]; 
-					$vars["aval_direccion_localidad"] 							= $vars["aval_domicilio_localidad"];
-					$vars["aval_domicilio_convencional"]						= $avalDom->getDireccionBasica(true);
+					$vars["aval_direccion_completa"] 						= $avalDom->getDireccionBasica(true);
+					$vars["aval_domicilio_localidad"] 						= $avalDom->getLocalidad(); //TODO: verificar Validez
+					$vars["aval_direccion_calle_y_numero"]					= $avalDom->getCalleConNumero();
+					$vars["aval_direccion_estado"] 							= $avalDom->getEstado(OUT_TXT);
+					$vars["aval_direccion_colonia"] 						= $avalDom->getColonia();
+					$vars["aval_direccion_municipio"] 						= $avalDom->getMunicipio();
+					$vars["aval_direccion_codigopostal"] 					= $avalDom->getCodigoPostal();
+					$vars["aval_direccion_localidad"] 						= $vars["aval_domicilio_localidad"];
+					$vars["aval_domicilio_convencional"]					= $avalDom->getDireccionBasica(true);
+					
+					$this->mArr["variable_aval" . $itx . "_domicilio_completo"] = $avalDom->getDireccionBasica(true);
+					$this->mArr["variable_aval" . $itx . "_domicilio_localidad"]= $avalDom->getLocalidad();
+					$this->mArr["variable_aval" . $itx . "_domicilio_estado"] 	= $avalDom->getEstado(OUT_TXT); 
+
 				}
 				if($avalEc != null){
-					$vars["aval_ocupacion"] 				= $xSoc->getOActividadEconomica()->getPuesto();
-					$vars["aval_empresa_de_trabajo"] 		= $xSoc->getOActividadEconomica()->getNombreEmpresa();
+					$vars["aval_ocupacion"] 								= $avalEc->getPuesto();
+					$vars["aval_empresa_de_trabajo"] 						= $avalEc->getNombreEmpresa();
 				}
 				//Iniciar Domiclio Fiscal y Convencional
 				$xODomFiscl			= $xSoc->getODomicilio(PERSONAS_TIPO_DOM_FISCAL);
@@ -8619,7 +8674,9 @@ class cFormato {
 				}
 				//hacer merge con el Principal
 				//TODO: Verificar problemas y conflictos
-				$this->mArr			= array_merge($vars, $this->mArr);
+				if($existeAPrinc == false){
+					$this->mArr		= array_merge($vars, $this->mArr);
+				}
 				//
 				$texto_ficha 		= contrato($forma, "texto_del_contrato");
 				$texto_ficha2 		= contrato($ficha2, "texto_del_contrato");
@@ -9943,6 +10000,26 @@ class cFormato {
 			}
 		}
 	}
+	function setGrupoSolidario($idgrupo, $predata = false){
+		$xGrp	= new cGrupo($idgrupo);
+		
+		if($xGrp->init() == true){
+			$this->mArr["var_nombre_gruposolidario"]			= $xGrp->getNombre();
+			$this->mArr["var_direccion_gruposolidario"]			= $xGrp->getDireccion();
+			$this->mArr["var_representante_nombrecompleto"]		= $xGrp->getNombreRepresentante();
+			$this->mArr["var_vocalvigilancia_nombrecompleto"]	= $xGrp->getNombreVocal();
+			$this->mArr["var_representante_numerosocio"]		= $xGrp->getRepresentanteCodigo();
+			$this->mArr["var_vocalvigilancia_numerosocio"]		= $xGrp->getVocalCodigo();
+			$this->mArr["var_grupo_id"]							= $xGrp->getCodigo();
+			$this->mArr["var_grupo_personaid"]					= $xGrp->getClaveDePersona();
+			
+			//$this->mArr[""]
+			//$this->mArr[""]
+			//$this->mArr[""]
+		}
+		
+
+	}
 	function setRegionLocal($clave, $datos = false){
 		$this->mArr["variable_region_clave"]			= $clave;
 		$this->mArr["variable_region_nombre"]			= "";
@@ -10631,7 +10708,7 @@ class cFIcons {
 	public $SALDO		= "saldo";
 	public $CERRAR		= "fa-window-close-o";
 	public $COBROS		= "caja";
-	public $EMAIL		= "envelope-e";
+	public $EMAIL		= "fa-envelope-o";
 	public $CREDITO		= "fa-credit-card";
 	public $RECIBO		= "fa-bars";
 	public $RESTAR		= "fa-minus";

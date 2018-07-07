@@ -2038,6 +2038,14 @@ class cHGrid {
 		$titulo	= $this->OLang()->getT($titulo);
 		$this->mCampos[$nombre] = array ("title" => $titulo, "width" => $zsize, "type" => "date", "displayFormat" => "dd/mm/yy");
 	}
+	/**
+	 * Devuleve una funcion externa en js, se renderiza al construirse el grid
+	 * @param string $nombre Nombre de la columna en que va
+	 * @param string $titulo Titulo de la columna
+	 * @param string $zsize Tamannio en %
+	 * @param string $funcion nombre de la funcion js que se usa, sin args
+	 * @return null
+	 */
 	function OColFunction($nombre, $titulo, $zsize, $funcion = ""){
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
 		$titulo	= $this->OLang()->getT($titulo);

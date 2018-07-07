@@ -2758,7 +2758,7 @@ class cSQLFiltros {
 			
 		} else {
 			$FechaInicial	= $xF->getFechaISO($FechaInicial);
-			if($FechaFinal == false){
+			if($FechaFinal === false){
 				$By	= " AND (`empresas_operaciones`.`fecha_de_operacion`  = '$FechaInicial')";
 			} else {
 				$FechaFinal	= $xF->getFechaISO($FechaFinal);
@@ -2773,7 +2773,57 @@ class cSQLFiltros {
 		$By			= ($persona> 0) ? " AND ( `originacion_leasing`.`persona` = $persona )" : "";
 		return $By;
 	}
-	
+	function CredsGarantiasPorFechaRec($FechaInicial, $FechaFinal=false){
+		$By				= "";
+		$xF				= new cFecha();
+		
+		if($FechaInicial === false){
+			
+		} else {
+			$FechaInicial	= $xF->getFechaISO($FechaInicial);
+			if($FechaFinal === false){
+				$By	= " AND (`creditos_garantias`.`fecha_recibo`  = '$FechaInicial')";
+			} else {
+				$FechaFinal	= $xF->getFechaISO($FechaFinal);
+				$By	= " AND (`creditos_garantias`.`fecha_recibo`  >= '$FechaInicial') AND (`creditos_garantias`.`fecha_recibo`  <= '$FechaFinal') ";
+			}
+		}
+		return $By;
+	}
+	function CredsGarantiasPorFechaDev($FechaInicial, $FechaFinal=false){
+		$By				= "";
+		$xF				= new cFecha();
+		
+		if($FechaInicial === false){
+			
+		} else {
+			$FechaInicial	= $xF->getFechaISO($FechaInicial);
+			if($FechaFinal === false){
+				$By	= " AND (`creditos_garantias`.`fecha_devolucion`  = '$FechaInicial')";
+			} else {
+				$FechaFinal	= $xF->getFechaISO($FechaFinal);
+				$By	= " AND (`creditos_garantias`.`fecha_devolucion`  >= '$FechaInicial') AND (`creditos_garantias`.`fecha_devolucion`  <= '$FechaFinal') ";
+			}
+		}
+		return $By;
+	}
+	function CredsGarantiasPorFechaRes($FechaInicial, $FechaFinal=false){
+		$By				= "";
+		$xF				= new cFecha();
+		
+		if($FechaInicial === false){
+			
+		} else {
+			$FechaInicial	= $xF->getFechaISO($FechaInicial);
+			if($FechaFinal === false){
+				$By	= " AND (`creditos_garantias`.`fecha_resguardo`  = '$FechaInicial')";
+			} else {
+				$FechaFinal	= $xF->getFechaISO($FechaFinal);
+				$By	= " AND (`creditos_garantias`.`fecha_resguardo`  >= '$FechaInicial') AND (`creditos_garantias`.`fecha_resguardo`  <= '$FechaFinal') ";
+			}
+		}
+		return $By;
+	}
 }
 class cCreditosTiposDeAutorizacion {
 	private $mClave		= false;

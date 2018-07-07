@@ -334,11 +334,11 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if(MODULO_AML_ACTIVADO == true){
 		if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
 			$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
-			
-			$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
-			$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
-			$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
-	
+			if($xSoc->getEsGrupoSolidario() == false AND $xSoc->getEsEmpresaConConvenio() == false){
+				$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
+				$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
+				$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
+			}
 			$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
 			
 			$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
@@ -625,7 +625,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xFRM->addTag("Garantia Liquida: <strong>$ $mny</strong>", "success");
 	}
 	//===================================== Agregar Fotos
-	if($UsarFotos == true){
+	if($UsarFotos == true AND $xSoc->getEsPersonaFisica() == true){
 		$xTT	= new cHTabla("idimagenes", "listado");
 
 		$xFRM->OButton("TR.AGREGAR FOTOGRAFIA", "jsAddNewPhoto()", "fa-camera", "addnewphoto");

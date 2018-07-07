@@ -633,7 +633,11 @@ $lang["20180501"][]	= array("MAXVALOR", "Monto Max.", "Max Value");
 $lang["20180501"][]	= array("MAXNUMERO", "Num. Max.", "Max Number");
 $lang["20180501"][]	= array("CARTERA", "Portafolio", "Portafolio");
 $lang["20180501"][]	= array("AYUDA", "Ayuda", "Help");
-//$lang["20180501"][]	= array("", "", "");
+//$lang["20180503"][]	= array("", "", "");
+
+$lang["20180503"][]	= array("COTEJO", "Cotejo", "To Check");
+$lang["20180503"][]	= array("DEVOLVER", "Devolver", "Give Back");
+//$lang["20180503"][]	= array("", "", "");
 
 
 header('Content-type: application/json');

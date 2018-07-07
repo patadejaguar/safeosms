@@ -228,6 +228,15 @@ $xTbl->addTD($xChk->get("", "idca01", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
+/* ------  personas_controlar_por_empresas ------*/
+//
+$xTbl->initRow();
+$xTbl->addTD("Controlar por Empleador");
+$rr	= (PERSONAS_CONTROLAR_POR_EMPRESA== true) ? true : false;
+$xChk->setOnClick("jsActualizarParam('personas_controlar_por_empresas', this)");
+$xTbl->addTD($xChk->get("", "idca02", $rr), " class='izq' ");
+$xTbl->endRow();
+
 /* ------ GARANTIA LIQUIDA  ------*/
 //
 $xTbl->initRow();
@@ -286,20 +295,49 @@ $xTbl->addTD($xChk->get("", "id10", $rr), " class='izq' ");
 $xTbl->endRow();
 /* ------  ------*/
 
+/*creditos_controlar_por_origen*/
+$xTbl->initRow();
+$xTbl->addTD("Creditos.- Controlar por Origen");
+$rr	= (CREDITO_CONTROLAR_POR_ORIGEN == true) ? true : false;
+$xChk->setOnClick("jsActualizarParam('creditos_controlar_por_origen', this)");
+$xTbl->addTD($xChk->get("", "id11", $rr), " class='izq' ");
+$xTbl->endRow();
+/* ------  ------*/
+
+
+/*creditos_controlar_por_origen*/
+$xTbl->initRow();
+$xTbl->addTD("Creditos.- Usar Ahorro");
+$rr	= (CREDITO_USAR_AHORRO == true) ? true : false;
+$xChk->setOnClick("jsActualizarParam('creditos_usar_ahorro_en_creds', this)");
+$xTbl->addTD($xChk->get("", "id12", $rr), " class='izq' ");
+$xTbl->endRow();
+/* ------  ------*/
+
+
+
 $xHT->addTab("TR.Creditos", $xTbl->get());
 
 //------------------------
 $xTbl		= new cHTabla("idtcfgcapta", "listado");
 $xTbl->addTH("TR.PARAMETRO");
 $xTbl->addTH("TR.VALOR");
+
+
+
 /*utilizar_garantia_liquida_en_captacion*/
-$xTbl->initRow();
+/*$xTbl->initRow();
 $xTbl->addTD("Captacion.- Garantia Liquida en captacion");
 $rr	= (GARANTIA_LIQUIDA_EN_CAPTACION == true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('utilizar_garantia_liquida_en_captacion', this)");
 $xTbl->addTD($xChk->get("", "idcapta01", $rr), " class='izq' ");
 $xTbl->endRow();
+*/
 /* ------  ------*/
+
+
+
+
 
 $xHT->addTab("TR.Captacion", $xTbl->get());
 
@@ -368,16 +406,16 @@ function jsActualizarParam(id, obj){
 	xG.confirmar({msg: "CONFIRMA_ACTUALIZACION", callback: jsaActualizarParam});
 }
 function jsGoEditConfig(){
-	xG.w({url: "../frmsystem/edit-config.frm.php"});
+	xG.w({url: "../frmsystem/edit-config.frm.php", tab:true});
 }
 function jsGoEditConfigSistema(){
-	xG.w({url: "../install/configuracion.editar.frm.php?tipo=sistema"});
+	xG.w({url: "../install/configuracion.editar.frm.php?tipo=sistema", tab:true});
 }
 function jsGoPeriodosDeCredito(){
-	xG.w({url: "../frmcreditos/cambiarperiodo.frm.php"});
+	xG.w({url: "../frmcreditos/cambiarperiodo.frm.php", tab:true});
 }
 function jsGoReglasDeNegocio(){
-	xG.w({url: "../frmsecurity/entidad-reglas.frm.php"});
+	xG.w({url: "../frmsecurity/entidad-reglas.frm.php", tab:true});
 }
 function jsSyncCatalogos(){
 	

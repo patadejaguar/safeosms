@@ -54,6 +54,7 @@ class cSystemUser{
 	private $mNombreCompleto	= "";
 	private $mOptions			= "";
 	private $mOListaRules		= null;
+	private $PASS_LARGO_MIN		= 4;
 	//private $mIDCacheReglaN		= "";
 	//private $mClaveUser			= "";//
 	/**
@@ -504,6 +505,11 @@ class cSystemUser{
 	function setActivo(){ $this->mMessages .= "Usuario Activado"; return $this->setUpdate("estatus", SYS_USER_ESTADO_ACTIVO); }
 	function setPassword($rawpass){
 		$xLog			= new cCoreLog();
+		if( strlen(trim($rawpass)) < $this->PASS_LARGO_MIN){
+			$this->mMessages	.= "ERROR\tEL Largo Minimo es : " . $this->PASS_LARGO_MIN . "\r\n";
+			return false;
+		}
+		
 		$xLog->add("Cambio de password del usuario " . $this->mCodeUser . " por "  . getUsuarioActual()  . "\r\n");
 		$xLog->guardar($xLog->OCat()->PASSWORD_MODIFICADO);
 		$rawpass 		= $this->getHash($rawpass);

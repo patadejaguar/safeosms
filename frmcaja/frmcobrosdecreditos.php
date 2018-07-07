@@ -13,7 +13,7 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 
-$xHP		= new cHPage("TR.RECIBO DE PAGO", HP_FORM);
+$xHP		= new cHPage("TR.COBRO DE CREDITOS", HP_FORM);
 $xCaja		= new cCaja();
 $xEvt		= new cCreditosEventos();
 $xRuls		= new cReglaDeNegocio();
@@ -195,6 +195,7 @@ $xFRM->addFechaRecibo();
 
 $xFRM->addCreditBasico();
 $xFRM->addDataTag("role", $xEvt->PAGO);
+$xFRM->setTitle($xHP->getTitle());
 
 $xTxt->addEvent("jsaGetLetras();jsaGetVerifyPlan();", "onfocus");
 

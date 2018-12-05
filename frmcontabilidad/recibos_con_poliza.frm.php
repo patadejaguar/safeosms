@@ -85,6 +85,7 @@ $xHP->init();
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 
+$xFRM->addCerrar();
 $xFRM->OButton("TR.Obtener", "jsaGetListaDeRecibos()", $xFRM->ic()->CARGAR );
 $xFRM->OButton("TR.Exportar Dia", "jsaExportarDia()", $xFRM->ic()->EXPORTAR );
 

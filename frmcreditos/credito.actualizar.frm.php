@@ -137,6 +137,16 @@ function jsaSetEstatus($credito){
 	}
 	return $exp;
 }
+function jsaSetCancelarRechazo($credito){
+	$xRech	= new cCreditosRechazos();
+	if($xRech->initByCredito($credito) == true){
+		$xRech->setCancelar();
+	}
+	
+	return $xRech->getMessages();
+}
+
+
 $jxc = new TinyAjax();
 $jxc ->exportFunction('jsaCambiarMontoAutorizado', array('idsolicitud', 'idmontoaut', 'idnumeroaut'), "#avisos");
 $jxc ->exportFunction('jsaCambiarMontoMinistrado', array('idsolicitud', 'idmonto'), "#avisos");
@@ -154,6 +164,7 @@ $jxc ->exportFunction('jsaSetCambiarPersona', array('idsolicitud', 'idnuevaperso
 
 $jxc ->exportFunction('jsaSetCAT', array('idsolicitud'), "#avisos");
 $jxc ->exportFunction('jsaSetEstatus', array('idsolicitud'), "#avisos");
+$jxc ->exportFunction('jsaSetCancelarRechazo', array('idsolicitud'), "#avisos");
 
 //
 $jxc ->process();
@@ -178,32 +189,50 @@ $lguardar	= $xFRM->lang("guardar");
 $lcancelar	= $xFRM->lang("cancelar");
 
 $xFRM->setTitle( $xHP->getTitle() );
+if($xCred->getEsRechazado() == true){
+	$xFRM->OButton("TR.Cancelar Rechazo", "jsCancelarRechazo()", "trabajo", "idcambiarechazo" );
+}
 
-$xFRM->OButton("TR.Cambiar Monto Ministrado", "jsCambiarMonto()", "mas-dinero", "idcambiarmonto" );
-$xFRM->OButton("TR.Cambiar Fecha de Ministracion", "jsCambiarFechaMinistracion()", "fecha", "idcmdministracion" );
-//$xFRM->addHElem( $oBtn->getBasic("Fecha de Autorizacion", "jsCambiarFechaAutorizacion", "fecha", "idcmdautorizacion" ) );
-$xFRM->OButton("TR.Cambiar Monto Autorizado", "jsCambiarMontoAutorizado()", "dinero", "idcambiarmontoaut" ) ;
-$xFRM->OButton("TR.Cambiar Estado", "jsCambiarEstado()", "trabajo", "idcambiarestado" );
-$xFRM->OButton("TR.Cambiar Producto", "jsCambiarProducto()", "colaborar", "idcambiarpdto" );
-$xFRM->OButton("TR.Cambiar Periocidad", "jsCambiarPeriocidad()", "calendario", "idcambiarpers" );
+if($xCred->getEsPagado() == false){
 
-$xFRM->addHElem($xCred->getFichaMini());
+	$xFRM->OButton("TR.Cambiar Monto Ministrado", "jsCambiarMonto()", "mas-dinero", "idcambiarmonto" );
+	$xFRM->OButton("TR.Cambiar Fecha de Ministracion", "jsCambiarFechaMinistracion()", "fecha", "idcmdministracion" );
+	//$xFRM->addHElem( $oBtn->getBasic("Fecha de Autorizacion", "jsCambiarFechaAutorizacion", "fecha", "idcmdautorizacion" ) );
+	
+	$xFRM->OButton("TR.Cambiar Monto Autorizado", "jsCambiarMontoAutorizado()", "dinero", "idcambiarmontoaut" ) ;
+	$xFRM->OButton("TR.Cambiar Producto", "jsCambiarProducto()", "colaborar", "idcambiarpdto" );
+	$xFRM->OButton("TR.Cambiar Periocidad", "jsCambiarPeriocidad()", "calendario", "idcambiarpers" );
 
-
-if($xCred->getPeriocidadDePago() !=  CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
-	//$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "regenerarPlanDePagos()", "reporte", "generar-plan");
-	$xFRM->OButton("TR.importar plan_de_pagos", "jsImportarPlanDePagos()", "csv", "idimportar");
-	if($xCred->getNumeroDePlanDePagos() > 0){
-		$idrecibo	= $xCred->getNumeroDePlanDePagos();
-		$xFRM->OButton("TR.EDITAR PLAN_DE_PAGOS #$idrecibo", "jsEditarPlan($idrecibo)", $xFRM->ic()->EDITAR, "edit-plan");
-		$xFRM->OButton("TR.EDITAR PLAN_DE_PAGOS CERO", "jsEditarPlan2($idrecibo)", $xFRM->ic()->CALENDARIO1, "edit-plan2");
+	$xFRM->OButton("TR.Cambiar Estado", "jsCambiarEstado()", "trabajo", "idcambiarestado" );
+	
+} else {
+	if($xCred->getEsAutorizado() == true OR $xCred->getEsSolicitado() == true){
+		//$xFRM->OButton("TR.Cambiar Monto Autorizado", "jsCambiarMontoAutorizado()", "dinero", "idcambiarmontoaut" ) ;
+		$xFRM->OButton("TR.Cambiar Producto", "jsCambiarProducto()", "colaborar", "idcambiarpdto" );
+		$xFRM->OButton("TR.Cambiar Periocidad", "jsCambiarPeriocidad()", "calendario", "idcambiarpers" );
 	}
 }
 
 
-$xFRM->OButton("TR.vincular_a empresa", "jsVincularEmpresa()", "empresa", "idvincularemp" );
+
+$xFRM->addHElem($xCred->getFichaMini());
+
+if($xCred->getEsPagado() == false AND $xCred->getEsRechazado() == false ){
+	if($xCred->getPeriocidadDePago() !=  CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO ){
+		//$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "regenerarPlanDePagos()", "reporte", "generar-plan");
+		$xFRM->OButton("TR.importar plan_de_pagos", "jsImportarPlanDePagos()", "csv", "idimportar");
+		if($xCred->getNumeroDePlanDePagos() > 0){
+			$idrecibo	= $xCred->getNumeroDePlanDePagos();
+			$xFRM->OButton("TR.EDITAR PLAN_DE_PAGOS #$idrecibo", "jsEditarPlan($idrecibo)", $xFRM->ic()->EDITAR, "edit-plan");
+			$xFRM->OButton("TR.EDITAR PLAN_DE_PAGOS CERO", "jsEditarPlan2($idrecibo)", $xFRM->ic()->CALENDARIO1, "edit-plan2");
+		}
+	}
+}
+if($xCred->getEsNomina() == true){
+	$xFRM->OButton("TR.vincular_a empresa", "jsVincularEmpresa()", "empresa", "idvincularemp" );
+}
 $xFRM->OButton("TR.Reestructurar Intereses", "jsaReestructurarIntereses();", "tasa", "idrestints"  );
-$xFRM->OButton("TR.Cambiar Persona", "jsCambiarPersona()", $xFRM->ic()->PERSONA, "idchange"  );
+
 
 $xFRM->OButton("TR.Actualizar CAT", "jsaSetCAT()", "tasa", "idacat"  );
 $xFRM->OButton("TR.Actualizar ESTATUS", "jsaSetEstatus()", $xFRM->ic()->GENERAR );
@@ -215,6 +244,12 @@ if($xNotaSIC->initByCredito($xCred->getClaveDeCredito())  == true){
 	$xFRM->OButton("TR.ELIMINAR NOTAS SIC", "jsDelNotaSic($idnotasic)", $xFRM->ic()->ELIMINAR  );
 } else {
 	$xFRM->OButton("TR.AGREGAR NOTAS SIC", "jsAddNotaSic($credito)", $xFRM->ic()->NOTA  );
+}
+
+if(getEsModuloMostrado(USUARIO_TIPO_GERENTE, MMOD_COLOCACION)){
+	if($xCred->getEsPagado() == false){
+		$xFRM->OButton("TR.Cambiar Persona", "jsCambiarPersona()", $xFRM->ic()->PERSONA, "idcambiarpersona", "yellow"  );
+	}
 }
 
 if(MODO_DEBUG == true OR (MODO_CORRECION == true OR MODO_MIGRACION == true)){
@@ -461,6 +496,9 @@ function jsEditNotaSic(idCredito){
 }
 function jsDelNotaSic(id){
 	xG.rmRecord({tabla:"creditos_sic_notas", id:id});
+}
+function jsCancelarRechazo(id){
+	xG.confirmar({ msg: "CONFIRMA_BAJA", callback: jsaSetCancelarRechazo});
 }
 </script>
 <?php

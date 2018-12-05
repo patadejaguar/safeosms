@@ -28,6 +28,8 @@ $xFecha				= new cFecha();
 $xCred				= new cCredito();
 $xVals				= new cReglasDeValidacion();
 $xRuls				= new cReglaDeNegocio();
+$xLog				= new cCoreLog();
+
 $OffByUsr			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_USR);		//regla de negocio
 $OffByHer			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_HER);		//regla de negocio
 $OffByProd			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_PROD);		//regla de negocio
@@ -63,10 +65,16 @@ $TipoLugarCobro		= parametro("idtipolugarcobro",0, MQL_INT);
 $oficial_de_credito	= parametro("oficial", getUsuarioActual(), MQL_INT);
 
 $TasaDeInteres		= parametro("tasa",false, MQL_FLOAT);
+$TasaDeMora			= parametro("tasamora",0, MQL_FLOAT);
 
 $fecha_solicitud 	= $xFecha->getFechaISO($solicitado);
 $fecha_ministracion = $xFecha->getFechaISO($ministrado);
 $fecha_vencimiento 	= $xFecha->getFechaISO($vencido);
+
+$empresa			= parametro("empresa", FALLBACK_CLAVE_EMPRESA, MQL_INT); $empresa = parametro("idempresa", $empresa, MQL_INT);
+
+
+$oficial_de_seguimiento		= getUsuarioActual();
 
 //$oficial_de_credito	= getUsuarioActual();
 $xBtn				= new cHButton();
@@ -130,9 +138,12 @@ if($sucess == true){
 	
 	$result		= $xCred->add($tipoconvenio, $persona,$contrato_corriente, $monto_solicitado, $periocidad, $numeropagos, $dias_solicitados, $rubro_destino, false,
 			$grupo_asociado, $amp_destino, $observaciones, $oficial_de_credito, $fecha_solicitud, $tipo_de_pago,
-			$xConv->getTipoDeBaseCalc(), $TasaDeInteres,  $fecha_ministracion, $xSoc->getClaveDeEmpresa(), $TipoDeAutorizacion, $idorigen, $origen);
+			$xConv->getTipoDeBaseCalc(), $TasaDeInteres,  $fecha_ministracion, $empresa, $TipoDeAutorizacion, $idorigen, $origen);
 	
 	if($result !== false){
+		if($TasaDeMora > 0){
+			$xCred->setTasaDeMora($TasaDeMora);
+		}
 		if ( USE_OFICIAL_BY_PRODUCTO == true){
 			$oficial_de_seguimiento		= $xConv->getOficialDeSeguimiento();
 			
@@ -184,6 +195,8 @@ if($sucess == true){
 		$xFRM->addHTML( $xCred->getFichaDeSocio() );
 		$xFRM->addHTML( $xCred->getFicha() );
 		$xFRM->addCreditoComandos($xCred->getNumeroDeCredito(), $xCred->getEstadoActual());
+		$xFRM->OButton("TR.PANEL DE CREDITO", "jsGoPanel()", $xFRM->ic()->CREDITO, "idcmdgocred", "credito");
+		
 		$xFRM->addCerrar();
 		
 		//$xFRM->addToolbar( $xBtn->getBasic("TR.Autorizar credito", "var CGen=new CredGen();CGen.getFormaAutorizacion($credito)", "imprimir", "cmdprintdes5", false) );
@@ -194,21 +207,27 @@ if($sucess == true){
 }
 	$msg		.= $xSoc->getMessages();
 	$xFRM->addAviso($msg);
+	
+	
+	
 	echo $xFRM->get();
 
 ?>
 <script>
 var xGen	= new Gen();
 var CGen	= new CredGen();
+var xCred	= new CredGen();
 
 var idcredito	= <?php echo $credito; ?>;
 var idsocio		= <?php echo $persona; ?>;
 
-function gogarantias() {  CGen.getFormaGarantias(idcredito); }
-function goavales() {    CGen.getFormaAvales(idcredito); }
-function goflujoefvo() { CGen.getFormaFlujoEfectivo(idcredito); }
-function printsol() { CGen.getImprimirSolicitud(idcredito); }
-function jsImprimirOrdenDeDesembolso(){ CGen.getImprimirOrdenDeDesembolso(idcredito);}
+function gogarantias() {  xCred.getFormaGarantias(idcredito); }
+function goavales() {    xCred.getFormaAvales(idcredito); }
+function goflujoefvo() { xCred.getFormaFlujoEfectivo(idcredito); }
+function printsol() { xCred.getImprimirSolicitud(idcredito); }
+function jsImprimirOrdenDeDesembolso(){ xCred.getImprimirOrdenDeDesembolso(idcredito);}
+function jsGoPanel(){ xCred.goToPanelControl(idcredito, {principal:true}); }
+
 </script>
 <?php
 	echo $xHP->end(); 

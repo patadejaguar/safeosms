@@ -40,6 +40,8 @@ switch ($action){
 			$xRels->setDarDeBaja();
 			$rs["error"]	= false;
 			$rs["message"]	= "La relacion se ha dado de baja";
+			setAgregarEvento_("La relacion se ha dado de baja", 10102, $xRels->getCodigoDePersona());
+			setAgregarEvento_("La relacion se ha dado de baja", 10102, $xRels->getCodigoDePersonaRelacionado());
 		}
 		break;
 }

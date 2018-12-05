@@ -61,24 +61,31 @@ foreach ($rsrango as $rw){
 }
 
 
+
 $sql	= "SELECT
 	`socios`.`codigo`,
 	`socios`.`nombre`,
 	`creditos_solicitud`.`numero_solicitud`,
+`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `producto`,
 	saldo,
-	dias_vencidos AS 'dias_en_vencido',
+	CAST(dias_vencidos AS SIGNED) AS 'dias_en_vencido',
 	
 	$casewhen
 	 
-	 FROM
+FROM     `creditos_solicitud` 
+INNER JOIN `dias_en_mora`  ON `creditos_solicitud`.`numero_solicitud` = `dias_en_mora`.`numero_solicitud` 
+INNER JOIN `socios`  ON `socios`.`codigo` = `creditos_solicitud`.`numero_socio` 
+INNER JOIN `creditos_tipoconvenio`  ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
+
+	 /*FROM
 	`creditos_solicitud` `creditos_solicitud` 
 		INNER JOIN `dias_en_mora` `dias_en_mora` 
 		ON `creditos_solicitud`.`numero_solicitud` = `dias_en_mora`.
 		`numero_solicitud` 
 			INNER JOIN `socios` `socios` 
-			ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`
+			ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`*/
 	 WHERE 
-		saldo > " . TOLERANCIA_SALDOS . "
+	 `creditos_solicitud`.`fecha_ministracion` <='$FechaFinal' AND saldo > " . TOLERANCIA_SALDOS . "
 		/*AND dias_vencidos >0*/
 		
 		$es_por_convenio
@@ -96,6 +103,8 @@ $sql	= "SELECT
 	$xTBL->setTipoSalida($out);
 	//$xTBL->setEventKey("jsGoEstadoDeCuentaDeCreditosPorPersona");
 	$xTBL->setKeyField("numero_solicitud");
+	//$xTBL->setForzarTipoSQL("dias_en_vencido", "int");
+	
 	//$xTBL->setTdClassByType();
 	$xTBL->setUsarNullPorCero();
 	$xTBL->setFechaCorte($FechaFinal);

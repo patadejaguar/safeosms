@@ -220,7 +220,7 @@ if($action == SYS_NINGUNO){
 					$man1, $man2,
 					$grupo, $fechaalta,
 					$tipocuenta, $tipotitulo, $dias, $tasa, $cuentaDeIntereses, $fechaalta);
-			
+			$xCta->setAlias($alias);
 			
 			$xCta->init();
 			

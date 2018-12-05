@@ -364,7 +364,7 @@ class TinyAjax
 	 * @param string $functionName Function to export
 	 * @param array/string $aSourceId, array or string containing of id to get value from, if set to null then you have to supply callback parameters yourself
 	 * @param string $callback if set then custom callback javascript-function, no behaviors used
-	 * @param obj $callback if set then the function is called in this class
+	 * @param mixed $callback if set then the function is called in this class
 	 *
 	 * @since 0.9.2 - Optional custom callback-class for function to call
 	 */
@@ -473,7 +473,7 @@ class TinyAjax
 	/**
 	 * Returns the common Ajax-javascript xmlhttp-creation etc.
 	 *
-	 * @var $getCommonJavascript if TinyAjax.js should be included in this page
+	 * @var $getCommonJavascript TinyAjax.js should be included in this page
 	 * @return string javascript to print
 	 */
 	private function getCommonJavaScript($getCommonJavascript = true) {
@@ -629,7 +629,7 @@ class TinyAjax
 	 * Static function that converts a form-parameter in callback class to
 	 * a key->val array containing all form data (like $_POST)
 	 *
-	 * @param unknown_type $data parameter containing form-data
+	 * @param mixed $data parameter containing form-data
 	 * @return array key->val array containing all form data
 	 */
 	public static function getPostData($data) {
@@ -650,8 +650,8 @@ class TinyAjax
 	 * Helper-function that decodes the arguments before passing
 	 * them to the callback function (in process)
 	 *
-	 * @param unknown_type $data
-	 * @return unknown
+	 * @param mixed $data
+	 * @return mixed
 	 */
 	private function decode($data) {
 

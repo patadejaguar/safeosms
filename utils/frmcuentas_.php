@@ -49,6 +49,8 @@ $ssql	= $xL->getListadoDeCuentasDeCapt($persona, false, $tipo, $subtipo);
 
 $tb = new cTabla($ssql);
 $tb -> setEventKey("setCuenta");
+$tb->setUsarNullPorCero();
+
 //$tb->
 $xFRM->addHTML( $tb -> Show() );
 

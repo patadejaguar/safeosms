@@ -10,7 +10,7 @@ $mKey		= getClaveCifradoTemporal();
 
 $usuario	= parametro("u$mKey", "", MQL_RAW);
 $password	= parametro("p$mKey", "", MQL_RAW);
-$sucursal	= parametro("idsucursal", "", MQL_RAW);
+$sucursal	= parametro("idsucursal", DEFAULT_SUCURSAL, MQL_RAW);
 $indice		= parametro("o",0, MQL_INT);
 
 

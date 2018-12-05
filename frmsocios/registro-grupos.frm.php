@@ -30,7 +30,7 @@ $xDate		= new cHDate();
 $xDate2		= new cHDate(2, false, FECHA_TIPO_NACIMIENTO);
 $xSel		= new cHSelect();
 if($action == SYS_NINGUNO){	$xFRM->addGuardar("jsCheck()"); }
-$xFRM->OButton("TR.Agregar PERSONA_FISICA", "jsAgregarRepLegal", $xFRM->ic()->PERSONA );
+$xFRM->OButton("TR.Agregar PERSONA_FISICA", "jsAgregarRepLegal", $xFRM->ic()->PERSONA, "idcmdannnewfis", "persona");
 
 $xFRM->addSeccion("iddatosgenerales", "TR.Datos generales");
 
@@ -110,14 +110,14 @@ if( EACP_CLAVE_DE_PAIS == "MX"){
 
 }
 $xFRM->endSeccion(); $xFRM->addSeccion("idintegrantes", "TR.Integrantes");
-$xFRM->addPersonaBasico("2", false, false, "", "TR.Representante_de_Grupo");
-$xFRM->addPersonaBasico("3", false, false, "", "TR.Vocal_de_Grupo");
-$xFRM->addPersonaBasico("4", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
-$xFRM->addPersonaBasico("5", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
-$xFRM->addPersonaBasico("6", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
-$xFRM->addPersonaBasico("7", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
-$xFRM->addPersonaBasico("8", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
-$xFRM->addPersonaBasico("9", false, false, "", "TR.INTEGRANTE_DE_GRUPO");
+$xFRM->addPersonaBasico("2", false, false, "", "TR.Representante_de_Grupo", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("3", false, false, "", "TR.Vocal_de_Grupo", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("4", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("5", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("6", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("7", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("8", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
+$xFRM->addPersonaBasico("9", false, false, "", "TR.INTEGRANTE_DE_GRUPO", ",solofisicas:'true'");
 
 //$xFRM->OMoneda("iddescuento", 0, "TR.Descuento Deseado");
 

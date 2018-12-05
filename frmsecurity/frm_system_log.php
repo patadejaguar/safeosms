@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.EVENTOS DEL SISTEMA", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -25,7 +25,7 @@ $xDic		= new cHDicccionarioDeTablas();
 $xHP->init();
 $xSel		= new cHSelect();
 $xPan		= new cPanelDeReportes(0, "seguridad");
-
+$xPan->setTitle($xHP->getTitle());
 
 $xSel1		= $xSel->getListadoGenerico("general_error_codigos", "codigo");
 $xSel1->addVacio(true);

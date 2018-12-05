@@ -576,10 +576,31 @@ class cCreditosLeasing {
 		$res	= $xQL->setRawQuery("UPDATE `originacion_leasing` SET `paso_proceso`=$paso WHERE `idoriginacion_leasing`=$clave");
 	}
 	function setOmitidos($pon = null, $quita = null){
+		
 		$idx	= "arrendamiento.omitidos." . $this->mClave;
 		
-		$xCache	= new cCache();
+		$arrE	= $this->getOmitidos();
+		if($pon === null AND $quita === null){
+			if(isset($_SESSION[$idx])){
+				unset($_SESSION[$idx]);
+			}
+		} else {
+			$pon	= setNoMenorQueCero($pon);
+			$quita	= setNoMenorQueCero($quita);
+			
+			if($pon > 0){
+				$arrE[$pon]	= $pon;
+			}
+			if($quita > 0 AND isset($arrE[$quita]) ){
+				unset($arrE[$quita]);
+			}
+			$_SESSION[$idx]	= implode(STD_LITERAL_SEC_DIV, $arrE);
+			setError($_SESSION[$idx]);
+		}
+		/*$xCache	= new cCache();
 		$dd		= $xCache->get($idx);
+		
+		//setError("$idx $pon $quita ");
 		if(!is_array($dd)){
 			$pon	= setNoMenorQueCero($pon);
 			if($pon > 0){
@@ -597,15 +618,32 @@ class cCreditosLeasing {
 		}
 		if($pon === null AND $quita === null){
 			$xCache->clean($idx);
-		}
+		}*/
 	}
 	function getOmitidos(){
 		$idx	= "arrendamiento.omitidos." . $this->mClave;
-		$xCache	= new cCache();
+		$dd		= array();
+		//setError($idx);
+		if(isset($_SESSION[$idx])){
+			$arrD	= explode(STD_LITERAL_SEC_DIV, $_SESSION[$idx]);
+			foreach ($arrD as $idnm => $vv){
+				$vv	= setNoMenorQueCero($vv);
+				if($vv > 0){
+					$dd[$vv]	= $vv;
+				}
+			}
+			$arrD	= null;
+			$_SESSION[$idx]	= implode(STD_LITERAL_SEC_DIV, $arrD);
+			
+		} else {
+			$_SESSION[$idx] = "";
+		}
+		/*$xCache	= new cCache();
 		$dd		= $xCache->get($idx);
+		
 		if(!is_array($dd)){
 			$dd	= array();
-		}
+		}*/
 		return $dd;
 	}
 	function getCodigoReciboPagoInit(){
@@ -1345,25 +1383,31 @@ class cCreditosDatosDeOrigen {
 		return $this->init($data);
 	}
 	function init($data = false){
-		$xCache	= new cCache();
-		$xT		= new cCreditos_datos_originacion();//Tabla
+		$xCache		= new cCache();
+		$xT			= new cCreditos_datos_originacion();//Tabla
+		$inCache	= true;
+		
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
-				$xQL	= new MQL();
-				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
 			}
 		}
-		if(isset($data[$xT->getKey()])){
+		if(isset($data[$xT->IDCREDITOS_DATOS_ORIGINACION])){
 			$xT->setData($data);
 			$this->mObj			= $xT; //Cambiar
-			$this->mClave		= $data[$xT->getKey()];
-			$this->mTipoOrigen	= $xT->tipo_originacion()->v();
-			$this->mClaveOrigen	= $xT->clave_vinculada()->v();
-			$this->mMontoOrigen = $xT->monto_vinculado()->v();
+			//$data[$xT->]; //
+			$this->mClave		= $data[$xT->IDCREDITOS_DATOS_ORIGINACION];
+			$this->mTipoOrigen	= $data[$xT->TIPO_ORIGINACION]; //$xT->tipo_originacion()->v();
+			$this->mClaveOrigen	= $data[$xT->CLAVE_VINCULADA]; //$xT->clave_vinculada()->v();
+			$this->mMontoOrigen = $data[$xT->MONTO_VINCULADO]; //$xT->monto_vinculado()->v();
 			
 			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			if($inCache === false){
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
 			$this->mInit		= true;
 			$xT 				= null;
 		}
@@ -1901,21 +1945,25 @@ class cLeasingRentas {
 
 
 class cCreditosLineas {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mNombre	= "";
-	private $mMessages	= "";
-	private $mIDCache	= "";
-	private $mTabla		= "creditos_lineas";
-	private $mTipo		= 0;
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_lineas";
+	private $mTipo			= 0;
 	private $mMontoOriginal	= 0;
 	private $mDescribeGar	= "";
 	private $mFecha			= false;
 	private $mVencimiento	= false;
 	private $mTasa			= 0;
-	private $mMontoDispuesto= 0;
-	private $mSaldo			= 0;
+	private $mMontoDispuesto	= 0;
+	private $mMontoDisponible	= 0;
+	private $mSaldo				= 0;
+	private $mClavePersona		= 0;
+	private $mFrecuencia		= 0;
+	private $mEsActivo			= true;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -1933,27 +1981,39 @@ class cCreditosLineas {
 	function init($data = false){
 		$xCache	= new cCache();
 		$xT		= new cCreditos_lineas();//Tabla
+		$inCach	= true;
 		if(!is_array($data)){
 			$data		= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
 				$xQL	= new MQL();
 				$data	= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCach	= false;
+				$xQL	= null;
 			}
 		}
 		
-		if(isset($data[$xT->getKey()])){
+		if(isset($data[$xT->IDCREDITOS_LINEAS])){
 			$xT->setData($data);
 			$this->mObj				= $xT; //Cambiar
-			$this->mClave			= $data[$xT->getKey()];
-			$this->mMontoOriginal	= $xT->monto_linea()->v();
-			$this->mDescribeGar		= $xT->numerohipoteca()->v() . " - $ " . $xT->monto_hipoteca()->v();
-			$this->mVencimiento		= $xT->fecha_de_vencimiento()->v();
-			$this->mTasa			= $xT->tasa()->v();
-			$this->mMontoDispuesto	= ($xT->monto_linea()->v() - $xT->saldo_disponible()->v());
-			$this->mSaldo			= $xT->saldo_disponible()->v();
+			$this->mClave			= $data[$xT->IDCREDITOS_LINEAS]; //$data[$xT->]; //
+			$this->mMontoOriginal	= $data[$xT->MONTO_LINEA]; //$xT->monto_linea()->v();
+			$this->mDescribeGar		= $data[$xT->NUMEROHIPOTECA]; //$xT->numerohipoteca()->v() . " - $ " . $xT->monto_hipoteca()->v();
+			$this->mVencimiento		= $data[$xT->FECHA_DE_VENCIMIENTO]; //$xT->fecha_de_vencimiento()->v();
+			$this->mTasa			= $data[$xT->TASA]; //$xT->tasa()->v();
+			$this->mSaldo			= $data[$xT->SALDO_DISPONIBLE]; //$xT->saldo_disponible()->v();
+			$this->mClavePersona	= $data[$xT->NUMERO_SOCIO]; //
+			$this->mFrecuencia		= $data[$xT->PERIOCIDAD];
+			$this->mEsActivo		= ($data[$xT->ESTADO]<=0) ? false : true;
+			$this->mMontoDisponible	= $data[$xT->SALDO_DISPONIBLE];
+			
+			$this->mMontoDispuesto	= setNoMenorQueCero( ($this->mMontoOriginal  - $this->mMontoDisponible) );
+			
 			
 			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			if($inCach == false){
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			
 			$this->mInit	= true;
 			$xT 			= null;
 		}
@@ -1962,17 +2022,38 @@ class cCreditosLineas {
 	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
-	function getNombre(){return $this->mNombre;}
-	function getClave(){return $this->mClave;}
-	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function getNombre(){ return $this->mNombre; }
+	function getClave(){ return $this->mClave; }
+	function getPeriodicidad(){ return $this->mFrecuencia; }
+	function getClaveDePersona(){ return $this->mClavePersona; }
+	function getTasa(){ return $this->mTasa; }
+	function getEsActivo(){ return $this->mEsActivo; }
+	
+	function setCuandoSeActualiza(){
+		
+		$this->setCleanCache(); 
+	}
 	function add(){}
 	function getMontoDisponible(){
-		$xDO			= new cCreditosDatosDeOrigen();
-		$dispuesto		= $xDO->getMontoActualPorOrigen($this->mClave, $xDO->ORIGEN_LINEA);
-		$this->mMontoDispuesto = $dispuesto;
-		$monto			= setNoMenorQueCero($this->mMontoOriginal - $dispuesto);
+		$xDO					= new cCreditosDatosDeOrigen();
+		$dispuesto				= $xDO->getMontoActualPorOrigen($this->mClave, $xDO->ORIGEN_LINEA);
+		$this->mMontoDispuesto 	= $dispuesto;
+		$monto					= setNoMenorQueCero($this->mMontoOriginal - $dispuesto);
 		
 		return $monto;
+	}
+	function setUpdateMontoDisponible(){
+		$monto		= $this->getMontoDisponible();
+		//$dispuesto	= $this->mMontoDispuesto;
+		$clave		= $this->mClave;
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery("UPDATE `creditos_lineas` SET `saldo_disponible`= $monto WHERE `idcreditos_lineas`=$clave");
+		if($res !== false){
+			$this->mMessages	.= "OK\Linea $clave\tActualizado disponible a $monto\r\n";
+			$this->setCuandoSeActualiza();
+		}
+		$xQL		= null;
+		return ($res === false) ? false : true;
 	}
 	function getFicha(){
 		$html	= "";
@@ -2378,6 +2459,7 @@ class cCreditosRechazos {
 	private $mUsuario		= 0;
 	private $mObservaciones	= "";
 	private $mTexto			= "";
+	private $mCredito		= 0;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -2409,6 +2491,7 @@ class cCreditosRechazos {
 			$this->mFecha	= $data[$xT->FECHA_DE_RECHAZO];
 			$this->mUsuario	= $data[$xT->IDUSUARIO];
 			$this->mTexto	= $data[$xT->RAZONES];
+			$this->mCredito	= $data[$xT->NUMERO_DE_CREDITO];
 			
 			$this->mObj		= $xT;
 			$this->setIDCache($this->mClave);
@@ -2438,5 +2521,177 @@ class cCreditosRechazos {
 	function getUsuario(){ return $this->mUsuario; }
 	function getFecha(){ return $this->mFecha; }
 	function getRazones(){ return $this->mTexto; }
+	function getCredito(){ return $this->mCredito; }
+	function setCancelar(){
+		
+		$xCred	= new cCredito($this->mCredito);
+		$res	= false;
+		if($xCred->init() == true){
+			$sql	= "UPDATE `creditos_rechazados` SET `estatusactivo`=0 WHERE `idcreditos_rechazados`=". $this->mClave;
+			$xQL	= new MQL();
+			$res	= $xQL->setRawQuery($sql);
+			$res	= ($res === false) ? false : true;
+			if($res === true){
+				$this->mMessages	.= "Se Cancela el Rechazo del Credito " . $this->mCredito . "\r\n";
+				setAgregarEvento_($this->mMessages , 20021, $xCred->getClaveDePersona(), $this->mCredito);
+				$xCred->setCambiarEstadoActual(CREDITO_ESTADO_SOLICITADO, fechasys());
+			}
+		}
+		return $res;
+	}
 }
+
+
+class cCreditosProductosReglas {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCreditos_productos_reglas();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	
+}
+
+class cCreditosMicroseguros {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "personas_seguros";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mMontoSeg		= 0;
+	private $mMontoCuota	= 0;
+	
+	public $TIPO_CREDITO	= 1;
+	public $TIPO_DESEMPLEO	= 2;
+	public $TIPO_VIDA		= 3;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cPersonas_seguros();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave		= $data[$xT->getKey()];
+			$this->mMontoSeg	= $data[$xT->MONTO_SEGURO];
+			$this->mMontoCuota	= $data[$xT->MONTO_CUOTA];
+			$this->mObj			= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function getMontoSeguro(){ return $this->mMontoSeg; }
+	function getMontoCuota(){ return $this->mMontoCuota; }
+	function add(){
+		$xT	= new cPersonas_seguros();//Tabla
+		$xT->idpersonas_seguros('NULL');
+		
+	}
+	function initByCredito($idcredito = false, $tipo = 1){
+		$idcredito	= setNoMenorQueCero($idcredito);
+		if($idcredito > DEFAULT_CREDITO){
+			$xQL	= new MQL();
+			$fecha	= fechasys();
+			$data	= "SELECT * FROM `personas_seguros` WHERE `credito` = $idcredito AND `tiposeguro`=$tipo AND `estatus`=1 AND `fecha_vencimiento`<='$fecha' LIMIT 0,1";
+			if(isset($data["idpersonas_seguros"])){
+				$this->mClave	= $data["idpersonas_seguros"];
+			}
+			return $this->init($data);
+		}
+		return false;
+	}
+}
+
 ?>

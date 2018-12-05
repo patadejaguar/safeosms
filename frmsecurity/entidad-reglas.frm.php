@@ -41,13 +41,14 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 
-
+//$xFRM->addBuscar();
+$xFRM->OBuscar("idbuscar", "", "", "jsBuscar");
 
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivreglas",$xHP->getTitle());
 
-$xHG->setSQL("SELECT * FROM `entidad_reglas` LIMIT 0,100");
+$xHG->setSQL("SELECT * FROM `entidad_reglas`");
 $xHG->addList();
 $xHG->setOrdenar();
 $xHG->addKey("identidad_reglas");
@@ -75,7 +76,15 @@ function jsAdd(){
 	xG.w({url:"../frmsecurity/entidad-reglas.new.frm.php?", tiny:true, callback: jsLGiddivreglas});
 }
 function jsDel(id){
-	xG.rmRecord({tabla:"entidad_reglas", id:id, callback:jsLGiddivreglas});
+	//xG.rmRecord({tabla:"entidad_reglas", id:id, callback:jsLGiddivreglas});
+}
+function jsBuscar(){
+	var idtext	= $("#idbuscar").val();
+	var str		= base64.encode("(`nombre` LIKE '%" + idtext + "%' OR `contexto` LIKE '%" + idtext + "%')");
+	str			= "&w=" + str;
+	$("#iddivreglas").jtable("destroy");
+	jsLGiddivreglas(str);
+	
 }
 function jsRenderActivo(data){
 	var id 		= data.record.identidad_reglas;

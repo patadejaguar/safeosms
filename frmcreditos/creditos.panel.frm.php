@@ -130,9 +130,9 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					$oFrm->OButton("TR.RENOVAR", "jsRenovar()", $oFrm->ic()->RECARGAR, "",  "yellow");
 				}
 			} else {
-				if($xCred->getEsRechazado() == false){
+				if($xCred->getEsAutorizado()){
 					if(MODULO_CAPTACION_ACTIVADO == true){
-						$oFrm->OButton("TR.Ministrar en cuenta", "var xG = new CredGen();xG.setMinistrarToPasivo({credito:$idsolicitud})", $oFrm->ic()->BLOQUEAR);
+						$oFrm->OButton("TR.Ministrar en cuenta", "var xG = new CredGen();xG.setMinistrarToPasivo({credito:$idsolicitud})", $oFrm->ic()->BLOQUEAR, "idotorgarencta", "yellow");
 					}
 				}
 			}
@@ -143,7 +143,9 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 		
 			if( setNoMenorQueCero($idnumeroplan) > 0) {
 				$oFrm->addButtonPlanDePagos($idnumeroplan);
-				$oFrm->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($idsolicitud)", $oFrm->ic()->PREGUNTAR);
+				if($xCred->getEsCreditoYaAfectado() == true){
+					$oFrm->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($idsolicitud)", $oFrm->ic()->PREGUNTAR);
+				}
 			}
 			if($codigo_de_oficial == USUARIO_TIPO_OFICIAL_AML OR OPERACION_LIBERAR_ACCIONES == true){
 				
@@ -169,7 +171,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					$oFrm->OButton("TR.SIMULAR PLAN_DE_PAGOS", "var xC=new CredGen();xC.getFormaSimPlanPagos($idsolicitud)", $oFrm->ic()->CALCULAR);
 				}
 				
-				$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
+				$xHTabs->addTab("TR.Plan_de_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
 				/*if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
 					//$xHTabs->addTab("TR.Plan_De_pagos", $xCred->getPlanDePago(OUT_HTML, false, true, true));
 					
@@ -182,7 +184,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 					$xPlan->setClaveDeCredito($xCred->getClaveDeCredito());
 					$xHTabs->addTab("TR.RENTA", $xPlan->getVersionImpresaLeasing());
 				}
-				if($xCred->getEsPagado() == true){
+				if($xCred->getEsPagado() == true OR MODO_MIGRACION == true){
 					
 					$xDic	= new cHDicccionarioDeTablas();
 					
@@ -313,7 +315,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			//if(getUsuarioActual(SYS_USER_NIVEL)>= USUARIO_TIPO_GERENTE){
 				//Castigos
 				if($xCred->getEstadoActual() == CREDITO_ESTADO_VENCIDO){
-					$oFrm->OButton("TR.Castigos", "jsCastigos($idsolicitud)", "error");
+					$oFrm->OButton("TR.Castigos", "jsCastigos($idsolicitud)", $oFrm->ic()->ERROR, "idcastigarcartera", "red");
 				}
 				//============= Tabla de Operaciones
 				$recsotros	= (MODO_DEBUG == true) ? "" :  " AND ( `operaciones_tipos`.`es_estadistico` = '0' ) ";
@@ -353,7 +355,23 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				$xHTabs->addTab("TR.Sistema", $xCred->getMessages(OUT_HTML));
 				$oFrm->addLog($xCred->getMessages());
 			}
+			$xLog	= new cCoreLog();
+			$sql	= $xLog->getListadoDeEventosSQL(false, $xCred->getClaveDeCredito());
 			
+			
+			$xTEvent= new cTabla($sql, 0, "idtevents");
+			if(MODO_DEBUG == false){
+				$xTEvent->setOmitidos("texto");$xTEvent->setOmitidos("tipo");
+			}
+			$htmlEv	= $xTEvent->Show("TR.EVENTOS");
+			
+			if($xTEvent->getRowCount()>0){
+				$xHTabs->addTab("TR.EVENTOS", $htmlEv);
+			}
+			
+			if(SAFE_ON_DEV == true AND MODO_DEBUG == true){
+				$oFrm->OButton("TR.Reporte SIC", "jsGetCirculoDeCredito($idsolicitud)", $oFrm->ic()->REPORTE);
+			}
 			$oFrm->addHTML( $xHTabs->get() );
 		}
 
@@ -412,7 +430,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function addLlamada(mKey){ }
 	function addAviso(mKey){ }
 	function addCompromiso(mKey){ }
-	function jsCastigos(idcredito){ xG.w({ url: '../frmcreditos/castigo_de_cartera.frm.php?credito=' + idcredito, tiny : true, h: 400, w : 600 }); }
+	function jsCastigos(idcredito){ xG.w({ url: '../frmcreditos/castigo_de_cartera.frm.php?credito=' + idcredito, tiny : true, h: 600, w : 800 }); }
 	function jsHistorialDeSaldos(idcredito){xG.w({ url: '../rpt_edos_cuenta/historial_de_saldos.rpt.php?credito=' + idcredito, full : true }); }
 	function jsHistorialDeNomina(idcredito){xG.w({ url: '../rpt_edos_cuenta/historial_de_nomina.rpt.php?credito=' + idcredito, full : true }); }
 
@@ -440,6 +458,11 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			},
 			msg : 'CREDITO_FALTA_DREEST'
 		});
+	}
+	function jsGetCirculoDeCredito(id){
+		var ff 		= window.prompt("Fecha de Corte:");
+		var xrl		= "../rptlegal/circulo_de_credito.rpt.php?creditoref=" + id + "&fechafinal=" + ff;
+		xG.w({ url: xrl, tab : true });  
 	}
 </script>	
 <?php

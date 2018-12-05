@@ -69,7 +69,7 @@ if (MODULO_AML_ACTIVADO == true){
 	$NoValRisk 	= $xRuls->getValorPorRegla($xRuls->reglas()->AML_CIERRE_NV_RIESGO);		//regla de negocio
 	$xQL		= new MQL();
 	//crear arbol de relaciones
-	$xUtils	= new cPersonas_utils();
+	$xUtils	= new cPersonasUtilerias();
 	$xUtils->setCrearArbolRelaciones();
 	//Actualizar Nivel de Riesgo
 	$xUAml		= new cUtileriasParaAML();

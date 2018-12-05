@@ -16,8 +16,7 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP		= new cHPage("TR.AGREGAR Alertas", HP_FORM);
-
-$jxc = new TinyAjax();
+$jxc 		= new TinyAjax();
 function jsaListadoDeEventos($generadoEn, $programado){
 	$xPRG		= new cAlertasDelSistema();
 	$cnt		= "";
@@ -51,6 +50,8 @@ $jxc ->process();
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 
+
+$xHP->addWizardSuport();
 $xHP->init();
 
 $xFRM		= new cHForm("frmalertas", "alertas.agregar.frm.php?action=1");
@@ -62,8 +63,13 @@ $xChk		= new cHCheckBox();
 $msg		= "";
 $txtA		= new cHTextArea();
 
-$xFRM->setTitle($xHP->getTitle());
 
+
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->setIsWizard();
+
+
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 
 $titulo			= parametro("idtitulo");
 $oficiales		= parametro("idoficiales");
@@ -93,7 +99,10 @@ if($action == SYS_UNO){
 	if($titulo == "" OR (trim("$oficiales $empresas $personas $mails")  == "") ){
 		//$msg			.= "$titulo |$oficiales| $empresas |$personas |$mails \r\n";
 		$msg			.= $xHP->lang(MSG_ERROR_SAVE);
-		if(MODO_DEBUG == true){ $xErr	= new cError(); $msg.= $xErr->getREQVars(); }
+		if(MODO_DEBUG == true){
+			$xErr		= new cError(); 
+			$msg.= $xErr->getREQVars(); 
+		}
 	} else {
 		$xA				= new cAlertasDelSistema();
 		
@@ -109,26 +118,40 @@ if($action == SYS_UNO){
 }
 
 $xPRG		= new cAlertasDelSistema();
+if($clave>0){
+	if($xPRG->initByClaveID($clave) == true){
+		$oficiales		= $xPRG->getPropAvisoOficiales();
+		$empresas		= $xPRG->getPropAvisoEmpresas();
+		$personas		= $xPRG->getPropAvisoPersonas();
+		$mails			= $xPRG->getPropAvisoMails();
+		$programacion	= $xPRG->getPropProgramacion();
+		$generadoen		= $xPRG->getPropGeneradoEn();
+		$ByTel			= false;
+	}
+}
+
+$xFRM->addHElem( $xTxt->getNormal("idtitulo", $titulo, "TR.Nombre del Aviso") );
 
 $xSel2		= new cHSelect();
 $xSel2->setDivClass("tx4 tx18 green"); $xSel->setDivClass("tx4 tx18 green");
-
 $xSel2->addOptions( $xPRG->getATipoDeEvento() );
 $xSel2->addEvent("jsaListadoDeEventos()", "onblur");
-$xFRM->addHElem( $xTxt->getNormal("idtitulo", $titulo, "TR.Nombre del Aviso") );
-$xFRM->addHElem( $xSel2->get("idgeneradoen", "TR.Generado") );
+$xSel2->setDefault($generadoen);
+$xFRM->addHElem( $xSel2->get("idgeneradoen", "TR.Generado", $generadoen) );
 
-$xSel->addOptions( $xPRG->getTipoDeProgramacion() );
-
-$xFRM->addHElem($xSel->get("idtipodeprogramacion", "TR.Programado") );
+$sqlP	= "SELECT   `programacion` AS `clave`, `programacion` AS `descripcion`, COUNT( `idprograma` )  AS `numero` FROM     `sistema_programacion_de_avisos` GROUP BY programacion";
+$xSelG1	= $xSel->getListadoGenerico($sqlP, "idtipodeprogramacion");
+//$xSel->addOptions($xPRG->getTipoDeProgramacion());
+$xSelG1->setOptionSelect($programacion);
+$xFRM->addHElem( $xSelG1->get("TR.Programado", true) );
 
 
 $xFS2	= new cHFieldset("TR.Destinatarios");
 $xFS	= new cHFieldset("TR.Medios de envio");
 
-$xFS->addHElem( $xChk->get("TR.Aviso por Telefono", "portelefono") );
-$xFS->addHElem( $xChk->get("TR.Aviso por Email", "pormail") );
-$xFS->addHElem( $xChk->get("TR.Aviso por SMS", "porsms") );
+$xFS->addHElem( $xChk->get("TR.Aviso por Telefono", "portelefono", $ByTel) );
+$xFS->addHElem( $xChk->get("TR.Aviso por Email", "pormail", $ByMail) );
+$xFS->addHElem( $xChk->get("TR.Aviso por SMS", "porsms", $BySMS) );
 
 $xFRM->addHElem( $xFS->get() );
 
@@ -138,7 +161,6 @@ $xFRM->addSeccion("iddestinatarios", "TR.Destinatarios");
 
 $xOficiales		= $xSel->getListaDeOficiales();
 $xOficiales->addEvent("onchange", "jsAddItem(this, '#idoficiales')");
-
 $xFRM->addDivSolo($xOficiales->get(), $txtA->get("idoficiales", $oficiales), "tx2","tx2"  );
 
 $xEmpresas		= $xSel->getListaDeEmpresas("", true);
@@ -147,7 +169,7 @@ $xFRM->addDivSolo( $xEmpresas->get(), $txtA->get("idempresas", $empresas), "tx2"
 
 
 $xFRM->addHElem( $txtA->get("idpersonas", $personas, "TR.Personas") );
-$xFRM->addHElem( $txtA->get("idmails", $mails, "TR.Correos electronicos") );
+$xFRM->addHElem( $txtA->get("idmails", $mails, "TR.Correo_electronico") );
 
 $xFRM->addAviso($msg);
 

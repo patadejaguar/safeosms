@@ -12,14 +12,25 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "Devian-Leonel"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201805";
+$codename 								= "DevLeo"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201808";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
 define("SAFE_REVISION",                 $revision);
 define("SAFE_FIRM",                  	"SAFE-OSMS-$version.$revision $codename");
 define("SAFE_CLEAN_LANG",                 false);
+
+if(defined("SAFE_ON_DEV")){
+
+} else {
+	if(isset($EnDesarrollo)){
+		define("SAFE_ON_DEV",                 $EnDesarrollo);
+		
+	} else {
+		define("SAFE_ON_DEV",                 false);
+	}
+}
 if(defined("SAFE_USE_MCACHE")){
 	
 } else {
@@ -30,7 +41,9 @@ if(defined("SAFE_USE_MCACHE")){
 ini_set("include_path", $os_path_includes_str);
 //======================================= HOST DE TRABAJO
 define ("CURRENT_EACP", 1);
-define ("DEFAULT_SUCURSAL", $sucursal);
+//define ("DEFAULT_SUCURSAL", $sucursal);
+define ("DEFAULT_SUCURSAL", "matriz");
+
 $url_host								= $V_cf1e8c14e54505f60aa10c;
 define("WORK_HOST",                     $V_67e92c8765a9bc7fb2d335);
 define("PORT_HOST",                     "3306");
@@ -45,6 +58,12 @@ define("MMOD_TESORERIA",			"tesoreria");
 define("MMOD_BANCOS",				"bancos");
 define("MMOD_OPERACIONES",			"operaciones");
 define("MMOD_SEGUIMIENTO",			"seguimiento");
+
+define("MMOD_CRED_NOMINA",			"credito.mod.nomina");
+define("MMOD_CRED_LINEAS",			"credito.mod.lineas");
+define("MMOD_CRED_GRUPOS",			"credito.mod.grupos");
+define("MMOD_CRED_LEASING",			"credito.mod.leasing");
+
 //======================================= INFORMACION DE LA CONEXION A LA BASE DE DATOS
 define("MY_DB_IN",                      $db_de_trabajo);
 
@@ -170,14 +189,20 @@ define("ADMIN_MAIL_PWD",                $xC->get("password_del_email_del_adminis
 define("TASK_PWD",                     	$xC->get("contrasenna_de_trabajos_automaticos", "", MMOD_SISTEMA) );
 define("SMS_PWD",                      	$xC->get("contrasenna_de_sms_automaticos", "", MMOD_SISTEMA) );
 define("SMS_USR",                      	$xC->get("usuario_de_sms_automaticos", "", MMOD_SISTEMA) );
+
+define("SERVER_PROXY_SMS",              $xC->get("servidor_proxy_sms", "", MMOD_SISTEMA) );
+
+
 define("SAFE_DB_VERSION",              	$xC->get("safe_osms_database_version", "1", MMOD_SISTEMA) );
 define("SYSTEM_ON_HOSTING",            	(bool) $xC->get("sistema_en_hosting", "false", MMOD_SISTEMA) );
 define("SYSTEM_ON_LINE",               	(bool) $xC->get("el_sistema_esta_en_linea", "true", MMOD_SISTEMA) );
+
 define("SVC_REMOTE_HOST",				$xC->get("url_de_servicios_remotos", "https://sdn.sipakal.com/", MMOD_SISTEMA) );
 define("SVC_ASOCIADA_HOST",				$xC->get("url_de_entidad_transmisora", "https://sdn.sipakal.com/", MMOD_SISTEMA) );
 
 define("SVC_HOST_CONSULTA_SDN",				$xC->get("url_de_consulta_sdn", "https://sdn.sipakal.com/", MMOD_AML) );
 define("SVC_HOST_CONSULTA_PEP",				$xC->get("url_de_consulta_pep", "https://sdn.sipakal.com/", MMOD_AML) );
+
 define("SVC_HOST_CONSULTA_GWS",				$xC->get("url_de_consulta_gws", "http://listaspep.com/", MMOD_AML) );
 define("SVC_HOST_CONSULTA_WIKI",			$xC->get("url_de_consulta_wiki", "http://es.wikipedia.org/", MMOD_AML) );
 define("SVC_USER_CONSULTA_WIKI",			$xC->get("usuario_de_consulta_wiki", "wikiusuario", MMOD_AML) );
@@ -209,6 +234,8 @@ if ( !isset($_SESSION["en_depurado"]) ){$_SESSION["en_depurado"]      		= false;
 define("MODO_DEBUG",                    $_SESSION["en_depurado"]);
 define("MODO_CORRECION",                (bool) $xC->get("sistema_en_correcion", "true", MMOD_SISTEMA));
 define("MODO_MIGRACION",                (bool) $xC->get("sistema_en_migracion", "false", MMOD_SISTEMA));
+define("MODO_NOOB",                (bool) $xC->get("ayuda_interactiva", "true", MMOD_SISTEMA));
+
 define("FORCE_UPDATES_ON_BOOT",         (bool) $xC->get("forzar_updates_on_boot", "false", MMOD_SISTEMA));
 if ( !isset($_SESSION["log_nivel"]) ){ 	$_SESSION["log_nivel"]      		= 0; }
 define("USR_NIVEL",                     $_SESSION["log_nivel"]);
@@ -387,6 +414,7 @@ define("SYS_PRODUCTO_NOMINA",			100);
 define("SYS_PRODUCTO_GRUPOS", 			900);
 define("SYS_PRODUCTO_ARREND", 			500);
 
+
 define("SYS_PRODUCTO_FUERA_NOMINA",		201);	//Deprecated
 define("SYS_PRODUCTO_DESCARTADOS",		203);	//Deprecated
 
@@ -430,8 +458,10 @@ define("OPERACION_LIBERAR_SUCURSALES",		(bool) $xC->get("liberar_informacion_de_
 
 define("SYS_TEXTO_TODAS",					$xC->get("texto_para_palabra_todas", "TODAS", MMOD_SISTEMA));
 define("CSS_TFUENTE_CONTRATOS",				$xC->get("css_tamano_fuente_en_contratos", "10", MMOD_SISTEMA) );
+define("CSS_BCONFIG_CONTRATOS",				$xC->get("css_css_body_en_contratos", "margin:0; height: 100%; padding: 0;", MMOD_SISTEMA) );
 define("CSS_TFUENTE_RECIBOS",				$xC->get("css_tamano_fuente_en_recibos", "8", MMOD_SISTEMA) );
 
+define("CSS_FORM_BACKGROUND",				$xC->get("css_fondo_en_formas", "background: #63bad8 url(../images/bg.jpg) 50% 0px repeat-x;", MMOD_SISTEMA) );
 
 define("FACTURACION_NUM_CERT",				$xC->get("facturacion.numero_certificado", "20001000000300022762", MMOD_OPERACIONES));
 
@@ -834,6 +864,8 @@ define("CREDITO_GENERAR_DEVENGADOS_ONFLY",	(bool) $xC->get("generar_devengados_a
 define("CREDITO_USAR_OFICIAL_SEGUIMIENTO",	(bool) $xC->get("activar_el_uso_de_oficial_de_seguimiento", "true", MMOD_COLOCACION));
 define("CREDITO_PRODUCTO_CON_PRESUPUESTO",	$xC->get("clave_de_producto_presupuestado", "200", MMOD_COLOCACION));
 define("CREDITO_TASA_COM_APERTURA_GLOBAL",	$xC->get("tasa_de_comision_por_apertura_global", "0", MMOD_COLOCACION)); //Tasa que aplica en otros de plan de pagos
+define("CREDITO_TASA_PENA_GLOBAL",			$xC->get("tasa_de_pena_global", "0", MMOD_COLOCACION)); //Tasa que aplica en otros de plan de pagos
+
 define("CREDITO_EN_PLAN_COM_APERTURA",		$xC->get("planes.aplicar_comision_en_primer_pago", "false", MMOD_COLOCACION)); //Tasa que aplica en otros de plan de pagos
 define("CREDITO_CONTROLAR_POR_PERIODOS", 	(bool) $xC->get("creditos_controlar_por_periodos", "false", MMOD_COLOCACION));
 define("CREDITO_CONTROLAR_POR_ORIGEN", 	(bool) $xC->get("creditos_controlar_por_origen", "true", MMOD_COLOCACION));
@@ -845,6 +877,7 @@ define("PERSONAS_NOMBRE_ID_FISCAL", 		$xC->get("nombre_del_identificador_fiscal"
 define("PERSONAS_CONTROLAR_POR_EMPRESA", 	(bool) $xC->get("personas_controlar_por_empresas", "true", MMOD_PERSONAS));
 define("PERSONAS_CONTROLAR_POR_GRUPO", 		(bool) $xC->get("personas_controlar_por_grupos", "false", MMOD_PERSONAS));
 define("PERSONAS_CONTROLAR_POR_APORTS", 	(bool) $xC->get("personas_controlar_por_aportaciones", "false", MMOD_PERSONAS));
+define("PERSONAS_CONTROLAR_MICROSEGUROS", 	(bool) $xC->get("personas_controlar_microseguros", "false", MMOD_PERSONAS));
 
 define("PERSONAS_LARGO_IDFISCAL",     		$xC->get("persona_largo_de_id_fiscal", "13", MMOD_PERSONAS ));
 define("PERSONAS_LARGO_IDPOBLACIONAL", 		$xC->get("persona_largo_de_id_poblacional", "12", MMOD_PERSONAS ));
@@ -942,15 +975,20 @@ define("PERSONAS_PERMITIR_EXTRANJEROS", (bool)  $xC->get("permitir_personas_extr
 //============================================ RIESGOS
 define("COSTO_CANASTA_BASICA",                  $xC->get("costo_de_la_canasta_basica") );
 //Configuracion de seguimiento
-define("SEGUIMIENTO_GENERAR_AL_CIERRE",        (bool) $xC->get("generar_llamadas_al_cierre", "false", MMOD_SEGUIMIENTO) );
+define("SEGUIMIENTO_GENERAR_AL_CIERRE",      	(bool) $xC->get("generar_llamadas_al_cierre", "false", MMOD_SEGUIMIENTO) );
 define("DIAS_DE_INTERVALO_POR_LLAMADAS",        $xC->get("dias_de_intervalo_por_llamadas", "2", MMOD_SEGUIMIENTO) );
 define("DIAS_DE_ANTICIPACION_PARA_LLAMADAS",    $xC->get("dias_de_anticipacion_por_llamadas","2", MMOD_SEGUIMIENTO) );
 define("DIAS_A_ESPERAR_POR_NOTIFICACION",       $xC->get("dias_a_esperar_por_notificacion", "5", MMOD_SEGUIMIENTO) );
 define("MINUTOS_A_ESPERAR_POR_LLAMADAS",        $xC->get("minutos_a_esperar_por_llamadas", "15", MMOD_SEGUIMIENTO) );
 
-define("SEGUIMIENTO_WATHSAPP_NUMERO",   		$xC->get("wathsapp_numero_telefonico", "529811098164", MMOD_SEGUIMIENTO) );
-define("SEGUIMIENTO_WATHSAPP_USER",   			$xC->get("wathsapp_nombre_de_usuario", "patadejaguar", MMOD_SEGUIMIENTO) );
+
+define("SEGUIMIENTO_NOTIF_CBZA_PREV",        	(bool) $xC->get("generar_notif_cbza_prev", "true", MMOD_SEGUIMIENTO) );
+define("SEG_CANAL_NOTIF_CBZA_PREV",        		$xC->get("canal_notif_cbza_prev", "wsms", MMOD_SEGUIMIENTO) );
+//define("SEGUIMIENTO_WATHSAPP_NUMERO",   		$xC->get("wathsapp_numero_telefonico", "529811098164", MMOD_SEGUIMIENTO) );
+define("SEGUIMIENTO_WATHSAPP_DID",  	 		$xC->get("wathsapp_numero_deviceid", "", MMOD_SEGUIMIENTO) );
+//define("SEGUIMIENTO_WATHSAPP_USER",   			$xC->get("wathsapp_nombre_de_usuario", "patadejaguar", MMOD_SEGUIMIENTO) );
 define("SEGUIMIENTO_WATHSAPP_PWD",   			$xC->get("wathsapp_password_de_usuario", "", MMOD_SEGUIMIENTO) );
+define("SEGUIMIENTO_TELEFONO_PREFIJO",   		$xC->get("telefono_prefijo_int", "52", MMOD_SEGUIMIENTO) );
 
 define("SEGUIMIENTO_ESTADO_PENDIENTE",        	"pendiente" );
 define("SEGUIMIENTO_ESTADO_EFECTUADO",        	"efectuado" );
@@ -1123,7 +1161,7 @@ define("POLIZA_ID_ULTIMAOPERACION", "poliza.ultima.operacion");
 
 define("CUENTA_SALDO", 				1);
 define("CUENTA_SALDO_DEUDOR", 		2);
-define("CUENTA_SALDO_ACREEDOR", 		3);
+define("CUENTA_SALDO_ACREEDOR", 	3);
 
 //define("CONTABLE_CUENTA_NIVEL_MAYOR", 			3);
 define("CONTABLE_CUENTA_NIVEL_MAYOR", 			3);
@@ -1524,6 +1562,9 @@ class cCache {
 			$clave	= MY_DB_IN . "-" . $clave;
 			$val	= $this->cnn()->get($clave);
 			$val	= ($val === false) ? null : $val;
+			//if($val === null){} else { syslog(E_NOTICE, "Usar cache en $clave"); }
+		} else {
+			//syslog(E_NOTICE, "NO Usar cache en $clave");
 		}
 		return $val;
 	}
@@ -1549,6 +1590,7 @@ class cCache {
 	}
 	function isReady(){
 		if(SAFE_USE_MCACHE == false){
+			//syslog(E_NOTICE, "NO Usar Cache por sistema");
 			return false;
 		}
 		
@@ -1558,16 +1600,22 @@ class cCache {
 		if(isset($_SESSION)){
 			if(isset($_SESSION[$this->mGID_Errors])){
 				$this->mErrors = $_SESSION[$this->mGID_Errors];
-				//syslog(E_NOTICE, "MdA ::: " . $this->mErrors);
-			} else { 
-				$this->mErrors = 1;
-				//syslog(E_NOTICE, "MdA-II ::: " . $this->mErrors);
+				//syslog(E_NOTICE, "Lo errores en Session son # " . $this->mErrors);
+			} else {
+				$_SESSION[$this->mGID_Errors]	= 0;
 			}
+			//else { 
+				//$this->mErrors = 1;
+				//syslog(E_NOTICE, "MdA-II ::: " . $this->mErrors);
+				//syslog(E_NOTICE, "No hay session, el error es # " . $this->mErrors);
+			//}
 		} else {
 			if(is_null($this->cnn())){
 				$this->mErrors = 1;
+				//syslog(E_NOTICE, "Los errores son generados por la conexion # " . $this->mErrors);
 			}
 		}
+		//syslog(E_NOTICE, "Los errores son # " . $this->mErrors);
 		return $this->mErrors;
 	}
 }

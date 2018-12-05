@@ -30,6 +30,9 @@ $Fecha				= $xF->getFechaISO($Fecha);
 
 $AplicarGarantia	= parametro("aplicagarantia", false, MQL_BOOL);
 $defaultPago		= parametro("tipodepago");
+
+$vendedor			= parametro("vendedor", getUsuarioActual(), MQL_INT);
+
 $SinTiposDePago		= false;
 
 if($defaultPago	== ""){
@@ -147,6 +150,8 @@ $xFRM->addCobroBasico("onchange='jsGetPago()'");
 $xFRM->addObservaciones();
 $xFRM->setValidacion("idobservaciones", "jsActualizarObservacion");
 
+$xFRM->OHidden("vendedor", $vendedor);
+
 //$xFRM->addTag("-", "warning");
 
 //$xFRM->addTag("<strong>". $xFRM->getT("TR.TOTAL") . "</strong> : <span id='spantotal' style='font-size:1.5em'></span>", "notice");
@@ -162,8 +167,8 @@ echo $xFRM->get();
 
 ?>
 <script>
-var iSRC 		= "./frmprocesarpago.php?<?php echo "p=$persona|$credito|$parcialidad|$periocidad|" ?>";
-var ixsrc		= "./frmcobrosdecreditos2.php?<?php echo "idsocio=$persona&idsolicitud=$credito&idparcialidad=" ?>";
+var iSRC 		= "./frmprocesarpago.php?vendedor=<?php echo $vendedor; ?>&<?php echo "p=$persona|$credito|$parcialidad|$periocidad|" ?>";
+var ixsrc		= "./frmcobrosdecreditos2.php?vendedor=<?php echo $vendedor; ?>&<?php echo "idsocio=$persona&idsolicitud=$credito&idparcialidad=" ?>";
 var parcial		= <?php echo $parcialidad; ?>;
 var mTipoPago	= "<?php echo $defaultPago; ?>";
 var oTipoPago	= $("#idtipo_pago");

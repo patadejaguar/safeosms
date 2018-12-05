@@ -151,6 +151,13 @@ $xRPT->setSQL($sql);
 $xRPT->addCampoSuma("monto_solicitado");
 $xRPT->addCampoSuma("monto_ministrado");
 $xRPT->addCampoSuma("monto_cheque");
+$xRPT->addCampoContar("codigo");
+
+$xRPT->setFormato("fecha_de_solicitud", $xRPT->FMT_FECHA);
+$xRPT->setFormato("fecha_de_autorizacion", $xRPT->FMT_FECHA);
+$xRPT->setFormato("fecha_de_ministracion", $xRPT->FMT_FECHA);
+$xRPT->setFormato("fecha_de_registro", $xRPT->FMT_FECHA);
+
 $xRPT->setOut($out);
 
 

@@ -12,6 +12,8 @@ class cReglasDePais {
 	private $mValidIDPoblacional	= "";
 	private $mValido				= false;
 	private $mMessages				= ""; 
+	public $DIGITOS_TELEFONO		= 10;
+	
 	function __construct(){
 		$this->mValidIDFiscal	= DEFAULT_PERSONAS_RFC_GENERICO;
 	}
@@ -45,43 +47,36 @@ class cReglasDePais {
 	}	
 	function isValid(){ return $this->mValido; }
 	function getTelMovil($telefono){
-		$xT		= new cTipos();
-		$tel	= $xT->cInt($telefono);
-		$tm		= strlen($tel);
-		if(MODO_DEBUG == true){ $this->mMessages .= "WARN\tTelefono $telefono longitud $tm\r\n"; }		
+		$telefono	= setNoMenorQueCero($telefono,0);
+		$tel		= $telefono;
+		$tm			= strlen($tel);
+		if(MODO_DEBUG == true){ 
+			$this->mMessages .= "WARN\tTelefono $telefono longitud $tm\r\n"; 
+		}		
 		switch (EACP_CLAVE_DE_PAIS){
 			case "MX":
-
-				switch ($tm){
-					case 13:
-						$tel	= substr($tel, -10);
-						break;
-					case 12:
-						$tel	= null;
-						$this->mValido	= false;
-						break;
-					case 10:
-						break;
-					case 7:
-						$tel	= null;
-						$this->mValido	= false;
-						break;
-					default:
-						$tel	= null;
-						$this->mValido	= false;
-						break;
+				if($tm >= 10){
+					$lim	= ($this->DIGITOS_TELEFONO * -1);
+					$tel	= substr($tel, $lim);
+				} else {
+					$tel	= null;
 				}
-				
+				//981-10-981-64
 				//10 98164 == 7 
 				//981 10 98164 == 10
 				//044 981 10 98164 == 13 
 				//01 981 10 98164 == 12
-				if($tel != null){ $tel	= "52$tel"; }
+				if($tel === null){
+					
+				} else {
+					$this->mValido	= true;
+				}
 				break;
 		}
 		return $tel;
 	}
 	function getMessages($put = OUT_TXT){ $xH	= new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	
 	function getValidNSS($nss){
 		$xT		= new cTipos();
 		$nss	= setNoMenorQueCero($nss);

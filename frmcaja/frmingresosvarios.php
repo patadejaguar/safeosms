@@ -17,7 +17,12 @@ $xCaja		= new cCaja();
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
+$xUser		= new cSystemUser(); $xUser->init();
+
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	header ("location:../404.php?i=200"); }
+
+
+
 
 function jsaDatosOperacion($idoperacion){
 	$xOps	= new cTipoDeOperacion($idoperacion);
@@ -56,6 +61,10 @@ $cheque			= parametro("cheque");
 $foliofiscal	= parametro("foliofiscal");
 $comopago		= parametro("ctipo_pago", SYS_NINGUNO, MQL_RAW);
 $montoiva		= parametro("idiva", 0, MQL_FLOAT);
+
+$concredito		= parametro("concredito", false, MQL_BOOL);
+$concuenta		= parametro("concuenta", false, MQL_BOOL);
+
 $xHP->init();
 $xFRM			= new cHForm("frmingresos", "frmingresosvarios.php?action=" . MQL_ADD);
 $xFRM->setTitle($xHP->getTitle());
@@ -72,6 +81,9 @@ $xTxt->addEvent("jsAddNewConcepto()", "onblur");
 $xSLT			= $xSel->getListaDeTiposDeOperacion("", false, false, RECIBOS_TIPO_OINGRESOS, true);
 $msg			= "";
 
+$EsInscripcion	= false;
+$txtInscripcion	= "INSCR";
+
 if($action == MQL_ADD){
 	$credito	= ($credito<= DEFAULT_CREDITO) ? DEFAULT_CREDITO: $credito;
 	$xSLT->show();
@@ -81,43 +93,86 @@ if($action == MQL_ADD){
 	//$cRec->setGenerarBancos();
 	$cRec->setGenerarPoliza();
 	$cRec->setGenerarTesoreria();
-	
-	$idrecibo			= $cRec->setNuevoRecibo($persona, $credito, $fecha, 1, RECIBOS_TIPO_OINGRESOS, $observaciones, $cheque, $comopago, $foliofiscal);
-	foreach ($arrConcep as $idx => $cpx){
-		//setLog(" $idx => $cpx ");
-		$monto			= parametro("id-$cpx", 0, MQL_FLOAT);
-		if($monto>0){
-			$tipo		= $cpx;
-			$cRec->setNuevoMvto($fecha, $monto, $tipo, 1, $observaciones, 1, TM_ABONO, $persona);
-			$sumas 		+= $monto;
+	$xSoc	= new cSocio($persona);
+	if($xSoc->init() == true){
+		
+		
+		
+		$idrecibo			= $cRec->setNuevoRecibo($persona, $credito, $fecha, 1, RECIBOS_TIPO_OINGRESOS, $observaciones, $cheque, $comopago, $foliofiscal);
+		foreach ($arrConcep as $idx => $cpx){
+			//setLog(" $idx => $cpx ");
+			$monto			= parametro("id-$cpx", 0, MQL_FLOAT);
+			if($monto>0){
+				$tipo		= $cpx;
+				
+				$xTO		= new cTipoDeOperacion($tipo);
+				$xTO->init();
+				$nombre		= strtoupper($xTO->getNombre());
+				if(strpos($nombre, $txtInscripcion) !== false){
+					$EsInscripcion		= true;
+					//var_dump($txtInscripcion);
+				}
+				
+				
+				$cRec->setNuevoMvto($fecha, $monto, $tipo, 1, $observaciones, 1, TM_ABONO, $persona);
+				$sumas 		+= $monto;
+			}
 		}
-	}
-	if($montoiva>0){
-		$cRec->setNuevoMvto($fecha, $montoiva, OPERACION_CLAVE_PAGO_IVA_OTROS, 1, $observaciones, 1, TM_ABONO, $persona);
-	}
-	$total	= $sumas + $montoiva;
-	$cRec->addMvtoContableByTipoDePago($total, TM_CARGO);
-	
-	
-	$cRec->setFinalizarRecibo(true);
-	
-	$xRec	= new cReciboDeOperacion(false, false, $idrecibo);
-	if($xRec->init() == true){
-	
-		$xFRM->addHElem($cRec->getFichaSocio());
-		$xFRM->addHElem($cRec->getFicha(true));
+		if($montoiva>0){
+			$cRec->setNuevoMvto($fecha, $montoiva, OPERACION_CLAVE_PAGO_IVA_OTROS, 1, $observaciones, 1, TM_ABONO, $persona);
+		}
 		
-		$xFRM->addPrintRecibo();
-		$xFRM->addJsCode( $cRec->getJsPrint() );
-		$xFRM->addJsInit("jsImprimirRecibo();");
+		$total	= $sumas + $montoiva;
+		$cRec->addMvtoContableByTipoDePago($total, TM_CARGO);
 		
-		$xFRM->addCerrar();
-		$xFRM->addAvisoRegistroOK();
+		
+		$cRec->setFinalizarRecibo(true);
+		
+		$xRec	= new cReciboDeOperacion(false, false, $idrecibo);
+		if($xRec->init() == true){
+		
+			$xFRM->addHElem($cRec->getFichaSocio());
+			$xFRM->addHElem($cRec->getFicha(true));
+			
+			$xFRM->addPrintRecibo();
+			$xFRM->addJsCode( $cRec->getJsPrint() );
+			$xFRM->addJsInit("jsImprimirRecibo();");
+			
+			$xFRM->addCerrar();
+			$xFRM->addAvisoRegistroOK();
+		}
+		
+		if($EsInscripcion == true){
+	
+				$xSoc->setEjecutivo($xUser->getID());
+				$xSoc->addMemo(MEMOS_TIPO_HISTORIAL, "Se agrega el Ejecutivo " . $xUser->getAlias(), $credito);
+	
+		}
+
+	} else {
+		$xFRM->addAvisoRegistroError();
 	}
 } else {
 //$xFRM->addJsBasico();
 	$xFRM->setNoAcordion();
-	$xFRM->addCreditBasico($credito, $persona);
+	if($concredito == false AND $concuenta == false){
+		$xFRM->addPersonaBasico();
+		$xFRM->OHidden("idsolicitud", DEFAULT_CREDITO);
+		$xFRM->OHidden("idcuenta", DEFAULT_CUENTA_CORRIENTE);
+		
+	} else {
+		if($concredito == true){
+			$xFRM->addCreditBasico($credito, $persona);
+		}
+		if(MODULO_CAPTACION_ACTIVADO == true){
+			if($concuenta == true){
+				$xFRM->addCuentaCaptacionBasico();
+			}
+		}
+	}
+	
+
+	
 	
 	$xSLT->addEvent("onblur", "jsaDatosOperacion()");
 	
@@ -182,7 +237,13 @@ if($action == MQL_ADD){
 	
 	$xFRM->addAviso("", "idmsg");
 	$xFRM->addGuardar();
-	$xFRM->OButton("TR.NUEVA PERSONA", "jsAddNuevaPersona", $xFRM->ic()->AGREGAR);
+	
+	$xFRM->OButton("TR.NUEVA PERSONA", "jsAddNuevaPersona", $xFRM->ic()->PERSONA, "cmdaddnewpersona", "persona");
+	
+	if($concredito == false){
+		$xFRM->OButton("TR.INCLUIR CREDITO", "jsVerConCredito", $xFRM->ic()->CREDITO, "cmdgotocredito", "credito");
+	}
+	
 	$LstCon			= implode(",", $xSLT->getListaKeys());
 }
 echo $xFRM->get();
@@ -245,6 +306,9 @@ function jsUpdateSumas(){
 }
 function jsAddNuevaPersona(){
 	xG.w({url:"../frmsocios/personas.registro-simple.frm.php?control=idsocio", tiny:true, w:800 ,h:400});
+}
+function jsVerConCredito(){
+	xG.go({url: "../frmcaja/frmingresosvarios.php?concredito=true"});
 }
 </script>
 <?php

@@ -54,9 +54,7 @@ th {
 	/*min-width: 25%;*/
 }
 body{
-	margin:0;
-	height: 100%;
-	padding: 0;
+	<?php echo CSS_BCONFIG_CONTRATOS; ?>
 }
 td {
 	text-align: justify;
@@ -71,7 +69,7 @@ table {
 }
 
 @page {
-	
+
 }
 @media print
 {

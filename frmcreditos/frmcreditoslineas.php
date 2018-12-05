@@ -108,15 +108,20 @@ if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
 	
 	$xFRM->ODate("fecha_de_alta", $xTabla->fecha_de_alta()->v(), "TR.fecha de registro");
 	
-	$xFRM->OMoneda2("monto_linea", $xTabla->monto_linea()->v(), "TR.monto");
+	$xFRM->OMoneda2("monto_linea", $xTabla->monto_linea()->v(), "TR.MAXVALOR");
 	$xFRM->setValidacion("monto_linea", "validacion.nozero");
 	
 	//$xFRM->OText("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.fecha de vencimiento");
 	$xFRM->OFechaLarga("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.FECHA DE VENCIMIENTO");
-	$xFRM->addHElem( $xSel->getListaDeOficiales("oficial_de_credito", "", $xTabla->oficial_de_credito()->v())->get(true) );
+	$xFRM->addHElem( $xSel->getListaDeOficiales("oficial_de_credito", SYS_USER_ESTADO_ACTIVO, $xTabla->oficial_de_credito()->v())->get(true) );
 	
-	$idtasa	= $xTabla->tasa()->v() * 100;
-	$xFRM->OTasa("tasa", $idtasa, "TR.TASA_ANUALIZADA");
+	$idtasa		= $xTabla->tasa()->v() * 100;
+	$idmora		= $xTabla->tasa_mora()->v() * 100;
+	
+	//$xFRM->OTasa("tasa", $idtasa, "TR.TASA_ANUALIZADA");
+	$xFRM->OTasaInt("tasa", $idtasa, "TR.TASA_ANUALIZADA");
+	$xFRM->OTasaInt("tasa_mora", $idmora, "TR.TASAMORA");
+	
 	$xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v())->get(true) );
 	
 	

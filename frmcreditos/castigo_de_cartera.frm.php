@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CASTIGOS", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -38,14 +38,44 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 
 $xFRM		= new cHForm("frmcastigos", "./");
+
+$xFRM->setTitle($xHP->getTitle());
+
 $msg		= "";
-$xFRM->addGuardar("jsaGuardarCastigo()");
-$xFRM->ODate("idfecha", false, "TR.Fecha de Castigo");
-$xFRM->OTextArea("idrazones", "", "TR.Razones del castigo");
+
+$xFRM->addGuardar("jsGuardarCastigo()");
+$xFRM->ODate("idfecha", false, "TR.Fecha / Castigos");
+$xFRM->OTextArea("idrazones", "", "TR.Razones / castigos");
+
+$xFMT	= new cFormato();
+$xFMT->initByFile("castigado-advierte-1");
+$xFMT->setProcesarVars();
+
+$txt	= $xFMT->get();
+
+$xFRM->addAvisoInicial($txt, true, "TR.CASTIGOS");
+
 $xFRM->addAviso("");
+
+
 $xFRM->OHidden("idsolicitudactual", $credito, "");
 
 echo $xFRM->get();
+?>
+<script>
+var xG	= new Gen();
+
+function jsGuardarCastigo(){
+	//()
+	xG.confirmar({	message: " ¿ Confirma el Castigos ? ", callback: jsConfirmasGuardarCastigo	});
+}
+function jsConfirmasGuardarCastigo(){
+	jsaGuardarCastigo();
+	xG.postajax("jsCerrar()");
+}
+function jsCerrar(){ xG.close(); }
+</script>
+<?php
 $jxc ->drawJavaScript(false, true);
 $xHP->fin();
 ?>

@@ -1,5 +1,5 @@
 /* default */
-@import "../global.css";
+@import "../global.css.php";
 /*@import 'http://fonts.googleapis.com/css?family=Open+Sans:300&subset=latin,greek-ext,cyrillic-ext,greek,vietnamese,cyrillic,latin-ext';*/
 .ui-corner-bottom >.fieldform {
 	width: 100% !important;
@@ -7,7 +7,7 @@
 }
 .formoid-default {
 	margin:0 auto;
-	background-color:#FFFFFF;
+	background-color:#F8F8F8;
 	font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;
 	/*color:#2E5798;*/
 	padding-bottom: 3em;
@@ -24,7 +24,7 @@
 }
 .formoid-default>div{
 	margin: 2px;
-	
+
 }
 .formoid-default #tabs{
 	margin: 0;
@@ -79,8 +79,8 @@
   content: "";
 }
 .formoid-default{
--webkit-border-radius: 4px;	
--moz-border-radius: 4px;	
+-webkit-border-radius: 4px;
+-moz-border-radius: 4px;
 border-radius: 4px;
 /*min-height: 320px;*/
 }
@@ -104,7 +104,7 @@ border-radius: 4px;
 /* Global Declaration */
 
 
-.formoid-default .selector, 
+.formoid-default .selector,
 .formoid-default .uploader,
 .formoid-default .uploader *{
   margin: 0;
@@ -126,14 +126,14 @@ border-radius: 4px;
 
 /*
 
-CORE FUNCTIONALITY 
+CORE FUNCTIONALITY
 
 Not advised to edit stuff below this line
 -----------------------------------------------------
 */
 
-.formoid-default .selector, 
-.formoid-default .btn, 
+.formoid-default .selector,
+.formoid-default .btn,
 .formoid-default .uploader {
   display: -moz-inline-box;
   display: inline-block;
@@ -142,7 +142,7 @@ Not advised to edit stuff below this line
   *display: inline;
 }
 
-.formoid-default .selector select:focus, 
+.formoid-default .selector select:focus,
 .formoid-default .uploader input:focus {
   outline: 0;
 }
@@ -178,7 +178,7 @@ Not advised to edit stuff below this line
           border-radius: 4px;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
-  
+
   *zoom: 1;
   -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
      -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -189,7 +189,7 @@ Not advised to edit stuff below this line
 .formoid-default  select.picker__select--month,
 .formoid-default  select.picker__select--year  {
 	font-size: .8em !important;
-	height: 2em !important;	
+	height: 2em !important;
 }
 .formoid-default  select.picker__select--month {
 	max-width: 35% !important;
@@ -325,7 +325,7 @@ Not advised to edit stuff below this line
 	z-index:0;
 	position:relative;
 	display:inline-block;
-	
+
 	top:0px;
 	background:url(./check-radio-bg.png) no-repeat 0 0;
 }*/
@@ -555,7 +555,7 @@ Not advised to edit stuff below this line
     border-radius:4px;
     -moz-box-shadow: 0px 3px 3px #cecece;
     -webkit-box-shadow: 0px 3px 3px #cecece;
-    box-shadow: 0 3px 4px #8b8b8b;    
+    box-shadow: 0 3px 4px #8b8b8b;
     padding-left: 1px;
 }
 
@@ -577,7 +577,7 @@ overflow: hidden;
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
     background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
     background-color:#383838;
-    
+
     /* We use the inset of the box shadow to create a subtle inner glow when hovering */
     -moz-box-shadow: inset 0 0 5px 5px #535353;
     -webkit-box-shadow: inset 0 0 5px 5px #535353;
@@ -599,7 +599,7 @@ overflow: hidden;
 }
 .toolnav li a {
     font-weight: 500;
-    
+
 	text-align:center;
 	display:block;
 	line-height:1.4em;
@@ -612,7 +612,7 @@ overflow: hidden;
 	text-shadow: 0 -1px 3px #202020;
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #2f2f2f), color-stop(0.5, #3e3e3e), color-stop(0.51, #403f3f), color-stop(1, #585858));
     background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #454545 50%, #424242 51%, #7e7e7e 100%);
-	
+
 
 }
 /*Temas de Botones*/
@@ -682,9 +682,17 @@ text-shadow: 0 -1px 2px #AAAAAA; color: #000066;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
-.toolnav li a.gris {
+.toolnav li a.gris,.toolnav li a.gray {
 	text-shadow: 0 -1px 3px #381f00;
 	background: #001121 url(../../images/ui/ui-bg_gloss-wave_45_817865_500x100.png) 50% 50% repeat-x;
+}
+.toolnav li a.gray2, .toolnav li a.grey2 {
+	text-shadow: none; color: #252B29;
+	background: #B9CCD2;
+}
+.toolnav li a.gray3 {
+	text-shadow:none; color: #704F5D;
+	background: #E5E9E9;
 }
 
 /*.toolnav li a.blue2 {
@@ -693,10 +701,7 @@ background: linear-gradient(top,#4387fd,#4683ea)
 
 }*/
 
-.toolnav li a.gray2, .toolnav li a.grey2 {
-text-shadow: none; color: #252B29;
-background: #B9CCD2;
-}
+
 
 .main-dialog-class .ui-widget-header{background: url("/Images/your-background.png") repeat-x scroll 34px 42px #a4cf50;font-size:16px;border:0;text-transform:uppercase}
 .main-dialog-class .ui-widget-content{background-image:none;background-color:#fff}
@@ -727,7 +732,7 @@ background: #2C4770;
 	/*text-shadow: 0 -1px 3px #468847;*/
 	/*background: #257433;*/
 	text-shadow: 0 -1px 3px #324F00;
-	background: #354F00;
+	background: #26A95E;
 	/*color: #C7E99B;*/
 }
 .toolnav li a.green2 {
@@ -789,4 +794,3 @@ border-right:1px solid #5d5d5d;
     min-width: 50%;
 
 }
-

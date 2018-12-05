@@ -259,6 +259,8 @@ class cReglasDeNegocioLista {
 	public $PERSONAS_AML_GWS_ACTIVO				= "PERSONAS.CONSULTA.GSW.DEFECTO";
 	public $PERSONAS_OPERAR_ALTO_R				= "PERSONAS.OPERAR.CON_ALTO_RIESGO";
 	public $PERSONAS_USAR_FOTOS					= "PERSONAS.PANEL_CON_FOTOS";
+	public $PERSONAS_SE_ELIMINAN				= "PERSONAS.SE_PUEDEN_ELIMINAR";
+	
 	
 	public $CREDITOS_AUTORIZACION_SIN_TASA		= "CREDITOS.AUTORIZACION.SIN_TASA";
 	public $CREDITOS_AUTORIZACION_SIN_DISP		= "CREDITOS.AUTORIZACION.SIN_DISPERSION";
@@ -280,8 +282,9 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_OFICIAL_POR_HER			= "CREDITOS.OFICIAL.POR_HERENCIA";
 	public $CREDITOS_OFICIAL_POR_USR			= "CREDITOS.OFICIAL.POR_USUARIO";
 	
-	
+	public $CREDITOS_LISTA_REQUISITOS			= "CREDITOS.LISTA_REQUISITOS";
 	public $CREDITOS_NOMINA_NOMORA				= "CREDITOS.NOMINA.NO_MORA";
+	public $CREDITOS_NO_CAP_ANT_INT				= "CREDITOS.NO_CAPITAL_ANTES_INTERES";
 	
 	public $CREDITOS_ARREND_RES_CON_ANT			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_ANT";
 	public $CREDITOS_ARREND_RES_CON_IVA			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_IVA";
@@ -328,6 +331,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_PAGO_LETRAF				= "CREDITOS.PAGOS_LETRA_FIJA";
 	public $CREDITOS_DEV_INTNOM_V				= "CREDITOS.DEV.INT_NORMAL.VENCIDO";
 	public $CREDITOS_AUTOPURGE_MINS				= "CREDITOS.AUTOPURGAR.MINIMOS";
+	public $CREDITOS_360_COMOLETRA				= "CREDITOS.360.COMOLETRAS";
 	
 	public $PRECREDITOS_NUEVO_REG				= "PRECREDITOS.NUEVO_REGISTRO";
 	
@@ -342,6 +346,10 @@ class cReglasDeNegocioLista {
 	public $RECIBOS_BLOQ_FECHA_ANT				= "RECIBOS.BLOQ_FECHA_ANTERIOR";
 	public $RECIBOS_REST_LETRA					= "RECIBOS.RESTAURAR_LETRA";
 	public $RECIBOS_COBRO_DEXTRA				= "RECIBOS.COBROS_DATO_EXTRA";
+	public $RECIBOS_CON_VENDEDOR				= "RECIBOS.CON.VENDEDOR";
+	public $RECIBOS_CON_RECFISCAL				= "RECIBOS.CON.RECIBO_FISCAL";
+	
+	public $RECIBOS_NOARRASTRA_PENAS			= "RECIBOS.NO.ARRASTRA_PENAS";
 	
 	public $AML_CIERRE_NV_RIESGO				= "AML.CIERRE.NO_VALIDAR_RIESGO";
 	public $AML_AUTOENVIAR_RMS					= "AML.RIESGO_AUTOENVIAR_RMS";
@@ -351,12 +359,17 @@ class cReglasDeNegocioLista {
 	
 	public $RN_USAR_REDIRECTS					= "RN_USAR_REDIRECTS";
 	public $RN_USAR_MENU_ALT					= "RN_USAR_USAR_MENU_ALTER";
+	public $RN_NO_USAR_HCHAT					= "RN_NO_USAR_CHAT_AYUDA";
 	
 	public $CAPTACION_SIN_DIASPRE				= "CAPTACION.SIN.DIAS_PRE";
 	
 	//public $CAPTACION_				= "CAPTACION";
 	public $REPORTES_USAR_EFED					= "REPORTES.USAR_ENTIDADESFED";
 	
+	
+	public $SEGUIMIENTO_TODOS_PUEDEN			= "SEGUIMIENTO.TODOS_PUEDEN";
+	
+	public $AML_NO_WIKI							= "AML.NO.CONSULTAR.WIKI";
 	
 	function getInArray(){
 		$arr	= array();
@@ -373,6 +386,11 @@ class cReglasDeNegocioLista {
 		$arr[$this->RN_CREDITOS_AL_AUTORIZAR]		= $this->RN_CREDITOS_AL_AUTORIZAR;
 		$arr[$this->RN_CREDITOS_AL_RECHAZAR]		= $this->RN_CREDITOS_AL_RECHAZAR;
 		$arr[$this->RN_RECIBOS_GTIALIQ]				= $this->RN_RECIBOS_GTIALIQ;
+		$arr[$this->RN_NO_USAR_HCHAT]				= $this->RN_NO_USAR_HCHAT;
+		
+		$arr[$this->SEGUIMIENTO_TODOS_PUEDEN]		= $this->SEGUIMIENTO_TODOS_PUEDEN;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -451,6 +469,13 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_ARREND_SUM_COMS]			= $this->CREDITOS_ARREND_SUM_COMS;
 		$arr[$this->CREDITOS_DEV_INTNOM_V]				= $this->CREDITOS_DEV_INTNOM_V;
 		$arr[$this->CREDITOS_AUTOPURGE_MINS]			= $this->CREDITOS_AUTOPURGE_MINS;
+		$arr[$this->CREDITOS_360_COMOLETRA]				= $this->CREDITOS_360_COMOLETRA;
+		$arr[$this->CREDITOS_NO_CAP_ANT_INT]			= $this->CREDITOS_NO_CAP_ANT_INT;
+		$arr[$this->CREDITOS_LISTA_REQUISITOS]			= $this->CREDITOS_LISTA_REQUISITOS;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
 		
@@ -480,6 +505,10 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_BLOQ_FECHA_FUT]				= $this->RECIBOS_BLOQ_FECHA_FUT;
 		$arr[$this->RECIBOS_REST_LETRA]					= $this->RECIBOS_REST_LETRA;
 		$arr[$this->RECIBOS_APORTSOC_COMP]				= $this->RECIBOS_APORTSOC_COMP;
+		$arr[$this->RECIBOS_CON_VENDEDOR]				= $this->RECIBOS_CON_VENDEDOR;
+		$arr[$this->RECIBOS_CON_RECFISCAL]				= $this->RECIBOS_CON_RECFISCAL;
+		$arr[$this->RECIBOS_NOARRASTRA_PENAS]			= $this->RECIBOS_NOARRASTRA_PENAS;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -495,6 +524,12 @@ class cReglasDeNegocioLista {
 		$arr[$this->VAL_NO_PERSONA_FALLA_ACT_ECONOM]	= $this->VAL_NO_PERSONA_FALLA_ACT_ECONOM;
 		$arr[$this->PERSONAS_OPERAR_ALTO_R]				= $this->PERSONAS_OPERAR_ALTO_R;
 		$arr[$this->PERSONAS_USAR_FOTOS]				= $this->PERSONAS_USAR_FOTOS;
+		$arr[$this->PERSONAS_SE_ELIMINAN]				= $this->PERSONAS_SE_ELIMINAN;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
 		$arr[$this->AML_AUTOENVIAR_RMS]					= $this->AML_AUTOENVIAR_RMS;
@@ -505,6 +540,10 @@ class cReglasDeNegocioLista {
 		//$arr[$this->]			= $this->;
 		$arr[$this->REPORTES_USAR_EFED]					= $this->REPORTES_USAR_EFED;
 		$arr[$this->CAPTACION_SIN_DIASPRE]				= $this->CAPTACION_SIN_DIASPRE;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		$arr[$this->AML_NO_WIKI]						= $this->AML_NO_WIKI;
+		
 		return $arr;
 	}
 }
@@ -601,11 +640,24 @@ class cReglaDeNegocio {
 					$xFMT->addVars("credito", $this->mCodigoCredito);
 					$xAlerts->addOficiales($vvar["vars_creds_idoficial_credito"]);
 
+					if($this->mCodigoPersona <= DEFAULT_SOCIO){
+						$xCred	= new cCredito($this->mCodigoCredito);
+						if($xCred->init() == true){
+							$this->mCodigoPersona = $xCred->getClaveDePersona();
+						}
+					}
 					$vvar	= null;
 				}
 				if ($this->mCodigoCuenta > 0 AND $this->mCodigoCuenta !== DEFAULT_CUENTA_CORRIENTE ){
 					$xFMT->setCuentaDeCaptacion($this->mCodigoCuenta);
 					$xFMT->addVars("clave_de_cuenta", $this->mCodigoCuenta);
+					
+					if($this->mCodigoPersona <= DEFAULT_SOCIO){
+						$xCta	= new cCuentaDeCaptacion($this->mCodigoCuenta);
+						if($xCta->init() == true){
+							$this->mCodigoPersona = $xCta->getClaveDePersona();
+						}
+					}
 				}
 			}
 			
@@ -627,7 +679,6 @@ class cReglaDeNegocio {
 		$this->mVars	= array_merge($this->mVars, $xFMT->getVariables());
 		
 		foreach ($rs as $datos){
-//				$datos["idprograma"]
 				$this->mMessages	.= "====\tProgramacion: " . $datos["idprograma"] . "\r\n";
 				$xAlerts->addPersonasDestinatarios($this->mDestPers);
 				$xAlerts->setProcesarProgramacion($datos["idprograma"], $this->mVars );
@@ -660,13 +711,16 @@ class cReglaDeNegocio {
 			//setLog(getMemoriaLibre(true));
 			
 			foreach($rs as $rw){
+				$nombre		= $rw[$xRul->NOMBRE];
+				$valor		= $rw[$xRul->VALOR];
+				$reglas		= $rw[$xRul->REGLAS];
+				
 				$xRul->setData($rw);
-				if(isset( $this->mRead[ $xRul->nombre()->v() ] )){
-					$this->mCodigo[$xRul->nombre()->v()]	= $xRul->reglas()->v();
-					
+				
+				if(isset( $this->mRead[ $nombre ] )){
+					$this->mCodigo[$nombre]	= $reglas;
 					//eval($xRul->reglas()->v());
-					
-					$this->mValores[$xRul->nombre()->v()]	= ($xRul->valor()->v() == 1) ? true : false;
+					$this->mValores[$nombre]	= ($valor == 1) ? true : false;
 				}
 			}
 			$xCache->set($idxc, $this->mCodigo);
@@ -784,8 +838,9 @@ class cReglasDeCalificacion {
 	function init($data = false){
 		$xQL	= new MQL();
 		$data	= (is_array($data)) ? $data : $xQL->getDataRow("SELECT * FROM `entidad_calificacion` WHERE `identidad_calificacion`=". $this->mClave);
-		if(isset($data["identidad_calificacion"])){
-			$xT					= new cEntidad_calificacion();
+		$xT		= new cEntidad_calificacion();
+		if(isset($data[$xT->IDENTIDAD_CALIFICACION])){
+			$xT->setData($data);
 			$this->mClave		= $data[$xT->IDENTIDAD_CALIFICACION]; //$data[$xT->];
 			$this->mTipo		= $data[$xT->TIPO_DE_OBJETO];
 			$this->mDocumento	= $data[$xT->CLAVE_DE_DOCUMENTO];
@@ -793,9 +848,9 @@ class cReglasDeCalificacion {
 			$this->mCumple		= $data[$xT->CUMPLE];
 			
 			$this->mObj			= $xT;
-			$this->mObj->setData($data);
-			
-			$this->mInit	= true;
+			$this->mInit		= true;
+		} else {
+			$this->mInit		= false;
 		}
 		return $this->mInit;
 	}
@@ -808,10 +863,10 @@ class cReglasDeCalificacion {
 	function getNombre(){return $this->mNombre;}
 	function getClave(){return $this->mClave;}
 	function initByRegla($regla){
-		$xCache		= new cCache();
+		//$xCache		= new cCache();
 		$xQL		= new MQL();
 		$datos		= $xQL->getDataRow("SELECT * FROM `entidad_calificacion` WHERE `tipo_de_objeto`='" . $this->mTipo . "' AND `clave_de_documento`='" . $this->mDocumento . "' AND `topico`='$regla' LIMIT 0,1");
-
+		
 		return $this->init($datos);
 	}
 	function add($regla, $cumple = false, $user=false,$vencimiento = false, $riesgo = false, $fecha = false){
@@ -915,4 +970,101 @@ class cRiesgos {
 		
 	}
 }
+
+
+
+class cUsuariosNotas {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "usuarios_web_notas";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	public $EST_ACTIVO		= 10;
+	public $EST_INACTIVO	= 40;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cUsuarios_web_notas();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function setInactivo(){
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE usuarios_web_notas SET estado=" . $this->EST_INACTIVO . " WHERE idusuarios_web_notas=" . $this->mClave . " ");
+		$xQL	= null;
+	}
+	
+	function addNote($tipo, $oficial, $socio, $docto, $texto, $fecha = false){
+		$xF					= new cFecha();
+		$xT					= new cTipos();
+		$xQL				= new MQL();
+		$oficial_de_origen	= getUsuarioActual();
+		$oficial			= setNoMenorQueCero($oficial);
+		$oficial			= ($oficial <= 0) ? $this->getCodigo() : 1;
+		$fecha				= $xF->getFechaISO($fecha);
+		
+		$msg				= "";
+		$texto				= $xT->cChar( trim($texto) );
+		
+		$sqlFR		= "INSERT INTO usuarios_web_notas( tipo, oficial, oficial_de_origen, socio, documento, fecha, texto)
+    					VALUES
+						('$tipo', $oficial, $oficial_de_origen, $socio, $docto, '$fecha', '$texto')";
+		$x 			=  $xQL->setRawQuery($sqlFR);
+		if($x == false){
+			$msg		.= "ERROR\tAviso al oficial $oficial NO GENERADO ($tipo|$socio|$docto|$fecha)\r\n";
+		} else {
+			$msg		.= "ERROR\tAviso al oficial $oficial Agregado con Exito ($tipo|$socio|$docto|$fecha)\r\n";
+		}
+		return $msg;
+	}
+}
+
 ?>

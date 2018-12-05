@@ -66,6 +66,7 @@ $xFRM		= new cHForm("frmAltaUsuarios", "altausuarios.frm.php");
 $xUser		= new cSystemUser();
 $xUser->init();
 $iduser		= $xUser->getID();
+
 if($xUser->getPuedeAgregarUsuarios() == false){
 	$xErr	= new cErrorCodes();
 	$xHP->goToPageError($xErr->SIN_PERMISO_REGLA);
@@ -108,8 +109,11 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		
 		$xSelSuc	= $xSel->getListaDeSucursales("idSucursal", getSucursal());
 		
-		
-		$xFRM->addHElem( $xSelSuc->get(true) );	
+		if(MULTISUCURSAL == false){
+			$xFRM->OHidden("idSucursal", DEFAULT_SUCURSAL);
+		} else {
+			$xFRM->addHElem( $xSelSuc->get(true) );
+		}
 		
 	
 		if(MODULO_CONTABILIDAD_ACTIVADO == true){
@@ -164,7 +168,11 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 				$msg 		.= "ERROR\tEl Nombre de Usuario no puede tener menos de 4 caracteres\r\n";
 				$sucess		= false;			
 			}
-			if ($nivelacceso > $_SESSION["SN_d567c9b2d95fbc0a51e94d665abe9da3"] AND MODO_DEBUG == false) {
+			
+			$xNivel	= new cSystemPerfiles($nivelacceso); $xNivel->init();
+			
+			
+			if ($xNivel->getTipo() > $xUser->getTipoEnSistema() ) {
 				$msg 		.= "ERROR\tUsted no Puede Asignar Permisos Mayores a su Nivel\r\n";
 				$sucess		= false;
 			}

@@ -95,17 +95,34 @@ if($clave <= 0){
 
 $xFRM->OHidden("numero_socio", $xTabla->numero_socio()->v(), "TR.NUMERO SOCIO");
 
-$xFRM->ODate("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.FECHA DE VENCIMIENTO");
 
-$xFRM->OMoneda2("monto_linea", $xTabla->monto_linea()->v(), "TR.MONTO LINEA");
+
+$xLin	= new cCreditosLineas($clave);
+if($xLin->init() == true){
+	$xFRM->addHElem($xLin->getFicha());
+}
+
+//$xFRM->ODate("fecha_de_vencimiento", $xTabla->fecha_de_vencimiento()->v(), "TR.FECHA DE VENCIMIENTO");
+
+//$xFRM->OMoneda2("monto_linea", $xTabla->monto_linea()->v(), "TR.MONTO LINEA");
+//$xFRM->ODisabledM("monto_linea", $xTabla->monto_linea()->v(), "TR.MONTO ORIGINAL");
 
 $pzomaximo	= $xF->setRestarFechas($xTabla->fecha_de_vencimiento()->v(), fechasys() );
 $pzomaximo	= floor(($pzomaximo / $xTabla->periocidad()->v()));
 
 //$xFRM->OMoneda("periocidad", $xTabla->periocidad()->v(), "TR.PERIOCIDAD");
-$xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v())->get(true) );
+//$xFRM->OHidden("periocidad", $xTabla->periocidad()->v());
 
-$xFRM->OTasa("tasa", $xTabla->tasa()->v(), "TR.TASA");
+
+
+//$xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v())->get(true) );
+$tasa	= $xTabla->tasa()->v() * 100;
+//$xFRM->ODisabledM("idxtasa", $tasa, "TR.TASA");
+//$xFRM->OHidden("tasa", $xTabla->tasa()->v());
+
+//$xFRM->OTasa("tasa", $xTabla->tasa()->v(), "TR.TASA");
+
+
 
 $xFRM->addHElem( $xSel->getListaDeOficiales("oficial_de_credito", "", $xTabla->oficial_de_credito()->v())->get(true) );
 
@@ -114,7 +131,7 @@ $xFRM->OMoneda2("monto_hipoteca", $xTabla->monto_hipoteca()->v(), "TR.monto de G
 
 $xFRM->OText("observaciones", $xTabla->observaciones()->v(), "TR.OBSERVACIONES");
 
-$xFRM->ODisabled_13("saldo_disponible", $xTabla->saldo_disponible()->v(), "TR.SALDO DISPONIBLE");
+//$xFRM->ODisabledM("saldo_disponible", $xTabla->saldo_disponible()->v(), "TR.SALDO DISPONIBLE");
 
 //$xFRM->OMoneda("estado", $xTabla->estado()->v(), "TR.ESTADO");
 
@@ -124,7 +141,7 @@ $xFRM->ODisabled_13("saldo_disponible", $xTabla->saldo_disponible()->v(), "TR.SA
 //$xFRM->OText("fecha_de_cancelacion", $xTabla->fecha_de_cancelacion()->v(), "TR.FECHA DE CANCELACION");
 //$xFRM->OText("razones_de_cancelacion", $xTabla->razones_de_cancelacion()->v(), "TR.RAZONES DE CANCELACION");
 
-$xFRM->setValidacion("monto_linea", "validacion.nozero");
+//$xFRM->setValidacion("monto_linea", "validacion.nozero");
 $xFRM->setValidacion("numerohipoteca", "validacion.novacio", "TR.MSG_DATA_REQUIRED", true);
 $xFRM->setValidacion("monto_hipoteca", "validacion.nozero");
 
@@ -132,8 +149,8 @@ $xFRM->setValidacion("monto_hipoteca", "validacion.nozero");
 
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);
 
-$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->CREDITO);
-$xFRM->OButton("TR.REPORTE CREDITOS_LINEAS", "var xC=new CredGen(); xC.getReporteDeLinea({id:$clave})", $xFRM->ic()->REPORTE);
+//$xFRM->OButton("TR.AGREGAR CREDITO", "jsAgregarCredito()", $xFRM->ic()->CREDITO);
+//$xFRM->OButton("TR.REPORTE CREDITOS_LINEAS", "var xC=new CredGen(); xC.getReporteDeLinea({id:$clave})", $xFRM->ic()->REPORTE);
 
 echo $xFRM->get();
 

@@ -597,6 +597,10 @@ class cUtileriasParaCreditos{
 					$FECHA_DE_ULTIMO_PAGO	= $fecha;
 					$xLog->add("WARN\tPagos sin Capital Dias $dias_transcurridos , Saldo $saldo_calculado , Fecha $fecha\r\n", $xLog->DEVELOPER);
 				} else {
+					if(isset($saldo_calculado)){
+						$saldo_calculado	= 0;
+						$xLog->add("WARN\tNo existe el Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
+					}
 					if($saldo_calculado<=0 AND $operacion == OPERACION_CLAVE_PLAN_INTERES){
 						$interes			= 0;
 					}
@@ -1619,6 +1623,8 @@ class cUtileriasParaCreditos{
 		$tolerancia	= setNoMenorQueCero($tolerancia);
 		$tolerancia	= ($tolerancia <=0) ? TOLERANCIA_SALDOS : $tolerancia;
 		$xQL        = new MQL();
+		$xF			= new cFecha();
+		$fecha		= $xF->get();
 		//$cRec		= new cReciboDeOperacion(10);
 		$msg        = "";
 		//$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CREDITOS");
@@ -1649,21 +1655,33 @@ class cUtileriasParaCreditos{
 								`creditos_solicitud`.`estatus_actual`
 								WHERE saldo_actual < " . $tolerancia . " ORDER BY saldo_actual ";
 						$rs			= $xQL->getRecordset( $sql );
-						while ($rw=$rs->fetch_assoc()) {
-								$socio		 	= $rw["numero_socio"];
-								$credito	 	= $rw["numero_solicitud"];
-								$saldo_actual	= $rw["saldo_actual"];
-								if($saldo_actual !== 0){
+						
+						while($rw = $rs->fetch_assoc()){
+								$socio		 		= $rw["numero_socio"];
+								$credito	 		= $rw["numero_solicitud"];
+								$saldo_actual		= round($rw["saldo_actual"],2);
+								if($saldo_actual != 0){
 									//Se inicializa una nueva instancia de crédito
-									$cCredito 		= new cCredito($credito, $socio);
+									$xCred 			= new cCredito($credito, $socio);
 									//y se neutralizara con su valor absoluto.
-									$cCredito->init($rw);
-									//$cCredito->setReciboDeOperacion($xRec);
-									//Generar un abono a Capital
-									$cCredito->setAbonoCapital($saldo_actual);
+									if($xCred->init($rw) == true){
+										$xRec		= new cReciboDeOperacion();
+										$parcialidad= $xCred->getPagosAutorizados();
+										$idrecibo	= $xRec->setNuevoRecibo($socio, $credito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, "", "", TESORERIA_COBRO_NINGUNO);
+										$xRec->setForzarNegativos(true);
+										$monto		= $saldo_actual;
+										$xRec->addMovimiento(OPERACION_CLAVE_PAGO_CAPITAL, $monto, $parcialidad, "", 1);
+										$xRec->setFinalizarRecibo(true);
+										$msg		.= $xRec->getMessages();
+										//Generar un abono a Capital
+										//$xCred->setAbonoCapital($saldo_actual);
+									}
+									$xCred->setCuandoSeActualiza();
 									$msg	.= "-\r\n-\r\n";
 									$msg	.= "$socio\t$credito\tEliminando el saldo de $saldo_actual\r\n";
-									$msg	.=  $cCredito->getMessages();
+									$msg	.=  $xCred->getMessages();
+								} else {
+									$msg	.= "$socio\t$credito\tNo se toca , con un saldo de $saldo_actual\r\n";
 								}
 						}
 						$rs->free();
@@ -2054,6 +2072,67 @@ class cUtileriasParaCreditos{
 		$this->mMessages	.= $xLog->getMessages();
 		return $xLog->getMessages();
 	}
+	function setCreditosCuadrarPlanes(){
+		
+		$xQL	= new MQL();
+		$xLog	= new cCoreLog();
+		if(getEnCierre() == false){
+			$xQL->setRawQuery("CALL `proc_creds_prox_letras`()");
+		}
+		$sql	= "SELECT
+			`tmp_creds_prox_letras`.`docto_afectado` AS `credito`,
+			`creditos_solicitud`.`numero_socio`      AS `persona`,
+			`creditos_solicitud`.`saldo_actual`		AS `capital`,
+			SUM(`tmp_creds_prox_letras`.`capital`) AS `capital_plan`,
+			(`creditos_solicitud`.`saldo_actual` -	SUM(`tmp_creds_prox_letras`.`capital`))   AS `diferencia`,
+			if( (`creditos_solicitud`.`saldo_actual` >	SUM(`tmp_creds_prox_letras`.`capital`)), 'El Plan Menor al Saldo', 'El Plan Mayor al Saldo') AS `observaciones`
+		FROM
+			`creditos_solicitud` `creditos_solicitud`
+				INNER JOIN `tmp_creds_prox_letras` `tmp_creds_prox_letras`
+				ON `creditos_solicitud`.`numero_solicitud` = `tmp_creds_prox_letras`.
+				`docto_afectado`
+		WHERE `creditos_solicitud`.`periocidad_de_pago`!=360
+		AND `creditos_solicitud`.`saldo_actual` > " . TOLERANCIA_SALDOS . "
+			GROUP BY
+				`tmp_creds_prox_letras`.`docto_afectado`
+				
+		HAVING
+		 diferencia >0.99 OR  diferencia < -0.99 ORDER BY diferencia DESC ";
+		$rs	= $xQL->getRecordset($sql);
+		
+		
+		
+		while($rw = $rs->fetch_assoc()){
+			
+			$idcredito	= $rw["credito"];
+			$xCred		= new cCredito($idcredito);
+			if($xCred->init() == true){
+				$xEm	= new cPlanDePagosGenerador();
+				if($xEm->initPorCredito($idcredito, $xCred->getDatosInArray()) == true){
+					
+					if($xCred->getEsAutorizado() == true OR $xCred->getEsAutorizado() == true OR $xCred->getEsRechazado() == true){
+						$xLog->add("WARN\tCredito con Estado Inactivo : " . $xCred->getEstadoActual() . "\r\n");
+					} else {
+
+						
+						$xEm->setFechaArbitraria($xCred->getFechaPrimeraParc());
+						
+						$parcial 			= $xEm->getParcialidadPresumida(100);
+						$xEm->setCompilar();
+						//echo $xEm->getVersionFinal(false);
+						$xEm->getVersionFinal(true);
+						
+						$xLog->add($xEm->getMessages());
+					}
+				}
+			}//end init
+		}
+		$this->mMessages	.= $xLog->getMessages();
+		
+		
+		
+		return $xLog->getMessages();
+	}
 }
 
 
@@ -2125,7 +2204,13 @@ class cSQLFiltros {
 		$ByEmp		= "";
 		if($destino > 0){ $ByEmp = " AND (`creditos_solicitud`.`destino_credito` = $destino ) "; }
 		return $ByEmp;
-	}	
+	}
+	function CreditosPorTipoDeCuota($tipocuota){
+		$tipocuota	= setNoMenorQueCero($tipocuota);
+		$ByTip		= "";
+		if($tipocuota > 0){ $ByTip = " AND (`creditos_solicitud`.`tipo_de_pago` = $tipocuota ) "; }
+		return $ByTip;
+	}
 	function CreditoPorClave($credito){
 		$credito		= setNoMenorQueCero($credito);
 		$ByCredito		= ($credito <= DEFAULT_CREDITO) ? "" : " AND (`creditos_solicitud`.`numero_solicitud`=$credito)  ";
@@ -2188,6 +2273,15 @@ class cSQLFiltros {
 			$filtro	= " AND (`creditos_tipoconvenio`.`omitir_seguimiento`=$filtrar) ";
 		}
 		return $filtro;
+	}
+	function CreditosProductosPorTSistema($tipo = false){
+		$tipo		= setNoMenorQueCero($tipo);
+		$By			= "";
+		if($tipo>0){
+			$By	= " AND (`creditos_tipoconvenio`.`tipo_en_sistema`=$tipo) ";
+		}
+		return $By;
+
 	}
 //----------------- Operaciones
 	function OperacionesPorTipo($tipo = false){
@@ -2452,14 +2546,37 @@ class cSQLFiltros {
 		}
 		return $By;
 	}
-	function VPersonasPorSucursalAut(){
+	function VPersonasPorSucursalAut($idsucursal = ""){
 		$By		= "";
+		$idsucursal = ($idsucursal === false) ? "" : $idsucursal;
+		
 		if(OPERACION_LIBERAR_SUCURSALES == false){
 			$xUsr		= new cSystemUser();
 			if($xUsr->getEsCorporativo() == false){
 				$sucursal	= $xUsr->getSucursalAccede();
 				$By			= " AND (`personas`.`sucursal`='" . $sucursal . "') ";
+			} else {
+				$xVal		= new cReglasDeValidacion();
+				if($xVal->sucursal($idsucursal) == true){
+					$sucursal	= $idsucursal;
+					$By			= " AND (`personas`.`sucursal`='" . $sucursal . "') ";
+				}
 			}
+		} else {
+			$xVal		= new cReglasDeValidacion();
+			if($xVal->sucursal($idsucursal) == true){
+				$sucursal	= $idsucursal;
+				$By			= " AND (`personas`.`sucursal`='" . $sucursal . "') ";
+			}
+		}
+		return $By;
+	}
+	function VPersonasPorCodigo($codigo = false){
+		$codigo	= setNoMenorQueCero($codigo);
+		$xVals	= new cReglasDeValidacion();
+		$By		= "";
+		if($xVals->persona($codigo) == true){
+			$By	= " AND (`personas`.`codigo`=$codigo) ";
 		}
 		return $By;
 	}
@@ -2826,13 +2943,16 @@ class cSQLFiltros {
 	}
 }
 class cCreditosTiposDeAutorizacion {
-	private $mClave		= false;
-	private $mObj		= null;
-	private $mInit		= false;
-	private $mNombre	= "";
-	private $mMessages	= "";
-	private $mIDCache	= "";
-	private $mTabla		= "creditos_tipo_de_autorizacion";
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_tipo_de_autorizacion";
+	public $TA_NORMAL		= 1;
+	public $TA_RENOVADO		= 3;
+	public $TA_REESTRUCT	= 4;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }

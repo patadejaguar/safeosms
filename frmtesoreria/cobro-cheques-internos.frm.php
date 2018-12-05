@@ -1,58 +1,68 @@
 <?php
+/**
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package
+ */
 //=====================================================================================================
-//=====>	INICIO_H
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	$theFile					= __FILE__;
-	$permiso					= getSIPAKALPermissions($theFile);
-	if($permiso === false){		header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
-//<=====	FIN_H
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP				= new cHPage("Cobranza.- Cheques Internos", HP_FORM);
-$xHP->setIncludes();
-
-
-$xJS			= new jsBasicForm("frmCobrosEnCheque");
-
 //=========================== AJAX
 $jxc 			= new TinyAjax();
 function jsaSetPago($Recibo, $cheque1, $Cuenta1, $monto1, $cheque2, $Cuenta2, $monto2){
 	$sucess		= true;
 	$tab 		= new TinyAjaxBehavior();
 	$xCtaBanc	= new cCuentaBancaria($Cuenta1);
-	
+	$xLog		= new cCoreLog();
+	$monto1		= setNoMenorQueCero($monto1);
+	$monto2		= setNoMenorQueCero($monto2);
 	
 	$xCaja		= new cCaja();		//$recibo, $MontoRecibido, $banco, $cheque
-	if( floatval($monto1) > 0 ){
-		$s1			= $xCtaBanc->getVerificarCheque($cheque1, $monto1);
+	if( $monto1 > 0 ){
+		$s1			= $xCtaBanc->getVerificarCheque($cheque1, $monto1, true);
 		$sucess		= $s1;
 		if ($s1 == false ){
-			$tab -> add(TabSetValue::getBehavior("iNumeroCheque1", "0" ) );
+			$tab->add(TabSetValue::getBehavior("iNumeroCheque1", "0" ) );
+			$xLog->add("ERROR\tCheque $cheque1 No existe en la cuenta $Cuenta1\r\n");
 		}
 	}
-	if( floatval($monto2) > 0 ){
+	if( $monto2 > 0 ){
 		$xCtaBanc->set($Cuenta2);
-		$s2			= $xCtaBanc->getVerificarCheque($cheque2, $monto2);
+		$s2			= $xCtaBanc->getVerificarCheque($cheque2, $monto2, true);
 		$sucess		= $s2;
 		if ($s1 == false ){
-			$tab -> add(TabSetValue::getBehavior("iNumeroCheque2", "0" ) );
+			$xLog->add("ERROR\tCheque $cheque2 No existe en la cuenta $Cuenta2\r\n");
+			$tab->add(TabSetValue::getBehavior("iNumeroCheque2", "0" ) );
 		}		
 	}
 	if($sucess == true ){
-		if( floatval($monto1) > 0 ){
+		if( $monto1 > 0 ){
 			$xCaja->setCobroChequeInterno($Recibo, $monto1, $Cuenta1, $cheque1);
 		}
-		if( floatval($monto2) > 0 ){
+		if( $monto2 > 0 ){
 			$xCaja->setCobroChequeInterno($Recibo, $monto2, $Cuenta2, $cheque2);
 		}
 	}
+	$xLog->add($xCtaBanc->getMessages(), $xLog->DEVELOPER);
+	$xLog->add($xCaja->getMessages(), $xLog->DEVELOPER);
+	
+	$tab -> add(TabSetValue::getBehavior("avisos", $xLog->getMessages() ) );
 	if($sucess == false ){
-		$tab -> add(TabSetValue::getBehavior("avisos", $xCtaBanc->getMessages("txt") ) );
+		$xRec	= new cReciboDeOperacion(false, false, $Recibo);
+		if($xRec->init() == true){
+			$xLog->guardar(2012, $xRec->getCodigoDeSocio(), $xRec->getCodigoDeDocumento(), $xRec->getCodigoDeRecibo());
+		}
 	}
-	return $tab -> getString();
+	return $tab->getString();
 }
 function jsaGetCheque1($cheque, $cuenta){
 	$xCta	= new cCuentaBancaria($cuenta);
@@ -69,19 +79,22 @@ $jxc ->exportFunction('jsaGetCheque2', array('iNumeroCheque2', 'iCuenta2' ), '#i
 //ejecuta el script
 $jxc ->process();
 
+$xHP->init();
+
 //=========================== HTML
-$recibo			= isset($_GET["r"]) ? $_GET["r"] : false;
-if( $recibo != false ){
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT); $recibo	= parametro("r", $recibo, MQL_INT);
+
+if( $recibo > 0  ){
 	$xRec			= new cReciboDeOperacion(false, false, $recibo);
 	$xRec->init();
 	$DRec			= $xRec->getDatosInArray();
 	$MontoOperacion	= $DRec["total_operacion"];
 	//=========================== HTML
-	echo $xHP->getHeader();
-	echo $xJS->setIncludeJQuery();
+
 	
-	$jxc ->drawJavaScript(false, true);
-	echo $xHP->setBodyinit();
+	
+	
+	
 	
 	?> <style> #idavisopago, #idimporte, #iMontoRecibido, #iNumeroCheque2, #iNumeroCheque1, #iMontoCheque2, #iMontoCheque1 { font-size : 1.3em !important; } </style> <?php
 	
@@ -92,11 +105,12 @@ if( $recibo != false ){
 	$xTxt	= new cHText("id");
 	$xTxt2	= new cHText("id");
 	$xHNot	= new cHNotif();
+	$xSel	= new cHSelect();
 	
 	$xTxt2->setIncludeLabel(false);	
 	$xTxt2->setProperty("size", "10");
 	$xTxt2->setProperty("maxlength", "12");
-	$xTxt2->setProperty("class", "requiredfield");
+	//$xTxt2->setProperty("class", "requiredfield");
 	//
 	$xTxt0	= new cHText("id");
 	$xTxt0->setProperty("disabled", "true");
@@ -104,79 +118,111 @@ if( $recibo != false ){
 	$xSel1	= new cSelect("iCuenta1", "iCuenta1", TBANCOS_CUENTAS);
 	$xSel2	= new cSelect("iCuenta2", "iCuenta2", TBANCOS_CUENTAS);
 	
-
+	$xTxt->addEvent("jsGetTotal(event)", "onkeyup");
 	
-	//$xFRM->addHElem( array("", "<div class='title'>IMPORTE :</div>",  $xTxt0->getDeMoneda("iMontoOperacion", "", $MontoOperacion) ));
+	
+	$xFRM->OHidden("iMontoOperacion", $MontoOperacion);
+	$xFRM->OHidden("iRecibo", $recibo);
+	
 	$xFRM->addHElem( $xHNot->get($xHP->lang("importe") . " : " . getFMoney($MontoOperacion) . AML_CLAVE_MONEDA_LOCAL, "idimporte") );
 	
 	$xTxt->setDropProperty("disabled");
 
-	$xFRM->addHElem( array( "<div class='title'>Banco</div>", "<div class='title'>Num. Cheque</div>", "<div class='title'>Monto</div>")  );
+	
 	$xTxt2->addEvent("onblur", "jsaGetCheque1");
-	$xFRM->addHElem( array( $xSel1->get(), $xTxt2->getBasic("iNumeroCheque1", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque1", "", 0.00) ) );
+	//$xSel1->setLabel("TR.BANCO"); $xFRM->addHElem( $xSel1->getLabel() );$xFRM->addHElem($xSel1->get());
+	$xFRM->addHElem( $xSel->getListaDeCuentasBancarias("iCuenta1", true)->get(false) );
+	$xFRM->addHElem( $xTxt2->getLabel("TR.CHEQUE 1") );
+	$xFRM->addHElem($xTxt2->getBasic("iNumeroCheque1", 8, "required", "0"));
+	$xFRM->addHElem($xTxt->getLabel("TR.MONTO 1") );
+	$xFRM->addHElem($xTxt->getDeMoneda("iMontoCheque1", "", 0));
+	
 	
 	$xTxt->addEvent("jsActualizarPago", "onblur");
-//	$xTxt->addEvent("jsActualizarPago", "onchange");
-
 	$xTxt2->addEvent("onblur", "jsaGetCheque2");
-	$xFRM->addHElem( array( $xSel2->get(), $xTxt2->getBasic("iNumeroCheque2", 8, "required", "0"), $xTxt->getDeMoneda("iMontoCheque2", "", 0.00) ) );
+	
+	//$xFRM->addHElem($xSel2->get());
+	$xFRM->addHElem( $xSel->getListaDeCuentasBancarias("iCuenta2", true)->get(false) );
+	$xFRM->addHElem( $xTxt2->getLabel("TR.CHEQUE 2") );
+	$xFRM->addHElem($xTxt2->getBasic("iNumeroCheque2", 8, "required", "0"));
+	$xFRM->addHElem($xTxt->getLabel("TR.MONTO 2") );
+	$xFRM->addHElem($xTxt->getDeMoneda("iMontoCheque2", "",0));
+	
+	
 	
 	$xTxt->setProperty("disabled", "true");
+	
 	$xFRM->addHElem( array("", "<div class='title'>SUMA:</div>",  $xTxt->getDeMoneda("iTotal", "", 0) ));
 	
+	$xFRM->addAviso($xFRM->getT("MS.MSG_REQUIERE_CHEQUE"), "avisos", false, "warning");
 	
-	$xFRM->addHTML("<input type='hidden' id='iRecibo' name='iRecibo' value='$recibo' />");
-	$xFRM->addHTML("<textarea id='avisos' rows='2' cols='52' disabled></textarea>");
+	$xFRM->addGuardar("jsActualizarPago()");
 		
 	echo $xFRM->get();
-	echo $xHP->setBodyEnd();
+
 	//=========================== HTML
 	?>
-	<script type="text/javascript">
+	<script>
+	var xG	= new Gen();
+	
+	function jsGetTotal(evt){
+		//xG.isNumberKey({evt:evt, callback: function(){
+				var mMonto1		= parseFloat( $("#iMontoCheque1").val() );
+				var mMonto2		= parseFloat( $("#iMontoCheque2").val() );
+				var mTotal		= parseFloat( (mMonto1 + mMonto2) );
+				$("#iTotal").val( mTotal );
+		//}});
+	}
 	function jsActualizarPago(){
 		var mReady		= true;
-		var mOperacion	= parseFloat( $("#iMontoOperacion").val() );
-		var mMonto1		= parseFloat( $("#iMontoCheque1").val() );
-		var mMonto2		= parseFloat( $("#iMontoCheque2").val() );
-		var mTotal		= parseFloat( (mMonto1 + mMonto2) );
+		var mOperacion	= flotante( $("#iMontoOperacion").val() );
+		var mMonto1		= flotante( $("#iMontoCheque1").val() );
+		var mMonto2		= flotante( $("#iMontoCheque2").val() );
+		var mTotal		= flotante( (mMonto1 + mMonto2) );
 		
-		var mRemanente	= parseFloat( ( mOperacion - mTotal ) );
+		var mRemanente	= flotante( ( mOperacion - mTotal ) );
 		//validar cheques
 		if( mMonto1 > 0){
-			if( $("#iNumeroCheque1").val() == 0){
+			if( entero($("#iNumeroCheque1").val()) == 0){
 				mReady = false;
-				alert("El Numero de Cheque 1 debe tener un valor Valido!!");
+				xG.alerta({msg:"El Numero de Cheque 1 debe tener un valor Valido!!", tipo: "error"});
 				$("#iNumeroCheque1").focus();
 			}
 		}
 		if( mMonto2 > 0){
-			if( $("#iNumeroCheque2").val() == 0){
+			if( entero($("#iNumeroCheque2").val()) == 0){
 				mReady = false;
-				alert("El Numero de Cheque 2 debe tener un valor Valido!!");
+				xG.alerta({msg:"El Numero de Cheque 2 debe tener un valor Valido!!", tipo: "error"});
 				$("#iNumeroCheque2").focus();				
 			}			
 		}
+		if( mTotal < mOperacion){
+			mReady = false;
+			xG.alerta({msg:"El Monto recibido $ " + mTotal + "\r\nNo debe ser DIFERENTE\r\nAl Monto de la Operacion $ " + mOperacion, tipo: "error"});
+		}
+		
 		if( mReady == true ){
 			if ( (mRemanente  > 0) || (mRemanente  < 0) ) {
-				alert("El Monto recibido $ " + mTotal + "\r\nNo debe ser DIFERENTE\r\nAl Monto de la Operacion");
+				xG.alerta({msg:"El Monto recibido $ " + mTotal + "\r\nNo debe ser DIFERENTE\r\nAl Monto de la Operacion $ " + mOperacion, tipo: "error"});
 				$("#iMontoCheque1").focus();
 				$("#iTotal").val( mTotal );
 			} else {
 				$("#iTotal").val( mTotal );
 				jsaSetPago();
-				if($("#aviso").val() == ""){
-					try  {
-						setTimeout("parent.jsRevalidarRecibo()", 500);
-					} catch ( err ){
-						
-					}
-				}
-
+				xG.postajax("jsReloadF()");
 			}
+		}
+	}
+	function jsReloadF(){
+		try  {
+			setTimeout("parent.jsRevalidarRecibo()", 500);
+		} catch ( err ){
+			
 		}
 	}
 	</script>
 	<?php
-	$xHP->end();
+	$jxc->drawJavaScript(false, true);
 }
+$xHP->fin();
 ?>

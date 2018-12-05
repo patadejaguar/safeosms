@@ -172,11 +172,15 @@ $messages		= "";
 	$ql->setRawQuery("CALL `sp_tabla_cal_aports`() ");
 	//$ql->setRawQuery("CALL `tmp_personas_aport_cal`() ");
 	
-	$ql->setRawQuery("CALL `sp_personas_estadisticas`() ");
+	//$ql->setRawQuery("CALL `sp_personas_estadisticas`() ");
 	
-	$xSys	= new cSystemTask();
-	$xDB	= new cSAFEData();
+	$xSys		= new cSystemTask();
+	$xDB		= new cSAFEData();
+	$xPUtils	= new cPersonasUtilerias();
+	
 
+	$xPUtils->setConstruirEstadisticas();
+	
 	//crear backup //
 	if (  $xF->getDiaFinal()  == $xF->get() OR date("N", $xF->getInt()) == 5  ){
 		try{
@@ -187,6 +191,8 @@ $messages		= "";
 			$messages	.= "ERROR\tNo se genera el Respaldo a la fecha " .$xF->getFechaDDMM() . "\r\n";
 		}
 
+	} else {
+		$xSys->setBackupDB();
 	}
 
 	//cerrar el log

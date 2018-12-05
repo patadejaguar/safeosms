@@ -59,6 +59,7 @@ if($credito <= DEFAULT_CREDITO){
 	if($xCred->init() == true){
 		$persona	= $xCred->getClaveDePersona();
 		$xFRM->addCerrar();
+		$xFRM->OButton("TR.AGREGAR DOCUMENTO", "var xC=new CredGen();xC.setAgregarDocumentos($credito);", $xFRM->ic()->ARCHIVOS, "idaddnewdoctocred", "white");
 		//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
 		
 
@@ -145,7 +146,7 @@ if($credito <= DEFAULT_CREDITO){
 				default :
 					
 					
-					if($xCred->getSaldoActual()<=0){
+					if($xCred->getEsPagado() == true){
 						$ArrGenericos[]	= array(
 								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CARTA_FINIQUITO"),
 								"imprimir" => "var xC=new CredGen(); xC.getFormatoFiniquito($credito)","doc" => "","pdf" => ""

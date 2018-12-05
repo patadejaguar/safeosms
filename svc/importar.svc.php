@@ -18,24 +18,35 @@ $ql			= new MQL();
 $xSuc		= new cSucursal();
 $xShare		= new cPersonasShare();
 $xLog		= new cCoreLog();
+$xUsr		= new cSystemUser();
 
 $data		= (isset($_REQUEST["data"])) ? $_REQUEST["data"] : null;
 $command	= (isset($_REQUEST["cmd"])) ? $svc->getDecryptData($_REQUEST["cmd"]) : null;
 //$context	= (isset($_REQUEST["ctx"])) ? $svc->getDecryptData($_REQUEST["ctx"]) : null;
 
-$xTu		= new cSystemUser( TASK_USR, false );
-$xTu->init();
-$ctx		= $xTu->getCTX();
+
+if($xUsr->init() == true){
+	$ctx	= $xUsr->getCTX();
+} else {
+	$xTu		= new cSystemUser( TASK_USR, false );
+	$xTu->init();
+	$ctx		= $xTu->getCTX();
+}
+
 $cmd		= $svc->getEncryptData($command);
 
 $rs				= array();
 $rs["error"]	= true;
-$rs["message"]	= "Sin datos validos";
+$rs["message"]	= "Sin datos validos ($command - $data)";
 $rs["persona"]	= 0;
+$ops	= 0;
 
 switch ($command){
 	case TPERSONAS_GENERALES:
-		$dpersona	= $svc->getService(SVC_ASOCIADA_HOST . "svc/exportar.svc.php?ctx=$ctx&data=$data&cmd=$cmd");
+		$urlP		= SVC_ASOCIADA_HOST . "svc/exportar.svc.php?ctx=$ctx&data=$data&cmd=$cmd";
+		$dpersona	= $svc->getService($urlP);
+		$xLog->add("WARN\tPidiendo Datos a " . SVC_ASOCIADA_HOST . "\r\n");
+		$xLog->add("WARN\tPidiendo Datos a : $urlP\r\n", $xLog->DEVELOPER);
 		
 		if(is_array($dpersona)){
 			$xSoc		= new cSocios_general($dpersona);
@@ -43,19 +54,28 @@ switch ($command){
 			
 			$idpersona	= $xSoc->codigo()->v();
 			$idpersona2	= $xSoc->codigo()->v();
+			
 			if($xSuc->existeSocio($idpersona) == true){
+				$xLog->add("WARN\tLa persona $idpersona existe en el sistema\r\n");
+				
 				if($xShare->add($idpersona) == true){
 					$idpersona	=  $xShare->getPersonaActual();
 					//Asignar nuevo codigo
 					$xSoc->codigo($idpersona);
 					$xLog->add("WARN\tCambio de Persona Importada de $idpersona2 a $idpersona\r\n");
 				} else {
+					if($xShare->getPersonaActual()>DEFAULT_SOCIO){
+						$idpersona	=  $xShare->getPersonaActual();
+						$xLog->add("WARN\tLa Persona Actual es $idpersona\r\n");
+					}
+					$xLog->add("ERROR\tSe fallo al agregar a la persona $idpersona como compartida\r\n");
 					$run		= false;
 				}
 			}
 			$rs["persona"]		= $idpersona;
 			if($run == true){
 				$res	= $xSoc->query()->insert()->save();
+				$ops++;
 			}
 			//Iniciar Cuenta de Captacion
 			
@@ -80,6 +100,8 @@ switch ($command){
 			
 			$rs["persona"]	= $idpersona;
 			$xDom->query()->insert()->save();
+			$rs["error"]	= false;
+			$ops++;
 		}
 		//$rs		= $ddomicilio;
 		break;
@@ -100,6 +122,8 @@ switch ($command){
 			
 			$rs["persona"]	= $idpersona;
 			$xAe->query()->insert()->save();
+			$rs["error"]	= false;
+			$ops++;
 		}
 		break;
 	case TCATALOGOS_EMPRESAS:
@@ -112,13 +136,19 @@ switch ($command){
 		if(is_array($dempresa)){
 			$xEmp	= new cSocios_aeconomica_dependencias($dempresa);
 			$xEmp->query()->insert()->save();
+			$rs["error"]	= false;
+			$ops++;
+			
 		}		
 		break;
 }
 
 $xLog->add($xShare->getMessages());
+//if($ops >= 1){
+	$rs["message"]	= $xLog->getMessages();
+//}
+$xLog->guardar($xLog->OCat()->PERSONA_INOUT_TADA, $idpersona);
 
-$xLog->guardar($xLog->OCat()->PERSONA_MODIFICADA, $idpersona);
 
 header('Content-type: application/json');
 echo json_encode($rs);

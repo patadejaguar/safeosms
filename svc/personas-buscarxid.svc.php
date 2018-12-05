@@ -34,9 +34,9 @@ header('Content-type: application/json');
 $existe			= ($curp != "") ? $xBus->setBuscarPorIDPoblacional($curp, true, true) : $existe; 
 $existe			= ($rfc != "") ? $xBus->setBuscarPorIDFiscal($rfc, true, true) : $existe;
 if($existe == false){
-	$rs["messages"]		= "ERROR\tNo existe ID_POBLACIONAL $curp O ID_FISCAL $rfc";
+	$rs["messages"]		= "OK\tNo existe ID_POBLACIONAL $curp O ID_FISCAL $rfc\r\n";
 } else {
-	$rs["messages"]		= "OK\tExiste ID_POBLACIONAL $curp O ID_FISCAL $rfc";
+	$rs["messages"]		= "WARN\tExiste ID_POBLACIONAL $curp O ID_FISCAL $rfc\r\n";
 }
 $rs["existe"]		= $existe;
 echo json_encode($rs);

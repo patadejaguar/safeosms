@@ -28,14 +28,14 @@ $xHP->init();
 
 
 //if($parent == false AND $txtBuscar == ""){
-	$w			= ($tipo == "") ?  " WHERE `nombre_del_parametro`!= '' " : " WHERE `tipo`='$tipo' ";
+	$w			= ($tipo == "") ?  "" : " AND(`tipo`='$tipo') ";
 	
 
 	$xFRM		= new cHForm("frmeditar", "configuracion.editar.frm.php");
 	$xFRM->setTitle($xHP->getTitle());
 	
 	$sqlMost 	= "SELECT tipo, CONCAT('(' , COUNT(nombre_del_parametro), ') ', tipo ) AS 'conceptos'
-					    FROM entidad_configuracion $w
+					    FROM entidad_configuracion WHERE `estatus`=1 $w
 					GROUP BY tipo
 					ORDER BY tipo ";
 	$cSel 		= new cSelect("cmenu", "cmenu", $sqlMost);
@@ -59,17 +59,22 @@ $xHP->init();
 	//Grid
 	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 	
-	$xHG->setSQL("SELECT * FROM `entidad_configuracion` $w");
+	$xHG->setSQL("SELECT * FROM `entidad_configuracion` WHERE `estatus`=1 $w");
 	$xHG->addList();
 	$xHG->setOrdenar();
 	
 	$xHG->col("tipo", "TR.TIPO", "10%");
 	$xHG->addKey("nombre_del_parametro");
-	$xHG->col("descripcion_del_parametro", "TR.DESCRIPCION DEL PARAMETRO", "10%");
-	$xHG->col("valor_del_parametro", "TR.VALOR DEL PARAMETRO", "10%");
+	if($xFRM->getEnDesarrollo() == true){
+		$xHG->col("nombre_del_parametro", "TR.NOMBRE", "20%");
+	}
+	$xHG->col("descripcion_del_parametro", "TR.DESCRIPCION", "30%");
+	$xHG->col("valor_del_parametro", "TR.VALOR", "20%");
 	
 	//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 	$xHG->OButton("TR.EDITAR", "jsEdit(\''+ data.record.nombre_del_parametro +'\')", "edit.png");
+	$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave_de_control +')", "undone.png");
+	
 	//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.nombre_del_parametro +')", "delete.png");
 	$xFRM->addHElem("<div id='iddiv'></div>");
 	$xFRM->addJsCode( $xHG->getJs(true) );
@@ -85,6 +90,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	//xG.rmRecord({tabla:"entidad_configuracion", id:id, callback:jsLGiddiv});
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"aml_alerts", id:id, callback:jsLGiddiv, preguntar:true });
 }
 function setFiltrar(){
 	var tipo	= String($("#cmenu").val()).toLowerCase();

@@ -20,9 +20,29 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
-//$jxc 		= new TinyAjax();
-//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-//$jxc ->process();
+$jxc 		= new TinyAjax();
+
+function jsaDenegarNivel($clave, $nivel){
+	$nivel	= setNoMenorQueCero($nivel);
+	$sql	= "SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$nivel AND `estatus`=1 ";
+	$xQL	= new MQL();
+	$xT		= new cGeneral_niveles();
+	if($nivel > 0 AND $clave > 0){
+		$rs	= $xQL->getDataRecord($sql);
+		foreach ($rs as $rw){
+			$idp		= $rw[$xT->IDGENERAL_NIVELES];
+			$xPerm	= new cSystemPermisosObjeto($clave);
+			if($xPerm->init() == true){
+				
+				$xPerm->addNegado($idp);
+			}
+		}
+	}
+	return "Listo Nivel $nivel en la clave $clave";
+}
+
+$jxc ->exportFunction('jsaDenegarNivel', array('idclave', 'idnegado'), "#idxaviso");
+$jxc ->process();
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
@@ -36,34 +56,66 @@ $grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, 
 $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
 $observaciones= parametro("idobservaciones");
+
+
+$form		= parametro("form", "", MQL_RAW);
+
+
 $xHP->addJTableSupport();
 $xHP->init();
 
-
+$ByF		= ($form == "") ? "" : " AND (`accion` LIKE '" .  crc32($form) . "-f-" . "%') ";
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
-
+$xFRM->addCerrar();
 
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivpermisos",$xHP->getTitle());
 
-$xHG->setSQL("SELECT * FROM `sistema_permisos` LIMIT 0,100");
-$xHG->addList();
-$xHG->addKey("idsistema_permisos");
-$xHG->col("accion", "TR.ACCION", "10%");
-$xHG->col("denegado", "TR.DENEGADO", "10%");
-$xHG->col("descripcion", "TR.DESCRIPCION", "10%");
-$xHG->col("tipo_objeto", "TR.TIPO OBJETO", "10%");
-$xHG->col("nombre_objeto", "TR.NOMBRE OBJETO", "10%");
+$xHG->setSQL("SELECT * FROM `sistema_permisos` WHERE `estatus`=1 $ByF LIMIT 0,100");
+//exit("SELECT * FROM `sistema_permisos` WHERE `estatus`=1 $ByF LIMIT 0,100");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->addList();
+$xHG->setOrdenar();
+
+
+
+$xHG->addKey("idsistema_permisos");
+//$xHG->col("accion", "TR.ACCION", "10%");
+if($form == ""){
+	$xHG->col("nombre_objeto", "TR.SUJETO", "10%");
+}
+$xHG->col("descripcion", "TR.DESCRIPCION", "10%");
+//$xHG->col("tipo_objeto", "TR.TIPO OBJETO", "10%");
+
+$xHG->col("denegado", "TR.DENEGADO", "10%");
+
+$rs	= $xQL->getDataRecord("SELECT `tipo_sistema` AS `clave`, MAX(`descripcion_del_nivel`) AS `tipo` FROM `general_niveles` WHERE `estatus`=1 GROUP BY `tipo_sistema` ");
+foreach ($rs as $rw){
+	$idx	= $rw["clave"];
+	
+	$nn		= $rw["tipo"];
+	if($idx <= 6){
+		$xHG->OButton("$nn", "jsAddNegados('+ data.record.idsistema_permisos +',$idx)", "$idx.png");
+	}
+}
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsistema_permisos +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_permisos +')", "delete.png");
+
+
+
 $xFRM->addHElem("<div id='iddivpermisos'></div>");
+
 $xFRM->addJsCode( $xHG->getJs(true) );
+
+$xFRM->OHidden("idnegado", 0);
+$xFRM->OHidden("idclave", 0);
+$xFRM->OHidden("idxaviso", "");
+
 echo $xFRM->get();
 ?>
 <script>
@@ -77,10 +129,24 @@ function jsAdd(){
 function jsDel(id){
 	xG.rmRecord({tabla:"sistema_permisos", id:id, callback:jsLGiddivpermisos});
 }
+function jsAddNegados(id, idnivel){
+	//var idnegado = $("#idnegado").val();
+	//var idclave = $("#idclave").val();
+	$("#idclave").val(id);
+	$("#idnegado").val(idnivel);
+	jsaDenegarNivel();
+}
+function jsMsg(){
+	$("#idclave").val(0);
+	$("#idnegado").val(0);
+	
+	var idxaviso = $("#idxaviso").val(); 
+	xG.alerta({msg: idxaviso});
+}
 </script>
 <?php
 
 
-//$jxc ->drawJavaScript(false, true);
+$jxc ->drawJavaScript(false, true);
 $xHP->fin();
 ?>

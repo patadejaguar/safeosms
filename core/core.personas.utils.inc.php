@@ -256,9 +256,10 @@ GROUP BY
 		return $datos;
 	}
 	function getCreditoPrioritario(){ return $this->mCreditoPrioritario; }
+
 }
 
-class cPersonas_utils {
+class cPersonasUtilerias {
 	function __construct(){}
 	function setCorregirDomicilios($correcion = false){
 		//obtener codigo postal
@@ -636,6 +637,26 @@ class cPersonas_utils {
 			//$QL->setRawQuery("");
 		//}	
 	}
+	function setConstruirEstadisticas($idpersona = false){
+		$xQL		= new MQL();
+		$idpersona	= setNoMenorQueCero($idpersona);
+		
+		if($idpersona <= DEFAULT_SOCIO){
+			$xQL->setCall("sp_personas_estadisticas");
+		}
+		$rs			= $xQL->getRecordset("SELECT numero_socio, descripcion FROM creditos WHERE estatusactivo=1 AND saldo_actual>0");
+		if($rs){
+			
+			while($rw = $rs->fetch_assoc()){
+				$descripcion	= $rw["descripcion"];
+				$idpersona		= $rw["numero_socio"];
+				
+				$xQL->setRawQuery("UPDATE `tmp_personas_estadisticas` SET `inf_creditos` = SUBSTR( CONCAT(`inf_creditos`,';$descripcion'),1,250) WHERE `persona`= $idpersona ");
+				
+			}
+			$rs->free();
+		}
+	}
 }
 class cIDLegal {
 	private $mID		= "";
@@ -779,7 +800,7 @@ class cPersonasShare {
 		$xSuc->init();
 		$idpersona	= $xSuc->getNuevaClaveDePersona();
 		if($this->initByImportado($personaImportada) == true){
-			$this->mMessages	.= "ERROR\tLa Persona Importada $personaImportada Existe\r\n";
+			$this->mMessages	.= "ERROR\tLa Persona Importada $personaImportada ya Existe, no se agrega\r\n";
 			return false;
 		}
 		
@@ -801,10 +822,45 @@ class cPersonasShare {
 			return true;
 		}
 	}
+	function add2($personaImportada, $persona = false){
+		$res		= false;
+		$idpersona	= setNoMenorQueCero($persona);
+		if($this->initByImportado($personaImportada) == true){
+			$this->mMessages	.= "ERROR\tLa Persona Importada $personaImportada ya Existe, no se agrega\r\n";
+			return false;
+		}
+		if($persona > DEFAULT_SOCIO AND $personaImportada > DEFAULT_SOCIO){
+			//Guardar en Share
+			$xShare	= new cPersonas_share();
+			$xShare->idusuario(getUsuarioActual());
+			$xShare->persona_id($idpersona);
+			$xShare->idpersonas_share("NULL");
+			$xShare->personas_share_id($personaImportada);
+			
+			$xShare->tiempo(time());
+			$xShare->url_share(SVC_ASOCIADA_HOST);
+			$res	= $xShare->query()->insert()->save();
+			
+			$this->setCuandoSeActualiza();
+		}
+		if($res === false){
+			return false;
+		} else {
+			$this->mPersonaImport	= $personaImportada;
+			$this->mPersonaActual	= $idpersona;
+			return true;
+		}
+	}
 	function getPersonaActual(){ return $this->mPersonaActual; }
 	function getPersonaImportada(){ return $this->mPersonaImport; }
 	function initByImportado($idimportado){
 		$sql	= "SELECT * FROM `personas_share` WHERE `personas_share_id`=$idimportado ORDER BY `tiempo` DESC LIMIT 0,1";
+		$xQL	= new MQL();
+		$data	= $xQL->getDataRow($sql);
+		return $this->init($data);
+	}
+	function initByPersona($idpersona){
+		$sql	= "SELECT * FROM `personas_share` WHERE `persona_id`=$idpersona ORDER BY `tiempo` DESC LIMIT 0,1";
 		$xQL	= new MQL();
 		$data	= $xQL->getDataRow($sql);
 		return $this->init($data);

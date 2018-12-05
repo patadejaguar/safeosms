@@ -35,6 +35,9 @@ $grupo				= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo
 
 $control			= parametro("control", "idsocio", MQL_RAW);
 
+$solofisicas		= parametro("solofisicas", false, MQL_BOOL);
+
+
 $tiny 				= (isset($_GET["tinybox"])) ? true : false;
 $BuscarConID		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);		//regla de negocio
 /*if($OtherEvent != ""){
@@ -87,7 +90,7 @@ function jsaGetListadoDeProductos(){
 	$cDE->setOptionSelect(DEFAULT_TIPO_CONVENIO);
 	return $cDE->get("", false);
 }
-function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $idempresa = 0, $idgrupo = 0, $idnextaction=""){
+function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "", $tipoingreso = 0, $idempresa = 0, $idgrupo = 0, $idnextaction="", $solofisicas = false){
 	$strTbls			= "";
 	$ByForm				= false;
 	$MostrarGars		= true;
@@ -105,6 +108,8 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 	$xT					= new cTipos();
 	$xVals				= new cReglasDeValidacion();
 	$todos				= $xT->cBool($todos);
+	$solofisicas		= $xT->cBool($solofisicas);
+	
 	$w1					= ($todos == true) ? "" : " AND (`socios_general`.tipoingreso != " . TIPO_INGRESO_SDN ." AND `socios_general`.tipoingreso != " . TIPO_INGRESO_PEP ." AND `socios_general`.tipoingreso != " . TIPO_INGRESO_USUARIO ." AND `socios_general`.tipoingreso != " . FALLBACK_PERSONAS_TIPO_ING ." AND `codigo` != " . DEFAULT_SOCIO . ") AND (`socios_general`.`estatusactual`!=20) ";
 	if($tipoingreso > 0){
 		$w1				= " AND (`socios_general`.tipoingreso=$tipoingreso) ";
@@ -138,8 +143,11 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 		
 	}
 	//if(OPERACION_LIBERAR_SUCURSALES == false){
-		$extras			= ", `socios_general`.`sucursal` ";
+	$extras			= ", `socios_general`.`sucursal` ";
 	//}
+	if($solofisicas == true){
+		$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_FISICA . ") ";
+	}
 	$buscar				= ( ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0")) AND ($idinterno =="") ) ? false : true;
 	if ($buscar == false) {
 		$sqllike = $sqlL->getListadoDePersonasV2($w1, "0,50", $extras);
@@ -288,7 +296,7 @@ function jsaAddPersonaToEmpresa($persona, $Empresa){
 }
 
 
-$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso","idempresaadd","idgrupoadd", "idnextaction"), "#divresultado");
+$jxc ->exportFunction('jsaShowSocios', array("idtextobusqueda", "idtipobusqueda","idtodo", "idinterna", "tipodeingreso","idempresaadd","idgrupoadd", "idnextaction", "idsolofisicas"), "#divresultado");
 $jxc ->exportFunction('jsaGetListadoDeEmpresas', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaGetListadoDeProductos', array(""), "#idbusqueda");
 $jxc ->exportFunction('jsaSetSocioEnSession', array("idsocio"));
@@ -346,9 +354,13 @@ $xFRM->endSeccion();
 $xFRM->OHidden("idnextaction", $nextstep);
 
 //Tipo de Ingreso falso
+if($solofisicas == true){
+	$xFRM->OHidden("idsolofisicas", "true");
+} else {
+	$xFRM->OHidden("idsolofisicas", "false");
+}
 
 $xFRM->OHidden("tipodeingreso", $tipo_de_ingreso);
-
 $xFRM->OHidden("idempresaadd", $empresa);
 $xFRM->OHidden("idgrupoadd", $grupo);
 
@@ -394,6 +406,10 @@ function setSocio(id){
 	var dd		= xG.getMetadata("#tr-socios_general-" + id);
 	$("#idsocio").val(id);
 
+	if(next == Configuracion.rutas.addcredito){
+		xG.go({url: "../frmcreditos/solicitud_de_credito.frm.php?persona=" + id});
+		return false;
+	}
 	if(next == Configuracion.rutas.credito){
 		xG.go({url: "../utils/frmscreditos_.php?next=panel&persona=" + id});
 		return false;

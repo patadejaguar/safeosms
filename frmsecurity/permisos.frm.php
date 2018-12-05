@@ -106,6 +106,9 @@ function jsaSetLiberarPermisos($id){	$xP	= new cSystemPermissions();	$xP->setLib
 function jsaSetAplicarPerfiles($id){
 	$xP					= new cSystemPermissions();
 	$xP->setAplicarPerfil();
+	$xCache	= new cCache();
+	$xCache->clean();
+	
 	$xFil				= new cFileLog();
 	$xFil->setWrite($xP->getMessages()); $xFil->setClose();
 	return $xFil->getLinkDownload("Cambios");
@@ -169,12 +172,16 @@ $xFRM->addHElem("<div id='idmenu' class='tx1'></div>");
 
 $xFRM->addAviso("", "idmsg");
 //$xFRM->OButton("TR.GUARDAR Permisos", "jsaSetClearPermisos()", $xFRM->ic()->ELIMINAR);
+$xFRM->addCerrar();
 $xFRM->OButton("TR.Obtener Permisos", "jsaListarPermisos()", $xFRM->ic()->CARGAR);
-$xFRM->OButton("TR.Limpiar Permisos", "jsaSetClearPermisos()", $xFRM->ic()->ELIMINAR);
-$xFRM->OButton("TR.Liberar Permisos", "jsaSetLiberarPermisos()", $xFRM->ic()->LIBERAR);
-$xFRM->OButton("TR.Aplicar Perfiles", "jsaSetAplicarPerfiles()", $xFRM->ic()->GRUPO);
-
 $xFRM->OButton("TR.Copiar Perfiles", "jsSetClonarPerfiles()", $xFRM->ic()->CONTROL);
+
+if(MODO_CORRECION == true OR MODO_MIGRACION == true){
+	$xFRM->OButton("TR.Limpiar Permisos", "jsaSetClearPermisos()", $xFRM->ic()->ELIMINAR, "idcmdclean", "red");
+	$xFRM->OButton("TR.Liberar Permisos", "jsaSetLiberarPermisos()", $xFRM->ic()->LIBERAR, "idcmdfree", "yellow");
+	$xFRM->OButton("TR.Aplicar Perfiles", "jsaSetAplicarPerfiles()", $xFRM->ic()->GRUPO, "idcmdapp", "blue");
+}
+
 
 echo $xFRM->get();
 ?>
@@ -190,6 +197,7 @@ function jsGuardarPermisos(obj){
 	var idmenu	= DD[1];
 	$.cookie.json 	= true;
 	var mURL	= "../svc/sudo.svc.php?id=" + idmenu  + "&enable=" + isEna + "&perfil="+idP;
+	console.log("../svc/sudo.svc.php?id=" + idmenu  + "&enable=" + isEna + "&perfil="+idP);
 	//var si		= confirm(this.lang("Confirma Eliminar el Registro"));
 	//if (si) {
 		$.getJSON( mURL, function( data ) {
@@ -197,7 +205,7 @@ function jsGuardarPermisos(obj){
 			  if (data.error == true) {
 				xG.alerta({msg:data.message});
 			  } else {
-				xG.alerta({msg:data.message, nivel:"ok"});
+				xG.alerta({info:data.message, nivel:"ok"});
 				//$("#tr-" + tbl + "-" + id).empty();
 			  }
 			}

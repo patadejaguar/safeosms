@@ -52,14 +52,22 @@ if($persona > DEFAULT_SOCIO and $action == MQL_ADD){
 		$xSoc		= new cSocio($persona);
 		if($xSoc->init() == true){
 			$xSoc->addMemo($tipomemo, $txtmemo, $credito, $fechamemo, $notificar, $notificar);
-			$xFRM->addAvisoRegistroOK();
+			$xFRM->addAvisoRegistroOK( $xSoc->getMessages() );
 			//$xFRM->addLog($xSoc->getMessages());
-			$xFRM->addCerrar("", 5);
+			if($notificar == true){
+				$xFRM->addCerrar();
+			}	else {
+				$xFRM->addCerrar("", 5);
+			}
+			
 		} else {
 			$xFRM->addAvisoRegistroError($xSoc->getMessages());
 		}
 	}
-}
+} else {
+	
+	
+
 if($credito > DEFAULT_CREDITO){
 	$xCred	= new cCredito($credito);
 	if($xCred->init() == true){
@@ -105,6 +113,11 @@ if($lista == true){
 	$xT->setOmitidos("usuario");
 	$xFRM->addHElem($xT->Show());
 	$xFRM->endSeccion();
+}
+
+
+
+
 }
 //.-
 echo $xFRM->get();	

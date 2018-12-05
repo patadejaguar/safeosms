@@ -38,14 +38,33 @@ if($ConEntFed == true){
 
 $xRPT->addControl( $xCtrl->get(true), "iddestinodecredito", "destino" );
 
+$xCtrl2		= $xSel->getListaDeTipoDeCuotaPag("tipodecuota");
+$xCtrl2->addEspOption(SYS_TODAS, "TODAS");
+$xCtrl2->setOptionSelect(SYS_TODAS);
+
+$xRPT->addControl( $xCtrl2->get(true), "tipodecuota", "tipodecuota" );
+
 $xChk->setDivClass("tx4 tx18");
 $xRPT->addControl($xChk->get("TR.Incluir Otros", "idotrosd"), "idotrosd", "otrosdatos", true);
 $xRPT->addControl($xChk->get("TR.Datos Simples", "idcompacto"), "idcompacto", "compacto", true);
 $xRPT->addControl($xChk->get("TR.OMITIRCEROS", "nocero"), "nocero", "nocero", true);
-$xRPT->addControl($xChk->get("TR.CON EMPLEADOR", "conempleador"), "conempleador", "conempleador", true);
-$xRPT->addControl($xChk->get("TR.SIN EMPLEADOR", "sinempleador"), "sinempleador", "sinempleador", true);
+
+if(PERSONAS_CONTROLAR_POR_EMPRESA == true ){
+	$xRPT->addControl($xChk->get("TR.CON EMPLEADOR", "conempleador"), "conempleador", "conempleador", true);
+	$xRPT->addControl($xChk->get("TR.SIN EMPLEADOR", "sinempleador"), "sinempleador", "sinempleador", true);
+}
+if(MODO_DEBUG == true){
+	$xSelTS	= $xSel->getListaDeCatalogoGenerico("cpdtos_tipo_sistema", "tipoensistema");
+	$xSelTS->setDivClass("tx4 tx18 red");
+	$xRPT->addControl($xSelTS->get("TR.TIPO EN SISTEMA", true), "tipoensistema", "tipoensistema");
+	
+}
+/*		
+		$xFRM->addHElem( $xSelTS->get("TR.TIPO EN SISTEMA", true) );*/
 //$xRPT->addTipoDeOperacion();
 //$xRPT->setConRecibos(false);
+
+
 echo $xRPT->get();
 
 echo $xRPT->getJs(true);

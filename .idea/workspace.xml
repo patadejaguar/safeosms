@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="5a02b1fd-926c-4988-8353-a580046c2d9a" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/safeosms.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/css/inicio.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/css/range.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/css/tableexport.min.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/forms/castigado-advierte-1.tpl.es" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos-garantias.panel.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos-lineas.panel.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos.productos.etapas.editar.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos.productos.reglas.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos.productos.reglas.new.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos.tipo_de_cuota.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/creditos.tipo_de_cuota.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/periodicidad_de_flujo.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmcreditos/periodicidad_de_flujo.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmfix/sistema-log.fix.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmpld/69b-cff.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/formulas-catalogo.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/formulas-catalogo.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/idioma-catalogo.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/idioma-catalogo.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/idioma-catalogo.new.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/utilerias-catalogo.edit.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmsystem/utilerias-catalogo.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frmtesoreria/cobro-domiciliado.frm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/--eraser.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/csv.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/delete-all.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/execution.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/go-back-arrow.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/icsv.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/itxt.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/ixls.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/ixlsx.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/logo.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/logo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/old-delete.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/txt.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/xls.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/xlsx.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/js/notify.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/js/tableexport.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/js/xlsx.core.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rptcajaslocales/rpt_socios_xcajalocal_v2.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rptcajaslocales/rpt_socios_xcajalocal_v21.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/safeosms.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/safeosms.ipr" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/safeosms.iws" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/support/functions-2018-08-27.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/support/parches-2018-08-27.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/support/vistas-2018-08-27.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/svc/mail.svc.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/svc/tareas.cron.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vendor/composer/autoload_static.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/404.php" beforeDir="false" afterPath="$PROJECT_DIR$/404.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.common.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.common.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.config.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.config.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.creditos.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.creditos.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.creditos.originacion.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.creditos.originacion.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.creditos.pagos.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.creditos.pagos.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.creditos.utils.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.creditos.utils.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.db.dic.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.db.dic.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.db.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.db.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.deprecated.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.deprecated.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.error.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.error.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.html.ext.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.html.ext.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.html.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.html.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.init.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.init.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.operaciones.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.operaciones.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.personas.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.personas.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.personas.utils.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.personas.utils.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.region.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.region.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.riesgo.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.riesgo.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.security.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.security.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.seguimiento.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.seguimiento.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.seguimiento.utils.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.seguimiento.utils.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.tesoreria.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.tesoreria.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/core.utils.inc.php" beforeDir="false" afterPath="$PROJECT_DIR$/core/core.utils.inc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/general.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/general.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/global.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/global.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcaja/frmcobrosdecreditos.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcaja/frmcobrosdecreditos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcaja/frmcobrosdecreditos2.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcaja/frmcobrosdecreditos2.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcaja/frmingresosvarios.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcaja/frmingresosvarios.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcaja/frmpagoprocesado.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcaja/frmpagoprocesado.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcaja/frmprocesarpago.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcaja/frmprocesarpago.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/castigo_de_cartera.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/castigo_de_cartera.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/credito.actualizar.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/credito.actualizar.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/creditos-lineas.edit.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/creditos-lineas.edit.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/creditos-lineas.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/creditos-lineas.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/creditos-preclientes.panel.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/creditos-preclientes.panel.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/creditos.panel.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/creditos.panel.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/frmcreditosautorizados.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/frmcreditosautorizados.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/frmcreditoslineas.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/frmcreditoslineas.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/frmdatos_de_convenios_de_creditos.xul.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/frmdatos_de_convenios_de_creditos.xul.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/plan_de_pagos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/plan_de_pagos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/solicitud_de_credito.2.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/solicitud_de_credito.2.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmcreditos/solicitud_de_credito.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmcreditos/solicitud_de_credito.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmgrupos/distribuir_garantia_en_grupos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmgrupos/distribuir_garantia_en_grupos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmmigracion/walook-creditos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmmigracion/walook-creditos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmoperaciones/recibos.panel.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmoperaciones/recibos.panel.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmpld/sdn.upload.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmpld/sdn.upload.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmreports/frmreportesdecreditos.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmreports/frmreportesdecreditos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsecurity/altausuarios.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsecurity/altausuarios.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsecurity/entidad-reglas.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsecurity/entidad-reglas.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsecurity/permisos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsecurity/permisos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsecurity/usuarios-edicion.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsecurity/usuarios-edicion.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmseguimiento/configurar-alertas.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmseguimiento/configurar-alertas.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmseguimiento/notificaciones.add.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmseguimiento/notificaciones.add.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/frmhistorialdesocios.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/frmhistorialdesocios.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/frmupdatesocios.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/frmupdatesocios.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/registro-grupos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/registro-grupos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/registro-personas.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/registro-personas.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/registro-personas_fisicas.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/registro-personas_fisicas.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsocios/socios.panel.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsocios/socios.panel.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsystem/edit-config.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsystem/edit-config.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmsystem/opciones.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmsystem/opciones.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmutils/cierre_de_riesgos.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmutils/cierre_de_riesgos.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmutils/cierre_de_seguimiento.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmutils/cierre_de_seguimiento.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frmutils/cierre_de_sistema.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/frmutils/cierre_de_sistema.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/llogo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inicio.php" beforeDir="false" afterPath="$PROJECT_DIR$/inicio.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/install/entidad-configuracion.edit.frm.php" beforeDir="false" afterPath="$PROJECT_DIR$/install/entidad-configuracion.edit.frm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/install/install.php" beforeDir="false" afterPath="$PROJECT_DIR$/install/install.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/install/updates/lang2.php" beforeDir="false" afterPath="$PROJECT_DIR$/install/updates/lang2.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/install/updates/sql.php" beforeDir="false" afterPath="$PROJECT_DIR$/install/updates/sql.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/LocalFaker.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/LocalFaker.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/config.js.php" beforeDir="false" afterPath="$PROJECT_DIR$/js/config.js.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/general.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/general.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/mexico.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/mexico.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-active-record.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-active-recordx.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-csvlib.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-datadict.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-error.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-errorhandler.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-errorpear.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-exceptions.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-iterator.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-lib.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-memcache.lib.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-pager.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-pear.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-perf.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-php4.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-time.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-xmlschema.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb-xmlschema03.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/adodb.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/contrib/toxmlrpc.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/cute_icons_for_site/adodb.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/cute_icons_for_site/adodb2.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-access.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-db2.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-firebird.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-generic.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-ibase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-informix.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-mssqlnative.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-mysql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-oci8.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-postgres.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-sapdb.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-sqlite.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/datadict/datadict-sybase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-access.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ado.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ado5.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ado_access.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ado_mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ads.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-borland_ibase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-csv.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-db2.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-db2oci.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-db2ora.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-fbsql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-firebird.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ibase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-informix.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-informix72.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-ldap.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mssql_n.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mssqlnative.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mssqlpo.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mysql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mysqli.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mysqlpo.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-mysqlt.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-netezza.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-oci8.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-oci805.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-oci8po.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbc.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbc_db2.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbc_mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbc_oracle.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbtp.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-odbtp_unicode.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-oracle.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo_mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo_mysql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo_oci.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo_pgsql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-pdo_sqlite.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-postgres.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-postgres64.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-postgres7.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-postgres8.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-proxy.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sapdb.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sqlanywhere.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sqlite.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sqlite3.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sqlitepo.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sybase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-sybase_ase.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/drivers/adodb-vfp.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-ar.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-bg.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-bgutf8.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-ca.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-cn.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-cz.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-da.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-de.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-en.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-es.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-esperanto.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-fa.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-fr.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-hu.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-it.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-nl.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-pl.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-pt-br.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-ro.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-ru1251.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-sv.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb-uk1251.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/lang/adodb_th.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/license.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/pear/Auth/Container/ADOdb.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/pear/readme.Auth.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-db2.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-informix.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-mssql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-mssqlnative.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-mysql.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-oci8.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/perf/perf-postgres.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/pivottable.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/readme.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/rsfilter.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/server.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-compress-bzip2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-compress-gzip.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-cryptsession.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-cryptsession2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-encrypt-mcrypt.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-encrypt-md5.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-encrypt-secret.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-encrypt-sha1.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-sess.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-session-clob.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-session-clob2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-session.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-session2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-sessions.mysql.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-sessions.oracle.clob.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/adodb-sessions.oracle.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/crypt.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/old/adodb-cryptsession.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/old/adodb-session-clob.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/old/adodb-session.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/old/crypt.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/session_schema.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/session/session_schema2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/benchmark.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/client.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/pdo.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-active-record.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-active-recs2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-active-relations.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-active-relationsx.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-datadict.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-perf.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-pgblob.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-php5.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test-xmlschema.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test2.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test3.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test4.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test5.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/test_rs_array.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testcache.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testdatabases.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testgenid.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testmssql.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testoci8.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testoci8cursor.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testpaging.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testpear.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/testsessions.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/time.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/tmssql.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/xmlschema-mssql.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tests/xmlschema.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/toexport.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/tohtml.inc.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xmlschema.dtd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xmlschema03.dtd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/convert-0.1-0.2.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/convert-0.1-0.3.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/convert-0.2-0.1.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/convert-0.2-0.3.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/remove-0.2.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/adodb5/xsl/remove-0.3.xsl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/aes.php" beforeDir="false" afterPath="$PROJECT_DIR$/libs/aes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libs/wsdl/class.phpwsdl.php" beforeDir="false" afterPath="$PROJECT_DIR$/libs/wsdl/class.phpwsdl.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptcajaslocales/rpt_aportacion_socios_x_caja.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptcajaslocales/rpt_aportacion_socios_x_caja.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptcajaslocales/rpt_socios_xcajalocal.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptcajaslocales/rpt_socios_xcajalocal.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptcreditos/creditos-generales.rpt.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptcreditos/creditos-generales.rpt.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptcreditos/creditos_generales_saldos.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptcreditos/creditos_generales_saldos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptcreditos/rpt_creditos_generales_saldos.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptcreditos/rpt_creditos_generales_saldos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptlegal/circulo_de_credito.rpt.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptlegal/circulo_de_credito.rpt.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptoperaciones/rpt_consulta_recibos_individual.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptoperaciones/rpt_consulta_recibos_individual.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rptsecurity/acumulado_de_incidencias.rpt.php" beforeDir="false" afterPath="$PROJECT_DIR$/rptsecurity/acumulado_de_incidencias.rpt.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/seguimiento/frm_cumplir_notificaciones.php" beforeDir="false" afterPath="$PROJECT_DIR$/seguimiento/frm_cumplir_notificaciones.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/site/data/other/logs/failedlogins.log" beforeDir="false" afterPath="$PROJECT_DIR$/site/data/other/logs/failedlogins.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/site/theme/Lucid/logos/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/site/theme/Lucid/logos/logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/app-sync.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/app-sync.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/inactivo.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/inactivo.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/listanegra.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/listanegra.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/peps.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/peps.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/setpagoesp.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/setpagoesp.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/sudo.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/sudo.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/svc/tabla.svc.php" beforeDir="false" afterPath="$PROJECT_DIR$/svc/tabla.svc.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/orm.php" beforeDir="false" afterPath="$PROJECT_DIR$/tools/orm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unit/core.creditos.test.php" beforeDir="false" afterPath="$PROJECT_DIR$/unit/core.creditos.test.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frm8db7028bdcdf054882ab54f644a9d36b.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frm8db7028bdcdf054882ab54f644a9d36b.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frm9d23d795f8170f495de9a2c3b251a4cd.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frm9d23d795f8170f495de9a2c3b251a4cd.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frm_calendar_tasks.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frm_calendar_tasks.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frmbuscarsocio.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frmbuscarsocio.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frmcierredeldia.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frmcierredeldia.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frmsgrupos.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frmsgrupos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/frmutilerias.php" beforeDir="false" afterPath="$PROJECT_DIR$/utils/frmutilerias.php" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="-1893537973">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="4" />
+          <entry key="project.open.time.0" value="1" />
+          <entry key="project.open.time.13" value="1" />
+          <entry key="project.open.time.18" value="1" />
+          <entry key="project.open.time.5" value="1" />
+          <entry key="project.opened" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="php" value="7" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="PLAIN_TEXT" value="7" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.vcs.git.usages">
+        <counts>
+          <entry key="git.branch.compare" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="txt" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="PLAIN_TEXT" value="1" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
+  <component name="FileEditorManager">
+    <leaf />
+  </component>
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Luis Balam &lt;patadejaguar@gmail.com&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="width" value="1890" />
+    <option name="height" value="1043" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope">
+        <subPane subId="Scope 'Project Files'; set:Project Files; class com.intellij.psi.search.scope.ProjectFilesScope">
+          <expand>
+            <path>
+              <item name="safeosms" type="3d21c010:ScopeViewTreeModel$ProjectNode" />
+              <item name="" type="442cc68d:ScopeViewTreeModel$RootNode" />
+            </path>
+            <path>
+              <item name="safeosms" type="3d21c010:ScopeViewTreeModel$ProjectNode" />
+              <item name="" type="442cc68d:ScopeViewTreeModel$RootNode" />
+              <item name="frmtesoreria" type="9f88c78c:ScopeViewTreeModel$FileNode" />
+            </path>
+            <path>
+              <item name="safeosms" type="3d21c010:ScopeViewTreeModel$ProjectNode" />
+              <item name="" type="442cc68d:ScopeViewTreeModel$RootNode" />
+              <item name="rptcreditos" type="9f88c78c:ScopeViewTreeModel$FileNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="safeosms" type="b2602c69:ProjectViewProjectNode" />
+              <item name="safeosms" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="PackagesPane" />
+      <pane id="AndroidView" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1535473494407" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5a02b1fd-926c-4988-8353-a580046c2d9a" name="Default Changelist" comment="" />
+      <created>1535064189551</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1535064189551</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-1" y="0" width="1922" height="1048" extended-state="6" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24813631" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Image Layers" order="2" />
+      <window_info id="Designer" order="3" />
+      <window_info id="UI Designer" order="4" />
+      <window_info id="Capture Tool" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Version Control" order="10" visible="true" weight="0.32976446" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Theme Preview" order="4" />
+      <window_info anchor="right" id="Jms Messenger" order="5" />
+      <window_info anchor="right" id="Capture Analysis" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+      <window_info anchor="right" id="Maven Projects" order="8" />
+    </layout>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/frmtesoreria/cobro-cargo-documento.frm.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frmtesoreria/recibo.general.frm.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rptcreditos/creditos-generales.ext.rpt.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frmtesoreria/registro-de-gastos.frm.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/404.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+  </component>
+</project>

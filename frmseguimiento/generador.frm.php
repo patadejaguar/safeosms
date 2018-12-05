@@ -23,7 +23,8 @@ $jxc 		= new TinyAjax();
 $jsCampo	= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "oficial_seguimiento" : "oficial_credito";
 
 function jsaGetCreditos($convenio, $estatus, $periocidad, $oficial){
-	$xLi		= new cSQLListas();
+	$xLi			= new cSQLListas();
+	$oficial		= setNoMenorQueCero($oficial);
 	$ByOficial		= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "	AND	(`creditos_solicitud`.`oficial_seguimiento` != $oficial) " : "	AND	(`creditos_solicitud`.`oficial_credito` != $oficial) ";
 	$sqlCred		= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? $xLi->getListadoDeCreditosConOficialSeguimiento(false, $estatus, $periocidad, $convenio, $ByOficial) : $xLi->getListadoDeCreditosConOficial(false, $estatus, $periocidad, $convenio, $ByOficial);
 
@@ -40,6 +41,78 @@ function jsaGetCreditos($convenio, $estatus, $periocidad, $oficial){
 	//$xTbl->setWidth();
 	return $xTbl->Show();
 }
+function jsaGetLetrasVencidas($fecha, $producto){
+	$xD		= new cFecha();
+	$xL		= new cSQLListas();
+	$xVis	= new cSQLVistas();
+	$xFil	= new cSQLFiltros();
+	
+	$fecha 	= $xD->getFechaISO($fecha);
+	
+	$BySaldo		= $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">");
+	//Agregar seguimiento
+	$BySaldo		= $BySaldo . $xFil->CreditosProductosPorSeguimiento(0);
+	$BySaldo		= $BySaldo . " AND (`letras`.`total_sin_otros` >0) ";
+	
+	//TODO: Corregir echale
+	
+	$sql			= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, false, $producto);
+	
+	//setLog($sql);
+	
+	$xT		= new cTabla($sql, 2, "idtblletrasyavencidas");
+	
+	$xT->setKeyTable("creditos_solicitud");
+	$xT->setKeyField("credito");
+	
+	//$xT->setOmitidos("persona");
+	$xT->setUsarNullPorCero();
+	$xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
+	$xT->setWithMetaData();
+	//$xT->setKeyField("credito");
+	
+	//$xT->setOmitidos("monto_ministrado");
+	$xT->setForzarTipoSQL("dias", MQL_INT);
+	
+	$xT->setTitulo("numero_con_atraso", "NUMERO");
+	$xT->setTitulo("fecha_de_atraso", "FECHA");
+	$xT->setTitulo("letra_original", "original");
+	
+	if(MODULO_SEGUIMIENTO_ACTIVADO == false){
+		$xT->setOmitidos("seguimiento");
+		$xT->setOmitidos("causamora");
+	} else {
+		$xT->setResumidos("seguimiento");
+		$xT->setResumidos("causamora");
+	}
+	//$xT->setResumidos("nombre");
+	$xT->setColSum("monto_ministrado");
+	$xT->setColSum("capital");
+	$xT->setColSum("historial");
+	$xT->setColSum("letra_original");
+	$xT->setColSum("total");
+	
+	//$xT->setOmitidos("persona");
+	$xT->setOmitidos("capital");
+	$xT->setOmitidos("interes");
+	$xT->setOmitidos("iva");
+	$xT->setOmitidos("otros");
+	$xT->setOmitidos("iva_moratorio");
+	$xT->setOmitidos("moratorio");
+	
+	$xT->setColTitle("total", "Con Mora");
+	$xT->setColTitle("original", "Monto Original");
+	$xT->OCheckBox("jsAddColaTareas(" . HP_REPLACE_ID . ")", "credito", "chk");
+	//$xT->setResumidos("iva");
+
+	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_SEGUIMIENTO) == true){
+		$xT->OButton("TR.LLAMADA", "var xC=new CredGen();xC.setAgregarLlamada(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TELEFONO);
+		$xT->OButton("TR.TAREAS", "var xC=new CredGen();xC.setAgregarCompromiso(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TAREA);
+		$xT->OButton("TR.SMS", "var xC=new CredGen();xC.setAgregarNotificacion(" . HP_REPLACE_ID . ", '$fecha')", $xT->ODicIcons()->NOTA);
+	}
+	return $xT->Show();
+}
+$jxc ->exportFunction('jsaGetLetrasVencidas', array('idfechaactual','idproducto'), "#id-listado-de-creditos");
 $jxc ->exportFunction('jsaGetCreditos', array('idproducto', 'idestado', 'idperiocidad', 'idoficial'), "#id-listado-de-creditos");
 $jxc ->process();
 
@@ -53,8 +126,14 @@ $xFRM->setTitle($xHP->getTitle());
 
 $xSel			= new cHSelect();
 $msg			= "";
-$xFRM->addHElem($xSel->getListaDeOficiales()->get(true) );
-$xFRM->addHElem($xSel->getListaDeProductosDeCreditoConSeguimiento()->get(true) );
+
+$xFRM->addFecha();
+
+$xsLO			= $xSel->getListaDeOficialesConCredito(); $xsLO->addTodas(true);
+$xsLP			= $xSel->getListaDeProductosDeCreditoConSeguimiento(); $xsLP->addTodas(true);
+
+$xFRM->addHElem($xsLO->get(true) );
+$xFRM->addHElem($xsLP->get(true) );
 $xSEstat		= $xSel->getListaDeEstadosDeCredito();
 $xSEstat->addEspOption(SYS_TODAS, SYS_TODAS);
 $xSEstat->setOptionSelect(SYS_TODAS);
@@ -64,8 +143,14 @@ $xSPer->addEspOption(SYS_TODAS, SYS_TODAS);
 $xSPer->setOptionSelect(SYS_TODAS);
 $xFRM->addHElem( $xSPer->get(true));
 $xFRM->addHTML("<div id='id-listado-de-creditos'></div>");
-$xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR);
-$xFRM->OButton("TR.Guardar", "jsSetOficial()", $xFRM->ic()->GUARDAR);
+
+$xFRM->addGuardar("jsSetOficial()");
+$xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR, "idgetcreditos", "blue2");
+
+//$xFRM->OButton("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", $xFRM->ic()->REPORTE4, "idletrapagosvencs");
+$xFRM->OButton("TR.LETRASVENC", "jsaGetLetrasVencidas()", $xFRM->ic()->REPORTE5, "idletravencs");
+
+//$xFRM->OButton("TR.Guardar", "jsSetOficial()", $xFRM->ic()->GUARDAR);
 
 //$xFRM->OButton("TR.Cargar Archivo", "jsCargarArchivo()", $xFRM->ic()->EXPORTAR);
 //$xFRM->addJsBasico();
@@ -78,7 +163,14 @@ $jxc ->drawJavaScript(false, true);
 var Frm 					= document.frmAsignarOficiales;
 var divLiteral				= STD_LITERAL_DIVISOR;
 var xGen					= new Gen();
+var xG						= new Gen();
+var ordenCbza				= {};
+ordenCbza.items				= 0;
+ordenCbza.fails				= 0;
+
 var fld						= "<?php echo $jsCampo; ?>";
+var arrTareas				= [];
+
 function jsSetOficial(){
 	var vOficial		= $("#idoficial").val();
 	$('.coolCheck input:checked').each(function() {
@@ -108,6 +200,22 @@ function jsMarkAll(){
 }
 function jsCargarArchivo(){	xGen.w({ url : "../frmseguimiento/creditos_oficiales.upload.frm.php?", tiny : true, w: 800 }); }
 function jsTest(){ $("#sqltable").tabulator({fitColumns:true}); }
+
+function jsAddColaTareas(id){
+	var cid	= "chk-" + id;
+	
+	if(document.getElementById(cid).checked == true){
+		ordenCbza["tr-creditos_solicitud-" +  id] = 1;
+		xG.alerta({msg: "Agregar el Credito # " + id});
+		xG.markTR({src:"#" + cid});
+	} else {
+		delete ordenCbza["tr-creditos_solicitud-" +  id];
+		xG.alerta({msg: "Quitar el Credito # " + id, tipo:"warn"});
+		xG.markTR({src:"#" + cid});
+	}
+
+}
+
 </script>
 <?php
 $xHP->fin();

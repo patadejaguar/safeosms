@@ -1,0 +1,177 @@
+<?php
+
+/**
+ * Reporte de
+ *
+ * @author Balam Gonzalez Luis Humberto
+ * @version 1.0
+ * @package seguimiento
+ * @subpackage reports
+ */
+//=====================================================================================================
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("TR.REPORTE DE PERSONAS Y CREDITOS", HP_REPORT);
+$xL			= new cSQLListas();
+$xF			= new cFecha();
+$query		= new MQL();
+$xFil		= new cSQLFiltros();
+
+
+$estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
+$frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
+$producto 		= parametro("convenio", SYS_TODAS, MQL_INT);  $producto 	= parametro("producto", $producto);
+$empresa		= parametro("empresa", SYS_TODAS, MQL_INT);
+$grupo			= parametro("grupo", SYS_TODAS, MQL_INT);
+$sucursal		= parametro("sucursal", SYS_TODAS, MQL_RAW); $sucursal		= parametro("s", $sucursal, MQL_RAW);
+$oficial		= parametro("oficial", SYS_TODAS ,MQL_INT);
+$cajalocal		= parametro("cajalocal", SYS_TODAS ,MQL_INT);
+
+$operacion		= parametro("operacion", SYS_TODAS, MQL_INT);
+//===========  Individual
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo		= parametro("idrecibo", $recibo, MQL_INT);
+//===========  General
+$out 			= parametro("out", SYS_DEFAULT);
+$FechaInicial	= parametro("on", false, MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
+$FechaFinal		= parametro("off", false, MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
+$senders		= getEmails($_REQUEST);
+$soloclientes	= true;	//parametro("soloclientes", false, MQL_BOOL);
+
+$ByActivos		= "";
+if($soloclientes == true){
+	if(MODULO_CAPTACION_ACTIVADO == true){
+		//$ByActivos	= " AND (`tmp_personas_estadisticas`.`creditos`>0 OR (`tmp_personas_estadisticas`.`cuentas`>0) ";
+	} else {
+		//$ByActivos	= "  AND (`tmp_personas_estadisticas`.`creditos`>0) ";
+		//$ByActivos	= "  AND (`tmp_personas_estadisticas`.`creditos_con_saldo`>0) ";
+	}
+}
+
+
+$ByCL			= $xFil->PersonasPorCajaLocal($cajalocal);
+$ByEstatus		= $xFil->PersonasPorEstado($estatus);
+$ByEmpresa		= $xFil->PersonasPorEmpresa($empresa);
+$BySucursal		= $xFil->PersonasPorSucursal($sucursal);
+
+
+$FEmpresa		= (PERSONAS_CONTROLAR_POR_EMPRESA == true) ? "`socios_aeconomica_dependencias`.`nombre_corto` AS `empresa`," : "";
+$FGrupo			= (PERSONAS_CONTROLAR_POR_GRUPO == true) ? "`socios_grupossolidarios`.`nombre_gruposolidario`          AS `grupo_solidario`," : "";
+$sql			= "SELECT SQL_CACHE
+					`socios_general`.`codigo`,
+					`socios_general`.`apellidopaterno`                         AS `apellido_paterno`,
+					`socios_general`.`apellidomaterno`                         AS `apellido_materno`,
+					`socios_general`.`nombrecompleto`                          AS `nombre`,
+					`socios_general`.`sucursal`                       		   AS `sucursal`,
+
+					`tmp_colonias_activas`.`nombre_estado` AS `estado`,
+					`tmp_colonias_activas`.`nombre_municipio` AS `municipio`,
+					`socios_genero`.`descripcion_genero`                     	AS `genero`,
+					(`socios_general`.`fechanacimiento`) 						AS `fecha_de_nacimiento`,
+					`socios_general`.`dependientes_economicos`,
+									
+					$FEmpresa
+					$FGrupo
+											
+					`socios_general`.`curp`,
+									
+									
+					`socios_estatus`.`nombre_estatus`                         	AS `estatusactivo`,
+					`socios_estadocivil`.`descripcion_estadocivil`            	AS `ESTATUS_CIVIL`,
+					`tmp_personas_estadisticas`.`ingreso_mensual`				AS `ingreso_mensual`,
+					`tmp_personas_estadisticas`.`num_refpersonales`				AS `REFPERS`,
+
+		`creditos`.`solicitud`,
+         `creditos`.`convenio`,
+         `creditos`.`fecha_ministracion`,
+         `creditos`.`monto_autorizado`,
+         `creditos`.`pagos`,
+         `creditos`.`estatus_credito`,
+         `creditos`.`periocidad`,
+         /*`creditos`.`saldo_actual`,*/
+		getSaldoAFecha(`creditos`.`solicitud`, `creditos`.`monto_autorizado`, '$FechaFinal') AS `saldo`
+FROM     `socios_general` 
+INNER JOIN `socios_tipoingreso`  ON `socios_general`.`tipoingreso` = `socios_tipoingreso`.`idsocios_tipoingreso` 
+INNER JOIN `socios_genero`  ON `socios_general`.`genero` = `socios_genero`.`idsocios_genero` 
+INNER JOIN `usuarios`  ON `socios_general`.`idusuario` = `usuarios`.`idusuarios` 
+INNER JOIN `socios_grupossolidarios`  ON `socios_general`.`grupo_solidario` = `socios_grupossolidarios`.`idsocios_grupossolidarios` 
+INNER JOIN `socios_aeconomica_dependencias`  ON `socios_general`.`dependencia` = `socios_aeconomica_dependencias`.`idsocios_aeconomica_dependencias` 
+INNER JOIN `socios_estadocivil`  ON `socios_general`.`estadocivil` = `socios_estadocivil`.`idsocios_estadocivil` 
+INNER JOIN `socios_estatus`  ON `socios_general`.`estatusactual` = `socios_estatus`.`tipo_estatus` 
+INNER JOIN `personas_documentacion_tipos`  ON `socios_general`.`tipo_de_identificacion` = `personas_documentacion_tipos`.`clave_de_control` 
+INNER JOIN `socios_figura_juridica`  ON `socios_general`.`personalidad_juridica` = `socios_figura_juridica`.`idsocios_figura_juridica` 
+LEFT OUTER JOIN `tmp_personas_domicilios`  ON `socios_general`.`codigo` = `tmp_personas_domicilios`.`codigo` 
+LEFT OUTER JOIN `tmp_personas_estadisticas`  ON `socios_general`.`codigo` = `tmp_personas_estadisticas`.`persona` 
+INNER JOIN `creditos`  ON `creditos`.`numero_socio` = `socios_general`.`codigo` 
+LEFT OUTER JOIN `tmp_colonias_activas`  ON `tmp_colonias_activas`.`codigo_postal` = `tmp_personas_domicilios`.`idcodigopostal` 
+
+										WHERE
+										(`socios_general`.`codigo` != " . DEFAULT_SOCIO . " ) AND ( `creditos`.`estatusactivo` = 1 )
+										$ByCL $ByEstatus $ByEmpresa $BySucursal AND (`creditos`.`fecha_ministracion`<='$FechaFinal')
+HAVING saldo !=0
+									ORDER BY
+										`socios_general`.`cajalocal`,
+										`socios_general`.`codigo`
+
+";
+//setLog($sql);
+
+$titulo			= "";
+$archivo		= "";
+
+$xRPT			= new cReportes($titulo);
+$xRPT->setFile($archivo);
+$xRPT->setOut($out);
+$xRPT->setSQL($sql);
+$xRPT->setTitle($xHP->getTitle());
+//============ Reporte
+$xRPT->addCampoSuma("saldo");
+
+/*$xT		= new cTabla($sql, 0);
+$xT->setTipoSalida($out);
+$xT->setColTitle("dependientes_economicos", "DEPENDIENTES_ECONOMICOS");*/
+
+$body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
+
+$xRPT->setBodyMail($body);
+$xRPT->addContent($body);
+
+
+
+//$xT->setEventKey("jsGoPanel");
+//$xT->setKeyField("creditos_solicitud");
+//$xRPT->addContent( $xT->Show(  ) );
+//============ Agregar HTML
+//$xRPT->addContent( $xHP->init($jsEvent) );
+//$xRPT->addContent( $xHP->end() );
+
+$xRPT->setColTitle("dependientes_economicos", "DEPENDIENTES_ECONOMICOS");
+
+$xRPT->setProcessSQL();
+
+$xRPT->setResponse();
+$xRPT->setSenders($senders);
+echo $xRPT->render(true);
+/*
+// Listen for clicks on table originating from .delete element(s)
+$("table").on("click", ".delete", function ( event ) {
+    // Get index of parent TD among its siblings (add one for nth-child)
+    var ndx = $(this).parent().index() + 1;
+    // Find all TD elements with the same index
+    $("td", event.delegateTarget).remove(":nth-child(" + ndx + ")");
+}); 
+ * */
+
+?>

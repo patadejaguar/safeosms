@@ -178,7 +178,7 @@ function jsCierreDeRiesgos(){
 }
 function jsCierreDeSistema(){
 	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_sistema.frm.php?f=" + idfecha + "&k=" + kk});
+	xG.w({url:"../frmutils/cierre_de_sistema.frm.php?s=true&f=" + idfecha + "&k=" + kk});
 }
 </script>
 <?php

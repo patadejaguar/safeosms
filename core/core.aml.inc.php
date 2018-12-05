@@ -346,6 +346,7 @@ class cAMLPersonas {
 		$pais	= strtoupper($pais);
 		$origen	= setCadenaVal($origen);
 		$destino= setCadenaVal($destino);
+		$res	= false;
 		
 		$persona	= $this->mClaveDePersona;
 		$id	= $xPT->query()->getLastID();
@@ -371,13 +372,20 @@ class cAMLPersonas {
 		$xPT->pais_de_origen($pais);
 		$xPT->recurso_origen($origen);
 		$xPT->recurso_aplicacion($destino);
+		$xPT->idusuario(getUsuarioActual());
 		
-		$ql	= $xPT->query()->insert();
-		$id	= $ql->save();
-		$this->mMessages	.= ($id == false) ? "ERROR\tError al agregar el perfil tipo $ntipo por un monto de $monto\r\n" : "OK\tSe agrego el perfil $id de tipo $ntipo por un monto de $monto\r\n";
-		if(MODO_DEBUG == true){
-			$this->mMessages	.= $ql->getMessages(OUT_TXT);
+		$id		= $xPT->query()->insert()->save();
+		if($id === false){
+			$this->mMessages .= "ERROR\tError al agregar el perfil tipo $ntipo por un monto de $monto\r\n";
+		} else {
+			$xPT = new cAMLPersonasPerfilTransaccional($persona);
+			$xPT->setCuandoSeActualiza();
+			
+			$this->mMessages .= "OK\tSe agrego el perfil $id de tipo $ntipo por un monto de $monto\r\n";
 		}
+		
+		
+		return $res;
 	}
 	function getOPersona($data = false){
 		if($this->mOSocio == null){
@@ -1262,6 +1270,12 @@ class cAMLPersonasPerfilTransaccional {
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function getNumeroEntradas(){ return $this->mItems; }
+	function setCuandoSeActualiza(){
+		$persona	= $this->mClaveDePersona;
+		$idx		= "personas-perfil-transaccional-$persona";
+		$xCache		= new cCache();
+		$xCache->clean($persona);
+	}
 }
 class cAMLOperaciones{
 	private $mMessages			= "";
@@ -1775,6 +1789,7 @@ class cAMLAlertas {
 		$xLng	= new cLang();
 		$xSoc	= new cSocio($this->getPersonaDeOrigen());
 		$xNot	= new cHNotif();
+		
 		$xHT	= new cHObject();
 		
 		$xSoc->init();

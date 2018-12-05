@@ -21,15 +21,29 @@ $xLoc				= new cLocal();
 $xLi				= new cSQLListas();
 $xSys				= new cSystemTask();
 $xQL				= new MQL();
+$xRuls				= new cReglaDeNegocio();
 
+$noUsarChat			= $xRuls->getValorPorRegla($xRuls->reglas()->RN_NO_USAR_HCHAT);
 
 function jsaRespaldarDB($fecha){ 
 	$xSys	= new cSystemTask(); 
 	$xSys->setBackupDB(); 
 	return $xSys->getMessages(); 
 }
-function jsaSetCumplido($Key){ $sql = "UPDATE usuarios_web_notas SET estado=40 WHERE idusuarios_web_notas=$Key"; my_query($sql); }
-function jsaEliminarLog($fecha){ $xQL	= new MQL(); $xQL->setRawQuery("DELETE FROM general_log");}
+function jsaSetCumplido($Key){ 
+	$xNot	= new cUsuariosNotas($Key);
+	if($xNot->init() == true){
+		$xNot->setInactivo();
+	}
+	
+	return $xNot->getMessages(OUT_HTML);
+}
+function jsaEliminarLog($fecha){
+	$xQL	= new MQL();
+	if(SAFE_ON_DEV == true){
+		$xQL->setRawQuery("DELETE FROM general_log");
+	}
+}
 function jsaShowCalendarTasks($date){
 	$xD			= new cFecha();
 	$date 		= $xD->getFechaISO($date);
@@ -75,67 +89,46 @@ function jsaGetIngresosMensualesPorDependencias($fecha){
 	return $xT->Show("Reporte de Ingresos Mensuales por Empresas", true, "tingresos");
 }
 function jsaGetLetrasAVencer($fecha, $producto){
-	$xD		= new cFecha();
-	$xL		= new cSQLListas();
-	$fecha 	= $xD->getFechaISO($fecha); //AND (`creditos_tipoconvenio`.`tipo_en_sistema` =" . CREDITO_PRODUCTO_INDIVIDUAL . ")
-	$filtro	= " AND (`creditos_solicitud`.`saldo_actual`> " . TOLERANCIA_SALDOS .  ")  AND (`creditos_tipoconvenio`.`omitir_seguimiento` =0) AND `letras`.`letra` > 0 ";
-	$sql	= $xL->getListadoDeLetrasConCreditos($fecha, false, "", "", $filtro, $producto);
+	$xVis	= new cSQLVistas();
+	$sql	= $xVis->getVistaLetrasConNombre($fecha, false, false, "", $producto);
+	//$xLi	= new cSQLListas(); $xF	= new cFecha(); $fecha = $xF->getFechaISO($fecha);
+	//$sql	= $xLi->getListadoDeLetrasConCreditos($fecha, false, "", "", " AND (`creditos_solicitud`.`saldo_actual`> 1)  AND (`creditos_tipoconvenio`.`omitir_seguimiento` =0) AND `letras`.`letra` > 0 ", $producto);
 	
-	$sql2	= "SELECT `socios`.`codigo`,
-	`socios`.`nombre`,
-	`creditos_solicitud`.`numero_solicitud` AS `credito`,
-	`creditos_solicitud`.`numero_pagos` AS `parcialidad`,
-	CONCAT(DATE_FORMAT('$fecha', '%Y-%m-'), DATE_FORMAT(fecha_ministracion, '%d'))
-	AS `fecha_de_pago`,
-	`creditos_solicitud`.`saldo_actual` AS `capital`,
-	setNoMenorCero(`creditos_solicitud`.`interes_normal_devengado` -
-	`creditos_solicitud`.`interes_normal_pagado`) AS `interes`,
-	setNoMenorCero(`creditos_solicitud`.`iva_interes`) AS `iva`,
-	setNoMenorCero(`creditos_solicitud`.`gastoscbza` -
-	`creditos_solicitud`.`bonificaciones` +  `creditos_solicitud`.`iva_otros` ) AS `otros`
-	FROM     `creditos_solicitud`
-	INNER JOIN `socios`  ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`
-	INNER JOIN `creditos_a_final_de_plazo`  ON `creditos_solicitud`.`numero_solicitud` = `creditos_a_final_de_plazo`.`credito`
-	WHERE    ( `creditos_solicitud`.`saldo_actual` >" . TOLERANCIA_SALDOS . " )	AND (DATE_FORMAT(`fecha_ministracion`, '%d')=DATE_FORMAT('$fecha', '%d'))
-
-	";
-	
-	//$sql	= "$sql UNION $sql2";
-	//setLog($sql);
-	
-	$xT		= new cTabla($sql, 2);
+	$xT		= new cTabla($sql, 2,"idtblletrasporvencer");
 	$xT->setWithMetaData();
-	$xT->setEventKey("jsGoPanel");
-	$xT->OButton("TR.PAGO", "jsGoToCaja(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
+	$xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
+	//$xT->OButton("TR.PAGO", "jsGoToCaja(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
 	$xT->setColTitle("letra", "TOTAL");
-	
-	$arrSum	= array( 5 => "capital", 6 => "interes", 7 => "iva", 8 => "otros",9 => "letra" );
+	$xT->setColSum("capital");
+	$xT->setColSum("interes");
+	$xT->setColSum("iva");
+	$xT->setColSum("otros");
+	$xT->setColSum("letra");
+	$xT->setKeyTable("creditos_solicitud");
 	
 	if(MODULO_CAPTACION_ACTIVADO == false){
 		$xT->setOmitidos("ahorro");
 	}
-	$xT->setFootSum( $arrSum );
 	
-	$t1	= $xT->Show();
+	//$xT->setResumidos("iva");
+	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
+		$xT->OButton("TR.PAGO", "jsGoToCaja(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
+	}
+	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_SEGUIMIENTO) == true){
+		$xT->OButton("TR.LLAMADA", "var xC=new CredGen();xC.setAgregarLlamada(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TELEFONO);
+		$xT->OButton("TR.TAREAS", "var xC=new CredGen();xC.setAgregarCompromiso(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TAREA);
+		$xT->OButton("TR.SMS", "var xC=new CredGen();xC.setAgregarNotificacion(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->NOTA);
+	}
 	
-	
-	$xT2	= new cTabla($sql2, 2);
-	$xT2->setWithMetaData();
-	$xT2->setEventKey("jsGoPanel");
-	$xT2->OButton("TR.PAGO", "jsGoToCaja2(" . HP_REPLACE_ID . ")", $xT2->ODicIcons()->COBROS);
-	$xT2->setFootSum( array( ) );
-	
-	$t1	.= $xT2->Show();
-	
-	
-	return $t1;
+	return $xT->Show();
 }
 function jsaGetLetrasVencidas($fecha, $producto){
 	$xD		= new cFecha();
 	$xL		= new cSQLListas();
-	$fecha 	= $xD->getFechaISO($fecha);
+	$xVis	= new cSQLVistas();
 	$xFil	= new cSQLFiltros();
 	
+	$fecha 	= $xD->getFechaISO($fecha);
 	$BySaldo		= $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">");
 	//Agregar seguimiento
 	$BySaldo		= $BySaldo . $xFil->CreditosProductosPorSeguimiento(0);	
@@ -143,22 +136,24 @@ function jsaGetLetrasVencidas($fecha, $producto){
 	
 	//TODO: Corregir echale
 	
-	$sql	= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, false, $producto);
+	$sql			= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, false, $producto);
 
 	//setLog($sql);
 	
-	$xT		= new cTabla($sql, 2);
+	$xT		= new cTabla($sql, 2, "idtblletrasyavencidas");
 	//$xT->setOmitidos("persona");
 	$xT->setUsarNullPorCero();
-	$xT->setEventKey("jsGoPanel");
+	$xT->setEventKey("var xC=new CredGen();xC.goToPanelControl");
 	$xT->setWithMetaData();
 	$xT->setKeyField("credito");
+	$xT->setKeyTable("creditos_solicitud");
 	//$xT->setOmitidos("monto_ministrado");
 	$xT->setForzarTipoSQL("dias", MQL_INT);
 	
 	$xT->setTitulo("numero_con_atraso", "NUMERO");
 	$xT->setTitulo("fecha_de_atraso", "FECHA");
 	$xT->setTitulo("letra_original", "original");
+	
 	if(MODULO_SEGUIMIENTO_ACTIVADO == false){
 		$xT->setOmitidos("seguimiento");
 		$xT->setOmitidos("causamora");
@@ -167,14 +162,20 @@ function jsaGetLetrasVencidas($fecha, $producto){
 		$xT->setResumidos("causamora");
 	}
 	//$xT->setResumidos("nombre");
-	$xT->setFootSum(array( 6=> "monto_ministrado", 7 => "capital", 8=>"historial", 11=>"letra_original", 14 => "total" ));
+	$xT->setColSum("monto_ministrado");
+	$xT->setColSum("capital");
+	$xT->setColSum("historial");
+	$xT->setColSum("letra_original");
+	$xT->setColSum("total");
+	
 	//$xT->setResumidos("iva");
-	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO) == true){
+	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 		$xT->OButton("TR.PAGO", "jsPagoCajaCompleto(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->COBROS);
 	}
-	if(MODULO_SEGUIMIENTO_ACTIVADO == true){
+	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_SEGUIMIENTO) == true){
 		$xT->OButton("TR.LLAMADA", "var xC=new CredGen();xC.setAgregarLlamada(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TELEFONO);
 		$xT->OButton("TR.TAREAS", "var xC=new CredGen();xC.setAgregarCompromiso(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->TAREA);
+		$xT->OButton("TR.SMS", "var xC=new CredGen();xC.setAgregarNotificacion(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->NOTA);
 	}
 	
 	return $xT->Show( );
@@ -202,11 +203,25 @@ function jsaGetCreditosPorMinistrar($fecha){
 	return $xDT->getCreditosPorAutorizar($fecha);
 }*/
 
-function jsaGetLog($fecha){
+function jsaGetLog($fecha, $buscar){
 	$xList	= new cSQLListas();
-	$sql	= $xList->getListadoDeEventos("", "", SYS_LOG_NIVEL_DEV);
+	$xF		= new cFecha();
+	$fecha	= $xF->getFechaISO($fecha);
+	if(SAFE_ON_DEV == true){
+		$sql	= $xList->getListadoDeEventos("", "", SYS_LOG_NIVEL_DEV);
+	} else {
+		if($buscar == "" OR $buscar == "0"){
+			$sql	= $xList->getListadoDeEventos($fecha, $fecha);
+		} else {
+			$sql	= $xList->getListadoDeEventos("", "", "", "", "", "$buscar");
+			
+		}
+	}
+	//iDE_OPERACION;
 	$xT	= new cTabla($sql); 
-	$xT->addTool(SYS_DOS);
+	if(SAFE_ON_DEV == true){
+		$xT->addTool(SYS_DOS);
+	}
 	$xT->setKeyField("idgeneral_log");
 	//Agregar el script delete
 	return $xT->Show("TR.Log", true, "tablelog");
@@ -217,11 +232,13 @@ function jsaGetRecibosEmitidos($fecha){
 	$fecha	= $xF->getFechaISO($fecha);
 	$xL		= new cSQLListas();
 	$otros	= (MODO_DEBUG == true) ? "" : "";
+	$xL->setInvertirOrden();
 	
 	$sql	= $xL->getListadoDeRecibos("", "", "", $fecha, $fecha, $otros);
 	//setLog($sql);
 	
-	$xT		= new cTabla($sql); 
+	$xT		= new cTabla($sql);
+	$xT->OButton("TR.RECIBO", "var xR=new RecGen();xR.formato(" . HP_REPLACE_ID . ")", $xT->ODicIcons()->IMPRIMIR);
 	$xT->setEventKey("jsGetPanelRecibo");
 	$xT->setFootSum(array(
 		6 => "total"	
@@ -318,6 +335,7 @@ function jsaSetToLocalHost($fecha, $version){
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'");
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'");
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'http://pruebas:pruebas@localhost:5984/' WHERE `nombre_del_parametro` = 'svc_url_couchdb'");
+	
 	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`");
 	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`");
 	$xQL->setRawQuery("CALL `proc_creditos_letras_pendientes`");
@@ -338,7 +356,9 @@ function jsaSetToLocalHost($fecha, $version){
 	$xSys->patch(true, false);
 	$xCache->clean();
 	
-	$xQL->setRawQuery("DELETE FROM general_log");
+	if(SAFE_ON_DEV == true){
+		$xQL->setRawQuery("DELETE FROM general_log");
+	}
 	return $xSys->getMessages(OUT_HTML);
 }
 function jsaSetActualizarSys($version){
@@ -347,8 +367,11 @@ function jsaSetActualizarSys($version){
 	$xQL		= new MQL();
 	$xCache		= new cCache();
 	$xSys		= new cSystemPatch();
+	$xTask		= new cSystemTask();
 	
-	
+	if(SAFE_ON_DEV == false){
+		$xTask->setBackupDB();
+	}
 	
 	if($version>0){
 		$xSys->setForceVersion($version);
@@ -365,7 +388,28 @@ function jsaSetRunContabilidad(){
 	$xUt->setRunSQLPatchByFile($subdir , "contable-estable.sql");//purgar_contable.sql
 	$xUt->setRunSQLPatchByFile($subdir , "contabilidad-pruebas.sql");//purgar_contable.sql
 	
+	$xContUtils	= new cUtileriasParaContabilidad();
+	$xContUtils->setGenerarSaldosDelEjercicio(EJERCICIO_CONTABLE);
+	
 }
+
+function jsaActualizarEstPers(){
+	$xPersUt	= new cPersonasUtilerias();
+	$xPersUt->setConstruirEstadisticas();
+	return "OK";
+}
+
+function jsaEnviarSMSCobro($credito){
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$xNot	= new cSeguimientoNotificaciones();
+		$xNot->add($credito, false, false, $xCred->getMontoDeParcialidad());
+	}
+	return $xNot->getMessages(OUT_HTML);
+}
+
+
+function jsaGetResumenDeCaja($caja){ $xCaja		= new cCaja();	$xCaja->init($caja);	return $xCaja->getResumenDeCaja(); }
 
 
 $jxc ->exportFunction('jsaShowCalendarTasks', array('idDateValue'), "#tcalendar-task");
@@ -379,7 +423,7 @@ $jxc ->exportFunction('jsaGetCreditosPorMinistrar', array('idDateValue', 'idprod
 
 $jxc ->exportFunction('jsaEliminarLog', array('idDateValue'), "#tcalendar-task");
 
-$jxc ->exportFunction('jsaGetLog', array('idDateValue'), "#tcalendar-task");
+$jxc ->exportFunction('jsaGetLog', array('idDateValue', 'idclave'), "#tcalendar-task");
 $jxc ->exportFunction('jsaGetRecibosEmitidos', array('idDateValue'), "#tcalendar-task");
 
 $jxc ->exportFunction('jsaSetCumplido', array('id-KeyEditable'));
@@ -398,14 +442,24 @@ $jxc ->exportFunction('jsaActualizarProyeccionMensual', array('idDateValue'), "#
 $jxc ->exportFunction('jsaSetToLocalHost', array('idDateValue', 'idclave'), "#idavisos");
 
 $jxc ->exportFunction('jsaSetActualizarSys', array('idclave'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarEstPers', array('idclave'), "#idavisos");
+
 
 $jxc ->exportFunction('jsaSetRunContabilidad', array('idclave'), "#idavisos");
+
+$jxc ->exportFunction('jsaGetResumenDeCaja', array("idcaja"), "#tcalendar-task");
+
+//$jxc ->exportFunction('jsaEnviarSMSCobro', array('idclave'), "#idavisos");
+
 
 //jsaRespaldarDB
 $jxc ->process();
 
 $xHP->addChartSupport();
-$xHP->addJsFile("https://help.sipakal.com/js/compiled/chat_popup.js");
+
+if($noUsarChat == false){
+	$xHP->addJsFile("https://help.sipakal.com/js/compiled/chat_popup.js");
+}
 
 $xHP->init();
 
@@ -417,7 +471,7 @@ $xSel		= new cHSelect();
 $xUsr->init();
 $xFRM->addSeccion("idsoptions", "TR.Opciones");
 	$xFRM->ODate("idDateValue", false, "TR.FECHA DE FILTRO");
-	$xSelC		= $xSel->getListaDeProductosDeCredito();
+	$xSelC		= $xSel->getListaDeProductosDeCredito("", false, true);
 	$xSelC->addEspOption(SYS_TODAS);
 	$xSelC->setOptionSelect(SYS_TODAS);
 	$xFRM->addHElem($xSelC->get(true));
@@ -439,43 +493,73 @@ if(MODULO_AML_ACTIVADO == true){
 	$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas");
 }
 
-if($xUsr->getNivel() != USUARIO_TIPO_OFICIAL_AML  OR (MODO_DEBUG == true) ){
-$xCEs	= new cCreditosEstadisticas();
-	$xFRM->addHElem( $xNotif->getDash("TR.Clientes con Creditos", $xCEs->getNumeroClientesConCredito(), $xFRM->ic()->PERSONA, $xNotif->NOTICE) );
-	if($xUsr->getNivel() >= USUARIO_TIPO_OFICIAL_CRED OR (MODO_DEBUG == true) OR (OPERACION_LIBERAR_ACCIONES == true)){
-		$xFRM->addToolbar($xBtn->getBasic("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", "reporte", "idletrav", false) );
-		$xFRM->addToolbar($xBtn->getBasic("TR.LETRASVENC", "jsaGetLetrasVencidas()", "reporte", "idletrav", false) );
-		//$xFRM->addToolbar($xBtn->getBasic("TR.Letras Pendientes", "jsaGetLetrasAVencerTodas()", "reporte", "idletrave", false) );
-		//$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Simples", "jsaGetCreditosSimplesMinistrados()", "lista", "idsimplev", false) );
-		//$xFRM->OButton("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", $xFRM->ic()->LIBERAR, "idcredd");
-		
-		$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", "lista", "idcredaut", false) );
-		$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Ministrar", "jsaGetCreditosPorMinistrar()", "lista", "idcrednpoaut", false) );
-		$xFRM->OButton("TR.Recibos Emitidos", "jsaGetRecibosEmitidos()", $xBtn->ic()->REPORTE);
-	}
-	if($xUsr->getNivel() >= USUARIO_TIPO_GERENTE OR (OPERACION_LIBERAR_ACCIONES == true)){
-		//$xFRM->addToolbar($xBtn->getBasic("TR.Ingresos del Dia", "jsGetChart()", "grafico", "idcharts", false) );
-		//$xFRM->addToolbar($xBtn->getBasic("TR.Ingresos del Mes", "jsGetIngresosMensuales()", "grafico", "idimes", false) );
-		$xFRM->OButton("TR.Actualizar Proyeccion Mensual de Credito", "jsaActualizarProyeccionMensual()", $xFRM->ic()->RECARGAR);
-	}
-	$xChCred		= new cChart("idchartcredito");
-	$xChCred->addData($xCEs->getNumeroCreditosPorAutorizar(), "TR.Creditos Por Autorizar" );
-	$xChCred->addData(0,"TR.Creditos Por Autorizar");
-	
-	
-	$xChCred->addData(0,"TR.Creditos Por Ministrar");
-	$xChCred->addData($xCEs->getNumeroCreditosPorMinistrar(),"TR.Creditos Por Ministrar");
-	
-	$xChCred->setProcess($xChCred->BAR);
+//=====================================================
+$xCh3		= new cChart("iddivevtsuser");
+$xCh3->setAlto("480");
 
-	$xFRM->addHElem($xChCred->getDiv());
-	$xFRM->addJsInit($xChCred->getJs());
-	//$xFRM->addHElem( $xNotif->getDash("TR.Creditos Por Autorizar", $xCEs->getNumeroCreditosPorAutorizar(), "fa-circle", $xNotif->SUCCESS) );
-	//$xFRM->addHElem( $xNotif->getDash("TR.Creditos Por Ministrar", $xCEs->getNumeroCreditosPorMinistrar(), "fa-circle-o", $xNotif->NOTICE) );
+
+$sql3	= "SELECT `general_error_codigos`.`description_error` AS `descripcion`, COUNT(`general_log`.`idgeneral_log`) AS `eventos`
+		
+			FROM `general_log` `general_log` INNER JOIN `general_error_codigos` `general_error_codigos`
+			ON `general_log`.`type_error` = `general_error_codigos`.`idgeneral_error_codigos`
+			WHERE (`general_log`.`fecha_log` ='" . fechasys() . "') AND (`general_error_codigos`.`type_err`!='developer') AND `type_error` !=10 AND `type_error` !=9001
+					/*AND CONVERT(`usr_log`,UNSIGNED INTEGER)>0*/
+			GROUP BY `general_log`.`type_error` ";
+
+//$xCh3->addSQL($xLi->getListadoDeEventosResumen(fechasys(), fechasys()),"descripcion", "eventos");
+
+$xCh3->addSQL($sql3,"descripcion", "eventos");
+//$xCh3->setAlto(400);
+$xCh3->setHorizontal(true);
+$xCh3->setTamanioTitulo(300);
+
+$xCh3->setAutoWith();
+
+$xCh3->setProcess($xCh3->BAR);
+
+
+$xFRM->addHElem($xCh3->getDiv());
+$xFRM->addJsInit($xCh3->getJs());
+
+
+
+
+//============================== Charts de creditos por ministrar
+$xCEs			= new cCreditosEstadisticas();
+$xFRM->addHElem( $xNotif->getDash("TR.Clientes con Creditos", $xCEs->getNumeroClientesConCredito(), $xFRM->ic()->PERSONA, $xNotif->NOTICE) );
+
+$xChCred		= new cChart("idchartcredito");
+$xChCred->addData($xCEs->getNumeroCreditosPorAutorizar(), "TR.Creditos Por Autorizar" );
+$xChCred->addData(0,"TR.Creditos Por Autorizar");
+
+$xChCred->addData(0,"TR.Creditos Por Ministrar");
+$xChCred->addData($xCEs->getNumeroCreditosPorMinistrar(),"TR.Creditos Por Ministrar");
+
+$xChCred->setProcess($xChCred->BAR);
+
+$xFRM->addHElem($xChCred->getDiv());
+$xFRM->addJsInit($xChCred->getJs());
+
+if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_SEGUIMIENTO) == true){
+	//==================== Cartera de Credito
+	if(GARANTIA_LIQUIDA_EN_CAPTACION== false){
+		$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3");
+	}
 	
+	$xFRM->OButton("TR.Recibos Emitidos", "jsaGetRecibosEmitidos()", $xBtn->ic()->REPORTE);
+	$xFRM->OButton("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", $xFRM->ic()->REPORTE4, "idletrapagosvencs");
+	$xFRM->OButton("TR.LETRASVENC", "jsaGetLetrasVencidas()", $xFRM->ic()->REPORTE5, "idletravencs");
 }
-//==================== Cartera de Credito
-$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3");
+if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION)){
+	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", "lista", "idcredaut", false) );
+	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Ministrar", "jsaGetCreditosPorMinistrar()", "lista", "idcrednpoaut", false) );
+}
+if(getEsModuloMostrado(USUARIO_TIPO_GERENTE, MMOD_COLOCACION) == true){
+	$xFRM->OButton("TR.Actualizar Proyeccion", "jsActualizarProyeccionMensual()", $xFRM->ic()->RECARGAR, "idcmdactualizar", "yellow");
+	$xFRM->OButton("TR.Actualizar Estadisticas", "jsActualizarEstPers()", $xFRM->ic()->RECARGAR, "idcmdactualizarespers", "yellow");
+}
+
+
 //==================== Proyecciones del Sistema
 $xChProy	= new cChart("idproymens");
 $xProy		= new cCreditosProyecciones();
@@ -533,22 +617,25 @@ $xChUser->addData($xTE->getNumeroCajasAbiertas(), "TR.CAJAS_ABIERTAS");
 //Checar si las caja del usuario está abierta
 $xCaja		= new cCaja();
 $OnCaja		= false;
-if(MODULO_CAJA_ACTIVADO == true){
+if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 	if($xCaja->initByFechaUsuario(fechasys(), getUsuarioActual()) == true){
 		if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){
 			//cerrar Caja
-			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',principal:true});", $xFRM->ic()->CERRAR);
+			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',principal:true});", $xFRM->ic()->CERRAR, "idcmdcerrarcaja", "yellow");
+			$xFRM->OButton("TR.REPORTE CAJA", "jsaGetResumenDeCaja()", $xFRM->ic()->DINERO, "idcmfgetrptcaja", "white");
 			$OnCaja	= true;
+			//Reporte de Caja
 		}
 	}
 }
-if(getEsModuloMostrado(false, MMOD_TESORERIA) == true){
+
+if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
 		$xFRM->OButton("TR.NOMINAS POR COBRAR", "jsaListaPeriodosDeEmpresa", $xFRM->ic()->REPORTE2);
 		$xFRM->OButton("TR.NOMINAS ENVIADAS", "jsaListaPeriodosDeEmpresaEmitidos", $xFRM->ic()->REPORTE3);
 	}
 }
-if(getEsModuloMostrado(false, MMOD_TESORERIA) == true AND $OnCaja == false){
+if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true AND $OnCaja == false){
 	$xFRM->OButton("TR.ABRIR_SESSION DE CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/abrir_caja.frm.php?',tiny:true})", $xFRM->ic()->COBROS);
 	//Agregar Lista de Nominas Enviadas
 }
@@ -586,6 +673,9 @@ $xFRM->addHElem($xChUser->getDiv());
 $xFRM->addJsInit($xChUser->getJs());
 
 
+
+
+//=====================================================
 if(MODULO_LEASING_ACTIVADO == true){
 	$xCh2		= new cChart("iddivleas");
 	$xCh2->setAlto("300");
@@ -607,35 +697,40 @@ FROM     `originacion_leasing` INNER JOIN `creditos_etapas`  ON `originacion_lea
 
 $xFRM->setNoAcordion();
 //$xF->dia() < 10 AND
-if( getUsuarioActual(SYS_USER_NIVEL) >= USUARIO_TIPO_CONTABLE){
+if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE, MMOD_CONTABILIDAD) == true){
 	$xFRM->OButton("TR.Actualizar Ingresos", "jsActualizarIngresos()", $xFRM->ic()->REPORTE4);
 }
 
-$xTask			= new cSystemTask();
-$xTask->setProcesarTareas();
-$alerts			.= $xTask->getMessages();
+
 $xChart			= new cChart("idivchart");
 
 
 
 $xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO, "cmdcalcplan", "ggreen");
 
-$xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange");
-$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange");
-
+if(getEsModuloMostrado(false, MMOD_CRED_LEASING) == true){
+	$xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange");
+}
+if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION) == true){
+	$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange");
+	$xFRM->OButton("TR.AGREGAR CREDITOS_LINEAS", "jsAgregarLineaCredito()", $xFRM->ic()->CREDITO, "cmdaddlineacredito", "gorange");
+}
 $xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
 $xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
 $xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO, "cmdpanelcred", "credito");
 $xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
 
-if(getUsuarioActual(SYS_USER_NIVEL)>USUARIO_TIPO_OFICIAL_CRED){
+
+if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
 	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
 }
 
 if(MODO_DEBUG == true){
 	$srv	= $xHP->getServerName();
 	if(strpos($srv, "localhost") === false AND strpos($srv, "test") === false){
-		
+		if(SAFE_ON_DEV == true){
+			$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
+		}
 	} else {
 		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
 		$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
@@ -653,18 +748,23 @@ if(MODO_DEBUG == true){
 	
 	$xFRM->OButton("TR.USUARIOS", "var xG=new Gen();xG.w({url:'../frmsecurity/usuarios-edicion.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn102", "green2");
 	
-	
 	$xFRM->OButton("TR.PERMISOS", "var xG=new Gen();xG.w({url:'../frmsecurity/permisos.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
+	
+	$xFRM->OButton("TR.CONTRATOS", "var xG=new Gen();xG.w({url:'../frmutils/contratos-editor.frm.php', principal:true});", $xFRM->ic()->CONTRATO, "cmdbtn103", "green2");
 	
 	
 }
-
-$xFRM->addToolbar('<a id="mibew-agent-button" class="yellow" href="https://help.sipakal.com/chat?locale=es" target="_blank" onclick="Mibew.Objects.ChatPopups[\'5b287945db28a4bc\'].open();return false;"><i class="fa fa-question-circle fa-2x"></i>' . $xFRM->getT("TR.AYUDA") . '</a>');
-
+if($noUsarChat == false){
+	$xFRM->addToolbar('<a id="mibew-agent-button" class="yellow" href="https://help.sipakal.com/chat?locale=es" target="_blank" onclick="Mibew.Objects.ChatPopups[\'5b287945db28a4bc\'].open();return false;"><i class="fa fa-question-circle fa-2x"></i>' . $xFRM->getT("TR.AYUDA") . '</a>');
+}
 
 if($xFRM->getEnDesarrollo() == true){
 	//$xFRM->OButton("TR.", "var xG=new Gen();xG.w({url:''});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
 	$xFRM->OButton("TR.LIMPIAR CONTABILIDAD", "var xG=new Gen();xG.confirmar({msg:'¿ Confirma limpiar contabilidad ?', callback: jsaSetRunContabilidad});", $xFRM->ic()->CONTABLE, "cmdbtncont01", "green2");
+}
+if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
+	$ctx	= $xUsr->getCTX();
+	$xFRM->OButton("TR.ABRIR ASOCIADA", "var xG = new Gen(); xG.w({new:true,full:true, url:'" . SVC_ASOCIADA_HOST . "index.xul.php?ctx=$ctx'});", $xFRM->ic()->VINCULAR, "cmcompartirasoc", "yellow");
 }
 
 $idpersona	= $xUsr->getClaveDePersona();
@@ -792,7 +892,9 @@ var xG		= new Gen();
 var xCred	= new CredGen();
 var xP		= new PersGen();
 $(document).ready( function(){
+	<?php if($noUsarChat == false){ ?>
 	Mibew.ChatPopup.init({"id":"5b287945db28a4bc","url":"https:\/\/help.sipakal.com\/chat?locale=es","preferIFrame":true,"modSecurity":false,"forceSecure":true,"width":640,"height":640,"resizable":true,"styleLoader":"https:\/\/help.sipakal.com\/chat\/style\/popup\/\/force_secure"});
+	<?php } ?>
 	//$('#idDateValue').pickadate({format: 'dd-mm-yyyy',formatSubmit:'yyyy-mm-dd'});
 	window.localStorage.clear();
 });
@@ -828,7 +930,7 @@ function setUpdateEstatus(id){
 }
 function jsGoPanel(idcredito){
 	var xc	= new CredGen();
-	xc.goToPanelControl(idcredito);
+	xc.goToPanelControl(idcredito,{principal:true, tab:false});
 }
 function jsGetChart(mType){
 	mType	= (typeof mType == "undefined") ? "bar" : mType;
@@ -852,7 +954,7 @@ function jsCalcularPlanPagos(){
 	xG.w({url:"../frmcreditos/calculadora.plan.frm.php?", tiny: false , h: 600, w : 480, tab:true});
 }
 function jsGoToCaja(id){
-	var obj	= processMetaData("#tr-letras-" + id);
+	var obj	= processMetaData("#tr-creditos_solicitud-" + id);
 	xCred.goToCobrosDeCredito({persona:obj.codigo, credito:obj.credito, periodo: obj.parcialidad});
 }
 function jsGoToCaja2(id){
@@ -875,7 +977,7 @@ function jsGoPanelPersona(){
 }
 function jsGoPanelCredito(){
 	var id = $("#idclave").val();
-	xCred.goToPanelControl(id);
+	xCred.goToPanelControl(id, {principal:true, tab:false});
 }
 function jsGoPanelRecibo(){
 	var id = $("#idclave").val();
@@ -905,11 +1007,13 @@ function jsGoBuscarPersona(){
 	xG.w({ url: xrl, principal : true });	
 }
 function jsPagoCajaCompleto(id){
-	var obj 	= processMetaData("#tr-letras-" + id);
+	var obj 	= processMetaData("#tr-creditos_solicitud-" + id);
+	//console.log(obj);
+	//console.log("#tr-creditos-solicitud-" + id);
 	xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total, principal : true}); 
 }
 function jsAgregarTarea(id){
-	var obj 	= processMetaData("#tr-letras-" + id);
+	var obj 	= processMetaData("#tr--" + id);
 	//xG.w({url:"../frmcaja/abonos-a-parcialidades.frm.php?credito="+id + "&monto=" + obj.total}); 
 }
 function jsAgregarLeasing(){
@@ -918,5 +1022,15 @@ function jsAgregarLeasing(){
 function jsAgregarPrecliente(){
 	xG.w({url:"../frmcreditos/creditos-preclientes.new.frm.php?topanel=true", principal:true});
 }
+function jsAgregarLineaCredito(){
+	xG.w({url:"../frmcreditos/frmcreditoslineas.php?topanel=true", principal:true});
+}
+function jsActualizarEstPers(){
+	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: jsaActualizarEstPers});
+}
+function jsActualizarProyeccionMensual(){
+	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: jsaActualizarProyeccionMensual});
+}
+
 </script>
 <?php $xHP->fin(); ?>

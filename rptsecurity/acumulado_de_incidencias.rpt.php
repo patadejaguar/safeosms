@@ -57,59 +57,12 @@ $nivel			= strtolower($nivel);
 
 $usuario		= parametro("idusuario",0, MQL_INT); $usuario		= parametro("usuario",$usuario, MQL_INT);
 
-
-$ByNivel 		= "";
-$ByCodigo		= "";
-$ByUsuario		= "";
-
-if( $nivel !== SYS_TODAS AND $nivel !== "" ){
-	$ByNivel = " AND (`general_error_codigos`.`type_err`='$nivel') ";
-}
-//Codigo de error
-if( $clave > 0 ){
-	$ByCodigo ="  AND (`general_log`.`type_error`='$clave') ";
-}
-
-if($usuario > 0){
-	$ByUsuario ="  AND (`general_log`.`usr_log`='$usuario') ";
-}
+$sql			= $xL->getListadoDeEventosResumen($FechaInicial, $FechaFinal, $nivel, $clave, $usuario);
 
 
-
-
-$sql = "SELECT
-`general_log`.`type_error`	AS `tipo`,
-`general_error_codigos`.`description_error` AS `descripcion`,
-getUserByID(`general_log`.`usr_log`) AS `usuario`,
-COUNT(`general_log`.`idgeneral_log`) AS `eventos`
-
-FROM
-`general_log` `general_log`
-INNER JOIN `general_error_codigos` `general_error_codigos`
-ON `general_log`.`type_error` = `general_error_codigos`.
-`idgeneral_error_codigos`
-
-WHERE
-
-(`general_log`.`fecha_log` >='$FechaInicial')
-AND
-(`general_log`.`fecha_log` <='$FechaFinal')
-
-$ByNivel
-$ByCodigo
-$ByUsuario
-GROUP BY
-`general_log`.`type_error`,
-`general_log`.`usr_log`
-
-
-
-
-";
 /*HAVING /*errores > 20
 AND
 usuario != \"_NO_REGISTRADO_\" */
-
 //exit($sql);
 
 $titulo			= $xHP->getTitle();

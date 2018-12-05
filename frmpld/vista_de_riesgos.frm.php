@@ -37,13 +37,15 @@ function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $byfechas){
 	} else {
 		$sql		= $xlistas->getListadoDeRiesgosConfirmados(false, false, false, $tipo, false,  " AND (`aml_risk_register`.`estado_de_envio` =0) AND (`aml_risk_register`.`fecha_de_checking` =0) ");
 	}
-	$xT				= new cTabla($sql);
+	$xT				= new cTabla($sql,0, "idtblvistariesgos");
 	//setLog($sql);
 	$xT->OButton("TR.Dictaminar", "jsModificarEstatus(_REPLACE_ID_)", $xT->ODicIcons()->REPORTE);
 	$xT->OButton("TR.Modificar", "jsEditarRiesgo(_REPLACE_ID_)", $xT->ODicIcons()->EDITAR);
 	//$xT->addTool(1);
 	$xT->setKeyField( $xAl->getKey() );
 	$xT->setKeyTable( $xAl->get() );
+	$xT->setOmitidos("persona");
+	
 	if(MODO_CORRECION == true OR MODO_DEBUG == true OR MODO_MIGRACION == true){
 		$xT->addEliminar();
 	}
@@ -51,7 +53,7 @@ function jsaGetListadoDeAvisos($tipo, $fecha_inicial, $fecha_final, $byfechas){
 	return $xT->Show();
 }
 
-$jxc ->exportFunction('jsaGetListadoDeAvisos', array('idtipoderiesgoaml', 'idfecha-1', 'idfecha-2', 'idporfecha'), "#lstalertas");
+$jxc ->exportFunction('jsaGetListadoDeAvisos', array('idtipoderiesgoaml', 'idfecha1', 'idfecha2', 'idporfecha'), "#lstalertas");
 
 
 $jxc ->process();
@@ -66,6 +68,9 @@ $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
 $xFRM->setNoAcordion();
+$xFRM->addCerrar();
+$xFRM->setTitle($xHP->getTitle());
+
 //$jsb->setNameForm( $xFRM->getName() );
 $selcat		= $xSel->getListaDeTipoDeRiesgoEnAML();
 //$xSel->addOptions(array(SYS_TODAS => SYS_TODAS));
@@ -76,16 +81,18 @@ $selcat->addEvent("onchange", "jsGetListadoAvisos()");
 $selcat->addEspOption(SYS_TODAS);
 $selcat->setOptionSelect(SYS_TODAS);
 
-$xFRM->setTitle($xHP->getTitle());
+
 
 $xFRM->addHElem( $selcat->get(true) );
 
-$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->CARGAR);
-$xFRM->addCerrar();
+$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR);
 
-$xFRM->ODate("idfecha-1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
-$xFRM->ODate("idfecha-2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
-$xFRM->OSiNo("TR.FILTRAR POR FECHA", "idporfecha");
+
+$xFRM->OSiNo("TR.FILTRAR POR FECHA", "idporfecha"); $xFRM->addControEvt("chk-idporfecha", "jsDisFechas", "change");
+
+$xFRM->ODate("idfecha1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
+$xFRM->ODate("idfecha2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
+
 
 $xta		= new cHTextArea();
 
@@ -105,9 +112,25 @@ var xG		= new Gen();
 
 function jsGetListadoAvisos(){
 	jsaGetListadoDeAvisos();
+	jsDisFechas();
 }
 function jsModificarEstatus(id){ xG.w({ url : "estatus_de_riesgo.frm.php?codigo=" +id , w: 800, h: 800, tiny : true, callback: jsGetListadoAvisos }); }
 function jsEditarRiesgo(id){ xG.w({ url : "riesgo.editar.frm.php?id=" +id , w: 800, h: 800, tiny : true, callback: jsGetListadoAvisos }); /*xG.editar({tabla: "aml_risk_register", id: id});*/ }
+
+function jsDisFechas(){
+	var idStat	= entero($("#idporfecha").val());
+	console.log("Estatus: " + idStat);
+	if(idStat == 1){
+		xG.verControl("idfecha1", true);
+		xG.verControl("idfecha2", true);
+	} else {
+		xG.verControl("idfecha1");
+		xG.verControl("idfecha2");
+	}
+
+	
+}
+
 </script>
 <?php
 $xHP->fin();

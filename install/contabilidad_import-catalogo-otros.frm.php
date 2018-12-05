@@ -35,13 +35,16 @@ $xFRM		= new cHForm("frm", "contabilidad_import-catalogo-otros.frm.php?action=" 
 $xFil		= new cHFile();
 $xChk		= new cHCheckBox();
 $msg		= "";
+$xFRM->setTitle($xHP->getTitle());
+
 if($action == SYS_NINGUNO ){
-	$xFRM->OFile("idarchivo");
+	$xFRM->OFileText("idarchivo");
 	$xFRM->addHElem( $xChk->get("TR.Afectar Base_de_Datos", "idaplicar") );
 	$xFRM->OText("idcolcuenta", 1, "TR.Columna Cuenta");
 	$xFRM->OText("idcolnom", 2, "TR.Columna Nombre");
 	$xFRM->OText("idcolnat", 3, "TR.Columna Tipo");
 	//$xFRM->OTextArea("idmascara", "$esqueleto", "TR.Formato");
+	$xFRM->addTag("Delimitador |");
 } else {
 	//
 	$doc1					= (isset($_FILES["idarchivo"])) ? $_FILES["idarchivo"] : false;

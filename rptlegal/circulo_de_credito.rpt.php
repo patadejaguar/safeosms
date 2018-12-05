@@ -28,6 +28,8 @@ ini_set("memory_limit", "2048M");
 
 $xHP					= new cHPage("", HP_REPORT);
 $mql					= new cSQLListas();
+$xVi					= new cSQLVistas();
+
 $xF						= new cFecha();
 $query					= new MQL();
 $xLoc					= new cLocal();
@@ -46,7 +48,7 @@ $ByPersona2				= "";
 $ByPersona3				= "";
 
 $FechaInicial			= parametro("on", $xF->getFechaMinimaOperativa(), MQL_DATE); $FechaInicial	= parametro("fechainicial", $FechaInicial, MQL_DATE); $FechaInicial	= parametro("fecha-0", $FechaInicial, MQL_DATE); $FechaInicial = ($FechaInicial == false) ? FECHA_INICIO_OPERACIONES_SISTEMA : $xF->getFechaISO($FechaInicial);
-$FechaFinal				= parametro("off", $xF->getFechaMaximaOperativa(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
+$FechaFinal				= parametro("off", fechasys(), MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 
 $toJson					= false;//parametro("beauty", false, MQL_BOOL);
 $lineaJson				= array();
@@ -55,8 +57,22 @@ $itemJson				= array();
 $FechaExtraccion		= date("Ymd", strtotime($FechaFinal));
 $estatus_actual 		= parametro("f2", false, MQL_INT);
 $persona				= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$creditoref				= parametro("creditoref", 0, MQL_INT);
 
-if($persona != DEFAULT_SOCIO){
+if($creditoref > DEFAULT_CREDITO AND $persona <= DEFAULT_SOCIO){
+	$xCredImp			= new cCredito($creditoref);
+	if($xCredImp->init() == true){
+		//$persona		= $xCredImp->getClaveDePersona();
+		
+		$ByPersona2			= " AND	(`creditos_solicitud`.`numero_solicitud` = $creditoref) ";
+		$ByPersona1			= " AND (`creditos_abonos_parciales`.`docto_afectado` = $creditoref ) ";
+		$ByPersona3			= " AND (`docto_afectado` = $creditoref ) ";
+		$toJson				= true;
+		
+	}
+}
+
+if($persona > DEFAULT_SOCIO){
 	$ByPersona2			= " AND	(`creditos_solicitud`.`numero_socio` = $persona) ";
 	$ByPersona1			= " AND (`creditos_abonos_parciales`.`socio_afectado` = $persona ) ";
 	$ByPersona3			= " AND (`socio_afectado` = $persona ) ";
@@ -86,9 +102,9 @@ if($toJson == true){
 } else {
 	echo $strHEAD . "\r\n";
 }
-$idx1			= "cc.rpt.rs1.$FechaFinal.$persona";
-$idx2			= "cc.rpt.rs2.$FechaFinal.$persona";
-$idx3			= "cc.rpt.rs3.$FechaFinal.$persona";
+$idx1			= "cc.rpt.rs1.$FechaFinal.$persona.$creditoref";
+$idx2			= "cc.rpt.rs2.$FechaFinal.$persona.$creditoref";
+$idx3			= "cc.rpt.rs3.$FechaFinal.$persona.$creditoref";
 
 $DPagos			= $xCache->get($idx1);
 if(!is_array($DPagos)){
@@ -96,6 +112,7 @@ if(!is_array($DPagos)){
 //No cachea la consulta
 	$DPagos			= array();
 	$rsPagos		= $query->getDataRecord("SELECT * FROM `creditos_abonos_parciales` WHERE	(`creditos_abonos_parciales`.`fecha_de_pago` <='$FechaFinal') $ByPersona1  ORDER BY `socio_afectado`,`docto_afectado`,`fecha_de_pago` ");
+	
 	foreach ($rsPagos as $dpags ){
 		$credito	= $dpags["docto_afectado"];
 		$DPagos[$credito][]	= $dpags;
@@ -105,18 +122,21 @@ if(!is_array($DPagos)){
 
 }
 
-$DCal			= $xCache->get($idx2);
-if(!is_array($DCal)){
+//$DCal			= $xCache->get($idx2);
+//if(!is_array($DCal)){
 	$DCal			= array();
-	$rsCal			= $query->getDataRecord("SELECT * FROM `letras` WHERE	(`fecha_de_pago` <='$FechaFinal') $ByPersona3");
+	
+	//$rsCal			= $query->getDataRecord("SELECT * FROM `letras` WHERE	(`fecha_de_pago` <='$FechaFinal') $ByPersona3");
+	$rsCal			= $query->getDataRecord($xVi->getVistaLetras(false, false, false, false, " AND (`fecha_afectacion`<='$FechaFinal') $ByPersona3 "));
+			//"SELECT * FROM `letras` WHERE	(`fecha_de_pago` <='$FechaFinal') $ByPersona3");
 	
 	foreach ($rsCal as $dscal ){
 		$credito	= $dscal["docto_afectado"];
 		$DCal[$credito][]	= $dscal;
 	}
 	$rsCal			= null;
-	$xCache->set($idx2, $DCal);
-}
+	//$xCache->set($idx2, $DCal);
+//}
 /*
  TotalSaldosActuales
 TotalSaldosVencidos
@@ -492,15 +512,29 @@ foreach($datos as $rw){
 	$NumeroDePagos				= $xCred->getPagosAutorizados();
 	$FrecuenciaDePagos			= $xCR->getEPeriocidad( $xCred->getPeriocidadDePago() );
 	
-	if($xCred->getEsPagado() == true){
-		$MontoPagar				= 0;
-	} else {
-		if($xCred->isAFinalDePlazo() == true){
-			$MontoPagar			= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));		//Acabar, valor de la letra actual o saldo?
-		} else {
-			$MontoPagar			= $xCR->getMonto($xCred->getMontoDeParcialidad());		//Va el monto de la parcialidad
+		
+	if($xCred->isAFinalDePlazo() == true){
+		$MontoPagar			= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));		//Acabar, valor de la letra actual o saldo?
+		if($persona> DEFAULT_SOCIO){
+			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar : $MontoPagar es por SALDO\r\n");
 		}
+	} else {
+		$MontoPagar			= $xCR->getMonto($xCred->getMontoDeParcialidad());		//Va el monto de la parcialidad
+		//setLog("Va el monto de la parcialidad $MontoPagar");
+		if($persona> DEFAULT_SOCIO){
+			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar : $MontoPagar es por LETRA\r\n");
+		}
+			
 	}
+	//====================== 2018-07-02
+	$SSDO					= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));
+	if($SSDO < $MontoPagar){
+		//setLog("Va el monto de la parcialidad $MontoPagar es menor de $SSDO");
+		$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar : $MontoPagar es mayor al Saldo $SSDO\r\n");
+		$MontoPagar			= $SSDO;
+	}
+		
+	
 	$FechaAperturaCuenta		= $xCR->getDate($xCred->getFechaDeMinistracion() );
 	$FechaUltimoPago			= $xCred->getFechaUltimoDePago();
 	//setLog("1....$FechaUltimoPago");
@@ -516,6 +550,7 @@ foreach($datos as $rw){
 	$Garantia					= "";		//TODO: Acabar garantia
 	$CreditoMaximo				= $xCR->getMonto($xSoc->getCreditoMaximo());
 	$SaldoActual				= $xCR->getMonto($xCred->getSaldoActual($FechaFinal));
+	//setLog("El saldo actual es $SaldoActual en $CuentaActual de $FechaFinal");
 	$LimiteCredito				= $xCR->getMonto($xSoc->getCreditoMaximo());
 	$SaldoVencido				= 0;
 	$NumeroPagosVencidos		= 0;		//Modificado en el plan de pagos
@@ -527,7 +562,11 @@ foreach($datos as $rw){
 	
 	$FechaDePrimerIncumplimiento = "";
 	
+	
 	if($SaldoActual <= 0){
+		$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar : $MontoPagar se lleva a 0, el Saldo $SaldoActual\r\n");
+		$MontoPagar					= 0;	//2018-07-09
+		//setLog("Va el monto de la parcialidad $MontoPagar por $SaldoActual ---- $CuentaActual");
 		//$xCred->getFechaUltimoDePago() 
 		if($xF->getInt($FechaUltimoPago) <= $xF->getInt( $xCred->getFechaDeMinistracion() )){
 			$FechaClave 			= $xF->setSumarDias(1, $xCred->getFechaDeMinistracion());
@@ -542,7 +581,12 @@ foreach($datos as $rw){
 		}
 		//$FechaUltimaCompra			= $xCR->getDate($xCred->getFechaDeMinistracion() );
 		//$FechaAperturaCuenta		= $xCR->getDate($xCred->getFechaDeMinistracion() );
-		$FechaCierreCuenta		= $xCR->getDate($FechaCierreCuenta);
+		$FechaCierreCuenta			= $xCR->getDate($FechaCierreCuenta);
+	} else {
+		if($MontoPagar<=0){
+			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar es cero: $MontoPagar y el Saldo $SaldoActual\r\n");
+			$MontoPagar				= $SaldoActual;
+		}
 	}
 	if($xF->getInt($FechaAperturaCuenta) >= $xF->getInt($FechaUltimoPago)){
 		$FechaClave = ($xF->getInt($FechaUltimoPago) > $xF->getInt($xCred->getFechaDeMinistracion()) ) ? $FechaUltimoPago : $xCred->getFechaDeMinistracion();
@@ -646,6 +690,14 @@ foreach($datos as $rw){
 			$PagoActual		= "01";//sprintf("%02d", setNoMenorQueCero(($xCred->getPagosAutorizados() - $NumeroPagosVencidos)) );
 		}	
 	}
+	/* 2018-07-09 */ //===================================================================================================================
+	if($MontoPagar<=0 AND $SaldoActual>0){
+		$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\tError. El Monto a pagar es $MontoPagar y el Saldo $SaldoActual\r\n");
+		$MontoPagar		= $SaldoActual;
+	}
+	if($persona > DEFAULT_SOCIO AND MODO_DEBUG == true){
+		$xLog->add("OK\t$idpersona-$idcredito\t$sucres\tEl Monto a pagar es $MontoPagar y el Saldo $SaldoActual\r\n");
+	}
 	if($SaldoVencido > $SaldoActual){ $SaldoVencido = $SaldoActual; }
 
 	$HistoricoPagos			= "";
@@ -695,8 +747,43 @@ foreach($datos as $rw){
 			foreach ($itemJson as $ix => $item){
 				if(!isset($jsonNew[$item])){
 					$jsonNew[$item] = (isset($arrLinea[$ix])) ? $arrLinea[$ix] : "ERROR";
+					
 				}
-				
+				//eliminar no estudiados
+				//unset($jsonNew[""]);
+				unset($jsonNew["DOMICILIODEVOLUCION"]);
+				unset($jsonNew["GARANTIA"]);
+				unset($jsonNew["CLAVEOTORGANTE"]);
+				unset($jsonNew["NOMBREOTORGANTE"]);
+				unset($jsonNew["APELLIDOADICIONAL"]);
+				unset($jsonNew["IDENTIFICADORDEMEDIO"]);
+				unset($jsonNew["NOTAOTORGANTE"]);
+				unset($jsonNew["VERSION"]);
+				unset($jsonNew["RESIDENCIA"]);
+				unset($jsonNew["NUMEROLICENCIACONDUCIR"]);
+				unset($jsonNew["SEXO"]);
+				unset($jsonNew["NACIONALIDAD"]);
+				unset($jsonNew["TIPOPERSONA"]);
+				unset($jsonNew["FAX"]);
+				unset($jsonNew["EXTENSION"]);
+				unset($jsonNew["TOTALPAGOSREPORTADOS"]);
+				unset($jsonNew["CLAVEANTERIOROTORGANTE"]);
+				unset($jsonNew["NOMBREANTERIOROTORGANTE"]);
+				unset($jsonNew["NUMEROCUENTAANTERIOR"]);
+				unset($jsonNew["TOTALELEMENTOSNOMBREREPORTADOS"]);
+				unset($jsonNew["TOTALELEMENTOSDIRECCIONREPORTADOS"]);
+				unset($jsonNew["TOTALELEMENTOSEMPLEOREPORTADOS"]);
+				unset($jsonNew["TOTALELEMENTOSCUENTAREPORTADOS"]);
+				unset($jsonNew["NUMERODEPENDIENTES"]);
+				unset($jsonNew["CLAVEMONEDA"]);
+				//Empleo
+				unset($jsonNew["FECHAULTIMODIAEMPLEO"]);
+				unset($jsonNew["FECHAVERIFICACIONEMPLEO"]);
+				unset($jsonNew["ORIGENRAZONSOCIALDOMICILIO"]);
+				unset($jsonNew["CLAVEUNIDADMONETARIA"]);
+				unset($jsonNew["ORIGENDOMICILIO"]);
+				unset($jsonNew["HISTORICOPAGOS"]);
+							
 			}
 			$lineaJson[]		= $jsonNew;
 		} else {
@@ -736,7 +823,7 @@ $icnt	= null;
 
 //
 
-if(MODO_DEBUG AND $persona <= DEFAULT_SOCIO){
+if(MODO_DEBUG AND $persona <= DEFAULT_SOCIO AND $creditoref<= DEFAULT_CREDITO){
 	$xFil	= new cFileLog();
 	$xFil->setWrite($xLog->getMessages());
 	$xFil->setSendToMail($xHP->getTitle(), ADMIN_MAIL);
@@ -751,6 +838,9 @@ if($toJson == true){
 	
 	$data		= json_encode($lineaJson);
 	
+	$xFRM->addCerrar();
+	
+	$xFRM->addLog($xLog->getMessages());
 	
 	$xFRM->addHElem($xDiv1->get($data));
 	
@@ -811,6 +901,6 @@ if($toJson == true){
 	<?php
 	//$jxc ->drawJavaScript(false, true);
 	$xHP->fin();
-	memprof_dump_callgrind(fopen("/tmp/cachegrind.out." . rand(0, 500), "w"));
+	//memprof_dump_callgrind(fopen("/tmp/cachegrind.out." . rand(0, 500), "w"));
 }
 ?>

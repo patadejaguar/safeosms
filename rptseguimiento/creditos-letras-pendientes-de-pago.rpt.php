@@ -73,7 +73,7 @@ if($idproducto > 0){
 }
 
 //$sql			= $xL->getListadoDeLetrasPendientesReporte($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
-$sql			= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
+$sql			= $xL->getListadoDeLetrasPendientesReporteAcum($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia, $sucursal); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
 
 
 $xRPT			= new cReportes($titulo);

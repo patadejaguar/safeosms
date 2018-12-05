@@ -38,8 +38,8 @@ $mostrar_como			= parametro("v", SYS_DEFAULT, MQL_RAW);
 $mostrar_como			= parametro("vista", SYS_DEFAULT, MQL_RAW);
 
 $imprimir_y_cerrar		= parametro("c");
-$codigo_unico			= parametro("codigo");
-
+$codigocompuesto		= parametro("codigo");
+$id						= parametro("id", 0, MQL_INT);
 
 //--------------------	OLD
 if($fechas != ""){
@@ -63,9 +63,9 @@ $ByFolio				= ($folio_inicial <= 0) ? "" : " AND `contable_polizas`.`numeropoliz
 $ByFolio				.= ($folio_final <= 0) ? "" : " AND `contable_polizas`.`numeropoliza`<=$folio_final ";
 $ByFecha				= " AND `contable_polizas`.`fecha`>='$fecha_inicial'	AND `contable_polizas`.`fecha`<= '$fecha_final' ";
 
-if($codigo_unico != ""){
+if($codigocompuesto != ""){
 	$xPol				= new cPoliza(false);
-	$xPol->setPorCodigo($codigo_unico);
+	$xPol->initByCodigo($codigocompuesto);
 	$ByCodigo			= " AND (`contable_polizas`.`ejercicio` = " . $xPol->getEjercicio() . " AND	`contable_polizas`.`periodo`=" . $xPol->getPeriodo() . "
 							AND `contable_polizas`.`tipopoliza`=" . $xPol->getTipo() . " AND `contable_polizas`.`numeropoliza` =" . $xPol->getNumero() . ") ";
 	$mostrar_como		= SYS_TODAS;
@@ -73,7 +73,17 @@ if($codigo_unico != ""){
 	$ByFolio			= "";
 	$WhereTipos			= "";
 }
-
+if($id>0){
+	$xPol				= new cPoliza(false);
+	$xPol->initById($id);
+	
+	$ByCodigo			= " AND (`contable_polizas`.`ejercicio` = " . $xPol->getEjercicio() . " AND	`contable_polizas`.`periodo`=" . $xPol->getPeriodo() . "
+							AND `contable_polizas`.`tipopoliza`=" . $xPol->getTipo() . " AND `contable_polizas`.`numeropoliza` =" . $xPol->getNumero() . ") ";
+	$mostrar_como		= SYS_TODAS;
+	$ByFecha			= "";
+	$ByFolio			= "";
+	$WhereTipos			= "";
+}
 $exoTbl						= "";
 $NetoCargos					= 0;
 $NetoAbonos					= 0;

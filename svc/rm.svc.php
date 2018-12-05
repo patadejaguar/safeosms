@@ -30,6 +30,7 @@ if($tabla != false AND $clave != false ){
 	} else {
 		$obj	= $xObj->obj();
 		$key	= $obj->getKey();
+		
 		switch ($tabla){
 			case TPERSONAS_DIRECCIONES:
 				$xDom	= new cPersonasVivienda();
@@ -49,20 +50,26 @@ if($tabla != false AND $clave != false ){
 					$rs["error"]	= false;
 					$rs["message"]	= $xCta->getMessages();
 				}
-				break;
+			break;
+
 			default:
 				$obj->setData( $obj->query()->initByID($clave) );
-				$data	= base64_encode( json_encode($obj->query()->getCampos()) );
+				$data				= base64_encode( json_encode($obj->query()->getCampos()) );
 				$ql->setRawQuery("DELETE FROM $tabla WHERE $key='$clave'");
 				$xCache				= new cCache();
 				$xCache->clean("$tabla-$clave");
 				$rs["message"]		= "OK\tSe elimina el Registro con ID $clave en la Tabla $tabla\r\n";
-				if(MODO_DEBUG == true){	$rs["message"]	.= $ql->getMessages(); }
-				$rs["error"]				= false;
+				if(MODO_DEBUG == true){
+					$rs["message"]	.= $ql->getMessages(); 
+				}
+				$rs["error"]		= false;
 				//guardar error
 				$xLog				= new cCoreLog();
 				$xLog->add($rs["message"] . " $data", $xLog->COMMON);
-				$xLog->guardar($xLog->OCat()->ELIMINAR_RAW);				
+				$xLog->guardar($xLog->OCat()->ELIMINAR_RAW);
+				
+				
+				
 				break;
 		}
 

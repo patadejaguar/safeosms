@@ -20,8 +20,11 @@
 //=====================================================================================================
 $xHP		= new cHPage("TR.parcialidades pendientes de pago ", HP_REPORT);
 $xL			= new cSQLListas();
+$xV			= new cSQLVistas();
 $xF			= new cFecha();
 $query		= new MQL();
+$xVals		= new cReglasDeValidacion();
+
 	
 $estatus 	= parametro("estado", SYS_TODAS);
 $frecuencia = parametro("periocidad", SYS_TODAS);
@@ -36,7 +39,8 @@ $senders		= getEmails($_REQUEST);
 
 
 $ByConvenio		= ($producto == SYS_TODAS) ? "" : " AND (`creditos_tipoconvenio`.`tipo_en_sistema` = $producto ) ";
-$sql			= $xL->getListadoDeLetrasConCreditos($FechaFinal, false, "", "", $ByConvenio);
+$sql			= $xV->getVistaLetrasConNombre($FechaFinal, "", "", "", $producto);
+// $xL->getListadoDeLetrasConCreditos($FechaFinal, false, "", "", $ByConvenio);
 $titulo			= $xHP->getTitle();
 $archivo		= "";
 
@@ -48,15 +52,24 @@ $xRPT->setSQL($sql);
 
 $xT		= new cTabla($sql, 2);
 $xT->setTipoSalida($out);
+if(MODULO_CAPTACION_ACTIVADO == false){
+	$xT->setOmitidos("ahorro");
+}
+$xT->setColSum("ahorro");
+$xT->setColSum("capital");
+$xT->setColSum("interes");
+$xT->setColSum("iva");
+$xT->setColSum("otros");
+$xT->setColSum("letra");
+
 $xRPT->addContent( $xRPT->getEncabezado("", $FechaInicial, $FechaFinal) );
-//$xT->setEventKey("jsGoPanel");
-//$xT->setKeyField("creditos_solicitud");
+
+
 $xRPT->addContent( $xT->Show( $xRPT->getTitle() ) );
 $xRPT->setBodyMail( $xHP->getTitle() );
+$xRPT->setSumarRegistros($xT->getRowCount());
 
 //============ Agregar HTML
-//$xRPT->addContent( $xHP->init($jsEvent) );
-//$xRPT->addContent( $xHP->end() );
 $xRPT->setTitle($xHP->getTitle());
 $xRPT->setResponse();
 $xRPT->setSenders($senders);

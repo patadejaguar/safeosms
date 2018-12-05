@@ -225,7 +225,7 @@ if($tabla != ""){
 								break;
 						case "int":
 								$valor				= "\$xTabla->$nombre" . "()->v()";
-								$controles[$nombre] = "\$xFRM->OMoneda(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
+								$controles[$nombre] = "\$xFRM->OEntero(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
 								//$receivers[$nombre]	= "\$$idF\t=parametro(\"$idF\", \"$valor\", MQL_INT);\n";
 								break;
 						default:
@@ -248,12 +248,12 @@ if($tabla != ""){
 										//$receivers[$nombre]	= "\$$idF\t=parametro(\"$idF\", \"$valor\", MQL_RAW);\n";
 								} else if($ctrl == "textarea"){
 										$valor				= "\$xTabla->$nombre" . "()->v()";
-										$controles[$nombre] = "\$xFRM->OTextArea(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
+										$controles[$nombre] = "\$xFRM->OText(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
 										$ctrl				= "textarea";
 										//$receivers[$nombre]	= "\$$idF\t=parametro(\"$idF\", \"$valor\", MQL_STRING);\n";
 								} else {
 										$valor				= "\$xTabla->$nombre" . "()->v()";
-										$controles[$nombre] = "\$xFRM->OText(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
+										$controles[$nombre] = "\$xFRM->OText_13(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
 										//$receivers[$nombre]	= "\$$idF\t=parametro(\"$idF\", \"$valor\", MQL_STRING);\n";
 								}
 								break;
@@ -361,7 +361,7 @@ if($tabla != ""){
 			$FRM_CLASS_2	.= "\n\$xHG->setSQL($gen_sql1);\r\n\$xHG->addList();\r\n\$xHG->setOrdenar();\r\n";	
 			$FRM_CLASS_2	.= $gridF;
 	
-			$FRM_CLASS_2	.= "\n\$xHG->OToolbar(\"TR.AGREGAR\", \"jsAdd()\", \"grid/add.png\");\r\n\$xHG->OButton(\"TR.EDITAR\", \"jsEdit('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG->OButton(\"TR.ELIMINAR\", \"jsDel('+ data.record.$loader +')\", \"delete.png\");
+			$FRM_CLASS_2	.= "\n\$xHG->OToolbar(\"TR.AGREGAR\", \"jsAdd()\", \"grid/add.png\");\r\n\$xHG->OButton(\"TR.EDITAR\", \"jsEdit('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG->OButton(\"TR.ELIMINAR\", \"jsDel('+ data.record.$loader +')\", \"delete.png\");\r\n\$xHG->OButton(\"TR.BAJA\", \"jsDeact('+ data.record.$loader +')\", \"undone.png\");
 \$xFRM->addHElem(\"<div id='". $idgrid . "'></div>\");\r\n\$xFRM->addJsCode( \$xHG->getJs(true) );\r\necho \$xFRM->get();\r\n?>
 \r\n<script>
 var xG	= new Gen();
@@ -373,6 +373,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:\"$tabla\", id:id, callback:jsLG$idgrid });
+}
+function jsDeact(id){
+	xG.recordInActive({tabla:\"$tabla\", id:id, callback:jsLG$idgrid, preguntar:true });
 }
 </script>
 <?php

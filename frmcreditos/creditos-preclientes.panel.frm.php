@@ -44,6 +44,10 @@ $RN_NoValidarCurp	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_NO_VALID
 $useDatosAccidente	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DATO_ACCIDENTE);
 $UsarIDInterno		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);
 
+$OffByUsr			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_USR);		//regla de negocio
+$OffByHer			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_HER);		//regla de negocio
+$OffByProd			= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_OFICIAL_POR_PROD);		//regla de negocio
+
 
 function jsaAsociar($idpersona, $idcontrol){
 	$xP		= new cCreditosPreclientes($idcontrol);
@@ -83,6 +87,7 @@ $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
+$soloIva	= true;
 
 $xFRM->setNoAcordion();
 $xFRM->addSeccion("idsolicita", "TR.DATOS");
@@ -95,7 +100,9 @@ $xFRM->OHidden("idcontrol", $xTabla->idcontrol()->v());
 $xFRM->OHidden("idpersona", $xTabla->idpersona()->v());
 $xFRM->OHidden("idcredito", $xTabla->idcredito()->v());
 
-$xFRM->ODate("fecha_de_registro", $xTabla->fecha_de_registro()->v(), "TR.FECHA DE REGISTRO");
+//$xFRM->ODate("fecha_de_registro", $xTabla->fecha_de_registro()->v(), "TR.FECHA DE REGISTRO");
+
+$xFRM->OHidden("fecha_de_registro", $xTabla->fecha_de_registro()->v());
 
 $xFRM->OText("nombres", $xTabla->nombres()->v(), "TR.NOMBRE_COMPLETO");
 $xFRM->OText_13("apellido1", $xTabla->apellido1()->v(), "TR.PRIMER_APELLIDO");
@@ -115,11 +122,16 @@ if($SinDatoPoblacional == true OR $userNoDNI == true){
 
 $xFRM->OMoneda("telefono", $xTabla->telefono()->v(), "TR.TELEFONO");
 $xFRM->OText("email", $xTabla->email()->v(), "TR.EMAIL");
+if($OffByUsr == true){
+	$xFRM->OHidden("idoficial", $xTabla->idoficial()->v());
+} else {
+	$xFRM->addHElem($xSel->getListaDeOficiales("idoficial",SYS_USER_ESTADO_ACTIVO, $xTabla->idoficial()->v())->get(true));
+}
 
 $xFRM->endSeccion();
 $xFRM->addSeccion("iddcreds", "TR.CREDITO");
 
-$xFRM->addHElem($xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v())->get(true));
+$xFRM->addHElem($xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v(), true)->get(true));
 $xFRM->addHElem($xSel->getListaDePeriocidadDePago("periocidad", $xTabla->periocidad()->v(), false, true)->get(true));
 $xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v(),true )->get(true) );
 $xFRM->OTasaInt("tasa_interes", $xTabla->tasa_interes()->v(), "TR.TASA");
@@ -127,8 +139,11 @@ $xFRM->OTasaInt("tasa_interes", $xTabla->tasa_interes()->v(), "TR.TASA");
 $xFRM->OEntero("pagos", $xTabla->pagos()->v(), "TR.PAGOS",100);
 $xFRM->OMoneda2("monto", $xTabla->monto()->v(), "TR.MONTO");
 
-$xFRM->addHElem($xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v())->get(true));
-$xFRM->addHElem($xSel->getListaDeOficiales("idoficial",SYS_USER_ESTADO_ACTIVO, $xTabla->idoficial()->v())->get(true));
+$xFRM->ODate("idfechainicial", false, "TR.FECHA PRIMER PAGO");
+
+$xFRM->addHElem($xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v(), $soloIva)->get(true));
+
+
 
 $xFRM->OText("notas", $xTabla->notas()->v(), "TR.NOTAS");
 
@@ -225,7 +240,7 @@ function jsAgregarCredito(){
 		var idoficial	= $("#idoficial").val();
 		//origen 270 PRECLIENTES
 		if(idcredito <= 0){
-			xC.addCredito({persona: idpersona, monto: monto, producto:producto, origen:270, idorigen:idcontrol, frecuencia: periocidad, pagos: pagos, destino:aplicacion, oficial:idoficial});
+			xC.addCredito({persona: idpersona, monto: monto, producto:producto, origen:CNF.credito.origen.precliente, idorigen:idcontrol, frecuencia: periocidad, pagos: pagos, destino:aplicacion, oficial:idoficial});
 		} else {
 			xG.alerta({msg: "El Credito ya existe"});
 		}
@@ -297,7 +312,8 @@ function jsCalcularPlan(){
 	var nombrec			= $.trim($("#nombres").val() + " " + $("#apellido1").val() + " " + $("#apellido2").val());
 	var email			= $("#email").val();
 	var idcontrol		= $("#idcontrol").val();
-
+	var idfechainicial = $("#idfechainicial").val(); 
+	
 
 	xG.desactiva("#idimprimir");
 	xG.desactiva("#idsendmail");
@@ -315,7 +331,7 @@ function jsCalcularPlan(){
 	txt					+= "</table>";
 	
 	session("data.head", base64.encode(txt));
-	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&redondeo=true&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&tipocuota=" + tipocuota_id + "&destino=" + aplicacion;
+	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&redondeo=true&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&tipocuota=" + tipocuota_id + "&destino=" + aplicacion + "&fechainicial=" + idfechainicial;
    	$.ajax(urlm, {
       success: function(data) {
 	//alert(data.monto);

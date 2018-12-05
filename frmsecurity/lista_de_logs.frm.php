@@ -99,9 +99,9 @@ $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setNoAcordion();
+$xFRM->addCerrar();
 
-$xFRM->addEnviar("TR.EJECUTAR", "jsaGetFiles()");
-
+$xFRM->addBuscar("jsaGetFiles()");
 $xFRM->OText("idBuscar", "", "TR.BUSCAR");
 
 

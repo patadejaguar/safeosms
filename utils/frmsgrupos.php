@@ -27,6 +27,8 @@ function jsaGetGrupos($txt){
 	$ByNombre	= ($nombre != "") ? " AND (`nombre_gruposolidario` LIKE '%$nombre%' OR `representante_nombrecompleto` LIKE '%$nombre%' OR `vocalvigilancia_nombrecompleto` LIKE '%$nombre%') " : "";	
 	$sql 		= $xLi->getListadoDeGrupos() . " $ByNombre ORDER BY	`nombre_gruposolidario`	LIMIT 0,10 ";
 	$xT			= new cTabla($sql);
+	
+	
 	$xT->setEventKey("setGrupo");
 	return $xT->Show();
 }

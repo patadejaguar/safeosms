@@ -36,6 +36,10 @@ $grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, 
 $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
 $observaciones= parametro("idobservaciones");
+
+
+$todas		= parametro("todas", false, MQL_BOOL);
+
 $xHP->addJTableSupport();
 $xHP->init();
 
@@ -49,8 +53,11 @@ $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivcattip",$xHP->getTitle());
-
-$xHG->setSQL("SELECT * FROM `personas_documentacion_tipos` LIMIT 0,100");
+if($todas == false){
+	$xHG->setSQL("SELECT * FROM `personas_documentacion_tipos` WHERE `estatus`=1 ORDER BY `estatus` DESC LIMIT 0,100");
+} else {
+	$xHG->setSQL("SELECT * FROM `personas_documentacion_tipos` ORDER BY `estatus` DESC LIMIT 0,100");
+}
 $xHG->addList();
 $xHG->setOrdenar();
 $xHG->addKey("clave_de_control");
@@ -59,17 +66,28 @@ $xHG->addKey("clave_de_control");
 $xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "40%");
 $xHG->col("clasificacion", "TR.CLASIFICACION", "8%");
 //$xHG->col("vigencia_dias", "TR.VIGENCIA", "8%");
-$xHG->col("almacen", "TR.ARCHIVO", "8%");
-$xHG->col("estatus", "TR.ESTATUS", "8%");
-$xHG->col("es_ident", "TR.IDENTIFICACION_OFICIAL", "8%");
+//$xHG->col("almacen", "TR.ARCHIVO", "8%");
+
+$xHG->OColSiNo("almacen","TR.ALMACEN", "8%" );
+
+if($todas == true){
+	$xHG->OColSiNo("estatus", "TR.ESTATUS", "8%");
+	//$xHG->col("estatus", "TR.ESTATUS", "8%");
+}
+
+//$xHG->col("es_ident", "TR.IDENTIFICACION_OFICIAL", "8%");
+
+$xHG->OColSiNo("es_ident","TR.IDENTIFICACION_OFICIAL", "8%" );
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave_de_control +')", "undone.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
 
 
 if(MODO_DEBUG == true){
 	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
 }
+
 $xFRM->addHElem("<div id='iddivcattip'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 
@@ -85,6 +103,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"personas_documentacion_tipos", id:id, callback:jsLGiddivcattip});
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"personas_documentacion_tipos", id:id, callback:jsLGiddivcattip, preguntar:true });
 }
 </script>
 <?php

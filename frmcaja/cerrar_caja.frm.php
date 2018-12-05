@@ -73,6 +73,7 @@ $xSel		= new cHSelect();
 $txtP		= new cHText();
 
 $txtP->addEvent("var xG = new Gen(); xG.inputMD5(this);", "onchange");
+$xFRM->addCerrar();
 
 $xFRM->OButton("TR.Cerrar Caja", "jsCerrarCaja()", "bloquear", "cmdlock");
 $xFRM->OButton("TR.Guardar Arqueo", "jsRegistrarArqueo()", $xFRM->ic()->GUARDAR, "cmdcerrar","whiteblue");

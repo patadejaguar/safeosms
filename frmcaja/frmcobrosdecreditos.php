@@ -18,6 +18,8 @@ $xCaja		= new cCaja();
 $xEvt		= new cCreditosEventos();
 $xRuls		= new cReglaDeNegocio();
 
+$ConVendedor= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_CON_VENDEDOR);
+
 if( $xCaja->getEstatus() == TESORERIA_CAJA_CERRADA ){	$xHP->goToPageError(200); }
 
 $jxc = new TinyAjax();
@@ -189,7 +191,7 @@ $xSel		= new cHSelect();
 ///$msel->addEvent("onchange", "initComponents()");
 
 $xDate->setDivClass("");
-$xFRM->addFechaRecibo();
+
 
 //$xFRM->addDivSolo($xDate->get("TR.Fecha"), "<div id='mscom'></div>", "tx14", "tx34");
 
@@ -224,9 +226,18 @@ if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
 $xFRM->OButton("TR.PAGOS POR FECHA", "jsaGetLetrasAVencerTodas()", $xFRM->ic()->REPORTE4);
 $xFRM->OButton("TR.Estado de Cuenta", "getEdoCtaCredito()", $xFRM->ic()->ESTADO_CTA);
 $xFRM->OButton("TR.PLAN_DE_PAGOS", "getPlanDePagos()", $xFRM->ic()->CALENDARIO);
-$xFRM->OButton("TR.generar PLAN_DE_PAGOS", "getFormaPlanDePagos()", $xFRM->ic()->CALENDARIO1);
+
+if(MODO_DEBUG == true){
+	$xFRM->OButton("TR.generar PLAN_DE_PAGOS", "getFormaPlanDePagos()", $xFRM->ic()->CALENDARIO1);
+}
 
 $xFRM->OButton("TR.NOTAS", "jsAddNota()", $xFRM->ic()->NOTA);
+
+
+$xFRM->addFechaRecibo();
+if($ConVendedor == true){
+	$xFRM->addHElem( $xSel->getListaDeUsuarios("vendedor", getUsuarioActual())->get("TR.VENDEDOR", true) );
+}
 
 echo $xFRM->get();
 ?>

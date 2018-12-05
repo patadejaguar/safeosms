@@ -18,9 +18,10 @@
 $xHP		= new cHPage("TR.Operaciones con Alertas", HP_FORM);
 $xF			= new cFecha();
 $xlistas	= new cSQLListas();
-
+$xRuls		= new cReglaDeNegocio();
 $jxc 		= new TinyAjax();
 
+//$UsarFotos	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_FOTOS);		//regla de negocio
 
 function jsaGetListadoDeAvisos($subtipo, $fecha_inicial, $fecha_final, $todas, $byfechas){
 	$subtipo		= setNoMenorQueCero($subtipo);
@@ -40,7 +41,7 @@ function jsaGetListadoDeAvisos($subtipo, $fecha_inicial, $fecha_final, $todas, $
 	} else {
 		$sql		= $xlistas->getListadoDeAlertas(false, false, false, false, $ByEstado);
 	}
-	$xT				= new cTabla($sql);
+	$xT				= new cTabla($sql, 0, "tblvistaalertas");
 	$xT->setWithMetaData();
 	
 	//$xT->OButton("TR.Dictaminar", "jsModificarEstatus(_REPLACE_ID_)", $xT->ODicIcons()->REPORTE );
@@ -50,25 +51,23 @@ function jsaGetListadoDeAvisos($subtipo, $fecha_inicial, $fecha_final, $todas, $
 	$xT->setEventKey("jsGetPanelDeAlertas");
 	$xT->setKeyField( $xAl->getKey() );
 	$xT->setKeyTable( $xAl->get() );
+	$xT->setOmitidos("persona_de_origen");
 	
+	$xT->addEditar();
+	$xT->addEliminar();
 	
-	if(getSePuedeMostrar(iDE_AML, MQL_MOD)== true){
-		$xT->addEditar();
-	}
-	if(getSePuedeMostrar(iDE_AML, MQL_DEL)== true){
-		$xT->addEliminar();
-	}
 	$xT->setPagination(100);
+	
 	return $xT->Show();
 }
 
-$jxc->exportFunction('jsaGetListadoDeAvisos', array('idsubtipo', 'idfecha-1', 'idfecha-2', 'idactivas', 'idporfecha'), "#lstalertas");
+$jxc->exportFunction('jsaGetListadoDeAvisos', array('idsubtipo', 'idfecha1', 'idfecha2', 'idactivas', 'idporfecha'), "#lstalertas");
 
 $jxc->process();
 
 $clave		= parametro("id", SYS_TODAS);
 $xHP->init("jsGetListadoAvisos()");
-$jsb		= new jsBasicForm("");
+//$jsb		= new jsBasicForm("");
 
 
 
@@ -79,7 +78,10 @@ $xTxt		= new cHText();
 $xDate		= new cHDate();
 $xSel		= new cHSelect();
 
-$jsb->setNameForm( $xFRM->getName() );
+//$jsb->setNameForm( $xFRM->getName() );
+$xFRM->addCerrar();
+$xFRM->setTitle($xHP->getTitle());
+
 
 $selcat		= $xSel->getListaDeTipoDeRiesgoEnAMLCAT('idsubtipo');
 $selcat->addEvent("onblur", "jsGetListadoAvisos()");
@@ -91,16 +93,16 @@ $selcat->setOptionSelect(SYS_TODAS);
 
 $xFRM->addSeccion("iddivtools", $xHP->getTitle());
 $xFRM->addHElem( $selcat->get(true) );
-$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->CARGAR);
-$xFRM->addCerrar();
+$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR);
 
 
+$xFRM->OSiNo("TR.FILTRO POR FECHA", "idporfecha"); $xFRM->addControEvt("chk-idporfecha", "jsDisFechas", "change");
 
-$xFRM->ODate("idfecha-1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
-$xFRM->ODate("idfecha-2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
-$xFRM->OSiNo("TR.FILTRO POR FECHA", "idporfecha");
+$xFRM->ODate("idfecha1", $xF->getFechaInicialDelAnno(), "TR.FECHA_INICIAL");
+$xFRM->ODate("idfecha2", $xF->getDiaFinal(), "TR.FECHA_FINAL");
 
-$xFRM->OCheck("TR.VER INACTIVO", "idactivas");
+
+$xFRM->OCheck_13("TR.VER INACTIVO", "idactivas");
 
 $xFRM->endSeccion();
 $xFRM->addSeccion("iddivalertas", "TR.LISTA DE ALERTAS");
@@ -110,7 +112,8 @@ $xFRM->addAviso("", "idmsg");
 echo $xFRM->get();
 
 
-$jsb->show();
+//$jsb->show();
+
 $jxc ->drawJavaScript(false, true);
 ?>
 <!-- HTML content -->
@@ -119,6 +122,20 @@ var xG		= new Gen();
 var xAml	= new AmlGen();
 function jsGetListadoAvisos(){
 	jsaGetListadoDeAvisos();
+	jsDisFechas();
+}
+function jsDisFechas(){
+	var idStat	= entero($("#idporfecha").val());
+	console.log("Estatus: " + idStat);
+	if(idStat == 1){
+		xG.verControl("idfecha1", true);
+		xG.verControl("idfecha2", true);
+	} else {
+		xG.verControl("idfecha1");
+		xG.verControl("idfecha2");
+	}
+
+	
 }
 /*function jsModificarEstatus(id){
 	xG.w({ url : "estatus_de_alerta.frm.php?codigo=" +id , w: 800, h: 800, tiny : true, callback: jsGetListadoAvisos  });

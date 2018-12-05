@@ -53,6 +53,8 @@ $xFRM    		= new cHForm("frmperfilrecs", "recibos-contabilidad.frm.php?action=$a
 $xFRM->setTitle($xHP->getTitle());
 $xSel     	   = new cHSelect();
 
+
+
 $xFRM->OHidden("idcontable_poliza_perfil", $xTabla->idcontable_poliza_perfil()->v());
 $xFRM->OHidden("tipo_de_recibo", $xTabla->tipo_de_recibo()->v(), "TR.TIPO DE RECIBO");
 $xFRM->OHidden("tipo_de_operacion", $xTabla->tipo_de_operacion()->v(), "TR.TIPO DE OPERACION");

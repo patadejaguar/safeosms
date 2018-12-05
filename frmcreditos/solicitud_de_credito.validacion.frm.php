@@ -26,7 +26,7 @@ $xHP->init();
 $xFRM		= new cHForm("frm", "./");
 $xLog		= new cCoreLog();
 
-$msg		= "";
+
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -47,7 +47,7 @@ $claveorigen= parametro("claveorigen",0, MQL_INT);
 	$xSoc			= new cSocio($persona);
 	
 	$out 			= false;
-	$msg 			= "";
+	
 	//"numero_de_solicitud" => $solicitud,
 	$arrDatos		= array(
 			
@@ -72,24 +72,25 @@ $claveorigen= parametro("claveorigen",0, MQL_INT);
 		if($xSoc->isOperable() == true AND $valido == true){
 			$out	= $xSoc->setPrevalidarCredito($arrDatos);
 		} else {
-			$msg	.= "ERROR\tLA PERSONA $persona NO PUEDE REALIZAR OPERACIONES.\r\n";
+			$xLog->add("ERROR\tLA PERSONA $persona NO PUEDE REALIZAR OPERACIONES\r\n");
 		}
 	
 	} else {
-		$msg	.= "ERROR\tLA PERSONA $persona No existe.\r\n";
+		$xLog->add("ERROR\tLA PERSONA $persona No existe.\r\n");
 	}
-	$msg	.= $xSoc->getMessages();
+	$xLog->add($xSoc->getMessages());
+	
 	if($out == true){
 		$_SESSION[SYS_UUID]		= $xSoc->getUUID();
-		$msg	.= "OK\tEL CREDITO HA SIDO VALIDADO POR EL SISTEMA - CUMPLE LOS REQUISITOS\r\n";
+		$xLog->add("OK\tEL CREDITO HA SIDO VALIDADO POR EL SISTEMA - CUMPLE LOS REQUISITOS\r\n");
 		//$xFRM->OButton("TR.guardar credito", "var xG = new Gen(); xG.close()", "guardar", "idvalidarok");
 		//$xFRM->OButton("TR.validar nuevamente", "jsaValidarCredito()", "checar", "idnuevavalidacion");
-		$xFRM->addAvisoRegistroOK($msg);
+		$xFRM->addAvisoRegistroOK($xLog->getMessages());
 	} else {
 		$_SESSION[SYS_UUID]		= null;
 		//$ctrl = "<input type=\"button\" name=\"cmdSubmit\" onclick=\"jsPrevalidarCredito();\" value=\"VALIDAR CREDITO NUEVAMENTE\" />";
 		//$xFRM->OButton("TR.validar nuevamente", "jsaValidarCredito()", "checar", "idnuevavalidacion");
-		$xFRM->addAvisoRegistroError($msg);
+		$xFRM->addAvisoRegistroError($xLog->getMessages());
 	}
 	
 	$xFRM->addCerrar();

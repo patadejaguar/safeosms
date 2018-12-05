@@ -42,6 +42,8 @@ $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("obser
 $topanel		= parametro("topanel", false, MQL_BOOL);
 
 
+$soloIva		= true;
+
 $xHP->init();
 
 /* ===========		FORMULARIO EDICION 		============*/
@@ -110,7 +112,7 @@ $xFRM->addSeccion("idpp", "TR.CREDITO");
 
 $xFRM->addHElem( $xSel->getListaDeProductosDeCredito("producto", $xTabla->producto()->v(), true)->get(true) );
 $xFRM->addHElem( $xSel->getListaDePeriocidadDePago("periocidad", $xTabla->producto()->v(), false, true)->get(true));
-$xFRM->addHElem( $xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v())->get(true));
+$xFRM->addHElem( $xSel->getListaDeDestinosDeCredito("aplicacion", $xTabla->aplicacion()->v(), $soloIva)->get(true));
 
 $xFRM->addHElem( $xSel->getListaDeTipoDePago("tipocuota_id", $xTabla->tipocuota_id()->v(),true )->get(true) );
 $xFRM->OTasaInt("tasa_interes", 0, "TR.TASA");

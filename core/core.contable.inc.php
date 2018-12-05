@@ -933,10 +933,11 @@ class cCuentaContable{
 			}
 			$superior	= $this->mCuentaSuperior;
 			$cuenta		= $this->mCuenta;
-	
+			$xQL		= new MQL();
 			$sql 		= "INSERT INTO contable_catalogorelacion (cuentasuperior, subcuenta, tiporelacion) VALUES($superior, $cuenta, 1) ";
-			$x 			= my_query($sql);
-			$estado		= $x[SYS_ESTADO];
+			$x 			= $xQL->setRawQuery($sql);
+			$estado		= ($x=== false) ? false : true;
+			$xQL		= null;
 		}
 		return $estado;
 	}
@@ -1101,12 +1102,12 @@ class cCuentaContable{
 		$cuenta_superior	= ( $cuenta_superior == false ) ? $this->getParent(true) : $cuenta_superior;
 		$aviso				= "";
 		$xLogg				= new cCoreLog();
-		$QL					= new MQL();
+		$xQL					= new MQL();
 		if( setNoMenorQueCero($cuenta_superior) > 0 ){
 			$xLogg->add("WARN\tGENERANDO SALDOS DE LA CUENTA $cuenta HEREDADOS DE LA CUENTA $cuenta_superior\r\n", $xLogg->DEVELOPER);
 				
 			$sql_SeSup 			= "SELECT * FROM contable_saldos WHERE cuenta=$cuenta_superior";
-			$rs_SS 				= $QL->getDataRecord($sql_SeSup);
+			$rs_SS 				= $xQL->getDataRecord($sql_SeSup);
 			$saldo_importados	= 0;
 			foreach ($rs_SS as $rwSS){
 				$Sejercicio 	= setNoMenorQueCero($rwSS["ejercicio"]);
@@ -1122,13 +1123,13 @@ class cCuentaContable{
 					$xLogg->add("OK\tAFECTABLE\tLa cuenta SUPERIOR $cuenta_superior es Afectable\r\n", $xLogg->DEVELOPER);
 					//Actualizar la Cuenta Superior NO_AFECTABLE
 					$sql_USup 			= "UPDATE contable_catalogo SET afectable=0 WHERE numero=$cuenta_superior ";
-					my_query($sql_USup);
+					$xQL->setRawQuery($sql_USup);
 				}
 			}
 			$xLogg->add("WARN\tNATURALEZA\tSe Actualizo la Naturaleza de la Cuenta Superior\r\n", $xLogg->DEVELOPER);
 			//Actualizar los Movimientos a la Cuenta Nueva
 			$sql_UMvtos = "UPDATE contable_movimientos set numerocuenta=$cuenta WHERE numerocuenta=$cuenta_superior ";
-			my_query($sql_UMvtos);
+			$xQL->setRawQuery($sql_UMvtos);
 			$xLogg->add( "OK\tMOVIMIENTOS\tSe Traspasaron los Movimientos de la Cuenta $cuenta_superior a la Cuenta $cuenta\r\n", $xLogg->DEVELOPER);
 		} else {
 			$xLogg->add("WARN\tSolo se generan los saldos por la cuenta\r\n", $xLogg->DEVELOPER);
@@ -1137,9 +1138,7 @@ class cCuentaContable{
 		//generar Saldos nuevos heredados
 		return $xLogg->getMessages();
 	}
-	function add($nombre, $tipo = false, $centro_de_costo = false, $es_mayor = false,
-							$digito_agrupador = false,
-							$fecha_de_alta = false, $equivalencia = false, $superior = false ){
+	function add($nombre, $tipo=false, $centro_de_costo = false, $es_mayor = false,$digito_agrupador = false,$fecha_de_alta = false, $equivalencia = false, $superior = false ){
 		$xLog				= new cCoreLog();
 		$cuenta				= setNoMenorQueCero($this->mCuenta);
 		$xEsq				= new cCuentaContableEsquema($cuenta);
@@ -1199,10 +1198,13 @@ class cCuentaContable{
 		 */
 		if($ready == true){
 			$ql		= new MQL();
-			$sql 			= "INSERT INTO contable_catalogo(numero, equivalencia, nombre, tipo, ctamayor,	afectable, centro_de_costo, fecha_de_alta,	digitoagrupador)
+			$sql 	= "INSERT INTO contable_catalogo(numero, equivalencia, nombre, tipo, ctamayor,	afectable, centro_de_costo, fecha_de_alta,	digitoagrupador)
 			VALUES($cuenta,	'$equivalencia', '$nombre', '$tipo', $es_mayor,	$afectable,
 			$centro_de_costo, '$fecha_de_alta',	$digito_agrupador)";
 			$exec	= $ql->setRawQuery($sql);
+			
+			$ql		= null;
+			
 			if($exec == false){
 				$xLog->add( "ERROR\t2.- Error al Agregar la cuenta $cuenta - $superior\r\n");
 				$cuenta					= CUENTA_DE_CUADRE;				
@@ -1326,18 +1328,25 @@ class cCuentaContable{
 		$monto		= ($revertir == true) ? $monto * -1 : $monto;
 		$ready		= true;
 		$exAfect	= "";
-		for($i = $periodo; $i <= 14; $i++){ $exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	}
+		
+		for($i = $periodo; $i <= 14; $i++){ 
+			$exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	
+		}
 		$okYear		= $QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio=$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
 		//Annios futuros
 		$exAfect	= "";
-		for($i = 1; $i <= 14; $i++){ $exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	}
+		for($i = 1; $i <= 14; $i++){ 
+			$exAfect	.= ($exAfect == "") ?  " imp$i=(imp$i $simbol ($monto)) " : ", imp$i=(imp$i $simbol ($monto))";	
+		}
 		$proxYear	= $QL->setRawQuery("UPDATE contable_saldos SET $exAfect WHERE ejercicio>$ejercicio AND `cuenta`=$cuenta AND tipo=$tipo");
+		
 		if($okYear == false OR $proxYear == false){
 			$xLog->add("ERROR\tAl afectar cuentas de la Cuenta $cuenta en el periodo $periodo/$ejercicio por $monto ($simbol)\r\n", $xLog->DEVELOPER);
 			$ready	= false;
 		} else {
 			$xLog->add("OK\tAfectar cuentas de la Cuenta $cuenta en el periodo $periodo/$ejercicio por $monto ($simbol)\r\n", $xLog->DEVELOPER);
-		}		
+		}
+		
 		$this->mMessages	.= $xLog->getMessages();
 		return "";
 	}
@@ -1890,7 +1899,11 @@ class cPoliza{
 		$this->mMessages	.= $xLog->getMessages();
 		return $xLog->getMessages();
 	}
-	function setPorCodigo($CodigoDePoliza, $delimitador = "."){
+	/**
+	 * @deprecated @since 2018.08.01
+	 */
+	function setPorCodigo($CodigoDePoliza, $delimitador = "."){ return $this->initByCodigo($CodigoDePoliza, $delimitador); }
+	function initByCodigo($CodigoDePoliza, $delimitador = "."){
 		//ejercicio . periodo . tipo . numero
 		$d		= explode($delimitador, $CodigoDePoliza);
 		$this->mEjercicioPoliza	= setNoMenorQueCero($d[0]);
@@ -1902,8 +1915,25 @@ class cPoliza{
 		$this->init();
 		return $this->mPolizaIniciada;
 	}
-	function setPorRecibo($Recibo){
-		
+	function initById($id){
+		$id	= setNoMenorQueCero($id);
+		if($id > 0){
+			$sql	= "SELECT * FROM contable_polizas WHERE `codigo_unico`=$id LIMIT 0,1";
+			$ql		= new MQL();
+			$Data	= $ql->getDataRow($sql);
+			if(isset($Data["codigo_unico"])){
+				unset($_SESSION[ POLIZA_ID_ULTIMAOPERACION ]);
+				$this->init($Data);
+				$this->mMessages	.= "OK\tLa Poliza Existe con el ID Unico " . $this->mCodigoUnico . "\r\n";
+			}
+		}
+		return $this->mPolizaIniciada;
+	}
+	/**
+	 * @deprecated @since 2018.08.01
+	 */
+	function setPorRecibo($Recibo){ return $this->initByRecibo($Recibo); }
+	function initByRecibo($Recibo){
 		$Recibo	= setNoMenorQueCero($Recibo);
 		if($Recibo > 0){
 			$sql	= "SELECT * FROM contable_polizas WHERE `recibo_relacionado`=$Recibo LIMIT 0,1";
@@ -1916,7 +1946,7 @@ class cPoliza{
 			}
 		}
 		return $this->mPolizaIniciada;
-	}	
+	}
 	//FIXME: Verificar Cumplimiento
 	/**
 	 * Agrega un Movimiento a la Poliza Contable
@@ -2199,7 +2229,10 @@ class cPoliza{
 	function getNumero(){ return $this->mNumeroDePoliza; }
 	function getTipo(){ return $this->mTipoDePoliza; }
 	function getCodigo(){ return $this->mCodigoDePoliza; }
+	function getCodigoCompuesto(){ return $this->mCodigoDePoliza; }
 	function getCodigoUnico(){ return $this->mCodigoUnico; }
+	function getCodigoId(){ return $this->mCodigoUnico; }
+	
 	function getConcepto(){ return $this->mConceptoPoliza; }
 	function getFecha(){ return $this->mFechaPoliza; }
 	/**

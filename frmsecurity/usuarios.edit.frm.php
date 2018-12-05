@@ -92,7 +92,13 @@ if($xUser->init() == true){
 		
 		
 		$xFRM->OText("idpuesto", $xUser->getPuesto(), "TR.PUESTO");
-		$xFRM->addHElem( $xSel->getListaDeSucursales("idsucursal", $xUser->getSucursal())->get(true));
+		
+		if(MULTISUCURSAL == false){
+			
+			$xFRM->OHidden("idsucursal", $xUser->getSucursal() );
+		} else {
+			$xFRM->addHElem( $xSel->getListaDeSucursales("idsucursal", $xUser->getSucursal())->get(true));
+		}
 		
 		
 		if(MODULO_CONTABILIDAD_ACTIVADO == true){

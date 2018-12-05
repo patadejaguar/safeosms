@@ -44,7 +44,7 @@ function jsaActualizarParam($id, $v){
 			break;
 		case $xCatConf->MODULO_CAJA_ACTIVADO:
 			$enable	= ($v == "true") ? true : false;
-			//$xSAFE->setModC($enable);
+			$xSAFE->setModTesoreriaDisEn($enable);
 			break;
 		case $xCatConf->MODULO_CAPTACION_ACTIVADO:
 			$enable	= ($v == "true") ? true : false;
@@ -67,8 +67,13 @@ function jsaActualizarParam($id, $v){
 			$xSAFE->setModAportacionesDisEn($enable);
 			break;
 		case "personas_controlar_por_empresas":
+			$enable	= ($v == "true") ? true : false;
+			$xSAFE->setModNominasDisEn($enable);
 			break;
-				
+		case "credito_registrar_estados_de_credito":
+			$enable	= ($v == "true") ? true : false;
+			$xSAFE->setModEstadosCredsDisEn($enable);
+			break;
 	}
 	return ($res == false) ? "FALLO" : "EXITO";
 }
@@ -170,6 +175,9 @@ $xChk->setOnClick("jsActualizarParam('modulo_de_seguimiento_activado', this)");
 $xTbl->addTD($xChk->get("", "id9", $rr), " class='izq' ");
 $xTbl->endRow();
 
+
+
+
 /* ------  ------*/
 
 
@@ -215,7 +223,7 @@ $xTbl->initRow();
 $xTbl->addTD("Aceptar Menores de Edad");
 $rr	= (PERSONAS_ACEPTAR_MENORES== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('persona_aceptar_menores_de_edad', this)");
-$xTbl->addTD($xChk->get("", "id13", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen01", $rr), " class='izq' ");
 $xTbl->endRow();
 
 /* ------  ------*/
@@ -224,7 +232,7 @@ $xTbl->initRow();
 $xTbl->addTD("Habilitar el Modulo de Aportaciones");
 $rr	= (PERSONAS_CONTROLAR_POR_APORTS== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('personas_controlar_por_aportaciones', this)");
-$xTbl->addTD($xChk->get("", "idca01", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen02", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
@@ -234,7 +242,7 @@ $xTbl->initRow();
 $xTbl->addTD("Controlar por Empleador");
 $rr	= (PERSONAS_CONTROLAR_POR_EMPRESA== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('personas_controlar_por_empresas', this)");
-$xTbl->addTD($xChk->get("", "idca02", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen03", $rr), " class='izq' ");
 $xTbl->endRow();
 
 /* ------ GARANTIA LIQUIDA  ------*/
@@ -243,7 +251,7 @@ $xTbl->initRow();
 $xTbl->addTD("Usar Garantia Liquida en Ahorro");
 $rr	= (GARANTIA_LIQUIDA_EN_CAPTACION== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('utilizar_garantia_liquida_en_captacion', this)");
-$xTbl->addTD($xChk->get("", "idca03", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen04", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
@@ -253,7 +261,7 @@ $xTbl->initRow();
 $xTbl->addTD("Controlar Aportaciones en Cuentas de Ahorrro");
 $rr	= (CAPITAL_SOCIAL_EN_CAPTACION== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('manejar_captal_social_en_captacion', this)");
-$xTbl->addTD($xChk->get("", "idca02", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen05", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
@@ -262,7 +270,7 @@ $xTbl->initRow();
 $xTbl->addTD("Habilitar el Modulo de Grupos");
 $rr	= (PERSONAS_CONTROLAR_POR_GRUPO== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('personas_controlar_por_grupos', this)");
-$xTbl->addTD($xChk->get("", "idcg01", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen06", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
@@ -272,7 +280,7 @@ $xTbl->initRow();
 $xTbl->addTD("Compartir con Asociada");
 $rr	= (PERSONAS_COMPARTIR_CON_ASOCIADA== true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('compartir_datos_con_entidad_asocidad', this)");
-$xTbl->addTD($xChk->get("", "idcca01", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkgen07", $rr), " class='izq' ");
 $xTbl->endRow();
 
 
@@ -291,7 +299,7 @@ $xTbl->initRow();
 $xTbl->addTD("Creditos.- Controlar por periodos");
 $rr	= (CREDITO_CONTROLAR_POR_PERIODOS == true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('creditos_controlar_por_periodos', this)");
-$xTbl->addTD($xChk->get("", "id10", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkcred01", $rr), " class='izq' ");
 $xTbl->endRow();
 /* ------  ------*/
 
@@ -300,7 +308,7 @@ $xTbl->initRow();
 $xTbl->addTD("Creditos.- Controlar por Origen");
 $rr	= (CREDITO_CONTROLAR_POR_ORIGEN == true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('creditos_controlar_por_origen', this)");
-$xTbl->addTD($xChk->get("", "id11", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkcred02", $rr), " class='izq' ");
 $xTbl->endRow();
 /* ------  ------*/
 
@@ -310,18 +318,53 @@ $xTbl->initRow();
 $xTbl->addTD("Creditos.- Usar Ahorro");
 $rr	= (CREDITO_USAR_AHORRO == true) ? true : false;
 $xChk->setOnClick("jsActualizarParam('creditos_usar_ahorro_en_creds', this)");
-$xTbl->addTD($xChk->get("", "id12", $rr), " class='izq' ");
+$xTbl->addTD($xChk->get("", "idkcred03", $rr), " class='izq' ");
+$xTbl->endRow();
+/* ------  ------*/
+
+/*credito_registrar_estados_de_credito*/
+$xTbl->initRow();
+$xTbl->addTD("Creditos.- Registrar Estados de credito");
+$rr	= (CREDITO_REGISTRAR_ESTADOS == true) ? true : false;
+$xChk->setOnClick("jsActualizarParam('credito_registrar_estados_de_credito', this)");
+$xTbl->addTD($xChk->get("", "idkcred04", $rr), " class='izq' ");
+$xTbl->endRow();
+
+if(CREDITO_REGISTRAR_ESTADOS == true){
+	/*credito_generar_operacion_en_mvto_a_mora*/
+	$xTbl->initRow();
+	$xTbl->addTD("Creditos.- Generar Movimiento por Mora");
+	$rr	= (CREDITO_GENERAR_MVTO_MORA == true) ? true : false;
+	$xChk->setOnClick("jsActualizarParam('credito_generar_operacion_en_mvto_a_mora', this)");
+	$xTbl->addTD($xChk->get("", "idkcred05", $rr), " class='izq' ");
+	$xTbl->endRow();
+	/* ------  ------*/
+	
+	
+	/*credito_generar_operacion_en_mvto_a_vigente*/
+	$xTbl->initRow();
+	$xTbl->addTD("Creditos.- Generar Movimiento por Vigente");
+	$rr	= (CREDITO_GENERA_MVTO_VIGENTE == true) ? true : false;
+	$xChk->setOnClick("jsActualizarParam('credito_generar_operacion_en_mvto_a_vigente', this)");
+	$xTbl->addTD($xChk->get("", "idkcred06", $rr), " class='izq' ");
+	$xTbl->endRow();
+	/* ------  ------*/
+
+}
+
+/*usar_oficial_por_producto*/
+$xTbl->initRow();
+$xTbl->addTD("Creditos.- Usar Oficial Por Producto");
+$rr	= (USE_OFICIAL_BY_PRODUCTO == true) ? true : false;
+$xChk->setOnClick("jsActualizarParam('usar_oficial_por_producto', this)");
+$xTbl->addTD($xChk->get("", "idkcred07", $rr), " class='izq' ");
 $xTbl->endRow();
 /* ------  ------*/
 
 
-
 $xHT->addTab("TR.Creditos", $xTbl->get());
 
-//------------------------
-$xTbl		= new cHTabla("idtcfgcapta", "listado");
-$xTbl->addTH("TR.PARAMETRO");
-$xTbl->addTH("TR.VALOR");
+
 
 
 
@@ -336,17 +379,61 @@ $xTbl->endRow();
 /* ------  ------*/
 
 
+if(MODULO_CAPTACION_ACTIVADO == true){
+	//------------------------
+	$xTbl		= new cHTabla("idtcfgcapta", "listado");
+	$xTbl->addTH("TR.PARAMETRO");
+	$xTbl->addTH("TR.VALOR");
+	
+	
+	/*manejar_en_detalle_las_tasas*/
+	$xTbl->initRow();
+	$xTbl->addTD("Captacion. Manejar En Detalle Las Tasas");
+	$rr	= (CAPTACION_USE_TASA_DETALLADA == true) ? true : false;
+	$xChk->setOnClick("jsActualizarParam('manejar_en_detalle_las_tasas', this)");
+	$xTbl->addTD($xChk->get("", "idcapt01", $rr), " class='izq' ");
+	$xTbl->endRow();
+	
+	$xHT->addTab("TR.Captacion", $xTbl->get());
+
+
+}
 
 
 
-$xHT->addTab("TR.Captacion", $xTbl->get());
 
 
+if(MODULO_CONTABILIDAD_ACTIVADO == true){
+	//------------------------
+	$xTbl		= new cHTabla("idtcfgcont", "listado");
+	$xTbl->addTH("TR.PARAMETRO");
+	$xTbl->addTH("TR.VALOR");
+	
+	
 
-
-
-
-
+	/* ------ contabilidad_en_migracion  ------*/
+	
+	$xTbl->initRow();
+	$xTbl->addTD("Contabilidad. Contabilidad En Migracion");
+	$rr	= (CONTABLE_EN_MIGRACION == true) ? true : false;
+	$xChk->setOnClick("jsActualizarParam('contabilidad_en_migracion', this)");
+	$xTbl->addTD($xChk->get("", "idcont01", $rr), " class='izq' ");
+	$xTbl->endRow();
+	
+	/* ------ generar_contabilidad  ------*/
+	
+	$xTbl->initRow();
+	$xTbl->addTD("Contabilidad. Generar Contabilidad");
+	$rr	= (GENERAR_CONTABILIDAD == true) ? true : false;
+	$xChk->setOnClick("jsActualizarParam('generar_contabilidad', this)");
+	$xTbl->addTD($xChk->get("", "idcont02", $rr), " class='izq' ");
+	$xTbl->endRow();
+	
+	
+	$xHT->addTab("TR.Contabilidad", $xTbl->get());
+	
+	
+}
 
 
 

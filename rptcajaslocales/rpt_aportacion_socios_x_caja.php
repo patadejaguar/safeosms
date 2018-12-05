@@ -57,8 +57,8 @@ $tsql			= "";
 $arrSumas		= array();
 $init			= 5;
 foreach ($items as $key => $value){
-	$nombre		= isset($DD[$value]) ? str_replace(" ", "_", $DD[$value]) : "";
-	$tsql		.= ($tsql == "") ? " SUM(IF(`operaciones_mvtos`.`tipo_operacion`=$value,`operaciones_mvtos`.`afectacion_real`,0)) AS `$nombre` " : ",SUM(IF(`operaciones_mvtos`.`tipo_operacion`=$value,`operaciones_mvtos`.`afectacion_real`,0)) AS `$nombre`";
+	$nombre				= isset($DD[$value]) ? str_replace(" ", "_", $DD[$value]) : "";
+	$tsql				.= ($tsql == "") ? " SUM(IF(`operaciones_mvtos`.`tipo_operacion`=$value,`operaciones_mvtos`.`afectacion_real`,0)) AS `$nombre` " : ",SUM(IF(`operaciones_mvtos`.`tipo_operacion`=$value,`operaciones_mvtos`.`afectacion_real`,0)) AS `$nombre`";
 	//setLog(" SUM(IF(`operaciones_mvtos`.`tipo_operacion`=$value,`operaciones_mvtos`.`afectacion_real`,0)) AS `$nombre` ");
 	$arrSumas[$init]	= "$nombre";
 	$init++;

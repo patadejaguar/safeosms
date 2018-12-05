@@ -15,10 +15,15 @@ $xInit      = new cHPage("", HP_SERVICE);
 $txt		= "";
 $svc		= new MQLService("", "");
 $ql			= new MQL();
+$xLog		= new cCoreLog();
+
 $data		= (isset($_REQUEST["data"])) ? $svc->getDecryptData($_REQUEST["data"]) : null;
 $command	= (isset($_REQUEST["cmd"])) ? $svc->getDecryptData($_REQUEST["cmd"]) : null;
 //$context	= (isset($_REQUEST["ctx"])) ? $svc->getDecryptData($_REQUEST["ctx"]) : null;
 $cnt		= "";
+$idpersona	= $data;
+
+
 //setLog("$data $command");
 switch ($command){
 	case TPERSONAS_GENERALES:
@@ -26,6 +31,7 @@ switch ($command){
 		$xSoc->setData( $xSoc->query()->initByID($data) );
 		$cnt 	= $svc->getEncryptData( json_encode($xSoc->query()->getCampos())  );
 		//setLog(json_encode($xSoc->query()->getCampos()));
+		$xLog->add("WARN\tExportando Datos Generales de la Persona $idpersona \r\n");
 		break;
 	case TPERSONAS_DIRECCIONES:
 		$xDom	= new cSocios_vivienda();
@@ -41,7 +47,7 @@ switch ($command){
 		$query->setToUTF8();
 		//setLog(json_encode($query->getCampos()) );
 		$cnt 	= $svc->getEncryptData( json_encode($query->getCampos())  );
-		
+		$xLog->add("WARN\tExportando Direccion de la persona $idpersona  \r\n");
 		break;
 	case TPERSONAS_ACTIVIDAD_ECONOMICA:
 		$xTrab	= new cSocios_aeconomica();
@@ -50,6 +56,7 @@ switch ($command){
 		$query	= $xTrab->query();
 		$query->setToUTF8();
 		$cnt 	= $svc->getEncryptData( json_encode($query->getCampos())  );
+		$xLog->add("WARN\tExportando Actividad Economica de la persona $idpersona \r\n");
 		break;
 	case TCATALOGOS_EMPRESAS:
 		$xEmp		= new cSocios_aeconomica_dependencias();
@@ -59,7 +66,12 @@ switch ($command){
 		$query	= $xEmp->query();
 		$query->setToUTF8();
 		$cnt 	= $svc->getEncryptData( json_encode($query->getCampos())  );
+		
+		$xLog->add("WARN\tExportando Empleadores con clave de persona $idpersona \r\n");
 		break;
 }
+
+$xLog->guardar($xLog->OCat()->PERSONA_INOUT_TADA, $idpersona);
+
 echo $cnt;
 ?>

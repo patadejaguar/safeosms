@@ -184,6 +184,7 @@ function jsRunCalendar(){
 		    	
 	    	} else {
    				var vURL	= "";
+   				
 	   			switch(calEvent.tipo){
 	   				case "llamada":
 	   					xSeg.setLlamadaEstado({clave : calEvent.id });
@@ -192,6 +193,7 @@ function jsRunCalendar(){
 	   	   				xSeg.getDetalleDeCompromiso({clave : calEvent.id});
 	   	   				break;
 	   				case "notificacion":
+		   				xSeg.getFormaNotificacion({clave: calEvent.id});
 	   	   				break;
 	   			}
 	    	}

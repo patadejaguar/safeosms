@@ -21,9 +21,12 @@ $xF			= new cFecha();
 $xRuls		= new cReglaDeNegocio();
 $xODT		= new cHDicccionarioDeTablas();
 $xLog		= new cCoreLog();
+$xCurrUsr	= new cSystemUser(); $xCurrUsr->init();
 
 $UsarRedir	= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
 $UsarFotos	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_FOTOS);		//regla de negocio
+$SePuedenDel= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SE_ELIMINAN);		//regla de negocio
+
 $jsTabs		= "";
 $idempresa	= 0;
 $oficial 	= elusuario($iduser);
@@ -35,7 +38,7 @@ function jsaReVivienda($idsocio){
 	$xLi		= new cSQLListas();
 	
 			
-		$cTbl = new cTabla($xLi->getListadoDeDireccionesPorPer($idsocio));
+		$cTbl = new cTabla($xLi->getListadoDeDireccionesPorPer($idsocio), 0, "idtbllistaviviendaps");
 		$cTbl->OButton("TR.Verificar", "jsVerificar(_REPLACE_ID_)", $cTbl->ODicIcons()->SALUD);
 		
 		$cTbl->addEditar();
@@ -51,7 +54,7 @@ function jsaReVivienda($idsocio){
 function jsaReActividadE($idsocio){
 	$ql		= new cSQLListas();
 		
-	$myCab = new cTabla($ql->getListadoDeActividadesEconomicas($idsocio));
+	$myCab = new cTabla($ql->getListadoDeActividadesEconomicas($idsocio),0, "idtbllistaactividadps");
 	$myCab->addEditar(USUARIO_TIPO_OFICIAL_CRED);
 	$myCab->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
 	$myCab->OButton("TR.Verificar", "jsVerificarAE(_REPLACE_ID_)", $myCab->ODicIcons()->SALUD);
@@ -67,7 +70,7 @@ function jsaReRelaciones($idsocio){
 	$tbl0		= $xDic->getHGuardarRelacion($idsocio, "jsGetRelaciones", $xSoc->getEsPersonaFisica());
 	
 	$sqlL		= new cSQLListas();
-	$cBenef		= new cTabla($sqlL->getListadoDeRelacionesPersonales($idsocio));
+	$cBenef		= new cTabla($sqlL->getListadoDeRelacionesPersonales($idsocio),0,"idtbllistarelsps");
 	
 	//$cBenef->addEditar();
 	$cBenef->OButton("TR.BAJA", "var xRP=new PersRelGen();xRP.setBajaRelacion(" . HP_REPLACE_ID . ")", $cBenef->ODicIcons()->BAJA);
@@ -83,8 +86,8 @@ function jsaReRelaciones($idsocio){
 	}
 	
 	$xLi	= new cSQLListas();
-	$xT		= new cTabla($xLi->getListadoDeReferenciasBancarias($idsocio));
-	$xT2	= new cTabla($xLi->getListadoDeReferenciasComerciales($idsocio));
+	$xT		= new cTabla($xLi->getListadoDeReferenciasBancarias($idsocio),0, "idtbllistarefsbancsps");
+	$xT2	= new cTabla($xLi->getListadoDeReferenciasComerciales($idsocio),0,"idtbllistarefscomsps");
 	
 	$xT->setKeyTable("socios_relaciones");
 	$xT->addEliminar();
@@ -110,7 +113,7 @@ function jsaReRelaciones($idsocio){
 
 function jsaRePatrimonio($idsocio){
 	$ql		= new cSQLListas();
-	$myTab = new cTabla($ql->getListaDePatrimonioPorPersona($idsocio));
+	$myTab = new cTabla($ql->getListaDePatrimonioPorPersona($idsocio),0,"idtbllistapatrimps");
 	$myTab->addEditar(USUARIO_TIPO_OFICIAL_CRED);
 	$myTab->setKeyField("idsocios_patrimonio");
 	
@@ -150,7 +153,7 @@ function jsaCumplimiento($idsocio){
 	$xAl		= new cAml_alerts();
 	$xlistas	= new cSQLListas();
 	$sql		= $xlistas->getListadoDeAlertas(false, false, false, $idsocio);
-	$xT			= new cTabla($sql);
+	$xT			= new cTabla($sql,0, "idlistaalertaspldps");
 	$xT->setKeyField( $xAl->getKey() );
 	$xT->setKeyTable( $xAl->get() );
 	//if(getEsModuloMostrado($tipo_de_usuario))
@@ -228,11 +231,11 @@ function jsaCambiarFiguraJuridica($idpersona){
 		}
 	}
 }
-$jxc ->exportFunction('jsaRePatrimonio', array('idsocio' ), "#tab-patrimonio");
-$jxc ->exportFunction('jsaReActividadE', array('idsocio' ), "#tab-actividad");
-$jxc ->exportFunction('jsaReRelaciones', array('idsocio' ), "#tab-relaciones");
-$jxc ->exportFunction('jsaCumplimiento', array('idsocio' ), "#tab-cumplimiento");
-$jxc ->exportFunction('jsaReVivienda', array('idsocio' ), "#tab-domicilio");
+$jxc ->exportFunction('jsaRePatrimonio', array('idsocio'), "#tab-patrimonio");
+$jxc ->exportFunction('jsaReActividadE', array('idsocio'), "#tab-actividad");
+$jxc ->exportFunction('jsaReRelaciones', array('idsocio'), "#tab-relaciones");
+$jxc ->exportFunction('jsaCumplimiento', array('idsocio'), "#tab-cumplimiento");
+$jxc ->exportFunction('jsaReVivienda', array('idsocio'), "#tab-domicilio");
 $jxc ->exportFunction('jsaValidarDocumentacion', array('idsocio' ), "#idavisos");
 $jxc ->exportFunction('jsaValidarRiesgo', array('idsocio' ), "#idavisos");
 $jxc ->exportFunction('jsaValidarPerfilTransaccional', array('idsocio' ), "#idavisos");
@@ -240,10 +243,10 @@ $jxc ->exportFunction('jsaCambiarFiguraJuridica', array('idsocio'), "#idavisos")
 
 $jxc ->exportFunction('jsaAddDescuento', array('idsocio', 'iddescuento'), "#idavisos");
 //$jxc ->exportFunction('jsaAddDescuentoDesdeEmpresa', array('idmodificado', 'idcantidad'), "#idavisos");
-$jxc ->exportFunction('jsaSetEnviarParaAsociada', array('idsocio' ), "#idavisos");
+$jxc ->exportFunction('jsaSetEnviarParaAsociada', array('idsocio'), "#idavisos");
 //$jxc ->exportFunction('jsaActualizarEmpresa', array('idempresa' ), "#idavisos");
-$jxc ->exportFunction('jsaActualizarSucursal', array('idsucursal' ), "#idavisos");
-$jxc ->exportFunction('jsaActualizarUsuario', array('idusuario' ), "#idavisos");
+$jxc ->exportFunction('jsaActualizarSucursal', array('idsucursal'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarUsuario', array('idusuario'), "#idavisos");
 
 $jxc ->process();
 
@@ -259,7 +262,7 @@ echo $xHP->getHeader();
 <?php
 
 if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
-	$xFRM	= new cHForm("extrasocios", "socios.panel.frm.php");
+	$xFRM	= new cHForm("frmsociospanel", "socios.panel.frm.php","frmsociospanel");
 	$xBtn	= new cHButton();
 	$xTxt	= new cHText();
 	
@@ -282,7 +285,8 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	$xHTabs		= new cHTabs();
 	$xBtn		= new cHButton("");
-	$xFRM		= new cHForm("extrasocios", "");
+	$xFRM		= new cHForm("frmsociospanel", "","frmsociospanel");
+	
 	$xHSel		= new cHSelect();
 	$xNotif		= new cHNotif();
 	
@@ -293,20 +297,23 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 
 
 	
-	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CAPT) == true OR getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){ 
+	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_COLOCACION) ){ 
 		//Agregar otra opciones
 		$xFRM->OButton("TR.Actualizar Datos", "updateDat()", $xFRM->ic()->EDITAR, "edit-socio", "editar");
+		
 		if(PERSONAS_CONTROLAR_POR_EMPRESA == true AND MODULO_CAPTACION_ACTIVADO == true){
 			$xFRM->addToolbar( $xBtn->getBasic("TR.Agregar Descuento Solicitado", "jsAddDescuento()", "dinero", "edit-descuento", false ) );
 		}
 		if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
-			$xFRM->OButton("TR.EXPORTAR", "jsSetEnviarParaAsociada()", $xBtn->ic()->EXPORTAR , "edit-aasoc", "yellow");
+			if($xSoc->getEsExportado() == false){
+				$xFRM->OButton("TR.EXPORTAR", "jsSetEnviarParaAsociada()", $xBtn->ic()->EXPORTAR , "edit-aasoc", "yellow");
+			}
 		}
 	}
 
 	//===============================================================================	
 	$setSql4	= $xLi->getListadoDeNotas($idsocio);
-	$c4Tbl 		= new cTabla($setSql4);
+	$c4Tbl 		= new cTabla($setSql4,0, "idlistanotaspersps");
 	
 	$c4Tbl->setKeyField("idsocios_memo");
 	$c4Tbl->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
@@ -323,12 +330,16 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$cnt		= "";
 	$xB			= new cBases();
 	$mems		= ($xSoc->getEsPersonaFisica() == true) ? $xB->getMembers_InArray(false, BASE_DOCTOS_PERSONAS_FISICAS) : $xB->getMembers_InArray(false, BASE_DOCTOS_PERSONAS_MORALES);
-	$xTblD		= new cTabla($xLi->getListadoDePersonasDoctos($idsocio, true), 0, "iddoctos");
+	$xTblD		= new cTabla($xLi->getListadoDePersonasDoctos($idsocio, true), 0, "idtbllistadoctosps");
+	
 	$xTblD->addEliminar(USUARIO_TIPO_GERENTE);
+	
 	$xTblD->setKeyField("clave");
 	$xTblD->setKeyTable("personas_documentacion");
 	$xTblD->setOmitidos("archivo_de_documento");
+	
 	$xTblD->OButton("TR.VER", "var xP=new PersGen();xP.getDocumento({id:" . HP_REPLACE_ID . "})", $xTblD->ODicIcons()->VER, "idview");
+	
 	$xHTabs->addTab("TR.DOCUMENTOS", $xTblD->Show()); //tabs
 	
 	if(MODULO_AML_ACTIVADO == true){
@@ -355,16 +366,16 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	//Arbol de relaciones y perfil transaccional
 	if(MODULO_AML_ACTIVADO == true){
 		$xFRM->OButton("TR.ARBOL_DE_RELACIONES", "jsSigmaRelaciones()", $xFRM->ic()->EXPORTAR);
-		$xT		= new cTabla($xLi->getListadoDePerfil($idsocio) );
+		$xT		= new cTabla($xLi->getListadoDePerfil($idsocio), 0,"idtblarbolrelsps");
 		$xT->addEliminar();
 		$xHTabs->addTab("TR.perfil_transaccional", $xT->Show() );
 		
 		//Agregar Consulta Listas
 		$ttl	= "";
-		$xTLNI	= new cTabla($xLi->getListadoDePersonasConsultasLInt($idsocio));
+		$xTLNI	= new cTabla($xLi->getListadoDePersonasConsultasLInt($idsocio),0,"idtbllistapersintsps");
 		$xTLNI->setOmitidos("nombre");$xTLNI->setOmitidos("persona");$xTLNI->setOmitidos("observaciones"); $xTLNI->setTitulo("clave_interna", "CLAVE"); $xTLNI->setTitulo("estatus", "ESTATUSACTIVO");
 		$ttl 	.= $xTLNI->Show("TR.LISTA_NEGRA INTERNA");
-		$xTLBI	= new cTabla($xLi->getListadoDePersonasConsultasBInt($idsocio));
+		$xTLBI	= new cTabla($xLi->getListadoDePersonasConsultasBInt($idsocio),0,"idtbllistapersbintps");
 		$xTLBI->setOmitidos("nombre");$xTLBI->setTitulo("clave_de_motivo", "MOTIVO");
 		
 		$ttl 	.= $xTLBI->Show("TR.LISTA_OMITIDOS");
@@ -389,34 +400,58 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		}
 	}
 
-	//Agregar convenios
+	//Agregar Creditos
 	$InfoCreds			= "";
-	$xTListaCreds		= new cTabla($xLi->getListadoDeCreditos($idsocio), 2);
+	$xTListaCreds		= new cTabla($xLi->getListadoDeCreditos($idsocio,false, false, false, "", true), 0, "idtbllistacredsps");
 	$xTListaCreds->OButton("TR.Panel", "jsGoToPanelCredito(" . HP_REPLACE_ID . ")", $xTListaCreds->ODicIcons()->CONTROL);
 	$xTListaCreds->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred(" . HP_REPLACE_ID . ")", $xTListaCreds->ODicIcons()->IMPRIMIR);
-	$xTListaCreds->setFootSum(array(8 => "monto", 9 => "saldo"));
+	$xTListaCreds->setColSum("monto");
+	$xTListaCreds->setColSum("saldo");
+	
+
+	
 	$LVig				= $xTListaCreds->Show("TR.VIGENTE");
 	$InfoCreds			.= ($xTListaCreds->getRowCount()<= 0) ? "" : $LVig;
 	
 	//Creditos por Autorizar
+	
 	$LVig				= $xODT->getCreditosPorMinistrar(false, $idsocio,"TR.AUTORIZADO");
 	$InfoCreds			.= ($xODT->getNumeroItems()<=0) ? "" : $LVig;
+	
 	$LVig				= $xODT->getCreditosPorAutorizar(false, $idsocio, "TR.SOLICITADO");
 	$InfoCreds			.= ($xODT->getNumeroItems()<=0) ? "" : $LVig;
 	//Creditos Pagados
-	$xTListaCredsP		= new cTabla($xLi->getListadoDeCreditosPagados($idsocio, false, true), 0);
+	$xTListaCredsP		= new cTabla($xLi->getListadoDeCreditosPagados($idsocio, false, true), 0, "idlistacredspagsps");
 	$xTListaCredsP->OButton("TR.Panel", "jsGoToPanelCredito(" . HP_REPLACE_ID . ")", $xTListaCredsP->ODicIcons()->CONTROL);
 	//$xTListaCreds->OButton("TR.PLAN_DE_PAGOS", "var xC=new CredGen();xC.getImprimirPlanPagosPorCred(" . HP_REPLACE_ID . ")", $xTListaCreds->ODicIcons()->IMPRIMIR);
-	$xTListaCredsP->setFootSum(array(8 => "monto", 9 => "saldo"));
+	$xTListaCredsP->setColSum("monto");
+	$xTListaCredsP->setColSum("saldo");
+	//$xTListaCredsP->setOmitidos("saldo");
+	$xTListaCredsP->setOmitidos("vencimiento");
+	
 	$LVig				= $xTListaCredsP->Show("TR.PAGADO");
 	$InfoCreds			.= ($xTListaCredsP->getRowCount()<= 0) ? "" : $LVig;
 	
 	$xHTabs->addTab("TR.Creditos", $InfoCreds );
 	
 	
+	//Creditos Castigados
+	$xTCredCast	= $xODT->getCreditosCastigados(false, $idsocio, "TR.CASTIGADOS");
+	if($xODT->getNumeroItems()>0){
+		$xHTabs->addTab("TR.CASTIGADOS", $xTCredCast );
+	}
+	
+	//Creditos rechazados
+	
+	$xTCredRech	= $xODT->getCreditosRechazados(false, $idsocio, "TR.RECHAZADO");
+	if($xODT->getNumeroItems()>0){
+		$xHTabs->addTab("TR.RECHAZADO", $xTCredRech );
+	}
+	
+	
 	if(MODULO_CAPTACION_ACTIVADO == true){
 		//agregar cuenta de ahorro
-		$xTListaCapt	= new cTabla($xLi->getListadoDeCuentasDeCapt($idsocio));
+		$xTListaCapt	= new cTabla($xLi->getListadoDeCuentasDeCapt($idsocio),0, "idlistactasahorrops");
 		$xTListaCapt->OButton("TR.Panel", "var xC= new CaptGen();xC.goToPanel(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
 		$xHTabs->addTab("TR.Captacion", $xTListaCapt->Show() );
 	}
@@ -429,7 +464,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM->OButton("TR.ESTADO_DE_CUENTA OTROSINGRESOS", "var xP=new PersGen(); xP.getReportePagosNoDoc($idsocio)", $xFRM->ic()->REGISTROS);
 	//Agregar Listado de Recibos
 	$xLi->setInvertirOrden();
-	$cTblx			= new cTabla($xLi->getListadoDeRecibosConDocto("", $idsocio));
+	$cTblx			= new cTabla($xLi->getListadoDeRecibosConDocto("", $idsocio),0,"idtbllistarecsps");
 	$cTblx->setKeyField("idoperaciones_recibos");
 	$cTblx->setTdClassByType();
 	$cTblx->setEventKey("jsGoPanelRecibos");
@@ -442,7 +477,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	//======================================== 			Tabla de Operaciones
 	$sql		= $xLi->getListadoDeOperaciones($idsocio);
-	$cEdit		= new cTabla($sql);
+	$cEdit		= new cTabla($sql,0, "idtbllistaopsps");
 	$cEdit->addTool(SYS_UNO);
 	$cEdit->addTool(SYS_DOS);
 	$cEdit->setTdClassByType();
@@ -470,7 +505,9 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xStats->initDatosDeCredito(true);
 		$xFRM->OButton("TR.BAJA PERSONA", "var xP=new PersGen();xP.setBaja($idsocio)", $xFRM->ic()->PARAR, "cmdbajapersona", "orange");
 		if($xStats->getTotalCompromisos()== 0){
-			$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
+			if($SePuedenDel == true){
+				$xFRM->OButton("TR.ELIMINAR PERSONA", "jsEliminarPersona($idsocio)", $xFRM->ic()->ELIMINAR, "cmdeliminarpersona", "red");
+			}
 		} else {
 			//$xFRM->addAviso(, "", true, "warning");
 			$xFRM->addTag("Compromisos #<strong>" . $xStats->getTotalCompromisos() . "</strong>.No Eliminar", "error");
@@ -481,7 +518,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		
 		//Agregar Lista de Parecidos
 		$sqlTT	= $xLi->getListadoDeBusquedaSocios($xSoc->getNombre(), $xSoc->getApellidoPaterno(), $xSoc->getApellidoMaterno(), "", "", $xSoc->getCodigo());
-		$xTT2	= new cTabla($sqlTT);
+		$xTT2	= new cTabla($sqlTT, 0 ,"idtblistacoincidenciasps");
 		$xTT2->OButton("TR.Unificar", "var xP=new PersGen();xP.setUnificar($idsocio, ". HP_REPLACE_ID .  ")", $xFRM->ic()->EXPORTAR);
 		$xHTabs->addTab("TR.Validacion", $xTT2->Show());
 	}
@@ -523,7 +560,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 			(`operaciones_tipos`.`recibo_que_afecta` =" . RECIBOS_TIPO_OINGRESOS . ") 
 		ORDER BY
 			`operaciones_recibos`.`fecha_operacion`";
-	$xTT98	= new cTabla($sql98,1);
+	$xTT98	= new cTabla($sql98,1, "idtbllistarecsoingps");
 	$xTT98->OButton("TR.RECIBO", "var xR=new RecGen();xR.formato(". HP_REPLACE_ID .  ")", $xFRM->ic()->IMPRIMIR);
 	$tt98	= $xTT98->Show();
 	if($xTT98->getRowCount()>0){
@@ -534,14 +571,14 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if(PERSONAS_CONTROLAR_POR_APORTS == true ){
 		//if($xSoc->getMembresiaDiaPag() == $xF->dia()){
 		$xFRM->OButton("TR.COBRO MEMBRESIA", "var xP=new PersGen();xP.setCobroMembresia($idsocio," . $xF->mes() . ");", $xFRM->ic()->COBROS);
-		$xTLC	= new cTabla($xLi->getListadoDePersonaPerfilCuotas($idsocio));
+		$xTLC	= new cTabla($xLi->getListadoDePersonaPerfilCuotas($idsocio),0, "idtbllistapcuotasps");
 		$xTLC->setOmitidos("clave_de_persona");
 		$xTLC->setOmitidos("fecha_de_aplicacion");
 		$xHTabs->addTab("TR.MEMBRESIA", $xTLC->Show());
 		//}
 	}
 	//===================================== Lineas de Credito
-	$xTBLC	= new cTabla($xLi->getListadoDeLineasDeCred($idsocio));
+	$xTBLC	= new cTabla($xLi->getListadoDeLineasDeCred($idsocio), 0,"idtbllistalineascredsps");
 	//$xTBLC->setOmitidos("");
 	$xTBLC->setOmitidos("clave_de_persona");
 	$xTBLC->setOmitidos("nombre");
@@ -554,6 +591,9 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	if($xTBLC->getRowCount()>0){
 		$xHTabs->addTab("TR.CREDITOS_LINEAS", $ctblc);
 	}
+	//===================================== Creditos Castigados Activos
+	
+	
 	//===================================== Cotizaciones
 	
 	//===================================== Registro Nuevo
@@ -566,6 +606,12 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xFRM->addTag("Creado por : <strong>" . $xUsr->getAlias() . "</strong>", "notice");
 		
 	}
+	$xEjec	= new cSystemUser($xSoc->getClaveDeEjecutivo()); 
+	if($xEjec->init() == true){
+		$xFRM->addTag("Ejecutivo : <strong>" . $xEjec->getAlias() . "</strong>", "notice");
+	}
+	
+	
 	if($xSoc->getPermisoParaOperar() == true){
 		$xFRM->addPersonaComandos($idsocio);
 	} else {
@@ -638,6 +684,27 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xTT->endRow();
 		
 		$xFRM->addHElem( $xTT->get() );
+	}
+	$xTTE	= new cTabla($xLog->getListadoDeEventosSQL($idsocio), 0, "idtbllistaeventossysps");
+	if(MODO_DEBUG == false){
+		$xTTE->setOmitidos("texto");$xTTE->setOmitidos("tipo");
+	}
+	$hhe	= $xTTE->Show("", true, "idlistaeventos");
+	if($xTTE->getRowCount()>0){
+		$xFRM->addHTML($xHTabs->addTab("TR.EVENTOS", $hhe));
+	}
+	//==================================== Personas COmpartidas
+	if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
+		$xTS	= new cTabla("", 0, "idtbllistashareps");
+		$xTS->setSQL("SELECT   `personas_share`.`idpersonas_share` AS `clave`,`personas_share`.`persona_id` AS `persona`,`personas_share`.`personas_share_id` AS `compartida`,getFechaMXByInt(`personas_share`.`tiempo`) AS `fecha`, `personas_share`.`url_share` AS `origen` FROM     `personas_share`");
+		$xTS->setOmitidos("persona");
+		$xTS->setWithMetaData();
+		$xTS->OButton("TR.ABRIR SHARE", "jsOpenShare(" .  HP_REPLACE_ID. ")", $xFRM->ic()->AUTOMAGIC, "idtopensharecmd");
+		$hhe	= $xTS->Show("", true, "idsharelst");
+		if($xTS->getRowCount()>0){
+			
+			$xFRM->addHTML($xHTabs->addTab("TR.SHARE", $hhe));
+		}
 	}
 	//===================================== 
 	$xFRM->addHTML($xHTabs->get());
@@ -762,9 +829,9 @@ function jsActualizarNivelDeRiesgo(id){
 		if(siguarda){ jsaAddDescuentoDesdeEmpresa();	}
 	}
 }*/
-function jsCancelarAccion(){	$(window).qtip("hide");    }
+function jsCancelarAccion(){ xG.cerrarDialogos(); }
 function jsAddDescuento(){ getModalTip(window, $("#iddivdescuento"), xG.lang(["actualizar", "descuento"]));	}
-function jsGuardarDescuento(){	jsaAddDescuento();	setTimeout("jsCancelarAccion()", 2000);	}
+function jsGuardarDescuento(){	jsaAddDescuento();	xG.postajax("jsCancelarAccion()"); }
 /*
 
 function jsGetCedulaDeAhorro(){
@@ -783,7 +850,8 @@ var xrl		= "../frmempresas/layout-cedula.frm.php?empresa=" + idemp;
 xG.w({ url: xrl, tiny : true }); 	
 }*/
 function jsGetCirculoDeCredito(){
-	var xrl		= "../rptlegal/circulo_de_credito.rpt.php?persona=" + mSocio;
+	var ff 		= window.prompt("Fecha de Corte:");
+	var xrl		= "../rptlegal/circulo_de_credito.rpt.php?persona=" + mSocio  + "&fechafinal=" + ff;
 	xG.w({ url: xrl, tab : true });  
 }
 function jsGetOperaciones(){ 	}
@@ -822,7 +890,18 @@ function jsSetEnviarParaAsociada(){
 	xG.confirmar({msg: "MSG_CONFIRMA_ENVIO", callback : jsaSetEnviarParaAsociada});
 }
 
-
+function jsOpenShare(id){
+	var dd 		= processMetaData("#tr-personas_share-" + id);
+	var idpers 	= dd.compartida;
+	var urlx 	= dd.origen;
+	var ctx 	= "<?php echo $xCurrUsr->getCTX(); ?>";
+	
+	var sURL	= urlx + "frmsocios/socios.panel.frm.php?persona=" + idpers + "&ctx=" + ctx;
+	//setLog(sURL);
+	window.open(sURL, "socios-panel-" + idpers, "fullscreen=yes,scrollbars=yes");
+	
+	//xG.w({url: url + "frmsocios/socios.panel.frm.php?ctx=" + ctx + "&persona=" + idpers, tab:true });
+}
 </script>
 <?php
 //echo $xJsB->get();

@@ -60,7 +60,7 @@ $xFRM->addHElem($xCred->getFichaMini());
 
 $xFRM->setTitle($xHP->getTitle());
 
-$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("idpdto", $xCred->getClaveDeProducto())->get(true) );
+$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("idpdto", $xCred->getClaveDeProducto())->get(true), true );
 
 
 $xFRM->addHElem($xSel->getListaDePeriocidadDePago("idperiocidad",$xCred->getPeriocidadDePago())->get("TR.NUEVA PERIOCIDAD", true) );

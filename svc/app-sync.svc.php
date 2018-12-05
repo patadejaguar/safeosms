@@ -44,7 +44,7 @@ if($action == SYS_NINGUNO){
 
 
 $xDB->getCnn();
-
+//var_dump($xDB->getCnn()); exit;
 //$cc		= $xDB->cnn();
 
 //===== Dump productos de Credito ======
@@ -56,9 +56,10 @@ foreach ($rs1 as $rw){
 	$xObj->clave		= $rw["idcreditos_tipoconvenio"];
 	$xObj->descripcion	= $rw["descripcion"];
 	$xObj->tabla		= "creditos_productos";
-	
+
 	$xDB->setDoc($xObj);
 }
+
 //===== Dump productos de Credito ======
 $sql1	= $xHSel->getListaDePeriocidadDePago()->getSQL();
 $rs1	= $xQL->getRecordset($sql1);
@@ -149,6 +150,30 @@ foreach ($rs2 as $rw){
 	$xObj->nivel		= $rw[$xT->F_F2CD801E90B78EF4DC673A4659C1482D];
 	$xObj->alias		= $rw[$xT->ALIAS];
 	$xObj->tabla		= "usuarios";
+	$xDB->setDoc($xObj);
+}
+
+//===== Dump de Avisos para los usuarios
+$maxFSync	= $xF->setRestarDias(7, fechasys() );
+$rs7	= $xQL->getRecordset("SELECT * FROM `usuarios_web_notas` WHERE `estado`=10 AND `fecha`>='$maxFSync' ");
+$xT		= new cUsuarios_web_notas();
+
+foreach ($rs7 as $rw){
+	$xT->setData($rw);
+	
+	$xObj				= new stdClass();
+	$xObj->_id			= "mensajes:". $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+	$xObj->clave		= $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+	$xObj->tabla		= "mensajes";
+	$xObj->user			= $rw[$xT->OFICIAL];
+	$xUsr				= new cSystemUser($rw[$xT->OFICIAL_DE_ORIGEN]);
+	$xUsr->init();
+	
+	$xObj->oficial_org	= $xUsr->getAlias();
+	$xObj->mensaje		= $rw[$xT->TEXTO];
+	$xObj->entidad		= EACP_CLAVE_CASFIN;
+	$xObj->fecha		=$rw[$xT->FECHA];
+	
 	$xDB->setDoc($xObj);
 }
 

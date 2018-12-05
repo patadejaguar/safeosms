@@ -1163,6 +1163,9 @@ class cFecha {
 		$f1	= $this->getInt($f1);
 		return ($f2 == $f1) ? true : false;
 	}
+	function hora(){
+		return date("H");
+	}
 }
 class cFechaTrimestre {
 	private $mFechaInicial	= false;

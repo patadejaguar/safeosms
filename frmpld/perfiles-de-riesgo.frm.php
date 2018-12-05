@@ -46,7 +46,7 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
 
-
+$xFRM->addCerrar();
 
 /* ===========		GRID JS		============*/
 
@@ -60,9 +60,11 @@ $xHG->col("campo_de_origen", "TR.CAMPO DE ORIGEN", "10%");
 $xHG->col("valor_de_origen", "TR.VALOR DE ORIGEN", "10%");
 $xHG->col("nivel_de_riesgo", "TR.NIVEL_DE_RIESGO", "10%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "add.png");
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idaml_riesgo_perfiles +')", "edit.png");
 $xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idaml_riesgo_perfiles +')", "delete.png");
+
 $xFRM->addHElem("<div id='iddivperfilesr'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();

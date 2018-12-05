@@ -40,6 +40,9 @@ $mails		= getEmails($_REQUEST);
 
 //agregar PDF
 $xFMT			= new cFormato(8802);
+$xRuls			= new cReglaDeNegocio();
+$NoWiki			= $xRuls->getValorPorRegla($xRuls->reglas()->AML_NO_WIKI);
+
 $txtLst			= "";
 $ByTipoPersona	= "";
 
@@ -90,7 +93,7 @@ $sql 	= "SELECT
 	FROM
 		`socios_general`
 	WHERE
-		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_PEP . " OR `nivel_de_riesgo_aml` = 100)
+		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_PEP . " /*OR `nivel_de_riesgo_aml` = 100*/)
 		$ByNombre $ByAPaterno $ByAMaterno $ByTipoPersona $OrderBy LIMIT 0,10";
 if($UseJW == true){
 	$sql 	.= " UNION SELECT
@@ -103,7 +106,7 @@ if($UseJW == true){
 	FROM
 		`socios_general`
 	WHERE
-		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_PEP . " OR `nivel_de_riesgo_aml` = 100)
+		codigo != " . DEFAULT_SOCIO . " AND (`tipoingreso`= " . TIPO_INGRESO_PEP . " /*OR `nivel_de_riesgo_aml` = 100*/)
 			$ByJWNombre  $ByJWAPaterno $ByJWAMaterno $OrderBy
 			LIMIT 0,10";	
 }
@@ -118,7 +121,7 @@ if($UseMeta == true){
 	FROM
 		`socios_general`
 	WHERE
-		codigo != " . DEFAULT_SOCIO . "	AND (`tipoingreso`= " . TIPO_INGRESO_PEP . "	OR `nivel_de_riesgo_aml` = 100)
+		codigo != " . DEFAULT_SOCIO . "	AND (`tipoingreso`= " . TIPO_INGRESO_PEP . " /*OR `nivel_de_riesgo_aml` = 100*/)
 			$ByMNombre $ByMAPaterno $ByMAMaterno $ByTipoPersona $OrderBy LIMIT 0,10
 			";	
 }
@@ -151,12 +154,16 @@ if($rs){
 		$mAPaterno	= $row["primerapellido"];
 		$mAMaterno	= $row["segundoapellido"];
 		//Consultar el Wikipedia
-		$xWiki		= new cWikipedia();
-		$arrWiki	= $xWiki->buscar(trim("$mNombre $mAPaterno $mAMaterno"));
-		if($xWiki->esBusqueda($arrWiki) == false){
-			$arrWiki	= $xWiki->buscar(trim("$mNombre $mAPaterno"));
+		if($NoWiki == true){
+			$arrWiki			= array();
+		} else {
+			$xWiki				= new cWikipedia();
+			$arrWiki			= $xWiki->buscar(trim("$mNombre $mAPaterno $mAMaterno"));
 			if($xWiki->esBusqueda($arrWiki) == false){
-				$arrWiki	= $xWiki->buscar(trim("$mAPaterno $mAMaterno"));
+				$arrWiki		= $xWiki->buscar(trim("$mNombre $mAPaterno"));
+				if($xWiki->esBusqueda($arrWiki) == false){
+					$arrWiki	= $xWiki->buscar(trim("$mAPaterno $mAMaterno"));
+				}
 			}
 		}
 //================ End consulta wikipedia
@@ -422,6 +429,6 @@ if($rs){
 	$json			= $json["error"] = $mql->getMessages(OUT_TXT);
 }
 
-
+header('Content-type: application/json');
 echo json_encode($json);
 ?>

@@ -173,7 +173,7 @@ function jsaSetGenerarPolizaPorRecibo($numero){
 		$xPol		= new cPoliza(false);
 		$idpoliza	= "";
 		$msg		= "";
-		if($xPol->setPorRecibo($numero) == true){
+		if($xPol->initByRecibo($numero) == true){
 			$idpoliza	= $xPol->getCodigo();
 			
 		} else {
@@ -255,186 +255,225 @@ $xTxt	= new cHText(); $xBtn	= new cHButton(); $xDate		= new cHDate(); $xSel	= ne
 <?php
 $uri		= "";
 $recAct		= "";
+$xFRM 		= new cHForm("frmrecibospanel", "../frmoperaciones/recibos.panel.frm.php");
+
 
 if ( $idrecibo <= 0 ){
-?>
-<fieldset>
-<legend>Panel de Control de Recibos</legend>
-
-<form name="frmrecibospanel" id="frmrecibospanel" action="recibos.panel.frm.php" method="post">
-<table  >
-	<tr>
-		<td width="10%">Numero de Recibo</td>
-		<td width="20%">
-		<input type='text' name='cNumeroRecibo' value='0' id="idNumeroRecibo" onchange="getReciboDesc()" onblur="getReciboDesc()"  class='mny' size='12' />
-			<?php echo CTRL_GORECIBOS; ?></td>
-		<td width="10%">Descripcion Corta</td>
-		<th width="60%"><input type="text" name="txtDescRecibo" id="txtDescRecibo" disabled size="60" /></th>
-	</tr>
-	<tr>
-		<th colspan='4'><input type='button' name='btnEnviar' value='ENVIAR NUMERO DE RECIBO' onclick='frmrecibospanel.submit();'></th>
-	</tr>
-</table>
-</form>
-</fieldset>
-<?php
+	
+	$xFRM->addEnviar();
+	
+	$xFRM->addReciboBasico();
+	
+	$xFRM->addAvisoInicial("MS.MSG_ELIJA_RECIBO", true, "TR.RECIBO");
+	
+	echo $xFRM->get();
+	
 $idrecibo		= "0";
 
 } else {
-	$xFRM 		= new cHForm("frmrecibospanel");
+	//$xFRM 		= new cHForm("frmrecibospanel");
 	$xRec		= new cReciboDeOperacion(false, false, $idrecibo);
-	$xRec->init();
-	$fechaRecibo	= $xRec->getFechaDeRecibo();
-	$totalRecibo	= $xRec->getTotal();
 	
+	$xFRM->addCerrar();
 	
-	$xBtn			= new cHButton();
-	$xHNot			= new cHNotif();
-	
-	$xFRM->addRefrescar();
-	$xFRM->setTitle($xHP->getTitle());
-	
-	$xFRM->addRecibosComando($xRec->getCodigoDeRecibo(), $xRec->getURI_Formato());
-	
-	if($xUser->getPuedeEditarRecibos() == true){
-		$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", $xFRM->ic()->CALENDARIO );
-		$xFRM->OButton("TR.Cambiar PERIODO", "jsGoActualizarPeriodo()",$xFRM->ic()->CALENDARIO1 );
-		$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", $xFRM->ic()->DINERO );
-		$xFRM->OButton("TR.Actualizar DOCUMENTO", "jsGoActualizarDocumento()", $xFRM->ic()->CONTRATO, "idcmdactualizardocto", "blue" );
-		$xFRM->OButton("TR.Actualizar Tipo", "jsGoActualizarTipo()", $xFRM->ic()->CONTROL, "idcmdactualizartipo", "" );
+	if($xRec->init() == true){
 		
-		$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()",$xFRM->ic()->EJECUTAR);
-		$xFRM->OButton("TR.Agregar Operacion", "jsAddMvto($idrecibo)", $xFRM->ic()->OPERACION);
-		$xFRM->OButton("TR.Cambiar Banco", "jsCambiarBanco($idrecibo)", $xFRM->ic()->BANCOS);
+		$fechaRecibo	= $xRec->getFechaDeRecibo();
+		$totalRecibo	= $xRec->getTotal();
 		
-		//Cambiar Documento
 		
-	}
-	if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE) == true ){
-		$xFRM->OButton("TR.Generar Poliza", "jsaSetGenerarPolizaPorRecibo()", "poliza", "cmdGo4");
-		$xFRM->OButton("TR.Generar Pre-Poliza", "jsaRegenerarPrepoliza()", $xFRM->ic()->EJECUTAR);
-	}	
-	
-	$xFRM->addHTML( $xRec->getFicha(true, "", true) );
-	
-	//echo ;
-	$uri 		= $xRec->getURI_Formato();
-	$xTabs		= new cHTabs();
-/* ----------------- DATOS --------------- */
-		$cEdit		= new cTabla($xSQL->getListadoDeOperaciones("", "", $idrecibo));
+		$xBtn			= new cHButton();
+		$xHNot			= new cHNotif();
+		
+		$xFRM->addRefrescar();
+		$xFRM->setTitle($xHP->getTitle());
+		
+		$xFRM->addRecibosComando($xRec->getCodigoDeRecibo(), $xRec->getURI_Formato());
+		
 		if($xUser->getPuedeEditarRecibos() == true){
-			$cEdit->addEditar();
-			$cEdit->addEliminar();
-			$cEdit->setEventKey("jsEditClick");
-			$cEdit->OButton("TR.Copiar", "jsSetClonar(" . HP_REPLACE_ID . ")", $xFRM->ic()->EXPORTAR);
+			$xFRM->OButton("TR.Cambiar fecha", "jsGoActualizarFecha()", $xFRM->ic()->CALENDARIO );
+			$xFRM->OButton("TR.Cambiar PERIODO", "jsGoActualizarPeriodo()",$xFRM->ic()->CALENDARIO1 );
+			$xFRM->OButton("TR.Actualizar Total", "jsaSetTotal()", $xFRM->ic()->DINERO );
+			$xFRM->OButton("TR.Actualizar DOCUMENTO", "jsGoActualizarDocumento()", $xFRM->ic()->CONTRATO, "idcmdactualizardocto", "blue" );
+			$xFRM->OButton("TR.Actualizar Tipo", "jsGoActualizarTipo()", $xFRM->ic()->CONTROL, "idcmdactualizartipo", "" );
+			
+			$xFRM->OButton("TR.Ajustar parcialidad", "jsSepararLetra()",$xFRM->ic()->EJECUTAR);
+			$xFRM->OButton("TR.Agregar Operacion", "jsAddMvto($idrecibo)", $xFRM->ic()->OPERACION);
+			$xFRM->OButton("TR.Cambiar Banco", "jsCambiarBanco($idrecibo)", $xFRM->ic()->BANCOS);
+			
+			//Cambiar Documento
+			
 		}
-		$cEdit->setTdClassByType();
-		$cEdit->setKeyField("idoperaciones_mvtos");
-		if(MODO_DEBUG == true){
-			$cEdit->setFootSum(array(8 => "monto"));
-		} else {
-			$cEdit->setOmitidos("operacion");
-			$cEdit->setFootSum(array(7 => "monto"));
-		}
+		if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE, MMOD_CONTABILIDAD) == true ){
+			
+			$xPol	= new cPoliza(false);
+			if($xPol->initByRecibo($xRec->getCodigoDeRecibo()) == true){
+				if(SAFE_ON_DEV == true){
+					$xFRM->OButton("TR.Generar Poliza", "jsaSetGenerarPolizaPorRecibo()", "poliza", "idcmdgenpol");
+					$xFRM->OButton("TR.Generar Pre-Poliza", "jsaRegenerarPrepoliza()", $xFRM->ic()->EJECUTAR, "idcmdgenprepol");
+				}
+				$xFRM->OButton("TR.Poliza", "var xC=new ContGen();xC.editarPolizaById('" . $xPol->getCodigoId() . "');", $xFRM->ic()->BALANZA, "idcmdeditpol");
+				$xFRM->OButton("TR.REPORTE Poliza", "var xC=new ContGen();xC.ImprimirPolizaById('" . $xPol->getCodigoId() . "');", $xFRM->ic()->BALANZA, "idcmdrptpol");
+			} else {
+				$xFRM->OButton("TR.Generar Poliza", "jsaSetGenerarPolizaPorRecibo()", "poliza", "idcmdgenpol");
+				$xFRM->OButton("TR.Generar Pre-Poliza", "jsaRegenerarPrepoliza()", $xFRM->ic()->EJECUTAR, "idcmdgenprepol");
+			}
+			
+
+		}	
 		
+		$xFRM->addHTML( $xRec->getFicha(true, "", true) );
+		
+		//echo ;
+		$uri 		= $xRec->getURI_Formato();
+		$xTabs		= new cHTabs();
+	/* ----------------- DATOS --------------- */
+			$cEdit		= new cTabla($xSQL->getListadoDeOperaciones("", "", $idrecibo), 0, "idtbllistaopsrp");
+			if($xUser->getPuedeEditarRecibos() == true){
+				$cEdit->addEditar();
+				$cEdit->addEliminar();
+				$cEdit->setEventKey("jsEditClick");
+				$cEdit->OButton("TR.Copiar", "jsSetClonar(" . HP_REPLACE_ID . ")", $xFRM->ic()->EXPORTAR);
+			}
+			$cEdit->setTdClassByType();
+			$cEdit->setKeyField("idoperaciones_mvtos");
+			if(MODO_DEBUG == true){
+				$cEdit->setFootSum(array(8 => "monto"));
+			} else {
+				$cEdit->setOmitidos("operacion");
+				$cEdit->setFootSum(array(7 => "monto"));
+			}
+			
+					
+			
+			$xTabs->addTab("TR.OPERACIONES", $cEdit->Show());
+			$NumOpers	= $cEdit->getRowCount();
+			
+			$cBan		= new cTabla($xSQL->getListadoDeOperacionesBancarias("", "", "", false, false, " AND `bancos_operaciones`.`recibo_relacionado` = $idrecibo "),0, "idtbllistaopsbancsrp");
+			if(MODULO_CAJA_ACTIVADO == true){
+				//$cBan->setEventKey("idcontrol");
+				$cBan->setKeyField("idcontrol");
+				if($xUser->getPuedeEditarRecibos() == true){
+					$cBan->addEditar();
+					$cBan->addEliminar();
+				}
+				$cBan->setFootSum(array(7 => "monto"));
+				$xTabs->addTab("TR.BANCOS", $cBan->Show());
+				//Operaciones de Tesorería
+				$cTes		= new cTabla($xSQL->getListadoDeOperacionesDeTesoreria("", "", $idrecibo),0, "idtbllistaopstesrp");
+				if($xUser->getPuedeEditarRecibos() == true){
+					$cTes->addEditar();
+					$cTes->addEliminar();
+				}
+				$xTabs->addTab("TR.TESORERIA", $cTes->Show());
+			}
+			//agregar contable
+			if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE, MMOD_CONTABILIDAD) == true ){
+				$xTbl	= new cTabla($xSQL->getListadoDePrepoliza($idrecibo),0, "idtbllistamvtospolrp");
+				$xTabs->addTab("TR.Forma Poliza", $xTbl->Show());
+				//poliza relacionada
+				$xTbl	= new cTabla($xSQL->getListadoDePolizasContables(false, false, false,false,false, " AND (`recibo_relacionado`=$idrecibo) "),0,"idtbllistapolscontrp");
+				$xTabs->addTab("TR.Poliza", $xTbl->Show());
+				//factura XML
+				//$xRec->getFactura(false, OUT_RXML);
+				//$xDo	= new cDocumentos();
+			}
+			//
+			$xFRM->addHTML($xTabs->get());
+		$xFRM->addHTML( "<input type='hidden' name='cNumeroRecibo' id='idNumeroRecibo' value='$idrecibo'>
+		<input type='hidden' name='cFechaRecibo' id='idFechaRecibo' value='$fechaRecibo'><input type='hidden' name='cTotalRecibo' id='idTotalRecibo' value='$totalRecibo'>
+		<input type='hidden' name='cOperacion' id='idOperacion' value=''>
+		");
+		
+		$xFRM->OHidden("agregar", $agregar);
+		$xFRM->addFooterBar("<br/>");
+		
+		//======================== Si puede eliminar Recibo
+		//if($xUser->getPuedeEliminarRecibos() == true){
+		//	$xFRM->OButton("TR.Eliminar Recibo", "var xRec = new RecGen();xRec.confirmaEliminar($recibo);", $xFRM->ic()->ELIMINAR, "del-$idrecibo", "red");
+		//}
+		
+		
+		$recAct		=  $cEdit->getJSActions();
+		
+		//ACTUALIZAR Parcialidad y Numero 1
+		$xFRM2	= new cHForm("frmajustarparc");
+		$xFRM2->setNoFormTags();
+		$xFRM2->ODate("idnuevafecha", $fechaRecibo, "TR.NUEVA FECHA");
+		$xFRM2->setNoJsEvtKeyForm();
+		$xFRM2->addGuardar("jsActualizarFecha()", "jsCancelAction()");
+		
+		echo "<div class=\"inv formoid-default\" id=\"ajustarparc\">" . $xFRM2->get(false) . "</div>";
+		
+		//ACTUALIZAR Parcialidad y Numero 2
+		$xFRM3	= new cHForm("frmajustarparc2");
+		$xFRM3->setNoFormTags();
+		if($xRec->getEsDeCredito() == true){
+			//$xSel->getListaDePeriodosDeCredito();
+			$xCred	= new cCredito($xRec->getCodigoDeDocumento());
+			if($xCred->init() == true){
+				$xHSel	= new cHSelect();
+				$arr	= array("0" => "0");
+				for($i=1;$i<= $xCred->getPagosAutorizados(); $i++){
+					$arr["" . $i . ""] = "" . $i . "";
+				}
+				$xHSel->addOptions($arr);
 				
-		
-		$xTabs->addTab("TR.OPERACIONES", $cEdit->Show());
-		$NumOpers	= $cEdit->getRowCount();
-		
-		$cBan		= new cTabla($xSQL->getListadoDeOperacionesBancarias("", "", "", false, false, " AND `bancos_operaciones`.`recibo_relacionado` = $idrecibo "));
-		if(MODULO_CAJA_ACTIVADO == true){
-			//$cBan->setEventKey("idcontrol");
-			$cBan->setKeyField("idcontrol");
-			if($xUser->getPuedeEditarRecibos() == true){
-				$cBan->addEditar();
-				$cBan->addEliminar();
+				$xFRM3->addHElem( $xHSel->get("idnuevoperiodo", "TR.NUEVO PERIODO", $xRec->getPeriodo()) );
 			}
-			$cBan->setFootSum(array(7 => "monto"));
-			$xTabs->addTab("TR.BANCOS", $cBan->Show());
-			//Operaciones de Tesorería
-			$cTes		= new cTabla($xSQL->getListadoDeOperacionesDeTesoreria("", "", $idrecibo));
-			if($xUser->getPuedeEditarRecibos() == true){
-				$cTes->addEditar();
-				$cTes->addEliminar();
-			}
-			$xTabs->addTab("TR.TESORERIA", $cTes->Show());
+		} else {
+				$xFRM3->addHElem( $xTxt->getNumero("idnuevoperiodo", $xRec->getPeriodo(), "TR.Nuevo Periodo") );
 		}
-		//agregar contable
-		if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE) == true ){
-			$xTbl	= new cTabla($xSQL->getListadoDePrepoliza($idrecibo));
-			$xTabs->addTab("TR.Forma Poliza", $xTbl->Show());
-			//poliza relacionada
-			$xTbl	= new cTabla($xSQL->getListadoDePolizasContables(false, false, false,false,false, " AND (`recibo_relacionado`=$idrecibo) "));
-			$xTabs->addTab("TR.Poliza", $xTbl->Show());
-			//factura XML
-			//$xRec->getFactura(false, OUT_RXML);
-			//$xDo	= new cDocumentos();
+		
+		$xFRM3->addGuardar("jsActualizarPeriodo()", "jsCancelAction()");
+		$xFRM3->setNoJsEvtKeyForm();
+		
+		echo "<div class=\"inv formoid-default\" id=\"ajustarparc2\">" . $xFRM3->get(false) . "</div>";
+		
+		//Actualizar Documento
+		$xSelC	= $xSel->getListaDeContratosPorPers("idncontrato", false, $xRec->getCodigoDeSocio());
+		$xSelC->addEspOption(FALLBACK_CLAVE_DE_DOCTO, "Ninguno");
+		
+		$xFRM4	= new cHForm("frmnewdocto");
+		$xFRM4->setNoFormTags();
+		$xFRM4->addHElem( $xSelC->get("TR.NUEVO DOCUMENTO", true) );
+		$xFRM4->addGuardar("jsActualizarDocumento()", "jsCancelAction()");
+		$xFRM4->setNoJsEvtKeyForm();
+		
+		echo "<div class=\"inv formoid-default\" id=\"newdoctodiv\">" . $xFRM4->get(false) . "</div>";
+		
+		//Actualizar Tipo
+		//idnuevotipo
+		
+		
+		
+		
+		$xFRM5	= new cHForm("frmnewtipo");
+		$xFRM5->setNoFormTags();
+		$xFRM5->addHElem( $xSel->getListaDeTiposDeRecibos("idnuevotipo", $xRec->getTipoDeRecibo())->get(true) );
+		$xFRM5->addGuardar("jsActualizarTipo()", "jsCancelAction()");
+		$xFRM5->setNoJsEvtKeyForm();
+		
+		echo "<div class=\"inv formoid-default\" id=\"newtipodiv\">" . $xFRM5->get(false) . "</div>";
+	
+	
+	} else {
+		$xFRM->addCerrar();
+		
+		if($xRec->getEsEliminado() == true){
+			$xFRM->OButton("TR.Reporte del Recibo", "var xRec = new RecGen();xRec.reporte($idrecibo);", $xFRM->ic()->REPORTE, "rpt-$idrecibo");
+			$xFRM->addAvisoRegistroError("MS.RECIBO_EN_ARCHIVO");
+		} else {
+			$xFRM->addAvisoRegistroError("MS.RECIBO_NO_EXISTE");
 		}
-		//
-		$xFRM->addHTML($xTabs->get());
-	$xFRM->addHTML( "<input type='hidden' name='cNumeroRecibo' id='idNumeroRecibo' value='$idrecibo'>
-	<input type='hidden' name='cFechaRecibo' id='idFechaRecibo' value='$fechaRecibo'><input type='hidden' name='cTotalRecibo' id='idTotalRecibo' value='$totalRecibo'>
-	<input type='hidden' name='cOperacion' id='idOperacion' value=''>
-	");
-	
-	$xFRM->OHidden("agregar", $agregar);
-	$xFRM->addFooterBar("<br/>");
-	
-	//======================== Si puede eliminar Recibo
-	//if($xUser->getPuedeEliminarRecibos() == true){
-	//	$xFRM->OButton("TR.Eliminar Recibo", "var xRec = new RecGen();xRec.confirmaEliminar($recibo);", $xFRM->ic()->ELIMINAR, "del-$idrecibo", "red");
-	//}
-	echo $xFRM->get();
-	
-	$recAct		=  $cEdit->getJSActions();
-	
-	//ACTUALIZAR Parcialidad y Numero 1
-	$xFRM2	= new cHForm("frmajustarparc");
-	$xFRM2->setNoFormTags();
-	$xFRM2->ODate("idnuevafecha", $fechaRecibo, "TR.NUEVA FECHA");
-	$xFRM2->setNoJsEvtKeyForm();
-	$xFRM2->addGuardar("jsActualizarFecha()", "jsCancelAction()");
-	
-	echo "<div class=\"inv formoid-default\" id=\"ajustarparc\">" . $xFRM2->get(false) . "</div>";
-	
-	//ACTUALIZAR Parcialidad y Numero 2
-	$xFRM3	= new cHForm("frmajustarparc2");
-	$xFRM3->setNoFormTags();
-	$xFRM3->addHElem( $xTxt->getNumero("idnuevoperiodo", $xRec->getPeriodo(), "TR.Nuevo Periodo") );
-	$xFRM3->addGuardar("jsActualizarPeriodo()", "jsCancelAction()");
-	$xFRM3->setNoJsEvtKeyForm();
-	
-	echo "<div class=\"inv formoid-default\" id=\"ajustarparc2\">" . $xFRM3->get(false) . "</div>";
-	
-	//Actualizar Documento
-	$xSelC	= $xSel->getListaDeContratosPorPers("idncontrato", false, $xRec->getCodigoDeSocio());
-	$xSelC->addEspOption(FALLBACK_CLAVE_DE_DOCTO, "Ninguno");
-	
-	$xFRM4	= new cHForm("frmnewdocto");
-	$xFRM4->setNoFormTags();
-	$xFRM4->addHElem( $xSelC->get("TR.NUEVO DOCUMENTO", true) );
-	$xFRM4->addGuardar("jsActualizarDocumento()", "jsCancelAction()");
-	$xFRM4->setNoJsEvtKeyForm();
-	
-	echo "<div class=\"inv formoid-default\" id=\"newdoctodiv\">" . $xFRM4->get(false) . "</div>";
-	
-	//Actualizar Tipo
-	//idnuevotipo
-	
-	
-	
-	
-	$xFRM5	= new cHForm("frmnewtipo");
-	$xFRM5->setNoFormTags();
-	$xFRM5->addHElem( $xSel->getListaDeTiposDeRecibos("idnuevotipo", $xRec->getTipoDeRecibo())->get(true) );
-	$xFRM5->addGuardar("jsActualizarTipo()", "jsCancelAction()");
-	$xFRM5->setNoJsEvtKeyForm();
-	
-	echo "<div class=\"inv formoid-default\" id=\"newtipodiv\">" . $xFRM5->get(false) . "</div>";
-	
+	}
 	//echo "<div id='idnotedel' class='inv formoid-default'>...</div>";
+	
+	echo $xFRM->get();
 }
+
+
+
 ?>
 </body>
 <?php

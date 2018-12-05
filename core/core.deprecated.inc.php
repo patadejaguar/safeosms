@@ -1844,4 +1844,1805 @@ function getPersonaEnSession($socio = false){
 	if($socio !== false){ $_SESSION[ SESSION_SOCIO] = $socio; }
 	return (isset($_SESSION[ SESSION_SOCIO]) ) ? $_SESSION[ SESSION_SOCIO] : DEFAULT_SOCIO;
 }
+
+
+/**
+ *
+ * Dibuja funciones Javascript para Operaciones Comunes
+ * @author Balam Gonzalez Luis Humberto
+ *
+ */
+class jsBasicForm {
+	private $mType 				= iDE_CREDITO;
+	private $mForm				= null;
+	//Funciones Incluidas
+	public  $mIncludeCalendar	= false;
+	public  $mIncludeSocio		= true;
+	public	$mIncludeCaptacion	= true;
+	public	$mIncludeCommon		= true;
+	public 	$mIncludeCreditos	= true;
+	public 	$mIncludeGrupos		= true;
+	public 	$mIncludeRecibos	= true;
+	
+	public  $mSubPath			= "";
+	protected $mTypeCaptacion	= 0;
+	protected $mSubproducto		= "all";
+	private $IncJQuery			= false;
+	private $strJQueryIncs		= "";
+	private $mLoadVals			= true;
+	
+	private $mArrCalendarJs		= array();
+	protected $mInputs			= array();
+	
+	protected $mWidth			= 600;
+	protected $mHeigth			= 480;
+	
+	
+	private $mFiltroCreditos	= "todos";
+	
+	/**
+	 * Dibuja funciones Javascript para Operaciones Comunes
+	 * @param string $form		Nombre del Formulario
+	 * @param integer $type		Tipo de Operaciones JavaScript [iDE_CREDITO]
+	 * @param string $subPath	Path por defecto,  . o ..
+	 */
+	function __construct($form, $type = iDE_CREDITO, $subPath = "."){
+		$this->mForm 												= $form;
+		$this->mSubPath												= $subPath;
+		$this->mInputs["descripcion_de_la_solicitud"]["name"]		= "nombresolicitud";
+		$this->mInputs["descripcion_de_la_cuenta"]["name"]		= "nombrecuenta";
+		$this->mInputs["descripcion_del_socio"]["name"]			= "nombresocio";
+		
+		$this->mInputs["codigo_de_solicitud"]["name"]			= "idsolicitud";
+		$this->mInputs["codigo_de_solicitud"]["id"]			= "idsolicitud";
+		
+		$this->mInputs["codigo_de_socio"]["name"]			= "idsocio";
+		$this->mInputs["codigo_de_socio"]["id"]				= "idsocio";
+		
+		$this->mInputs["codigo_de_recibo"]["name"]			= "idrecibo";
+		$this->mInputs["codigo_de_recibo"]["id"]			= "idrecibo";
+		
+		$this->mInputs["codigo_de_grupo"]["name"]			= "idgrupo";
+		$this->mInputs["codigo_de_grupo"]["id"]				= "idgrupo";
+		
+		$this->mInputs["codigo_de_cuenta"]["name"]			= "idcuenta";
+		$this->mInputs["codigo_de_cuenta"]["id"]			= "idcuenta";
+		
+		
+		switch ( $type ){
+			case iDE_CAPTACION:
+				$this->mIncludeCaptacion	= true;
+				$this->mIncludeCreditos		= false;
+				$this->mIncludeCommon		= true;
+				break;
+			case iDE_CINVERSION:
+				$this->mIncludeCaptacion	= true;
+				$this->mIncludeCreditos		= false;
+				$this->mTypeCaptacion		= CAPTACION_TIPO_PLAZO;
+				$this->mIncludeCommon		= true;
+				break;
+			case iDE_CREDITO:
+				$this->mIncludeCreditos		= true;
+				$this->mIncludeCaptacion	= false;
+				$this->mIncludeCommon		= true;
+				break;
+			case iDE_OPERACION:
+				$this->mIncludeCreditos		= true;
+				$this->mIncludeCaptacion	= true;
+				$this->mIncludeCommon		= true;
+				break;
+		}
+		$this->mIncludeSocio	= true;
+	}
+	/**
+	 * Personaliza una variable de controles Input
+	 * @param string $input
+	 * @param string $property
+	 * @param string $value
+	 */
+	function setInputProp($input, $property, $value){ $this->mInputs[$input][$property] = $value; }
+	function setConCaptacion($w = true){ $this->mIncludeCaptacion	= $w; }
+	function setIncludeCaptacion($w = true){ $this->mIncludeCaptacion	= $w; }
+	function setConCreditos($w = true){ $this->mIncludeCreditos	= $w; }
+	function setIncludeCreditos($w = true){ $this->mIncludeCreditos	= $w; }
+	function setConGrupos($w = true){ $this->mIncludeGrupos	= $w; }
+	function setIncludeGrupos($w = true){ $this->mIncludeGrupos	= $w; }
+	function setTypeCaptacion($type = CAPTACION_TIPO_PLAZO){ $this->mTypeCaptacion	= $type; }
+	function setSubproducto($type = 99){ $this->mSubproducto		= $type; }
+	function setConRecibos($w = true){ $this->mIncludeRecibos	= $w; }
+	function setConCommon($w = true){ $this->mIncludeCommon	= $w; }
+	function setNCtrlGrupo($control){	$this->mInputs["codigo_de_grupo"]["name"]	= $control;	}
+	function setIncludeCalendar($toInclude = true){	$this->mIncludeCalendar = $toInclude;	}
+	function setConSocios($w = true){	$this->mIncludeSocio	= $w;	}
+	function setIncludeOnlyCommons(){
+		$this->mIncludeCalendar		= false;
+		$this->mIncludeCaptacion	= false;
+		$this->mIncludeCommon		= true;
+		$this->mIncludeCreditos		= false;
+		$this->mIncludeGrupos		= false;
+		$this->mIncludeRecibos		= false;
+		$this->mIncludeSocio		= false;
+	}
+	function setNameForm($name){ $this->mForm = $name; }
+	function setNombreCtrlRecibo($nombre){ $this->mInputs["codigo_de_recibo"]["name"] = $nombre;	}
+	function setLoadDefaults($load = false){ $this->mLoadVals = $load; }
+	function setEstatusDeCreditos($estatus){ $this->mFiltroCreditos	= $estatus;	}
+	/**
+	 * Agrega la Opcion del Calendario al Javascript
+	 * @param string $id_control		ID en el Documento XHTML
+	 * @param boolean $type
+	 * @param string $cmdButton 		Nombre del Boton asociado
+	 */
+	function addSetupCalendar($id_control, $type = false, $cmdButton = "cmdCalendar", $format = "%Y-%m-%d"){
+		if ($type == "multiple"){
+			$this->mArrCalendarJs[] = "
+	//Dia
+	Calendar.setup({
+        inputField     :    \"ideldia$id_control\",
+        ifFormat       :    \"%d\",
+        showsTime      :    false,
+        button         :    \"$cmdButton\",
+        singleClick    :    true,
+	});
+	//Mes
+	Calendar.setup({
+        inputField     :    \"idelmes$id_control\",	// id of the input field
+        ifFormat       :    \"%m\",
+        showsTime      :    false,
+        button         :    \"$cmdButton\",
+        singleClick    :    true,
+	});
+	//Anno
+	Calendar.setup({
+        inputField     :    \"idelanno$id_control\",	// id of the input field
+        ifFormat       :    \"%Y\",
+        showsTime      :    false,
+        button         :    \"$cmdButton\",
+        singleClick    :    true,
+	});
+	";
+		} else {
+			$this->mArrCalendarJs[] = "
+	Calendar.setup({
+        inputField     :    \"$id_control\",
+        ifFormat       :    \"$format\",
+        showsTime      :    false,
+        button         :    \"$cmdButton\",
+        singleClick    :    true,
+	});";
+		}
+	}
+	/*			<link rel=\"stylesheet\" href=\"" . $this->mSubPath . "./css/jquery.qtip.css\" media=\"all\" />
+	
+	<script  src=\"" . $this->mSubPath . "./js/jquery/jquery.js\"></script><script  src=\"" . $this->mSubPath . "./js/jquery/jquery.qtip.min.js\"></script>*/
+	function setIncludeJQuery($ask = true){
+		if ($ask == true ){
+			$this->strJQueryIncs	= "<link rel=\"stylesheet\" href=\"" . $this->mSubPath . "./css/jquery-ui/jquery-ui.css\" media=\"all\" />	<script  src=\"" . $this->mSubPath . "./js/jquery/jquery.ui.js\"></script>";
+		}
+		return $this->strJQueryIncs;
+	}
+	
+	function setDrawCalendar($cmdButton = "cmdCalendar"){
+		return "<img style=\"width: 16px; height: 16px;\" alt=\"\" src=\"../images/common/calendar.gif\" align='middle' id=\"$cmdButton\" alt=\"Muestra el Calendario\" />";
+		
+	}
+	function getJsSocios(){
+		//================================	SOCIOS
+		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
+		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
+		$idsocio		= $this->mInputs["codigo_de_socio"]["name"];
+		$idcuenta		= $this->mInputs["codigo_de_cuenta"]["name"];
+		$subtipo		= ($this->mSubproducto == "all") ? 0 : setNoMenorQueCero($this->mSubproducto);
+		$jsSocios		= "
+/** Funciones de Compatibilidad */
+function envsoc(){ jsSetNombreSocio(); }
+
+/* funcion que retorna el nombre de socio */
+function jsSetNombreSocio(mObtenerI){
+	var tipocuenta		= jsTypeCaptacion;
+	mObtenerI		= (typeof mObtenerI == \"undefined\") ? true : mObtenerI;
+	if (jsWorkForm.$idsocio) {
+		var mSocio	= entero(jsWorkForm.$idsocio.value);
+		if( mSocio > 0 ) {
+			jsrsExecute(jsrGeneralCommon, jsReturnSocio, \"Common_695bad33e1f2af343f99c6a4ceb9d045\", jsWorkForm.$idsocio.value);
+			if(mObtenerI == true && mLoadDefs == true){
+				/** Busca la Solicitud de Credito con Prioridad */
+				if(jsWorkForm.$idsolicitud) {
+					if(typeof jsReturnPrioriCredit != \"undefined\"){
+						jsrsExecute(jsrCreditsCommon, jsReturnPrioriCredit, 'Common_86d8b5015acb366cec42bf1556d8258a', jsWorkForm.$idsocio.value + vSEPARATOR + mFiltroCred);
+					}
+				}
+				/** Busca la Cuenta de captacion con Prioridad */
+				if(jsWorkForm.$idcuenta){
+					var mOr		= mSocio  + '|' + tipocuenta + '|" . $this->mSubproducto . "';
+					var xCG	= new CaptGen(); xCG.getPrincipal({ persona: mSocio, tipo: tipocuenta, subtipo : $subtipo, control : jsWorkForm.$idcuenta.id });
+				}
+			}
+		} else { goSocio_(); }
+	}
+}
+/** Retorna El Numero de Socio */
+function jsReturnSocio(mRetNombre){
+	var xRetNombre	= mRetNombre
+		if( (xRetNombre == \"" . MSG_NO_PARAM_VALID . "\") || (xRetNombre == '0' ) ){
+					goSocio_();
+		} else {
+			try{
+				jsWorkForm." . $this->mInputs["descripcion_del_socio"]["name"] . ".value = xRetNombre;
+			} catch (err) {	}
+		}
+}
+function jsPersonaRegresarCaptura(){ jsWorkForm.$idsocio.value = " . DEFAULT_SOCIO . "; jsWorkForm.$idsocio.focus(); jsWorkForm.$idsocio.select(); }
+function goSocio_(){
+	jsPersonaRegresarCaptura();
+	var isoc 	= jsWorkForm.$idsocio.value;
+	var pfSoc 	= \"../utils/frmbuscarsocio.php?i=\";
+	try {
+		var xurl = pfSoc + isoc + \"&f=" . $this->mForm . "\";
+		mGlo.w({ url: xurl, h: 600, w : 800, tiny : true});
+	} catch (e){}
+}";
+		return $jsSocios;
+	}
+	function getJsCreditos(){
+		//================================	CREDITOS
+		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
+		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
+		$idsocio		= $this->mInputs["codigo_de_socio"]["name"];
+		$jsCreditos		= "
+		var isCredit		= (typeof jsWorkForm.$idsolicitud != \"undefined\") ? true : false;
+		var mCredit		= (typeof jsWorkForm.$idsolicitud != \"undefined\") ? jsWorkForm.$idsolicitud : null;
+		var MG			= (typeof Gen  != \"undefined\") ? new Gen(): {};
+		var MCRED		= (typeof CredGen  != \"undefined\") ? new CredGen(): null;
+    /** Funciones de compatibilidad */
+	function envsol(){ jsGetDescCredito(); }
+	/** Retorna la Descripcion de la Solicitud	*/
+	function jsGetDescCredito(){
+		esGuardable=false;
+		if( mCredit != null){
+			if(MCRED == null){
+				if( entero(mCredit.value) > 0 ) { jsrsExecute(jsrCreditsCommon, jsReturnDescCredito,'Common_b05dfbfaf8125673c6dc350143777ee1', mCredit.value); }
+			} else {
+				if( entero(mCredit.value) > 0 ) { MCRED.getDescripcion(mCredit.value, '$nombresolicitud'); }
+			}
+		}
+	}
+	function jsReturnPrioriCredit(idsolicitud){ if(isCredit == true){jsWorkForm.$idsolicitud.value=idsolicitud; setTimeout(\"jsGetDescCredito()\", 1000); }	}
+	/** Returna una Descripcion del Credito */
+	function jsReturnDescCredito(stringDescription){
+		var mDescription = stringDescription;
+		if (mDescription == '" . MSG_NO_PARAM_VALID . "'||$.trim(mDescription) == '') {
+			jsWorkForm.$idsocio.focus();
+			//var siBuscar = confirm(\"EL CREDITO SOLICITADO NO EXISTE \\n O ESTA INACTIVO. DESEA BUSCARLO?\");
+			//if(siBuscar){ goCredit_(); } else { jsCredRegresarCaptura(); }
+		} else {
+			jsWorkForm.$nombresolicitud.value = mDescription; esGuardable=true;
+		}
+	}
+	function jsCredRegresarCaptura(){
+		jsWorkForm.$nombresolicitud.focus(); jsWorkForm.$nombresolicitud.select();
+	}
+	function goCredit_(){
+		var isoc 	= jsWorkForm.$idsocio.value;
+		var pfcred 	= \"../utils/frmscreditos_.php?i=\";
+		var xurl	= pfcred + isoc + \"&f=" . $this->mForm . "&tipo=\" + mFiltroCred;
+		mGlo.w({ url: xurl, h: 600, w : 800, tiny: true});
+	}
+	function envparc() {
+		if (jsWorkForm.$idsolicitud) {
+			if( entero(jsWorkForm.$idsolicitud.value) > 0){
+				var misol = jsWorkForm.$idsolicitud.value;
+				jsrsExecute(jsrFile, darparc,'damecredito', misol + ' 27');
+			}
+		}
+	}
+	function darparc(laparc)  {
+		var uparc = parseInt(laparc)+1;
+		if (jsWorkForm.idparcialidad){
+			jsWorkForm.idparcialidad.value = uparc;
+		}
+	}
+	
+	function goLetra_(){
+		var isoc 	= jsWorkForm." . $this->mInputs["codigo_de_solicitud"]["name"] . ".value;
+		var urlLetra 	= \"../utils/frmletras.php?i=\" + isoc + \"&f=" . $this->mForm . "\";
+		mGlo.w({ url: urlLetra, tiny: true});
+	}
+	";
+		return $jsCreditos;
+	}
+	function getJsRecibos(){
+		$jsRecibos		= "
+			function goRecibos_(){
+				var iRec 	= jsWorkForm." . $this->mInputs["codigo_de_recibo"]["name"] . ".value;
+				var pfRec 	= \"../utils/frmbuscarrecibos.php?i=\";
+				mGlo.w({ url: pfRec + iRec + \"&f=" . $this->mForm . "\" + \"&c=" . $this->mInputs["codigo_de_recibo"]["name"] . "\", h: 600, w : 800, tiny : true});
+			}";
+		return $jsRecibos;
+	}
+	function get(){ return $this->show(true); }
+	function show($Devolver = false){
+		$token					= SAFE_VERSION . SAFE_REVISION;
+		$jsCalendarBody		= "";
+		$jsJQueryUI			= $this->strJQueryIncs;
+		$jsCalendarIncludes	= "";
+		$jsLoadDef			= ($this->mLoadVals == true) ? "true" : "false";
+		//$jsCaptacion
+		$jsCalendarIncludes = "	<link rel=\"stylesheet\"  media=\"all\" href=\"" . $this->mSubPath . "./js/jscalendar/calendar-green.css\" title=\"green\" />
+								<script  src=\"" . $this->mSubPath . "./js/jscalendar/calendar.js\"></script>
+								<script  src=\"" . $this->mSubPath . "./js/jscalendar/lang/calendar-es.js\"></script>
+								<script  src=\"" . $this->mSubPath . "./js/jscalendar/calendar-setup.js\"></script>";
+		$jsMD5Include		= "<script  src='" . $this->mSubPath . "./js/md5.js'></script>";
+		/**
+		 * Include Segmentados
+		 */
+		$jsRecibos			= ($this->mIncludeRecibos == false) ? "" : $this->getJsRecibos();
+		$jsSocios			= ($this->mIncludeSocio == false ) ? "" : $this->getJsSocios();
+		$jsCreditos			= ($this->mIncludeCreditos == false) ? "" : $this->getJsCreditos();
+		$jsCaptacion		= ($this->mIncludeCaptacion == false) ? "" : $this->getJsCaptacion();
+		$jsCommon			= ($this->mIncludeCommon == false) ? "" : $this->getJsCommon();
+		$jsGrupos			= ($this->mIncludeGrupos == false ) ? "" : $this->getJsGrupos();
+		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
+		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
+		$idsocio			= $this->mInputs["codigo_de_socio"]["name"];
+		$idcuenta			= $this->mInputs["codigo_de_cuenta"]["name"];
+		$nombrecuenta		= $this->mInputs["descripcion_de_la_cuenta"]["name"];
+		$claveSocio		= getPersonaEnSession();
+		foreach ($this->mArrCalendarJs AS $key=>$value){
+			$jsCalendarBody 		.= $value;
+		}
+		if ($this->mIncludeCalendar == false){
+			$jsCalendarIncludes	= "";
+			$jsCalendarBody		= "";
+		}
+		//================================	PRINCIPAL
+		$js = "
+			$jsCalendarIncludes
+			$jsJQueryUI
+			<script src='" . $this->mSubPath . "./js/jsrsClient.js'></script>
+			<!-- <script src='" . $this->mSubPath . "./js/general.js?$token'></script> -->
+			<script>
+			var jsrFile 				= \"" . $this->mSubPath . "./clsfunctions.inc.php\";
+			var jsWorkForm				= document." . $this->mForm . ";
+			var jsrCreditsCommon		= \"" . $this->mSubPath . "./js/creditos.common.js.php\";
+			var jsrCaptacionCommon		= \"" . $this->mSubPath . "./js/captacion.common.js.php\";
+			var jsrGeneralCommon		= \"" . $this->mSubPath . "./js/general.common.js.php\";
+			var jsrSeguimientoCommon	= \"" . $this->mSubPath . "./js/seguimiento.common.js.php\";
+					
+			var jsTypeCaptacion			= " . $this->mTypeCaptacion . ";
+			var setToGo					= true;
+			var mInputsCheck			= new Array();
+			var mFiltroCred			= \"" . $this->mFiltroCreditos . "\";
+			var vSEPARATOR			= \"" . STD_LITERAL_DIVISOR . "\";
+			var mLoadDefs			= $jsLoadDef;
+			var mGlo			= new Gen();
+			var esGuardable			= false;
+			var autoEjecutar		= true;
+			var enBusqueda			= false;
+			function frmSubmit( evaluate ){
+				//Valida que los Campos
+				evaluate = (typeof evaluate != \"undefined\" ) ? evaluate : false;
+				if ( evaluate == false ){
+					setToGo = jsEvaluarFormulario(false);
+					if(setToGo == false){
+						alert(\"Su Formulario contiene errores\");
+					} else {
+						var mGoSubmit	= confirm(\"Quiere Guardar los Datos Capturados?\");
+						if( mGoSubmit == false ){
+							setToGo = false;
+						} else {
+							jsWorkForm.submit();
+						}
+					}
+				} else {
+					jsWorkForm.submit();
+				}
+			}
+			$jsSocios
+			$jsCreditos
+			$jsGrupos
+			$jsCommon
+			$jsRecibos
+			$jsCaptacion
+			$jsCalendarBody
+			function out(msg){ if(typeof msg != \"undefined\"){ console.log(msg); }	}
+			function jsLoadNombreValores(){
+				if(autoEjecutar == true){
+					if(jsWorkForm.$idsocio){
+						if($.trim(jsWorkForm.$idsocio.value) == \"\"){ jsWorkForm.$idsocio.value = $claveSocio; }
+						jsWorkForm.$idsocio.focus();
+						if( entero(jsWorkForm.$idsocio.value) > 0 ){ jsSetNombreSocio(); }
+					}
+					if(jsWorkForm.$idsolicitud){
+						if( entero(jsWorkForm.$idsolicitud.value) > 0 ){ jsGetDescCredito(); }
+					}
+				}
+			}
+			/*function jsEvaluarSalida(evt){ if(evt.id =='$idcuenta'){ envcta(); } }*/
+			jsLoadNombreValores();
+			</script>";
+			
+			if( $Devolver == false){
+				echo $js;
+			} else {
+				return $js;
+			}
+	}
+	function getJsGrupos(){
+		//================================	GRUPOS
+		$jsGrupos		= "/** FUNCION QUE RETORNA EL NOMBRE DEL GPO SOLIDARIO */
+	function envgpo() {
+		var idgpo = jsWorkForm." . $this->mInputs["codigo_de_grupo"]["name"] . ".value;
+		jsrsExecute(jsrFile, jsGetNombreGrupo,'mostrargrupo', idgpo + ' 1');
+	}
+	function jsGetNombreGrupo(nombredev) {
+		if(jsWorkForm.nombregrupo){ jsWorkForm.nombregrupo.value = nombredev;  }
+	}
+	function goGrupos_(){
+		var iGrp 	= jsWorkForm." . $this->mInputs["codigo_de_grupo"]["name"] . ".value;
+		var pfGrp 	= \"../utils/frmsgrupos.php?i=\";
+		frmGrp 	= window.open(pfGrp + iGrp + \"&f=" . $this->mForm . "\", \"\", \"width=600,height=600,scrollbars,dependent=yes\");
+		frmGrp.focus();
+	}
+	";
+		return $jsGrupos;
+	}
+	function getJsCaptacion(){
+		$markSubproducto	= "";
+		if ( $this->mSubproducto != "all"){
+			$markSubproducto	= "&s=" .$this->mSubproducto;
+		}
+		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
+		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
+		$idsocio			= $this->mInputs["codigo_de_socio"]["name"];
+		$idcuenta			= $this->mInputs["codigo_de_cuenta"]["name"];
+		$nombrecuenta		= $this->mInputs["descripcion_de_la_cuenta"]["name"];
+		
+		$jsCaptacion	= "
+	//.- FUNCION OBTIENE DETALLES DE LA CUENTA DE CAPTACION
+	/** Funcion de Compatibilidad */
+	function envcta(iTipo) {
+		vTipoC	= (typeof iTipo != \"undefined\") ? iTipo : jsTypeCaptacion;
+		jsGetCuenta(iTipo);
+	}
+	function jsGetCuenta(inttipo) {
+		if(jsWorkForm.$idcuenta){
+			var lacta = jsWorkForm.$idcuenta.value;
+				if (lacta!='' || lacta!=NaN || lacta!=0) {
+					jsrsExecute(jsrCaptacionCommon, jsSetCuenta,'Common_82cbe75762e2714baaf92926f0d26d6b', lacta);
+				}
+		}
+	}
+	/** Obtiene una Descripcion de la Cuenta */
+	function jsSetCuenta(depcta)  {
+		var ccta = depcta;
+		jsWorkForm.$nombrecuenta.value = ccta;
+	}
+	function jsReturnPrioriCaptacion(escta) {
+		if (escta!='' || escta!=NaN || escta!=0) {
+			var micta = escta;
+			if(jsWorkForm.$idcuenta){
+				jsWorkForm.$idcuenta.value = micta;
+			}
+		}
+	}
+	
+	function goCuentas_(tipoc){
+		var vTipoC	= \"\";
+		if(typeof tipoc == 'undefined'){
+			if(jsTypeCaptacion == 0){ } else { vTipoC	= \"&a=\" + jsTypeCaptacion; }
+		} else { vTipoC	= \"&a=\" + tipoc; }
+		var isoc 	= jsWorkForm.$idsocio.value;
+		var urlcap 	= \"../utils/frmcuentas_.php?i=\" + isoc + \"&c=$idcuenta" . "$markSubproducto&f=" . $this->mForm . "\" + vTipoC;
+		console.log(urlcap);
+		mGlo.w({ url: urlcap, tiny: true});
+	}";
+		return $jsCaptacion;
+	}
+	function getJsCommon(){
+		$EventOnLoad = " jsResizeWindow(); ";
+		$jsCommon		= "
+	// funcion que checa que el valor no sea cero
+	function chkmonto(eValue){ return isNumber(eValue); }
+	function notnan(isthis){ return isNotEmpty(isthis); }
+	function muestralo(id_e) {
+		var mist_s = document.getElementById(id_e);
+		mist_s.style.visibility='visible';
+	}
+	function ocultalo(id_e) { var mist_e = document.getElementById(id_e); mist_e.style.visibility='hidden';	}
+	function msgbox(string_alert) { alert (string_alert);	}
+				
+	function cierrame(){ window.close(); }
+	/** function que cambia una propiedad de un elemento */
+	function jsChangeProperty(id, prop, val){
+		document.getElementById(id).removeAttribute(prop);
+		document.getElementById(id).setAttribute(prop, val);
+	}
+	function jsRestarFechas(date1, date2) {
+	    var DSTAdjuste 	= 0;
+	    // ------------------------------------
+	    oneMinute 		= 1000 * 60;
+	    var oneDay 		= oneMinute * 60 * 24;
+	    // ------------------------------------
+	    date1.setHours(0);
+	    date1.setMinutes(0);
+	    date1.setSeconds(0);
+				
+	    date2.setHours(0);
+	    date2.setMinutes(0);
+	    date2.setSeconds(0);
+	    // ------------------------------------
+	    if (date2 > date1) {
+	        DSTAdjuste =
+	            (date2.getTimezoneOffset() - date1.getTimezoneOffset()) * oneMinute;
+	    } else {
+	        DSTAdjuste =
+	            (date1.getTimezoneOffset() - date2.getTimezoneOffset()) * oneMinute;
+	    }
+	    var diff = Math.abs(	date2.getTime() - date1.getTime()	) - DSTAdjuste;
+	    return Math.ceil(diff/oneDay);
+	}
+	function jsSumarDias(vFecha, days){
+	    var mDays   = parseInt(days);
+	    var vFecha	= new String(vFecha);
+	    var sDays	= 86400000 * mDays;
+	    var sDate   = vFecha.split('-');
+	    var varDate = new Date(sDate[0], parseInt(sDate[1]-1), parseInt(sDate[2])-1, 0,0,0 );
+				
+	    var vDate	= varDate.getTime()+sDays;
+		varDate.setTime( vDate );
+				
+	    var mMonth  = varDate.getMonth()+1;
+	    var mDate	= varDate.getDate()+1;
+	    if (mMonth == 0){
+	        alert('Error al Determinar el Mes ' + mMonth + ' en la Fecha ' + vFecha);
+	    }
+		return varDate.getFullYear() + '-' + mMonth + '-' + mDate;
+	}
+	function jsRestarDias(vFecha, days){
+				
+	    var mDays   = new Number(days);
+	    var vFecha	= new String(vFecha);
+	    var sDays	= 86400000 * mDays;
+	    var sDate   = vFecha.split('-');
+	    var varDate = new Date(sDate[0], parseInt(sDate[1]-1), parseInt(sDate[2])-1, 0,0,0 );
+				
+	    var vDate	= varDate.getTime()-sDays;
+				
+		varDate.setTime(vDate);
+	    var mMonth  = varDate.getMonth()+1;
+	    var mDate	= varDate.getDate()+1;
+				
+	    if (mMonth == 0){
+	        alert('Error al Determinar el Mes ' + mMonth + ' en la Fecha ' + vFecha);
+	    }
+		return varDate.getFullYear() + '-' + mMonth + '-' + mDate;
+	}
+	function setCheckForm(vFrm){ return jsEvaluarFormulario(); }
+	function jsEvaluarFormulario(enviar){
+		vFrm				= jsWorkForm;
+		var isLims 			= vFrm.elements.length - 1;
+		enviar				= (typeof enviar == 'undefined') ? true : enviar;
+				
+			setToGo			= true;
+	  		for(i=0; i<=isLims; i++){
+				var elem	= vFrm.elements[i];
+				var mTyp 	= elem.getAttribute(\"type\");
+				var mCls	= elem.getAttribute(\"class\");
+				
+				if ( (mTyp == \"text\" || mTyp == \"textarea\") ){
+					/* Validar si no esta vacio */
+				
+					if ( /(req)/.test(mCls) ){
+							setToGo = isNotEmpty(elem);
+					}
+					//validar que los numeros sean numeros , siempre que no este vacio
+					if ( /(mny)/.test(mCls) ){
+							setToGo = isNumber(elem);
+					}
+					if ( (setToGo == false) && (mTyp!=\"hidden\") ){
+							elem.focus();
+							break;
+					}
+				}//eval
+	  		}
+		if( setToGo == true&& enviar == true ){
+			var mGoSubmit	= confirm(\"Quiere Guardar los Datos Capturados?\");
+			if( mGoSubmit == false ){
+				setToGo = false;
+			} else {
+				vFrm.submit();
+			}
+		}
+		return setToGo;
+	}
+				
+	function isLenX(elem, mLen) {
+		var str 	= elem.value;
+		var sucess	= true;
+		var mTit	= elem.getAttribute(\"title\");
+	    var re 		= /\b.{mLen}\b/;
+	    if (!str.match(re)) {
+	        alert(\"[ERROR]El Campo no tiene la Numero de Entradas Aceptadas.\");
+	        sucess	= false;
+	    } else {
+	        sucess 	= true;
+	    }
+	    return sucess;
+	}
+				
+	// validates that the field value string has one or more characters in it
+	function isNotEmpty(elem) {
+	    var str 	= elem.value;
+	    var mTit	= elem.getAttribute(\"title\");
+	    var sucess	= true;
+	    if( str == null || str.length == 0 || /^\s+$/.test(str) ) {
+	        alert(\"[ERROR]El Valor de [\" + mTit + \"] no debe quedar vacio\");
+	        sucess	= false;
+	    } else {
+	        sucess	= true;
+	    }
+	    return sucess;
+	}
+				
+	//validates that the entry is a positive or negative number
+	function isNumber(elem) {
+	    var str 	= elem.value;
+	    var sucess	= true;
+	    var mTit	= elem.getAttribute(\"title\");
+    	var re 		= /^[-]?\d*\.?\d*$/;
+    	str 		= str.toString( );
+    	if (!str.match(re)) {
+	        alert(\"[ERROR]El Valor de [\" + mTit + \"] debe ser un Numero\");
+	        sucess	= false;
+	    }
+	    return sucess;
+	}
+				
+				
+				
+				
+	function jsResizeWindow(){
+			top.resizeTo(" . $this->mWidth . "," . $this->mHeigth . ");
+			
+	}
+	function jsRoundPesos(mCantidad){
+		var mStrCantidad	= new String(mCantidad);
+		var rF = new RegExp(\",\" , \"g\");
+		var rF2 = new RegExp(\"$\" , \"g\");
+		var rF3 = new RegExp(\" \" , \"g\");
+		
+		mStrCantidad = mStrCantidad.replace(rF, \"\");
+		mStrCantidad = mStrCantidad.replace(rF2, \"\");
+		mStrCantidad = mStrCantidad.replace(rF3, \"\");
+		mStrCantidad = mStrCantidad.replace(\"$\", \"\");
+		
+			mStrCantidad	+= \".00\";
+		var arrCantidad		= mStrCantidad.split(\".\");
+		
+		return arrCantidad[0] + \".\" + arrCantidad[1];
+	}
+	
+	function jsInitComponents(){
+	$EventOnLoad
+	}
+	";
+	return $jsCommon;
+	}
+}
+
+
+
+class cMigracion {
+	function __construct(){
+		
+	}
+}
+class cMigracionTCB extends cMigracion {
+	function Creditos_EliminarNoExistentes(){
+		$msg	= "";
+		$sql	= "
+				SELECT
+					`creditos_solicitud`.*,
+					`creditos_solicitud`.`estatus_actual`,
+					`creditos_solicitud`.`saldo_actual`
+				FROM
+					`creditos_solicitud` `creditos_solicitud`
+				WHERE
+					(`creditos_solicitud`.`estatus_actual` =50)
+					OR
+					(`creditos_solicitud`.`saldo_actual` <=0.99)
+			";
+		$rs	= mysql_query($sql, cnnGeneral() );
+		while( $rw = mysql_fetch_array($rs) ) {
+			$credito 	= $rw["numero_solicitud"];
+			$socio		= $rw["numero_socio"];
+			$sqlDE		= " DELETE FROM tcb_prestamos_movimientos WHERE numero_de_credito=$credito ";
+			$x			= my_query($sqlDE, true);
+			$msg	.= "$socio\t$credito\tELIMINAR\Eliminar -- " . $x["rows"] . " -- Movimientos de TCB\r\n";
+		}
+		return $msg;
+	}
+	function TCB_GenerarLetras(){
+		//TODO: Revisar v 1.9.42 rev 42 2011-09-24
+		$msg	    = "============================ GENERANDO TABLAS DE AMORTIZACION TCB \r\n ";
+		my_query("DELETE FROM tcb_prestamos_movimientos ");
+		//crear tabla de amortizaciones pagadas
+		$msg	    .= "============================ IMPORTANDO MOVIMIENTOS DE SAFE \r\n ";
+		$sql	= "SELECT SQL_CACHE
+					`operaciones_mvtos`.`socio_afectado`       AS `socio`,
+					`operaciones_mvtos`.`docto_afectado`       AS `credito`,
+					`operaciones_mvtos`.`tipo_operacion`       AS `operacion`,
+					`operaciones_mvtos`.`fecha_operacion`      AS `fecha`,
+					`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+					SUM(`operaciones_mvtos`.`afectacion_real`) AS `monto`
+				FROM
+					`eacp_config_bases_de_integracion_miembros`
+					`eacp_config_bases_de_integracion_miembros`
+						INNER JOIN `operaciones_mvtos` `operaciones_mvtos`
+						ON `eacp_config_bases_de_integracion_miembros`.`miembro` =
+						`operaciones_mvtos`.`tipo_operacion`
+				WHERE
+					(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =8002)
+					AND
+					(`operaciones_mvtos`.`docto_afectado` != 1)
+				GROUP BY
+					`operaciones_mvtos`.`docto_afectado`,
+					`operaciones_mvtos`.`tipo_operacion`,
+					`operaciones_mvtos`.`fecha_operacion`
+				ORDER BY
+					`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+					`operaciones_mvtos`.`docto_afectado`,
+					`operaciones_mvtos`.`fecha_operacion`,
+					`operaciones_mvtos`.`tipo_operacion` /* LIMIT 0,100 */ ";
+		$rs	= mysql_query($sql, cnnGeneral() );
+		$MarkCredito	= false;
+		$MarkFecha	= false;
+		while( $rw = mysql_fetch_array($rs) ) {
+			$credito	= $rw["credito"];
+			$socio		= $rw["socio"];
+			$fecha		= $rw["fecha"];
+			$operacion	= $rw["operacion"];
+			$monto		= $rw["monto"];
+			
+			$iva_pagado	= 0;
+			$capital_pagado	= 0;
+			$IM_pagado	= 0;
+			$IN_pagado	= 0;
+			$IvaMPagado	= 0;
+			$comisiones	= 0;
+			$iva_comisiones	= 0;
+			
+			switch ( $operacion ){
+				case 120:
+					$capital_pagado += $monto;
+					break;
+				case 140:
+					$IN_pagado += $monto;
+					$iva_pagado	+= $monto * 0.15;
+					break;
+				case 141:
+					$IM_pagado += $monto;
+					$IvaMPagado	+= $monto * 0.15;
+					break;
+				case 146:
+					$comisiones += $monto;
+					break;
+				case 145:
+					$comisiones += $monto;
+					break;
+				case 351:
+					$IN_pagado += $monto;
+					$iva_pagado	+= $monto * 0.15;
+					break;
+				case 143:
+					$IM_pagado += $monto;
+					$IvaMPagado	+= $monto * 0.15;
+					break;
+				case 142:
+					$IN_pagado += $monto;
+					$iva_pagado	+= $monto * 0.15;
+					break;
+			}
+			$sql		= "UPDATE tcb_prestamos_movimientos
+								SET
+							    capital_pagado=(capital_pagado + $capital_pagado),
+							    interes_pagado= (interes_pagado + $IN_pagado),
+							    iva_pagado=(iva_pagado + $iva_pagado),
+							    interes_moratorio= (interes_moratorio + $IM_pagado),
+							    iva_interes_moratorio=(iva_interes_moratorio  + $IvaMPagado),
+							    comisiones=(comisiones + $comisiones),
+							    iva_comisiones=(iva_comisiones + $iva_comisiones)
+							WHERE
+							    (numero_de_cliente=$socio)
+							    AND
+							    (numero_de_credito=$credito)
+							    AND
+							    (fecha_de_amortizacion='$fecha') ";
+			$x		= my_query($sql, true);
+			
+			if ( ($x["stat"] == false) OR ($x["rows"] <= 0) ){
+				$msg		.= "$socio\t$credito\t$operacion\tWARN\tSe fallo al actualizar el registro(" . $x["rows"] . "), se intenta uno nuevo\r\n";
+				$sql	= "INSERT INTO tcb_prestamos_movimientos
+								(numero_de_cliente, numero_de_credito, numero_de_pago, fecha_de_amortizacion,
+								capital_a_pagar, interes_a_pagar, iva_por_el_interes_a_pagar,
+								capital_pagado, interes_pagado, iva_pagado,
+								interes_moratorio, iva_interes_moratorio, comisiones, iva_comisiones)
+								VALUES
+								($socio, $credito, 0, '$fecha',
+								0, 0, 0,
+								$capital_pagado, $IN_pagado, $iva_pagado,
+								$IM_pagado, $IvaMPagado, $comisiones, $iva_comisiones) ";
+								
+								$x		= my_query($sql);
+								if ( $x["stat"] == false){
+									$msg	.= "$socio\t$credito\t$operacion\tERROR\tSe fallo al agregar el registro\r\n";
+								}
+			} else {
+				$msg	.= "$socio\t$credito\t$operacion\tOK\tRegistro actualizado\r\n";
+			}
+		}
+		$msg	    .= "============================ IMPORTANDO LETRAS PARA SISBANCS \r\n ";
+		//separar de un pago
+		//separar de pagos varios
+		//acumular operaciones por pagar
+		//acumular conceptos pagados
+		$sqlIS	= "SELECT socio, credito, parcialidad,
+					fecha_de_vencimiento, fecha_de_abono,
+					saldo_vigente, saldo_vencido, interes_vigente, interes_vencido, saldo_interes_vencido,
+					interes_moratorio, estatus, iva_interes_normal, iva_interes_moratorio
+					FROM sisbancs_amortizaciones ";
+		
+		$rs	= mysql_query($sqlIS, cnnGeneral() );
+		while( $rw = mysql_fetch_array($rs) ) {
+			$credito	= $rw["credito"];
+			$socio		= $rw["socio"];
+			$fecha		= $rw["fecha_de_vencimiento"];
+			//$monto		= $rw["monto"];
+			$letra		= $rw["parcialidad"];
+			$capital	= $rw["saldo_vigente"] + $rw["saldo_vencido"];
+			$interes	= $rw["interes_vigente"] + $rw["interes_vencido"];
+			$iva		= $rw["iva_interes_normal"];
+			
+			$sqlIM =  "INSERT INTO tcb_prestamos_movimientos
+							(numero_de_cliente, numero_de_credito, numero_de_pago, fecha_de_amortizacion, capital_a_pagar,
+							interes_a_pagar, iva_por_el_interes_a_pagar, capital_pagado, interes_pagado, iva_pagado,
+							interes_moratorio, iva_interes_moratorio, comisiones, iva_comisiones)
+							VALUES($socio, $credito, $letra, '$fecha', $capital,
+							$interes, $iva, 0, 0, 0, 0, 0, 0, 0)";
+							$xim = my_query($sqlIM);
+							$msg	.= "$socio\t$credito\t$letra\tParcialidad de fecha $fecha por $capital; $interes; $iva IMPORTADA\r\n";
+		}
+		return $msg;
+	}
+}
+class cMigracionSIBANCS extends cMigracion {
+	function CompararPlanesDePago(){
+		$msg	= "============================ COMPARANDO PLANES DE PAGO SISBANCS\r\n";
+		//Efectua una Comparacion con los Datos del Plan de Pagos
+		$sqlSC = "SELECT
+								`creditos_solicitud`.*,
+								`sisbancs_suma_amorizaciones`.*
+							FROM
+								`creditos_solicitud` `creditos_solicitud`
+									INNER JOIN `sisbancs_suma_amorizaciones` `sisbancs_suma_amorizaciones`
+									ON `creditos_solicitud`.`numero_solicitud` =
+									`sisbancs_suma_amorizaciones`.`credito`
+							/* WHERE
+								 (`creditos_solicitud`.`saldo_actual` >" . TOLERANCIA_SALDOS . ") */ ";
+		$rs 	= mysql_query($sqlSC, cnnGeneral() );
+		$contar	= 0;
+		$NetoDisminuir  = 0;
+		$NetoCap        = 0;
+		$NetoLetra      = 0;
+		//Eliminar Letras cuyo capital es Cero o menor a cero
+		$sql	= " DELETE FROM sisbancs_amortizaciones WHERE saldo_vigente < 0.99 ";
+		$tx		= my_query($sql);
+		$msg	.= "ELIMINANDO LETRAS CUYO CAPITAL ES MENOR A CERO (" . $tx["info"] . ")\r\n";
+		
+		while ( $rw = mysql_fetch_array($rs) ){
+			$credito			= $rw["numero_solicitud"];
+			$socio				= $rw["numero_socio"];
+			$saldoActual		= $rw["saldo_actual"];
+			
+			$saldoSISBANCS		= $rw["capital_vigente"];
+			$LimitLetras		= $rw["pagos_autorizados"];
+			$diferencia			= ($saldoActual - $saldoSISBANCS);
+			$PeriocidadDePago	= $rw["periocidad_de_pago"];
+			//Datos del PLAN DE PAGOS
+			$letraInicial		= $rw["letra_inicial"];
+			$letraFinal			= $rw["letra_final"];
+			$AEliminar			= $diferencia;
+			
+			$NetoCap            += $saldoActual;
+			$NetoLetra          += $rw["capital_vigente"];
+			$NetoDisminuir      += $diferencia;
+			//TODO: Verificar la Validez de la Condicion
+			if ( $diferencia < (TOLERANCIA_SALDOS * -1) ){
+				$msg		.= "$contar\t$credito\tOBJETIVO\tLa Diferencia($diferencia) no es tolerable \r\n";
+				$AEliminar	= ($diferencia * -1);
+				//
+				for ( $i = $letraInicial; $i <= $letraFinal; $i ++ ){
+					$sqLetra = "SELECT
+																`sisbancs_amortizaciones`.*
+															FROM
+																`sisbancs_amortizaciones` `sisbancs_amortizaciones`
+															WHERE
+																(`sisbancs_amortizaciones`.`credito` =$credito) AND
+																(`sisbancs_amortizaciones`.`parcialidad` =$i)";
+					$DLetra		= obten_filas($sqLetra);
+					$LMonto		= $DLetra["saldo_vigente"];
+					
+					$PercTrunk	= 0;
+					//Si eliminar es Mayor a la Letra, y la Letra es Mayor a 0.99
+					if ( ($AEliminar >= $LMonto) AND ($LMonto > TOLERANCIA_SALDOS) AND ($AEliminar > 0) ){
+						//Eliminar la Letra
+						$sqlDL = "DELETE FROM
+																`sisbancs_amortizaciones`
+															WHERE
+																(`sisbancs_amortizaciones`.`credito` =$credito) AND
+																(`sisbancs_amortizaciones`.`parcialidad` =$i) ";
+						$x	= my_query($sqlDL);
+						
+						$msg	.= "$contar\t$credito\tELIMINAR\tLetra $i (Disminuir $AEliminar / Letra $LMonto)\r\n";
+						$AEliminar	-= $LMonto;
+						//Si a eliminar es Menor a la Letra, y la Letra es mayor a 0.99
+					} elseif ( ( $AEliminar < $LMonto ) AND ($LMonto > TOLERANCIA_SALDOS) AND ($AEliminar > 0) ) {
+						//$LMonto		= $LMonto - $AEliminar;
+						$PercTrunk	= ($AEliminar / $LMonto);
+						
+						$sqlUL = "UPDATE sisbancs_amortizaciones
+																		SET saldo_vigente=saldo_vigente - (saldo_vigente * $PercTrunk),
+																			saldo_vencido=saldo_vencido - (saldo_vencido * $PercTrunk),
+																			interes_vigente=interes_vigente - (interes_vigente * $PercTrunk),
+																			interes_vencido=interes_vencido - (interes_vencido * $PercTrunk),
+																			saldo_interes_vencido=saldo_interes_vencido - (saldo_interes_vencido * $PercTrunk),
+																			interes_moratorio=interes_moratorio - (interes_moratorio * $PercTrunk),
+																			iva_interes_normal=iva_interes_normal - (iva_interes_normal * $PercTrunk),
+																			iva_interes_moratorio=iva_interes_moratorio - (iva_interes_moratorio * $PercTrunk)
+																		WHERE
+																	credito=$credito AND parcialidad=$i ";
+						$x = my_query($sqlUL); //(" . $x["info"] . ")
+						$msg	.= "$contar\t$credito\tACTUALIZAR\tLetra $i con el Factor $PercTrunk ( LETRA:$LMonto / ELIMINAR:$AEliminar)\r\n";
+						//$msg	.= $x["info"];
+						
+						$AEliminar	= 0;
+					}
+					if ($AEliminar < TOLERANCIA_SALDOS){
+						$AEliminar	= 0;
+					}
+				}
+			} elseif ( $diferencia > TOLERANCIA_SALDOS ){
+				$sqLetra = "SELECT
+																`sisbancs_amortizaciones`.*
+															FROM
+																`sisbancs_amortizaciones` `sisbancs_amortizaciones`
+															WHERE
+																(`sisbancs_amortizaciones`.`credito` = $credito)
+																AND
+																(`sisbancs_amortizaciones`.`parcialidad` = $letraInicial)";
+				$DLetra		= obten_filas( $sqLetra );
+				$fechaIn	= restardias( $DLetra["fecha_de_vencimiento"], $PeriocidadDePago);
+				
+				$nuevaLetra	= $letraInicial - 1;
+				$msg		.= "$contar\t$credito\tAGREGAR\tEl Plan de Pagos es menor al saldo del Credito, se agrega la letra $nuevaLetra por $diferencia \r\n";
+				$sqlIS		= "INSERT INTO sisbancs_amortizaciones(socio, credito, parcialidad, fecha_de_vencimiento,
+														saldo_vigente, saldo_vencido, interes_vigente, interes_vencido, saldo_interes_vencido, interes_moratorio,
+														estatus, iva_interes_normal, iva_interes_moratorio)
+																VALUES ($socio, $credito, $nuevaLetra, '$fechaIn',
+														$diferencia, 0, 0, 0, 0, 0,
+														1, 0, 0)";
+														$x		= my_query($sqlIS);
+														//$msg	.= $x["info"];
+			}
+			
+			$contar++;
+		}
+		$msg .=	"\t\t=============\tCAPITAL SAFE\t$NetoCap\r\n";
+		$msg .=	"\t\t=============\tCAPITAL SISBANCS\t$NetoLetra\r\n";
+		$msg .=	"\t\t=============\tDIFERENCIA NETA\t$NetoDisminuir\r\n";
+		$msg .=	"\tFIN\t=================================================================\r\n";
+		return $msg;
+	}
+	function setCrearLetras($EsSucursal, $EnDetalle, $Avisar){
+		
+		//Construir la Array de Letras
+		
+		$BySucursal		= "";
+		$sucursal		= getSucursal();
+		$arrLetras		= array();
+		$arrFechas		= array();
+		
+		if ( $EsSucursal == "si"){
+			$BySucursal	= " AND sucursal = '$sucursal' ";
+		}
+		//Eliminar las letras
+		$sqlDSB		= "DELETE FROM `sisbancs_amortizaciones` ";
+		my_query($sqlDSB);
+		$msg		= "\t\tEliminar todas las letras\r\n";
+		
+		
+		$sqlLetras	= "SELECT
+							`operaciones_mvtos`.`socio_afectado`,
+							`operaciones_mvtos`.`docto_afectado`,
+							`operaciones_mvtos`.`fecha_afectacion`,
+							`operaciones_mvtos`.`tipo_operacion`,
+							`operaciones_mvtos`.`periodo_socio`,
+							(`operaciones_mvtos`.`afectacion_real` *
+							`eacp_config_bases_de_integracion_miembros`.`afectacion`) AS 'monto'
+				
+						FROM
+							`operaciones_mvtos` `operaciones_mvtos`
+								INNER JOIN `eacp_config_bases_de_integracion_miembros`
+								`eacp_config_bases_de_integracion_miembros`
+								ON `operaciones_mvtos`.`tipo_operacion` =
+								`eacp_config_bases_de_integracion_miembros`.`miembro`
+						WHERE
+							(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =2601)
+							AND
+							(`operaciones_mvtos`.`afectacion_real` >0)
+							AND
+							(`operaciones_mvtos`.`tipo_operacion` !=413)
+				
+						ORDER BY
+							`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+							`operaciones_mvtos`.`socio_afectado`,
+							`operaciones_mvtos`.`docto_afectado`,
+							`operaciones_mvtos`.`periodo_socio` ";
+		$rsA		= getRecordset( $sqlLetras );
+		while( $rw = mysql_fetch_array($rsA)){
+			$arrLetras[ $rw["docto_afectado"] . "-" . $rw["periodo_socio"] . "-" . $rw["tipo_operacion"] ] = $rw["monto"];
+			
+			if ( !isset($arrFechas[ $rw["docto_afectado"] . "-" . $rw["periodo_socio"] . "-fecha" ] ) ){
+				$arrFechas[ $rw["docto_afectado"] . "-" . $rw["periodo_socio"] . "-fecha" ] = $rw["fecha_afectacion"];
+			}
+		}
+		$sqlCreds	= "SELECT
+					`creditos_solicitud`.*,
+					`creditos_tipoconvenio`.*,
+					`creditos_periocidadpagos`.*,
+					`creditos_estatus`.*,
+					`creditos_solicitud`.`tasa_interes` AS `tasa_ordinaria_anual`,
+					`creditos_solicitud`.`tipo_autorizacion` AS `tipo_de_autorizacion`,
+                    `creditos_solicitud`.`tasa_ahorro` AS `tasa_de_ahorro`
+				FROM
+					`creditos_tipoconvenio` `creditos_tipoconvenio`
+						INNER JOIN `creditos_solicitud` `creditos_solicitud`
+						ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+						= `creditos_solicitud`.`tipo_convenio`
+							INNER JOIN `creditos_periocidadpagos`
+							`creditos_periocidadpagos`
+							ON `creditos_periocidadpagos`.
+							`idcreditos_periocidadpagos` =
+							`creditos_solicitud`.`periocidad_de_pago`
+								INNER JOIN `creditos_estatus`
+								`creditos_estatus`
+								ON `creditos_estatus`.`idcreditos_estatus` =
+								`creditos_solicitud`.`estatus_actual`
+				WHERE
+					(`creditos_solicitud`.`saldo_actual` >0.99)
+					AND (`creditos_solicitud`.`estatus_actual` !=50)
+					$BySucursal";
+					$rsC		= mysql_query($sqlCreds, cnnGeneral() );
+					$contar		= 0;
+					$NetoDisminuir  = 0;
+					$NetoCap        = 0;
+					$NetoLetra      = 0;
+					
+					while ( $rw = mysql_fetch_array($rsC) ) {
+						//Validar el Credito
+						$socio					= $rw["numero_socio"];
+						$credito				= $rw["numero_solicitud"];
+						$oficial				= $rw["oficial_credito"];
+						$numero_pagos			= $rw["pagos_autorizados"];
+						$TasaIVA				= $rw["tasa_iva"];
+						$saldo_actual			= $rw["saldo_actual"];
+						$periocidad_de_pago		= $rw["periocidad_de_pago"];
+						$fecha_de_vencimiento	= $rw["fecha_vencimiento"];
+						$interes_pagado			= $rw["interes_normal_pagado"];
+						$interes_devengado		= $rw["interes_normal_devengado"];
+						
+						$NetoCap                += $saldo_actual;
+						$TotalCap		        = 0;
+						$TotalInt		        = 0;
+						if ($periocidad_de_pago == 360){
+							$numero_pagos	= 1;
+						}
+						$xc				= new cCredito($credito, $socio);
+						$xc->initCredito($rw);
+						//$msg .=	"$contarINICIO\t$credito\t=============\tSALDO\t$saldo_actual\r\n";
+						
+						for ($i=1; $i <= $numero_pagos; $i++){
+							$capital	= 0;
+							$interes	= 0;
+							$lkey		= $credito . "-" . $i . "-";
+							$fecha		= ( isset($arrFechas[$lkey . "fecha"]) ) ? $arrFechas[$lkey . "fecha"] : fechasys();
+							$txtLog		= "";
+							
+							if ( $periocidad_de_pago != 360 ){
+								
+								//Si el Capital Existe
+								if ( isset( $arrLetras[$lkey . 410] ) ){
+									$capital	= $arrLetras[$lkey . 410];
+								}
+								//Si el Interes Existe
+								if ( isset( $arrLetras[$lkey . 411] ) ){
+									$interes	= $arrLetras[$lkey . 411];
+								}
+							} else {
+								$fecha		= $fecha_de_vencimiento;
+								$capital	= $saldo_actual;
+								$interes	= setNoMenorQueCero( ($interes_devengado -  $interes_pagado) );
+							}
+							//recompocision a 2 digitos por letra
+							$capital		= round($capital, 2);
+							$interes		= round($interes, 2);
+							$iva			= round( ($interes	* $TasaIVA), 2);
+							//SUMAS
+							$total_letra	= $capital + $interes + $iva;
+							$TotalCap		+= $capital;
+							$TotalInt		+= $interes;
+							//Global
+							$NetoLetra      += $capital;
+							
+							if ( $total_letra > TOLERANCIA_SALDOS ){
+								$sqlI = "INSERT INTO sisbancs_amortizaciones
+										(socio, credito, parcialidad, fecha_de_vencimiento, saldo_vigente, saldo_vencido,
+										interes_vigente, interes_vencido,
+										saldo_interes_vencido, interes_moratorio,
+										estatus, iva_interes_normal, iva_interes_moratorio,
+										fecha_de_abono)
+										VALUES
+										($socio, $credito, $i, '$fecha', $capital, 0,
+										$interes, 0,
+										0, 0, 1, $iva, 0,
+										'$fecha')";
+										my_query($sqlI);
+										if ( $EnDetalle == "si" ){
+											$msg			.= "$contar\tLETRA\t$credito\t$i\tAGREGANDO PARCIALIDAD POR $total_letra\r\n";
+										}
+							}
+						}
+						
+						if ( ($TotalCap > ($saldo_actual + TOLERANCIA_SALDOS)) OR ($TotalCap < ($saldo_actual - TOLERANCIA_SALDOS) ) ){
+							$txtLog .=	"$contar\tERROR\t$credito\tERROR EL SALDO($saldo_actual)ES DIFERENTE A LA SUMA DE LETRAS($TotalCap)\r\n";
+							if ( $Avisar == "si" ){
+								$xo			= new cOficial();
+								$xo->addNote(iDE_CREDITO, $oficial, $socio, $credito, $txtLog);
+							}
+							$msg	.= $txtLog;
+						}
+						$msg .=	"$contar\t$credito\t=============\tCAPITAL\t$TotalCap\r\n";
+						$msg .=	"$contar\t$credito\t=============\tINTERES\t$TotalInt\r\n";
+						$msg .=	"$contar\tFIN\t=================================================================\r\n";
+						$contar++;
+					}
+					return $msg;
+	}
+	function setCrearCaptacionNoExistente(){
+		$msg	= "";
+		$sql	= "SELECT * FROM sisbancs_temp_depositos WHERE
+								(SELECT count(numero_cuenta) FROM captacion_cuentas WHERE numero_socio = sisbancs_temp_depositos.numero_de_socio
+								 AND saldo_cuenta > 0.99) = 0";
+		$rs		= getRecordset( $sql );
+		while( $rw = mysql_fetch_array($rs) ){
+			$cuenta		= "10" . $rw["numero_de_socio"] . "01";
+			$socio		= $rw["numero_de_socio"];
+			$cCta		= new cCuentaALaVista($cuenta);
+			$cuenta		= $cCta->setNuevaCuenta(5, 1, $socio, "CUENTA_POR_AJUSTE_SISBANCS");
+			//$cuenta	= 	$cCuenta->setNuevaCuenta(5, 1, $socio, "CUENTA_POR_AJUSTE");
+			$msg		.= "$socio\t$cuenta\tCreando nueva cuenta\r\n";
+		}
+		return $msg;
+	}
+	function setEliminarCuentasNoExistentes(){
+		$msg			= "";
+		//Crear un nuevo Recibo de Ajuste
+		$cRec		= new cReciboDeOperacion(10);
+		$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CAPTACION");
+		$msg		.= "\t\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+		$cRec->setNumeroDeRecibo($xRec, true);
+		//2011-01-15
+		$sql 			= "SELECT
+							`captacion_cuentas`.*,
+							`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
+							`captacion_cuentas`.`numero_cuenta`                 AS `cuenta`,
+							`captacion_cuentas`.`fecha_afectacion`              AS `apertura`,
+							`captacion_cuentas`.`inversion_fecha_vcto`          AS `vencimiento`,
+							`captacion_subproductos`.`descripcion_subproductos` AS `subproducto`,
+							`captacion_cuentas`.`tasa_otorgada`                 AS `tasa`,
+										`captacion_cuentas`.`dias_invertidos`               AS `dias`,
+										`captacion_cuentas`.`observacion_cuenta`            AS `observaciones`,
+										`captacion_cuentas`.`saldo_cuenta` 			        AS `saldo`,
+										`captacion_subproductos`.`descripcion_subproductos` AS `subproducto`,
+										`captacion_subproductos`.`algoritmo_de_premio`,
+										`captacion_subproductos`.`algoritmo_de_tasa_incremental`,
+										`captacion_subproductos`.`metodo_de_abono_de_interes`,
+										`captacion_subproductos`.`destino_del_interes`,
+										`captacion_subproductos`.`nombre_del_contrato`,
+										`captacion_subproductos`.`algoritmo_modificador_del_interes`
+										FROM
+										`captacion_cuentas` `captacion_cuentas`
+											INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos`
+											ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.
+											`idcaptacion_cuentastipos`
+												INNER JOIN `captacion_subproductos` `captacion_subproductos`
+												ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`
+												.`idcaptacion_subproductos`
+										WHERE
+											(
+                                                SELECT COUNT(numero_de_socio) FROM sisbancs_temp_depositos WHERE numero_de_socio = captacion_cuentas.numero_socio ) = 0
+											AND
+											(`captacion_cuentas`.`tipo_cuenta` =10)
+											AND
+											(`captacion_cuentas`.`saldo_cuenta` > 0)
+										ORDER BY
+											`captacion_cuentas`.`saldo_cuenta`,
+											`captacion_cuentas`.`fecha_afectacion` ";
+		$rs			= getRecordset( $sql );
+		$contar 	= 0;
+		while( $rw = mysql_fetch_array($rs) ){
+			$cuenta		= $rw["numero_cuenta"];
+			$socio		= $rw["numero_socio"];
+			$monto      = $rw["saldo_cuenta"];
+			
+			$cCuenta	= new cCuentaALaVista($cuenta);
+			
+			$cCuenta->init();
+			
+			$cCuenta->setReciboDeOperacion($xRec);
+			$cCuenta->set($cuenta);
+			$cCuenta->setForceOperations();
+			$cCuenta->init($rw);
+			$cCuenta->setRetiro($monto);
+			
+			$NuevoSaldo	= $cCuenta->getNuevoSaldo();
+			$msg	.= "$contar\t$socio\t$cuenta\tACTUALIZAR\tActualizar la Cuenta a $NuevoSaldo, Anteriormente $monto\r\n";
+			$msg	.= $cCuenta->getMessages("txt");
+			//$msg	.= "$contar\t$socio\t$cuenta\tLa cuenta quedo en $NuevoSaldo\r\n";
+			$contar++;
+		}
+		return $msg;
+	}
+	function setConciliarCuentas($AppSucursal){
+		$msg	= "";
+		$AppSucursal	= strtoupper($AppSucursal);
+		$BySucursal		= " AND (`sucursal` ='" . getSucursal() . "')  ";
+		if ( $AppSucursal != "SI" ){
+			$BySucursal	= "";
+		}
+		//Crea un Array de los saldos de la Cuenta
+		$arrSdoCtas		= array();
+		$arrNumCtas		= array();
+		$arrSdoCW		= array();
+		//
+		$sqlCW			= "SELECT
+								COUNT(`sisbancs_temp_depositos`.`numero_de_socio`) AS `existentes`,
+								`sisbancs_temp_depositos`.`numero_de_socio`
+							FROM
+								`sisbancs_temp_depositos` `sisbancs_temp_depositos`
+				
+							GROUP BY
+								`sisbancs_temp_depositos`.`numero_de_socio` ";
+		$rsA		= getRecordset($sqlCW );
+		while( $rw = mysql_fetch_array($rsA)){
+			$arrSdoCW[ $rw["numero_de_socio"] ] = $rw["existentes"];
+			
+		}
+		unset($rsA);
+		unset($rw);
+		// obtiene las cuentas tipo 10[A LA VISTA] en safe y crea un array
+		$sqlSdoCta		= " SELECT SQL_CACHE
+							`captacion_cuentas`.`numero_socio`         AS `socio`,
+							`captacion_cuentas`.`tipo_cuenta`	AS `tipo`,
+							COUNT(`captacion_cuentas`.`numero_cuenta`) AS `cuentas`,
+							SUM(`captacion_cuentas`.`saldo_cuenta`)    AS `suma`
+						FROM
+							`captacion_cuentas` `captacion_cuentas`
+						WHERE
+							(`captacion_cuentas`.`estatus_cuenta` != 99)
+							AND
+							(`captacion_cuentas`.`tipo_cuenta` = 10)
+							$BySucursal
+						GROUP BY
+							`captacion_cuentas`.`numero_socio`,
+							`captacion_cuentas`.`tipo_cuenta`
+						ORDER BY
+							`captacion_cuentas`.`tipo_cuenta` ";
+							$rsA		= getRecordset($sqlSdoCta);
+							while( $rw = mysql_fetch_array($rsA)){
+								$msocio			= $rw["socio"];
+								$arrSdoCtas[ $msocio . "-" . $rw["tipo"] ] = round($rw["suma"], 2);
+								//OK: Verificar
+								if (!isset( $arrSdoCW[ $rw["socio"] ] ) OR is_null( $arrSdoCW[ $rw["socio"] ] )  ){
+									$msg	.= "\t$msocio\tAgregando un cuadre al socio " . $msocio  . " A COMPACW para Verificacion\r\n";
+									$sqltmp	= "INSERT INTO sisbancs_temp_depositos(numero_de_socio, cuenta_contable, nombre, tipo_de_saldo, monto, sucursal)
+    																			VALUES($msocio, '', '_AGREGADO_PARA_CUADRE_MONTO_" . $rw["suma"] . "', 0, 0, 'matriz')";
+									my_query($sqltmp);
+								}
+							}
+							unset($rsA);
+							unset($rw);
+							//============================================================================================================================
+							$sqlCuentasSISBANCS	= "SELECT SQL_CACHE
+										`temp_captacion_por_socio`.`numero_socio`,
+										`temp_sisbancs_depositos`.`numero_de_socio`,
+										`temp_captacion_por_socio`.`tipo_cuenta`,
+										ROUND(`temp_captacion_por_socio`.`monto`, 2) AS `saldo_safe`,
+										`temp_sisbancs_depositos`.`total`,
+										`temp_sisbancs_depositos`.`cuentas`,
+										ROUND((`temp_sisbancs_depositos`.`total`  - `temp_captacion_por_socio`.`monto`), 2) AS 'diferencia'
+										
+									FROM
+										`temp_captacion_por_socio` `temp_captacion_por_socio`
+											INNER JOIN `temp_sisbancs_depositos` `temp_sisbancs_depositos`
+											ON `temp_captacion_por_socio`.`numero_socio` = `temp_sisbancs_depositos`
+											.`numero_de_socio`
+									WHERE
+										(`temp_captacion_por_socio`.`tipo_cuenta` =10)
+										$BySucursal
+									HAVING
+										(diferencia > 0.02)
+										OR
+										(diferencia < -0.02)
+									ORDER BY
+										diferencia
+								  /* LIMIT 0,600 */ ";
+										$rs				= getRecordset($sqlCuentasSISBANCS );
+										$contar			= 0;
+										
+										//Crear un nuevo Recibo de Ajuste
+										$cRec		= new cReciboDeOperacion(10);
+										$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_CAPTACION");
+										$msg	.= "\t\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+										$cRec->setNumeroDeRecibo($xRec, true);
+										//$cRec->initRecibo();
+										$msg	.= "\t\t============= \r\n";
+										$msg	.= "\t\t============= APLICANDO CUENTAS DESDE COMPACW\r\n";
+										$msg	.= "\t\t============= \r\n";
+										while ( $rw = mysql_fetch_array($rs) ){
+											
+											$socio		= $rw["numero_de_socio"];
+											$ahorro		= round($rw["total"], 2);
+											$NCuentas	= $rw["cuentas"];
+											$Monto		= 0;
+											
+											//Si el saldo EXISTE Y es Diferente a NULL
+											if ( isset($arrSdoCtas["$socio-10"]) AND !is_null($arrSdoCtas["$socio-10"] ) ){
+												$Monto	= $arrSdoCtas["$socio-10"];
+											}
+											
+											//SI es mayor el Monto que el Ahorro, entonces esta inflado la parte Operativa.- Saldo Negativo
+											$diferencia	= $ahorro - $Monto;
+											//Si la Difrencia es menor a -0.99 entonces
+											if ( $diferencia < (TOLERANCIA_SALDOS * (-1) ) ){
+												$diferencia		= $diferencia * (-1);
+												$msg			.= "$contar\t$socio\tEXCESO\tExiste un monto en exceso de $diferencia en SAFE, debe tener $ahorro segun COMPACW\r\n";
+												//FIXME: globalizar 5
+												//TODO: Cambiar esta linea
+												$sqlCSoc	= "SELECT
+											`captacion_cuentas`.*,
+											`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
+											`captacion_cuentas`.`numero_cuenta`                 AS `cuenta`,
+											`captacion_cuentas`.`fecha_afectacion`              AS `apertura`,
+											`captacion_cuentas`.`inversion_fecha_vcto`          AS `vencimiento`,
+											`captacion_cuentas`.`tasa_otorgada`                 AS `tasa`,
+											`captacion_cuentas`.`dias_invertidos`               AS `dias`,
+											`captacion_cuentas`.`observacion_cuenta`            AS `observaciones`,
+											`captacion_cuentas`.`saldo_cuenta` 			        AS `saldo`,
+											`captacion_subproductos`.`descripcion_subproductos` AS `subproducto`,
+											`captacion_subproductos`.`algoritmo_de_premio`,
+											`captacion_subproductos`.`algoritmo_de_tasa_incremental`,
+											`captacion_subproductos`.`metodo_de_abono_de_interes`,
+											`captacion_subproductos`.`destino_del_interes`,
+											`captacion_subproductos`.`nombre_del_contrato`,
+											`captacion_subproductos`.`algoritmo_modificador_del_interes`
+										FROM
+										`captacion_cuentas` `captacion_cuentas`
+											INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos`
+											ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.
+											`idcaptacion_cuentastipos`
+												INNER JOIN `captacion_subproductos` `captacion_subproductos`
+												ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`
+												.`idcaptacion_subproductos`
+										WHERE
+											(`captacion_cuentas`.`numero_socio` =$socio)
+											AND
+											(`captacion_cuentas`.`tipo_cuenta` =10)
+											AND
+											(`captacion_cuentas`.`saldo_cuenta` != 0)
+										ORDER BY
+											`captacion_cuentas`.`saldo_cuenta`,
+											`captacion_cuentas`.`fecha_afectacion` ";
+												
+												$rsCSoc			= getRecordset( $sqlCSoc );
+												while ( $CRw = mysql_fetch_array($rsCSoc) ){
+													$cuenta		= $CRw["numero_cuenta"];
+													$saldo		= $CRw["saldo_cuenta"];
+													//Si la Diferencia es mayor al saldo de la cuenta, entonces
+													if ( ($diferencia >= $saldo) AND ($diferencia > 0) ){
+														//Retirar el saldo de la cuenta
+														$cCuenta	= new cCuentaALaVista($cuenta);
+														$cCuenta->setReciboDeOperacion($xRec);
+														$cCuenta->set($cuenta);
+														$cCuenta->setForceOperations();
+														$cCuenta->init($CRw);
+														$cCuenta->setRetiro($saldo);
+														//Quitar el saldo de la cuenta de la diferencia
+														$diferencia	= $diferencia - $saldo;
+														//Mensaje
+														$msg	.= "$contar\t$socio\t$cuenta\tELIMINAR\tEliminando el saldo de la cuenta por $saldo, queda $diferencia\r\n";
+														$msg	.= $cCuenta->getMessages("txt");
+														
+													} elseif ( ($diferencia < $saldo) AND ($diferencia > 0) ){
+														//Restar la diferencia y dejar el saldo de la cuenta con el saldo de la cuenta
+														$NSaldo		= $saldo - $diferencia;
+														
+														$cCuenta	= new cCuentaALaVista($cuenta);
+														$cCuenta->setReciboDeOperacion($xRec);
+														$cCuenta->set($cuenta);
+														$cCuenta->setForceOperations();
+														$cCuenta->init($CRw);
+														$cCuenta->setRetiro($diferencia);
+														$msg	.= "$contar\t$socio\t$cuenta\tACTUALIZAR\tActualizar la Cuenta a $NSaldo, Anteriormente $saldo\r\n";
+														$NuevoSaldo	= $cCuenta->getNuevoSaldo();
+														$msg	.= $cCuenta->getMessages("txt");
+														
+														$msg	.= "$contar\t$socio\t$cuenta\tSALDO\tLa cuenta quedo en $NuevoSaldo\r\n";
+														//Llevar a Cero la Diferencia
+														$diferencia	= 0;
+														
+													} else {
+														$msg	.= "$contar\t$socio\tIGNORAR\tNo efectuo ninguna accion (SAFE: $Monto / CW: $ahorro)\r\n";
+													}
+													if ( $diferencia <= TOLERANCIA_SALDOS){
+														$diferencia		= 0;
+													}
+												}
+												
+												$msg	.= "$contar\t$socio\tFIN_RET\t------\t------\t------\t------\t------\t------\t------\r\n";
+												//Diferencia:	Si la Diferencia es Mayor a 0.99
+											} elseif ($diferencia > TOLERANCIA_SALDOS) {
+												$msg	.= "$contar\t$socio\tINSUFICIENCIA\tExiste Insuficiencia de $diferencia en SAFE (SAFE: $Monto / CW: $ahorro)\r\n";
+												//Obtener una Cuenta
+												//FIXME: Globalizar 6
+												//TODO: Actualizar esta linea
+												$sqlCSoc	= "SELECT
+										`captacion_cuentas`.*,
+										`captacion_cuentastipos`.`descripcion_cuentastipos` AS `tipo`,
+										`captacion_cuentas`.`numero_cuenta`                 AS `cuenta`,
+										`captacion_cuentas`.`fecha_afectacion`              AS `apertura`,
+										`captacion_cuentas`.`inversion_fecha_vcto`          AS `vencimiento`,
+										`captacion_cuentas`.`tasa_otorgada`                 AS `tasa`,
+										`captacion_cuentas`.`dias_invertidos`               AS `dias`,
+										`captacion_cuentas`.`observacion_cuenta`            AS `observaciones`,
+										`captacion_cuentas`.`saldo_cuenta` 			        AS `saldo`,
+										`captacion_subproductos`.`descripcion_subproductos` AS `subproducto`,
+										`captacion_subproductos`.`algoritmo_de_premio`,
+										`captacion_subproductos`.`algoritmo_de_tasa_incremental`,
+										`captacion_subproductos`.`metodo_de_abono_de_interes`,
+										`captacion_subproductos`.`destino_del_interes`,
+										`captacion_subproductos`.`nombre_del_contrato`,
+										`captacion_subproductos`.`algoritmo_modificador_del_interes`
+										FROM
+										`captacion_cuentas` `captacion_cuentas`
+											INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos`
+											ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.
+											`idcaptacion_cuentastipos`
+												INNER JOIN `captacion_subproductos` `captacion_subproductos`
+												ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`
+												.`idcaptacion_subproductos`
+										WHERE
+											(`captacion_cuentas`.`numero_socio` =$socio)
+											AND
+											(`captacion_cuentas`.`tipo_cuenta` =10)
+										ORDER BY
+											`captacion_cuentas`.`saldo_cuenta` DESC,
+											`captacion_cuentas`.`fecha_afectacion` DESC
+										LIMIT 0,1 ";
+												$DCta			= obten_filas($sqlCSoc);
+												$cuenta			= $DCta["numero_cuenta"];
+												$cCuenta		= new cCuentaALaVista($cuenta);
+												$NSaldo			= 0;
+												//Si la cuenta no existe, crear una nueva
+												if ( !isset($cuenta) OR ($cuenta == 0) OR ($cuenta == false) ){
+													$cuenta	= 	$cCuenta->setNuevaCuenta(5, 1, $socio, "CUENTA_POR_AJUSTE");
+													$msg	.= 	"$contar\t$socio\t$cuenta\tNUEVA\tNO Existe la Cuenta, se crea una NUEVA\r\n";
+													$DCta	= false;
+												}
+												$cCuenta->set($cuenta);
+												$cCuenta->init($DCta);
+												$cCuenta->setReciboDeOperacion($xRec);
+												$cCuenta->setDeposito($diferencia);
+												$NSaldo	= $cCuenta->getNuevoSaldo();
+												$msg	.= "$contar\t$socio\t$cuenta\tAGREGAR\tSe Agrega la Cuenta un monto de $diferencia, Saldo de $NSaldo\r\n";
+												$msg	.= $cCuenta->getMessages("txt");
+												$diferencia = 0;
+											}
+											//$msg	.= "==========================================================================\r\n";
+											$contar++;
+										}
+										
+										$cRec->setFinalizarRecibo();
+										$msg	.= $cRec->getMessages("txt");
+										return $msg;
+	}
+	function setConciliarCreditos (){
+		$msg		= "";
+		$cRec		= new cReciboDeOperacion(10);
+		$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_PLAN_DE_PAGOS");
+		$msg	.= "\t\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+		$cRec->setNumeroDeRecibo($xRec, true);
+		
+		//Concilia Creditos sin Planes de Pago a SISBANCS
+		$sql = "SELECT
+								`migracion_creditos_por_socio`.`numero_socio`,
+								`migracion_creditos_por_socio`.`creditos`,
+								`migracion_creditos_por_socio`.`saldo`,
+								getCreditosCompac(numero_socio) AS `saldo_compac`,
+								( `migracion_creditos_por_socio`.`saldo` -  getCreditosCompac(numero_socio)) AS 'diferencia'
+							FROM
+								`migracion_creditos_por_socio` `migracion_creditos_por_socio`
+				
+							HAVING
+								(diferencia >0.99
+								OR
+								diferencia < -0.99)";
+		$rs			= getRecordset($sql );
+		while ($rw = mysql_fetch_array($rs)) {
+			$socio		 	= $rw["numero_socio"];
+			$sqlCred			= "SELECT
+													`creditos_solicitud`.*,
+													`creditos_tipoconvenio`.*,
+													`creditos_periocidadpagos`.*,
+													`creditos_estatus`.*,
+													`creditos_solicitud`.`tasa_interes` AS `tasa_ordinaria_anual`,
+													`creditos_solicitud`.`tipo_autorizacion` AS `tipo_de_autorizacion`,
+								                    `creditos_solicitud`.`tasa_ahorro` AS `tasa_de_ahorro`
+																	FROM
+														`creditos_tipoconvenio` `creditos_tipoconvenio`
+															INNER JOIN `creditos_solicitud` `creditos_solicitud`
+															ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+															= `creditos_solicitud`.`tipo_convenio`
+																INNER JOIN `creditos_periocidadpagos`
+																`creditos_periocidadpagos`
+																ON `creditos_periocidadpagos`.
+																`idcreditos_periocidadpagos` =
+																`creditos_solicitud`.`periocidad_de_pago`
+																	INNER JOIN `creditos_estatus`
+																	`creditos_estatus`
+																	ON `creditos_estatus`.`idcreditos_estatus` =
+																	`creditos_solicitud`.`estatus_actual`
+																	WHERE
+																		(`creditos_solicitud`.`numero_socio` = $socio )
+														ORDER BY fecha_vencimiento ASC, saldo_actual DESC,
+														fecha_solicitud DESC
+														
+														";
+			$ajuste		= $rw["diferencia"];
+			$SdoCW		= $rw["saldo_compac"];
+			$SdoSAFE	= $rw["saldo"];
+			
+			$rsC		= getRecordset($sqlCred );
+			while ( $rwC= mysql_fetch_array($rsC) ){
+				$credito	= $rwC["numero_solicitud"];
+				$saldo		= $rwC["saldo_actual"];
+				
+				$cCredito	= new cCredito($credito, $socio);
+				$cCredito->init($rwC);
+				
+				$DCred		= $cCredito->getDatosDeCredito();
+				
+				$TAjustar	= 0;
+				
+				//Generar un abono a Capital
+				//si el ajuste es mayo a 0.09 o menor que -0.99 proseguir::
+				if ( ($ajuste > 0.09) OR ($ajuste < -0.09) ){
+					
+					//Si 100 > 0.09 Y 0 < 0.09
+					if ( ($ajuste > 0.09) AND ($saldo <= 0.09) ){
+						$msg	.= "$socio\t$credito\tSe ignora el Credito por no tener Saldo (COMPACW $SdoCW / Credito $saldo)\r\n";
+					} else {
+						// 50 > 30
+						//500 > -140
+						if ( $ajuste > $saldo ){
+							//saldo <= 0
+							if ( $saldo <= 0 ){
+								//justar	= 500
+								$TAjustar	= $ajuste;
+								//xajustar	= 0
+								$ajuste		= 0;
+							} else {
+								//ajuste	= 30;
+								$TAjustar	= $saldo;
+								//xajustar	= 50 - 30 = 20;
+								$ajuste		= $ajuste - $saldo;
+							}
+							//80 < 100
+						} elseif( $ajuste < $saldo ) {
+							//ajuste	= 80;
+							$TAjustar	= $ajuste;
+							//xajustar	= 0;
+							$ajuste		= 0;
+						} elseif( $ajuste == $saldo ) {
+							//80 == 80
+							//ajustar	= 80
+							$TAjustar	= $ajuste;
+							//xajustar	= 0;
+							$ajuste		= 0;
+						}
+						$cCredito->setReciboDeOperacion($xRec);
+						$cCredito->setAbonoCapital($TAjustar);
+						$msg	.= "$socio\t$credito\tRealizando un Ajuste de $TAjustar (COMPACW $SdoCW / Credito $saldo)\r\n";
+						$msg	.= $cCredito->getMessages("txt");
+					}
+				} else {
+					$msg	.= "$socio\t$credito\tNo se Realizan NINGUN ajuste (SAFE $SdoSAFE / COMPACW $SdoCW / Ajuste $ajuste)\r\n";
+				}
+				
+			}
+			$msg	.= "=============================\t$socio\t===========================\r\n";
+			//$msg	.=  $cCredito->getMessages("txt");
+		}
+		$cRec->setFinalizarRecibo(true);
+		$msg			.= $cRec->getMessages("txt");
+		return $msg;
+	}
+	function setGenerarPlanDePagos(){
+		$msg	= "";
+		$cRec		= new cReciboDeOperacion(10);
+		$xRec		= $cRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO, fechasys(), 1, 10, "RECIBO_DE_AJUSTES_DE_PLAN_DE_PAGOS");
+		$msg	.= "\t\tRECIBO\tEl Recibo de Operacion es $xRec\r\n";
+		$cRec->setNumeroDeRecibo($xRec, true);
+		
+		//Concilia Creditos sin Planes de Pago a SISBANCS
+		$sql = "SELECT * FROM creditos_solicitud WHERE (SELECT
+								COUNT(credito) FROM sisbancs_suma_amorizaciones
+								WHERE credito = creditos_solicitud.numero_solicitud) = 0
+								AND saldo_actual > 0
+								AND estatus_actual != 50 ";
+		$rs			= getRecordset( $sql );
+		while ($rw = mysql_fetch_array($rs)) {
+			$socio		 	= $rw["numero_socio"];
+			$credito	 	= $rw["numero_solicitud"];
+			$saldo_actual	= $rw["saldo_actual"];
+			$letra			= $rw["ultimo_periodo_afectado"] + 1;
+			$fecha			= sumardias($rw["fecha_ultimo_mvto"], $rw["periocidad_de_pago"]);
+			$monto			= $saldo_actual;
+			
+			$msg			.= "$socio\t$credito\tAGREGAR\tUnica Letra por el SALDO de $saldo_actual \r\n";
+			
+			$sqlIS			= "INSERT INTO sisbancs_amortizaciones(socio, credito, parcialidad, fecha_de_vencimiento,
+														saldo_vigente, saldo_vencido, interes_vigente, interes_vencido, saldo_interes_vencido, interes_moratorio,
+														estatus, iva_interes_normal, iva_interes_moratorio)
+																VALUES ($socio, $credito, $letra, '$fecha',
+														$saldo_actual, 0, 0, 0, 0, 0,
+														1, 0, 0)";
+														$cRec->setNuevoMvto($fecha, $monto, 410, $letra, "", 1, false, $socio, $credito);
+														$x		= my_query($sqlIS);
+														
+														
+														if ( $x["stat"] == false ){
+															$msg		.= "$socio\t$credito\tERROR\t   \r\n";
+														}
+		}
+		$msg			.= $cRec->getMessages("txt");
+		return $msg;
+	}
+	function setRepararPlanDePagos(){
+		$msg		= "";
+		$msg	.= "============= RECONSTRUYENDO LETRAS SISBANCS \r\n";
+		
+		//Selecciona todo los pagos segun letra, en una base
+		
+		$arrFechas		= array();
+		$arrMontos		= array();
+		
+		$sqlLetras	= "SELECT SQL_CACHE
+							`operaciones_mvtos`.`docto_afectado`,
+							`operaciones_mvtos`.`periodo_socio`,
+							MAX(`operaciones_mvtos`.`fecha_afectacion`) AS 'fecha',
+							SUM(`operaciones_mvtos`.`afectacion_real`) AS 'monto'
+						FROM
+							`operaciones_mvtos` `operaciones_mvtos`
+								INNER JOIN `eacp_config_bases_de_integracion_miembros`
+								`eacp_config_bases_de_integracion_miembros`
+								ON `operaciones_mvtos`.`tipo_operacion` =
+								`eacp_config_bases_de_integracion_miembros`.`miembro`
+						WHERE
+							(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2003)
+							AND
+							(`operaciones_mvtos`.`afectacion_real` >0)
+						GROUP BY
+							`operaciones_mvtos`.`docto_afectado`,
+							`operaciones_mvtos`.`periodo_socio`
+						ORDER BY
+							`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
+							`operaciones_mvtos`.`socio_afectado`,
+							`operaciones_mvtos`.`docto_afectado`,
+							`operaciones_mvtos`.`periodo_socio` ";
+		$rsA		= getRecordset( $sqlLetras );
+		while( $rw = mysql_fetch_array($rsA)){
+			$arrFechas[ $rw["docto_afectado"] . "-" . $rw["periodo_socio"] ] = $rw["fecha"];
+			$arrMontos[ $rw["docto_afectado"] . "-" . $rw["periodo_socio"] ] = $rw["monto"];
+		}
+		$fecha_de_migracion		= fechasys();
+		//DELETE FROM sisbancs_amortizaciones WHERE credito = 0 AND parcialidad = 1
+		$sql = "SELECT
+								`sisbancs_amortizaciones`.*
+							FROM
+								`sisbancs_amortizaciones` `sisbancs_amortizaciones` ";
+		$rs			= getRecordset( $sql );
+		$contar		= 0;
+		while ($rw = mysql_fetch_array($rs) ){
+			$credito			= $rw["credito"];
+			$socio				= $rw["credito"];
+			$parcialidad		= $rw["parcialidad"];
+			$vencimiento		= $rw["fecha_de_vencimiento"];
+			$saldo_vigente		= $rw["saldo_vigente"];
+			$saldo_vencido		= 0;
+			$interes_vigente	= $rw["interes_vigente"];
+			$interes_vencido	= 0;
+			$interes_moratorio	= 0;
+			$dias_en_mora		= 0;
+			
+			$estatus			= $rw["estatus"];
+			$fecha_de_abono		= $rw["fecha_de_abono"];
+			$iva_normal			= 0;
+			$iva_moratorio		= 0;
+			$tasa_normal		= 0;
+			$tasa_moratorio		= 0;
+			$monto_abonado		= 0;
+			$saldo_teorico		= 0;
+			
+			$DCredito			= array();
+			//TODO: Actualizar sentencia de obtencion de IVA
+			$msg	.= "$contar\t$credito\t$parcialidad\t\t=================================================\r\n";
+			//Actualizar le fecha de Pago
+			if ( isset($arrFechas["$credito-$parcialidad"] ) ){
+				$fecha_de_abono		= $arrFechas["$credito-$parcialidad"];
+				$monto_abonado		= $arrMontos["$credito-$parcialidad"];
+				
+				//Corrige las idioteces de reestructuras
+				
+				if ( strtotime($vencimiento) > strtotime($fecha_de_abono) ){
+					$fecha_de_abono	= $vencimiento;
+					$msg	.= "$contar\t$credito\t$parcialidad\tERROR_DE_FECHA\tLa fecha de abono(" . getFechaMediana($fecha_de_abono) . ") es menor a la de vencimiento " . getFechaMediana($vencimiento) . " \r\n";
+				}
+				$saldo_teorico		= $saldo_vigente - $monto_abonado;
+				$msg	.= "$contar\t$credito\t$parcialidad\tFECHA_DE_ABONO\tLa fecha de Abono Existente es " . getFechaMediana($fecha_de_abono) . " y suma de $monto_abonado (saldo teorico $saldo_teorico)\r\n";
+			}
+			
+			if ( strtotime($vencimiento) < strtotime($fecha_de_migracion) ){
+				$msg	.= "$contar\t$credito\t$parcialidad\tFECHA_DE_VCTO\tLa Vencimiento (" . getFechaMediana($vencimiento) . ") es Menor a la Fecha de Migracion\r\n";
+				$estatus			= 2;
+				$saldo_vencido		= $saldo_vigente;
+				$saldo_vigente		= 0;
+				$interes_vencido	= $interes_vigente;
+				$interes_vigente	= 0;
+				$xCred				= new cCredito($credito, $socio);
+				$xCred->init();
+				$DCredito			= $xCred->getDatosDeCredito();
+				$tasa_moratorio		= $DCredito["tasa_moratorio"];
+				
+				$dias_morosos		= setNoMenorQueCero( restarfechas($fecha_de_migracion, $fecha_de_abono) );
+				$interes_moratorio	= ($saldo_vencido * $dias_morosos * $tasa_moratorio) / EACP_DIAS_INTERES;
+				$msg	.= "$contar\t$credito\t$parcialidad\tINTERES_MORATORIO\tEl Interes Moratorio es $interes_moratorio, por $dias_morosos dias en Mora y Capital $saldo_vencido\r\n";
+			}
+			$iva_normal				= ($interes_vigente + $interes_vencido)	* 0.15;
+			$iva_moratorio			= $interes_moratorio * 0.15;
+			$sqlUD			= "UPDATE sisbancs_amortizaciones
+												    SET  fecha_de_abono='$fecha_de_abono', saldo_vigente=$saldo_vigente,
+													saldo_vencido=$saldo_vencido, interes_vigente=$interes_vigente, interes_vencido=$interes_vencido,
+													saldo_interes_vencido=0, interes_moratorio=$interes_moratorio, estatus=$estatus,
+													iva_interes_normal=$iva_normal, iva_interes_moratorio=$iva_moratorio
+												    WHERE
+													credito=$credito, parcialidad=$parcialidad ";
+			my_query($sqlUD);
+			$contar++;
+		}
+		return $msg;
+	}
+}
+
 ?>

@@ -126,7 +126,7 @@ class TabSetValue extends Tab
 		ob_start();
 //TODO: Modificado por patadejaguar
 		echo "function " . get_class($this) . "(data){";
-		echo " if( document.getElementById(data[1]) ){ document.getElementById(data[1]).value = decodeSpecialChars(data[2]); }\n}\n";
+		echo " if( document.getElementById(data[1]) ){ var v=document.getElementById(data[1]); v.value = decodeSpecialChars(data[2]); $(v).addClass('inajax'); setTimeout(function (){ $(v).removeClass('inajax'); },2000); }\n}\n";
 
 		return ob_get_clean();
 	}

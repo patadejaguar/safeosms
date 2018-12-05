@@ -3,20 +3,46 @@
 include_once ("core/global.static.inc.php");
 include_once ("core/lang.inc.php");
 include_once ("core/html.inc.php");*/
+// Get HTTP/HTTPS (the possible values for this vary from server to server)
+$lurl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && !in_array(strtolower($_SERVER['HTTPS']),array('off','no'))) ? 'https' : 'http';
+// Get domain portion
+$lurl .= '://'. $_SERVER['HTTP_HOST'] . "/";
 
 $dir			= $_SERVER["DOCUMENT_ROOT"];
-$privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 
+$ndb			= $_SERVER['HTTP_HOST'];
+$ondebug		= isset($_REQUEST["debug"]) ? $_REQUEST["debug"] : false;
+//$ndb			= "demo.server.lan";
+
+if(strpos($ndb, ".") !== false){
+	$ddb		= explode(".",$ndb);
+	$ndb		= $ddb[0];
+}
+
+$arrEsp			= array(0=>"_", 1 => ".", 2=>"%");
+$sABC			= "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+$sABC			= str_shuffle($sABC);
+$largo			= strlen($sABC);
+$rnd			= rand(0,($largo-2));
+$rnd2			= rand(0,($largo-4));
+
+$userPos		= "User". rand(0,10) . $ndb;
+
+$tt				= microtime();
+$userPwd		= substr($sABC, $rnd, 2) . $arrEsp[rand(0,2)] . crc32("$tt") . strtolower(substr($sABC, $rnd, 2));
+
+
+$privateconfig	= "$dir/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php";
 if ( file_exists($privateconfig) ){ header("location: ../index.php"); } else {  }
+
 include_once ("./libs/importer.php");
 ini_set("max_execution_time", 900);
 
-
-//ini_set('display_errors', 1);
-//ini_set('display_startup_errors', 1);
-//error_reporting(E_ALL);
-
-
+if($ondebug == true){
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+		ini_set('display_startup_errors', 1);
+}
 
 $msg			= "";
 //======================== Checar
@@ -34,22 +60,38 @@ $pwdroot		= (isset($_REQUEST["idpwdroot"])) ?  $_REQUEST["idpwdroot"] : "";
 $urlsys			= (isset($_REQUEST["idurl"])) ?  $_REQUEST["idurl"] : $_SERVER['SERVER_NAME'];
 $urlpath		= (isset($_REQUEST["idpath"])) ?  $_REQUEST["idpath"] : $dir;
 $nocache		= (isset($_REQUEST["idnocache"])) ?  $_REQUEST["idnocache"] : 0;
+$useeng			= (isset($_REQUEST["iduseeng"])) ?  $_REQUEST["iduseeng"] : false;
+
 if($nocache == 1){
 	$nocache	= true;
 } else {
 	$nocache	= false;
+}
+if($useeng == 1){
+	$useeng		= true;
+} else {
+	$useeng		= false;
 }
 
 $srvmysql		= ($srvmysql == "") ? "127.0.0.1" : $srvmysql;
 
 if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $action == "" ){
 	
+	$markL		= "";
+	if($useeng == true){
+		$markL	= "-en";
+	}
 	$FS_TMP		= "/tmp";
 	$F1			= "$FS_TMP/safe-osms.sql";
 	$F2			= "$FS_TMP/xx.vistas.sql";
 	$F3			= "$FS_TMP/xx.functions.sql";
+	
+	if(file_exists($F1)){
+		unlink($F1);
+		$msg		.= "Eliminando el Archivo pre-existente\r\n";
+	}
 	//ejecutar si no existe el archivo
-	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/safe-osms.sql -O $F1");
+	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/safe-osms" . $markL. ".sql -O $F1");
 	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/xx.vistas.sql -O $F2");
 	system("wget https://raw.githubusercontent.com/patadejaguar/safeosmsdb/master/xx.functions.sql -O $F3");
 	
@@ -60,7 +102,15 @@ if( trim("$usrmysql$pwdmysql") !== "" AND trim("$srvmysql$dbmysql") !== "" AND $
 	//Importar la base de datos
 	$mysqlImport = new MySQLImporter($srvmysql, "root", $pwdroot);
 	$mysqlImport->doImport($F1,$dbmysql,true);
-	
+	$errCrea	= false;
+	foreach ($mysqlImport->errors as $iderr => $err){
+		$msg		.= $err . "\r\n";
+		$errCrea	= true;
+	}
+	if($errCrea == true){
+		system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F1");
+		$msg		.= "Intentando crear la DB en RAW\r\n";
+	}
 	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F2");
 	system("mysql --host=$srvmysql --user=root --password=$pwdroot --force --database=$dbmysql < $F3");
 	
@@ -279,8 +329,8 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
   </header>
 
   <div class='name'>
-    <input class='first' placeholder='Usuario MySQL' type='text' name='idusuario'>
-    <input class='last' placeholder='Contraseña MySQL' type='text' name='idpassword'>
+    <input class='first' placeholder='Usuario MySQL' type='text' name='idusuario' value='<?php echo $userPos; ?>'>
+    <input class='last' placeholder='Contraseña MySQL' type='text' name='idpassword' value='<?php echo $userPwd; ?>'>
   </div>
 
   <div class='name'>
@@ -289,18 +339,23 @@ $sucursal		= (isset($_REQUEST["idsucursal"])) ?  $_REQUEST["idsucursal"] : "";
     
 
   <div class='name'>
-    <input class='first' placeholder='Servidor MySQL como 127.0.0.1' type='text' name='idservidor'>
-    <input class='last' placeholder='Nombre de la Base de Datos' type='text' name='iddb'>
+    <input class='first' placeholder='Servidor MySQL como 127.0.0.1' type='text' name='idservidor' value='localhost'>
+    <input class='last' placeholder='Nombre de la Base de Datos' type='text' name='iddb'  value='<?php echo $ndb; ?>'>
   </div>
 <div class='contact'>
-    <input class='email' placeholder='Direccion Web del Servidor como http://servidor.com/' type='text' name='idurl'>
+    <input class='email' placeholder='Direccion Web del Servidor como http://servidor.com/' type='text' name='idurl' value='<?php echo $lurl; ?>'>
 </div>
       
 <div class='contact'>
     <input type="hidden" name="idnocache" value="1" />
     <input type="checkbox" name="idnocache" value="0">Usar Memcache<br>
 </div>      
-      
+
+<!-- <div class='contact'>
+    <input type="hidden" name="iduseeng" value="1" />
+    <input type="checkbox" name="iduseeng" value="0">English Version<br>
+</div> -->
+      <input type="hidden" name="debug" id="debug" value="<?php echo ($ondebug == true) ? "true" : "false"; ?>" />
   <!--  <div class='contact'>
     <input class='email' placeholder='E-mail Address' type='text'>
   </div>

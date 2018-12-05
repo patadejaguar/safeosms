@@ -70,9 +70,17 @@ while($rw = $rs->fetch_assoc()){
 
 $fechaop		= fechasys();
 $xF				= new cFecha();
+$idsocio			= 1901154;
+$xODT				= new cHDicccionarioDeTablas();
 
+//$LVig2				= $xODT->getCreditosPorMinistrar(false, $idsocio,"TR.AUTORIZADO");
 
-$xCUtils		= new cUtileriasParaCreditos();
+$LVig3				= $xODT->getCreditosPorAutorizar(false, $idsocio, "TR.SOLICITADO");
+
+//$xFRM->addHElem($LVig2);
+$xFRM->addHElem($LVig3);
+
+/*CUtils		= new cUtileriasParaCreditos();
 //$xCUtils->setEstatusDeCreditos(false, fechasys(), false, true, false, true);
 if(getEnCierre() == false){
 	$xFRM->addAviso("ES FALSO");
@@ -88,7 +96,7 @@ if(getEnCierre(false) == false){
 getEnCierre(true);
 if(getEnCierre() == true){
 	$xFRM->addAviso("ES VERDADERO");
-}
+}*/
 //$xCUtils->setReestructurarSDPM_Planes(true, false, false, $fechaop, $xF->getDiaInicial(), true);
 //$xFRM->addFooterBar(  );
 //$xFRM->addLog($xUtils->setCambiarPersonaDeCredito($credito_de_pruebas, "1901549"));

@@ -16,6 +16,7 @@ var TINYAJAX_CALLB	= "tinyajax.callback";
 
 var UPDWIN		= null;
 var Gen			= function(){};
+var FrmGen		= function(){};
 var CredGen		= function(){};
 var PersGen		= function(){};
 var PersAEGen	= function(){};
@@ -62,6 +63,9 @@ Gen.prototype.ancho	= function(){
 		var mSz	= getClientSize();
 		return mSz.width;
 }
+Gen.prototype.cerrarDialogos = function(){
+	$(".ui-dialog-content").dialog("close");
+}
 Gen.prototype.isKey	= function(opts){
 	var charCode = 0;
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -106,6 +110,19 @@ Gen.prototype.isKeyEdit	= function(opts){
 
 	return isA;
 }
+Gen.prototype.F10Key		= function(){
+	alert('you pressed F10!');
+}
+Gen.prototype.EscKey		= function(){
+	if(document.getElementById("btn_cerrar")){
+		$("#btn_cerrar").trigger("click");
+	} else {
+		if(document.getElementById("btn_salir")){
+			$("#btn_salir").trigger("click");
+		}
+	}
+}
+
 Gen.prototype.winOrigen		= function(){
 	dsrc	= null;
 	if (window.parent){ dsrc = window.parent.document; }
@@ -210,12 +227,15 @@ Gen.prototype.soloLeerForma	= function(activar,conButtons){
 }
 Gen.prototype.verControl	= function(id, ver){
 	ver			= (typeof ver == "undefined") ? false : ver;
+	var isDis	= ($("#" + id).parent().css("display") == "none") ? true : false;
+
 	if(ver == false){
 		$("#" + id).parent().css("display", "none");
 	} else {
 		$("#" + id).parent().css("display", "inline-block");
 	}
 }
+
 Gen.prototype.verDiv	= function(id, ver){
 	ver			= (typeof ver == "undefined") ? false : ver;
 	if(ver == false){
@@ -241,6 +261,51 @@ Gen.prototype.ver	= function(id, ver){
 			$("#" + id).parent().css("display", "inline-block");
 		}
 	}
+}
+FrmGen.prototype.isDis	= function(id){
+	
+}
+FrmGen.prototype.tagAdd = function(mTag, id){
+	var div1	= ",";
+	var str		= this.tagRem(mTag, id);
+	str			+= (str == "") ? mTag : div1 + mTag;
+	return str;
+}
+FrmGen.prototype.tagRem = function(mTag, id){
+	var div1	= ",";
+	var div2	= "=";
+	var txt		= $("#" + id).val();
+	if(mTag == ""){
+		str		= txt;
+	} else {
+		var arrT	= String(txt).split(div1);
+		var vaT		= String( $.trim(mTag) ).split(div2);
+		var str		= "";
+		
+		for(x in arrT){
+			var vv	= arrT[x];
+			var va	= String( $.trim(vv) ).split(div2);
+			
+			console.log(va[0]);
+			console.log(vaT[0]);
+			
+			if(va[0] == vaT[0]){
+				
+			} else {
+				vvx	= (typeof va[1] == "undefined") ? va[0] : va[1];
+				if(str === ""){
+					str = str + "" +  va[0];
+				} else {
+					str = str + div1 +  va[0];
+				}
+				//console.log(str);
+			}
+		}
+	}
+	return str;
+}
+FrmGen.prototype.tagDec = function(str, id){
+	
 }
 Gen.prototype.aMonedaForm = function(){
 	var aMny 		= $( ":input[class=mny]" );
@@ -297,6 +362,7 @@ Gen.prototype.formF9key	= function(evt){
 	} else if (evt.keyCode !== undefined) {
 		code = evt.keyCode;
 	}
+	
 	switch(code){
 		case 121:
 			evt.preventDefault();
@@ -308,6 +374,16 @@ Gen.prototype.formF9key	= function(evt){
 				}
 			}
 			break;
+		case "F9":
+			evt.preventDefault();
+			if(document.getElementById("btn_confirm_si")){
+				$("#btn_confirm_si").click();
+			} else {
+				if(document.getElementById("btn_guardar")){
+					$("#btn_guardar").click();
+				}
+			}
+			break;		
 		default:
 			break;
 	}
@@ -338,8 +414,8 @@ Gen.prototype.w	= function(opts){
 	var precallF 	= (typeof opts.precall == "undefined") ? function(){ return ""; } : opts.precall;
 	var url		= (typeof opts.url == "undefined") ? "" : opts.url;
 	//var args	= (typeof opts.args == "undefined") ? "" : opts.args;
-	var wd		= (typeof opts.w == "undefined") ? entero((LimAn * 0.85)) : entero(opts.w);
-	var hg		= (typeof opts.h == "undefined") ? entero((LimAl * 0.75)) : entero(opts.h);
+	var wd		= (typeof opts.w == "undefined") ? entero((LimAn * 0.75)) : entero(opts.w);
+	var hg		= (typeof opts.h == "undefined") ? entero((LimAl * 0.85)) : entero(opts.h);
 	var ifull	= (typeof opts.full == "undefined") ? false : opts.full;
 	var otags	= (typeof opts.tags == "undefined") ? true : opts.tags;
 	var isBlank	= (typeof opts.blank == "undefined") ? false : opts.blank;
@@ -347,6 +423,8 @@ Gen.prototype.w	= function(opts){
 	var isPrinc	= (typeof opts.principal == "undefined") ? false : opts.principal;
 	
 	var ajsAlto	= (typeof opts.ajusteAlto == "undefined") ? false : opts.ajusteAlto;
+	ajsAlto		= (typeof opts.ajustarAlto == "undefined") ? ajsAlto : opts.ajustarAlto;
+	
 	var wm		= this;
 	var isMob	= session(Configuracion.variables.sistema.isMobile);
 	isMob		= (isMob === null) ? false : isMob;
@@ -354,14 +432,17 @@ Gen.prototype.w	= function(opts){
 	var tiny	= (typeof opts.tiny == "undefined") ? false : opts.tiny;
 	tiny		= (isMob == "true") ? false  : tiny;
 	//if(isMob == "true"){ console.log("mobile.."); } else { console.log( Configuracion.variables.sistema.isMobile + ": " +  session(Configuracion.variables.sistema.isMobile) ); }
-	if(ajsAlto == true){
-		hg		= LimAl;
+
+	if(ajsAlto === true){
+		hg		= entero((LimAl*0.96));
+		//console.log("Alto Determinado: " + hg);
+		//console.log("Alto Sistema: " + LimAl);
 	}
 		
-		wd		= ((wd > LimAn) && isBlank == false) ? LimAn : wd;
-		hg		= ((hg > LimAl) && isBlank == false) ? LimAl : hg;
-		tp		= entero( (LimAl - hg)/2 );
-		lf		= entero( (LimAn - wd)/2 );
+	wd			= ((wd > LimAn) && isBlank == false) ? LimAn : wd;
+	hg			= ((hg > LimAl) && isBlank == false) ? LimAl : hg;
+	tp			= entero( (LimAl - hg)/2 );
+	lf			= entero( (LimAn - wd)/2 );
 	if(ifull == true){
 		wd		= LimAn;
 		hg		= LimAl;
@@ -377,6 +458,7 @@ Gen.prototype.w	= function(opts){
 	url			= url + oargs;
 	if(isPrinc == true){
 		self.go(opts);
+		
 	} else {
 		if(tiny == false){
 			if (isBlank == true) {
@@ -396,6 +478,7 @@ Gen.prototype.w	= function(opts){
 		} else {
 			if (otags == true) { url	= url + "&tinybox=true"; }
 			if(wd > 1120){ wd = 1120; }
+			
 			TINY.box.show({iframe: url ,boxid:'frameless', width:wd, height:hg, fixed:false, maskid:'bluemask',maskopacity:40,closejs: callbackF });
 			$('html,body').animate({ scrollTop: 0 }, 700);
 		}
@@ -920,7 +1003,7 @@ if (typeof jQuery != "undefined") {
 						resizable: false,
 						title: title,
 						modal: true
-					}).text(message);
+					}).html(message);
 				}
 		});
 		//Alerta
@@ -933,6 +1016,11 @@ if (typeof jQuery != "undefined") {
 					dialogClass: css,
 					open: function(event, ui) {
 						
+						if(document.getElementById("error-snd")){
+							var audd = document.getElementById("error-snd");
+							audd.play();
+						}
+
 						
 						//var x		= entero(( $(document).width() -300)/2);
 						//var y 		= entero(( $(document).height()-200) / 2);
@@ -960,7 +1048,7 @@ if (typeof jQuery != "undefined") {
 						resizable: false,
 						title: title,
 						modal: true
-					}).text(message);
+					}).html(message);
 				}
 		});
 		
@@ -1197,25 +1285,32 @@ Gen.prototype.close	= function(opts){
 	var process		= false;
 	var self		= this;
 	var crun		= true;
+	var goPage		= false;
 
 	if(currFrm !== ""){
-		if( $("#"+currFrm).attr("data-mod") == "true"){
+		if( $("#"+ currFrm).attr("data-mod") == "true"){
 			var sipo	= confirm("El Formulario tiene Cambios\n¿Desea Salir sin Guardar?");
 			crun		= (sipo == true) ? true : false;
 		}
 	}
 	if(crun == true){
-		if (vURL == "") {
+		if (vURL == ""){
+			
 			if (window.parent){
-				if (typeof window.parent.TINY != "undefined"){ closeTiny = true; src = window.parent.document; }
+				if (typeof window.parent.TINY != "undefined"){
+					closeTiny = true;
+					src = window.parent.document;
+				}
 			} else {
-				this.error({ msg : "No tiene ventana modal..."});
+				self.error({ msg : "No tiene ventana modal..."});
 			}
 			if (opener){
 				closeOpen	= true;
 				src		= opener.document;
 			} else {
-				this.error({ msg : "No es ventana abierta..."});
+				self.error({ msg : "No es ventana abierta..."});
+				self.spinInit();
+				
 			}
 			if ( frm != "" && control != null) {
 				if (value != "") {
@@ -1225,8 +1320,23 @@ Gen.prototype.close	= function(opts){
 				src.frm.control.select();
 				process	= true;
 			}
-			if (closeTiny == true){ process	= true;  try { window.parent.TINY.box.hide(); } catch(e){ process = false; };	}
-			if (closeOpen == true ){ process = true; window.close(); if(!window.closed){ process = false; }; setLog("Ma xx");  }
+			if (closeTiny == true){
+				process	= true;
+				try {
+					window.parent.TINY.box.hide();
+				} catch(e){
+					process = false;
+				};
+			}
+			if (closeOpen == true ){
+				process = true;
+				window.close();
+				if(!window.closed){
+					process = false;
+					self.error({ msg : "No se cerro la ventana..."});
+				};
+			}
+			
 		} else {
 			//Checar TODO: Inicio Limpio @todo
 			top.location	= (vURL);
@@ -1234,6 +1344,7 @@ Gen.prototype.close	= function(opts){
 		}
 		//try {$(window).qtip("hide");} catch(e){}
 		if (process == false) { self.go(); }
+		
 	} //end run
 }
 
@@ -1295,6 +1406,11 @@ Gen.prototype.aviso	= function(opts){
 	var tit		= (typeof opts.title == "undefined") ? self.lang("Aviso") : opts.title;
 	tit			= (typeof opts.titulo == "undefined") ? tit : opts.titulo;
 	opts.title	= tit;
+	if(typeof opts.msg == "undefined"||opts.msg == ""){
+		if(typeof opts.info != "undefined"){
+			opts.msg	= opts.info;
+		}
+	}
 	
 	this.requiere(opts);
 }
@@ -1434,6 +1550,7 @@ Gen.prototype.alerta	= function(opts){
 	var info	= (typeof opts.info == "undefined") ? "" : opts.info;
 	var solo	= (typeof opts.solo == "undefined") ? false : opts.solo;
 	var self	= this;
+	var snd		= "";
 	
 	if ($.trim(msg) != "" && raw == false) { msg	= self.lang(msg);	}
 
@@ -1443,6 +1560,7 @@ Gen.prototype.alerta	= function(opts){
 		if(icn == ""){
 			icn	= "fa-exclamation-triangle";
 		}
+		snd		= "error-snd";
 	}
 	if (lvl == "ok"||lvl == 1||lvl == "success"||mth == "success"||mth == "ok") {
 		mth	= "awesome ok";
@@ -1465,6 +1583,12 @@ Gen.prototype.alerta	= function(opts){
 	if(icn !== ""){ opciones.icon = 'fa ' + icn; }
 
 	$.amaran({ content:opciones, theme : mth, position :'top right'});
+	if(snd !== ""){
+		if(document.getElementById(snd)){
+			var audd = document.getElementById(snd);
+			audd.play();
+		}
+	}
 	//theme:'awesome green'
 }
 Gen.prototype.notificar	= function(opts){
@@ -1523,6 +1647,7 @@ Gen.prototype.notificar	= function(opts){
 Gen.prototype.enviar	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
 	var self	= this;
 	
 	if(typeof jsPreEnvio !== "undefined"){
@@ -1545,10 +1670,21 @@ Gen.prototype.enviar	= function(opts){
 	//	});
 	//}
 	if(idform !== ""){
-		$('#'+idform).submit();
-		if(self.happy() == true){
-			self.spinInit();
+//		if (!$form.checkValidity || $form.checkValidity()) {
+		if(msg == ""){
+			$('#'+idform).submit();
+			if(self.happy() == true){
+				self.spinInit();
+			}
+		} else {
+			self.confirmar({msg: msg, callback : function(){
+					$('#'+idform).submit();
+						if(self.happy() == true){
+							self.spinInit();
+					}
+			}});
 		}
+
 	}
 }
 Gen.prototype.recordInActive	= function(opts){
@@ -1573,7 +1709,7 @@ Gen.prototype.recordInActive	= function(opts){
 		});
 	};
 	var mFunc_	= function(){ self.spinInit(); setTimeout(mFunc,2000); };
-	self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
+	self.confirmar({ msg : "CONFIRMA_BAJA", callback: mFunc_ });
 }
 Gen.prototype.save	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -1630,7 +1766,9 @@ Gen.prototype.save	= function(opts){
 						if(evt != null){
 							//Deshabilitar Guardado
 							var src = evt.target || evt.srcElement;
-							$('#' +  src.id).css('pointer-events', 'none');
+							//--------------------------------------- Revisar validez
+							//TODO: 2018-09-06
+							//$('#' +  src.id).css('pointer-events', 'none');
 						}
 						setTimeout(callB,10);	//------------------ callback
 					}
@@ -1646,6 +1784,21 @@ Gen.prototype.save	= function(opts){
 	} else {
 		self.confirmar({ msg : "CONFIRMA_ACTUALIZACION", callback: mFunc_ });
 	}
+}
+Gen.prototype.showInvalidInputs	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var idform	= (typeof opts.form == "undefined") ? "" : opts.form;
+	var msg		= (typeof opts.msg == "undefined") ? "" : opts.msg;
+	var swAlert	= (typeof opts.showAlert == "undefined") ? false : opts.showAlert;
+	var self	= this;
+	if(swAlert == true){
+		self.alerta({msg: "MSG_NO_DATA", tipo: "error"});
+	}
+	var invFlds = $("#" + idform).find( ":invalid" ).each(
+	function(index,node){
+			var lblInv = $( "label[for=" + node.id + "] "), msgv = node.validationMessage || 'Invalid value.';
+			self.alerta({ msg:msgv, title: lblInv.html(), tipo:"warn" });
+	});
 }
 Gen.prototype.setGVals	= function(){
 	var idxsoc	= entero(session(ID_PERSONA));
@@ -2072,7 +2225,7 @@ CredGen.prototype.getPanelDeLinea	= function(opts){
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var id			= (typeof opts.id == "undefined") ? null : opts.id;
 	xG				= new Gen();
-	xG.w({url:"../frmcreditos/creditos-lineas.edit.frm.php?clave=" + id, callback: callback});
+	xG.w({url:"../frmcreditos/creditos-lineas.panel.frm.php?clave=" + id, callback: callback});
 }
 CredGen.prototype.getReporteDeLinea	= function(opts){
 
@@ -2239,10 +2392,34 @@ CredGen.prototype.setAgregarLlamada	= function(idcredito){
 	var gURL	= "../frmseguimiento/llamadas.frm.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 800, tiny : true });
 }
-CredGen.prototype.setAgregarNotificacion	= function(idcredito){
-	var gURL	= "../frmseguimiento/notificaciones.add.frm.php?credito=" + idcredito;
+CredGen.prototype.setAgregarNotificacion	= function(idcredito, fecha){
+	var strF	= (typeof fecha == "undefined") ? "" : "&idfecha=" + fecha;
+	
+	var gURL	= "../frmseguimiento/notificaciones.add.frm.php?credito=" + idcredito + strF;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 800, tiny : true });
 }
+
+/*CredGen.prototype.setAgregarNotiSMS	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var callback= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var credito	= (typeof opts.credito == "undefined") ? "" : "&monto="  + opts.credito;
+	var monto	= (typeof opts.monto == "undefined") ? "" : "&monto="  + opts.monto;
+	var letra	= (typeof opts.letra == "undefined") ? 0 : opts.letra;
+	
+	xG.pajax({
+	url : url, result : "json",
+	callback : function(data){
+	    try { data = JSON.parse(data); } catch (e){}
+	    if (typeof data != "undefined") {
+			ierror		= data.error;
+			jscall(ierror, credito);			//callback
+			if(ierror == true){
+				xG.alerta({msg:data.message});
+			}
+	    }
+	}
+	});	
+}*/
 CredGen.prototype.getExpedienteDeCobranza	= function(idcredito){ var xSeg = new SegGen(); xSeg.getExpediente({ credito : idcredito }); }
 
 CredGen.prototype.setMinistrarToPasivo	= function(opts){
@@ -2265,7 +2442,7 @@ CredGen.prototype.addCredito	= function(opts){
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 
 	var idorigen	= (typeof opts.idorigen == "undefined") ? "" : "&idorigen=" + opts.idorigen; //id del origen
-	var origen	= (typeof opts.origen == "undefined") ? "" : "&origen=" + opts.origen;	//tipo de origen
+	var origen		= (typeof opts.origen == "undefined") ? "" : "&origen=" + opts.origen;	//tipo de origen
 	var frecuencia	= (typeof opts.frecuencia == "undefined") ? "" : "&frecuencia=" + opts.frecuencia;//
 	var pagos	= (typeof opts.pagos == "undefined") ? "" : "&pagos=" + opts.pagos;//
 	var destino	= (typeof opts.destino == "undefined") ? "" : "&destino=" + opts.destino;//
@@ -2304,9 +2481,10 @@ CredGen.prototype.getDocumentos	= function(idcredito){
 	var gURL	= "../frmcreditos/creditos-documentos.frm.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, blank:true, full:true, tab : true });
 }
+
 CredGen.prototype.setAgregarDocumentos	= function(idcredito){
 	var sURL ="../frmsocios/personas_documentos.frm.php?credito=" + idcredito;
-	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true });
+	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true, ajusteAlto:true });
 }
 CredGen.prototype.getCuotaDePago	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -2427,7 +2605,7 @@ PersGen.prototype.goToDatosPM	= function(idpersona, tiny){
 PersGen.prototype.goToPanel	= function(idpersona, tiny){
 	tiny		= (typeof tiny == "undefined") ? false : tiny;
 	var sURL 	= '../frmsocios/socios.panel.frm.php?socio=' + idpersona;
-	var xGen	= new Gen(); xGen.w({ url : sURL, h : 600, w : 780, tiny : tiny, tab:true });
+	var xGen	= new Gen(); xGen.w({ url : sURL, ajustarAlto:true, w : 780, tiny : tiny, tab:true });
 }
 PersGen.prototype.getExpediente	= function(idpersona){
 	var sURL = '../rpt_edos_cuenta/rpt_estado_cuenta_socio.php?socio=' + idpersona;
@@ -2439,7 +2617,7 @@ PersGen.prototype.getImprimirSolicitud	= function(idpersona){
 }
 PersGen.prototype.setAgregarDocumentos	= function(idpersona){
 	var sURL ="../frmsocios/personas_documentos.frm.php?persona=" + idpersona;
-	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true });
+	var xGen	= new Gen(); xGen.w({ url : sURL, tiny : true, ajusteAlto:true });
 }
 PersGen.prototype.getImagenDocumentos	= function(params){
 	var sURL = "../frmsocios/documento.png.php?persona=" + params;;
@@ -2520,6 +2698,7 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 	var nxt		= (typeof opts.next == "undefined") ? "" : "&next=" + opts.next;
 	var oargs	= (typeof opts.args == "undefined") ? "" : opts.args;
 	var postevt	= (typeof opts.onclose == "undefined") ? "" : "&callback=" + opts.onclose;
+	var vSoloF	= (typeof opts.solofisicas == "undefined") ? "" : "&solofisicas=" + opts.solofisicas;
 	
 	var vTipoI	= "";
 	//define el tipo de persona
@@ -2528,7 +2707,7 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 		vTipoI	= "&tipodeingreso=" + vTipoI;
 	}
 	session("idpersona.control.dx", control);
-	var xG		= new Gen(); xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + oargs, tiny : true, h: 600, w : 800, callback:jcallb});
+	var xG		= new Gen(); xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + vSoloF + oargs, tiny : true, h: 600, w : 800, callback:jcallb});
 }
 
 PersGen.prototype.getBuscarCreditos	= function(){
@@ -2593,6 +2772,13 @@ PersGen.prototype.getDocumento	= function(opts){
 	var persona	= (typeof opts.persona == "undefined") ? "" : opts.persona;
 	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&docto=" + docto + "&id=" + id, tiny : true, h: 600, w : 800});
 }
+PersGen.prototype.getDescargarDocumento	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var docto	= (typeof opts.docto == "undefined") ? "" : opts.docto;
+	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
+	var persona	= (typeof opts.persona == "undefined") ? "" : opts.persona;
+	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&docto=" + docto + "&id=" + id, tiny : true, h: 600, w : 800});
+}
 PersGen.prototype.getNombre		= function(idpersona, dest){
 	var srUp 	= "../svc/personas.svc.php?persona=" + idpersona;
 	dest		= (typeof dest == "undefined") ? "nombresocio" : dest;
@@ -2647,11 +2833,19 @@ PersGen.prototype.showBuscarPersonas	= function(opts){
 		url: vURL,
 		finder: "persona",
 		result : "json",
-		callback : function(obj, final){
+		callback : function(obj, fin){
 				//"record_19":{"codigo":"20100839","nombrecompleto":"CAAMAL  CHAN LUIS ANTONIO ","apellidopaterno":"CAAMAL ","apellidomaterno":"CHAN","nombre":"LUIS ANTONIO "}
+				cnt	= 0;
+				msg	= "";
 				for( dd in obj ){
 					var v = obj[dd];
-					oxd.alerta({ title : v.codigo, msg : v.nombrecompleto, icon : "fa-male", type: "green", raw : true });
+					msg	+= v.codigo + " - " + v.nombrecompleto + "\r\n";
+					//$.notify(v.codigo + " - " + v.nombrecompleto, "warn");
+					cnt++;
+				}
+				if(cnt > 0){
+					$('.notifyjs-corner').empty();
+					$.notify(msg, "warn");
 				}
 		}
 	});
@@ -3105,7 +3299,7 @@ RecGen.prototype.reporte			= function(clave){
 	var xGen	= new Gen(); xGen.w({ url: "../rptoperaciones/rpt_consulta_recibos_individual.php?recibo=" + clave, full:true, blank: true});
 }
 RecGen.prototype.formato			= function(clave){
-	var xGen	= new Gen(); xGen.w({ url: "../rpt_formatos/recibo.rpt.php?recibo=" + clave, full: true});
+	var xGen	= new Gen(); xGen.w({ url: "../rpt_formatos/recibo.rpt.php?recibo=" + clave, blank:true, full: true});
 }
 RecGen.prototype.formatoNT			= function(clave){
 	var xGen	= new Gen(); xGen.w({ url: "../rpt_formatos/recibo.rpt.php?notesoreria=true&recibo=" + clave, full: true});
@@ -3215,8 +3409,8 @@ RecGen.prototype.confirmaEliminar	= function(id){
 }
 RecGen.prototype.editar	= function(id){
 	//opts		= (typeof opts == "undefined") ? {} : opts;
-	var xurl 	= "../utils/frm8db7028bdcdf054882ab54f644a9d36b.php?t=operaciones_recibos&f=idoperaciones_recibos=" + id;
-	var xG	= new Gen(); xG.w({url : xurl, h : 600, W : 800, tiny : true });
+	var xurl 	= "../frmoperaciones/recibos-editar.frm.php?clave=" + id;
+	var xG	= new Gen(); xG.w({url : xurl, ajusteAlto:true, W : 800, tiny : true });
 }
 RecGen.prototype.getReporteEmitidos			= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
@@ -3250,6 +3444,48 @@ RecGen.prototype.setCuadrar			= function(opts){
 	var xG			= new Gen();
 
 	xG.svc({url: "recibos.svc.php?cmd=cuadrar" + idrec + idmonto, callback: callB});
+}
+RecGen.prototype.getDescripcion			= function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+
+	var xG			= new Gen();
+
+	xG.svc({url: "recibos.svc.php?" + idrec, callback: callB});
+}
+RecGen.prototype.getBuscarRecibos = function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var idrec	= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var control	= (typeof opts.control == "undefined") ? "idrecibo" : opts.control;
+	var docto	= (typeof opts.docto == "undefined") ? "" : "&docto=" + opts.docto;
+	var idpersona	= (typeof opts.persona == "undefined" ) ? "" : "&persona=" + opts.persona;
+	
+	var xG		= new Gen();
+	var urlR 	= "../utils/frmbuscarrecibos.php?control=" + control;
+	xG.w({url:urlR, ajustarAlto:true, w:800, tiny:true});
+}
+RecGen.prototype.getDescripcionCallback = function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+
+	var xG			= new Gen();
+	
+	if(entero(idrec) >0 && document.getElementById("idrecibo")){
+		xG.svc({url: "recibos.svc.php?" + idrec, callback: function(data){
+			if(typeof data.descripcion == "undefined" ){
+
+			} else {
+				if(document.getElementById("nombrerecibo")){
+					$("#nombrerecibo").val(data.descripcion);
+				}
+			}
+			
+		}});
+	}
+	
 }
 //------------------------ END RECIBOS
 Gen.prototype.salir		= function (opts){ top.location=("../salir.php"); }
@@ -3291,7 +3527,13 @@ Gen.prototype.tipModal	= function (opts){
 Gen.prototype.getTCampos = function (obj, osrc){
 	var idKey		= "N";
 	var nGen		=  new Gen();
-	var xUrl		= "../svc/tabla.svc.php?tabla=" + $("#" + osrc).val();
+	var tt			= "";
+	if(document.getElementById(osrc)){
+		tt			= $("#" + osrc).val();
+	} else {
+		tt			= osrc;
+	}
+	var xUrl		= "../svc/tabla.svc.php?tabla=" + tt;
 	//console.log(xUrl);
 	nGen.DataList({
 		url : xUrl,
@@ -3389,7 +3631,16 @@ ContGen.prototype.ImprimirPoliza	= function(clave){
 	var xGen		= new Gen();
 	xGen.w({ url : mRPT });
 }
-
+ContGen.prototype.ImprimirPolizaById	= function(clave){
+	var mRPT		= "../rptcontables/rpt_auxiliar_de_polizas.php?id=" + clave;
+	var xGen		= new Gen();
+	xGen.w({ url : mRPT });
+}
+ContGen.prototype.editarPolizaById	= function(clave){
+	var mRPT		= "../frmcontabilidad/poliza_movimientos.frm.php?id=" + clave;
+	var xGen		= new Gen();
+	xGen.w({ url : mRPT });
+}
 ContGen.prototype.goToPanel	= function(clave){
 	var mRPT		= "../frmcontabilidad/cuenta.panel.frm.php?cuenta=" + clave;
 	var xGen		= new Gen();
@@ -3918,9 +4169,19 @@ SegGen.prototype.getExpediente = function (opts){
 	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var xG		= new Gen();
 	var xUrl	= "../rptseguimiento/expediente_integral.rpt.php?id=0" + persona + credito;
-	xG.w({ url : xUrl,  w : 900, callback : jscall });
+	xG.w({ url : xUrl,  ajustarAlto:true, callback : jscall });
 }
-
+SegGen.prototype.getFormaNotificacion = function (opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var sid		= (typeof opts.clave == "undefined") ? "" : "&clave=" + opts.clave;
+	var fmt		= (typeof opts.forma == "undefined") ? "" : "&forma=" + opts.forma;
+	//var credito	= (typeof opts.credito == "undefined") ? "" : "&credito=" + opts.credito;
+	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var xG		= new Gen();
+	var xUrl	= "../rpt_formatos/notificacion.rpt.php?" + sid + fmt;
+	
+	xG.w({ url : xUrl,  ajustarAlto:true, callback : jscall });
+}
 SegGen.prototype.setEstadoDeCompromiso = function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
@@ -4118,13 +4379,24 @@ FechaGen.prototype.get	= function(v){
 			var xF	= new XDate(entero(xDat[0]), mm, entero(xDat[2]));
 		}
 	} else {
-		xG.alerta({msg : "Fecha invalida " + v});
+		xG.alerta({msg : "Fecha invalida :" + v, tipo: "error"});
 	}
 	return xF.toString("yyyy-MM-dd");
 }
 FechaGen.prototype.getRestarFechas	= function(FechaAnterior, FechaCalculo) {
 	var xF		= new XDate(FechaAnterior);
 	return xF.diffDays(FechaCalculo);
+}
+FechaGen.prototype.getDiffEnDias	= function(FechaMayor, FechaMenor){
+	var self	= this;
+	FechaComp	= self.get(FechaMayor);
+	FechaRef	= self.get(FechaMenor);
+	
+	var xF		= new XDate(FechaComp);
+	
+	var res		= xF.diffDays(FechaRef);
+	//console.log("fecha " + res + "---FechaComp:" + FechaComp + "---FechaRef:" + FechaRef);
+	return res;
 }
 FechaGen.prototype.setSumarDias	= function(vFecha, days){
 	var xF		= new XDate(vFecha);
@@ -4142,6 +4414,7 @@ FechaGen.prototype.setRestarDias	= function(vFecha, days){
 if (typeof goCredit_ == "undefined") {	var goCredit_ = function(){ var xP	= new PersGen(); xP.getBuscarCreditos();} }
 if (typeof goCuentas_ == "undefined") {	var goCuentas_ = function(){ var xP	= new PersGen(); xP.getBuscarCuentas();} }
 if (typeof goGrupos_ == "undefined") {	var goGrupos_ = function(){ var xP	= new PersGen(); xP.getBuscarGrupos();} }
+if (typeof goRecibos_ == "undefined") {	var goRecibos_ = function(){ var xR	= new RecGen(); xR.getBuscarRecibos();} }
 //------------------- BANCOS
 BanGen.prototype.setNuevoDeposito = function (opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;

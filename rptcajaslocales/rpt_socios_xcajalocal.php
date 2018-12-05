@@ -128,26 +128,41 @@ $xRPT->setOut($out);
 $xRPT->setSQL($sql);
 $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
-$xT		= new cTabla($sql, 0);
-$xT->setTipoSalida($out);
 
+
+/*$xT		= new cTabla($sql, 0);
+$xT->setTipoSalida($out);
+$xT->setColTitle("dependientes_economicos", "DEPENDIENTES_ECONOMICOS");*/
 
 $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
-$xRPT->setBodyMail($body);
 
+$xRPT->setBodyMail($body);
 $xRPT->addContent($body);
+
+
 
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
-$xRPT->addContent( $xT->Show(  ) );
+//$xRPT->addContent( $xT->Show(  ) );
 //============ Agregar HTML
 //$xRPT->addContent( $xHP->init($jsEvent) );
 //$xRPT->addContent( $xHP->end() );
 
+$xRPT->setColTitle("dependientes_economicos", "DEPENDIENTES_ECONOMICOS");
+
+$xRPT->setProcessSQL();
 
 $xRPT->setResponse();
 $xRPT->setSenders($senders);
 echo $xRPT->render(true);
-
+/*
+// Listen for clicks on table originating from .delete element(s)
+$("table").on("click", ".delete", function ( event ) {
+    // Get index of parent TD among its siblings (add one for nth-child)
+    var ndx = $(this).parent().index() + 1;
+    // Find all TD elements with the same index
+    $("td", event.delegateTarget).remove(":nth-child(" + ndx + ")");
+}); 
+ * */
 
 ?>

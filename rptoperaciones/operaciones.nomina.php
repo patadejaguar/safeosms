@@ -102,7 +102,7 @@ $setSql 		= " SELECT
 				`operaciones_mvtos`.`idoperaciones_mvtos` ";
 	//exit($setSql);
 $xRPT		= new cReportes("TR.Reporte de operaciones - $tipo");
-$output		= ($output == SYS_DEFAULT) ? OUT_HTML : $output;
+//$output		= ($output == SYS_DEFAULT) ? OUT_HTML : $output;
 $xRPT->setOut($output);
 $xRPT->setSenders($senders);
 
@@ -110,6 +110,13 @@ $body		= $xRPT->getEncabezado("", $fecha_inicial, $fecha_final);
 $xRPT->setBodyMail($body);
 
 $xRPT->setFile($xmlFile);
+$xRPT->addCampoSuma("monto");
+$xRPT->setFormato("fecha", $xRPT->FMT_FECHA);
+
+
+$xRPT->setResponse(true);
 $xRPT->setSQL($setSql);
-$xRPT->render(true);
+$xRPT->setProcessSQL();
+
+echo $xRPT->render(true);
 ?>

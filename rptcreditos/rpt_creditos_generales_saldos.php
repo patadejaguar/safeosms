@@ -103,7 +103,7 @@ $setSql = "SELECT socios.nombre, creditos_solicitud.numero_socio AS 'socio',
 						ON `creditos_solicitud`.`estatus_actual` = 
 						`creditos_estatus`.`idcreditos_estatus`
 	
-	WHERE creditos_solicitud.saldo_actual>=0.99
+	WHERE creditos_solicitud.saldo_actual > " . TOLERANCIA_SALDOS . "
 	AND
 	(`creditos_solicitud`.`fecha_ultimo_mvto`>='$fechaInicial')
 $ByTipoAut $ByProducto $BySucursal $ByMunicipio $ByFecha 

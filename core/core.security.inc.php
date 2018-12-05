@@ -336,8 +336,19 @@ class cSystemUser{
 		$this->mMessages	.= $xPer->getMessages();
 		return $access;
 	}
-	function setUserOption(){
+	function setUserOption($option, $value){
+		//setLog($this->getUserOptions());
+		$arr			= $this->getUserOptions();
 		
+		$arr[$option]	= $value;
+		$str			= "";
+		setLog($arr);
+		foreach ($arr as $idx => $vv){
+			//$str		.= ($str == "") ? "" : "";
+			$str		.= "$idx=$vv;";
+		}
+		$this->setUpdate("usr_options", $str);
+		//Actualizar;
 	}
 	/**
 	 * Obtiene en un array Las opciones del usuario
@@ -415,13 +426,16 @@ class cSystemUser{
 		$usr	= substr($usr, $rnd1, 5);
 		$pwd	= substr($pwd, $rnd2, 5);
 		$ctx	= strtoupper("$rnd1.$usr-$rnd2.$pwd");
-
+		$ctx	= base64_encode($ctx);
+		$ctx	= urlencode($ctx);
 		
 		return $ctx;
 	}
 	function initByCTX($ctx){
 		$res	= false;
 		$xQL	= new MQL();
+		$ctx	= urldecode($ctx);
+		$ctx	= base64_decode($ctx);
 		$ctx	= strtolower($ctx);
 		$saveLog= true;
 		//setLog($sql);
@@ -454,13 +468,16 @@ class cSystemUser{
 				$this->mCodeUser	= $DCTX["idusuarios"];
 				$this->mEstado		= $DCTX["estatus"];
 				$usr				= $DCTX["f_28fb96d57b21090705cfdf8bc3445d2a"];
+				 
 				//SN_b80bb7740288fda1f201890375a60c8f
 				//Iniciar Session
 				//$xSVC				= new MQLService("", "");
 				//$xSVC->setKey(getClaveCifradoTemporal());			
 				$pass				= $DCTX["f_34023acbff254d34664f94c3e08d836e"];
 				//$pass				= $xSVC->getEncryptData($pass);
-				
+				if(isset($_SESSION)){
+					$_SESSION[SYS_USER_ID] = $this->mCodeUser;
+				}
 				$this->initSession($usr, "", $pass, $saveLog);
 				$xCache->set($cid, $DCTX, $xCache->EXPIRA_5MIN);
 				$res				= true;
@@ -615,9 +632,9 @@ class cSystemUser{
 			//SN_b80bb7740288fda1f201890375a60c8f
 			$_SESSION[SYS_USER_ID] 		= $iduser;
 			$_SESSION[SYS_USER_NIVEL] 	= $nivel;
-			$_SESSION["SN_0d35c1f17675a8a2bf3caaacd59a65de"] = $pwd;
-			$_SESSION["SN_0a744893951e0d1706ff74a7afccf561"] = $nuser;		//Nombre de Usuario
-
+			$_SESSION["SN_0d35c1f17675a8a2bf3caaacd59a65de"] 	= $pwd;
+			$_SESSION["SN_0a744893951e0d1706ff74a7afccf561"] 	= $nuser;		//Nombre de Usuario
+			
 			//--------------------------------------------------------
 			$this->mCodeUser	= $iduser;
 			$this->mTypeById	= true;
@@ -692,16 +709,22 @@ class cSystemUser{
 		$this->mUserOptions		= $rules;
 		return $this->mUserOptions;
 	} 
+
 	function puede($form, $titulo, $obj = ""){
 		$puede		= true;
-		if($titulo == "TR.SALIR"){
+		$arrDefs	= array("TR.SALIR" => "TR.SALIR", "TR.CERRAR" => "TR.CERRAR", "TR.RECARGAR" => "TR.RECARGAR");
+		if(SAFE_ON_DEV == true){
+			$arrDefs["RELLENAR"]	= "RELLENAR";
+			$arrDefs["SERIALIZAR"]	= "SERIALIZAR";
+		}
+		if(isset($arrDefs[strtoupper($titulo)])){
 			
 		} else {
 			$xPerms	= new cSystemPermissions();		
 			$idcx	= crc32($form) . "-f-" . crc32($titulo);
 			$obj	= ($obj == "") ? "FORM" : $obj;
 			$arr	= $xPerms->initPueden();
-			
+			//setError("$form ---- $idcx");
 			if(!isset($arr[$idcx])){
 				//verificar si existe
 				//Insertar en SQL
@@ -711,14 +734,20 @@ class cSystemUser{
 				$xT->descripcion($titulo);
 				$xT->nombre_objeto($form);
 				$xT->tipo_objeto($obj);
+				
 				$res = $xT->query()->insert()->save();
+				
 				if($res !== false){
 					//Insertar en Cache
 					$xCache	= new cCache();
 					$arr[$idcx]		= "";
 					$xCache->set($xPerms->IDCACHE_PUEDEN, $arr);
+					
+				} else {
+					$puede	= false;
 				}
 			} else {
+				
 				//verificar si existe entre los negados
 				if(strpos($arr[$idcx], $this->getNivel() . "@r") !== false ){
 					$puede	= false;
@@ -759,7 +788,21 @@ class cSystemUserRulesList {
 	public $ACTIVE_PRINTER_POS 		= "IMPRESORA_POS_ACTIVA";
 	
 	function  __construct(){}
-	
+	function getListInArray(){
+		$arr	= array();
+		
+		//$arr[$this->]		= $this-> ;
+		//$arr[$this->]		= $this-> ;
+		//$arr[$this->]		= $this-> ;
+		//$arr[$this->]		= $this-> ;
+		$arr[$this->PUEDE_EDITAR_USUARIOS]		= $this->PUEDE_EDITAR_USUARIOS;
+		$arr[$this->PUEDE_AGREGAR_USUARIOS]		= $this->PUEDE_AGREGAR_USUARIOS;
+		$arr[$this->PUEDE_ELIMINAR_RECS]		= $this->PUEDE_ELIMINAR_RECS;
+		$arr[$this->PUEDE_EDITAR_RECS]			= $this->PUEDE_EDITAR_RECS;
+		$arr[$this->ACTIVE_PRINTER_POS]			= $this->ACTIVE_PRINTER_POS;
+		
+		return $arr;
+	}
 }
 class cSystemPermissions{
 	private $mMessages			= "";
@@ -767,16 +810,37 @@ class cSystemPermissions{
 	private $mPublicFile		= false;
 
 	private $mPerfiles			= array(
-		4 => array(18000, 15000,1000),
-		7 => array(18000, 15000,3000,4000, 2000),
-		6 => array(18000, 15000, 5000),
-		10 => array(18000, 15000, 7000, 2000),
-		8 => array(18000, 15000, 8000, 2000)
+			2 => array(18000,15000),
+			3 => array(18000,15000,2000,3000),
+			4 => array(18000,15000,11030,1000, 2008,2009,2006,2004),
+			5 => array(18000,15000,11030,1000, 2008,2009,2006,2004, 9000),
+			6 => array(18000,15000, 5000, 2008,2009,2006,2004),
+			7 => array(18000,15000,3000,4000, 2000, 2008,2009,2006,2004),
+			8 => array(18000,15000, 8000, 2000, 2008,2009,2006,2004),
+			9 => array(18000,15000, 2000, 2008,2009,2006,2004),
+			10 => array(18000,15000, 7000, 2003, 3002,9003),
+			11 => array(18000,15000, 2000, 2008,2009,2006,2004),
+			12 => array(18000,15000, 2000, 2008,2009,2006,2004),
+			13 => array(18000,15000, 2000, 2008,2009,2006,2004),
+			14 => array(18000,15000, 2000, 2008,2009,2006,2004)
+			
 		);
 	private $mProhibidos	= array(
-		10 => array(2001, 2002, 2050,2060, 2014, 2012)
+			2 => array(71000,72000,1000,1050,8030,3035,5080,4400,2050,3030,2000,3000,4000,5000,6000, 7000, 8000,9000,11030, 2008,2009,2006,2004,11032,11033,11034,11039),
+			3 => array(71000,72000,1000,1050,8030,3035,5080,4400,2050,3030,2000,3000,4000,5000,6000, 7000, 8000,9000,11030,11032,11033,11034,11039),
+			4 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,3000,5000,6000, 7000, 8000,9000, 11030,11032,11033,11034,11039),
+			5 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030, 7000,8000,5000,4000,3000,11032,11033,11034,11039),
+			6 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			7 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			8 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			9 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			10 => array(72000,1000,1050,8030,3035,5080,4000,4400,2050,3030, 2001, 2002, 2050,2060, 2014, 2012,11032,11033,11034,11039),
+			11 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			12 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			13 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
+			14 => array(71000,72000, 1050,8030,3035,5080,4400,2050,3030,11032,11033,11034,11039),
 	);
-	private $mRW				= "@rw";
+	public $mRW				= "@rw";
 	private $mRO				= "@ro";
 	private $mGlobalM			= 9999;
 	private $mObj				= null;
@@ -787,6 +851,7 @@ class cSystemPermissions{
 	public $DIV_PERMISOS		= ",";
 	private $mParentID			= 0;
 	private $mTabla				= "general_menu";
+	private $mPermsAntes		= "";
 	
 	function __construct($id = false){
 		$this->mID				= setNoMenorQueCero($id);
@@ -870,7 +935,10 @@ class cSystemPermissions{
 		if(isset($data[$xT->IDGENERAL_MENU])){
 			$this->mInit		= true;
 			$this->mParentID	= $data[$xT->MENU_PARENT];
+			//setError($this->mID . " == " . $data[$xT->MENU_RULES]);
+			$this->mPermsAntes	= $data[$xT->MENU_RULES];
 			$this->mPermisos	= $this->setDecompilePermisos($data[$xT->MENU_RULES]);
+			
 			if($inCache == false){
 				$xCache->set($idx, $data);
 			}
@@ -887,10 +955,19 @@ class cSystemPermissions{
 		}
 		return $this->mObj;
 	}
-	private function getCompilePermisos(){ 
+	/**
+	 * Compila los permisos de Array a un string
+	 * @param array $arrPerms
+	 * @return string Permisos compilados
+	 */
+	function getCompilePermisos($aPerms = false){ 
 		$txt		= "";
 		$arrPerms	= array();
-		
+		if(is_array($aPerms)){
+			if( count($aPerms) > 0 ){
+				$this->mPermisos	= $aPerms;
+			}
+		}
 		foreach ($this->mPermisos as $id2 => $val2){
 			$idx	= setNoMenorQueCero($val2);
 			//setLog($idx);
@@ -909,7 +986,12 @@ class cSystemPermissions{
 		$this->setDecompilePermisos($txt);
 		return $txt;
 	}
-	private function setDecompilePermisos($str){
+	/**
+	 * Devuelve un array desde un texto de permisos 
+	 * @param string $str Permisos en cadena
+	 * @return array
+	 */
+	function setDecompilePermisos($str = ""){
 		$arr		= explode($this->DIV_PERMISOS, $str);
 		$pm			= array();
 		
@@ -919,18 +1001,27 @@ class cSystemPermissions{
 				$pm[$cnt.$this->mRW]		= $cnt.$this->mRW;
 			}
 		}
+		//setError($this->mID);
+		//setLog($arr);
 		$arr		= $pm;
 		$pm			= null;
 		asort($arr);
 		return $arr;
 	}
+	private function setCleanRul($txt){
+		$txt	= str_replace("@rw", "", $txt);
+		$txt	= str_replace("@ro", "", $txt);
+		return $txt;
+	}
 	function setAgregarPermiso($niveldeusuario, $id = false){
+		
 		$niveldeusuario	= setNoMenorQueCero($niveldeusuario);
 		$id			= setNoMenorQueCero($id);
 		$id			= ($id <= 0) ? $this->mID : $id;
-		
 		$this->mID	= $id;
-		if($this->mInit == false){ $this->init(); }
+		if($this->mInit == false){ 
+			$this->init(); 
+		}
 
 		unset($this->mPermisos[$niveldeusuario.$this->mRO]); //old
 		unset($this->mPermisos[$niveldeusuario.$this->mRW]); //old
@@ -940,85 +1031,117 @@ class cSystemPermissions{
 		$permisos				= $this->getCompilePermisos();
 		
 		//setLog(print_r($this->mPermisos, true));
-		$this->mMessages		.= "OK\t$id\tAgregar.- Cambiar permisos a $permisos\r\n";
+		$this->mMessages		.= "OK\t$id\tNivel: $niveldeusuario\tAgregar.- Cambiar permisos a ". $this->setCleanRul($permisos) . ", Original : " . $this->setCleanRul($this->mPermsAntes) . "\r\n";
+		//setLog("OK\t$id\tNivel: $niveldeusuario\tAgregar.- Cambiar permisos a $permisos\r\n");
 		return $this->setPermisos($permisos, $id);
 	}
 	function setEliminarPermiso($niveldeusuario, $id = false){
+		//setError($this->mID . "|$id");
 		$niveldeusuario	= setNoMenorQueCero($niveldeusuario);
-		$id			= setNoMenorQueCero($id);
-		$id			= ($id <=0) ? $this->mID : $id;
-		$this->mID	= $id;
-		if($this->mInit == false){ $this->init(); }
+		$id				= setNoMenorQueCero($id);
+		$id				= ($id <=0) ? $this->mID : $id;
+		
+		$this->mID		= $id;
+		
+		if($this->mInit == false){ 
+			$this->init(); 
+		}
 		unset($this->mPermisos[$niveldeusuario.$this->mRO]);
 		unset($this->mPermisos[$niveldeusuario.$this->mRW]);
 		$permisos				= $this->getCompilePermisos();
-		$this->mMessages	.= "WARN\t$id\tAgregar.- Cambiar permisos a $permisos\r\n";
+		$this->mMessages	.= "WARN\t$id\tNivel: $niveldeusuario\tAgregar.- Cambiar permisos a ". $this->setCleanRul($permisos) . ", Original : " . $this->setCleanRul($this->mPermsAntes) . "\r\n";
+		//setLog("WARN\t$id\tAgregar.- Cambiar permisos a $permisos\r\n");
 		return $this->setPermisos($permisos, $id);
 	}	
 	function setPermisos($permisos, $id = false){
 		$xQL		= new MQL();
+		$xLog		= new cCoreLog();
 		$msg		= "";
 		$id			= setNoMenorQueCero($id);
 		$id			= ($id <=0) ? $this->mID : $id;
 		$this->mID	= $id;
-		if($this->mInit == false){ $this->init(); }
+		if($this->mInit == false){ 
+			$this->init(); 
+		}
 		
 		if($this->mParentID == $this->mGlobalM){
 			$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE `idgeneral_menu` = $id ";
 			$ics	= $xQL->setRawQuery($sql);
+			//setLog($sql);
 			if($ics === false){
 				
 			} else {
-				$msg	.= "OK\tActualizacion de permisos para $id\r\n";
+				$xLog->add("OK\tActualizacion de permisos para $id con ". $this->setCleanRul($permisos) . ", Original : " . $this->setCleanRul($this->mPermsAntes) . "\r\n");
 			}
 		} else {
-			$gl		= $this->mGlobalM;
+			$idglobal		= $this->mGlobalM;
 			//actualizar padres y parent
-			$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $gl) AND (menu_parent=$id OR `idgeneral_menu` = $id )";
-			//setLog("UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $gl) AND (menu_parent=$id OR `idgeneral_menu` = $id )");
-			$ics	= $xQL->setRawQuery($sql);
+			$sql 	= "UPDATE general_menu set menu_rules='$permisos' WHERE (menu_parent != $idglobal) AND (menu_parent=$id OR `idgeneral_menu` = $id )";
 			//setLog($sql);
-			$msg	.= "OK\tAplicacion Recursiva de $id " . $xQL->getNumberOfRows() . "\r\n";
+			$ics	= $xQL->setRawQuery($sql);
+			
+			$xLog->add("OK\tAplicacion Recursiva de $id " . $xQL->getAffectedRows() . " con ". $this->setCleanRul($permisos) . ", Original : " . $this->setCleanRul($this->mPermsAntes) . "\r\n");
 			
 			$sql2	= "SELECT * FROM general_menu WHERE menu_parent=$id";
+			//setLog($sql2);
 			$rs		= $xQL->getDataRecord($sql2);
-					
 			$xMen	= new cGeneral_menu();
+			
 			foreach ($rs as $row){
 				$xMen->setData($row);
 				$ide	= $xMen->idgeneral_menu()->v();
 				$sqlP 	= "UPDATE general_menu SET menu_rules='$permisos' WHERE menu_parent=$ide OR `idgeneral_menu` = $ide ";
 				$idcs 	= $xQL->setRawQuery($sqlP);
-				$msg	.= "OK\tSubmenu $ide padre $id " . $idcs["rows"] . "\r\n";
+				$xLog->add("OK\tSubmenu $ide padre $id Son : " . $xQL->getAffectedRows() . " con Permisos [$permisos]\r\n");
+				//setLog($sqlP);
 			}
 		}
-		$this->mMessages	.= $msg;
-		//setLog($msg);
-		return $msg;
+		$this->setCuandoSeActualiza();
+		$this->mMessages	.= $xLog->getMessages();
+		$xLog->guardar($xLog->OCat()->PERMISO_NUEVO);
+		return $xLog->getMessages();
 	}
 	function setAplicarPerfil($tipo = false){
+		$xQL		= new MQL();
+		$xT			= new cGeneral_niveles();
 		if($tipo == false){
 			foreach ($this->mPerfiles as $nivel => $items){
-				foreach ($items as $indice => $valor){
-					$this->setAgregarPermiso($nivel, $valor);
+				$rs		= $xQL->getRecordset("SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$nivel");
+				foreach ($rs as $rw){
+					$idnivel		= $rw[$xT->IDGENERAL_NIVELES];
+					foreach ($items as $indice => $valor){
+						$this->setAgregarPermiso($idnivel, $valor);
+					}
 				}
 			}
 			foreach ($this->mProhibidos as $nivel2 => $items2){
-				foreach ($items2 as $indice2 => $valor2){
-					$this->setEliminarPermiso($nivel2, $valor2);
+				$rs		= $xQL->getRecordset("SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$nivel2");
+				foreach ($rs as $rw){
+					$idnivel		= $rw[$xT->IDGENERAL_NIVELES];
+					foreach ($items2 as $indice2 => $valor2){
+						$this->setEliminarPermiso($idnivel, $valor2);
+					}
 				}
 			}			
 		} else {
 			if(isset($this->mPerfiles[$tipo] )){
 				$items	= $this->mPerfiles[$tipo];
-				foreach ($items as $indice => $valor){
-					$this->setAgregarPermiso($tipo, $valor);
+				$rs		= $xQL->getRecordset("SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$tipo");
+				foreach ($rs as $rw){
+					$idnivel		= $rw[$xT->IDGENERAL_NIVELES];
+					foreach ($items as $indice => $valor){
+						$this->setAgregarPermiso($idnivel, $valor);
+					}
 				}
 			}
 			if(isset($this->mProhibidos[$tipo] )){
 				$items2	= $this->mProhibidos[$tipo];
-				foreach ($items2 as $indice2 => $valor2){
-					$this->setEliminarPermiso($tipo, $valor2);
+				$rs		= $xQL->getRecordset("SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$tipo");
+				foreach ($rs as $rw){
+					$idnivel		= $rw[$xT->IDGENERAL_NIVELES];
+					foreach ($items2 as $indice2 => $valor2){
+						$this->setEliminarPermiso($idnivel, $valor2);
+					}
 				}
 			}			
 		}
@@ -1061,10 +1184,9 @@ class cSystemPermissions{
 		$xQL	= new MQL();
 		$wS		= ($superior !== false)? " AND `menu_parent`=$superior " : "";
 		$wF		= ($buscar == "") ? "" : " AND (`general_menu`.`menu_title` LIKE '%$buscar%' OR `general_menu`.`menu_file` LIKE '%$buscar%') ";
+		$sql	= "SELECT * FROM `general_menu` WHERE FIND_IN_SET('$nivel@rw',`menu_rules`) >0 $wS $wF ORDER BY `general_menu`.`menu_type` DESC, `menu_parent`,`menu_order`,`general_menu`.`menu_title`";
 		
-		$rs		= $xQL->getDataRecord("SELECT * FROM `general_menu` 
-				WHERE FIND_IN_SET('$nivel@rw',`menu_rules`) >0 $wS $wF
-				ORDER BY `general_menu`.`menu_type` DESC, `menu_parent`,`menu_order`, `general_menu`.`menu_title` ");
+		$rs		= $xQL->getDataRecord($sql);
 		return $rs;
 	}
 	function getNegados($nivel, $superior = false, $buscar = ""){
@@ -1088,7 +1210,7 @@ class cSystemPermissions{
 		$PSVC		= array("personas.actividades.economicas.php" => true,
 				"listanegra.svc.php" => true, "equivalente.moneda.svc.php" => true,
 				"cantidad_en_letras.php" => true, "peps.svc.php" => true, "cotizador.plan.svc.php" => true, "pc.svc.php" => true, 
-				"importar.svc.php" => true, "exportar.svc.php" => true
+				"importar.svc.php" => true, "exportar.svc.php" => true, "tareas.cron.php"
 		);			//servicios publicos
 		return $PSVC;
 	}
@@ -1245,7 +1367,95 @@ class cUserEstadisticas {
 		return setNoMenorQueCero($DD["numero"]);
 	}
 }  
-
+class cSystemPermisosObjeto {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "sistema_permisos";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mPermisos		= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSistema_permisos();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->IDSISTEMA_PERMISOS];
+			$this->mPermisos= $data[$xT->DENEGADO];
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function addNegado($id){
+		$xPerms	= new cSystemPermissions();
+		
+		$pp			= $id . $xPerms->mRW;
+		$arrP		= $xPerms->setDecompilePermisos($this->mPermisos);
+		$arrP[$pp]	= $pp; //setLog($arrP);
+		$txt		= $xPerms->getCompilePermisos($arrP);
+		$xQL		= new MQL();
+		$xQL->setRawQuery("UPDATE `sistema_permisos` SET `denegado`='$txt' WHERE `idsistema_permisos`=" . $this->mClave);
+		$xQL		= null;
+		$this->setCuandoSeActualiza();
+	}
+	function delNegado($id){
+		$xPerms	= new cSystemPermissions();
+		$arrP	= $xPerms->setDecompilePermisos($this->mPermisos);
+		$pp		= $id . $xPerms->mRW;
+		if(isset($arrP[$pp])){
+			unset($arrP[$pp]);
+		}
+			
+		$txt	= $xPerms->getCompilePermisos($arrP);
+		$xQL	= new MQL();
+		$xQL->setRawQuery("UPDATE `sistema_permisos` SET `denegado`='$txt' WHERE `idsistema_permisos`=" . $this->mClave);
+		$xQL	= null;
+		$this->setCuandoSeActualiza();
+	}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+}
 class cSystemPerfiles {
 	private $mClave		= false;
 	private $mObj		= null;
@@ -1292,7 +1502,8 @@ class cSystemPerfiles {
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
 	function getNombre(){return $this->mNombre;}
-	function getClave(){return $this->mClave;}
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
 	function initNivelByIDX($idx){

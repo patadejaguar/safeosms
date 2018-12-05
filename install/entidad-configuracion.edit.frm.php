@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.EDITAR PARAMETRO", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -58,6 +58,9 @@ $xSel		= new cHSelect();
 
 //$xFRM->OText("tipo", $xTabla->tipo()->v(), "TR.TIPO");
 $xFRM->OHidden("nombre_del_parametro", $xTabla->nombre_del_parametro()->v());
+
+$xFRM->ODisabled("idbbx", $xTabla->nombre_del_parametro()->v(), "TR.NOMBRE");
+
 $xFRM->OText("descripcion_del_parametro", $xTabla->descripcion_del_parametro()->v(), "TR.DESCRIPCION DEL PARAMETRO");
 $xFRM->OText("valor_del_parametro", $xTabla->valor_del_parametro()->v(), "TR.VALOR DEL PARAMETRO");
 

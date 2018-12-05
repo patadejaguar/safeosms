@@ -49,7 +49,8 @@ $soloint		= parametro("solointeres", false, MQL_BOOL);
 $redondeo		= ($redondeo == true) ? 100 : 0;
 
 $destino		= parametro("destino", 0, MQL_INT);
-
+$fechainicial	= parametro("fechainicial", $fecha, MQL_DATE);
+$fechainicial	= $xF->getFechaISO($fechainicial);
 
 $rs				= array();
 $rs["error"]	= true;
@@ -65,6 +66,11 @@ $xGen->setTasaDeInteres($tasa);
 $xGen->setTasaDeIVA($tasaiva);
 
 $xGen->setFechaDesembolso(fechasys());
+if($xF->getInt($fechainicial) == $xF->getInt(fechasys())){
+	
+} else {
+	$xGen->setFechaArbitraria($fechainicial);
+}
 
 if($destino > 0){
 	$xDest	= new cCreditosDestinos($destino);

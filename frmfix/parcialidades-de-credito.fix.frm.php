@@ -1,5 +1,6 @@
 <?php
 /**
+ * Corrige el monto de la parcialidad por credito
  * @author Balam Gonzalez Luis Humberto
  * @version 0.0.01
  * @package
@@ -50,13 +51,40 @@ ini_set("max_execution_time", 600);
 
 //$xQL->setRawQuery("CALL `proc_creditos_letras_del_dia`");
 
-$rs			= $xQL->getDataRecord("SELECT * FROM creditos_solicitud");
+$sql		= "SELECT * FROM creditos_solicitud";
+
+/*$sql		= "SELECT   `creditos_plan_de_pagos`.`clave_de_credito`,
+         COUNT( `creditos_plan_de_pagos`.`plan_de_pago` )  AS `pagos`,
+         MIN( `creditos_plan_de_pagos`.`fecha_de_pago` )  AS `fecha_inicial`,
+         `creditos_solicitud`.`monto_autorizado`,
+         SUM( `creditos_plan_de_pagos`.`capital` )  AS `capital`,
+         SUM( `creditos_plan_de_pagos`.`interes` )  AS `interes`,
+         
+         SUM( `creditos_plan_de_pagos`.`otros` )  AS `otros`,
+         SUM( `creditos_plan_de_pagos`.`ahorro` )  AS `ahorro`,
+         SUM( `creditos_plan_de_pagos`.`penas` )  AS `penas`,
+         SUM( `creditos_plan_de_pagos`.`gtoscbza` )  AS `gtoscbza`,
+         SUM( `creditos_plan_de_pagos`.`mora` )  AS `mora`,
+         SUM( `creditos_plan_de_pagos`.`descuentos` )  AS `descuentos`,
+         SUM( `creditos_plan_de_pagos`.`iva_castigos` )  AS `ivas_castigos`,
+         SUM( `creditos_plan_de_pagos`.`total_base` )  AS `total_base`,
+         SUM( `creditos_plan_de_pagos`.`total_c_otros` )  AS `total_c_cargos`,
+         SUM( `creditos_plan_de_pagos`.`total_c_castigos` )  AS `total_c_castigos`,
+         SUM( `creditos_plan_de_pagos`.`impuesto` )  AS `impuesto`
+FROM     `creditos_plan_de_pagos` 
+INNER JOIN `creditos_solicitud`  ON `creditos_plan_de_pagos`.`clave_de_credito` = `creditos_solicitud`.`numero_solicitud` 
+WHERE    ( `creditos_plan_de_pagos`.`estatusactivo` = 1 ) AND `creditos_solicitud`.`monto_autorizado` >0 
+GROUP BY clave_de_credito
+HAVING capital != monto_autorizado";*/
+
+$rs			= $xQL->getRecordset($sql);
 $xT			= new cCreditos_solicitud();
 $errors		= 0;
 $exitos		= 0;
-foreach ($rs as $rw){
-	$idcredito	= $rw[$xT->NUMERO_SOLICITUD];
+while ($rw = $rs->fetch_assoc()){
+	$idcredito	= $rw["clave_de_credito"];//$rw[$xT->NUMERO_SOLICITUD];
 	$xCred		= new cCredito($idcredito);
+	
 	if($xCred->init() == true){
 		$montoparcialidad				= $xQL->getDataValue("SELECT MAX(`letra`) AS `monto` FROM `tmp_creds_prox_letras` WHERE `docto_afectado`=$idcredito", "monto");
 		$montoparcialidad				= setNoMenorQueCero($montoparcialidad,2);
@@ -71,6 +99,7 @@ foreach ($rs as $rw){
 				$xEm->setFechaArbitraria($xCred->getFechaDePrimerPago());
 				$xEm->setMostrarCompleto(true);
 				$montoparcialidad 		= $xEm->getParcialidadPresumida($xCred->getFactorRedondeo());
+				
 			}
 			//$xEm->setCompilar();
 			//$xEm->getVersionFinal(false);
@@ -79,7 +108,7 @@ foreach ($rs as $rw){
 		$arr[$xT->MONTO_PARCIALIDAD]	= $montoparcialidad;
 		
 		$xCred->setUpdate($arr);
-		$xLog->add("UPDATE `creditos_solicitud` SET `monto_parcialidad`=$montoparcialidad WHERE `numero_solicitud`=$idcredito;\r\n");
+		//$xLog->add("UPDATE `creditos_solicitud` SET `monto_parcialidad`=$montoparcialidad WHERE `numero_solicitud`=$idcredito;\r\n");
 		
 		if($montoparcialidad<=0){
 			$errors++;

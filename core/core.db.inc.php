@@ -47,6 +47,8 @@ class cSQLListas {
 	private $mFechaFunction		= "";
 	private $mObjFiltro			= null;
 	private $mOrderASC			= "ASC";
+	private $mCamposExtras1		= "";
+	
 	function setOperador($operador){$this->mOperador = $operador;}
 	function setInvertirOrden(){ $this->mOrderASC = "DESC"; }
 	function getSumaDeIngresosPorFechas($fecha_inicial, $fecha_final){ return $this->getSumaDeBasePorFechas($fecha_inicial, $fecha_final, 2002);	}
@@ -153,6 +155,53 @@ class cSQLListas {
 		//resetear order
 		$this->mOrderASC	= "ASC";
 		return $sql;
+	}
+	function getListadoDeRecibosV101($tipo = "", $socio = "", $docto = "", $fecha_inicial = "", $fecha_final = "", $otros = "", $periodo = false){
+		$ByPeriodo		= $this->OFiltro()->RecibosPorPeriodo($periodo);
+		$ByTipo			= (setNoMenorQueCero($tipo) > 0) ? "AND (`operaciones_recibos`.`tipo_docto` = $tipo)" : "";
+		$BySocio		= (setNoMenorQueCero($socio) > 0) ? "AND (`operaciones_recibos`.`numero_socio` = $socio) " : "";
+		$ByDocto		= (setNoMenorQueCero($docto) >  0) ? " AND (`operaciones_recibos`.`docto_afectado` = $docto) " : "";
+		//$this->OFiltro()->RecibosPorFecha($fecha_inicial, $fecha_final);
+		$ByFecha		= ($fecha_inicial == "") ? "" : " AND `operaciones_recibos`.`fecha_operacion` = '$fecha_inicial' ";
+		$BySucAut		= $this->OFiltro()->PersonasPorSucursalAut();
+		
+		if($fecha_inicial != "" AND $fecha_final != ""){
+			$ByFecha	= " AND (`operaciones_recibos`.`fecha_operacion` >= '$fecha_inicial' AND `operaciones_recibos`.`fecha_operacion`<='$fecha_final') ";
+		}
+		$sql = "SELECT
+			`operaciones_recibos`.`idoperaciones_recibos`       AS `numero`,
+			`operaciones_recibos`.`fecha_operacion`             AS `fecha`,
+			`operaciones_recibostipo`.`descripcion_recibostipo` AS `tipo`,
+			`operaciones_recibos`.`docto_afectado`              AS `documento`,
+			`operaciones_recibos`.`numero_socio`		    AS `socio`,
+			CONCAT(`socios_general`.`nombrecompleto`, ' ',
+			`socios_general`.`apellidopaterno`, ' ',
+			`socios_general`.`apellidomaterno`)		   AS `nombre`,
+			`periodo_de_documento` AS `periodo`,
+			`operaciones_recibos`.`total_operacion`   AS `total`
+			
+			FROM
+			`operaciones_recibos` `operaciones_recibos`
+			INNER JOIN `socios_general` `socios_general`
+			ON `operaciones_recibos`.`numero_socio` = `socios_general`.`codigo`
+			INNER JOIN `operaciones_recibostipo` `operaciones_recibostipo`
+			ON `operaciones_recibos`.`tipo_docto` = `operaciones_recibostipo`.
+			`idoperaciones_recibostipo`
+		WHERE
+			(`operaciones_recibos`.`idoperaciones_recibos` >0)
+			$BySocio
+			$ByTipo
+			$ByDocto
+			$ByFecha
+			$otros
+			$ByPeriodo $BySucAut
+		ORDER BY
+			`operaciones_recibos`.`fecha_operacion` " . $this->mOrderASC . ",
+					`operaciones_recibos`.`docto_afectado`,
+					`operaciones_recibos`.`idoperaciones_recibos` " . $this->mOrderASC . " ";
+			//resetear order
+			$this->mOrderASC	= "ASC";
+			return $sql;
 	}
 	function getListadoDeRecibosConDocto($tipo = "", $socio = "", $docto = "", $fecha_inicial = "", $fecha_final = "", $otros = "", $periodo = false){
 		$ByPeriodo	= $this->OFiltro()->RecibosPorPeriodo($periodo);
@@ -784,6 +833,38 @@ class cSQLListas {
 			";
 			return $sql;
 	}
+	function getListadoDeOperacionesArch($persona = "", $documento = "", $recibo = "", $otros = "" ){
+		$ByPersona	= (setNoMenorQueCero($persona) <= 0) ? "" : " AND (`operaciones_mvtos_arch`.`socio_afectado` = $persona) ";
+		$ByRecibo	= (setNoMenorQueCero($recibo) <= 0) ? "" : " AND (`operaciones_mvtos_arch`.`recibo_afectado` =$recibo)  ";
+		$ByDocto	= (setNoMenorQueCero($documento)<=0) ? "" : " AND (`operaciones_mvtos_arch`.`docto_afectado`=$documento) ";
+		$sql = "SELECT
+	`operaciones_mvtos_arch`.`idoperaciones_mvtos`   AS `codigo`,
+	`operaciones_mvtos_arch`.`socio_afectado`       	AS `socio`,
+	`operaciones_mvtos_arch`.`docto_afectado`       	AS `documento`,
+	getFechaMX(`operaciones_mvtos_arch`.`fecha_operacion`)       AS `operado`,
+	getFechaMX(`operaciones_mvtos_arch`.`fecha_afectacion`)      AS `afectado`,
+			`operaciones_mvtos_arch`.`periodo_socio`			AS `periodo`,
+			`operaciones_mvtos_arch`.`tipo_operacion`        AS `operacion`,
+			`operaciones_tipos`.`descripcion_operacion` AS `descripcion`,
+			`operaciones_mvtos_arch`.`afectacion_real`       AS `monto`
+			FROM
+			`operaciones_mvtos_arch` `operaciones_mvtos_arch`
+			INNER JOIN `operaciones_tipos` `operaciones_tipos`
+			ON `operaciones_mvtos_arch`.`tipo_operacion` = `operaciones_tipos`.
+			`idoperaciones_tipos`
+			WHERE
+			(`operaciones_mvtos_arch`.`idoperaciones_mvtos` != 0)
+			$ByRecibo $ByPersona $ByDocto $otros
+			ORDER BY
+			`operaciones_mvtos_arch`.`fecha_operacion` " . $this->mOrderASC . ",
+			`operaciones_mvtos_arch`.`socio_afectado`,
+			`operaciones_mvtos_arch`.`docto_afectado`,
+			`operaciones_mvtos_arch`.`periodo_socio`,
+			`operaciones_mvtos_arch`.`tipo_operacion`
+			LIMIT 0,1000 ";
+		
+			return $sql;
+	}
 
 	function getListadoDePersonasActividadesEconomicasTipos($clave = "", $clasificacion = "", $superior = "", $otros = ""){
 	$operador	= $this->mOperador;
@@ -1250,6 +1331,8 @@ class cSQLListas {
 	}	
 	function getListadoDeCreditosPagados($persona, $producto = false, $SinNombre = false ){
 		$otros		= " AND (`creditos_solicitud`.`saldo_actual` <= " . TOLERANCIA_SALDOS . ")  AND (`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_AUTORIZADO . ") AND (`creditos_solicitud`.`estatus_actual` != " . CREDITO_ESTADO_SOLICITADO . ") ";
+		$this->mCamposExtras1	= ", `creditos_solicitud`.`fecha_ultimo_capital` AS `fecha_liquidacion`";
+		
 		return $this->getListadoDeCreditos($persona, true, false, $producto, $otros, $SinNombre);
 	}
 	function getListadoDeCreditos($persona = false, $sinsaldo = false, $estado = false, $producto = false, $otros= "", $sin_nombre = false){
@@ -1261,6 +1344,8 @@ class cSQLListas {
 		$ByProducto	= ($producto == false OR $producto  == SYS_TODAS) ? "" : " AND (`creditos_solicitud`.`tipo_convenio` =$producto)  ";
 		$ConNombres	= ($sin_nombre == true) ? "" : " `creditos_solicitud`.`numero_socio` AS `persona`, `socios`.`nombre`, ";
 		$tituloP	= " `creditos_tipoconvenio`.`descripcion_tipoconvenio`       AS `producto`, ";
+		$extra1		= $this->mCamposExtras1;
+		
 		if($estado == 0){
 			$tituloP	= " CONCAT( `creditos_estatus`.`descripcion_estatus`, '-', 
 					`creditos_tipoconvenio`.`descripcion_tipoconvenio`)
@@ -1278,7 +1363,7 @@ class cSQLListas {
 				`creditos_solicitud`.`fecha_vencimiento`                 AS `vencimiento`,
 				`creditos_solicitud`.`monto_autorizado`                  AS `monto`,
 				`creditos_solicitud`.`saldo_actual`                      AS `saldo`
-				
+				$extra1
 				FROM
 				
 	`creditos_solicitud` `creditos_solicitud` 
@@ -1483,13 +1568,13 @@ FROM
 		
 		return $sql;
 	}
-	function getListadoDeLetrasPendientesReporteAcum($otros = "", $tasaIVA = TASA_IVA, $EsSoloInteres = false, $empresa = false, $Producto = false, $Periocidad = false){
+	function getListadoDeLetrasPendientesReporteAcum($otros = "", $tasaIVA = TASA_IVA, $EsSoloInteres = false, $empresa = false, $Producto = false, $Periocidad = false, $sucursal = ""){
 	
 		
 		$ByEmpresa		= $this->OFiltro()->CreditosPorEmpresa($empresa);
 		$ByProducto		= $this->OFiltro()->CreditosPorProducto($Producto);
 		$ByPeriocidad	= $this->OFiltro()->CreditosPorFrecuencia($Periocidad);
-		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut();
+		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut($sucursal);
 		//$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`creditos_letras_del_dia`.`ahorro`)        AS `ahorro`, " : "";
 		$wAhorro		= (CREDITO_USAR_AHORRO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
 		
@@ -1497,7 +1582,7 @@ FROM
 	`letras`.`persona`,
 	`personas`.`nombre`,
 	`letras`.`credito`,
-	
+	`creditos_solicitud`.`pagos_autorizados` AS `pagos`,
 	COUNT(`letras`.`parcialidad`)   AS `numero_con_atraso`,
 	MIN(`letras`.`fecha_de_pago`) AS `fecha_de_atraso`,
 	MAX(`letras`.`dias`)          AS `dias`,
@@ -1546,13 +1631,13 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		
 		return $sql;
 	}
-	function getListadoDeLetrasPendientesReporteAcumV101($otros = "", $tasaIVA = TASA_IVA, $EsSoloInteres = false, $empresa = false, $Producto = false, $Periocidad = false){
+	function getListadoDeLetrasPendientesReporteAcumV101($otros = "", $tasaIVA = TASA_IVA, $EsSoloInteres = false, $empresa = false, $Producto = false, $Periocidad = false, $sucursal = ""){
 		
 		
 		$ByEmpresa		= $this->OFiltro()->CreditosPorEmpresa($empresa);
 		$ByProducto		= $this->OFiltro()->CreditosPorProducto($Producto);
 		$ByPeriocidad	= $this->OFiltro()->CreditosPorFrecuencia($Periocidad);
-		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut();
+		$BySucAut		= $this->OFiltro()->VPersonasPorSucursalAut($sucursal);
 		//$wAhorro		= (MODULO_CAPTACION_ACTIVADO == true) ? " SUM(`creditos_letras_del_dia`.`ahorro`)        AS `ahorro`, " : "";
 		$wAhorro		= (CREDITO_USAR_AHORRO == true) ? " SUM(`letras`.`ahorro`)        AS `ahorro`, " : "";
 		
@@ -1560,7 +1645,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		`letras`.`persona`,
 		`personas`.`nombre`,
 		`letras`.`credito`,
-		
+		`creditos_solicitud`.`pagos_autorizados` AS `pagos`,
 		COUNT(`letras`.`parcialidad`)   AS `numero_con_atraso`,
 		MIN(`letras`.`fecha_de_pago`) AS `fecha_de_atraso`,
 		MAX(`letras`.`dias`)          AS `dias`,
@@ -1612,6 +1697,8 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		$ByPersona		= ($persona == "" OR $persona == SYS_TODAS) ? "" : " AND (`socios`.`codigo` = $persona) ";
 		$ByCredito		= ($credito == "" OR $credito == SYS_TODAS) ? "" : " AND (`letras`.`docto_afectado` =$credito) ";
 		$BySucAut		= $this->OFiltro()->VSociosPorSucursalAut();
+		$xV				= new cSQLVistas();
+		
 		
 		$sql	= "SELECT
 					`socios`.`codigo`,
@@ -1638,6 +1725,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 							`creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
 			WHERE (`letras`.`fecha_de_pago` >='$fecha_inicial' AND	`letras`.`fecha_de_pago` <= '$fecha_final') $ByPersona $ByCredito $ByProducto $BySucAut $otros 
 			ORDER BY `socios`.`nombre`,	`letras`.`docto_afectado`,	`letras`.`periodo_socio` ";
+		//setLog($sql);
 		return $sql;
 	}
 	function getListadoDeLetrasConCreditos_Simple($fecha_inicial, $fecha_final = false, $persona = "", $credito = "", $otros = "", $SinSaldo = false){
@@ -2052,7 +2140,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		`contable_movimientos`.`numeromovimiento` ";
 		return $sqlpm;	
 	}
-	function getListadoDeMvtosDeCaptacion($persona = false, $cuenta = false, $tipo = false, $subtipo = false, $FechaInicial = false, $FechaFinal = false, $operacion = false){
+	function getListadoDeMvtosDeCaptacion($persona = false, $cuenta = false, $tipo = false, $subtipo = false, $FechaInicial = false, $FechaFinal = false, $operacion = false, $mOtFiltros=""){
 		$xF			= new cFecha();
 		$ByPersona	= ( setNoMenorQueCero($persona) <= 0) ? "" : " AND (`captacion_cuentas`.`numero_socio` =$persona) ";
 		$ByCuenta	= (setNoMenorQueCero($cuenta) <= 0 OR $cuenta == DEFAULT_CUENTA_CORRIENTE ) ? "" : " AND (`captacion_cuentas`.`numero_cuenta` = $cuenta) ";
@@ -2071,7 +2159,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		FROM `captacion_cuentas` `captacion_cuentas` INNER JOIN `operaciones_mvtos` `operaciones_mvtos` ON `captacion_cuentas`.`numero_cuenta` = `operaciones_mvtos`.
 		`docto_afectado` INNER JOIN `operaciones_tipos` `operaciones_tipos` ON `operaciones_tipos`.`idoperaciones_tipos` = `operaciones_mvtos`.
 		`tipo_operacion` INNER JOIN `socios_general` `socios_general` ON `captacion_cuentas`.`numero_socio` = `socios_general`.`codigo`
-		WHERE `captacion_cuentas`.`numero_cuenta` > 0 $ByCuenta $ByPersona $BySubtipo $ByTipo $ByFecha $ByOpera
+		WHERE `captacion_cuentas`.`numero_cuenta` > 0 $ByCuenta $ByPersona $BySubtipo $ByTipo $ByFecha $ByOpera $mOtFiltros
 		GROUP BY `operaciones_mvtos`.`tipo_operacion`,	`operaciones_mvtos`.`docto_afectado` ORDER BY `operaciones_mvtos`.`tipo_operacion`,	`captacion_cuentas`.`numero_socio`,	`captacion_cuentas`.`numero_cuenta` ";
 		return $sql;
 	}
@@ -2094,6 +2182,8 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 			$from3	= " `captacion_cuentas` `captacion_cuentas` INNER JOIN `captacion_cuentastipos` `captacion_cuentastipos` ON `captacion_cuentas`.`tipo_cuenta` = `captacion_cuentastipos`.`idcaptacion_cuentastipos` INNER JOIN `socios` `socios` ON `captacion_cuentas`.`numero_socio` = `socios`.`codigo` INNER JOIN `captacion_subproductos` `captacion_subproductos` ON `captacion_cuentas`.`tipo_subproducto` = `captacion_subproductos`.`idcaptacion_subproductos`";
 			$selPers= "	`socios`.`codigo`, `socios`.`nombre`, ";
 		}
+		$TGrp		= (PERSONAS_CONTROLAR_POR_GRUPO == false) ? "" : " `captacion_cuentas`.`numero_grupo`                  AS `grupo`, ";
+
 		switch ($tipo){
 			case CAPTACION_TIPO_PLAZO:
 				$sql	= 	$ssql = "SELECT $selPers
@@ -2131,7 +2221,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 				(`captacion_cuentas`.`tasa_otorgada` * 100)         AS `tasa`,
 				`captacion_cuentas`.`saldo_cuenta`                  AS `saldo`,
 				/*`captacion_cuentas`.`numero_socio`,*/
-				`captacion_cuentas`.`numero_grupo`                  AS `grupo`,
+				$TGrp
 				`captacion_cuentas`.`numero_solicitud`              AS `credito`,
 				`captacion_cuentas`.`observacion_cuenta`            AS `observaciones`
 			FROM
@@ -2291,7 +2381,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		
 		$ByActivos 	= ($activos == true) ? " AND(`personas_documentacion`.`estatus` = 1) " : "";
 		$contrato	= setNoMenorQueCero($contrato);
-		$ByDocto	= ($contrato> FALLBACK_CLAVE_DE_DOCTO) ? " AND (`personas_documentacion`.`documento_relacionado`=$contrato) " : "";
+		$ByDocto	= ($contrato > FALLBACK_CLAVE_DE_DOCTO) ? " AND (`personas_documentacion`.`documento_relacionado`=$contrato) " : "";
 		
 		$sql	= "SELECT
 			`personas_documentacion`.`clave_de_control` AS `clave`,
@@ -2361,12 +2451,20 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		return $setSql;		
 	}
 	
-	function getListadoDeEventos($fechaInicial = "", $fechaFinal = "", $nivel = "", $codigo = "", $usuario = "", $buscar = ""){
-				
-		$ByLike		= ($buscar == "" OR $buscar == SYS_TODAS) ? "" :" AND `general_log`.`text_log` LIKE '%$buscar%' ";
+	function getListadoDeEventos($fechaInicial = "", $fechaFinal = "", $nivel = "", $codigo = "", $usuario = "", $buscar = "", $persona = false, $documento = false, $recibo = false){
+		
+		$recibo		= setNoMenorQueCero($recibo);
+		$persona	= setNoMenorQueCero($persona);
+		$documento	= setNoMenorQueCero($documento);
+		
+		$ByLike		= ($buscar == "" OR $buscar == SYS_TODAS) ? "" :" AND (`general_log`.`text_log` LIKE '%$buscar%') ";
 		$ByUsuario 	= ($usuario == "" OR $usuario == SYS_TODAS) ? "" :" AND `general_log`.`usr_log` = '$usuario' ";
 		$ByCodigo 	= ($codigo == "" OR $codigo == SYS_TODAS) ? "" :" AND `general_log`.`type_error` = '$codigo' ";
 		$ByNivel 	= ($nivel == "" OR $nivel == SYS_TODAS) ? "" :" AND (`general_error_codigos`.`type_err` = '$nivel') ";
+		$ByDocto	= ($documento > DEFAULT_CREDITO AND $documento != DEFAULT_CUENTA_CORRIENTE) ? " AND (`iddocumento`= $documento)" : "";
+		$ByPers		= ($persona > DEFAULT_SOCIO) ? "AND (`idpersona`=$persona)": "";
+		$ByRec		= ($recibo > 0) ? "AND (`idrecibo`=$recibo)" : "";
+		
 		$ByFecha	= "";
 		if($fechaInicial != "" AND $fechaFinal != ""){
 			$ByFecha		= " AND (`general_log`.`fecha_log` >='$fechaInicial') AND	(`general_log`.`fecha_log` <='$fechaFinal') ";
@@ -2388,22 +2486,64 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		INNER JOIN `general_log` `general_log`
 		ON `general_error_codigos`.`idgeneral_error_codigos` =
 		`general_log`.`type_error`
-		WHERE `idgeneral_log` > 0
-		$ByFecha 
-		$ByNivel
-		$ByCodigo
-		$ByUsuario
-		$ByLike
-ORDER BY
-	`general_log`.`fecha_log` DESC,
-	`general_log`.`hour_log`,
-	`general_log`.`type_error`
-			
-		LIMIT 0,1000
-		";
+		WHERE (`idgeneral_log` > 0 $ByFecha $ByNivel $ByCodigo $ByUsuario $ByDocto $ByPers $ByRec ) $ByLike
+		ORDER BY `general_log`.`fecha_log` DESC,	`general_log`.`hour_log`,`general_log`.`type_error` LIMIT 0,1000 ";
 		return $setSql;	
 	}
-
+	function getListadoDeEventosResumen($fechaInicial = "", $fechaFinal = "", $nivel = "", $clave = "", $usuario = ""){
+		//, $buscar = "", $persona = false, $documento = false, $recibo = false
+		$clave			= setNoMenorQueCero($clave);
+		$usuario		= setNoMenorQueCero($usuario);
+		$ByNivel 		= "AND (`general_error_codigos`.`type_err`!='developer')";
+		$ByCodigo		= "";
+		$ByUsuario		= "";
+		
+		if( $nivel !== SYS_TODAS AND $nivel !== "" ){
+			$ByNivel = " AND (`general_error_codigos`.`type_err`='$nivel') ";
+		}
+		//Codigo de error
+		if( $clave > 0 ){
+			$ByCodigo ="  AND (`general_log`.`type_error`='$clave') ";
+		}
+		
+		if($usuario > 0){
+			$ByUsuario ="  AND (`general_log`.`usr_log`='$usuario') ";
+		}
+		
+		$ByFecha	= "";
+		if($fechaInicial != "" AND $fechaFinal != ""){
+			$ByFecha		= " AND (`general_log`.`fecha_log` >='$fechaInicial') AND	(`general_log`.`fecha_log` <='$fechaFinal') ";
+		} else {
+			if($fechaFinal != ""){
+				$ByFecha	= " AND (`general_log`.`fecha_log` <='$fechaFinal') ";
+			}
+		}
+		
+		
+		$sql = "SELECT
+			`general_log`.`type_error`	AS `tipo`,
+			`general_error_codigos`.`description_error` AS `descripcion`,
+			getUserByID(`general_log`.`usr_log`) AS `usuario`,
+			COUNT(`general_log`.`idgeneral_log`) AS `eventos`
+			
+			FROM
+			`general_log` `general_log`
+			INNER JOIN `general_error_codigos` `general_error_codigos`
+			ON `general_log`.`type_error` = `general_error_codigos`.
+			`idgeneral_error_codigos`
+			
+			WHERE `idgeneral_log` > 0
+			$ByFecha
+			$ByNivel
+			$ByCodigo
+			$ByUsuario
+			GROUP BY
+			`general_log`.`type_error`,
+			`general_log`.`usr_log`
+			";
+		return $sql;
+	}
+	
 	function getListadoDeRecibosEmitidos($persona = "", $fechaInicial = false, $fechaFinal = false){
 		$ByPersona	= (setNoMenorQueCero($persona) > 0) ? " AND ( `operaciones_recibos`.`numero_socio` = $persona) " : "";
 		$ByFecha	= ($fechaInicial == false) ? "" : " AND (`operaciones_recibos`.`fecha_operacion`='$fechaInicial') ";
@@ -2625,7 +2765,8 @@ ORDER BY
 					`creditos_estatus`.*,
 					`creditos_solicitud`.`tasa_interes` AS `tasa_ordinaria_anual`,
 					`creditos_solicitud`.`tipo_autorizacion` AS `tipo_de_autorizacion`,
-					`creditos_solicitud`.`tasa_ahorro` AS `tasa_de_ahorro`
+					`creditos_solicitud`.`tasa_ahorro` AS `tasa_de_ahorro`,
+					`creditos_solicitud`.`oficial_seguimiento` AS `oficial_de_seguimiento`
 				FROM
 					`creditos_tipoconvenio` `creditos_tipoconvenio`
 						INNER JOIN `creditos_solicitud` `creditos_solicitud`
@@ -3177,7 +3318,7 @@ FROM
 			$ByPeriodos	= "";
 		}
 		$ByEstado	= ($estado > 0) ? " AND ( `creditos_solicitud`.`estatus_actual` = $estado ) " : "";
-		$NoRecha	= ($Rechazados == true) ? "" : " AND (SELECT COUNT(*) FROM `creditos_rechazados` WHERE `numero_de_credito`=`creditos_solicitud`.`numero_solicitud` ) <= 0 ";
+		$NoRecha	= ($Rechazados == true) ? "" : " AND (SELECT COUNT(*) FROM `creditos_rechazados` WHERE `creditos_rechazados`.`estatusactivo`=1 AND `numero_de_credito`=`creditos_solicitud`.`numero_solicitud` ) <= 0 ";
 		$strPer		= ($conPeriodo == true) ? "`creditos_solicitud`.`periodo_solicitudes` AS `sesion_de_credito`, `creditos_periodos`.`descripcion_periodos` AS `nombre_de_la_sesion`," : "";
 		$strEstat	= ($estado <= 0) ? ", `creditos_estatus`.`descripcion_estatus` AS	`estado_actual` " : "";
 		
@@ -3187,7 +3328,7 @@ FROM
 		$BySucAut	= $this->OFiltro()->VSociosPorSucursalAut();
 		
 		if($Rechazados == true AND $estado <= 0){
-			$strEstat	= ", IF(((SELECT COUNT(*) FROM `creditos_rechazados` WHERE `numero_de_credito`=`creditos_solicitud`.`numero_solicitud`) >0), getTrad('RECHAZADO') ,`creditos_estatus`.`tit_proceso` ) AS `estado_actual` ";
+			$strEstat	= ", IF(((SELECT COUNT(*) FROM `creditos_rechazados` WHERE `creditos_rechazados`.`estatusactivo`=1 AND `numero_de_credito`=`creditos_solicitud`.`numero_solicitud`) >0), getTrad('RECHAZADO') ,`creditos_estatus`.`tit_proceso` ) AS `estado_actual` ";
 		}
 		if($SoloDatosSol == true){
 			$ByAut	= "";
@@ -3537,8 +3678,9 @@ FROM
 		WHERE `personas_datos_colegiacion`.`clave_de_persona` > 0 $ByDia $otros";
 		return $sql;
 	}
-	function getListadoDeCargosPorProductoCred($idproducto, $formato = false){
+	function getListadoDeCargosPorProductoCred($idproducto, $formato = false, $soloActivos = false){
 		$FF	= "	`creditos_productos_costos`.`unidad_de_medida`,	`creditos_productos_costos`.`editable`";
+		$BYActivos	= ($soloActivos == true) ? " AND (`creditos_productos_costos`.`estatus`=1) " : "";
 		if($formato == true){
 			$FF	= "	getTrad(getBooleanMX(`creditos_productos_costos`.`unidad_de_medida`)) as 'es_porcentaje',
 					getTrad(getBooleanMX(`creditos_productos_costos`.`editable`)) AS 'editable' ";
@@ -3554,7 +3696,7 @@ FROM
 		ON `operaciones_tipos`.`idoperaciones_tipos` =
 		`creditos_productos_costos`.`clave_de_operacion`
 		WHERE
-		(`creditos_productos_costos`.`clave_de_producto` =$idproducto)" ;
+		(`creditos_productos_costos`.`clave_de_producto` =$idproducto) $BYActivos" ;
 		//setLog($sql);
 		return $sql;		
 	}
@@ -3607,6 +3749,45 @@ FROM
 		
 		return $sql;
 	}
+	function getListadoDeProductosCred($soloactivos = true){
+		
+		$ByAct	= ($soloactivos == true) ? " AND (`estatus`='activo') " : "";
+		
+		$sql			= "SELECT `creditos_tipoconvenio`.`idcreditos_tipoconvenio` AS `codigo`,
+		`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS `nombre`,
+		`creditos_tipoconvenio`.`nombre_corto` AS `alias`,
+		`creditos_modalidades`.`descripcion_modalidades` AS `modalidad`,
+		(`creditos_tipoconvenio`.`interes_normal` * 100) AS 'tasa_normal',
+		(`creditos_tipoconvenio`.`interes_moratorio` * 100) AS 'tasa_moratorio',
+		(`creditos_tipoconvenio`.`tasa_ahorro` * 100) AS 'porcentaje_ahorro',
+		(`creditos_tipoconvenio`.`tasa_iva` * 100) AS 'porcentaje_iva'
+		FROM `creditos_tipoconvenio` `creditos_tipoconvenio` INNER JOIN `creditos_modalidades` `creditos_modalidades`	ON `creditos_tipoconvenio`.`tipo_de_credito` =
+		`creditos_modalidades`.`idcreditos_modalidades` WHERE `idcreditos_tipoconvenio`> 0 $ByAct  ORDER BY `creditos_tipoconvenio`.`idcreditos_tipoconvenio` ";
+		return $sql;
+	}
+	function getListadoDeReglasPorProductoCred($idproducto){
+		$idproducto	= setNoMenorQueCero($idproducto);
+		$sql	= " SELECT   
+		`creditos_productos_reglas`.`idcreditos_productos_reglas` AS `clave`,
+		`creditos_productos_reglas`.`sujeto`,
+		`creditos_productos_reglas`.`producto_id` AS `producto`, 
+		`creditos_productos_reglas`.`tipo_regla` AS `tipo`,
+         `creditos_productos_reglas`.`clave_Interna`,
+         `creditos_productos_reglas`.`evoluciona`,
+         `creditos_productos_reglas`.`contador`,
+         `creditos_productos_reglas`.`num_minimo` AS `minnumero`,
+         `creditos_productos_reglas`.`num_maximo` AS `maxnumero`,
+         `creditos_productos_reglas`.`monto_min` AS `minvalor`,
+         `creditos_productos_reglas`.`monto_max` AS `maxvalor`,
+         `creditos_productos_reglas`.`tasa_min`,
+         `creditos_productos_reglas`.`tasa_max`
+
+		FROM     `creditos_productos_reglas`
+		WHERE    ( `creditos_productos_reglas`.`producto_id` = $idproducto ) ";
+		
+		return $sql;
+	}
+	
 	function getListadoDeRequisitosPorProductoCred($idproducto){
 		$idproducto	= setNoMenorQueCero($idproducto);
 		$sql	= "SELECT `creditos_productos_req`.`idcreditos_productos_req` AS `clave`,
@@ -4004,7 +4185,7 @@ FROM
 		FROM     `leasing_rentas`
 		WHERE    ( `leasing_rentas`.`credito` = $credito )
 		$ByActivos
-		ORDER BY `leasing_rentas`.`periodo` LIMIT 0,200";
+		ORDER BY `leasing_rentas`.`periodo` LIMIT 0,200 ";
 		//setLog($sql);
 		return $sql;
 	}
@@ -4054,12 +4235,30 @@ class cSQLVistas  {
 		$sql	= $this->getVistaLetras($credito, false, false, false, " AND `operaciones_mvtos`.`periodo_socio` >0 ", " total_sin_otros>0 ");
 		return $sql;
 	}
-	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $otros="", $having="", $where = ""){
+	/**
+	 * Vista de Letras
+	 * @param integer $credito
+	 * @param integer $periodo
+	 * @param boolean $par1 No definido
+	 * @param boolean $par2 No definido
+	 * @param string $where0
+	 * @param string $having
+	 * @param string $where1
+	 * @param mixed $fecha
+	 * @return string
+	 */
+	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $where0 ="", $having="", $where1 = "", $fecha = false){
 		$credito	= setNoMenorQueCero($credito);
 		$periodo	= setNoMenorQueCero($periodo);
 		$having		= ($having == "") ? "" : " HAVING $having ";
 		$ByCredito 	= ($credito <= DEFAULT_CREDITO) ?  "" : "AND `operaciones_mvtos`.`docto_afectado` = $credito";
 		$ByPeriodo	= ($periodo <=0) ? "" : " AND `operaciones_mvtos`.`periodo_socio`= $periodo "; 
+		$fechaC		= "getFechaDeCorte()";
+		if($fecha !== false){
+			$xF		= new cFecha();
+			$fecha	= $xF->getFechaISO($fecha);
+			$fechaC		= "'$fecha'";
+		}
 		
 		$sql	= "SELECT
 		
@@ -4080,29 +4279,29 @@ class cSQLVistas  {
 		SUM(IF(`tipo_operacion` = 412,`afectacion_real`,0)) AS `ahorro`,
 
 		
-		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()) ,`afectacion_real`,0)) AS `capital_exigible`,
-		SUM(IF((`tipo_operacion` = 411 AND `fecha_afectacion` < getFechaDeCorte()),`afectacion_real`,0)) AS `interes_exigible`,
-		SUM(IF((`tipo_operacion` = 413  AND `fecha_afectacion` < getFechaDeCorte()),`afectacion_real`,0)) AS `iva_exigible`,
-		SUM(IF((`tipo_operacion` = 412  AND `fecha_afectacion` < getFechaDeCorte()),`afectacion_real`,0)) AS `ahorro_exigible`,
-		SUM(IF(((`tipo_operacion` < 410 OR `tipo_operacion` > 413)  AND `fecha_afectacion` < getFechaDeCorte()) , `afectacion_real`,0)) AS `otros_exigible`,
+		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC) ,`afectacion_real`,0)) AS `capital_exigible`,
+		SUM(IF((`tipo_operacion` = 411 AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `interes_exigible`,
+		SUM(IF((`tipo_operacion` = 413  AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `iva_exigible`,
+		SUM(IF((`tipo_operacion` = 412  AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `ahorro_exigible`,
+		SUM(IF(((`tipo_operacion` < 410 OR `tipo_operacion` > 413)  AND `fecha_afectacion` < $fechaC) , `afectacion_real`,0)) AS `otros_exigible`,
 		
 		ROUND(SUM(
-		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()),
-		((`afectacion_real` * DATEDIFF(getFechaDeCorte(), `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
 		, 0 )),2) AS `interes_moratorio`,
 		
 		ROUND(SUM(
-		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()),
-		((`afectacion_real` * DATEDIFF(getFechaDeCorte(), `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
 		, 0 )),2) AS `mora`,
 		
 		ROUND((SUM(
-		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()),
-		((`afectacion_real` * DATEDIFF(getFechaDeCorte(), `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
 		, 0 ))*getTasaIVAGeneral()),2) AS `iva_moratorio`,
 		
-		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()),
-		(DATEDIFF(getFechaDeCorte(), `fecha_afectacion`))
+		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		(DATEDIFF($fechaC, `fecha_afectacion`))
 		, 0 )) AS `dias`,
 		
 		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413), `afectacion_real`,0)) AS `otros`,
@@ -4110,16 +4309,145 @@ class cSQLVistas  {
 		ROUND(SUM((`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)),2) AS `letra`,
 		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),0, `afectacion_real`)) AS `total_sin_otros`,
 		MAX(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),`tipo_operacion`,0)) AS `clave_otros`,
-		ROUND( (SUM((`afectacion_real` * `afectacion`)) + SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < getFechaDeCorte()),((`afectacion_real` * DATEDIFF(getFechaDeCorte(), `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres()), 0 ))*(1+getTasaIVAGeneral()) ),2) AS `neto`
+		ROUND( (SUM((`afectacion_real` * `afectacion`)) + SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres()), 0 ))*(1+getTasaIVAGeneral()) ),2) AS `neto`
 
 		FROM `operaciones_mvtos` `operaciones_mvtos` INNER JOIN `creditos_solicitud` `creditos_solicitud` ON `operaciones_mvtos`.`docto_afectado` = `creditos_solicitud`.`numero_solicitud` INNER JOIN `eacp_config_bases_de_integracion_miembros` `eacp_config_bases_de_integracion_miembros` ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro`
 		WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2601)
-		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146 $ByCredito $ByPeriodo $otros
-		$where
+		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146 $ByCredito $ByPeriodo $where0
+		$where1
 		GROUP BY `operaciones_mvtos`.`docto_afectado`,`operaciones_mvtos`.`periodo_socio`
 		$having
-		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio`";
+		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio` ";
 		
+		//setLog($sql);
+		return $sql;
+	}
+	function getVistaLetrasPorCredito($credito=false, $periodo=false, $fecha = false, $par2=false, $where0 ="", $having="", $where1 = ""){
+		$credito	= setNoMenorQueCero($credito);
+		$periodo	= setNoMenorQueCero($periodo);
+		$having		= ($having == "") ? "" : " HAVING $having ";
+		$ByCredito 	= ($credito <= DEFAULT_CREDITO) ?  "" : "AND `operaciones_mvtos`.`docto_afectado` = $credito";
+		$ByPeriodo	= ($periodo <=0) ? "" : " AND `operaciones_mvtos`.`periodo_socio`= $periodo ";
+		$fechaC		= "getFechaDeCorte()";
+		if($fecha !== false){
+			$xF		= new cFecha();
+			$fecha	= $xF->getFechaISO($fecha);
+			$fechaC		= "'$fecha'";
+		}
+		//,`operaciones_mvtos`.`periodo_socio`
+		$sql	= "SELECT
+		
+		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` AS `codigo_de_base`,
+		`socio_afectado`                         AS `socio_afectado`,
+		
+		`socio_afectado`                         AS `persona`,
+		`docto_afectado`                         AS `credito`,
+		`periodo_socio`                          AS `parcialidad`,
+		
+		`docto_afectado`                         AS `docto_afectado`,
+
+		MIN(`periodo_socio`)                          AS `letra_minima`,
+		MAX(`periodo_socio`)                          AS `letra_max`,
+		SUM(IF((`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)>0,1,0)) AS `letra_pends`, 
+		MIN(`fecha_afectacion`)                  AS `fecha_de_pago`,
+		MAX(`fecha_afectacion`)                   AS `fecha_de_vencimiento`,
+		SUM(IF(`tipo_operacion` = 410,`afectacion_real`,0)) AS `capital`,
+		SUM(IF(`tipo_operacion` = 411,`afectacion_real`,0)) AS `interes`,
+		SUM(IF(`tipo_operacion` = 413,`afectacion_real`,0)) AS `iva`,
+		SUM(IF(`tipo_operacion` = 412,`afectacion_real`,0)) AS `ahorro`,
+		
+		
+		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC) ,`afectacion_real`,0)) AS `capital_exigible`,
+		SUM(IF((`tipo_operacion` = 411 AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `interes_exigible`,
+		SUM(IF((`tipo_operacion` = 413  AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `iva_exigible`,
+		SUM(IF((`tipo_operacion` = 412  AND `fecha_afectacion` < $fechaC),`afectacion_real`,0)) AS `ahorro_exigible`,
+		SUM(IF(((`tipo_operacion` < 410 OR `tipo_operacion` > 413)  AND `fecha_afectacion` < $fechaC) , `afectacion_real`,0)) AS `otros_exigible`,
+		
+		ROUND(SUM(
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		, 0 )),2) AS `interes_moratorio`,
+		
+		ROUND(SUM(
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		, 0 )),2) AS `mora`,
+		
+		ROUND((SUM(
+		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		, 0 ))*getTasaIVAGeneral()),2) AS `iva_moratorio`,
+		
+		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		(DATEDIFF($fechaC, `fecha_afectacion`))
+		, 0 )) AS `dias`,
+		
+		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413), `afectacion_real`,0)) AS `otros`,
+		
+		ROUND(SUM((`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)),2) AS `letra`,
+		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),0, `afectacion_real`)) AS `total_sin_otros`,
+		MAX(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),`tipo_operacion`,0)) AS `clave_otros`,
+		ROUND( (SUM((`afectacion_real` * `afectacion`)) + SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres()), 0 ))*(1+getTasaIVAGeneral()) ),2) AS `neto`
+		
+		FROM `operaciones_mvtos` `operaciones_mvtos` INNER JOIN `creditos_solicitud` `creditos_solicitud` ON `operaciones_mvtos`.`docto_afectado` = `creditos_solicitud`.`numero_solicitud` INNER JOIN `eacp_config_bases_de_integracion_miembros` `eacp_config_bases_de_integracion_miembros` ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro`
+		WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2601)
+		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146 $ByCredito $ByPeriodo $where0
+		$where1
+		GROUP BY `operaciones_mvtos`.`docto_afectado`
+		$having
+		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio` ";
+		
+		//setLog($sql);
+		return $sql;
+	}
+	function getVistaLetrasConNombre($fecha, $persona = "", $credito = "", $otros = "", $producto = ""){
+		$xFil		= new cSQLFiltros();
+		$xRuls		= new cReglaDeNegocio();
+		$xF			= new cFecha();
+		$fecha		= $xF->getFechaISO($fecha);
+		$use360Let	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_360_COMOLETRA);
+
+		$ByProducto	= $xFil->CreditosPorProducto($producto);
+		$ByCredito	= $xFil->CreditoPorClave($credito);
+		$ByPersona	= $xFil->CreditoPorPersona($persona);
+		
+		$sql1		= " UNION SELECT `socios`.`codigo`, CONCAT(`socios`.`nombre`, '[x]') AS `nombre`, `creditos_solicitud`.`numero_solicitud` AS `credito`,	`creditos_solicitud`.`numero_pagos` AS `parcialidad`,
+	CONCAT(DATE_FORMAT('$fecha', '%Y-%m-'), DATE_FORMAT(fecha_ministracion, '%d')) AS `fecha_de_pago`, `creditos_solicitud`.`saldo_actual` AS `capital`,
+	setNoMenorCero(`creditos_solicitud`.`interes_normal_devengado` - `creditos_solicitud`.`interes_normal_pagado`) AS `interes`,
+	setNoMenorCero(`creditos_solicitud`.`iva_interes`) AS `iva`,	0 AS `ahorro`,
+	setNoMenorCero(`creditos_solicitud`.`gastoscbza` - `creditos_solicitud`.`bonificaciones` +  `creditos_solicitud`.`iva_otros` ) AS `otros`,
+	(`creditos_solicitud`.`saldo_actual` + setNoMenorCero(`creditos_solicitud`.`interes_normal_devengado` - `creditos_solicitud`.`interes_normal_pagado`) + setNoMenorCero(`creditos_solicitud`.`iva_interes`) + setNoMenorCero(`creditos_solicitud`.`gastoscbza` - `creditos_solicitud`.`bonificaciones` +  `creditos_solicitud`.`iva_otros`)) AS `letra`
+	FROM     `creditos_solicitud`
+	INNER JOIN `socios`  ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo`
+	INNER JOIN `creditos_a_final_de_plazo`  ON `creditos_solicitud`.`numero_solicitud` = `creditos_a_final_de_plazo`.`credito`
+	WHERE    ( `creditos_solicitud`.`saldo_actual` >1 )	AND (DATE_FORMAT(`fecha_ministracion`, '%d') = DATE_FORMAT('$fecha', '%d'))";
+		$sql		= "SELECT
+		`socio_afectado`                         AS `codigo`,
+		`socios`.`nombre`,
+		`docto_afectado`                         AS `credito`,
+		`periodo_socio`                          AS `parcialidad`,
+		MIN(`fecha_afectacion`)                  AS `fecha_de_pago`,
+		SUM(IF(`tipo_operacion` = 410,`afectacion_real`,0)) AS `capital`,
+		SUM(IF(`tipo_operacion` = 411,`afectacion_real`,0)) AS `interes`,
+		SUM(IF(`tipo_operacion` = 413,`afectacion_real`,0)) AS `iva`,
+		SUM(IF(`tipo_operacion` = 412,`afectacion_real`,0)) AS `ahorro`,
+		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413), `afectacion_real`,0)) AS `otros`,
+		ROUND(SUM((`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)),2) AS `letra`
+	FROM     `creditos_solicitud` 
+	INNER JOIN `socios`  ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo` 
+	INNER JOIN `creditos_tipoconvenio`  ON `creditos_solicitud`.`tipo_convenio` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio` 
+	INNER JOIN `operaciones_mvtos`  ON `creditos_solicitud`.`numero_solicitud` = `operaciones_mvtos`.`docto_afectado` 
+	INNER JOIN `eacp_config_bases_de_integracion_miembros`  ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro` 
+
+		WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2601)
+		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146   
+		AND `fecha_afectacion`>='$fecha' AND  `fecha_afectacion` <='$fecha'
+		AND (`creditos_solicitud`.`saldo_actual`> 1)  AND (`creditos_tipoconvenio`.`omitir_seguimiento` =0) $ByCredito $ByPersona $ByProducto
+		GROUP BY `operaciones_mvtos`.`docto_afectado`,`operaciones_mvtos`.`periodo_socio`
+		HAVING letra>0";
+		if($use360Let == true){
+			$sql	.= $sql1;
+		}
 		//setLog($sql);
 		return $sql;
 	}
@@ -4699,7 +5027,18 @@ class cSQLTabla {
 			/*case "socios_viviendatipo":
 				$mObj				= new cSocios_viviendatipo();
 				break;*/
-				
+			case "personas_xclasificacion":
+				$mObj	= new cPersonas_xclasificacion();
+				$this->mCampoDesc = $mObj->descripcion_xclasificacion()->get();
+				break;
+			case "personas_yclasificacion":
+				$mObj	= new cPersonas_yclasificacion();
+				$this->mCampoDesc = $mObj->descripcion_yclasificacion()->get();
+				break;
+			case "personas_zclasificacion":
+				$mObj	= new cPersonas_zclasificacion();
+				$this->mCampoDesc = $mObj->descripcion_zclasificacion()->get();
+				break;
 			case "personas_documentacion":
 				$mObj	= new cPersonas_documentacion();
 				$this->mCampoDesc = $mObj->archivo_de_documento()->get();
@@ -4786,8 +5125,13 @@ class cSQLTabla {
 			case "aml_personas_descartadas":
 				$mObj	= new cAml_personas_descartadas();
 				break;
+			case "creditos_productos_reglas":
+				$mObj	= new cCreditos_productos_reglas();
+				$this->mCampoDesc = $mObj->CLAVE_INTERNA;
+				break;
 			case TCREDITOS_PRODUCTOS_OTROS_PARAMETROS:
 				$mObj	= new cCreditos_productos_otros_parametros();
+				$this->mCampoDesc = $mObj->CLAVE_DEL_PARAMETRO;
 				break;
 			case "creditos_lineas":
 				$mObj	= new cCreditos_lineas();
@@ -4795,7 +5139,11 @@ class cSQLTabla {
 				$mObj	= new cCreditos_otros_datos();
 				$this->mCampoDesc = $mObj->clave_de_parametro()->get();
 				break;
-
+			case "creditos_tipoconvenio":
+				$mObj	= new cCreditos_tipoconvenio();
+				$this->mCampoDesc = $mObj->DESCRIPCION_TIPOCONVENIO;
+				
+				break;
 			case "creditos_productos_costos":
 				$mObj	= new cCreditos_productos_costos();
 				break;
@@ -4832,7 +5180,10 @@ class cSQLTabla {
 				$mObj	= new cCreditos_datos_originacion();
 				
 				break;
-
+			case "creditos_periocidadpagos":
+				$mObj	= new cCreditos_periocidadpagos();
+				$this->mCampoDesc	= $mObj->DESCRIPCION_PERIOCIDADPAGOS;
+				break;
 
 
 			case "creditos_preclientes":
@@ -5018,6 +5369,27 @@ class cSQLTabla {
 				$mObj				= new cSistema_permisos();
 				$this->mCampoDesc 	= $mObj->descripcion()->get();
 				break;
+			case "general_menu":
+				$mObj				= new cGeneral_menu();
+				$this->mCampoDesc 	= $mObj->MENU_TITLE;
+				break;
+			case "general_utilerias":
+				$mObj				= new cGeneral_utilerias();
+				$this->mCampoDesc 	= $mObj->NOMBRE_UTILERIAS;
+				break;
+			case "general_formulas":
+				$mObj				= new cGeneral_formulas();
+				$this->mCampoDesc 	= $mObj->APLICADO_A;
+				
+				break;
+			case "sistema_lenguaje":
+				$mObj				= new cSistema_lenguaje();
+				$this->mCampoDesc 	= $mObj->TRADUCCION;
+				break;
+			case "sistema_programacion_de_avisos":
+				$mObj				= new cSistema_programacion_de_avisos();
+				$this->mCampoDesc 	= $mObj->NOMBRE_DEL_AVISO;
+				break;
 			default:
 				$mObj	= null;
 				break;
@@ -5025,6 +5397,7 @@ class cSQLTabla {
 		if($mObj != null) { $this->mClavePrincipal	= $mObj->getKey(); }
 		return $mObj;
 	}
+
 }
 class cSysTablas {
 	public $AML_ALERTS 	 = "aml_alerts";
@@ -5368,8 +5741,22 @@ class cSystemPatch {
 	function setForceVersion($id){ 
 		$this->mForcedVersion = $id; 
 	}
+	function setAplicarCodigo(){
+		$archivo_src	= "htdocs.tar.gz";
+		$FKeySRC		= "a8xdz22lmynq6b4";
+		$xSys			= new cSystemTask();
+		//Archivo Scian
+		//$archivo_scian	= "";
+		
+		
+		if(is_file(PATH_TMP . $archivo_src)){ unlink(PATH_TMP . $archivo_src);	}
+		//$apVista		= $xSys->runcmd("wget --no-check-certificate -O " . PATH_TMP . $archivo_src . " https://www.dropbox.com/s/$FKeySRC/$archivo_src?dl=1");
+		$res			= false;
+		return $res;
+	}
 	function patch($force = false, $version_inicial = false, $soloIdioma = false){
 		$xCache		= new cCache();
+		$xLog		= new cCoreLog();
 		$xCache->clean(false);
 		
 		$ql			= new MQL();
@@ -5405,7 +5792,7 @@ class cSystemPatch {
 			$sql		= json_decode($usql, true);
 			
 			//setLog(URL_UPDATES . "install/updates/sql.php?version=$dbversion");
-			$this->mMessages .= "URL\t" . URL_UPDATES . "install/updates/sql.php?version=$localver" . "\r\n";
+			$xLog->add("URL\t" . URL_UPDATES . "install/updates/sql.php?version=$localver" . "\r\n");
 			
 			$upt		= false;	
 			if(is_array($lang)){
@@ -5438,16 +5825,16 @@ class cSystemPatch {
 			if($soloIdioma == false){
 				foreach ($sql as $version => $patchs){
 					if($current <= intval($version) ){
-						$this->mMessages .= "WARN\t===========PATCH $version\r\n";
+						$xLog->add("WARN\t===========PATCH $version\r\n");
 						foreach ($patchs as $idx => $content){
 							$ql->setRawQuery($content);
 							$content = preg_replace('!\s+!', ' ', $content);
-							$this->mMessages .= "$idx\t====$content====\r\n";
+							$xLog->add("$idx\t====$content====\r\n");
 							$upt	= true;
 							//syslog(E_ERROR, $content);
 						}
 					} else {
-						$this->mMessages .= "WARN\tDescartado por ser $version de $current\r\n";
+						$xLog->add("WARN\tDescartado por ser $version de $current\r\n");
 					}
 				}
 				//Obtener el codigo y parcharlo
@@ -5467,23 +5854,27 @@ class cSystemPatch {
 			//Actualizar vistas y functions
 			if($soloIdioma == false){
 				if($this->setAplicarScripts() == false){
-					$this->mMessages .= "ERROR\tAl Aplicar Vistas y funciones...\r\n";
+					$xLog->add("ERROR\tAl Aplicar Vistas y funciones...\r\n");
 				} else {
-					$this->mMessages .= "OK\tSe aplicaron Vistas y funciones...\r\n";
+					$xLog->add("OK\tSe aplicaron Vistas y funciones...\r\n");
 				}
 			} else {
 			    $upt     = false;
 			}
 			//ejecutar Mensajes
-			$this->mMessages	.= $ql->getMessages(OUT_TXT);		
+			$xLog->add($ql->getMessages(OUT_TXT));		
 		
 			if($upt == true){		/*Actualiza la configuracion*/			
 				$xConf->set("safe_osms_database_version", $dbversion);		
 			}
 		} else {
-			$this->mMessages	.= "WARN\tSistema no Actualizado\r\n";
+			$xLog->add("WARN\tSistema no Actualizado\r\n");
 		}
+		$this->mMessages	.= $xLog->getMessages();
 		
+		$xF			= new cFileLog();
+		$xF->setWrite($xLog->getMessages());
+		$xF->setClose();
 		
 		return $this->mMessages;
 	}
@@ -5547,6 +5938,7 @@ class cSystemPatch {
 		$archivo_funcs	= "xx.functions.sql";
 		$FKeyVistas		= "vvophctb4lqlih9";
 		$FKeyFuncts		= "ehyutpzihekm7uy";
+		$xSys			= new cSystemTask();
 		//Archivo Scian
 		//$archivo_scian	= "";
 		
@@ -5554,10 +5946,10 @@ class cSystemPatch {
 		if(is_file(PATH_TMP . $archivo_vistas)){ unlink(PATH_TMP . $archivo_vistas);	}
 		if(is_file(PATH_TMP . $archivo_funcs)){	unlink(PATH_TMP . $archivo_funcs);	}
 		
-		$apVista		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_vistas . " https://www.dropbox.com/s/$FKeyVistas/$archivo_vistas?dl=1");
-		$apFuncs		= exec("wget --no-check-certificate -O " . PATH_TMP . $archivo_funcs . " https://www.dropbox.com/s/$FKeyFuncts/$archivo_funcs?dl=1");
-		$res			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_vistas);
-		$res 			= exec("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_funcs);
+		$apVista		= $xSys->runcmd("wget --no-check-certificate -O " . PATH_TMP . $archivo_vistas . " https://www.dropbox.com/s/$FKeyVistas/$archivo_vistas?dl=1");
+		$apFuncs		= $xSys->runcmd("wget --no-check-certificate -O " . PATH_TMP . $archivo_funcs . " https://www.dropbox.com/s/$FKeyFuncts/$archivo_funcs?dl=1");
+		$res			= $xSys->runcmd("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_vistas);
+		$res 			= $xSys->runcmd("mysql --host=localhost --user=" .  USR_DB . " --password=" . PWD_DB ." --force --database=" . MY_DB_IN . " < " . PATH_TMP . $archivo_funcs);
 		return $res;
 	}
 	function getMessages($put = OUT_TXT){ $xH	 = new cHObject(); return $xH->Out($this->mMessages, $put);	}
@@ -5709,6 +6101,7 @@ class MQL {
 	private $mSql		= "";
 	private $mInsertID	= false;
 	private $mNumberRow	= 0;
+	private $mAffectedRows = 0;
 	private $mDebug		= false;
 	private $mConTitulos= false;
 	private $mTitulos	= array(); 
@@ -5966,6 +6359,7 @@ class MQL {
 		return $data;
 	}
 	function getNumberOfRows(){ return $this->mNumberRow; }
+	function getAffectedRows(){ return $this->mAffectedRows; }
 	function setConTitulos(){ $this->mConTitulos = true; }
 	function getTitulos(){ return $this->mTitulos; }
 	function getDataRow($sql){
@@ -6029,6 +6423,7 @@ class MQL {
 		$res				= true;
 		$cnn				= $this->connect();
 		$rs					= $cnn->query($this->mSql);
+		$this->mAffectedRows = 0;
 		if($rs === false){
 			if($this->mDebug == true){
 				$this->mMessages = "ERROR[" . $cnn->error . "] " . $this->mSql . "\r\n";
@@ -6037,7 +6432,10 @@ class MQL {
 			$res			= false;
 		} else {
 			if(isset($cnn->insert_id)){
-				$this->mInsertID	= $cnn->insert_id;
+				$this->mInsertID		= $cnn->insert_id;
+			}
+			if(isset($cnn->affected_rows)){
+				$this->mAffectedRows 	= $cnn->affected_rows;
 			}
 			/*try{
 				$rs->free();
@@ -6436,14 +6834,15 @@ class MQLHtml {
 	function log(){ return $this->mMessages; }
 }
 class MQLService {
-	private $mSQL		= "";
-	private $mAction	= ""; //select insert update
-	private $mKey		= "kouko-kaga-123";
-	private $mError		= array("code" => 0, "msg" => "");
-	private $mMessages	= "";
-	public $JTABLE		= "jtable";
-	public $XPLAIN		= "xplain";
-	private $mDebug		= false;
+	private $mSQL			= "";
+	private $mAction		= ""; //select insert update
+	private $mKey			= "kouko-kaga-123";
+	private $mError			= array("code" => 0, "msg" => "");
+	private $mMessages		= "";
+	public $JTABLE			= "jtable";
+	public $XPLAIN			= "xplain";
+	private $mDebug			= false;
+	private $mNoDecryptReq	= false;
 	
 	function __construct($action, $sql){
 		$this->mAction	= $action;
@@ -6557,6 +6956,7 @@ $jTableResult['Records'] = $rows;
 		$content 	= $xA->decrypt($content, $this->mKey, 256);
 		return $content;
 	}
+	
 	function checkCTX($ctx){
 		$rs		= ($ctx == $this->getCTX()) ? true : false;
 		if($rs == false) { $this->mError = array("code" => 1, "msg" => "No autenticado"); }
@@ -6570,20 +6970,30 @@ $jTableResult['Records'] = $rows;
 		return  md5("|" . $usr . "|" . $date . "|" . $ip);
 	}
 	function getError(){ return json_encode($this->mError);	}
-
+	//No desencriptar la respuesta
+	function setNoDecryptReq(){ $this->mNoEncryptReq = true; }
 	function getService($url){
 		$obj		= null;
 		$req 		= $this->getRequest($url);// file_get_contents($url);
 		if(!$req){
 			setLog("Error al procesar la url : $url");
 		} else {
-			$req		= $this->getDecryptData($req);
+			if($this->mNoEncryptReq == false){
+				$req		= $this->getDecryptData($req);
+			}
 			$obj		= json_decode($req, true);
-			/*if(!$obj){
-
+			
+			if(!$obj){
+				
 			} else {
-
-			}*/
+				if(is_array($obj)){
+					
+					if(isset($obj["message"])){
+						$this->mMessages .= $obj["message"];
+					}
+				}
+			}
+			/**/
 			/*	str	= base64.decode(str);
 			 str	= Aes.Ctr.decrypt(str, CloudConfig.apiKey, 256)
 			*/
@@ -6596,6 +7006,7 @@ $jTableResult['Records'] = $rows;
 		}
 		return $obj;
 	}
+	function getMessages(){ return $this->mMessages; }
 	function getRequest($url){
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL,$url);

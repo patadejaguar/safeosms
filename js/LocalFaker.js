@@ -32,14 +32,50 @@ LocalFaker.prototype.run = function(frm){
 			self.setNuevaVivienda();
 			break;
 		case "id-frmregistrogrupos":
-			
 			self.setNuevoGrupo();
-			
-			break;		
+			break;
+		case "id-frmcreditos_lineas":
+			self.setNuevaLinea();
+			break;
 		default:
 			alert("No hay Prueba para este Formulario");
 			break;
 	}
+}
+LocalFaker.prototype.setNuevaLinea	= function(){
+	var fa	= $("#fecha_de_alta").val();
+	
+	var xF	= new FechaGen();
+	var ff	= xF.setSumarDias(xF.get(fa), (365+365));
+	var self= this;
+	
+	$("#idsocio").val();
+		
+
+	$("#fecha_de_vencimiento").val(ff);
+
+	$("#oficial_de_credito").val( self.rndSel("oficial_de_credito") );
+	var tt	= self.tasa();
+	$("#tasa_ts").val( tt ); $("#tasa").val( tt );
+	
+	$("#periocidad").val( self.rndSel("periocidad") );
+	
+	
+	
+	
+	var pp			= self.prestamo();
+	pp				= pp * 5;
+	var pp2			= pp * 2;
+	
+	$("#monto_linea_mny").val(pp);
+	$("#monto_linea").val(pp);
+	
+	$("#monto_hipoteca").val(pp2);
+	$("#monto_hipoteca_mny").val(pp2);
+	
+	$("#numerohipoteca").val( faker.internet.mac() );
+	$("#observaciones").val( self.observaciones() );
+	//$("#idcreditos_lineas").val(); 
 }
 LocalFaker.prototype.setNuevaVivienda	= function(){
 	var self	= this;
@@ -157,14 +193,27 @@ LocalFaker.prototype.rnd = function(arr){
 }
 LocalFaker.prototype.rndSel = function(id){
 	var self		= this;
-	var x 			= document.getElementById(id); 
-	var optionVal 	= new Array();
-	for (i = 0; i < x.length; i++) { 
-		optionVal.push(x.options[i].value);
+	var rnx			= false;
+	
+	if(document.getElementById(id)){
+		
+		var x 			= document.getElementById(id);
+		if( $(x).is("selected") ){
+			var optionVal 	= new Array();
+			for (i = 0; i < x.length; i++) { 
+				optionVal.push(x.options[i].value);
+			}
+			var rnx			= self.rnd(optionVal);
+		} else {
+			var rnx 		= $(x).val();
+		}
+
 	}
-	var rand		= self.rnd(optionVal);
-	//console.log(rand);
-	return rand;
+	
+	console.log("El Control " + id + " devuelve " + rnx);
+	
+	return rnx;
+
 }
 LocalFaker.prototype.nombreEntero	= function(){
 	return faker.fake("{{name.lastName}} {{name.lastName}} {{name.firstName}}");
@@ -205,6 +254,9 @@ LocalFaker.prototype.tasa	= function(){
 	//var pp2	= Math.floor((Math.random() * 1000) + 100);
 	//pp		= pp * pp2;
 	return pp;
+}
+LocalFaker.prototype.observaciones = function(){
+	return faker.random.words();
 }
 LocalFaker.prototype.setNuevaCotizacion = function(){
 	var self	= this;

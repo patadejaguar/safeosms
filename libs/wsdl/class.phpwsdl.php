@@ -1085,7 +1085,7 @@ class PhpWsdl{
 	/**
 	 * Interpret the @service keyword
 	 * 
-	 * @param $data The parser data
+	 * @param mixed $data The parser data
 	 * @return boolean Response
 	 */
 	public static function InterpretService($data){

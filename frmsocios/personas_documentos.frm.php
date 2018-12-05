@@ -5,35 +5,48 @@
  * @package
  */
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.CARGA DE DOCUMENTO", HP_FORM);
-$xDoc		= new cDocumentos();
-$xF			= new cFecha();
-$xLi		= new cSQLListas();
-$xPDoc		= new cPersonasDocumentacion();
+$xHP			= new cHPage("TR.LISTA DOCUMENTOS", HP_FORM);
+$xQL			= new MQL();
+$xLi			= new cSQLListas();
+$xF				= new cFecha();
+$xDic			= new cHDicccionarioDeTablas();
+$xRuls			= new cReglaDeNegocio();
+$useRequisitos	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_LISTA_REQUISITOS);
 
-$DDATA		= $_REQUEST;
-//$persona	= ( isset($DDATA["persona"]) ) ? $DDATA["persona"] : DEFAULT_SOCIO;
-//$action		= ( isset($DDATA["action"]) ) ? $DDATA["action"] : SYS_CERO;
-
+//$jxc 		= new TinyAjax();
+//$tab = new TinyAjaxBehavior();
+//$tab -> add(TabSetValue::getBehavior("idide", $x));
+//return $tab -> getString();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
-$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);$action	= strtolower($action);
-$observaciones	= parametro("idobservaciones"); $observaciones	= parametro("observaciones", $observaciones);
-
-$idcontrato		= parametro("idcontrato", 0, MQL_INT);
-$tipodedocto	= parametro("idtipodedocto", 0, MQL_INT); $tipodedocto	= parametro("tipo", $tipodedocto, MQL_INT);
-
 $credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);$action	= strtolower($action);
+$monto			= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$observaciones	= parametro("idobservaciones"); $observaciones	= parametro("observaciones", $observaciones);
+
+$xHP->addJTableSupport();
+$xHP->init();
+
+
+//$ByType			= "";
 
 if($persona<= DEFAULT_SOCIO AND $credito> DEFAULT_CREDITO){
 	$xCred		= new cCredito($credito);
@@ -43,124 +56,108 @@ if($persona<= DEFAULT_SOCIO AND $credito> DEFAULT_CREDITO){
 	}
 }
 
-//$jxc = new TinyAjax();
-//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
-//$jxc ->process();
 
-echo $xHP->getHeader();
 
-//$jsb		= new jsBasicForm("frmdocumentos");
-//$jxc ->drawJavaScript(false, true);
 
-$ByType			= "";
-echo $xHP->setBodyinit();
-if($persona != DEFAULT_SOCIO){
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+$xFRM->addCerrar();
+
+if($persona > DEFAULT_SOCIO){
 	$xSoc	= new cSocio($persona);
 	$xSoc->init();
-	$ByType	= ($xSoc->getEsPersonaFisica() == true) ? BASE_DOCTOS_PERSONAS_FISICAS : BASE_DOCTOS_PERSONAS_MORALES;
-}
-
-
-$xFRM	= new cHForm("frmfirmas", "personas_documentos.frm.php?action=" . SYS_UNO . "&persona=$persona");
-$xFRM->setEnc("multipart/form-data");
-$xFRM->setTitle($xHP->getTitle());
-
-$xBtn	= new cHButton();
-$xTxt	= new cHText();
-$xTxt2	= new cHText();
-$xTxtF	= new cHText();
-$xSel	= new cHSelect();
-$xImg	= new cHImg();
-
-$xFRM->setNoAcordion();
-$xFRM->setTitle($xHP->getTitle());
-
-if($action == SYS_NINGUNO){
-	$xFRM->addSeccion("iddivar", "TR.ARCHIVO");
-	$xTxtF->setDivClass("");
-	//$xTxtF->setProperty("class", "")
-	if($tipodedocto == $xPDoc->TIPO_FOTO){
-		$xFRM->OFileImages("idnuevoarchivo","", "");
-	} else {
-		$xFRM->OFileDoctos("idnuevoarchivo","", "");
-	}
-	//accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-	$itemsPDF	= count($xDoc->FTPListFiles("", ".pdf"));
-	if($itemsPDF > 0){
-		$xFRM->OText("nombrearchivo", "", "TR.Nombre del Archivo", true, $xImg->get24("common/search.png", " onclick='jsGetDocto()' "));
-	} else {
-		$xFRM->OHidden("nombrearchivo", "");
-	}
-	$xFRM->endSeccion();
+	//$ByType	= ($xSoc->getEsPersonaFisica() == true) ? BASE_DOCTOS_PERSONAS_FISICAS : BASE_DOCTOS_PERSONAS_MORALES;
+	//$xSelTD	= $xSel->getTiposDeDoctosPersonalesArch("", $ByType, $xSoc->getClaveDePersona());
 	
-	$xFRM->addSeccion("iddotros", "TR.DATOS");
-	if($tipodedocto == $xPDoc->TIPO_FOTO){
-		$xFRM->OHidden("idtipodedocto", $tipodedocto);
-		$xFRM->OHidden("idfechacarga", false);
-		$xFRM->OHidden("idnumeropagina", 0);
-		$xFRM->OHidden("idcontrato",0);
-		$xFRM->setTitle($xFRM->getT("TR.FOTOGRAFIA"));
-	} else {
-		$xFRM->addHElem( $xSel->getTiposDeDoctosPersonales("", $ByType, $xSoc->getClaveDePersona())->get(true) );
-		$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE_EMISION");
-		$xFRM->OText_13("idnumeropagina", 0, "TR.PAGINA");
+/* ===========        GRID JS        ============*/
 
-		if($idcontrato>0){
-			$xFRM->OHidden("idcontrato", $idcontrato);
-			$xFRM->addTag($xFRM->getT("TR.CONTRATO") . " : $idcontrato");
-		} else {
-			$xSelCP		= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
-			$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
-			$xFRM->addHElem($xSelCP->get(true));
-		}
-	}
+$xHG    = new cHGrid("iddivlstdoctos",$xHP->getTitle());
 
-	//$xFRM->ODate("idfechavencimiento", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
-	$xFRM->addObservaciones();
-	$xFRM->addGuardar();
-	$xFRM->endSeccion();
-	
+if($xSoc->getEsPersonaFisica() == true){
+	$ByTipo	= " AND ((`personas_documentacion_tipos`.`clasificacion` ='IP') OR (`personas_documentacion_tipos`.`clasificacion` ='DG')) ";
 } else {
-	$xFRM->addCerrar("", 3);
-	$nombrearchivo	= parametro("nombrearchivo", "", MQL_RAW);
-	//$observaciones	= (isset($DDATA["idobservaciones"]) ) ? $DDATA["idobservaciones"] : "";
-	//$tipodedocto	= (isset($DDATA["idtipodedocto"]) ) ? $DDATA["idtipodedocto"] : "";
-	$pagina			= parametro("idnumeropagina", "");
-	$archivonuevo	= (isset($_FILES["idnuevoarchivo"])) ? $_FILES["idnuevoarchivo"] : null;
-	$fechacarga		= parametro("idfechacarga", false, MQL_DATE);
-	$fechavenc		= false; //parametro("idfechavencimiento", $xF->getFechaMaximaOperativa(), MQL_DATE);
-	
-	if(isset($_FILES["idnuevoarchivo"])){
-		if(trim($_FILES["idnuevoarchivo"]["name"]) == ""){ $archivoenviado = null; }
-	}
-	$xSoc		= new cSocio($persona);
-	if($xSoc->init() == true){
-	//if($doc1 !== false){
-		$ready		= $xSoc->setGuardarDocumento($tipodedocto, $nombrearchivo, $pagina, $observaciones, $fechacarga, $archivonuevo, $fechavenc, $idcontrato);
-		if($ready == true){
-			$xFRM->addAvisoRegistroOK($xSoc->getMessages());
-		} else {
-			$xFRM->addAvisoRegistroError($xSoc->getMessages());
-		}
-	}
-	//if(MODO_DEBUG == true){ $xFRM->addLog($xSoc->getMessages(OUT_TXT) ); }
+	$ByTipo	= " AND ((`personas_documentacion_tipos`.`clasificacion` ='IPM') OR (`personas_documentacion_tipos`.`clasificacion` ='DG')) ";
 }
+
+$xHG->setSQL("SELECT `clave_de_control`, `nombre_del_documento`, IF(getEsDoctoEntregadoByP($persona,`clave_de_control`)=false,0,1) AS `entregado` FROM personas_documentacion_tipos WHERE `estatus`=1 AND `almacen`=1 $ByTipo");
+
+$xHG->addList();
+$xHG->setOrdenar();
+$xHG->addKey("clave_de_control");
+
+$xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "25%");
+$xHG->OColSiNo("entregado", "TR.EN ARCHIVO", "10%");
+if($credito <= DEFAULT_CREDITO AND ($cuenta <= 0 OR $cuenta== DEFAULT_CUENTA_CORRIENTE)){
+	$xHG->OToolbar("TR.AGREGAR", "jsAdd($persona)", "grid/add.png");
+	$xHG->OButton("TR.CARGAR", "jsUpload($persona, ' + data.record.clave_de_control + ',' + data.record.entregado + ')", "upload.png");
+} else {
+	if($credito>DEFAULT_CREDITO){
+		$xHG->OToolbar("TR.AGREGAR", "jsAddCont($persona, $credito)", "grid/add.png");
+		$xHG->OButton("TR.CARGAR", "jsUploadCont($persona,$credito,' + data.record.clave_de_control + ',' + data.record.entregado + ')", "upload.png");
+	}
+
+}
+
+
+//$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+//$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave_de_control +')", "undone.png");
+
+
+if(MODO_DEBUG == true){
+	$xHG->OButton("TR.PROPIEDADES", "jsEditProps('+ data.record.clave_de_control +')", "process.png");
+}
+
+$xFRM->addHElem("<div id='iddivlstdoctos'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
 
-//$jsb->show();
-?>
-<!-- HTML content -->
-<script>
-var xG	= new Gen();
-function jsGetDocto(){
-	xG.w({
-		url : "../frmutils/docs.explorer.php?callback=jsSetDocto", tiny:true
-		});
 }
-function jsSetDocto(mfile){
-	$("#nombrearchivo").val(mfile);
+
+?>
+
+<script>
+var xG    	= new Gen();
+
+
+function jsEdit(id){
+    xG.w({url:"../frm/.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivlstdoctos});
+}
+function jsEditProps(id){
+	xG.w({url:"../frmsocios/catalogo-documentacion.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivlstdoctos});
+}
+
+function jsDel(id){
+    xG.rmRecord({tabla:"personas_documentacion_tipos", id:id, callback:jsLGiddivlstdoctos });
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"personas_documentacion_tipos", id:id, callback:jsLGiddivlstdoctos, preguntar:true });
+}
+function jsAdd(idx){
+    xG.w({url:"../frmsocios/personas_documentos.add.frm.php?persona=" + idx, tiny:true, callback: jsLGiddivlstdoctos});
+}
+function jsUpload(idp, tipodocto, entregado){
+	if(entregado == 1){
+		xG.alerta({msg: "MSG_CONCEPTO_EXISTE"});
+	} else {
+		xG.w({url:"../frmsocios/personas_documentos.add.frm.php?persona=" + idp + "&tipo=" + tipodocto, tiny:true, callback: jsLGiddivlstdoctos});
+	}
+}
+function jsAddCont(idx, idcont){
+    xG.w({url:"../frmsocios/personas_documentos.add.frm.php?persona=" + idx + "&contrato=" + idcont, tiny:true, callback: jsLGiddivlstdoctos});
+}
+function jsUploadCont(idp, idcont, tipodocto, entregado){
+	if(entregado == 1){
+		xG.alerta({msg: "MSG_CONCEPTO_EXISTE"});
+	} else {
+		xG.w({url:"../frmsocios/personas_documentos.add.frm.php?persona=" + idp + "&tipo=" + tipodocto + "&contrato=" + idcont, tiny:true, callback: jsLGiddivlstdoctos});
+	}
 }
 </script>
 <?php
+
+
+//$jxc ->drawJavaScript(false, true);
 $xHP->fin();
 ?>

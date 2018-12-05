@@ -104,7 +104,7 @@ if($tabla != null AND $clave != null){
 			if($xTT->isLog($tabla) == true){
 				foreach ($aDiffD as $idxD => $vvD){
 					$vva		= $antes[$idxD];
-					setCambio($tabla, $idxD, $clave, $vva, $vvD);
+					setCambio($tabla, $clave, $idxD, $vva, $vvD);
 				}
 			}
 			
@@ -123,21 +123,36 @@ if($tabla != null AND $clave != null){
 						foreach ($rs as $rw){
 							$idsoc	= $rw["numero_socio"];
 							$xQL->setRawQuery("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc"); //setLog("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc");
-							setCambio($tabla, $xT->SUCURSAL, $clave, "", $xsuc);
+							setCambio($tabla, $clave, $xT->SUCURSAL, "", $xsuc);
 							$xCache->clean("socios_general-$idsoc");
 						}
 						
 					}
 					
 					break;
+				case TOPERACIONES_RECIBOS:
+					$xT		= new cOperaciones_recibos();
+					//setLog($aDiffD);
+					$idrecibo	= $clave;
+					
+					if(isset($aDiffD[$xT->TIPO_PAGO])){
+						$xRec	= new cReciboDeOperacion(false, false, $idrecibo);
+						if($xRec->init() == true){
+							$xRec->setCambiarTipoPago($aDiffD[$xT->TIPO_PAGO]);
+							$xLog->add($xRec->getMessages());
+						}
+					}
+					break;
 
 			}
+			//setError($tabla);
+			
 			if($res === false){
 				$rs["error"]		= true;
 				$rs["message"]		= "ERROR\tFallo al guardar El registro con ID $clave\r\n";
 				$xLog->add("El Usuario " . getUsuarioActual() . " Intento Guardar el registro ID $clave en $tabla con errores ($txtde)");
 			} else {
-				$rs["error"]	= false;
+				$rs["error"]		= false;
 				$rs["message"]		= "OK\tRegistro con ID $clave Guardado\r\n";
 				$xLog->add("El Usuario " . getUsuarioActual() . " Actualiza ($txtde) antes ($txtan) de el ID $clave en $tabla");
 			}

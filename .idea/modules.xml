@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/S.A.F.E.-Open-Source-Microfinance-Suite.iml" filepath="$PROJECT_DIR$/S.A.F.E.-Open-Source-Microfinance-Suite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/safeosms.iml" filepath="$PROJECT_DIR$/.idea/safeosms.iml" />
     </modules>
   </component>
 </project>

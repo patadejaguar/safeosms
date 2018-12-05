@@ -27,7 +27,7 @@ $filter = (isset($_GET["f"])) ? $_GET["f"] : false;
 $table 	= (isset($_GET["t"])) ? $_GET["t"] : false;
 $msg	= "";
 	
-	if ($filter == false OR $table == false) {
+	/*if ($filter == false OR $table == false) {
 		$msg		.= "ERROR\tNO SE TIENE UN DATO\r\n";
 	} else {
 		$insql 		= "DELETE FROM $table WHERE $filter";
@@ -40,7 +40,7 @@ $msg	= "";
 		if($rs["stat"] == true){
 			$msg		.= "OK\tSE HA ELIMINADO EL REGISTRO\r\n";
 		}
-	}
+	}*/
 	echo JS_CLOSE;
 ?>
 </body>

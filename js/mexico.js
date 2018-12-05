@@ -1,7 +1,21 @@
 //EACP_CLAVE_DE_PAIS
 var Mexico			= function(){}
 
-Mexico.prototype.jsValidarCURP	= function(curp){ var exp 	= /^[A-Z]{4}\d{2}(1|0)\d(0|1|2|3)\d(H|M)[A-Z]{5}\d{2}$/; return exp.test(curp); }
+Mexico.prototype.jsValidarCURP	= function(curp){
+	var exp 	= /^[A-Z]{4}\d{2}(1|0)\d(0|1|2|3)\d(H|M)[A-Z]{5}\d{2}$/;
+	var exp2 	= /^[A-Z]{4}\d{2}(1|0)\d(0|1|2|3)\d(H|M)[A-Z]{5}[A-Z]{1}\d{1}$/;
+	var res		= exp.test(curp);
+	if(res === false){
+		console.log("CURP v1 : " + curp + " Incorrecta");
+		var res		= exp2.test(curp);
+		if(res === false){
+			console.log("CURP v2 : " + curp + " Incorrecta");
+		} else {
+			console.log("CURP v2 : " + curp + " Correcta");
+		}
+	}
+	return res;
+}
 
 Mexico.prototype.jsConsultarCURP  = function (){
 	xGen.w({

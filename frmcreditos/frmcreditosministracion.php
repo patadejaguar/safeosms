@@ -31,6 +31,7 @@ $xCaja		= new cCaja();
 $xRuls		= new cReglaDeNegocio();
 //$xPaso		= new cCreditosEtapas();
 $xPaso		= new cCreditosProceso();
+$xUser		= new cSystemUser(); $xUser->init();
 
 $SinDatosDescuentos	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_DESEMBOLSO_SIN_DESC);		//regla de negocio
 $SinRecFiscal		= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_SIN_VERSIONIMP);		//regla de negocio
@@ -139,9 +140,15 @@ if($credito <= DEFAULT_CREDITO){
 						if($xCredOrg->getEsPagado() == false){
 							$mdesc	= $xCredOrg->getSaldoActual();
 							$sum 	+= $mdesc;
-							$txt	= $xTxt->getHidden("idmontocreditodescontado", 0, $mdesc);
-							$txt	.= $xTxt->getHidden("idcreditodescontado", 0, $xCredOrg->getClaveDeCredito());
-							$xT->addRaw("<tr><td>"  . $xCredOrg->getDescripcion() ." $txt</td><td class='mny'>" . getFMoney($xCredOrg->getSaldoActual()) . "</td></tr>");
+							
+							$txt	= $xTxt->getHidden("idcreditodescontado", 0, $xCredOrg->getClaveDeCredito());
+							if($xUser->getPuedeEditarRecibos() == true){
+								$xT->addRaw("<tr><td>"  . $xCredOrg->getDescripcion() ." $txt</td><td class='mny'>" . $xTxt->getDeMoneda("idmontocreditodescontado", "",$xCredOrg->getSaldoActual() ) . "</td></tr>");
+							} else {
+								$txt	.= $xTxt->getHidden("idmontocreditodescontado", 0, $mdesc);
+								$xT->addRaw("<tr><td>"  . $xCredOrg->getDescripcion() ." $txt</td><td class='mny'>" . getFMoney($xCredOrg->getSaldoActual()) . "</td></tr>");
+							}
+							
 							$jsSum	.= "flotante(\$('#idmontocreditodescontado').val())";
 							$xFRM->addJsInit("jsGetSumas();");
 						}

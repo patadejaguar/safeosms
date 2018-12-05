@@ -21,7 +21,8 @@ ini_set("max_execution_time", 2400);
 //ini_set("max_execution_time", 900);
 ini_set("memory_limit", SAFE_MEMORY_LIMIT);
 //ini_set("display_errors", "on");
-$chri 		= "@";
+
+
 $jsExtra	= "";
 
 $rmtCmd		= (isset($_GET["r"])) ? $_GET["r"] : 0;
@@ -1409,7 +1410,7 @@ $xHP->init();
 				break;
 			case 880:
 				$ForzarCorreccion	= ( strtoupper($id) == "SI") ? true : false;
-				$xPerUtils			= new cPersonas_utils();
+				$xPerUtils			= new cPersonasUtilerias();
 				$msg				.= $xPerUtils->setCorregirDomicilios($ForzarCorreccion);
 
 				break;
@@ -1578,7 +1579,7 @@ $xHP->init();
 				
 			case 13001:
 				$ForzarCorreccion	= ( strtoupper($id) == "SI") ? true : false;
-				$xPerUtils			= new cPersonas_utils();
+				$xPerUtils			= new cPersonasUtilerias();
 				$msg				.= $xPerUtils->setCorregirActividadEconomica($ForzarCorreccion);
 				
 				break;
@@ -1650,7 +1651,7 @@ $xHP->init();
 				$msg		.= $xUAml->setActualizarNivelDeRiesgo($ForzarCorreccion);
 				break;
 			case 8203:
-				$xUPers		= new cPersonas_utils();
+				$xUPers		= new cPersonasUtilerias();
 				$xUPers->setCrearArbolRelaciones();
 				
 				break;
@@ -1731,7 +1732,17 @@ $xHP->init();
 				while( $rw = $rs->fetch_assoc() ){
 					$credito	= $rw["numero_solicitud"];
 					$xCred		= new cCredito($credito);
-					$xCred->init();
+					
+					if($xCred->init() == true){
+						if($xCred->getEsPagado() == true){
+							$res	= $xQL->setRawQuery("UPDATE `operaciones_mvtos` SET `afectacion_real`=0,`afectacion_estadistica`=0 WHERE (`tipo_operacion`= 410 OR `tipo_operacion`= 411 OR `tipo_operacion`= 412 OR `tipo_operacion`= 413 OR `tipo_operacion`= 414) AND `afectacion_real`>0 AND `docto_afectado`=$credito");
+							if($res === false){
+								
+							} else {
+								$msg	.= "OK\tSe Eliminaron " . $xQL->getNumberOfRows() . "\r\n";
+							}
+						}
+					}
 					//$xCred->setDelete();
 					$msg		.= $xCred->getMessages();
 				}

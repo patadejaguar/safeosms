@@ -1,11 +1,14 @@
 <?php
 $sucursal 			    	= "matriz";					//nombre de la Sucursal, re recomienda la misma que la base de datos
 $db_de_trabajo				= "matriz";					//Nombre de la Base de datos MySQL, se recomienda la misma que la sucursal
-$V_0a744893951e0d1706ff74	= "root";					//Nombre de usuario MySQL
-$V_9003d1df22eb4d38200150	= "";						//Password del usuario MySQL
-$SAFEPathRoot				= "C:\\server2go\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
-$V_cf1e8c14e54505f60aa10c	= "http://localhost:4001";	//Ruta HTTP del sistema
-$V_67e92c8765a9bc7fb2d335	= "localhost";				//Nombre o IP del Servidor Mysql
+$V_0a744893951e0d1706ff74	= "demo";					//Nombre de usuario MySQL
+$V_9003d1df22eb4d38200150	= "demo";						//Password del usuario MySQL
+//$SAFEPathRoot				= "C:\\server2go\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
+$SAFEPathRoot				= "C:\\Users\\LuisHumberto\\Dropbox\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
+//$V_cf1e8c14e54505f60aa10c	= "http://localhost:4001";	//Ruta HTTP del sistema
+$V_cf1e8c14e54505f60aa10c	= "http://127.0.0.1:4001";	//Ruta HTTP del sistema
+//$V_67e92c8765a9bc7fb2d335	= "localhost";				//Nombre o IP del Servidor Mysql
+$V_67e92c8765a9bc7fb2d335	= "localhost:3306";				//Nombre o IP del Servidor Mysql
 /**
  * Archivo de Configuracion en WINDOWS
  */
@@ -35,5 +38,5 @@ $os_path_bks				= "C:\\server2go\\tmp\\";
  * @var string      Ruta absoluta del directorio temporal de archivos
  **/
 $os_path_tmp				= "C:\\server2go\\tmp\\";
-
+$os_en_memcache				= false;
 ?>

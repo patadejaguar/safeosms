@@ -42,18 +42,42 @@ if($tabla !== false ){
 		$key	= $obj->getKey();
 		$campo	= "estatus";
 		switch ($tabla){
-			case "";
+			case "creditos_lineas";
+			$campo	= "estado";
+			break;
+			case "creditos_periocidadpagos";
+			$campo	= "estatusactivo";
 			break;
 		}
-		
-		$xQL	= new MQL();
-		$in		= ($activar == true) ? "1" : "0";
-		$res	= $xQL->setRawQuery("UPDATE `$tabla` SET `$campo`=$in WHERE `$key` = $clave ");
-		if($res === false){
-			$rs["message"]	= "ERROR\tFallo en la actualizacion.";
+		if($tabla == "creditos_tipoconvenio"){
+			$xProd	= new cProductoDeCredito($clave);
+			if($xProd->init() == true){
+				if($activar == true){
+					$xProd->setInActivo(false);
+				} else {
+					$xProd->setInActivo();
+				}
+				
+				
+				$rs["message"]	= "OK\tActualizacion Exitosa.";
+				$rs[SYS_ERROR]	= false;
+			} else {
+				$rs["message"]	= "ERROR\tNo existe el producto";
+				$rs[SYS_ERROR]	= true;
+			}
+			
+
 		} else {
-			$rs["message"]	= "OK\tActualizacion Exitosa.";
-			$rs[SYS_ERROR]	= false;
+		
+			$xQL	= new MQL();
+			$in		= ($activar == true) ? "1" : "0";
+			$res	= $xQL->setRawQuery("UPDATE `$tabla` SET `$campo`=$in WHERE `$key` = $clave ");
+			if($res === false){
+				$rs["message"]	= "ERROR\tFallo en la actualizacion.";
+			} else {
+				$rs["message"]	= "OK\tActualizacion Exitosa.";
+				$rs[SYS_ERROR]	= false;
+			}
 		}
 	}
 } else {

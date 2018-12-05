@@ -14,6 +14,10 @@
 .tabcontrol a
 {
     outline: 0;
+	border: 2px solid #466178;
+	background-color: #E5E9E9;
+	text-transform: none;
+	color:#CA3D48;
 }
 
 .wizard ul,
@@ -56,7 +60,8 @@
 {
     position: relative;
     display: block;
-    width: 100%;
+    width: 99.8%;
+	background:#2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x;
 }
 
 .wizard.vertical > .steps
@@ -99,7 +104,6 @@
     margin: 0 0.1em 0.1em;
     padding: 1em 0;
     text-decoration: none;
-
     border-radius: 5px;
 }
 
@@ -119,6 +123,7 @@
     background: #2184be;
     color: #fff;
     cursor: default;
+	text-decoration: none;
 }
 
 .wizard > .steps .done a,
@@ -127,6 +132,7 @@
 {
     background: #9dc8e2;
     color: #fff;
+	text-decoration: none;
 }
 
 .wizard > .steps .error a,
@@ -135,11 +141,12 @@
 {
     background: #ff3111;
     color: #fff;
+	text-decoration: none;
 }
 
 .wizard > .content
 {
-    /*background: #eee;*/
+    background: #F8F8F8;
     display: block;
     margin: 0.5em;
     min-height: 35em;
@@ -166,7 +173,7 @@
     position: absolute;
     width: 99%;
     height: 100%;
-    background-color: #FFFFFF;
+    background-color: #F8F8F8;
 }
 
 .wizard > .content > .body ul

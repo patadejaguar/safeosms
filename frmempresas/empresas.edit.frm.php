@@ -71,9 +71,10 @@ $mail3			= "";
 $msg			= "";
 
 
-
-
 $observaciones= parametro("idobservaciones");
+
+$xHP->addJTagSupport();
+
 $xHP->init();
 
 
@@ -121,22 +122,29 @@ if($action == SYS_NINGUNO) {
 		$diaspago2		= $xEmp->getDiasDePago($periocidad2, MQL_STRING);
 	}
 	$xFRM->addPersonaBasico("", false, $xOEmp->clave_de_persona()->v(), "jsValidarEmpresa()");
-	$xFRM->OText("nombrecorto", $xOEmp->nombre_corto()->v(), "TR.Nombre_corto");
+	$xFRM->OText_13("nombrecorto", $xOEmp->nombre_corto()->v(), "TR.Nombre_corto");
 	$xFRM->setValidacion("nombrecorto", "validacion.novacio", "TR.EL NOMBRE_CORTO ES OBLIGATORIO", true);
 	
 	
-	$xFRM->addHElem( $xTxt2->getDeNombreDePersona("iddirectivo", $xOEmp->clave_de_directivo()->v(), "TR.Clave_de_Persona del Contacto") );
-	$xFRM->OText("directivo", $xOEmp->directivo_principal()->v(), "TR.Nombre de Contacto");
-	$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("", $xOEmp->producto_preferente()->v())->get(true) );
+	$xFRM->OHidden("iddirectivo", $xOEmp->clave_de_directivo()->v());
+	
+	//$xFRM->addHElem( $xTxt2->getDeNombreDePersona("iddirectivo", $xOEmp->clave_de_directivo()->v(), "TR.Clave_de_Persona del Contacto") );
+	
+
 	
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-		$xTabs->addTab("TR.Periocidad 1", $xSel->getListaDePeriocidadDePago("idperiocidad1",  $periocidad1)->get("TR.Periocidad de pago", true) );
+		$xSelComp1	= $xSel->getListaDePeriocidadDePago("idperiocidad1",  $periocidad1);
+		$xSelComp1->addEvent("onblur", "jsLoadV1");
+		
+		$xTabs->addTab("TR.Periocidad 1", $xSelComp1->get("TR.Periocidad de pago", true) );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_aviso1", $diasaviso1, "TR.Dias de Aviso") );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_nomina1", $diasnomina1, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 1", $xTxt->getNormal("dias_de_pago1", $diaspago1, "TR.Dias de Pago") );
 	
-	
-		$xTabs->addTab("TR.Periocidad 2", $xSel->getListaDePeriocidadDePago("idperiocidad2", $periocidad2)->get("TR.Periocidad de pago", true) );
+		$xSelComp2	= $xSel->getListaDePeriocidadDePago("idperiocidad2", $periocidad2);
+		$xSelComp2->addEvent("onblur", "jsLoadV2");
+		
+		$xTabs->addTab("TR.Periocidad 2", $xSelComp2->get("TR.Periocidad de pago", true) );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_aviso2", $diasaviso2, "TR.Dias de Aviso") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_nomina2", $diasnomina2, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_pago2", $diaspago2, "TR.Dias de Pago") );
@@ -144,6 +152,8 @@ if($action == SYS_NINGUNO) {
 	}
 	
 	
+	$xFRM->OText("directivo", $xOEmp->directivo_principal()->v(), "TR.Nombre de Contacto");
+	$xFRM->addHElem( $xSel->getListaDeProductosDeCredito("", $xOEmp->producto_preferente()->v())->get(true) );
 	
 	$xFRM->addHElem( $xSel->getListaDeOficiales("", "", $oficial)->get(true));
 	
@@ -152,6 +162,7 @@ if($action == SYS_NINGUNO) {
 	$xFRM->OMail("idemail3", $mail3, "TR.Email de contacto 3");
 		
 	$xFRM->OTasa("idcomision", $xOEmp->comision_por_encargo()->v(), "TR.Comision_por_Encargo");
+	
 	$xFRM->OTasa("tasa", $xOEmp->tasa_preferente()->v(), "TR.TASA PREFERENTE");
 	$xFRM->OSiNo("TR.ESTATUSACTIVO", "estatus", $xOEmp->estatus()->v());
 	$xFRM->addSubmit();
@@ -200,10 +211,91 @@ var xEmp	= new EmpGen();
 var xVal	= new ValidGen();
 var xNuevo	= false;
 var cnf		= false;
+var idp1	= $("#idperiocidad1").val();
+var idp2	= $("#idperiocidad2").val();
 
+function jsLoadV1(){
+	var x		= "1";
+	
+	var idper	= entero($("#idperiocidad"+x).val());
+	var opts	= { tagLimit:1, removeConfirmation:true,autocomplete:{delay: 0, minLength: 1 } };
+
+	if(idper == idp1){
+		
+	} else {
+		$("#dias_de_aviso"+x).val("");
+		$("#dias_de_nomina"+x).val("");
+		$("#dias_de_pago"+x).val("");
+		
+		$("#dias_de_aviso"+x).tagit("removeAll");
+		$("#dias_de_nomina"+x).tagit("removeAll");
+		$("#dias_de_pago"+x).tagit("removeAll");
+		
+	}
+	
+	if(idper == 7||idper == 14){
+		opts.availableTags	= Configuracion.listas.dias.semana;
+	} else {
+		opts.availableTags = Configuracion.listas.dias.mes;
+	}
+	
+	if(idper == 15){
+		opts.tagLimit = 2;
+	}
+	if(idper == 10){
+		opts.tagLimit = 3;
+	}
+	//console.log(opts);
+		
+	$("#dias_de_aviso"+x).tagit(opts);
+	$("#dias_de_nomina"+x).tagit(opts);
+	$("#dias_de_pago"+x).tagit(opts);
+	
+	
+	
+}
+function jsLoadV2(){
+	var x		= "2";
+	
+	var idper	= entero($("#idperiocidad"+x).val());
+	var opts	= { tagLimit:1, removeConfirmation:true,autocomplete:{delay: 0, minLength: 1 } };
+
+	if(idper == idp2){
+		
+	} else {
+		$("#dias_de_aviso"+x).val("");
+		$("#dias_de_nomina"+x).val("");
+		$("#dias_de_pago"+x).val("");
+		
+		$("#dias_de_aviso"+x).tagit("removeAll");
+		$("#dias_de_nomina"+x).tagit("removeAll");
+		$("#dias_de_pago"+x).tagit("removeAll");
+		
+	}
+	
+	if(idper == 7||idper == 14){
+		opts.availableTags	= Configuracion.listas.dias.semana;
+	} else {
+		opts.availableTags = Configuracion.listas.dias.mes;
+	}
+	
+	if(idper == 15){
+		opts.tagLimit = 2;
+	}
+	if(idper == 10){
+		opts.tagLimit = 3;
+	}
+	//console.log(opts);
+		
+	$("#dias_de_aviso"+x).tagit(opts);
+	$("#dias_de_nomina"+x).tagit(opts);
+	$("#dias_de_pago"+x).tagit(opts);
+}
 function jsInitComponents(){
 	if(xNuevo == false){
 		$("#idsocio").trigger("onblur"); $("#idsocio").focus();
+		setTimeout("jsLoadV1()",1000);
+		setTimeout("jsLoadV2()",1000);
 	}
 }
 

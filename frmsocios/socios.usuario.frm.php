@@ -43,10 +43,27 @@ function jsaNivel($idusuario, $idnivel){
 	}
 	return "echo!";
 }
+function jsaEditarPermisoUsr($idusuario, $idp, $vv){
+	$xUsr	= new cSystemUser($idusuario);
+	
+	if($xUsr->init() == true){
+		$xPer	= new cSystemPermissions();
+		if($vv == 1){
+			$xUsr->setUserOption($idp, "true");
+		} else {
+			$xUsr->setUserOption($idp, "false");
+		}
+		
+		
+	}
+}
+
 
 $jxc->exportFunction('jsaSavePin', array('idpin', 'usuario'), "#idmsg");
+
 if(MODO_DEBUG == true){
 	$jxc->exportFunction('jsaNivel', array('usuario', 'idnivel'), "#idmsg");
+	$jxc->exportFunction('jsaEditarPermisoUsr', array('usuario', 'idpermiso', 'idvalor'), "#idmsg");
 }
 
 
@@ -78,6 +95,9 @@ $xSel			= new cHSelect();
 $xTxt			= new cHText();
 $xChk			= new cHCheckBox();
 
+$xChk->setDivClass("tx18");
+
+
 $xFRM->setTitle($xHP->getTitle());
 $xUser2			= new cSystemUser(); $xUser2->init();
 if($usuario<=0){
@@ -108,12 +128,12 @@ if($xSoc->init() == true){
 			}
 			$usuario	= $xUser->getID();
 		}
+		
 		if(($xUser2->getID() !== $xUser->getID()) AND $xUser2->getPuedeEditarUsuarios() == false ){
 			$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
 		} else {
 			//Reporte de Eliminados
 			$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
-			
 		}
 		
 		
@@ -144,6 +164,10 @@ if($xSoc->init() == true){
 			
 			$xFRM->addGuardar();
 			
+			if(MODO_DEBUG == true){
+				$xFRM->OHidden("idvalor", "");
+				$xFRM->OHidden("idpermiso", "");
+			}
 			
 			$xFRM->setAction("socios.usuario.frm.php?action=" . MQL_ADD);
 			if($pass1 !== $pass2){
@@ -155,29 +179,75 @@ if($xSoc->init() == true){
 			$xTbl->addTH("TR.PARAMETRO");
 			$xTbl->addTH("TR.VALOR");
 			
-			$arrR	= $xUser2->getUserRules();
+			$arrR	= $xUser->getUserRules();
 			foreach ($arrR as $idx => $idv){
 				$ss		= ($idv == "false") ? "error" : "success";
 				$img	= ($idv == "false") ? "busy.png" : "check.png";
+				$vv		= ($idv == "false") ? 0 : 1;
 				
 				$xTbl->initRow($ss);
 				$xTbl->addTD($idx);
-				$xTbl->addTD($xImg->get16($img));
 				
+				
+				
+				if($xUser2->getPuedeEditarUsuarios() == false OR ($xUser2->getTipoEnSistema() < $xUser->getTipoEnSistema() )){
+					$xTbl->addTD($xImg->get16($img));
+				} else {
+					
+					$xTbl->addTD($xChk->getSiNo("", "idchk1-$idx", $vv, true));
+					$xFRM->addControEvt("chk-idchk1-$idx", "jsEditPermiso('idchk1-$idx','$idx')", "change");
+				}
+				
+
 				$xTbl->endRow();
 			}
 			//Opciones Editables
-			$arrR	= $xUser2->getUserOptions();
-			foreach ($arrR as $idx => $idv){
+			$arrR2	= $xUser->getUserOptions();
+			foreach ($arrR2 as $idx => $idv){
 				$ss		= ($idv == "false") ? "error" : "success";
+				$img	= ($idv == "false") ? "busy.png" : "check.png";
+				
 				$vv		= ($idv == "false") ? 0 : 1;
 				
-				$xChk->setDivClass("tx18");
+				
 				$xTbl->initRow($ss);
 				$xTbl->addTD($idx);
-				$xTbl->addTD($xChk->getSiNo("", "idchk-$idx", $vv, true));
+				
+				if($xUser2->getPuedeEditarUsuarios() == false OR ($xUser2->getTipoEnSistema() < $xUser->getTipoEnSistema() )){
+					$xTbl->addTD($xImg->get16($img));
+				} else {
+					$xTbl->addTD($xChk->getSiNo("", "idchk2-$idx", $vv, true));
+					$xFRM->addControEvt("chk-idchk2-$idx", "jsEditPermiso('idchk2-$idx','$idx')", "change");
+				}
+				//
 				
 				$xTbl->endRow();
+			}
+			if(MODO_DEBUG == true){
+				$xLPerm	= new cSystemUserRulesList();
+				$arrR3	= $xLPerm->getListInArray();
+				
+				foreach ($arrR3 as $idx => $idv){
+					$idv	= "false";
+					$ss		= ($idv == "false") ? "error" : "success";
+					$img	= ($idv == "false") ? "busy.png" : "check.png";
+					
+					$vv		= ($idv == "false") ? 0 : 1;
+					
+					
+					$xTbl->initRow($ss);
+					$xTbl->addTD($idx);
+					
+					if($xUser2->getPuedeEditarUsuarios() == false OR ($xUser2->getTipoEnSistema() < $xUser->getTipoEnSistema() )){
+						$xTbl->addTD($xImg->get16($img));
+					} else {
+						$xTbl->addTD($xChk->getSiNo("", "idchk3-$idx", $vv, true));
+						$xFRM->addControEvt("chk-idchk3-$idx", "jsEditPermiso('idchk3-$idx','$idx')", "change");
+					}
+					//
+					
+					$xTbl->endRow();
+				}
 			}
 			//Cambiar Nivel
 			/*if(MODO_DEBUG == true){
@@ -220,29 +290,31 @@ function jsVerEliminados(){
 	var iduser = $("#usuario").val();
 	xG.w({url:"../frmsecurity/eliminados.frm.php?usuario=" +  iduser});
 }
-/*
-function jsPreEnvio(){
-	var idpass1 = $("#idpass1").val();
-	var idpass2 = $("#idpass2").val(); 
-console.log(idpass1);
-console.log(idpass2);
 
-	if(idpass1 == idpass2){
-		return true;
-	} else {
-		xG.aviso({msg: "MSG_PASS_NO_IGUAL", callback: function(){
-				$("#idpass1").val('');
-				$("#idpass2").val('');
-			} 
-		});
-	}
-
-	return false;
-}*/
 function jsSavePin(){
 	xG.confirmar({msg: "CONFIRMA_ACTUALIZACION", callback: jsaSavePin});
 	//var iduser = $("#idpin").val();
 	return true;
+}
+function jsEditPermiso(idx,regla){
+	var vv	= entero($("#" + idx).val());
+	if(vv == 0){
+	xG.confirmar({msg:"¿ Confirma eliminar permiso : " + regla + " ?",
+		callback: function(){
+			$("#idpermiso").val(regla);
+			$("#idvalor").val(0);
+			jsaEditarPermisoUsr();
+		}});
+	} else {
+		xG.confirmar({msg:"¿ Confirma agregar permiso : " + regla + " ?",
+			callback: function(){
+				$("#idpermiso").val(regla);
+				$("#idvalor").val(1);
+				jsaEditarPermisoUsr();
+			}});
+		
+	}
+	
 }
 </script>
 <?php

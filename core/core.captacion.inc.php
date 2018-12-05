@@ -807,10 +807,11 @@ class cCuentaDeCaptacion {
 				$this->mFechaVencimiento			= $DC["vencimiento"];
 				$this->mDestinoDelInteres			= $DC["destino_del_interes"];
 				$this->mReciboDeReinversion			= $DC["recibo_de_inversion"];
-				$this->mNombreMancomunados			= $DC["nombre_mancomunado1"];
+				
 				$this->mFechaDeApertura				= $DC["fecha_apertura"];
 				$this->mTasaGat						= $DC["tasa_gat"];
-				$this->mNombreMancomunados			.= (trim($DC["nombre_mancomunado2"]) == "") ? "" : " & " . $DC["nombre_mancomunado2"];
+				$this->mNombreMancomunados			= (strlen($DC["nombre_mancomunado1"])>3) ? $DC["nombre_mancomunado1"] : "";
+				$this->mNombreMancomunados			.= (strlen($DC["nombre_mancomunado2"]) > 3) ? " & " . $DC["nombre_mancomunado2"] :  "";
 				
 				
 				//Inicia el Nuevo Saldo como el Anterior
@@ -1762,6 +1763,15 @@ class cCuentaDeCaptacion {
 			$xCache->set($idx, $D);
 		}
 		return $this->init($D);
+	}
+	function setAlias($alias){
+		$alias	= setCadenaVal($alias,24);
+		$sql	= "UPDATE `captacion_cuentas` SET `alias`='$alias' WHERE `numero_cuenta`=" . $this->mNumeroCuenta . " ";
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery($sql);
+		$xQL	= null;
+		
+		return ($res === false) ? false : true;
 	}
 }
 

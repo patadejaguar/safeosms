@@ -81,6 +81,11 @@ $xHG->setOrdenar();
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_eliminados +')", "delete.png");
 $xFRM->addHElem("<div id='iddiveliminados'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
+
+
+$xFRM->addCerrar();
+
+
 echo $xFRM->get();
 ?>
 <script>

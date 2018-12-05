@@ -1,5 +1,5 @@
 <?php
-use Enhance\Language;
+//use Enhance\Language;
 //use Respect\Validation\Exceptions\PrivateAbstractNestedException;
 use Dompdf\Dompdf;
 //use Enhance\Language;
@@ -30,59 +30,168 @@ class cHDicccionarioDeTablas {
 	private $mItems				= 0;
 	private $mOTable			= null;
 	
-	function __construct(){
-		$this->mOTable	= new cTabla("");
+	function __construct($indice=0){
+		$this->mOTable	= new cTabla("", $indice);
 	}
 	function getCreditosPorAutorizar($fecha, $persona = false, $titulo = ""){
 		$this->mItems	= 0;
 		$xD				= new cFecha();
 		$xL				= new cSQLListas();
 		$ic				= new cHButton();
+		//$this->mOTable	= new cTabla("");
+		
 		$fecha 			= $xD->getFechaISO($fecha);
 		$sql			= $xL->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_SOLICITADO, false, false, false, false, false, false, $persona);
-		//$xT				= new cTabla($sql, 3);
-		//$xT->setKeyField("numero_de_solicitud");
-		//if($persona>0){	$xT->setKey(1);}
 		$this->mOTable->setSQL($sql);
 		$this->mOTable->setKey(3);
-		if($persona>0){	$this->mOTable->setKey(1); }
+		$this->mOTable->setColTitle("numero_de_pagos_solicitado", "PAGOS");
+		if($persona>0){
+			$this->mOTable->setKey(1);
+			$this->mOTable->setKeyField("numero_de_solicitud");
+			$xSoc	= new cSocio($persona);
+			if($xSoc->init() == true){
+				if($xSoc->getEsPersonaFisica() == false){
+					$this->mOTable->setKey(0);
+					$this->mOTable->setOmitidos("empresa");
+				}
+			}
+		}
 		
 		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
 		$this->mOTable->OButton("TR.Autorizar", "var xC=new CredGen(); xC.getFormaAutorizacion(" . HP_REPLACE_ID . ")", $ic->ic()->OK);
 		$this->mOTable->OButton("TR.RECHAZADO", "var xC=new CredGen(); xC.getFormaRechazo(" . HP_REPLACE_ID . ")", $ic->ic()->PARAR);
-		$this->mOTable->setFootSum(array(
-				5 => "monto_solicitado"
-		));
 		
-		$html			= $this->mOTable->Show($titulo);
+		$this->mOTable->setColSum("monto_solicitado");
+		$this->mOTable->setColSum("monto_autorizado");
+
+		
+		$html			= $this->mOTable->Show($titulo, true, "tcreditosporautorizar");
 		$this->mItems	= $this->mOTable->getRowCount();
+		$this->cleanOTable(0);
 		return $html;
 	}
 	function getCreditosPorMinistrar($fecha, $persona = false, $titulo = ""){
 		$this->mItems	= 0;
 		$xD				= new cFecha();
 		$xL				= new cSQLListas();
+		//$this->mOTable	= new cTabla("");
+		
 		$fecha 			= $xD->getFechaISO($fecha);
 		$ic				= new cHButton();
 		$sql			= $xL->getListaDeCreditosEnProceso(EACP_PER_SOLICITUDES, CREDITO_ESTADO_AUTORIZADO, true, false, false, false, false, false, $persona);
-		//$xT				= new cTabla($sql, 3);
-		//$xT->setKeyField("numero_de_solicitud");
 		$this->mOTable->setSQL($sql);
+		
+		$this->mOTable->setColTitle("numero_de_pagos_autorizado", "PAGOS");
+		$this->mOTable->setOmitidos("numero_de_pagos_solicitado");
 		$this->mOTable->setKey(3);
-		if($persona>0){	$this->mOTable->setKey(1); }
+		if($persona>0){	
+			//$this->mOTable->setKey(0);
+			$this->mOTable->setKey(1);
+			$this->mOTable->setKeyField("numero_de_solicitud");
+			
+			$xSoc	= new cSocio($persona);
+			if($xSoc->init() == true){
+				if($xSoc->getEsPersonaFisica() == false){
+					$this->mOTable->setKey(0);
+					$this->mOTable->setOmitidos("empresa");
+				}
+			}
+		}
 		$this->mOTable->setWithMetaData();
 		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
 		$this->mOTable->OButton("TR.MINISTRAR", "var xC=new CredGen();xC.getFormaMinistracion(" . HP_REPLACE_ID . ")", $ic->ic()->DINERO);
 		
-		$this->mOTable->setFootSum(array(
-				5 => "monto_solicitado",
-				13 => "monto_autorizado" 
-		));
-		//$xT->OButton("TR.Panel", "var xC=new CredGen(); xC.goToPanelControl(" . HP_REPLACE_ID . ")", $ic->ic()->CONTROL);
-		$html			= $this->mOTable->Show($titulo);
+		$this->mOTable->setColSum("monto_solicitado");
+		$this->mOTable->setColSum("monto_autorizado");
+
+		
+		$html			= $this->mOTable->Show($titulo, true, "tcreditosporministrar");
 		$this->mItems	= $this->mOTable->getRowCount();
+		$this->cleanOTable(0);
 		return $html;
 	}
+	function getCreditosRechazados($fecha, $persona = false, $titulo = ""){
+		
+		$this->mItems	= 0;
+		$xD				= new cFecha();
+		$xL				= new cSQLListas();
+		$ByPers			= $xL->OFiltro()->VPersonasPorCodigo($persona);
+		//$this->mOTable	= new cTabla("");
+		$sql			= "SELECT   `personas`.`codigo`,
+         `personas`.`nombre`,
+         `personas`.`alias_dependencia` AS `empleador`,
+         `creditos`.`solicitud`,
+         `creditos`.`convenio` AS `producto`,
+         `creditos_rechazados`.`fecha_de_rechazo` AS `fecha`,
+         `creditos_rechazos_tipo`.`descripcion`,
+         `usuarios`.`alias` AS `usuario`,
+         `creditos_rechazados`.`notas`
+	FROM     `creditos_rechazados` 
+	INNER JOIN `creditos`  ON `creditos_rechazados`.`numero_de_credito` = `creditos`.`solicitud` 
+	INNER JOIN `creditos_rechazos_tipo`  ON `creditos_rechazos_tipo`.`idcreditos_rechazos_tipo` = `creditos_rechazados`.`claverechazo` 
+	INNER JOIN `usuarios`  ON `usuarios`.`idusuarios` = `creditos_rechazados`.`idusuario` 
+	INNER JOIN `personas`  ON `creditos`.`numero_socio` = `personas`.`codigo` WHERE    ( `creditos_rechazados`.`estatusactivo` = 1 ) $ByPers ";
+		$fecha 			= $xD->getFechaISO($fecha);
+		$this->mOTable->setSQL($sql);
+		$this->mOTable->setKeyField("solicitud");
+		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
+		if($persona>0){
+			$xSoc	= new cSocio($persona);
+			$this->mOTable->setOmitidos("codigo");
+			$this->mOTable->setOmitidos("nombre");
+			$this->mOTable->setKey(1);
+			if($xSoc->init() == true){
+				if($xSoc->getEsPersonaFisica() == false){
+					$this->mOTable->setKey(0);
+					$this->mOTable->setOmitidos("empleador");
+				}
+			}
+		}
+		$html			= $this->mOTable->Show($titulo);
+		$this->mItems	= $this->mOTable->getRowCount();
+		$this->cleanOTable(0);
+		return $html;
+	}
+	function getCreditosCastigados($fecha, $persona = false, $titulo = ""){
+		
+		$this->mItems	= 0;
+		$xD				= new cFecha();
+		$xL				= new cSQLListas();
+		$ByPers			= $xL->OFiltro()->VPersonasPorCodigo($persona);
+		//$this->mOTable	= new cTabla("");
+		$sql			= "SELECT   `personas`.`codigo`,
+         `personas`.`nombre`,
+         `personas`.`alias_dependencia` AS `empleador`,
+         `creditos`.`solicitud`,
+         `creditos`.`convenio` AS `producto`,
+         `socios_memo`.`fecha_memo` AS `fecha`,
+         `socios_memo`.`texto_memo` AS `razones`
+
+				FROM     `creditos` LEFT OUTER JOIN `socios_memo`  ON `creditos`.`solicitud` = `socios_memo`.`numero_solicitud` INNER JOIN `personas`  ON `creditos`.`numero_socio` = `personas`.`codigo`	 
+				WHERE    ( `estatus` = 50 ) AND ( `creditos`.`monto_autorizado` >0 ) AND ( `socios_memo`.`tipo_memo` = 15 ) $ByPers";
+		$fecha 			= $xD->getFechaISO($fecha);
+		$this->mOTable->setSQL($sql);
+		$this->mOTable->setKeyField("solicitud");
+		$this->mOTable->setEventKey("var xC=new CredGen(); xC.goToPanelControl");
+		if($persona>0){
+			$xSoc	= new cSocio($persona);
+			if($xSoc->init() == true){
+				$this->mOTable->setOmitidos("codigo");
+				$this->mOTable->setOmitidos("nombre");
+				$this->mOTable->setKey(1);
+				if($xSoc->getEsPersonaFisica() == false){
+					$this->mOTable->setKey(0);
+					$this->mOTable->setOmitidos("empleador");
+
+				}
+			}
+		}
+		$html			= $this->mOTable->Show($titulo);
+		$this->mItems	= $this->mOTable->getRowCount();
+		$this->cleanOTable(0);
+		return $html;
+	}
+	
 	function getLlamadas($fecha_inicial = false, $fecha_final = false, $De = 0 , $efectuadas = false, $canceladas = false, $vencidas = false){
 		$xLi					= new cSQLListas();
 		$sql 	= $xLi->getListadoDeLlamadas(false, getUsuarioActual(), $fecha_inicial, $fecha_final, $efectuadas, $canceladas, $vencidas);
@@ -196,29 +305,23 @@ class cHDicccionarioDeTablas {
 		$this->mOTable->setOmitidos("credito");
 		$this->mOTable->setOmitidos("pagos");
 		
-		$this->mOTable->setFootSum(array(
-				2 => "deducible",
-				3 => "nodeducible",
-				4 => "iva",
-				5 => "total"
-		));
+		$this->mOTable->setColSum("deducible");
+		$this->mOTable->setColSum("nodeducible");
+		$this->mOTable->setColSum("iva");
+		$this->mOTable->setColSum("total");
+		$this->mOTable->setUsarNullPorCero();
+		//$this->mOTable->
 		
 		$this->mOTable->setNoFilas("");
 		
 		$this->mOTable->setColTitle("fecha", "FECHA_DE PAGO");
 		$this->mOTable->setColTitle("periodo", "PLANPERIODORENTA");
+		$this->mOTable->setColTitle("total", "PLANMONTORENTA");
 		
 		if($simple == true){
 			$this->mOTable->setOmitidos("deducible");
 			$this->mOTable->setOmitidos("nodeducible");
-			
-			$this->mOTable->setColTitle("total", "PLANMONTORENTA");
-			
-			
-			
 			$this->mOTable->setOmitidos("iva");
-			$this->mOTable->setFootSum(array(2=>"total"));
-			
 		}
 		return $this->mOTable->Show();
 	}
@@ -233,7 +336,7 @@ class cHDicccionarioDeTablas {
          `creditos_plan_de_pagos`.`interes`,
          `creditos_plan_de_pagos`.`impuesto`,
          `creditos_plan_de_pagos`.`otros`,
-         `operaciones_tipos`.`descripcion_operacion` AS `otros_cargos`,
+         IF(`creditos_plan_de_pagos`.`otros`<=0, '',`operaciones_tipos`.`descripcion_operacion`) AS `otros_cargos`,
                  
          $fahorro
 		`creditos_plan_de_pagos`.`total_c_otros` AS `original`,
@@ -245,14 +348,18 @@ class cHDicccionarioDeTablas {
 		
 		`creditos_plan_de_pagos`.`total_c_castigos` AS `neto`,
  		`creditos_plan_de_pagos`.`saldo_inverso`
-		FROM     `creditos_plan_de_pagos` INNER JOIN `operaciones_tipos`  ON `creditos_plan_de_pagos`.`otros_codigo` = `operaciones_tipos`.`idoperaciones_tipos` 
+		FROM     `creditos_plan_de_pagos` LEFT OUTER JOIN `operaciones_tipos`  ON `creditos_plan_de_pagos`.`otros_codigo` = `operaciones_tipos`.`idoperaciones_tipos` 
 		WHERE    ( `creditos_plan_de_pagos`.`clave_de_credito` = $idcredito )";
+		//setLog($sql);
+		
 		$this->mOTable->setOmitidos("credito");
+		$this->mOTable->setUsarNullPorCero();
 		
 		$this->mOTable->setSQL($sql);
 		return $this->mOTable->Show();
 	}
 	function OTable(){ return $this->mOTable; }
+	function cleanOTable($indice = 0){ $this->mOTable	= new cTabla("", $indice); }
 }
 
 /**
@@ -507,8 +614,10 @@ class cPanelDeReportes {
 		$xF				= new cFecha();
 		$this->mOFRM	= new cHForm("frmpanel");
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
-		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", $this->mOFRM->ic()->REPORTE, "cmdgetreporte", "green2");
 		$this->mOFRM->addCerrar();
+		
+		$this->mOFRM->OButton("TR.Obtener Reporte", "jsGetReporte()", $this->mOFRM->ic()->REPORTE, "cmdgetreporte", "green2");
+		
 		//$this->mOFRM->setFieldsetClass("fieldform frmpanel");
 		$SqlRpt			= "SELECT * FROM general_reports WHERE aplica='" . $this->mFiltro . "' AND `estatus`=1 ORDER BY `descripcion_reports`,`order_index` ASC ";
 		$cSRpt			= new cSelect("idreporte", "idreporte", $SqlRpt );
@@ -575,6 +684,7 @@ class cPanelDeReportes {
 		$xF				= new cFecha();
 		
 		$xFRM->setTitle( $this->mTitle );
+		
 		if($this->mTipo == iDE_CAPTACION){
 			$this->addTipoDeCuentaDeCaptacion();
 			$this->addProductoDeCuentaDeCaptacion();
@@ -755,18 +865,23 @@ class cPanelDeReportes {
 		return $xDate->get($titulo);
 	}
 	function addTiposDeSalida(){
+		
+		$xSel		= new cHSelect();
+		$xSelOut	= $xSel->getListaDeCatalogoGenerico("rpt_tipos_salida", "idtipodesalida");
+		$xSelOut->setDivClass("tx4 tx18");
+		$xSelOut->setNoMayus();
 		//<option value=\"html\">Pagina Web(www)</option>
-		$this->mTiposSalida = "<div class='tx4 tx18'><label>Exportar Reporte Como</label>
+		$this->mTiposSalida = $xSelOut->get("TR.SALIDA", true); /*"<div class='tx4 tx18'><label>Exportar Reporte Como</label>
 			<select name=\"idtipodesalida\" id=\"idtipodesalida\">
-				<option value=\"" . SYS_DEFAULT . "\" selected>Por Defecto(xml)</option>
+				<option value=\"" . SYS_DEFAULT . "\" selected>Ven en Pantalla</option>
 				<option value=\"pdf\">Archivo PDF</option>
-				<option value=\"xls\">Excel</option>
+				<option value=\"xls\">Excel(xls)</option>
 				<option value=\"csv\">Archivo Delimitado por comas (cvs)</option>
 
 				<option value=\"txt\">Archivo de Texto(txt)</option>
 
 
-			</select></div> ";
+			</select></div> "*/;
 
 		$this->mJsVars	.= "var idtiposalida	= $('#idtipodesalida').val();\r\n";
 		$this->mURL		.= " + \"&out=\" + idtiposalida ";
@@ -965,6 +1080,8 @@ class cReportes {
 	private $mPDFOrient		= "portrait";
 	public $PDF_OHORIZONTAL = "landscape";
 	public $PDF_OVERTICAL 	= "portrait";
+	private $mArrColtitles	= array();
+	private $mTotalRegs		= 0;
 	
 	
 	function __construct($titulo = ""){
@@ -1055,6 +1172,9 @@ class cReportes {
 	function setToPrint(){ $this->mJS .= "xRpt.print();"; }
 	function setToPagination($init = 0){ $this->mJS .= "xRpt.setPagePagination($init);"; }
 	function setPDFOrientacion($or){$this->mPDFOrient = $or; }
+	function setColTitle($col, $title){
+		$this->mArrColtitles[$col]	= $title;
+	}
 	/**
 	 * @deprecated
 	 * */
@@ -1229,14 +1349,23 @@ class cReportes {
 				
 		}
 		if($toMail == true){
-			$xMail		= new cNotificaciones();
-			foreach ($this->mSenders as $idmail => $email){
-				$this->mMessages	.= $xMail->sendMail($this->mTitulo, $body, $email, array( "path" => $this->mFile ));
-			}
-
-			if($this->mResponse == true){
-				$rs		= array("message"  => $this->mMessages);
-				$cnt	= json_encode($rs);
+			if($this->mTotalRegs>0){
+				$this->mMessages	.= "OK\tNumero de Registros: " . $this->mTotalRegs . ".\r\n";
+				
+				$xMail		= new cNotificaciones();
+				foreach ($this->mSenders as $idmail => $email){
+					$this->mMessages	.= $xMail->sendMail($this->mTitulo, $body, $email, array( "path" => $this->mFile ));
+				}
+				if($this->mResponse == true){
+					$rs		= array("message"  => $this->mMessages);
+					$cnt	= json_encode($rs);
+				}
+			} else {
+				$this->mMessages	.= "WARN\tNo hay Registros.\r\n";
+				if($this->mResponse == true){
+					$rs		= array("message"  => $this->mMessages);
+					$cnt	= json_encode($rs);
+				}
 			}
 		}
 		return $cnt;
@@ -1278,7 +1407,7 @@ class cReportes {
 		$rs 	= $xQL->getDataRecord($this->mSQL);
 		$tit	= $xQL->getTitulos();
 		$regs	= $xQL->getNumberOfRows();
-		
+		$this->mTotalRegs	= $regs;
 		$body	= "";
 		$head	= "";
 		$foot	= "";
@@ -1363,8 +1492,15 @@ class cReportes {
 					$valor				= $xF->getFechaMX($valor, "/");
 				}
 				//if(!isset($this->mOmitidos[$idcampo])){
-					if($idx == 1){ 
-						$trad	= $xLng->getT("TR." . str_replace("_", " ", $idcampo));
+					if($idx == 1){
+						if(isset($this->mArrColtitles[$idcampo])){
+							$trad	= $xLng->getT("TR." . $this->mArrColtitles[$idcampo]);//2018-07-09
+						} else {
+							$trad	= $xLng->getT("TR." . str_replace("_", " ", $idcampo));
+						}
+						
+						
+						
 						$head	.= "<th>". $trad . "</th>";
 					}
 					
@@ -1421,6 +1557,10 @@ class cReportes {
 		$head			= null;
 		$foot			= null;
 		$rs				= null;
+	}
+	function setSumarRegistros($recs){
+		$recs	= setNoMenorQueCero($recs);
+		$this->mTotalRegs	+= $recs;
 	}
 }
 
@@ -1521,7 +1661,8 @@ class cHExcelNew {
 		$class	= ($class == "") ? "" : " class=\"$class\" ";
 		$str = "<a href=\"../utils/download.php?type=xlsx&download=" . $this->mFile . "&file=" . $this->mFile . "\" target=\"_blank\" $class>$ic $label</a>";
 		return $str;
-	}	
+	}
+
 }
 class cChart {
 	private $mCNT	= array();
@@ -1541,7 +1682,10 @@ class cChart {
 	private $mHorizontal= false;
 	private $mColumnW	= 50;
 	private $mFuncCvt	= "";
-	private $mAlto		= "300";
+	private $mAlto		= 300;
+	private $mItems		= 0;
+	private $mDistance	= 1;
+	private $mTamanioTitulo	= 100;
 	
 	function __construct($id = ""){$this->mId	= $id;	}
 	private function TR($txt){if($this->OLang == null){ $this->OLang = new cLang(); } return $this->OLang->getT($txt); }
@@ -1551,21 +1695,24 @@ class cChart {
 	function setTamanioCol($v){$this->mColumnW = $v;}
 	function setFuncConvert($jsFunc){$this->mFuncCvt = $jsFunc; }
 	function setAlto($v){$this->mAlto = $v; }
+	function setTamanioTitulo($v){ $this->mTamanioTitulo = $v; }
 	function getJs(){
 		$js		= "";
 		$opFc	= ($this->mFuncCvt == "") ? "" : "convert:".$this->mFuncCvt;
 		$opF2	= ($this->mFuncCvt == "") ? "" : "labelInterpolationFnc:function(value){return ".$this->mFuncCvt . "(value)}";
-		$opsH	= ($this->mHorizontal == true) ? ",reverseData: true,  horizontalBars: true,  axisY: { offset: 100 }" : ", axisY: { $opF2 } ";
-		$opsA	= ($this->mAlto == "") ? "" : ", height: ". $this->mAlto; 
+		$opsH	= ($this->mHorizontal == true) ? ",reverseData: true,  horizontalBars: true,  axisY: { offset: " . $this->mTamanioTitulo . " }" : ", axisY: { $opF2 } ";
+		$opsA	= ($this->mAlto == "") ? "" : ", height: ". $this->mAlto;
+		$plugs	= ($this->mHorizontal == true) ? " " : ", plugins: [ Chartist.plugins.ctBarLabels({ $opFc   })] ";
+		$barDistance	= $this->mDistance;
 		switch($this->mTipo){
 			case $this->BAR:
 				$js	= "var data = {labels:[" . $this->mLbl . "], series: [" . $this->mSs . " ] };
-var options = { seriesBarDistance: 10, plugins: [ Chartist.plugins.ctBarLabels({ $opFc   }) ] $opsH $opsA };
+var options = { seriesBarDistance: $barDistance $plugs $opsH $opsA };
 new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data){ if(data.type === 'bar') {  data.element.attr({ style: 'stroke-width: " . $this->mColumnW . "px' }); } } 	);";
 				break;
 			case $this->MULTILABEL:
 		$js	= "new Chartist.Bar('#" . $this->mId . "', { labels: [" . $this->mLbl . "], series: [" . $this->mSs . " ]}, {
-			  seriesBarDistance: 10,
+			  seriesBarDistance: $barDistance,
 			  axisX: {   offset: 60
 			  },
 			  axisY: {
@@ -1595,49 +1742,51 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 		foreach ($this->mLabels as $k => $v){
 			$this->mLbl	.= ($this->mLbl == "") ? "'$v'" : ",'$v'";
 		}
-		$maxWidth 		= max( array_map( 'count',  $this->mSeries ) );
-		//setLog($maxWidth);
-		foreach ($this->mSeries as $kx => $cnt){
-			$sr			= "";
-			$nitems		= 0;
-			foreach ($cnt as $k => $v){
-				$subitems	= "";
-				if(is_array($v)){
-					$vtmp	= "";
-					foreach ($v as $arrK => $arrV){
-						if($this->mOnPercent == true){
-							$arrV		= $arrV / $this->mTotal;
-							$arrV		= round(($arrV * 100),2);
+		if(count($this->mSeries)>0){
+			$maxWidth 		= max( array_map( 'count',  $this->mSeries ) );
+			//setLog($maxWidth);
+			foreach ($this->mSeries as $kx => $cnt){
+				$sr			= "";
+				$nitems		= 0;
+				foreach ($cnt as $k => $v){
+					$subitems	= "";
+					if(is_array($v)){
+						$vtmp	= "";
+						foreach ($v as $arrK => $arrV){
+							if($this->mOnPercent == true){
+								$arrV		= $arrV / $this->mTotal;
+								$arrV		= round(($arrV * 100),2);
+							}
+							$vtmp .= ($vtmp  == "") ? "$arrV" : ",$arrV";
 						}
-						$vtmp .= ($vtmp  == "") ? "$arrV" : ",$arrV";
+						
+						$v		= (count($v) > 1) ? "[" .$vtmp . "]" : $vtmp;
+					} else {
+						if($this->mOnPercent == true){
+							$v		= $v / $this->mTotal;
+							$v		= round(($v * 100),2);
+						}
+					}
+					$sr	.= ($sr == "") ? "$v" : ",$v";
+					$nitems++;
+					
+				}
+				
+				if($this->mTipo == $this->PIE){
+					$sr	= "$sr";
+				} else {
+					//setLog(" $kx => $sr ($nitems) ");
+					if($nitems < $maxWidth){
+						$nrellena 	= ($maxWidth-$nitems);
+						$sr 	= $sr . str_repeat(",0", $nrellena);
 					}
 					
-					$v		= (count($v) > 1) ? "[" .$vtmp . "]" : $vtmp;
-				} else {
-					if($this->mOnPercent == true){
-						$v		= $v / $this->mTotal;
-						$v		= round(($v * 100),2);
-					}
+					$sr	= "[$sr]";
 				}
-				$sr	.= ($sr == "") ? "$v" : ",$v";
-				$nitems++;
+				$this->mSs	.= ($this->mSs == "") ? "$sr" : ",$sr";
 				
+				$cseries++;
 			}
-			
-			if($this->mTipo == $this->PIE){
-				$sr	= "$sr";
-			} else {
-				//setLog(" $kx => $sr ($nitems) ");
-				if($nitems < $maxWidth){
-					$nrellena 	= ($maxWidth-$nitems);
-					$sr 	= $sr . str_repeat(",0", $nrellena);
-				}
-				
-				$sr	= "[$sr]";
-			}
-			$this->mSs	.= ($this->mSs == "") ? "$sr" : ",$sr";
-			
-			$cseries++;
 		}
 		
 	}
@@ -1705,8 +1854,17 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 		//setLog($cItems);
 		//setLog($aCols);
 		//setLog($this->mSeries);
+		$this->mItems	= $cItems;
 		$rsD	= null;
 		$xQL	= null;
+	}
+	function setDistanciaCol($col){ $this->mDistance = $col; }
+	function setAutoWith(){
+		$alto		= setNoMenorQueCero($this->mAlto);
+		$distancias	= $this->mDistance * $this->mItems;
+		$remanente	= $alto - $distancias;
+		$this->mColumnW	= floor(($remanente / $this->mItems ));
+		
 	}
 }
 
@@ -1894,21 +2052,21 @@ class cHMenuItem {
 	private $mIsMobile	= false;
 	
 	function __construct($id, $datos = false){
-		$xMen	= new cGeneral_menu();
-		if(is_array($datos)){
-			$xMen->setData($datos);
-		} else {
-				
-			$xMen->setData( $xMen->query()->initByID($id) );
+		$xMen			= new cGeneral_menu();
+		if(!is_array($datos)){
+			$datos		= $xMen->query()->initByID($id);
 		}
-		$this->CLAVE	= $xMen->idgeneral_menu()->v();
-		$this->NOTA		= $xMen->menu_description()->v(OUT_TXT);
-		$this->TIPO		= $xMen->menu_type()->v();
-		$this->DESTINO	= $xMen->menu_destination()->v(OUT_TXT);
-		$this->ARCHIVO	= $xMen->menu_file()->v(OUT_TXT);
-		$this->ICON		= $xMen->menu_image()->v(OUT_TXT);
-		$this->TITULO	= $xMen->menu_title()->v();
-		$this->PARENT	= $xMen->menu_parent()->v();
+		
+		$xMen->setData($datos);
+		//$datos[$xMen->]; //
+		$this->CLAVE	= $datos[$xMen->IDGENERAL_MENU]; //$xMen->idgeneral_menu()->v();
+		$this->NOTA		= $datos[$xMen->MENU_DESCRIPTION]; //$xMen->menu_description()->v(OUT_TXT);
+		$this->TIPO		= $datos[$xMen->MENU_TYPE]; //$xMen->menu_type()->v();
+		$this->DESTINO	= $datos[$xMen->MENU_DESTINATION]; //$xMen->menu_destination()->v(OUT_TXT);
+		$this->ARCHIVO	= $datos[$xMen->MENU_FILE]; //$xMen->menu_file()->v(OUT_TXT);
+		$this->ICON		= $datos[$xMen->MENU_IMAGE]; //$xMen->menu_image()->v(OUT_TXT);
+		$this->TITULO	= $datos[$xMen->MENU_TITLE]; //$xMen->menu_title()->v();
+		$this->PARENT	= $datos[$xMen->MENU_PARENT]; //$xMen->menu_parent()->v();
 		$this->mIsMobile= $_SESSION[SYS_CLIENT_MOB];
 	}
 	function setIsMobile($is){ $this->mIsMobile = $is; }
@@ -2051,6 +2209,12 @@ class cHGrid {
 		$titulo	= $this->OLang()->getT($titulo);
 		$this->mCampos[$nombre] = array ("title" => $titulo, "sorting" => "false", "width" => $zsize, "function" => "$funcion(data)");
 	}
+	function OColSiNo($nombre, $titulo, $zsize){
+		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
+		$titulo	= $this->OLang()->getT($titulo);
+		$this->mCampos[$nombre] = array ("title" => $titulo, "sorting" => "false", "width" => $zsize, "function" => " (entero(data.record.". $nombre . ") == 1) ? \"<img src='../images/grid/49.png' />\" : \"<img src='../images/grid/1.png' />\" ");
+	}
+	
 	function setColSum($nombre){
 		if( isset($this->mCampos[$nombre]) ){
 			$this->mCampos[$nombre]["footer"] = "function(data){ var total = 0; $.each(data.records, function(index,record){ total += redondear(record.$nombre,2); }); return getFMoney(total); }";
@@ -2534,4 +2698,424 @@ class cFormatosDelSistema {
 		return $sql;
 	}
 }
+
+class cHCreditosProductos {
+	private $mClave			= 0;
+	private $mEmpresa		= 0;
+	private $mPersona		= 0;
+	private $mCredito		= 0;
+	
+	public $S_PERIODICIDAD	= "PERIODICIDAD";
+	public $S_MONTO			= "MONTO_CREDITO";
+	public $S_PAGOS			= "PAGOS";
+	public $S_TASAINTERES	= "TASA_INTERES";
+	public $S_TASAMORA		= "TASA_MORATORIO";
+	public $S_TIPOCUOTA		= "TIPO_CUOTA";
+
+	private $mEspOptions	= array();
+	private $mArrEvents		= array();
+	private $mArrEventsVals	= array();
+	private $mArrProp		= array();
+	private $mSql			= "";
+	private $mLabelSize		= 0;
+	private $mId			= "";
+	private $mDefault		= "";
+	private $mTags			= true;
+	private $mDivClass		= "element-select";
+	private $mLIDs			= array();
+	
+	
+	function __construct($clave){
+		$this->mClave = setNoMenorQueCero($clave);	
+	}
+	function init(){ return true; }
+	
+	
+	function getListaDePeriocidadDePago($id = "", $selected = false, $empresa = false, $omitir360 = false){
+		$id		= ($id == "") ? "idperiocidad" : $id; $this->mLIDs[]	= $id;
+		$selected	= setNoMenorQueCero($selected);
+		$empresa	= setNoMenorQueCero($empresa);
+		$xVal		= new cReglasDeValidacion();
+		
+		$sqlSc		= "SELECT `idcreditos_periocidadpagos`, `descripcion_periocidadpagos` FROM `creditos_periocidadpagos` WHERE (`idcreditos_periocidadpagos` !=99) AND (`estatusactivo`=1) ";
+		if($omitir360 == true){
+			$sqlSc	.= " AND (`idcreditos_periocidadpagos` != " . CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO . ") ";
+		}
+		//============= Determinar por empresa
+		if($xVal->empresa($empresa) == true ){
+			if($empresa > 0){
+				$xEmp	= new cEmpresas($empresa);
+				if($xEmp->init() == true){
+					$arrPers	= $xEmp->getListaDePeriocidad();
+					
+					if(count($arrPers)>0){
+						$ww		= "";
+						foreach ($arrPers as $idx => $v){
+							$ww	.= ($ww == "") ? " `idcreditos_periocidadpagos`=$v " : " OR `idcreditos_periocidadpagos`=$v ";
+						}
+						$ww		= ($ww == "") ? "" : " AND ($ww) ";
+						$sqlSc	.= $ww;
+						
+					} else {
+						$sqlSc	= "SELECT   `creditos_periocidadpagos`.`idcreditos_periocidadpagos`,`creditos_periocidadpagos`.`descripcion_periocidadpagos`, COUNT(`creditos_solicitud`.`numero_solicitud`) AS `creds`
+						FROM     `creditos_solicitud` INNER JOIN `creditos_periocidadpagos`  ON `creditos_solicitud`.`periocidad_de_pago` = `creditos_periocidadpagos`.`idcreditos_periocidadpagos`
+						WHERE    ( `creditos_solicitud`.`persona_asociada` = $empresa ) AND ( `creditos_solicitud`.`saldo_actual` > 0.99 ) GROUP BY `creditos_solicitud`.periocidad_de_pago";
+					}
+				}
+				
+
+			}
+		} else {
+			$sql		= "SELECT   `creditos_periocidadpagos`.`idcreditos_periocidadpagos`,`creditos_periocidadpagos`.`descripcion_periocidadpagos`
+		FROM     `creditos_productos_reglas` INNER JOIN `creditos_tipoconvenio`  ON `creditos_productos_reglas`.`producto_id` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio`
+		INNER JOIN `creditos_periocidadpagos`  ON `creditos_productos_reglas`.`num_minimo` = `creditos_periocidadpagos`.`idcreditos_periocidadpagos` WHERE    ( `creditos_productos_reglas`.`producto_id` = " . $this->mClave . " ) AND ( `creditos_productos_reglas`.`sujeto` = 'PERIODICIDAD' )";
+			$xQL	= new MQL();
+			$rs		= $xQL->getDataRecord($sql);
+			$contar	= $xQL->getNumberOfRows();
+			if($contar > 0){
+				$rs		= null;
+				$xQL	= null;
+				$sqlSc	= $sql;
+			}
+		}
+		
+		
+		
+		
+
+
+		$xS 	= new cSelect($id, $id, $sqlSc);
+		$xS->setLabel("TR.Frecuencia de pagos");
+		$xS->setDivClass("tx4 tx18 orange");
+		if($selected > 0){ $xS->setOptionSelect($selected); }
+		$xS->setEsSql();
+		return $xS;
+	}
+	
+	
+	function getListaDeTipoDeCuota($id = "", $select = false, $omitir360 = false){
+		$select	= setNoMenorQueCero($select);
+		$select	= ($select <= 0) ? CREDITO_TIPO_PAGO_PERIODICO : $select;
+		$id		= ($id == "") ? "idtipodepago" : $id; $this->mLIDs[]	= $id;
+		$sqlSc	= " SELECT * FROM `creditos_tipo_de_pago` WHERE (`idcreditos_tipo_de_pago` !=99) AND (`estatus`=1)";
+		if($omitir360 == true){
+			$sqlSc	.= " AND (`idcreditos_tipo_de_pago` != 1 ) ";
+		}
+		$sql		= "SELECT   `creditos_tipo_de_pago`.* FROM     `creditos_tipo_de_pago` INNER JOIN `creditos_productos_reglas`  ON `creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` = `creditos_productos_reglas`.`num_minimo` WHERE    ( `creditos_productos_reglas`.`sujeto` = 'TIPO_CUOTA' ) AND ( `creditos_productos_reglas`.`producto_id` = ". $this->mClave ." ) AND (`creditos_tipo_de_pago`.`estatus`=1)";
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		$contar	= $xQL->getNumberOfRows();
+		if($contar > 0){
+			$rs		= null;
+			$xQL	= null;
+			$sqlSc	= $sql;
+		}
+		
+		$xS 	= new cSelect($id, $id, $sqlSc);
+		$xS->setLabel("TR.Tipo_de CUOTA");
+		$xS->setDivClass("tx4 tx18 green");
+		$xS->setOptionSelect( $select );
+		$xS->setEsSql();
+		return $xS;
+	}
+	function getTasaOtorgable($persona = false, $id=""){
+		$xProd	= new cProductoDeCredito($this->mClave); $xProd->init();
+		$xTxt	= new cHText();
+		$html	= "";
+		$id		= ($id == "") ? "tasa" : $id;
+		$minimo	= 0;
+		$tasaPreferida	= $xProd->getTasaDeInteres() * 100;
+		$valor	= $tasaPreferida;
+		$pagoU	= false;	//Monto Unico
+		$lbl	= "TR.TASA_ANUALIZADA";
+		$maximo	= $xProd->getTasaDeInteres() * 100;
+		
+		$sql	= "SELECT `creditos_productos_reglas`.* FROM `creditos_productos_reglas` WHERE    ( `creditos_productos_reglas`.`sujeto` = 'TASA_INTERES' ) AND ( `creditos_productos_reglas`.`producto_id` = ". $this->mClave ." ) ";
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		$contar	= $xQL->getNumberOfRows();
+		
+		if($contar > 0){
+			$xT			= new cCreditos_productos_reglas();
+			$arrPagos	= array();
+			if($contar <=1){
+				foreach ($rs as $rw){
+					$minimo	= $rw[$xT->TASA_MIN];
+					$maximo	= $rw[$xT->TASA_MAX];
+					
+					if(($minimo == $maximo) OR ($maximo < $minimo)){
+						$maximo	= $minimo;
+						$pagoU	= true;
+					}
+				}
+			} else {
+				$xSel	= new cHSelect();
+				
+				foreach ($rs as $rw){
+					if($rw[$xT->TASA_MIN]>0){
+						$arrPagos[$rw[$xT->TASA_MIN]]	= $rw[$xT->TASA_MIN];
+					}
+					if($rw[$xT->TASA_MAX]>0){
+						$arrPagos[$rw[$xT->TASA_MAX]]	= $rw[$xT->TASA_MAX];
+					}
+				}
+				$xSel->addOptions($arrPagos);
+				$xSel->setDivClass("tx4 tx18 orange");
+				$html	= $xSel->get($id, $lbl, $valor);
+				return $html;
+				
+			}
+			
+			$rs		= null;
+			$xQL	= null;
+			if($tasaPreferida >= $minimo AND $tasaPreferida <= $maximo ){
+				$valor	= $tasaPreferida;
+			} else {
+				$valor	= $minimo;
+			}
+		} 
+		
+		
+		if($pagoU == true){
+			$xTxt	= new cHText();
+			$xTxt2	= new cHText();
+			$xTxt->setProperty("disabled", "disabled");
+			$xTxt->setDiv13();
+			$xTxt->setProperty("class", "mny");
+			$vv		= getFMoney($valor);
+			$id2	= $id . "_xdis";
+			
+			$html	.= $xTxt->get($id2, $vv, $lbl);
+			$valor	= setNoMenorQueCero( ($valor / 100), 4);
+			$html	.= $xTxt2->getHidden($id, "", $valor);
+		} else {
+			$html	= $xTxt->getDeTasa2($id, $lbl, $valor, true, $maximo, $minimo);
+		}
+		
+		
+		return $html;
+	}
+	function getTasaMoraOtorgable($persona = false, $id=""){
+		$xProd	= new cProductoDeCredito($this->mClave); $xProd->init();
+		$xTxt	= new cHText();
+		$html	= "";
+		$id		= ($id == "") ? "tasamora" : $id;
+		$minimo	= 0;
+		$valor	= $xProd->getTasaDeMora() * 100;
+		$pagoU	= false;	//Monto Unico
+		$lbl	= "TR.TASAMORA";
+		$maximo	= $xProd->getTasaDeMora() * 100;
+		
+		$sql	= "SELECT `creditos_productos_reglas`.* FROM `creditos_productos_reglas` WHERE    ( `creditos_productos_reglas`.`sujeto` = 'TASA_MORATORIO' ) AND ( `creditos_productos_reglas`.`producto_id` = ". $this->mClave ." ) ";
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		$contar	= $xQL->getNumberOfRows();
+		
+		if($contar > 0){
+			$xT			= new cCreditos_productos_reglas();
+			$arrPagos	= array();
+			if($contar <=1){
+				foreach ($rs as $rw){
+					$minimo	= $rw[$xT->TASA_MIN];
+					$maximo	= $rw[$xT->TASA_MAX];
+					
+					if(($minimo == $maximo) OR ($maximo < $minimo)){
+						$maximo	= $minimo;
+						$pagoU	= true;
+					}
+				}
+			} else {
+				$xSel	= new cHSelect();
+				
+				foreach ($rs as $rw){
+					if($rw[$xT->TASA_MIN]>0){
+						$arrPagos[$rw[$xT->TASA_MIN]]	= $rw[$xT->TASA_MIN];
+					}
+					if($rw[$xT->TASA_MAX]>0){
+						$arrPagos[$rw[$xT->TASA_MAX]]	= $rw[$xT->TASA_MAX];
+					}
+				}
+				$xSel->addOptions($arrPagos);
+				$xSel->setDivClass("tx4 tx18 orange");
+				$html	= $xSel->get($id, $lbl, $valor);
+				return $html;
+				
+			}
+			
+			$rs		= null;
+			$xQL	= null;
+			$valor	= $minimo;
+		}
+		
+		
+		if($pagoU == true){
+			$xTxt	= new cHText();
+			$xTxt2	= new cHText();
+			$xTxt->setProperty("disabled", "disabled");
+			$xTxt->setDiv13();
+			$xTxt->setProperty("class", "mny");
+			$vv		= getFMoney($valor);
+			$id2	= $id . "_xdis";
+			
+			$html	.= $xTxt->get($id2, $vv, $lbl);
+			$valor	= setNoMenorQueCero( ($valor / 100), 4);
+			$html	.= $xTxt2->getHidden($id, "", $valor);
+		} else {
+			$html	= $xTxt->getDeTasa2($id, $lbl, $valor, true, $maximo, $minimo);
+		}
+		
+		
+		return $html;
+	}
+	function getMonedaMontoOtorgable($persona, $id=""){
+		$xProd	= new cProductoDeCredito($this->mClave); $xProd->init();
+		$xTxt	= new cHText();
+		$html	= "";
+		$id		= ($id == "") ? "idmonto" : $id;
+		$minimo	= 1;
+		$valor	= $minimo;
+		$pagoU	= false;	//Monto Unico
+		$lbl	= "TR.Monto Solicitado";
+		$maximo	= $xProd->getMontoMaximoOtorgable();
+		
+		$sql	= "SELECT `creditos_productos_reglas`.* FROM `creditos_productos_reglas` WHERE    ( `creditos_productos_reglas`.`sujeto` = 'MONTO_CREDITO' ) AND ( `creditos_productos_reglas`.`producto_id` = ". $this->mClave ." ) ";
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		$contar	= $xQL->getNumberOfRows();
+		
+		if($contar > 0){
+			$xT			= new cCreditos_productos_reglas();
+			$arrPagos	= array();
+			if($contar <=1){
+				foreach ($rs as $rw){
+					$minimo	= $rw[$xT->MONTO_MIN];
+					$maximo	= $rw[$xT->MONTO_MAX];
+					if(($minimo == $maximo) OR ($maximo < $minimo)){
+						$maximo	= $minimo;
+						$pagoU	= true;
+					}
+				}
+			} else {
+				$xSel	= new cHSelect();
+				
+				foreach ($rs as $rw){
+					if($rw[$xT->MONTO_MIN]>0){
+						$arrPagos[$rw[$xT->MONTO_MIN]]	= $rw[$xT->MONTO_MIN];
+					}
+					if($rw[$xT->MONTO_MAX]>0){
+						$arrPagos[$rw[$xT->MONTO_MAX]]	= $rw[$xT->MONTO_MAX];
+					}
+				}
+				$xSel->addOptions($arrPagos);
+				$xSel->setDivClass("tx4 tx18 green");
+				$html	= $xSel->get($id, $lbl, $valor);
+				return $html;
+				
+			}
+			
+			$rs		= null;
+			$xQL	= null;
+		}
+		$valor	= $minimo;
+		
+		if($pagoU == true){
+			$xTxt	= new cHText();
+			$xTxt2	= new cHText();
+			$xTxt->setProperty("disabled", "disabled");
+			$xTxt->setDiv13();
+			$xTxt->setProperty("class", "mny");
+			$vv		= getFMoney($valor);
+			$id2	= $id . "_xdis";
+			
+			$html	.= $xTxt->get($id2, $vv, $lbl);
+			$html	.= $xTxt2->getHidden($id, "", $valor);
+		} else {
+			$html	= $xTxt->getDeMoneda($id, $lbl, $valor, true, $maximo, $minimo);
+		}
+		
+		
+		return $html;
+	}
+	function getNumeroPagosOtorgable($id = ""){
+		$titulo	= "TR.PAGOS";
+		$xTxt	= new cHText();
+		$id		= ($id == "") ? "idnumerodepagos" : $id;
+		$html	= "";
+		$xProd	= new cProductoDeCredito($this->mClave); $xProd->init();
+		$maximo	= $xProd->getPagosMaximos();
+		$minimo	= $xProd->getPagosMinimo();
+		$valor	= $minimo;
+		$pagoU	= false;	//Pago Unico
+		$hsel	= "";
+		
+		$sql	= "SELECT `creditos_productos_reglas`.* FROM `creditos_productos_reglas` WHERE    ( `creditos_productos_reglas`.`sujeto` = 'PAGOS' ) AND ( `creditos_productos_reglas`.`producto_id` = ". $this->mClave ." ) ";
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord($sql);
+		$contar	= $xQL->getNumberOfRows();
+		if($contar > 0){
+			$xT			= new cCreditos_productos_reglas();
+			$arrPagos	= array();
+			if($contar <=1){
+				foreach ($rs as $rw){
+					$minimo	= $rw[$xT->NUM_MINIMO];
+					$maximo	= $rw[$xT->NUM_MAXIMO];
+					if(($minimo == $maximo) OR ($maximo < $minimo)){
+						$maximo	= $minimo;
+						$pagoU	= true;
+					}
+				}
+			} else {
+				$xSel	= new cHSelect();
+				
+				foreach ($rs as $rw){
+					if($rw[$xT->NUM_MINIMO]>0){
+						$arrPagos[$rw[$xT->NUM_MINIMO]]	= $rw[$xT->NUM_MINIMO];
+					}
+					if($rw[$xT->NUM_MAXIMO]>0){
+						$arrPagos[$rw[$xT->NUM_MAXIMO]]	= $rw[$xT->NUM_MAXIMO];
+					}
+				}
+				$xSel->addOptions($arrPagos);
+				$xSel->setDivClass("tx4 tx18 green");
+				$html	= $xSel->get($id, "TR.PAGOS", $minimo);
+				return $html;
+				
+			}
+			
+			$rs		= null;
+			$xQL	= null;
+			//$sqlSc	= $sql;
+		}
+		$valor	= $minimo;
+		
+		$xTxt	= new cHText();
+		$lbl	= $xTxt->getLabel("TR.PAGOS");
+		
+		$hrange	= "<div class=\"range-slider tx13\">$lbl<input name=\"$id\" id=\"$id\" step=\"1\" class=\"range-slider__range\" type=\"range\" value=\"$valor\" min=\"$minimo\" max=\"$maximo\"> <span class=\"range-slider__value\">$valor</span></div>";
+		if($pagoU == true){
+			$xTxt	= new cHText(); 
+			$xTxt2	= new cHText();
+			$xTxt->setProperty("disabled", "disabled");
+			$xTxt->setDiv13();
+			$xTxt->setProperty("class", "mny");
+			$vv		= getFMoney($valor);
+			$id2	= $id . "_xdis";
+			
+			$html	.= $xTxt->get($id2, $vv, $titulo);
+			$html	.= $xTxt2->getHidden($id, "", $valor);
+		} else {
+			if($maximo <= 50){
+				$html	= $hrange;
+			} else {
+				$xTxt->setDivClass("tx4 tx18");
+				$html	= $xTxt->getDeConteo($id, $titulo, $valor, $maximo, $minimo);
+			}
+		}
+
+		
+		return $html;
+	}
+}
+
+
 ?>

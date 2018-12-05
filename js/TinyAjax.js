@@ -379,8 +379,8 @@ function getValue(element) {
 		var name;
 		var first = true;
 		
-		value = 'post_data';
-		form_data = '&rsargs[]=';
+		value 		= 'post_data';
+		form_data 	= '&rsargs[]=';
 		
 		for(var x = 0; x < itm.elements.length; x++) {
 			if(!first) {
@@ -399,9 +399,10 @@ function getValue(element) {
 
 			if(y.type == 'select-one') {
 				form_data +=  name + col + y[y.selectedIndex].value;
-			} else if(y.type == 'select-multiple') {
-				var sel = false;
-				form_data += name + col;
+			}else if(y.type == 'select-multiple'){
+				
+				var sel 	= false;
+				form_data 	+= name + col;
 				for (var z = 0; z < y.length; z++) {
 					if(y.options[z].selected) {
 						form_data += encodeSpecialChars(y.options[z].value) + ',';
@@ -450,9 +451,9 @@ function setValue(element, data) {
 		//alert(itm.type);
 
 		if(itm.value != undefined) {
-			itm.value = data;
+			itm.value 		= data;
 		} else {
-			itm.innerHTML = data;
+			itm.innerHTML 	= data;
 		}
 	}
 }

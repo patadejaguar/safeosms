@@ -72,7 +72,7 @@ if($idproducto > 0){
 	$titulo		.= " - " . $xProd->getNombre();
 }
 
-$sql			= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
+$sql			= $xL->getListadoDeLetrasPendientesReporteAcumV101($BySaldo, TASA_IVA, true, $empresa, $producto, $frecuencia, $sucursal); //Se agrega tasa IVA y TRUE para mostrar creditos con planes de pago
 
 
 $xRPT			= new cReportes($titulo);
@@ -101,6 +101,8 @@ $xRPT->addCampoSuma("iva_moratorio");
 $xRPT->addCampoSuma("total");
 $xRPT->addCampoSuma("ahorro");
 $xRPT->addCampoContar("credito");
+
+
 
 if(MODULO_CAPTACION_ACTIVADO == false){
 	$xRPT->setOmitir("ahorrro");

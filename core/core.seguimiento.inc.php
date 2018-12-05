@@ -543,9 +543,20 @@ class cLlamadas{
 }
 
 class cSeguimientoNotificaciones {
-	private $mPersona		= false;
 	private $mClave			= false;
 	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "seguimiento_notificaciones";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mPersona		= false;
 	private $mAsInit		= false;
 	private $mOPersona		= null;
 	private $mOOficial		= null;
@@ -553,36 +564,137 @@ class cSeguimientoNotificaciones {
 	private $mCredito		= false;
 	private $mEstado		= "";
 	private $mNota			= "";
-	private $mTipo			= "";
-	private $mFecha			= "";
 	private $mHora			= "";
+	private $mCanal			= "personal";
 	
 	public $CANAL_PERSONAL	= "personal";
 	public $CANAL_SMS		= "sms";
+	public $CANAL_WSMS		= "wsms";
 	public $CANAL_MAIL		= "email";
 	
-	function __construct(){
-		
+	public $EST_EFECTUADO	= "efectuado";
+	public $EST_PENDIENTE	= "pendiente";
+	public $EST_CANCELADO	= "cancelado";
+	public $EST_VENCIDO		= "vencido";
+	
+	public $FMT_SMS_PREV	= 3003;
+	
+	private $mTotal			= 0;
+	private $mNumero		= 0;
+	private $mCapital		= 0;
+	private $mInteres		= 0;
+	private $mMoratorio		= 0;
+	private $mImpuestos		= 0;
+	private $mOtrosCargos	= 0;
+	private $mClaveFormato	= 0;
+	private $mPerVencs		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
 	}
-	function add($credito, $fecha, $hora, $total, $notas = "", $oficial = false,$canal ="personal", $formato = false, $capital = 0, $interes = 0, $moratorio = 0, $otros=0, $impuestos = 0 ){
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSeguimiento_notificaciones();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave		= $data[$xT->IDSEGUIMIENTO_NOTIFICACIONES];//$data[$xT->];
+			$this->mFecha		= $data[$xT->FECHA_NOTIFICACION];
+			$this->mTotal		= $data[$xT->TOTAL];
+			$this->mInteres		= $data[$xT->INTERES];
+			$this->mMoratorio	= $data[$xT->MORATORIO];
+			$this->mImpuestos	= $data[$xT->IMPUESTOS];
+			$this->mOtrosCargos	= $data[$xT->OTROS_CARGOS];
+			$this->mObservacion	= $data[$xT->OBSERVACIONES];//$data[$xT->];
+			$this->mCredito		= $data[$xT->NUMERO_SOLICITUD];
+			$this->mOficial		= $data[$xT->OFICIAL_DE_SEGUIMIENTO];
+			$this->mTipo		= $data[$xT->CANAL_DE_ENVIO];
+			$this->mClaveFormato= $data[$xT->FORMATO];
+			$this->mCanal		= $data[$xT->CANAL_DE_ENVIO];
+			$this->mPersona		= $data[$xT->SOCIO_NOTIFICADO];
+			$this->mCapital		= $data[$xT->CAPITAL];
+			$this->mPerVencs	= $data[$xT->PERIODOSVENCIDOS];
+			$this->mNumero		= $data[$xT->NUMERO_NOTIFICACION];
+			$this->mObj			= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){ return $this->mNombre; }
+	function getClave(){ return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function getTotal(){ return $this->mTotal; }
+	function getCapital(){ return $this->mCapital; }
+	function getNumero(){ return $this->mNumero; }
+	function getMoratorio(){ return $this->mMoratorio; }
+	function getInteres(){ return $this->mInteres; }
+	function getOtrosCargos(){ return $this->mOtrosCargos; }
+	function getImpuestos(){ return $this->mImpuestos; }
+	function getObservaciones(){ return $this->mObservacion; }
+	function getCredito(){ return $this->mCredito; }
+	function getClaveCredito(){ return $this->mCredito; }
+	function getClavePersona(){ return $this->mPersona; }
+	function getOficial(){ return $this->mOOficial; }
+	function getCanal(){ return $this->mCanal; }
+	function getFecha(){ return $this->mFecha; }
+	function getPeriodosVencidos(){ return $this->mPerVencs; }
+	function getClaveFormato(){ return $this->mClaveFormato; }
+	function getVencimiento(){
+		$xF		= new cFecha();
+		$vence	= $xF->setSumarDias(DIAS_DE_ANTICIPACION_PARA_LLAMADAS, $this->getFecha());
+		return $vence;
+	}
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($credito, $fecha, $hora, $total, $notas = "", $oficial = false,$canal ="personal", $formato = false, $capital = 0, $interes = 0, $moratorio = 0, $otros=0, $impuestos = 0, $numperiodos=0 ){
 		$oficial	= setNoMenorQueCero($oficial);
 		$formato	= setNoMenorQueCero($formato);
 		$formato	= ($formato<=0) ? 10 : $formato;//Recordatorio de Pago
 		$oficial	= ($oficial <= 0 ) ? getUsuarioActual() : $oficial;
 		$ready		= false;
 		$xCred		= new cCredito($credito);
-		$persona=DEFAULT_SOCIO;
-		$grupo	= DEFAULT_GRUPO;
+		$xF			= new cFecha();
+		$fecha		= $xF->getFechaISO($fecha);
+		$total		= setNoMenorQueCero($total,2);
+		
+		$persona	= DEFAULT_SOCIO;
+		$grupo		= DEFAULT_GRUPO;
 		if($xCred->init() == true){
 			$ready		= true;
 			$persona	= $xCred->getClaveDePersona();
 			$grupo		= $xCred->getClaveDeGrupo();
+			if($oficial <= 0){
+				$oficial	= $xCred->getOficialDeSeguimiento();
+			}
 		}
 		$xSeg	= new cSeguimiento_notificaciones();
 		$xSeg->canal_de_envio($canal);
 		$xSeg->capital($capital);
 		$xSeg->eacp(EACP_CLAVE);
-		$xSeg->estatus_notificacion(SEGUIMIENTO_ESTADO_PENDIENTE);
+		$xSeg->estatus_notificacion($this->EST_PENDIENTE);
 		$xSeg->fecha_notificacion($fecha);
 		$xSeg->formato($formato);
 		$xSeg->grupo_relacionado();
@@ -599,19 +711,106 @@ class cSeguimientoNotificaciones {
 		$xSeg->sucursal(getSucursal());
 		$xSeg->total($total);
 		$xSeg->usuario(getUsuarioActual());
+		$xSeg->idresultado(SYS_UNO);
+		$xSeg->periodosvencidos($numperiodos);
+		
 		$id		= $xSeg->query()->getLastID();
 		$xSeg->idseguimiento_notificaciones( $id );
+		
 		if($ready == true){
-			$ready	= $xSeg->query()->insert()->save(); 
+			$ready	= $xSeg->query()->insert()->save();
 			if($ready !== false){
 				$this->mClave	= $id;
+				$this->mMessages	.= "OK\tSe Agrega la Notificacion Num. $id\r\n";
+			} else {
+				$this->mMessages	.= "ERROR\tNo se agrego la Notificacion\r\n";
 			}
 		}
 		return ($ready !== false) ? true : false;
 	}
-	function enviar(){
-		//si es SMS, EMAIL
+	function enviar($clave	= false){
+		$clave			= setNoMenorQueCero($clave);
+		$clave			= ($clave<=0) ? $this->mClave : $clave;
+		$this->mClave	= $clave;
+		$res			= false;
+		
+		if($this->init() == true){
+			$xSoc	= new cSocio($this->getClavePersona());
+			if($xSoc->init() == true){
+				
+				//si es SMS, EMAIL
+				switch($this->mCanal){
+					case $this->CANAL_SMS:
+						$xNot		= new cNotificaciones();
+						$telefono	= $xSoc->getTelefonoPrincipal();
+						$txt		= "";
+						if($this->getClaveFormato() > 0){
+							$xFMT		= new cFormato($this->getClaveFormato());
+							if($xFMT->init() == true){
+								$xFMT->setNotificacionDeCobro($this->mClave);
+								$xFMT->setProcesarVars();
+								$txt	= $xFMT->get();
+								
+							}
+						}
+						if($txt == ""){
+							$this->mMessages	.= "ERROR\tMensaje vacio($txt)\r\n";
+						} else {
+							$nnota				= $xNot->sendSMS($telefono, $txt);
+							$this->mMessages	.= $nnota;
+							$this->mMessages	.= $xNot->getMessages();
+							$res				= true;
+							$this->setActualizarEnviado($nnota);
+						}
+					break;
+					case $this->CANAL_MAIL:
+						
+						$xNot		= new cNotificaciones();
+						$mail		= $xSoc->getCorreoElectronico();
+						$txt		= "";
+						$titulo		= "";
+						if($this->getClaveFormato() > 0){
+							$xFMT			= new cFormato($this->getClaveFormato());
+							if($xFMT->init() == true){
+								$xFMT->setNotificacionDeCobro($this->mClave);
+								$xFMT->setProcesarVars();
+								$txt		= $xFMT->get();
+								$titulo		= $xFMT->getTitulo(); 
+							}
+						}
+						if($txt == ""){
+							$this->mMessages	.= "ERROR\tMensaje vacio($txt)\r\n";
+						} else {
+							$nnota				= $xNot->sendMail($titulo, $txt, $mail);
+							$this->mMessages	.= $nnota;
+							$this->mMessages	.= $xNot->getMessages();
+							$res				= true;
+							$this->setActualizarEnviado($nnota);
+						}
+						
+						break;
+				}
+			} else {
+				$this->mMessages	.= "ERROR\tError al Inicializal la persona(" . $this->getClavePersona() . ")\r\n";
+			}
+			
+		} else {
+			$this->mMessages	.= "ERROR\tError al Inicializa($clave)\r\n";
+		}
+		//setError($this->mMessages);
+		
+		return $res;
 	}
+	function setActualizarEnviado($notas){
+		$tiempo	= time();
+		$clave	= $this->mClave;
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE `seguimiento_notificaciones` SET `estatus_notificacion`='" . $this->EST_EFECTUADO . "', `tiempo_entrega`=$tiempo , `nota_entrega`='$notas' AND `idseguimiento_notificaciones`=$clave ");
+		$xQL	= null;
+		
+		return ($res === false) ? false : true;
+	}
+	
 }
 
 class cAlertasDelSistema {
@@ -628,6 +827,16 @@ class cAlertasDelSistema {
 	private $mDestPers		= array();
 	private $mArrMails		= array();
 	private $mArrTels		= array();
+	
+	private $mPropAvOficiales 	= "";
+	private $mPropAvPersonas 	= "";
+	private $mPropAvMails 		= "";
+	private $mPropAvEmpresas	= "";
+	private $mPropProgramacion	= "";
+	private $mPropGeneradoEn	= "";
+	private $mPropConMail		= false;
+	private $mPropConTels		= false;
+	private $mPropConSMS		= false;
 
 	function __construct($fecha = false){
 		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
@@ -922,9 +1131,14 @@ class cAlertasDelSistema {
 		$ins->save();
 		if(MODO_DEBUG == true){ $this->mMessages	.= $ins->getMessages(OUT_TXT); }
 	}
+	/**
+	 * Enviar Avisos del Sistema al cierre
+	 * @param mixed $fecha
+	 * @return string
+	 */
 	function setGenerarAlCierre($fecha = false){
 		$fecha	= ($fecha == false) ? $this->mFecha : $fecha;
-		$sql	= "SELECT * FROM `sistema_programacion_de_avisos` WHERE	(`sistema_programacion_de_avisos`.`forma_de_creacion` ='" . SYS_ALERTA_AL_CIERRE . "')";
+		$sql	= "SELECT * FROM `sistema_programacion_de_avisos` WHERE	(`sistema_programacion_de_avisos`.`forma_de_creacion` ='" . SYS_ALERTA_AL_CIERRE . "') AND `estatus`=1 ";
 		$alerta	= new cSistema_programacion_de_avisos();
 		$mql	= new MQL();
 		$rw		= $mql->getDataRecord($sql);
@@ -957,6 +1171,9 @@ class cAlertasDelSistema {
 		$idc	= "sistema_programacion_de_avisos-byE-$evento";
 		$sql 	= "SELECT  * FROM `sistema_programacion_de_avisos` WHERE `programacion`='$evento' LIMIT 0,1";
 		$dd		= $xCache->get($idc);
+		$xP		= new cSistema_programacion_de_avisos();
+		$res	= false;
+		
 		if( !is_array($dd) ){
 			$xQL	= new MQL();
 			$dd		= $xQL->getDataRow($sql);
@@ -964,12 +1181,42 @@ class cAlertasDelSistema {
 			
 			$xCache->set($idc, $dd);
 		}
-		if(isset($dd["programacion"])){
-			$xP		= new cSistema_programacion_de_avisos();
+		if(isset($dd[$xP->PROGRAMACION])){
+			$res	= true;
 			$xP->setData($dd);
+			//--------- No se porque mierda es al reves
+			$this->mPropProgramacion	= $dd[$xP->FORMA_DE_CREACION];
+			$this->mPropGeneradoEn		= $dd[$xP->PROGRAMACION];
 			$this->getMailsByCnt($xP->destinatarios()->v());
 		}
-		
+		return $res;
+	}
+	function initByClaveID($id){
+		$id		= setNoMenorQueCero($id);
+		$res	= false;
+		if($id > 0){
+			$xCache	= new cCache();
+			$idc	= "sistema_programacion_de_avisos-t-$id";
+			$sql 	= "SELECT  * FROM `sistema_programacion_de_avisos` WHERE `idprograma`=$id LIMIT 0,1";
+			$dd		= $xCache->get($idc);
+			$xP		= new cSistema_programacion_de_avisos();
+			
+			if( !is_array($dd) ){
+				$xQL	= new MQL();
+				$dd		= $xQL->getDataRow($sql);
+				//setLog($dd);
+				$xCache->set($idc, $dd);
+			}
+			if(isset($dd[$xP->PROGRAMACION])){
+				$xP->setData($dd);
+				$this->getMailsByCnt($xP->destinatarios()->v());
+				//--------- No se porque mierda es al reves
+				$this->mPropProgramacion	= $dd[$xP->PROGRAMACION];
+				$this->mPropGeneradoEn		= $dd[$xP->FORMA_DE_CREACION];
+				$res	= true;
+			}
+		}
+		return $res;
 	}
 	function getMailsByCnt($cnt){
 		$emails				= array();
@@ -988,6 +1235,8 @@ class cAlertasDelSistema {
 				if( $cdests > 0 ){
 					switch ( $mdestino ) {
 						case "OFICIALES":
+							$this->mPropAvOficiales		= $dests;
+							
 							$oficiales		= explode(",", $dests);
 							foreach ($oficiales AS $ofc => $ofkey){
 								$xOf		= new cOficial($ofkey); $xOf->init();
@@ -997,6 +1246,7 @@ class cAlertasDelSistema {
 							}
 						break;
 						case "EMPRESAS":
+							$this->mPropAvEmpresas	= $dests;
 							$empresas		= explode(",", $dests);
 							foreach ($empresas AS $emp => $empkey){
 								$xEmp		= new cEmpresas($empkey); $xEmp->init();
@@ -1005,6 +1255,8 @@ class cAlertasDelSistema {
 							}
 						break;
 						case "PERSONAS":
+							$this->mPropAvPersonas	= $dests;
+							
 							$personas		= explode(",", $dests);
 							//Agregar personas opcionales
 							if(count($this->mDestPers) > 0 ){
@@ -1023,6 +1275,7 @@ class cAlertasDelSistema {
 						
 						break;
 						case "CORREO":
+							$this->mPropAvMails	= $dests;
 							$personas		= explode(",", $dests);
 							foreach ($personas AS $ofc => $ofkey){
 								if (filter_var($ofkey, FILTER_VALIDATE_EMAIL)){ $emails[]	= $ofkey; }
@@ -1052,6 +1305,12 @@ class cAlertasDelSistema {
 			}
 		}
 	}
+	function getPropAvisoPersonas(){ return $this->mPropAvPersonas; }
+	function getPropAvisoEmpresas(){ return $this->mPropAvEmpresas; }
+	function getPropAvisoOficiales(){ return $this->mPropAvOficiales; }
+	function getPropAvisoMails(){ return $this->mPropAvMails; }
+	function getPropProgramacion(){ return $this->mPropProgramacion; }
+	function getPropGeneradoEn(){ return $this->mPropGeneradoEn; }
 }
 
 
@@ -1068,9 +1327,12 @@ class cNotificaciones {
 	private $mOriginalM	= "";
 
 	private $mCanal		= "";
-	private $mTitleFrom	= "S.A.F.E. OSMS Alertas";
-	public $MEDIO_MAIL	= "email";
-	public $MEDIO_SMS	= "sms";
+	private $mTitleFrom		= "";
+	public $MEDIO_MAIL		= "email";
+	public $MEDIO_SMS		= "sms";
+	public $MEDIO_WSMS		= "wsms";
+	
+	
 	
 	private $mMailSrv		= "";
 	private $mMailSrvTLS	= false;
@@ -1078,6 +1340,7 @@ class cNotificaciones {
 	private $mMailSrvUsr	= "";
 	private $mMailSrvPwd	= "";
 	private $mMailToName	= "SAFE-OSMS";
+	private $mIsSend		= false;
 	//private $mOnMail	= true;
 	//private $mOnSMS		= false;
 	//private $mOnLocal	= false;
@@ -1096,7 +1359,7 @@ class cNotificaciones {
 		$this->mMailSrvPort	= ADMIN_MAIL_SMTP_PORT;
 		$this->mMailSrvUsr	= ADMIN_MAIL;
 		$this->mMailSrvPwd	= ADMIN_MAIL_PWD;
-		
+		$this->mTitleFrom	= EACP_NAME . "";
 	}
 	function setCanal($canal){ $this->mCanal	= $canal; }
 	function setMailSettings($server = "", $port = "", $tls = null,  $usr = "", $pwd = "", $from="", $toName=""){
@@ -1111,6 +1374,7 @@ class cNotificaciones {
 		
 	}
 	function setTitulo($txt){ $this->mTitulo = $txt; }
+	function isSend(){ return $this->mIsSend; }
 	function send($mensaje, $email = false, $telefono = false, $usuario = false, $mensaje_corto = "", $canal = false){
 		$msg			= "";
 		$mensaje		= $this->cleanString($mensaje);
@@ -1125,8 +1389,6 @@ class cNotificaciones {
 		if($telefono == false){
 				
 		} else {
-			
-			//$telefono	= $xReg->getTelMovil($telefono);
 			$msg		.= $this->sendSMS($telefono, $mensaje_corto);
 		}
 		if($usuario == false){
@@ -1146,38 +1408,78 @@ class cNotificaciones {
 		$this->mMessages	.= $msg;
 		return $msg;
 	}
-	function sendSMS($telefono, $mensaje) {
-		$pwd				= $this->mSMS_pwd;
-		$user				= $this->mSMS_usr;
+	
+	function sendWSMS($telefono, $mensaje) {
+		$this->mIsSend		= true;
 		$res				= "";
 		$xReg				= new cReglasDePais();
 		$telefono			= $xReg->getTelMovil($telefono);
-		/*	$url = 'http://bulksms.vsms.net/eapi/submission/send_sms/2/2.0';
-	$msisdn = '44123123123';
-	$data = 'username=your_username&password=your_password&message='.urlencode('Testing SMS').'&msisdn='.urlencode($msisdn);*/
-		if(trim($pwd) == "" OR trim($user) == "" OR $telefono == null){
-			$res			.= "ERROR\tError con las credenciales ($user) o telefono $telefono\r\n";		
+		$xWap				= new cSeguimientoWathsApp();
+		if($telefono == null){
+			$res			.= "ERROR\tTelefono $telefono no valido\r\n";
+			$res			.= $xReg->getMessages();
 		} else {
-			$optional_headers 	= 'Content-type:application/x-www-form-urlencoded';
-			$data 				= "username=" . $user . "&password=" . $pwd . "&message=".urlencode($mensaje).'&msisdn='.urlencode($telefono);
-			$url				= $this->mSMS_uri;
-			
-			$params = array('http'      => array(
-					'method'       => 'POST',
-					'content'      => $data,
-			));
-			if ($optional_headers !== null) {
-				$params['http']['header'] = $optional_headers;
+			$res			= $xWap->sendMessage($telefono, $mensaje);
+		}
+		$this->mMessages	.= $res; 
+		
+		return $res;
+	}
+	function sendSMS($telefono, $mensaje) {
+		$pwd				= $this->mSMS_pwd;
+		$user				= $this->mSMS_usr;
+		$this->mIsSend		= true;
+		$res				= "";
+		$xReg				= new cReglasDePais();
+		$telefono			= $xReg->getTelMovil($telefono);
+		$proxySMS			= SERVER_PROXY_SMS;
+		
+		if($telefono == null){
+			$res			.= "ERROR\tTelefono $telefono no valido\r\n";
+			$this->mMessages.= $xReg->getMessages(); 
+		} else {
+			if(strlen($mensaje)> $this->mSMS_limit){
+				$mensaje	= substr($mensaje, 0, $this->mSMS_limit);
 			}
-	
-			$ctx 		= stream_context_create($params);
-			$response 	= @file_get_contents($url, false, $ctx);
-			if ($response === false) {
-				$res	.= "ERROR\tProblem reading data from $url, No status returned\r\n";
-				//
+			if(strlen($proxySMS) > 10){
+				$xSVC		= new MQLService("", "");
+				//curl -X "GET" "http://192.168.1.102:8080/v1/sms/send/?phone=987654321&message=your%20message" 
+				$mTel		= "phone=$telefono&";
+				$mMsg		= "message=" . urlencode($mensaje);
+				$res		.= $xSVC->getRequest($proxySMS . "v1/sms/send/?" . $mTel . $mMsg);
+				//setError($proxySMS . "v1/sms/send/?" . $mTel . $mMsg);
 			} else {
-				$res	.= $response;
-				
+				if(strlen("$telefono") == 10){
+					$telefono	= SEGUIMIENTO_TELEFONO_PREFIJO . $telefono;
+				}
+				/*	$url = 'http://bulksms.vsms.net/eapi/submission/send_sms/2/2.0';	$msisdn = '44123123123';	$data = 'username=your_username&password=your_password&message='.urlencode('Testing SMS').'&msisdn='.urlencode($msisdn);*/
+				if(trim($pwd) == "" OR trim($user) == ""){
+					$res			.= "ERROR\tError con las credenciales ($user) o telefono $telefono\r\n";		
+				} else {
+					//Agregar telefono a Codigo de pais 52
+					
+					$optional_headers 	= 'Content-type:application/x-www-form-urlencoded';
+					$data 				= "username=" . $user . "&password=" . $pwd . "&message=".urlencode($mensaje).'&msisdn='.urlencode($telefono);
+					$url				= $this->mSMS_uri;
+					
+					$params = array('http'      => array(
+							'method'       => 'POST',
+							'content'      => $data,
+					));
+					if ($optional_headers !== null) {
+						$params['http']['header'] = $optional_headers;
+					}
+			
+					$ctx 		= stream_context_create($params);
+					$response 	= @file_get_contents($url, false, $ctx);
+					if ($response === false) {
+						$res	.= "ERROR\tProblema al leer datos de  $url, No se ha devuelto nada\r\n";
+						//
+					} else {
+						$res	.= $response;
+						
+					}
+				}
 			}
 		}
 		//if(MODO_DEBUG == true){setLog($res);}
@@ -1271,7 +1573,7 @@ class cNotificaciones {
 	}
 	function sendCloudMessage($mensaje){
 		$res		= "";
-
+		/*
 		$PConf			= new parseConfig();
 		$APPLICATION_ID = $PConf::APPID;
 		$REST_API_KEY 	= $PConf::RESTKEY;
@@ -1300,7 +1602,7 @@ class cNotificaciones {
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
 		$result		= curl_exec($curl);
 		$result		= json_decode($result);
-
+		*/
 		$res	.= "OK\tMensaje $mensaje enviado con exito\r\n";
 
 		$this->mMessages	.= $res;
@@ -1482,37 +1784,116 @@ class cSeguimientoCompromisos {
 	}		
 }
 class cSeguimientoWathsApp {
-	private $mObj	= null;
+	private $mObj		= null;
+	private $mApiKey	= "";
+	private $mSrv		= "https://messagingapi.app/whatsapp";
+	private $mIsSend	= false;
+	
 	function __construct(){
-		$this->mObj = new WhatsProt(SEGUIMIENTO_WATHSAPP_NUMERO, SEGUIMIENTO_WATHSAPP_USER, EACP_NAME, MODO_DEBUG);
+		//$this->mObj = new WhatsProt(SEGUIMIENTO_WATHSAPP_NUMERO, SEGUIMIENTO_WATHSAPP_USER, EACP_NAME, MODO_DEBUG);
+		//SEGUIMIENTO_WATHSAPP_NUMERO;
+		//SEGUIMIENTO_WATHSAPP_USER;
+		//SEGUIMIENTO_WATHSAPP_PWD;
+		//$xConf	= new cConfiguration();
+		//$xConf->set("wathsapp_password_de_usuario", $clave);
 	}
 	
 	function setRequerirRegistro(){
-		$this->mObj->codeRequest('sms');
+		//$this->mObj->codeRequest('sms');
 	}
 	function setConfirmarRegistro($clave){
-		$this->mObj->codeRegister($clave);
+		//$this->mObj->codeRegister($clave);
 		//Guardar en la configuracion
-		$xConf	= new cConfiguration();
-		$xConf->set("wathsapp_password_de_usuario", $clave);
+
 	}
 	function sendMessage($telefono, $txt){
-		$this->mObj->connect();
-		//$this->mObj->eventManager()->bind("onPresence", "onPresenceReceived");
-		$this->mObj->loginWithPassword(SEGUIMIENTO_WATHSAPP_PWD);
-		//$this->mObj->
-		$w->sendMessage($telefono, $txt);
-		//$w->sendMessage($target, "Sent from WhatsApi at " . date('H:i'));
-		while($w->pollMessage());		
+		$pwd		= SEGUIMIENTO_WATHSAPP_PWD;
+		$device		= setNoMenorQueCero(SEGUIMIENTO_WATHSAPP_DID);
+		$url 		= $this->mSrv . "/services/send.php";
+		$msg		= "";
+		$send		= true;
+		
+		if(strlen("$telefono") < 10){
+			$msg	.= "Telefono : $telefono Invalido\r\n";
+			$send	= false;
+		}
+		if($device<=0){
+			$msg	.= "Dispositivo : $device Invalido\r\n";
+			$send	= false;
+		}
+		if(trim($pwd) == ""){
+			$msg	.= "Api Key Invalida\r\n";
+			$send	= false;
+		}
+		if(strlen("$telefono") == 10){
+			$telefono	= SEGUIMIENTO_TELEFONO_PREFIJO . $telefono;
+		}
+		$postData 	= array('number' => $telefono, 'message' => $txt, 'key' => $pwd, 'devices' => $device, 'useAvailable' => true);
+		/*$postData = [
+				'messages' => json_encode($messages),
+				'key' => API_KEY,
+				'devices' => json_encode($devices),
+				'useAvailable' => $useAvailable
+		];*/
+		if($send == true){
+			try {
+				$this->sendRequest($url, $postData);
+				$this->mIsSend	= true;
+			} catch (Exception $e) {
+				$msg	= $e->getMessage();
+			}
+		}
+		return $msg;
+	}
+	function isSend(){ return $this->mIsSend; }
+	
+	//https://messagingapi.app/whatsapp/services/send.php?key=83bb2d6d0112e15c66ccfdc7c2cf638d439e9faa&number=529994922438&message=Prueba&devices=135
+	private function sendRequest($url, $postData)
+	{
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+		$response = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if (curl_errno($ch)) {
+			throw new Exception(curl_error($ch));
+		}
+		curl_close($ch);
+		if ($httpCode == 200) {
+			$json = json_decode($response, true);
+			if($json == false) {
+				if(empty($response)) {
+					throw new Exception("Missing data in request. Please provide all the required information to send messages.");
+				} else {
+					throw new Exception($response);
+				}
+			}
+			else {
+				if ($json["success"]) {
+					return $json["data"];
+				} else {
+					throw new Exception($json["error"]["message"]);
+				}
+			}
+		} else {
+			throw new Exception("HTTP Error Code : {$httpCode}");
+		}
 	}
 }
 
 
-
+class cSeguimiento {
+	public $T_LLAMADA		= "llamada";
+	public $T_NOTIFICACION	= "notificacion";
+	public $T_COMPROMISO	= "compromiso";
+	
+}
 
 
 //This function only needed to show how eventmanager works.
-function onGetProfilePicture($from, $target, $type, $data)
+/*function onGetProfilePicture($from, $target, $type, $data)
 {
 	if ($type == "preview") {
 		$filename = "preview_" . $target . ".jpg";
@@ -1536,5 +1917,5 @@ function onPresenceReceived($username, $from, $type)
 		echo "<$dFrom is online>\n\n";
 		else
 			echo "<$dFrom is offline>\n\n";
-}
+}*/
 ?>

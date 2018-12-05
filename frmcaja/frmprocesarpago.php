@@ -23,13 +23,18 @@ $ql			= new MQL();
 $capital_original_de_letra		= 0;			//Monto original de capital de la letra
 $msg		= "";
 $xLog		= new cCoreLog();
-
 $xRuls		= new cReglaDeNegocio();
+
 $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 $LockCobros	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
 $NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
+$NoCaptAntI	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NO_CAP_ANT_INT); //No pagar Capital antes de los Intereses
+$NoArrPena	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_NOARRASTRA_PENAS); //No arrastrar penas
+
+$EsPagoAdelantado	= false;
 
 $interes_a_pagar	= 0;
+$vendedor			= parametro("vendedor", 0, MQL_INT);
 
 
 
@@ -93,6 +98,8 @@ if( $aPagaCompleto[$operacion] == true ){ $pago_total = true ; $monto_a_operar	=
  
 $mTipoPago			= (isset($DPar[6])) ?  trim($DPar[6]) : DEFAULT_TIPO_PAGO;
 $mReciboFiscal		= (isset($DPar[7])) ? $DPar[7] : DEFAULT_RECIBO_FISCAL;
+
+
 $procesado			= (isset($_GET["procesar"]) ) ? $_GET["procesar"] : "normal";
 $cheque				= parametro("cheque", DEFAULT_CHEQUE); $cheque = parametro("idcheque", $cheque); $cheque = parametro("ccheque", $cheque);
 
@@ -134,7 +141,7 @@ for($ix=0; $ix <= $limParms; $ix++){
 	$interes_anticipado 		= $dcredito["sdo_int_ant"];
 	$grupo						= $xCred->getClaveDeGrupo();
 	$OProducto					= $xCred->getOProductoDeCredito();
-	
+	$pagosautorizados			= $xCred->getPagosAutorizados();
 	$tasa_iva					= ( $generarIVA == false) ? 0 : $xCred->getTasaIVA();
 	
 
@@ -167,6 +174,12 @@ for($ix=0; $ix <= $limParms; $ix++){
 				$xLetra->setTasaMora($xCred->getTasaDeMora());
 				$xLetra->setIDProducto($xCred->getClaveDeProducto());
 				$xLetra->setPeriocidadDePago($xCred->getPeriocidadDePago());
+				if($xLetra->getEsAdelantadoSegunFecha($fecha_operacion) == true){
+					$EsPagoAdelantado	= true;
+					$NoCaptAntI			= false;//Puede pagar solo Interes
+					$xLog->add("WARN\tPago Adelantado en $fecha_operacion por "  . $xLetra->getFechaDePago() .  "\r\n", $xLog->DEVELOPER);
+				}
+				
 				
 				$DPena				= $xLetra->setCalcularPenas_Y_Mora($fecha_operacion, true);
 				$monto_penas		= $DPena[SYS_PENAS];
@@ -286,7 +299,10 @@ $tasa_iva_otros			= TASA_IVA;
 echo $xHP->setBodyinit("initComponents()");
 $xFRM	= new cHForm("frmprocesarpago", "frmpagoprocesado.php?p=$params|$estatus_del_credito|$grupo", "frmprocesarpago");
 
-$xFRM->OHidden("ctipo_pago", $mTipoPago); //<input type='hidden' name='ctipo_pago' id=\"idtipo_pago\" value='$mTipoPago' />
+$xFRM->OHidden("ctipo_pago", $mTipoPago);
+$xFRM->OHidden("vendedor", $vendedor);
+$xFRM->OHidden("oficialcobranza", $vendedor);
+
 
 $xFRM->addFootElement("<input type='hidden' name='cobservaciones' value='' id=\"idobservaciones\" />
  <input type='hidden' name='crecibo_fiscal' id=\"idrecibo_fiscal\" value='$mReciboFiscal' />
@@ -321,6 +337,10 @@ foreach ($rsm as $rwm ){
 				//Omite los Intereses Pactados y tod lo concerniente al credito segun la base
 				if ( in_array($MTipo, $arrINTS) ){
 					$xLog->add("WARN\t$MTipo\tINTERES\tEl Monto por $monto Del Movimiento $MTipo se lleva a CERO\r\n", $xLog->DEVELOPER);
+					$monto	   	= 0;
+				}
+				if($NoArrPena == true AND $MTipo == OPERACION_CLAVE_PAGO_PENAS){
+					$xLog->add("WARN\t$MTipo\tPENAS\tEl Monto por $monto Del Movimiento $MTipo se lleva a CERO por nos arrastrar PENAS\r\n", $xLog->DEVELOPER);
 					$monto	   	= 0;
 				}
 				if($MTipo == OPERACION_CLAVE_PLAN_DESGLOSE){
@@ -449,11 +469,28 @@ foreach ($rsm as $rwm ){
 				
 				if($xTipoOp->getExigenciaEnPagTotCred($xCred->getClaveDeProducto()) == true ){
 					$ntemp	= setNoMenorQueCero(($xCred->getPagosAutorizados()-$parcialidad))+1;
-					$nnote	= " ($ntemp * $monto)";
+					$nnote	= " EXIG($ntemp * $monto)";
 					$monto	= $ntemp * $monto;
-					$xLog->add("WARN\t$idx\tADD\tExigencia TOTAL del Monto por $monto a la Parcialidad Num $parcialidad\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\t$idx\tADD\tExigencia TOTAL del Monto por $monto a la Parcialidad Num $parcialidad por $ntemp Periodos\r\n", $xLog->DEVELOPER);
 					
+				} else {
+					if($xCred->isAtrasado() == true){
+						if($xCred->isAFinalDePlazo() == false){
+							$xPlan	= new cPlanDePagos($xCred->getNumeroDePlanDePagos());
+							$xPlan->init();
+							
+							$xPlan->initParcsPendientes(0, $fecha_operacion);
+							
+							$ntemp	= setNoMenorQueCero($xPlan->getPagosAtrasados());
+							$nnote	= " VENC($ntemp * $monto)";
+							$monto	= $ntemp * $monto;
+							
+							$xLog->add("WARN\t$idx\tADD\tPagos atrasados por $monto a la Parcialidad Num $parcialidad por $ntemp Periodos\r\n", $xLog->DEVELOPER);
+							
+						}
+					}
 				}
+				
 			}
 			if( ($monto > 0) AND ($monto_a_operar >0)){
 				//Evauar pendiente
@@ -787,6 +824,8 @@ var mCapitalAmort	= 0;
 var mInteresAmort	= 0;
 var mCapitalPend	= 0;
 var mInteresPend	= 0;
+var mNumsLetras		= <?php echo $pagosautorizados; ?>;
+var mNoCaptAntInt	= <?php echo ($NoCaptAntI == true) ? "true" : "false"; ?>;
 
 var EsFinalPlazo	= <?php echo ($xCred->isAFinalDePlazo() == true) ? "true" : "false"; ?>;
 var LockCobro		= <?php echo ($LockCobros == true) ? "true" : "false"; ?>;
@@ -879,8 +918,16 @@ function getTotal(){
 	mInteresAmort		= redondear(mIntAb);			//Actualizar el Interes Abonado
 	if(mIntPend > 0){
 		if(mCapitalAmort > 0){
-			xG.informar({msg : "ALERT_PAGAR_ANTES_INT : " + getFMoney(mIntPend)});
-			oInfo.errors++;
+			if(mLetra == mNumsLetras){
+				console.log("Capital a ultima letra factible : " +  mLetra + "/" + mNumsLetras);
+			} else {
+				if(mNoCaptAntInt == true){
+					xG.informar({msg : "ALERT_PAGAR_ANTES_INT : " + getFMoney(mIntPend)});
+					oInfo.errors++;
+				} else {
+					console.log("Pago Adelantado : " +  mLetra + "/" + mNumsLetras);
+				}
+			}
 		} 
 	}
 	//setLog("Error... " + oInfo.errors);
@@ -888,9 +935,11 @@ function getTotal(){
   	$("#idtotaloperaciones").val( redondear(neto) );
   	
   	getLetras();
+
   	//Heredar
 	if(window.parent){
 		if(window.parent.document.getElementById("idobservaciones")){ $("#idobservaciones").val(window.parent.document.getElementById("idobservaciones").value);	}
+		if(window.parent.document.getElementById("id-foliofiscal")){ $("#idrecibo_fiscal").val(window.parent.document.getElementById("id-foliofiscal").value);	}
 		if(window.parent.document.getElementById("cheque")){ $("#idcheque").val(window.parent.document.getElementById("cheque").value); 	}
 		if(window.parent.jsFrameTotalActualizado){ window.parent.jsFrameTotalActualizado(); }
 	}

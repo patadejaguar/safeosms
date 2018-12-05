@@ -66,6 +66,12 @@ $fecha_de_autorizacion	= $xF->get();
 $TipoDeDispersion		= FALLBACK_CREDITOS_TIPO_DESEMBOLSO;
 $TipoDeLugarDeCobro		= FALLBACK_CREDITOS_LUGAR_DE_PAGO;
 $cedula_grupal			= 0;
+$TipoDeOrigen			= 0;
+$IDDeOrigen				= 0;
+
+
+$xCredTA				= new cCreditosTiposDeAutorizacion();
+
 
 if( setNoMenorQueCero($credito) > DEFAULT_CREDITO){
 	$xCred	= new cCredito($credito);
@@ -88,7 +94,8 @@ if( setNoMenorQueCero($credito) > DEFAULT_CREDITO){
 	$TipoDePago				= $xCred->getTipoDePago();
 	$TasaDeInteres	        = $xCred->getTasaDeInteres()*100;
 	$TasaDeMora				= $xCred->getTasaDeMora()*100;
-	
+	$TipoDeOrigen			= $xCred->getTipoDeOrigen();
+	$IDDeOrigen				= $xCred->getClaveDeOrigen();
 	
 	$fecha_de_ministracion	= $xCred->getFechaDeMinistracion();
 	$fecha_de_autorizacion	= $xCred->getFechaDeAutorizacion();	
@@ -431,6 +438,10 @@ if  ( $action == SYS_DOS ){
 				$SinTasa		= true;
 				$SinLugarPag	= true;
 				
+				break;
+			case $xCOrg->ORIGEN_LINEA:
+				$SinTipoAut	= true;
+				$SinTasa	= true;
 				break;
 		}
 		

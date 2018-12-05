@@ -5,8 +5,8 @@
 -- Modulo de Contabilidad
 */
 
-UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'true' WHERE `nombre_del_parametro` = 'contabilidad_en_migracion'; 
 
+UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'true' WHERE `nombre_del_parametro` = 'contabilidad_en_migracion'; 
 UPDATE `entidad_configuracion` SET `valor_del_parametro` = '1-1-2-2-2' WHERE `nombre_del_parametro` = 'mascara_de_cuenta_contable'; 
 UPDATE `entidad_configuracion` SET `valor_del_parametro` = '#-#-##-##-##' WHERE `nombre_del_parametro` = 'mascara_sql_de_cuenta_contable'; 
 
@@ -162,4 +162,8 @@ UPDATE creditos_tipoconvenio
      interes_vigente_renovado='510410', 
      interes_vigente_reestructurado='510410', 
      interes_vigente_normal='510410';
+
+-- ---------------
+-- ---------------
+-- ---------------
 

@@ -78,6 +78,15 @@ $useDatosAccidente	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DA
 $UsarIDInterno		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_BUSQUEDA_IDINT);
 
 $xTI				= new cPersonasTipoDeIngreso(false);
+//======================================== Fixea el tipo de ingreso si es mayor a cero
+if( setNoMenorQueCero($con_relacion) > 0 ){
+	//setNoMenorQueCero($con_relacion)
+	if($tipo_de_ingreso <= 0){
+		$tipo_de_ingreso= $xTI->TIPO_RELACION;
+	}
+}
+
+
 
 switch ($tipo_de_ingreso){
 	case $xTI->TIPO_OTROS:
@@ -181,6 +190,7 @@ if(setNoMenorQueCero($con_relacion) > 0){
 	$xHSel					= new cHSelect(); 
 	$tipoRe					= "";
 	$xTxtSelPersonas		= "";
+	
 	if( setNoMenorQueCero($persona_rel) <= 0 ){
 		if($con_relacion == iDE_CREDITO){
 			$xDoc			= new cCredito($documento_rel); $xDoc->init();
@@ -266,8 +276,9 @@ if(SISTEMA_CAJASLOCALES_ACTIVA == false) {
 
 }
 
-if($tipo_de_ingreso != DEFAULT_TIPO_INGRESO){
-	$xFRM->OHidden("idtipodeingreso", $tipo_de_ingreso, "");
+if($tipo_de_ingreso !== DEFAULT_TIPO_INGRESO){
+	$xFRM->OHidden("idtipodeingreso", $tipo_de_ingreso);
+	
 } else {
 	$xFRM->addHElem( $xSel->getListaDeTiposDeIngresoDePersonas("", PERSONAS_ES_FISICA, $tipo_de_ingreso)->get("TR.tipo de persona", true) );
 }
@@ -540,10 +551,12 @@ if($con_actividad == true AND $tipo_de_ingreso != TIPO_INGRESO_RELACION){
 $xFRM->addFooterBar(" ");
 
 $xFRM->setValidacion("idtipodeingreso", "jsCheckTipoIngreso");
+
 $xFRM->setValidacion("idnombrecompleto", "jsCheckNombres", "Necesita Capturar un Nombre", true);
 $xFRM->setValidacion("idapellidopaterno", "jsCheckApellido", "Necesita Capturar al menos un Apellido", true);
 $xFRM->setValidacion("idemail", "happy.email", $xFRM->l()->getMensajeByTop("GENERAL_FALTA_MAIL"));
 $xFRM->setNoAcordion();
+
 
 
 //=============== Datos de origen
@@ -636,7 +649,8 @@ function jsCheckTipoIngreso(){
 		$("#dividgrupo").css("display", "none");
 	} else {
 		$("#dividgrupo").css("display", "inline-flex");
-	}	
+	}
+	
 	return true;
 }
 function jsCheckRegimenMat(){
@@ -679,10 +693,7 @@ function jsCheckFirmaElec(){
 	return (evalFiscal == true) ? rs : true;
 }
 function jsCheck(){
-	$('#id-frmsolingreso').submit();
-	if(xG.happy() == true){
-		xG.spinInit();
-	}
+	xG.enviar({form: "id-frmsolingreso"});
 }
 function getListaSocios(msrc, evt) {
 	evt=(evt) ? evt:event;
@@ -698,19 +709,8 @@ function getListaSocios(msrc, evt) {
 	var xUrl	= "../svc/personas.svc.php?n=" + idnombrecompleto + "&p=" + idapellidopaterno + "&m=" + idapellidomaterno;
 	var sibusq					= (String(idnombrecompleto+idapellidopaterno+idapellidomaterno).length >= 7) ? true : false;
 	if ((charCode >= 65 && charCode <= 90) && sibusq == true) {
-		
-		//jsaBuscarCoincidencias();
-		//var xPer	= new PersGen();
-		//xPer.showBuscarPersonas({ paterno : idapellidopaterno, materno : idapellidomaterno, nombre : idnombrecompleto });
-		/*if ( String(msrc.value).length >= 3 ){
-			$("#dlBuscarPersona").empty();
-			xG.DataList({
-				url : xUrl,
-				id : "dlBuscarPersona",
-				key : idKey,
-				label : "nombrecompleto"
-				});	
-		}*/
+		var xPer	= new PersGen();
+		xPer.showBuscarPersonas({ paterno : idapellidopaterno, materno : idapellidomaterno, nombre : idnombrecompleto });
 	}
 }
 
@@ -752,7 +752,7 @@ function jsTestCURP(){
 			//si existe bloquear form
 			xP.setBuscarPorIDs({poblacional:xCurp, callback: jsValidarExistePersona});
 		} else {
-			setLog("Cup Validada " + xCurp);
+			setLog("CURP Validada " + xCurp);
 		}
 	}
 

@@ -47,7 +47,7 @@ $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setNoAcordion();
 
-
+$action		= strtolower($action);
 
 if($credito <= DEFAULT_CREDITO){
 	$xFRM->addCreditBasico();
@@ -55,6 +55,7 @@ if($credito <= DEFAULT_CREDITO){
 	$xFRM->setAction("../frmcreditos/frmcreditosflujoefvo.php");
 	
 } else {
+	
 	$xCred	= new cCredito($credito);
 	if($xCred->init() == true){
 		
@@ -91,7 +92,10 @@ if($credito <= DEFAULT_CREDITO){
 				$xFlujo->solicitud_flujo($xCred->getClaveDeCredito());
 				$xFlujo->sucursal(getSucursal());
 				$xFlujo->tipo_flujo($tipo);
+				
 				$res 	= $xFlujo->query()->insert()->save();
+				
+				
 				$xFRM->setResultado($res);
 				
 			}

@@ -88,16 +88,24 @@ if($action == SYS_CERO){
 	//var_dump($_FILES["f1"]);
 	if($xFil->processFile($doc1) == true){
 	$data			= $xFil->getData();
-	if($limpiardb == true){
+	if($limpiardb == true AND $tipoimportacion == "SDN"){
 		$xDB		= new cSystemTask();
 		$xDB->setBackupDB();
-				
 		$xQL		= new MQL();
-		$xQL->setRawQuery("DELETE FROM `socios_general` WHERE `codigo`!=". DEFAULT_SOCIO);
+		$rsP		= $xQL->getRecordset("SELECT * FROM `socios_general` WHERE (`tipoingreso` = " . TIPO_INGRESO_SDN . ")");
+		while($rwP = $rsP->fetch_assoc()){
+			$xSoc	= new cSocio($rwP["codigo"]);
+			if($xSoc->init() == true){
+				$xSoc->setDeleteSocio();
+				$msg	.= $xSoc->getMessages();
+			}
+		}
+		/*$xQL->setRawQuery("DELETE FROM `socios_general` WHERE `codigo`!=". DEFAULT_SOCIO);
 		$xQL->setRawQuery("DELETE FROM `socios_vivienda` WHERE `socio_numero` != " . DEFAULT_SOCIO);
 		$xQL->setRawQuery("DELETE FROM `socios_relaciones` WHERE `socio_relacionado`!=". DEFAULT_SOCIO);
 		$xQL->setRawQuery("TRUNCATE `socios_memo`");
-		$xQL->setRawQuery("TRUNCATE `socios_aeconomica`");
+		$xQL->setRawQuery("TRUNCATE `socios_aeconomica`");*/
+		
 	}
 		foreach($data as $valores => $cont){
 			$id	= $xT->cInt($cont[0]);

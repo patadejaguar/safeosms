@@ -92,6 +92,7 @@ function getSIPAKALPermissions($mFile){
 	$salir	= false;
 	$nivel	= 0;
 	if($xPer->getEsPublico($mFile) == true){
+		$xLog->add("Archivo Publico\r\n", $xLog->DEVELOPER);
 		$permiso	= true;		
 	} else {
 		if(isset($_REQUEST)){
@@ -101,6 +102,8 @@ function getSIPAKALPermissions($mFile){
 				if($init === false){
 					$xLog->add("No existe el Usuario por Contexto\r\n");
 					$salir	= true;
+				} else {
+					$nivel	= $xUsr->getNivel();
 				}
 			}
 		}

@@ -32,6 +32,7 @@ $fechaInicial			= parametro("on", EACP_FECHA_DE_CONSTITUCION);
 $fechaFinal				= parametro("off", fechasys());
 $fechaInicial			= $xF->getFechaISO($fechaInicial);
 $fechaFinal				= $xF->getFechaISO($fechaFinal);
+
 $formato				= parametro("out", SYS_DEFAULT, MQL_RAW);
 $sucursal				= parametro("sucursal", SYS_TODAS, MQL_RAW);
 $xRPT					= new cReportes($xHP->getTitle());

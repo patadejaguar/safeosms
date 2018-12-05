@@ -112,12 +112,12 @@ if($action == SYS_NINGUNO) {
 	$xFRM->OText("nombrecorto", $alias, "TR.Nombre_corto");
 	$xFRM->setValidacion("nombrecorto", "validacion.novacio", "TR.EL NOMBRE_CORTO ES OBLIGATORIO", true);
 	
-	
-	$xFRM->addHElem( $xTxt2->getDeNombreDePersona("iddirectivo", $iddirectivo, "TR.Clave_de_Persona del Contacto") );
+	$xFRM->OHidden("iddirectivo", $xTabla->clave_de_directivo()->v());
+	//$xFRM->addHElem( $xTxt2->getDeNombreDePersona("iddirectivo", $iddirectivo, "TR.Clave_de_Persona del Contacto") );
 	$xFRM->OText("directivo", $directivo, "TR.Nombre de Contacto");
 	$xFRM->addHElem( $xSel->getListaDeProductosDeCreditoNomina("", $producto)->get(true) );
 	
-	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
+	/*if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
 		$xST1		= $xSel->getListaDePeriocidadDePagoNomina("idperiocidad1", $periocidad1);
 		
 		//$xST1->addEvent("onchange", "jsEvtSel1()");
@@ -135,8 +135,8 @@ if($action == SYS_NINGUNO) {
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_nomina2", $diasnomina2, "TR.Dias de Nomina") );
 		$xTabs->addTab("TR.Periocidad 2", $xTxt->getNormal("dias_de_pago2", $diaspago2, "TR.Dias de Pago") );
 		
-		$xFRM->addHTML( $xTabs->get() );
-	}
+		//$xFRM->addHTML( $xTabs->get() );
+	}*/
 	
 	
 	

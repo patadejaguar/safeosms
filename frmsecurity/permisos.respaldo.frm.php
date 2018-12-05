@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Balam Gonzalez Luis Humberto
- * @version 1.0
+ * @version 0.0.01
  * @package
  */
 //=====================================================================================================
@@ -9,63 +9,59 @@
 	include_once("../core/core.error.inc.php");
 	include_once("../core/core.html.inc.php");
 	include_once("../core/core.init.inc.php");
+	include_once("../core/core.db.inc.php");
 	$theFile			= __FILE__;
 	$permiso			= getSIPAKALPermissions($theFile);
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("Respaldo de Permisos", HP_FORM);
-$xHP->setIncludes();
-
-$xHP->setArchivo("../frmsecurity/permiso.respaldo.frm.php");
-
-$oficial 			= elusuario($iduser);
-$jxc = new TinyAjax();
-function jsaRespaldo($anno, $mes, $dia){
+$xHP		= new cHPage("TR.RESPALDO DE PERMISOS", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+$jxc 		= new TinyAjax();
+function jsaRespaldo($fecha){
+	$xF			= new cFecha();
+	$fecha		= $xF->getFechaISO($fecha);
 	$xSec		= new cSystemPermissions();
-	$file		= $xSec->setBackup("$anno-$mes-$dia");
+	$file		= $xSec->setBackup($fecha);
 	return "Se hizo el respaldo en ". $file;
 }
-function jsaRestaurar($anno, $mes, $dia){
+function jsaRestaurar($fecha){
+	$xF			= new cFecha();
+	$fecha		= $xF->getFechaISO($fecha);
+	
 	$xSec		= new cSystemPermissions();
-	$xSec->setRestore("$anno-$mes-$dia");
+	$xSec->setRestore($fecha);
 	return 		$xSec->getMessages("html");
 }
-$jxc ->exportFunction('jsaRespaldo', array('idelanno0', 'idelmes0', 'ideldia0'), "#aviso" );
-$jxc ->exportFunction('jsaRestaurar', array('idelanno0', 'idelmes0', 'ideldia0'), "#aviso" );
+$jxc ->exportFunction('jsaRespaldo', array('idfechaactual'), "#idmsgs" );
+$jxc ->exportFunction('jsaRestaurar', array('idfechaactual'), "#idmsgs" );
 $jxc ->process();
 
-echo $xHP->getHeader();
+$xHP->init();
+
+
+
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
+$xFRM->setTitle($xHP->getTitle());
+
+$xFRM->OButton("TR.RESPALDAR", "jsaRespaldo()", $xFRM->ic()->GUARDAR, "idhacerresp", "yellow");
+$xFRM->OButton("TR.RESTAURAR", "jsaRestaurar()", $xFRM->ic()->DESCARGAR, "idhacerrest", "red");
+
+$xFRM->addFecha();
+
+$xFRM->addCerrar();
+
+$xFRM->addAviso("");
+
+echo $xFRM->get();
+
 $jxc ->drawJavaScript(false, true);
-//echo $jsb->setIncludeJQuery();
-echo $xHP->setBodyinit();
-$msg			= "";
-$xFrm			= new cHForm("respaldo_de_permisos", "movimientos_bancarios.frm.php");
-//id,	label value, size,	class,	options[])
-$xF				= new cHDate(0, false, TIPO_FECHA_OPERATIVA);
+$xHP->fin();
 
-$xBtnBk		= new cHButton("idResp", "Respaldar Permisos");
-$xBtnBk->init();
-$xBtnBk->addEvent("jsaRespaldo");
 
-$xBtnRes		= new cHButton("idRest", "Restaurar Permisos");
-$xBtnRes->init();
-$xBtnRes->addEvent("jsaRestaurar");
-
-//array("onchange=alert('test')")
-$xFrm->addHElem( array($xF->get("Fecha de Operacion"), $xBtnBk->get(),  $xBtnRes->get() ) );
-$xFrm->addHTML("<div class='aviso' id='aviso'>$msg</div>");
-echo $xFrm->get();
-
-//id value class size maxlength arra(varias_opciones)
-//nombre = id
-echo $xHP->setBodyEnd();
-
-?>
-
-<script  >
-
-</script>
-<?php
-$xHP->end();
 ?>

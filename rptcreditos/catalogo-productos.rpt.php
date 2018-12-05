@@ -48,24 +48,8 @@ $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
 
 
-$sql			= "SELECT
-		`creditos_tipoconvenio`.`idcreditos_tipoconvenio` AS
-		`codigo`,
-		`creditos_tipoconvenio`.`descripcion_tipoconvenio` AS
-		`descripcion`,
-		`creditos_modalidades`.`descripcion_modalidades` AS
-		`modalidad`,
-		(`creditos_tipoconvenio`.`interes_normal` * 100) AS 'tasa_normal',
-		(`creditos_tipoconvenio`.`interes_moratorio` * 100) AS 'tasa_moratoria',
-		(`creditos_tipoconvenio`.`tasa_ahorro` * 100) AS 'porcentaje_ahorro',
-		(`creditos_tipoconvenio`.`tasa_iva` * 100) AS 'porcentaje_iva'
-		FROM
-		`creditos_tipoconvenio` `creditos_tipoconvenio`
-		INNER JOIN `creditos_modalidades`
-		`creditos_modalidades`
-		ON `creditos_tipoconvenio`.`tipo_de_credito` =
-		`creditos_modalidades`.`idcreditos_modalidades` ORDER BY
-		`creditos_tipoconvenio`.`idcreditos_tipoconvenio`";
+$sql			= $xL->getListadoDeProductosCred(false);
+
 $titulo			= "";
 $archivo		= "";
 

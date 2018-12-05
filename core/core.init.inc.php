@@ -222,7 +222,8 @@ class cTipos {
 	private $mForceMayus	= false;
 	private $mForceClean	= false; 
 	private $mForceEnc		= false;
-	private $mEncodeSRC		= "ISO-8859-1"; 
+	private $mEncodeSRC		= "ISO-8859-1";
+	private $mNoForceMins	= false;
 	
 	private $mArrOps	= array(
 			"efectivo" =>  9100,
@@ -356,8 +357,13 @@ class cTipos {
 		if($this->mForceEnc == true){
 			$cadena	= mb_convert_encoding($cadena, "UTF-8", $this->mEncodeSRC );
 		}
-		$html	= @htmlentities(strtolower($cadena), ENT_COMPAT, "UTF-8");
-		if($html == false){ $html = htmlentities($cadena); }
+		if($this->mNoForceMins == false){
+			$cadena	= strtolower($cadena);
+		}
+		$html	= @htmlentities($cadena, ENT_COMPAT, "UTF-8");
+		if($html == false){ 
+			$html = htmlentities($cadena); 
+		}
 		
 		$text	= preg_replace('~&([a-z]{1,2})(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);~i', '$1', $html);
 		$text	= htmlspecialchars_decode($text);
@@ -544,6 +550,7 @@ class cTipos {
 	}
 	function setToUTF8(){	$this->mForceUTF		= true;	}
 	function setForceMayus(){ $this->mForceMayus = true;}
+	function setNoForceMins(){ $this->mNoForceMins = true;}
 	function setForceClean(){ $this->mForceClean = true; }
 	function cleanString($cadena, $otros = false){
 		$cleanArr	= array('/\s\s+/', '/(\")/', '[\\\\]', '/(\')/');
@@ -568,690 +575,7 @@ function getMemoriaLibre($megas = false){
 	return $v;
 }
 
-/**
- * 
- * Dibuja funciones Javascript para Operaciones Comunes
- * @author Balam Gonzalez Luis Humberto
- *
- */
-class jsBasicForm {
-	private $mType 				= iDE_CREDITO;
-	private $mForm				= null;
-	//Funciones Incluidas
-	public  $mIncludeCalendar	= false;
-	public  $mIncludeSocio		= true;
-	public	$mIncludeCaptacion	= true;
-	public	$mIncludeCommon		= true;
-	public 	$mIncludeCreditos	= true;
-	public 	$mIncludeGrupos		= true;
-	public 	$mIncludeRecibos	= true;
 
-	public  $mSubPath			= "";
-	protected $mTypeCaptacion	= 0;
-	protected $mSubproducto		= "all";
-	private $IncJQuery			= false;
-	private $strJQueryIncs		= "";
-	private $mLoadVals			= true;
-
-	private $mArrCalendarJs		= array();
-	protected $mInputs			= array();
-	
-	protected $mWidth			= 600;
-	protected $mHeigth			= 480;
-
-	
-	private $mFiltroCreditos	= "todos";
-	
-	/**
-	 * Dibuja funciones Javascript para Operaciones Comunes
-	 * @param string $form		Nombre del Formulario
-	 * @param integer $type		Tipo de Operaciones JavaScript [iDE_CREDITO]
-	 * @param string $subPath	Path por defecto,  . o ..
-	 */
-	function __construct($form, $type = iDE_CREDITO, $subPath = "."){
-		$this->mForm 												= $form;
-		$this->mSubPath												= $subPath;
-		$this->mInputs["descripcion_de_la_solicitud"]["name"]		= "nombresolicitud";
-		$this->mInputs["descripcion_de_la_cuenta"]["name"]		= "nombrecuenta";
-		$this->mInputs["descripcion_del_socio"]["name"]			= "nombresocio";
-
-		$this->mInputs["codigo_de_solicitud"]["name"]			= "idsolicitud";
-		$this->mInputs["codigo_de_solicitud"]["id"]			= "idsolicitud";
-
-		$this->mInputs["codigo_de_socio"]["name"]			= "idsocio";
-		$this->mInputs["codigo_de_socio"]["id"]				= "idsocio";
-
-		$this->mInputs["codigo_de_recibo"]["name"]			= "idrecibo";
-		$this->mInputs["codigo_de_recibo"]["id"]			= "idrecibo";
-
-		$this->mInputs["codigo_de_grupo"]["name"]			= "idgrupo";
-		$this->mInputs["codigo_de_grupo"]["id"]				= "idgrupo";
-
-		$this->mInputs["codigo_de_cuenta"]["name"]			= "idcuenta";
-		$this->mInputs["codigo_de_cuenta"]["id"]			= "idcuenta";
-		
-		
-		switch ( $type ){
-			case iDE_CAPTACION:
-				$this->mIncludeCaptacion	= true;
-				$this->mIncludeCreditos		= false;
-				$this->mIncludeCommon		= true;
-			break;
-			case iDE_CINVERSION:
-				$this->mIncludeCaptacion	= true;
-				$this->mIncludeCreditos		= false;
-				$this->mTypeCaptacion		= CAPTACION_TIPO_PLAZO;
-				$this->mIncludeCommon		= true;
-			break;		
-			case iDE_CREDITO:
-				$this->mIncludeCreditos		= true;
-				$this->mIncludeCaptacion	= false;
-				$this->mIncludeCommon		= true;
-				break;
-			case iDE_OPERACION:
-				$this->mIncludeCreditos		= true;
-				$this->mIncludeCaptacion	= true;
-				$this->mIncludeCommon		= true;
-				break;
-		}
-		$this->mIncludeSocio	= true;
-	}
-	/**
-	 * Personaliza una variable de controles Input
-	 * @param string $input
-	 * @param string $property
-	 * @param string $value
-	 */
-	function setInputProp($input, $property, $value){ $this->mInputs[$input][$property] = $value; }
-	function setConCaptacion($w = true){ $this->mIncludeCaptacion	= $w; }
-	function setIncludeCaptacion($w = true){ $this->mIncludeCaptacion	= $w; }	
-	function setConCreditos($w = true){ $this->mIncludeCreditos	= $w; }
-	function setIncludeCreditos($w = true){ $this->mIncludeCreditos	= $w; }	
-	function setConGrupos($w = true){ $this->mIncludeGrupos	= $w; }
-	function setIncludeGrupos($w = true){ $this->mIncludeGrupos	= $w; }	
-	function setTypeCaptacion($type = CAPTACION_TIPO_PLAZO){ $this->mTypeCaptacion	= $type; }
-	function setSubproducto($type = 99){ $this->mSubproducto		= $type; }
-	function setConRecibos($w = true){ $this->mIncludeRecibos	= $w; }
-	function setConCommon($w = true){ $this->mIncludeCommon	= $w; }
-	function setNCtrlGrupo($control){	$this->mInputs["codigo_de_grupo"]["name"]	= $control;	}
-	function setIncludeCalendar($toInclude = true){	$this->mIncludeCalendar = $toInclude;	}
-	function setConSocios($w = true){	$this->mIncludeSocio	= $w;	}
-	function setIncludeOnlyCommons(){
-		$this->mIncludeCalendar		= false;
-		$this->mIncludeCaptacion	= false;
-		$this->mIncludeCommon		= true;
-		$this->mIncludeCreditos		= false;
-		$this->mIncludeGrupos		= false;
-		$this->mIncludeRecibos		= false;
-		$this->mIncludeSocio		= false;
-	}
-	function setNameForm($name){ $this->mForm = $name; }
-	function setNombreCtrlRecibo($nombre){ $this->mInputs["codigo_de_recibo"]["name"] = $nombre;	}
-	function setLoadDefaults($load = false){ $this->mLoadVals = $load; }
-	function setEstatusDeCreditos($estatus){ $this->mFiltroCreditos	= $estatus;	}
-	/**
-	 * Agrega la Opcion del Calendario al Javascript
-	 * @param string $id_control		ID en el Documento XHTML
-	 * @param boolean $type
-	 * @param string $cmdButton 		Nombre del Boton asociado
-	 */
-	function addSetupCalendar($id_control, $type = false, $cmdButton = "cmdCalendar", $format = "%Y-%m-%d"){
-		if ($type == "multiple"){
-			$this->mArrCalendarJs[] = "
-	//Dia
-	Calendar.setup({
-        inputField     :    \"ideldia$id_control\",
-        ifFormat       :    \"%d\",
-        showsTime      :    false,
-        button         :    \"$cmdButton\",
-        singleClick    :    true,
-	});
-	//Mes
-	Calendar.setup({
-        inputField     :    \"idelmes$id_control\",	// id of the input field
-        ifFormat       :    \"%m\",
-        showsTime      :    false,
-        button         :    \"$cmdButton\",
-        singleClick    :    true,
-	});
-	//Anno
-	Calendar.setup({
-        inputField     :    \"idelanno$id_control\",	// id of the input field
-        ifFormat       :    \"%Y\",
-        showsTime      :    false,
-        button         :    \"$cmdButton\",
-        singleClick    :    true,
-	});
-	";
-		} else {
-			$this->mArrCalendarJs[] = "
-	Calendar.setup({
-        inputField     :    \"$id_control\",
-        ifFormat       :    \"$format\",
-        showsTime      :    false,
-        button         :    \"$cmdButton\",
-        singleClick    :    true,
-	});";
-		}
-	}
-	/*			<link rel=\"stylesheet\" href=\"" . $this->mSubPath . "./css/jquery.qtip.css\" media=\"all\" />
-			
-			<script  src=\"" . $this->mSubPath . "./js/jquery/jquery.js\"></script><script  src=\"" . $this->mSubPath . "./js/jquery/jquery.qtip.min.js\"></script>*/
-	function setIncludeJQuery($ask = true){
-		if ($ask == true ){
-			$this->strJQueryIncs	= "<link rel=\"stylesheet\" href=\"" . $this->mSubPath . "./css/jquery-ui/jquery-ui.css\" media=\"all\" />	<script  src=\"" . $this->mSubPath . "./js/jquery/jquery.ui.js\"></script>";
-		}
-		return $this->strJQueryIncs;
-	}
-
-	function setDrawCalendar($cmdButton = "cmdCalendar"){
-		return "<img style=\"width: 16px; height: 16px;\" alt=\"\" src=\"../images/common/calendar.gif\" align='middle' id=\"$cmdButton\" alt=\"Muestra el Calendario\" />";
-
-	}
-	function getJsSocios(){
-//================================	SOCIOS
-		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
-		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
-		$idsocio		= $this->mInputs["codigo_de_socio"]["name"];
-		$idcuenta		= $this->mInputs["codigo_de_cuenta"]["name"];
-		$subtipo		= ($this->mSubproducto == "all") ? 0 : setNoMenorQueCero($this->mSubproducto);
-		$jsSocios		= "
-/** Funciones de Compatibilidad */
-function envsoc(){ jsSetNombreSocio(); }
-
-/* funcion que retorna el nombre de socio */
-function jsSetNombreSocio(mObtenerI){
-	var tipocuenta		= jsTypeCaptacion;
-	mObtenerI		= (typeof mObtenerI == \"undefined\") ? true : mObtenerI;
-	if (jsWorkForm.$idsocio) {
-		var mSocio	= entero(jsWorkForm.$idsocio.value);
-		if( mSocio > 0 ) {
-			jsrsExecute(jsrGeneralCommon, jsReturnSocio, \"Common_695bad33e1f2af343f99c6a4ceb9d045\", jsWorkForm.$idsocio.value);
-			if(mObtenerI == true && mLoadDefs == true){
-				/** Busca la Solicitud de Credito con Prioridad */
-				if(jsWorkForm.$idsolicitud) {
-					if(typeof jsReturnPrioriCredit != \"undefined\"){
-						jsrsExecute(jsrCreditsCommon, jsReturnPrioriCredit, 'Common_86d8b5015acb366cec42bf1556d8258a', jsWorkForm.$idsocio.value + vSEPARATOR + mFiltroCred);
-					}
-				}
-				/** Busca la Cuenta de captacion con Prioridad */
-				if(jsWorkForm.$idcuenta){
-					var mOr		= mSocio  + '|' + tipocuenta + '|" . $this->mSubproducto . "';
-					var xCG	= new CaptGen(); xCG.getPrincipal({ persona: mSocio, tipo: tipocuenta, subtipo : $subtipo, control : jsWorkForm.$idcuenta.id });
-				}
-			}
-		} else { goSocio_(); }
-	}
-}
-/** Retorna El Numero de Socio */
-function jsReturnSocio(mRetNombre){
-	var xRetNombre	= mRetNombre
-		if( (xRetNombre == \"" . MSG_NO_PARAM_VALID . "\") || (xRetNombre == '0' ) ){
-					goSocio_();
-		} else {
-			try{
-				jsWorkForm." . $this->mInputs["descripcion_del_socio"]["name"] . ".value = xRetNombre;
-			} catch (err) {	}
-		}
-}
-function jsPersonaRegresarCaptura(){ jsWorkForm.$idsocio.value = " . DEFAULT_SOCIO . "; jsWorkForm.$idsocio.focus(); jsWorkForm.$idsocio.select(); }
-function goSocio_(){
-	jsPersonaRegresarCaptura();
-	var isoc 	= jsWorkForm.$idsocio.value;
-	var pfSoc 	= \"../utils/frmbuscarsocio.php?i=\";
-	try {
-		var xurl = pfSoc + isoc + \"&f=" . $this->mForm . "\";
-		mGlo.w({ url: xurl, h: 600, w : 800, tiny : true});
-	} catch (e){}
-}";
-		return $jsSocios;		
-	}
-	function getJsCreditos(){
-		//================================	CREDITOS
-		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
-		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
-		$idsocio		= $this->mInputs["codigo_de_socio"]["name"];
-		$jsCreditos		= "
-		var isCredit		= (typeof jsWorkForm.$idsolicitud != \"undefined\") ? true : false;
-		var mCredit		= (typeof jsWorkForm.$idsolicitud != \"undefined\") ? jsWorkForm.$idsolicitud : null;
-		var MG			= (typeof Gen  != \"undefined\") ? new Gen(): {};
-		var MCRED		= (typeof CredGen  != \"undefined\") ? new CredGen(): null;
-    /** Funciones de compatibilidad */
-	function envsol(){ jsGetDescCredito(); }
-	/** Retorna la Descripcion de la Solicitud	*/
-	function jsGetDescCredito(){
-		esGuardable=false;
-		if( mCredit != null){
-			if(MCRED == null){
-				if( entero(mCredit.value) > 0 ) { jsrsExecute(jsrCreditsCommon, jsReturnDescCredito,'Common_b05dfbfaf8125673c6dc350143777ee1', mCredit.value); }
-			} else {
-				if( entero(mCredit.value) > 0 ) { MCRED.getDescripcion(mCredit.value, '$nombresolicitud'); }
-			}
-		}
-	}
-	function jsReturnPrioriCredit(idsolicitud){ if(isCredit == true){jsWorkForm.$idsolicitud.value=idsolicitud; setTimeout(\"jsGetDescCredito()\", 1000); }	}
-	/** Returna una Descripcion del Credito */
-	function jsReturnDescCredito(stringDescription){
-		var mDescription = stringDescription;
-		if (mDescription == '" . MSG_NO_PARAM_VALID . "'||$.trim(mDescription) == '') {
-			jsWorkForm.$idsocio.focus();
-			//var siBuscar = confirm(\"EL CREDITO SOLICITADO NO EXISTE \\n O ESTA INACTIVO. DESEA BUSCARLO?\");
-			//if(siBuscar){ goCredit_(); } else { jsCredRegresarCaptura(); }
-		} else {
-			jsWorkForm.$nombresolicitud.value = mDescription; esGuardable=true;
-		}
-	}
-	function jsCredRegresarCaptura(){
-		jsWorkForm.$nombresolicitud.focus(); jsWorkForm.$nombresolicitud.select(); 
-	}
-	function goCredit_(){
-		var isoc 	= jsWorkForm.$idsocio.value;
-		var pfcred 	= \"../utils/frmscreditos_.php?i=\";
-		var xurl	= pfcred + isoc + \"&f=" . $this->mForm . "&tipo=\" + mFiltroCred;
-		mGlo.w({ url: xurl, h: 600, w : 800, tiny: true});
-	}
-	function envparc() {
-		if (jsWorkForm.$idsolicitud) {
-			if( entero(jsWorkForm.$idsolicitud.value) > 0){
-				var misol = jsWorkForm.$idsolicitud.value;
-				jsrsExecute(jsrFile, darparc,'damecredito', misol + ' 27');
-			}
-		}
-	}
-	function darparc(laparc)  {
-		var uparc = parseInt(laparc)+1;
-		if (jsWorkForm.idparcialidad){
-			jsWorkForm.idparcialidad.value = uparc;
-		}
-	}
-
-	function goLetra_(){
-		var isoc 	= jsWorkForm." . $this->mInputs["codigo_de_solicitud"]["name"] . ".value;
-		var urlLetra 	= \"../utils/frmletras.php?i=\" + isoc + \"&f=" . $this->mForm . "\";
-		mGlo.w({ url: urlLetra, tiny: true});
-	}
-	";
-		return $jsCreditos;
-	}
-	function getJsRecibos(){
-		$jsRecibos		= "
-			function goRecibos_(){
-				var iRec 	= jsWorkForm." . $this->mInputs["codigo_de_recibo"]["name"] . ".value;
-				var pfRec 	= \"../utils/frmbuscarrecibos.php?i=\";
-				mGlo.w({ url: pfRec + iRec + \"&f=" . $this->mForm . "\" + \"&c=" . $this->mInputs["codigo_de_recibo"]["name"] . "\", h: 600, w : 800, tiny : true});
-			}";
-		return $jsRecibos;
-	}
-	function get(){ return $this->show(true); }
-	function show($Devolver = false){
-		$token					= SAFE_VERSION . SAFE_REVISION;
-		$jsCalendarBody		= "";
-		$jsJQueryUI			= $this->strJQueryIncs;
-		$jsCalendarIncludes	= "";
-		$jsLoadDef			= ($this->mLoadVals == true) ? "true" : "false";
-		//$jsCaptacion
-		$jsCalendarIncludes = "	<link rel=\"stylesheet\"  media=\"all\" href=\"" . $this->mSubPath . "./js/jscalendar/calendar-green.css\" title=\"green\" />
-								<script  src=\"" . $this->mSubPath . "./js/jscalendar/calendar.js\"></script>
-								<script  src=\"" . $this->mSubPath . "./js/jscalendar/lang/calendar-es.js\"></script>
-								<script  src=\"" . $this->mSubPath . "./js/jscalendar/calendar-setup.js\"></script>";
-		$jsMD5Include		= "<script  src='" . $this->mSubPath . "./js/md5.js'></script>";
-		/**
-		 * Include Segmentados
-		 */
-		$jsRecibos			= ($this->mIncludeRecibos == false) ? "" : $this->getJsRecibos();
-		$jsSocios			= ($this->mIncludeSocio == false ) ? "" : $this->getJsSocios();
-		$jsCreditos			= ($this->mIncludeCreditos == false) ? "" : $this->getJsCreditos();
-		$jsCaptacion		= ($this->mIncludeCaptacion == false) ? "" : $this->getJsCaptacion();
-		$jsCommon			= ($this->mIncludeCommon == false) ? "" : $this->getJsCommon();
-		$jsGrupos			= ($this->mIncludeGrupos == false ) ? "" : $this->getJsGrupos();
-		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
-		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
-		$idsocio			= $this->mInputs["codigo_de_socio"]["name"];
-		$idcuenta			= $this->mInputs["codigo_de_cuenta"]["name"];
-		$nombrecuenta		= $this->mInputs["descripcion_de_la_cuenta"]["name"];
-		$claveSocio		= getPersonaEnSession();
-		foreach ($this->mArrCalendarJs AS $key=>$value){
-			$jsCalendarBody 		.= $value;
-		}
-		if ($this->mIncludeCalendar == false){
-			$jsCalendarIncludes	= "";
-			$jsCalendarBody		= "";
-		}
-//================================	PRINCIPAL
-		$js = "
-			$jsCalendarIncludes
-			$jsJQueryUI
-			<script src='" . $this->mSubPath . "./js/jsrsClient.js'></script>
-			<!-- <script src='" . $this->mSubPath . "./js/general.js?$token'></script> -->
-			<script>
-			var jsrFile 				= \"" . $this->mSubPath . "./clsfunctions.inc.php\";
-			var jsWorkForm				= document." . $this->mForm . ";
-			var jsrCreditsCommon		= \"" . $this->mSubPath . "./js/creditos.common.js.php\";
-			var jsrCaptacionCommon		= \"" . $this->mSubPath . "./js/captacion.common.js.php\";
-			var jsrGeneralCommon		= \"" . $this->mSubPath . "./js/general.common.js.php\";
-			var jsrSeguimientoCommon	= \"" . $this->mSubPath . "./js/seguimiento.common.js.php\";
-			
-			var jsTypeCaptacion			= " . $this->mTypeCaptacion . ";
-			var setToGo					= true;
-			var mInputsCheck			= new Array();
-			var mFiltroCred			= \"" . $this->mFiltroCreditos . "\";
-			var vSEPARATOR			= \"" . STD_LITERAL_DIVISOR . "\";
-			var mLoadDefs			= $jsLoadDef;
-			var mGlo			= new Gen();
-			var esGuardable			= false;
-			var autoEjecutar		= true;
-			var enBusqueda			= false;
-			function frmSubmit( evaluate ){
-				//Valida que los Campos
-				evaluate = (typeof evaluate != \"undefined\" ) ? evaluate : false;
-				if ( evaluate == false ){
-					setToGo = jsEvaluarFormulario(false);
-					if(setToGo == false){
-						alert(\"Su Formulario contiene errores\");
-					} else {
-						var mGoSubmit	= confirm(\"Quiere Guardar los Datos Capturados?\");
-						if( mGoSubmit == false ){
-							setToGo = false;
-						} else {
-							jsWorkForm.submit();
-						}
-					}
-				} else {
-					jsWorkForm.submit();
-				}
-			}
-			$jsSocios
-			$jsCreditos
-			$jsGrupos
-			$jsCommon
-			$jsRecibos
-			$jsCaptacion
-			$jsCalendarBody
-			function out(msg){ if(typeof msg != \"undefined\"){ console.log(msg); }	}
-			function jsLoadNombreValores(){
-				if(autoEjecutar == true){
-					if(jsWorkForm.$idsocio){
-						if($.trim(jsWorkForm.$idsocio.value) == \"\"){ jsWorkForm.$idsocio.value = $claveSocio; }
-						jsWorkForm.$idsocio.focus();
-						if( entero(jsWorkForm.$idsocio.value) > 0 ){ jsSetNombreSocio(); }
-					}
-					if(jsWorkForm.$idsolicitud){
-						if( entero(jsWorkForm.$idsolicitud.value) > 0 ){ jsGetDescCredito(); }
-					}
-				}
-			}
-			/*function jsEvaluarSalida(evt){ if(evt.id =='$idcuenta'){ envcta(); } }*/
-			jsLoadNombreValores();
-			</script>";
-
-		if( $Devolver == false){
-			echo $js;
-		} else {
-			return $js;
-		}
-	}
-	function getJsGrupos(){
-//================================	GRUPOS
-	$jsGrupos		= "/** FUNCION QUE RETORNA EL NOMBRE DEL GPO SOLIDARIO */
-	function envgpo() {
-		var idgpo = jsWorkForm." . $this->mInputs["codigo_de_grupo"]["name"] . ".value;
-		jsrsExecute(jsrFile, jsGetNombreGrupo,'mostrargrupo', idgpo + ' 1');
-	}
-	function jsGetNombreGrupo(nombredev) {
-		if(jsWorkForm.nombregrupo){ jsWorkForm.nombregrupo.value = nombredev;  }
-	}
-	function goGrupos_(){
-		var iGrp 	= jsWorkForm." . $this->mInputs["codigo_de_grupo"]["name"] . ".value;
-		var pfGrp 	= \"../utils/frmsgrupos.php?i=\";
-		frmGrp 	= window.open(pfGrp + iGrp + \"&f=" . $this->mForm . "\", \"\", \"width=600,height=600,scrollbars,dependent=yes\");
-		frmGrp.focus();
-	}
-	";
-	return $jsGrupos;		
-	}
-	function getJsCaptacion(){
-		$markSubproducto	= "";
-		if ( $this->mSubproducto != "all"){
-			$markSubproducto	= "&s=" .$this->mSubproducto;
-		}
-		$idsolicitud		= $this->mInputs["codigo_de_solicitud"]["name"];
-		$nombresolicitud	= $this->mInputs["descripcion_de_la_solicitud"]["name"];
-		$idsocio			= $this->mInputs["codigo_de_socio"]["name"];
-		$idcuenta			= $this->mInputs["codigo_de_cuenta"]["name"];
-		$nombrecuenta		= $this->mInputs["descripcion_de_la_cuenta"]["name"];
-		
-		$jsCaptacion	= "
-	//.- FUNCION OBTIENE DETALLES DE LA CUENTA DE CAPTACION
-	/** Funcion de Compatibilidad */
-	function envcta(iTipo) {
-		vTipoC	= (typeof iTipo != \"undefined\") ? iTipo : jsTypeCaptacion;
-		jsGetCuenta(iTipo);
-	}
-	function jsGetCuenta(inttipo) {
-		if(jsWorkForm.$idcuenta){
-			var lacta = jsWorkForm.$idcuenta.value;
-				if (lacta!='' || lacta!=NaN || lacta!=0) {
-					jsrsExecute(jsrCaptacionCommon, jsSetCuenta,'Common_82cbe75762e2714baaf92926f0d26d6b', lacta);
-				}
-		}
-	}
-	/** Obtiene una Descripcion de la Cuenta */
-	function jsSetCuenta(depcta)  {
-		var ccta = depcta;
-		jsWorkForm.$nombrecuenta.value = ccta;
-	}
-	function jsReturnPrioriCaptacion(escta) {
-		if (escta!='' || escta!=NaN || escta!=0) {
-			var micta = escta;
-			if(jsWorkForm.$idcuenta){
-				jsWorkForm.$idcuenta.value = micta;
-			}
-		}
-	}
-
-	function goCuentas_(tipoc){
-		var vTipoC	= \"\";
-		if(typeof tipoc == 'undefined'){
-			if(jsTypeCaptacion == 0){ } else { vTipoC	= \"&a=\" + jsTypeCaptacion; }
-		} else { vTipoC	= \"&a=\" + tipoc; }
-		var isoc 	= jsWorkForm.$idsocio.value;
-		var urlcap 	= \"../utils/frmcuentas_.php?i=\" + isoc + \"&c=$idcuenta" . "$markSubproducto&f=" . $this->mForm . "\" + vTipoC;
-		console.log(urlcap);
-		mGlo.w({ url: urlcap, tiny: true});
-	}";
-		return $jsCaptacion;		
-	}
-	function getJsCommon(){
-		$EventOnLoad = " jsResizeWindow(); ";
-		$jsCommon		= "
-	// funcion que checa que el valor no sea cero
-	function chkmonto(eValue){ return isNumber(eValue); }
-	function notnan(isthis){ return isNotEmpty(isthis); }
-	function muestralo(id_e) {
-		var mist_s = document.getElementById(id_e);
-		mist_s.style.visibility='visible';
-	}
-	function ocultalo(id_e) { var mist_e = document.getElementById(id_e); mist_e.style.visibility='hidden';	}
-	function msgbox(string_alert) { alert (string_alert);	}
-
-	function cierrame(){ window.close(); }
-	/** function que cambia una propiedad de un elemento */
-	function jsChangeProperty(id, prop, val){
-		document.getElementById(id).removeAttribute(prop);
-		document.getElementById(id).setAttribute(prop, val);
-	}
-	function jsRestarFechas(date1, date2) {
-	    var DSTAdjuste 	= 0;
-	    // ------------------------------------
-	    oneMinute 		= 1000 * 60;
-	    var oneDay 		= oneMinute * 60 * 24;
-	    // ------------------------------------
-	    date1.setHours(0);
-	    date1.setMinutes(0);
-	    date1.setSeconds(0);
-	
-	    date2.setHours(0);
-	    date2.setMinutes(0);
-	    date2.setSeconds(0);
-	    // ------------------------------------
-	    if (date2 > date1) {
-	        DSTAdjuste =
-	            (date2.getTimezoneOffset() - date1.getTimezoneOffset()) * oneMinute;
-	    } else {
-	        DSTAdjuste =
-	            (date1.getTimezoneOffset() - date2.getTimezoneOffset()) * oneMinute;
-	    }
-	    var diff = Math.abs(	date2.getTime() - date1.getTime()	) - DSTAdjuste;
-	    return Math.ceil(diff/oneDay);
-	}
-	function jsSumarDias(vFecha, days){
-	    var mDays   = parseInt(days);
-	    var vFecha	= new String(vFecha);
-	    var sDays	= 86400000 * mDays;
-	    var sDate   = vFecha.split('-');
-	    var varDate = new Date(sDate[0], parseInt(sDate[1]-1), parseInt(sDate[2])-1, 0,0,0 );
-	
-	    var vDate	= varDate.getTime()+sDays;
-		varDate.setTime( vDate );
-		
-	    var mMonth  = varDate.getMonth()+1;
-	    var mDate	= varDate.getDate()+1;
-	    if (mMonth == 0){
-	        alert('Error al Determinar el Mes ' + mMonth + ' en la Fecha ' + vFecha);
-	    }
-		return varDate.getFullYear() + '-' + mMonth + '-' + mDate;
-	}
-	function jsRestarDias(vFecha, days){
-		
-	    var mDays   = new Number(days);
-	    var vFecha	= new String(vFecha);
-	    var sDays	= 86400000 * mDays;
-	    var sDate   = vFecha.split('-');
-	    var varDate = new Date(sDate[0], parseInt(sDate[1]-1), parseInt(sDate[2])-1, 0,0,0 );
-	
-	    var vDate	= varDate.getTime()-sDays;
-	
-		varDate.setTime(vDate);
-	    var mMonth  = varDate.getMonth()+1;
-	    var mDate	= varDate.getDate()+1;
-	    
-	    if (mMonth == 0){
-	        alert('Error al Determinar el Mes ' + mMonth + ' en la Fecha ' + vFecha);
-	    }
-		return varDate.getFullYear() + '-' + mMonth + '-' + mDate;
-	}
-	function setCheckForm(vFrm){ return jsEvaluarFormulario(); }
-	function jsEvaluarFormulario(enviar){
-		vFrm				= jsWorkForm;
-		var isLims 			= vFrm.elements.length - 1;
-		enviar				= (typeof enviar == 'undefined') ? true : enviar;
-		  	
-			setToGo			= true;
-	  		for(i=0; i<=isLims; i++){
-				var elem	= vFrm.elements[i];
-				var mTyp 	= elem.getAttribute(\"type\");
-				var mCls	= elem.getAttribute(\"class\");
-
-				if ( (mTyp == \"text\" || mTyp == \"textarea\") ){
-					/* Validar si no esta vacio */
-
-					if ( /(req)/.test(mCls) ){
-							setToGo = isNotEmpty(elem);
-					}
-					//validar que los numeros sean numeros , siempre que no este vacio
-					if ( /(mny)/.test(mCls) ){
-							setToGo = isNumber(elem);
-					}
-					if ( (setToGo == false) && (mTyp!=\"hidden\") ){
-							elem.focus();
-							break;
-					}
-				}//eval
-	  		}
-		if( setToGo == true&& enviar == true ){
-			var mGoSubmit	= confirm(\"Quiere Guardar los Datos Capturados?\");
-			if( mGoSubmit == false ){
-				setToGo = false;
-			} else {
-				vFrm.submit();
-			}
-		}	
-		return setToGo;
-	}
-	
-	function isLenX(elem, mLen) {
-		var str 	= elem.value;
-		var sucess	= true;
-		var mTit	= elem.getAttribute(\"title\");
-	    var re 		= /\b.{mLen}\b/;
-	    if (!str.match(re)) {
-	        alert(\"[ERROR]El Campo no tiene la Numero de Entradas Aceptadas.\");
-	        sucess	= false;
-	    } else {
-	        sucess 	= true;
-	    }
-	    return sucess;
-	}
-	
-	// validates that the field value string has one or more characters in it
-	function isNotEmpty(elem) {
-	    var str 	= elem.value;
-	    var mTit	= elem.getAttribute(\"title\");
-	    var sucess	= true;
-	    if( str == null || str.length == 0 || /^\s+$/.test(str) ) {
-	        alert(\"[ERROR]El Valor de [\" + mTit + \"] no debe quedar vacio\");
-	        sucess	= false;
-	    } else {
-	        sucess	= true;
-	    }
-	    return sucess;
-	}
-	
-	//validates that the entry is a positive or negative number
-	function isNumber(elem) {
-	    var str 	= elem.value;
-	    var sucess	= true;
-	    var mTit	= elem.getAttribute(\"title\");
-    	var re 		= /^[-]?\d*\.?\d*$/;
-    	str 		= str.toString( );
-    	if (!str.match(re)) {
-	        alert(\"[ERROR]El Valor de [\" + mTit + \"] debe ser un Numero\");
-	        sucess	= false;
-	    }
-	    return sucess;
-	}
-	
-
-	
-
-	function jsResizeWindow(){
-			top.resizeTo(" . $this->mWidth . "," . $this->mHeigth . ");	
-
-	}	
-	function jsRoundPesos(mCantidad){
-		var mStrCantidad	= new String(mCantidad);
-		var rF = new RegExp(\",\" , \"g\");
-		var rF2 = new RegExp(\"$\" , \"g\");
-		var rF3 = new RegExp(\" \" , \"g\");
-	
-		mStrCantidad = mStrCantidad.replace(rF, \"\");
-		mStrCantidad = mStrCantidad.replace(rF2, \"\");
-		mStrCantidad = mStrCantidad.replace(rF3, \"\");
-		mStrCantidad = mStrCantidad.replace(\"$\", \"\");
-	
-			mStrCantidad	+= \".00\";
-		var arrCantidad		= mStrCantidad.split(\".\");
-	
-		return arrCantidad[0] + \".\" + arrCantidad[1];
-	}
-
-	function jsInitComponents(){
-	$EventOnLoad
-	}
-	";
-		return $jsCommon;		
-	}
-}
 
 class cTableStructure{
 	public $ACTUALIZAR			= 1;
@@ -1788,23 +1112,24 @@ class cSAFEData{
 		if ( $sucursal == false ){
 			$sucursal	= getSucursal();
 		}
+		$xQL	= new MQL();
 		//Actualiza root y usuario de Impotacion a la sucursal.
 		$sqlUsrs = "UPDATE t_03f996214fba4a1d05a68b18fece8e71
 				    SET sucursal='$sucursal'
 				    WHERE  (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%root%')
 				    OR
 				    (f_28fb96d57b21090705cfdf8bc3445d2a LIKE '%IMPORT%') ";
-		my_query($sqlUsrs);
+		$xQL->setRawQuery($sqlUsrs);
 		$sqlST	= "SHOW TABLES IN " . MY_DB_IN;
-		$rs		= mysql_query($sqlST, cnnGeneral() );
+		$rs		= $xQL->getRecordset($sqlST);
 		$msg	=  "=============\tELIMINANDO REGISTROS NO PERTECIENTES A ESTA SUCURSAL \r\n";
 		$msg	.= "=============\tSUCURSAL:\t$sucursal \r\n";
-		while( $rw = mysql_fetch_array($rs) ){
-			$table 		= $rw[0];
+		while( $rw = $rs->fetch_assoc() ){
+			$table 		= $rw["Tables_in_" . MY_DB_IN];
 			$msg	.= "=============\tTABLA:\t$table\r\n";
 			$sqlMT		= "DELETE FROM $table WHERE sucursal != \"$sucursal\" ";
-			$x			=  my_query($sqlMT);
-			$msg		.= $x["info"];
+			$x			=  $xQL->setRawQuery($sqlMT);
+			$msg		.= $xQL->getMessages();
 		}
 		return $msg;
 	}
@@ -1828,7 +1153,7 @@ class cSAFEData{
 			$table 		= $value;
 			$msg		.= "=============\tTABLA:\t$table\r\n";
 			$sqlMT		= "DELETE FROM $table WHERE sucursal = \"$sucursal\" ";
-			$x			=  my_query($sqlMT);
+			$x			=  $xQL->setRawQuery($sqlMT);
 			$msg		.= $x["info"];			
 		}
 
@@ -1891,6 +1216,7 @@ class cSAFEData{
 			return $arrDev;
 	}
 	function setCheckDatabase(){
+		$xSysT	= new cSystemTask();
 		/*$ql		= new MQL();
 		$rs		= $ql->getDataRecord("SHOW TABLES");
 		foreach ($rs as $rw){
@@ -1898,7 +1224,7 @@ class cSAFEData{
 			$ql->setRawQuery("OPTIMIZE TABLE $t");
 		}
 		$rs		= null;*/
-		exec( "mysqlcheck --user=" . USR_DB . " --password=" . PWD_DB . " --databases " . MY_DB_IN . " --auto-repair --optimize " );
+		$xSysT->runcmd( "mysqlcheck --user=" . USR_DB . " --password=" . PWD_DB . " --databases " . MY_DB_IN . " --auto-repair --optimize " );
 	//exec	mysqlcheck --user=root --password= --databases matriz --auto-repair
 	}
 	function setCrearEjemplos(){
@@ -1962,7 +1288,7 @@ class cSAFEData{
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'pruebas@opencorebanking.com' WHERE `nombre_del_parametro` = 'email_de_nominas'";
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'pruebas@opencorebanking.com' WHERE `nombre_del_parametro` = 'email_del_administrador'";
 		$sqlT[]	= "UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'pruebas@opencorebanking.com' WHERE `nombre_del_parametro` = 'facturacion.email_de_almacenamiento'";
-		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `apellidopaterno`, `apellidomaterno`, `rfc`, `curp`, `estatusactual`, `cajalocal`, `fechanacimiento`, `lugarnacimiento`, `tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`) VALUES ('90001', 'LUIS HUMBERTO', 'BALAM', 'GONZALEZ', 'BAGL810822VE5', 'BAGL810822HCCLNS12', '10', '1', '1981-08-22', 'CC,CAMPECHE', '200', '1', '1', 'SRN69300601', 'matriz', 'IFE1000000', 'patadejaguar@gmail.com', '9811371867'); ";
+		$sqlT[]	= "INSERT INTO `socios_general` (`codigo`, `nombrecompleto`, `apellidopaterno`, `apellidomaterno`, `rfc`, `curp`, `estatusactual`, `cajalocal`, `fechanacimiento`, `lugarnacimiento`, `tipoingreso`, `estadocivil`, `genero`, `eacp`, `sucursal`, `documento_de_identificacion`, `correo_electronico`, `telefono_principal`) VALUES ('90001', 'LUIS X', 'BALAM', 'X', 'BAGL810822XX1', 'BAGL000822HCCLNS00', '10', '1', '1981-08-22', 'CC,CAMPECHE', '200', '1', '1', 'SRN69300601', 'matriz', 'IFE1000000', 'patadejaguar@gmail.com', ''); ";
 		$sqlT[]	= "UPDATE `socios_general` SET `correo_electronico` = 'luis.balam@opencorebanking.com' WHERE `codigo` = '90001' ";
 		$sqlT[]	= "UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `codigo_de_persona` = '99999' WHERE `idusuarios` != '99'";
 		$sqlT[]	= "INSERT INTO `bancos_cuentas` (`idbancos_cuentas`, `descripcion_cuenta`, `fecha_de_apertura`, `estatus_actual`, `consecutivo_actual`, `saldo_actual`, `codigo_contable`, `entidad_bancaria`) VALUES ('12000', 'BANCO DE PRUEBA', '$ff', 'activo', '00001', '100000', '110215', '50')";
@@ -1997,13 +1323,15 @@ class cSAFEData{
 		$this->setContratoDisEn(1908, $enable);
 		$this->setContratoDisEn(1909, $enable);
 		$this->setContratoDisEn(1910, $enable);
-
+		
 		$this->setContratoDisEn(1911, $enable);
 		$this->setContratoDisEn(1912, $enable);
 		$this->setContratoDisEn(1913, $enable);
 		$this->setContratoDisEn(1914, $enable);
 		$this->setContratoDisEn(1915, $enable);
 		$this->setContratoDisEn(1916, $enable);
+		$this->setContratoDisEn(1917, $enable);
+		
 		$this->setOperacionDisEn(157, $enable);
 		$this->setOperacionDisEn(171, $enable);
 		$this->setOperacionDisEn(172, $enable);
@@ -2021,6 +1349,8 @@ class cSAFEData{
 		$this->setContratoDisEn(8802, $enable);
 		$this->setContratoDisEn(811, $enable);
 		$this->setContratoDisEn(812, $enable);
+		$this->setContratoDisEn(813, $enable);
+		
 		$this->setContratoDisEn(800, $enable);
 		$this->setTipoDoctoDisEn(502, $enable);
 		
@@ -2044,10 +1374,22 @@ class cSAFEData{
 		$this->setContratoDisEn(9, $enable);
 		$this->setContratoDisEn(18, $enable);
 		$this->setOperacionDisEn(412, $enable);
+		$this->setOperacionDisEn(417, $enable);
 		$this->setOperacionDisEn(220, $enable);
 		$this->setOperacionDisEn(500, $enable);
 		$this->setOperacionDisEn(510, $enable);
 		$this->setOperacionDisEn(251, $enable);
+		
+		$this->setOperacionDisEn(221, $enable);
+		$this->setOperacionDisEn(222, $enable);
+		
+		$this->setOperacionDisEn(223, $enable);
+		$this->setOperacionDisEn(230, $enable);
+		
+		$this->setOperacionDisEn(231, $enable);
+		$this->setOperacionDisEn(232, $enable);
+		$this->setOperacionDisEn(233, $enable);
+		$this->setOperacionDisEn(234, $enable);
 		
 		$this->setTipoDoctoDisEn(510, $enable);
 		$this->setTipoDoctoDisEn(520, $enable);
@@ -2066,7 +1408,8 @@ class cSAFEData{
 	}
 	function setModGruposDisEn($enable = false){
 		//$this->setContratoDisEn(3002, $enable);
-		//$this->setContratoDisEn(10, $enable);
+		$this->setContratoDisEn(5, $enable);
+		$this->setContratoDisEn(1011, $enable);
 		//$this->setOperacionDisEn(510, $enable);
 		$this->setOperacionDisEn(50, $enable);
 		$this->setOperacionDisEn(112, $enable);
@@ -2091,6 +1434,29 @@ class cSAFEData{
 		$this->setOperacionDisEn(902, $enable);
 		
 	}
+	function setModNominasDisEn($enable = false){
+		$this->setOperacionDisEn(2101, $enable);
+		$this->setOperacionDisEn(2102, $enable);
+		
+		$this->setContratoDisEn(4501, $enable);
+		$this->setContratoDisEn(4502, $enable);
+		$this->setContratoDisEn(4001, $enable);
+		$this->setContratoDisEn(801, $enable);
+		$this->setContratoDisEn(902, $enable);
+		//$this->setOperacionDisEn(510, $enable);
+	
+		
+	}
+	function setModEstadosCredsDisEn($enable = false){
+		$this->setOperacionDisEn(111, $enable);
+		$this->setOperacionDisEn(112, $enable);
+		$this->setOperacionDisEn(113, $enable);
+		$this->setOperacionDisEn(114, $enable);
+		$this->setOperacionDisEn(115, $enable);
+		//$this->setOperacionDisEn(510, $enable);
+		
+		
+	}
 	function setManejarGarantiasEnCaptacion($manejar = false){
 		if($manejar == false){
 			//Habilitar operaciones de garantia
@@ -2112,11 +1478,25 @@ class cSAFEData{
 		$this->setOperacionDisEn(9201, $enable);
 		
 	}
+	
+	function setCrearSiNoExiste($tabla, $nombre, $id = 'NULL'){
+		$xQL		= new MQL();
+		$xDD		= new cSQLTabla($tabla);
+		$xT			= $xDD->obj();
+		$iddevuelto	= 0;
+		$items		= 0;
+		$d			= $this->getDataRow("SELECT * FROM `$tabla` WHERE ");
+		if(isset($d["items"])){
+			$items	= $d["items"];
+		}
+		
+	}
 }
 function getUsuarioActual($parametro = false){
 	$usr	= false;
 	if($parametro == false){
-		$usr	= ( isset($_SESSION["SN_b80bb7740288fda1f201890375a60c8f"]) ) ? $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"] : false;
+		//"SN_b80bb7740288fda1f201890375a60c8f"
+		$usr	= ( isset($_SESSION[SYS_USER_ID]) ) ? $_SESSION[SYS_USER_ID] : false;
 	} else {
 		$usr	= ( isset($_SESSION[$parametro]) ) ? $_SESSION[$parametro] : false;
 	}
@@ -2924,48 +2304,78 @@ function convertirletras_porcentaje($numero){
 	return $numf." PUNTO $cents POR CIENTO";
 }
 
+
+
+
+/**
+ * Obtiene si en un contexto se muestra el modulo, no son permisos personalizados.
+ * @param integer $tipo_de_usuario
+ * @param string $contexto
+ * @return boolean
+ */
 function getEsModuloMostrado($tipo_de_usuario, $contexto = false){
-	$acceder		= false;
-	$lvl			= getUsuarioActual(SYS_USER_TIPO);
-	//$xUsr			= new cSystemUser();
+	$mostrar		= true;
+	$tipo_de_usuario= setNoMenorQueCero($tipo_de_usuario);
+	$xRuls			= new cReglaDeNegocio();
 	
-	
-	if( OPERACION_LIBERAR_ACCIONES == true OR MODO_DEBUG == true){
-		$acceder	= true;
+	// OR MODO_DEBUG == true
+	if( OPERACION_LIBERAR_ACCIONES == true){
 		
 	} else {
-		if($lvl == $tipo_de_usuario){
-			$acceder	= true;
+		
+		
+		if($contexto == MMOD_AML AND MODULO_AML_ACTIVADO == false){
+			$mostrar	= false;
 		}
-	}
-	//acceso denegado
-	if($tipo_de_usuario == USUARIO_TIPO_CONTABLE AND MODULO_CONTABILIDAD_ACTIVADO == false ){
-		$acceder		= false;
-	}
-	if($tipo_de_usuario == USUARIO_TIPO_OFICIAL_AML AND MODULO_AML_ACTIVADO == false){
-		$acceder		= false;
-	}
-	if($tipo_de_usuario == USUARIO_TIPO_OFICIAL_CRED AND MODULO_SEGUIMIENTO_ACTIVADO == false){
-		$acceder		= false;
-	}
-	
-	switch ($contexto){
-		case MMOD_AML:
-			break;
-		case MMOD_TESORERIA:
+		if($contexto == MMOD_BANCOS AND MODULO_CAJA_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		if($contexto == MMOD_CAPTACION AND MODULO_CAPTACION_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		if($contexto == MMOD_TESORERIA AND MODULO_CAJA_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		if($contexto ==  MMOD_CONTABILIDAD AND MODULO_CONTABILIDAD_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		if($contexto ==  MMOD_CRED_GRUPOS AND PERSONAS_CONTROLAR_POR_GRUPO == false){
+			$mostrar	= false;
+		}
+		if($contexto ==  MMOD_CRED_LEASING AND MODULO_LEASING_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		//if($contexto ==  MMOD_CRED_LINEAS AND
+		if($contexto ==  MMOD_CRED_NOMINA AND PERSONAS_CONTROLAR_POR_EMPRESA == false){
+			$mostrar	= false;
+		}
+		if($contexto ==  MMOD_SEGUIMIENTO AND MODULO_SEGUIMIENTO_ACTIVADO == false){
+			$mostrar	= false;
+		}
+		
+		//================== Si es modulo de seguimiento .- 
+		if($contexto ==  MMOD_SEGUIMIENTO){
+			$NivelMinSeg	= $xRuls->getValorPorRegla($xRuls->reglas()->SEGUIMIENTO_TODOS_PUEDEN);
+			$tipo_de_usuario	= 2;
+		}
+		
+		if($mostrar == true AND $tipo_de_usuario > 0){
+			$xUsr			= new cSystemUser(); $xUsr->init();
+			$TipoEnSistema	= $xUsr->getTipoEnSistema();
 			
-			if($lvl == USUARIO_TIPO_CAJERO OR $lvl == 5){
-				$acceder	= true;
-			} else {
-				$acceder	= false;
+			if($TipoEnSistema < $tipo_de_usuario){
+				$mostrar	= false;
 			}
-			break;
+			
+		}
+		
 	}
-	if(MODO_DEBUG == true){
-		$acceder	= true;
-	}
-	return $acceder;
+
+	return $mostrar;
 }
+/**
+ * @deprecated 2018.08.01
+ */
 function getSePuedeMostrar($contexto = false, $accion = false){
 	$tipo_de_usuario	= getUsuarioActual(SYS_USER_NIVEL);
 	$acceder			= false;
@@ -3075,7 +2485,7 @@ class cFolios {
 	function __destruct(){ $this->mQ	= null;	}
 }
 
-function setCambio($tabla, $campo, $clave, $antes, $despues){
+function setCambio($tabla, $clave, $campo, $antes, $despues){
 	if($antes == $despues){
 		return false;
 	}

@@ -18,32 +18,8 @@
 $xHP		= new cHPage("TR.Panel de Cuentas", HP_FORM);
 $mSQL		= new cSQLListas();
 $xHP->setIncludeJQueryUI();
-$DDATA		= $_REQUEST;
-$jxc = new TinyAjax();
-
-function jsaSetActualizar($cuenta){
-	$xCta	= new cCuentaDeCaptacion($cuenta);
-	if($xCta->init() == true){
-		$xCta->setCuandoSeActualiza();
-	}
-	return $xCta->getMessages(OUT_HTML);
-}
-
-function jsaSetRegenerarInteres($cuenta){
-	$xCta	= new cCuentaDeCaptacion($cuenta);
-	if($xCta->init() == true){
-
-		$xUC	= new cUtileriasParaCaptacion();
-		$msg	= $xUC->setRegenerarSDPM($xCta->getFechaDeApertura(), fechasys(), true, false, $xCta->getClaveDeCuenta());
-	}
-	return $msg;//$xCta->getMessages(OUT_HTML);
-}
 
 
-$jxc ->exportFunction('jsaSetActualizar', array('idcuenta'), "#idmsg");
-$jxc ->exportFunction('jsaSetRegenerarInteres', array('idcuenta'), "#idmsg");
-
-$jxc ->process();
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -71,6 +47,7 @@ if($cuenta <= 0){
 } else {
 	$xFRM->addCerrar();
 	$xCta	= new cCuentaDeCaptacion($cuenta);
+	
 	$xFRM->addRefrescar("jsRecargar($cuenta)");
 	//Actualizar Saldo
 	$xCta->setCuandoSeActualiza();
@@ -78,12 +55,7 @@ if($cuenta <= 0){
 	$xCta->init();
 	$xFRM->OHidden("idcuenta", $cuenta);
 	$xFRM->OHidden("idcuentacaptacion", $cuenta);
-	if($xCta->isTipoVista() == true){
-		
-		$xFRM->OButton("TR.Regenerar Intereses", "jsaSetRegenerarInteres()", $xFRM->ic()->CALCULAR);
-	} else {
-		//Inversion
-	}
+
 	/*$xFRM->OButton("TR.Actualizar Saldo", "jsaSetActualizar()", $xFRM->ic()->SALDO);*/
 	$xFRM->addHTML($xCta->getFicha(true, "", true) );
 	
@@ -96,20 +68,33 @@ if($cuenta <= 0){
 	$xHTabs	= new cHTabs();
 	$mSQL->setInvertirOrden();
 	
-	$cTblx	= new cTabla($mSQL->getListadoDeRecibos("", $xCta->getClaveDePersona(), $xCta->getNumeroDeCuenta() ));
+	$cTblx	= new cTabla($mSQL->getListadoDeRecibosV101("", $xCta->getClaveDePersona(), $xCta->getNumeroDeCuenta() ));
 	$cTblx->setKeyField("idoperaciones_recibos");
 	$cTblx->setTdClassByType();
+	
+	$cTblx->setOmitidos("socio");
+	$cTblx->setOmitidos("nombre");
+	$cTblx->setOmitidos("documento");
+	$cTblx->setOmitidos("operacion");
+	$cTblx->setTitulo("periodo", "CAPTPER");
+	$cTblx->setColSum("total");
 	$cTblx->setEventKey("jsGoPanelRecibos");
 	$xHTabs->addTab("TR.RECIBOS", $cTblx->Show());
 	//Operaciones
 	$mSQL->setInvertirOrden();
 	$xTBM	= new cTabla($mSQL->getListadoDeOperaciones(false, $xCta->getNumeroDeCuenta()));
+	$xTBM->setOmitidos("socio");
+	$xTBM->setOmitidos("documento");
+	$xTBM->setOmitidos("operacion");
+	$xTBM->setColSum("monto");
+	$xTBM->setTitulo("periodo", "CAPTPER");
 	$xTBM->setKeyField("idoperaciones_mvtos");
 	$xTBM->setKeyTable("operaciones_mvtos");
 	
 	
-	$xTBM->addEditar();
-	$xTBM->addEliminar();
+	//$xTBM->addEditar();
+	//$xTBM->addEliminar();
+	
 	$xHTabs->addTab("TR.OPERACIONES", $xTBM->Show());
 	$numeroops	= $xTBM->getRowCount();
 	//Saldos Promedios
@@ -119,15 +104,14 @@ if($cuenta <= 0){
 	$xTBS->setKeyTable("captacion_sdpm_historico");
 	$xTBS->setOmitidos("numero_de_socio");
 	
-	$xTBS->addEditar();
-	$xTBS->addEliminar();
+	//$xTBS->addEditar();
+	//$xTBS->addEliminar();
+	
 	$xHTabs->addTab("TR.SALDOS", $xTBS->Show());	
 	$xFRM->addHTML( $xHTabs->get() );
 	
 	$xFRM->addAviso("", "idmsg");
-	if($numeroops <= 0){
-		$xFRM->OButton("TR.ELIMINAR", "var xG=new Gen();xG.rmRecord({tabla:'captacion_cuentas', id:$cuenta})", $xFRM->ic()->ELIMINAR, "cmdeliminarcta", "red");
-	}
+
 	
 	/*
 	 * <fieldset>
@@ -149,6 +133,7 @@ if($cuenta <= 0){
 					</table>
 			</fieldset>
 	 * */
+	$xFRM->OButton("TR.ACTUALIZAR", "jsEditar($cuenta);", $xFRM->ic()->EDITAR, "idcmdedit", "yellow");
 }
 
 echo $xFRM->get();
@@ -157,10 +142,20 @@ echo $xFRM->get();
 //echo $xJs->get();
 ?>
 <script>
+var xRec	= new RecGen();
+var xCred	= new CredGen();
+var xCta	= new GenCapt();
+var xG		= new Gen();
+
 function jsGoPanelRecibos(id){ var xRec = new RecGen(); xRec.panel(id); }
-function jsRecargar(idcuenta){ window.location = "cuentas.panel.frm.php?cuenta=" + idcuenta; }
+function jsRecargar(idcuenta){ 
+	xG.go({url: "cuentas.panel.frm.php?cuenta=" + idcuenta});
+}
+function jsEditar(idcuenta){
+	xG.w({tiny:true, url: "../frmcaptacion/cuentas.panel.edicion.frm.php?cuenta=" + idcuenta});
+}
 </script>
 <?php
-$jxc ->drawJavaScript(false, true);
+
 $xHP->fin();
 ?>

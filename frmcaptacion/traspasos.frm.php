@@ -56,7 +56,10 @@ $xFRM->setNoAcordion();
 
 
 
-if($action == SYS_NINGUNO){
+//if($action == SYS_NINGUNO){
+
+//} else {
+if($persona <= DEFAULT_SOCIO){
 	$xFRM->addSubmit();
 	$xFRM->addPersonaBasico();
 	$xFRM->setAction("../frmcaptacion/traspasos.frm.php?action=" . MQL_MOD, true);

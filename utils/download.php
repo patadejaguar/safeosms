@@ -10,9 +10,9 @@
 	if($permiso === false){		header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //<=====	FIN_H
-	$iduser = $_SESSION["log_id"];
+	//$xUsr	= new cSystemUser(); $xUsr->init();
 //=====================================================================================================
-
+$xLog	= new cCoreLog();
 /**
  * @see : File Download by Agata Report Team Project
  * header("Location: download.php?type=$mimetype&download=$download&file=$Output");
@@ -41,7 +41,10 @@ switch ($type)
         break;
     case ('sbk'):
         $content_type = 'text/enriched';
-        break;        
+        break;
+    case ('gz'):
+    	$content_type = 'application/x-gzip';
+    	break;   
     case 'xml':
         $content_type = 'text/xml';
         break;
@@ -50,7 +53,7 @@ switch ($type)
         	break;
      case 'xls':
      	$content_type = 'application/vnd.ms-excel';
-        break;        	
+        break;
     case 'pdf':
         $content_type = 'application/pdf';
         break;
@@ -67,9 +70,13 @@ switch ($type)
     	$content_type = 'application/octet-stream';
     	break;
 }
-
+	$largo	= strlen($file) - (strlen($type) + 1);
+	$xLog->add("WARN\tDescargando el recurso $file de tipo $content_type\r\n");
 	if($type == "sbk"){
-		$file	= PATH_BACKUPS . $file . "." . $type;
+		if(strpos($file, $type, $largo) === false){
+			$file		= $file . "." . $type;
+		}
+		$file			= PATH_BACKUPS . $file;
 	} else if(isset($tabla)){
 		$xSys			= new cSystemTask();
 		$file			= $xSys->setBackupTable($tabla);
@@ -77,8 +84,12 @@ switch ($type)
 		$type			= "sql.gz";
 		$date			= date("Ymd");
 		$download		= "$tabla-$date";
+		$xLog->add("WARN\tHaciendo Backup de la Tabla $tabla\r\n");
 	} else {
-		$file	= PATH_TMP . $file . "." . $type;
+		if(strpos($file, $type, $largo) === false){
+			$file		= $file . "." . $type;
+		}
+		$file			= PATH_BACKUPS . $file;
 	}
 
 	if ($type != 'html')
@@ -87,7 +98,9 @@ switch ($type)
 		//ISO-8859-1
 		header("Content-Disposition: attachment; filename=\"$download.$type\"; ");
 		//header("Content-Disposition: ");
-	}	
-readfile($file);
+	}
+	$xLog->guardar(4);
+	
+	readfile($file);
 //echo 'df';
 ?>

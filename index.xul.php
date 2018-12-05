@@ -15,7 +15,7 @@ if ( !file_exists(dirname(__FILE__) . "/core/core.config.os." . strtolower(subst
 //<=====	FIN_H
 
 //=====================================================================================================
-$mTit						= ENTIDAD_NOMBRE_SIC. " - " . getSucursal();
+$mTit						= ENTIDAD_NOMBRE_SIC;
 
 $xHP						= new cHPage($mTit, HP_FORM, "", ".");
 $xRuls						= new cReglaDeNegocio();
@@ -112,8 +112,8 @@ $xHP->setNoCache();
 		//$xHP->addCSS("css/jmenu.css");
 		//$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
 		
-		$xHP->addCSS("css/jquery.mmenu.all.css");
-		$xHP->addJsFile("js/jquery.mmenu.all.js");
+$xHP->addCSS("css/jquery.mmenu.all.css");
+$xHP->addJsFile("js/jquery.mmenu.all.js");
 		
 	//}
 	//$xHP->addJsFile("js/tinybox.js");
@@ -121,26 +121,18 @@ $xHP->setNoCache();
 echo $xHP->getHeader();
 
 ?>
-
 <style>
-	html, body, object  {
-		padding: 0 !important;
-		margin : 0 !important;
-	}
-	#header  {
-		text-align: center !important;
-	}
-	#banner {
-		right: 0;
-		bottom: 0;
-		position:fixed !important;
-	}
-
-	#wprincipal{ width: 100%; max-width: 100%;
+	html,body,object{padding:0 !important;	margin:0 !important;}
+	#header{text-align: center !important;}
+	#banner{right: 0;bottom: 0;position:fixed !important;}
+	#wprincipal{width: 100%; max-width: 100%;}
+	#idbtninfouser {
+	right:5px;top:8px;position:fixed !important;text-shadow:0px 1px 1px #4d4d4d;color:#FFF;font-size:1.2em;background:#AB3D6F; padding-left:6px;padding-top:2px;padding-bottom:2px;padding-right:6px;border-radius:3px;
 	}
 	
-	
-<?php if ($isMobile == true){ ?>
+<?php
+if ($isMobile == true){ 
+?>
 
 #jPanelMenu-menu { font-size: 1em;overflow-y: hidden !important; background: #65a9cc; }
 #jPanelMenu-menu li a { min-height: 1.8em;}
@@ -153,17 +145,12 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 
 #jPanelMenu-menu ul, #jPanelMenu-menu ol{list-style:none;list-style-image:none;}
 #jPanelMenu-menu ul li a i {  padding-right: 5px; }
-
-
-
-
-
 <?php 
-	} 
+} 
 ?>
 
 #jpanel {
-	min-height: 2.7em;
+	min-height: 2em;
  	text-align: center; border-bottom: 1px solid #1b5572; box-shadow: 0 0 25px #222;  /* box-shadow:0 1px 5px rgba(34,34,34,0.5);*/
 	transform: translate3d(0px, 0px, 0px);
   	background: #317ca2;
@@ -179,7 +166,7 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 	box-shadow: 0 1px 5px rgba(34, 34, 34, 0.5);
 	width: 100%; /*95%*/
 	max-width: none;
-	height: 2.7em;
+	height: 2.5em;
 	margin: 0;
 	/*padding: 0 7.5%;*/
 	border-bottom: 1px solid #1b5572;
@@ -189,7 +176,7 @@ font-weight:300;display:block;padding:0.5em 5%;border-top:1px solid #484848;bord
 #jpanel #menugo {
 	float: left; position: relative; color: #FFF; top: 0.25em; left: 0.25em;
 }
-#jpanel h1 { background-color: transparent !important; background-image: none;  height: 2em; }
+#jpanel h1 { background-color: transparent !important; background-image: none;  height:1.7em; }
 
 
 </style>
@@ -213,11 +200,9 @@ if($menu === null){
 
 	$menu	=
 	"<div id=\"jpanel\">
-
-	<a href=\"#navmenu\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>
-
-	<h1 id='htitle'>$mTit</h1>
-
+	<a href=\"#navmenu\" class=\"menu-trigger\" id=\"menugo\">
+	<i class=\"fa fa-reorder fa-2x\"></i></a> <h1 id='htitle'>$mTit</h1>
+	<span id=\"idbtninfouser\" style=''>" . $xUser->getNombreDeUsuario() . " / " . getSucursal() . "</span>
 	</div>
  
 	<nav id=\"navmenu\">" . $menu . "</nav> ";

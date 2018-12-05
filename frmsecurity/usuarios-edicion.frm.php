@@ -20,6 +20,10 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+
+
+
+
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -96,16 +100,23 @@ $xHG->setOrdenar();
 $xHG->col("clave", "TR.CLAVE", "5%");
 $xHG->col("nombre", "TR.NOMBRE", "10%");
 
+$xHG->col("sucursal", "TR.SUCURSAL", "10%");
+
 //$xHG->col("nombre_completo", "TR.NOMBRE_COMPLETO", "40%");
 $xHG->col("alias", "TR.ALIAS", "20%");
 $xHG->col("puesto", "TR.PUESTO", "10%");
 $xHG->col("estatus", "TR.ESTATUS", "10%");
 
-$xHG->OButton("TR.EDITAR", "jsEditarUsuario('+ data.record.clave +')", "edit.png");
+if( $xUser->getPuedeEditarUsuarios() == true ){
+	$xHG->OButton("TR.EDITAR", "jsEditarUsuario('+ data.record.clave +')", "edit.png");
+	$xHG->OButton("TR.PASSWORD", "jsVerMiPassword('+ data.record.clave +')", "unlocked.png");
+	
+	$xHG->OButton("TR.BAJA", "jsActionBaja('+ data.record.clave +',\''+ data.record.estatus +'\')", "prohibition.png");
+}
 
-$xHG->OButton("TR.BAJA", "jsActionBaja('+ data.record.clave +',\''+ data.record.estatus +'\')", "prohibition.png");
-
-$xHG->OToolbar("TR.AGREGAR USUARIO","jsAgregarUsuario()", "grid/add.png");
+if($xUser->getPuedeAgregarUsuarios()== true){
+	$xHG->OToolbar("TR.AGREGAR USUARIO","jsAgregarUsuario()", "grid/add.png");
+}
 
 $xFRM->addHElem("<div id='iddiv'></div>");
 

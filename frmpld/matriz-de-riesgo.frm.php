@@ -44,6 +44,8 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 $observaciones= parametro("idobservaciones");
 
 $xHP->addJTableSupport();
+$xHP->addJExcelSupport();
+
 $xHP->init();
 
 $xFRM		= new cHForm("frm", "./");
@@ -55,7 +57,9 @@ $xFRM->OButton("TR.NUEVO RIESGO", "addTopico()", $xFRM->ic()->AGREGAR);
 $xFRM->OButton("TR.RIESGO PAIS", "jsGetRiesgoPais()", $xFRM->ic()->EDITAR);
 $xFRM->OButton("TR.RIESGO ACTIVIDAD_ECONOMICA", "jsGetRiesgoActividad()", $xFRM->ic()->EDITAR);
 $xFRM->OButton("TR.PERFIL ADICIONAL", "addTopicoExtra()", $xFRM->ic()->NOTA);
-
+if(MODO_DEBUG == true){
+	$xFRM->OButton("TR.EXPORTAR", "$('table').tableExport({bootstrap: false,position:'top',fileName:'MatrizDeRiesgo'});", $xFRM->ic()->EXPORTAR, "idtoexport", "yellow");
+}
 
 
 //Riesgo por pais de origen
@@ -112,6 +116,7 @@ $xHG->col("nombre", "TR.NOMBRE", "10%");
 $xHG->col("clasificacion", "TR.CLASIFICACION", "10%");
 $xHG->col("nivel_de_riesgo", "TR.NIVEL_DE_RIESGO", "10%");
 $xHG->col("finalizador", "TR.FINALIZADOR", "10%");
+
 $xHG->col("probabilidad", "TR.PROBABILIDAD", "10%");
 $xHG->col("impacto", "TR.IMPACTO", "10%");
 $xHG->col("consecuencia", "TR.CONSECUENCIA", "10%");
@@ -140,11 +145,14 @@ $xHG->col("producto", "TR.PRODUCTO", "10%");
 $xHG->col("riesgo", "TR.NIVEL_DE_RIESGO", "10%");
 $xHG->col("observaciones", "TR.OBSERVACIONES", "10%");
 $xHG->OToolbar("TR.RIESGO CREDITO", "jsAddRP(" . iDE_CREDITO . ")", "grid/add.png");
+
 if(MODULO_CAPTACION_ACTIVADO == true){
 	$xHG->OToolbar("TR.RIESGO CAPTACION", "jsAddRP(" . iDE_CAPTACION . ")", "grid/add.png");
 }
+
 $xHG->OButton("TR.EDITAR", "jsEditRP('+ data.record.clave +')", "edit.png");
 $xHG->setNoPaginar();
+
 if(MODO_DEBUG == true){
 	$xHG->OButton("TR.ELIMINAR", "jsDelRP('+ data.record.clave +')", "delete.png");
 }
@@ -185,10 +193,10 @@ echo $xFRM->get();
 <script>
 var xG	= new Gen();
 function addTopico(){
-	xG.w({url: "../frmpld/matriz-de-riesgo.new.frm.php?", tiny: true, w:600, callback: jsReloadGrids});
+	xG.w({url: "../frmpld/matriz-de-riesgo.new.frm.php?", tiny: false, w:600, callback: jsReloadGrids});
 }
 function addTopicoExtra(){
-	xG.w({url: "../frmpld/perfiles-de-riesgo.frm.php?", tiny: true, w:600, callback: jsReloadGrids});
+	xG.w({url: "../frmpld/perfiles-de-riesgo.frm.php?", tiny: false, w:600, callback: jsReloadGrids});
 }
 function setTopico(id, riesgo){
 	$("#idtopico").val(id);

@@ -82,6 +82,7 @@ if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
 	
 	$DDif		= array_diff($DOriginal, $DCambios);
 	$str		= json_encode($DDif);
+	
 	if($action == MQL_ADD){
 		$xTabla->query()->insert()->save();
 	} else {
@@ -101,6 +102,8 @@ if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
 	$persona	= 0;
 	$clave		= 0;
 	$xFRM->addCerrar("", 3);
+	
+	
 }
 
 $xSoc				= new cSocio($persona);
@@ -212,10 +215,13 @@ if($xSoc->init() == true){
 	}
 	
 	
+	if($EsMoral == true){
+		
+	} else {
+		$xFRM->addHElem( $xSel->getListaDeTipoDeIdentificacion("tipo_de_identificacion", $tipo_de_persona, $xTabla->tipo_de_identificacion()->v())->get(true) );
+		$xFRM->OText_13("documento_de_identificacion", $xTabla->documento_de_identificacion()->v(), "TR.DOCUMENTO DE IDENTIFICACION");
+	}
 	
-	$xFRM->addHElem( $xSel->getListaDeTipoDeIdentificacion("tipo_de_identificacion", $tipo_de_persona, $xTabla->tipo_de_identificacion()->v())->get(true) );
-	$xFRM->OText_13("documento_de_identificacion", $xTabla->documento_de_identificacion()->v(), "TR.DOCUMENTO DE IDENTIFICACION");
-
 	$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
 	$xFRM->OText("telefono_principal", $xTabla->telefono_principal()->v(), "TR.TELEFONO_PRINCIPAL");
 	
@@ -223,6 +229,7 @@ if($xSoc->init() == true){
 		$xFRM->OHidden("titulo_personal", $xTabla->titulo_personal()->v());
 		$xFRM->OHidden("dependientes_economicos", $xTabla->dependientes_economicos()->v());
 	} else {
+		$xFRM->OText_13("nss", $xTabla->nss()->v(), "TR.ID_DE_SEGURIDADSOCIAL");
 		$xFRM->OText("titulo_personal", $xTabla->titulo_personal()->v(), "TR.TITULO_PERSONAL");
 		$xFRM->OMoneda("dependientes_economicos", $xTabla->dependientes_economicos()->v(), "TR.DEPENDIENTES_ECONOMICOS");
 	}
@@ -232,13 +239,19 @@ if($xSoc->init() == true){
 	if(MODULO_AML_ACTIVADO == true){
 		$xFRM->OSiNo("TR.PREGUNTA_AML_PERSONA_2","nacionalidad_extranjera", $xTabla->nacionalidad_extranjera()->v());
 		$xFRM->addHElem( $xSel->getListaDePaises("pais_de_origen", $xTabla->pais_de_origen()->v())->get(true) );
+		$xFRM->OHidden("nivel_de_riesgo_aml", $xTabla->nivel_de_riesgo_aml()->v(), "TR.NIVEL DE RIESGO AML");
 	} else {
 		$xFRM->OHidden("nacionalidad_extranjera", $xTabla->nacionalidad_extranjera()->v(), "TR.NACIONALIDAD EXTRANJERA");
 		$xFRM->OHidden("pais_de_origen", $xTabla->pais_de_origen()->v(), "TR.PAIS DE ORIGEN");	
 	}
+	//============== Agregar ejecutivo
 	
+	$xFRM->addHElem($xSel->getListaDeUsuarios("idejecutivo",$xTabla->idejecutivo()->v(), true)->get("TR.EJECUTIVO", true));
+	//NSS
 	
-	$xFRM->OHidden("nivel_de_riesgo_aml", $xTabla->nivel_de_riesgo_aml()->v(), "TR.NIVEL DE RIESGO AML");
+	//Actualizar Tasa de Penas
+	$xFRM->OTasaInt("tasapena", $xTabla->tasapena()->v(), "TR.TASA DE PENAS");
+	
 	$xFRM->OText("observaciones", $xTabla->observaciones()->v(), "TR.OBSERVACIONES");
 }
 echo $xFRM->get();

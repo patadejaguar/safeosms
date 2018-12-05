@@ -14,6 +14,9 @@
 //=====================================================================================================
 $xHP				= new cHPage("TR.Poliza Contable", HP_FORM);
 $poliza				= parametro("codigo", "");
+$id					= parametro("id", 0, MQL_INT);
+
+
 $jxc 				= new TinyAjax();
 function jsaGetCuentas($cuenta){
 	$xCta	= new cCuentaContableEsquema($cuenta);	
@@ -89,12 +92,21 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init("initComponents()");
 
-$xFRM		= new cHForm("frm", "poliza_movimientos.frm.php");
+$xFRM		= new cHForm("frmpolizacont", "poliza_movimientos.frm.php");
 $msg		= "";
-
 $xPol		= new cPoliza(false);
-$xPol->setPorCodigo($poliza);
+
+if($id>0){
+	if($xPol->initById($id) == true){
+		$poliza	= $xPol->getCodigoCompuesto();
+	}
+}
+
+
+
+$xPol->initByCodigo($poliza);
 $xPol->init();
+
 $xFRM ->setTitle($xHP->getTitle());
 
 

@@ -40,8 +40,8 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
-$xHP->addCSS("../css/jquery.tagit.css");
-$xHP->addJsFile("../js/tag-it.min.js");
+$xHP->addJTagSupport();
+
 
 $xHP->init();
 
@@ -73,9 +73,7 @@ $xSel->addOptions( array("FORM" => "FORMULARIO", "TABLE" => "TABLA" ) );
 $xFRM->OHidden("idsistema_permisos", $xTabla->idsistema_permisos()->v());
 $xFRM->ODisabled("accion", $xTabla->accion()->v(), "TR.ACCION");
 
-$xFRM->OText("descripcion", $xTabla->descripcion()->v(), "TR.DESCRIPCION");
 
-$xFRM->OText("denegado", $xTabla->denegado()->v(), "TR.DENEGADO");
 
 
 $arrDen 	= $xPerms->setTraducir($xTabla->denegado()->v());
@@ -92,19 +90,21 @@ foreach ($arrDen as $idx => $nn){
 }
 
 if($clave > 0){
-	$xFRM->ODisabled("tipo_objeto", $xTabla->tipo_objeto()->v(), "TR.TIPO OBJETO");
-	$xFRM->ODisabled("nombre_objeto", $xTabla->nombre_objeto()->v(), "TR.NOMBRE OBJETO");
+	$xFRM->ODisabled_13("tipo_objeto", $xTabla->tipo_objeto()->v(), "TR.TIPO");
+	$xFRM->ODisabled_13("nombre_objeto", $xTabla->nombre_objeto()->v(), "TR.NOMBRE");
 } else {
-	$xFRM->OText("tipo_objeto", $xTabla->tipo_objeto()->v(), "TR.TIPO OBJETO");
-	$xFRM->OText("nombre_objeto", $xTabla->nombre_objeto()->v(), "TR.NOMBRE OBJETO");
+	$xFRM->OText_13("tipo_objeto", $xTabla->tipo_objeto()->v(), "TR.TIPO");
+	$xFRM->OText_13("nombre_objeto", $xTabla->nombre_objeto()->v(), "TR.NOMBRE");
 }
 
-//$xFRM->addHElem("<div class=\"solo\"><label>DENEGADO</label><ul id=\"tags\">$lsItems</ul></div>");
 
 
+$xFRM->OText("descripcion", $xTabla->descripcion()->v(), "TR.DESCRIPCION");
+$xFRM->OHidden("denegado", $xTabla->denegado()->v(), "TR.DENEGADO");
 
+$xFRM->addHElem("<div class=\"solo\"><label>DENEGADO</label><ul id=\"tags\">$lsItems</ul></div>");
 
-//$xFRM->addJsInit("jsTags();");
+$xFRM->addJsInit("jsTags();");
 
 //$xFRM->addCRUD($xTabla->get(), true);
 $xFRM->addCRUDSave($xTabla->get(), $clave, true);
@@ -114,6 +114,7 @@ echo $xFRM->get();
 <script>
 
 function jsTags(){
+	
 	$("#tags").tagit({
 	    availableTags: [<?php echo $jsTags; ?>],
 	    afterTagAdded: function(event, ui) {
@@ -124,6 +125,7 @@ function jsTags(){
 	    	if(idnivel > 0){
 		    	var oPerm	= $("#denegado").val();
 		    	var dPerm	= String(idnivel).concat("@rw");
+		    	setLog("Agregar " + dPerm);
 		    	//Eliminar si existe
 		    	if(oPerm == ""){
 		    		$("#denegado").val(dPerm);
@@ -164,10 +166,11 @@ function jsTags(){
 						}
 					}
 
-			    	console.log(txt);		    				    		
+			    			    				    		
 	    		}
 		    	//
 	    		$("#denegado").val(txt);
+	    		setLog("Permisos en " + txt);
 	    	}			
 		} 
 	});

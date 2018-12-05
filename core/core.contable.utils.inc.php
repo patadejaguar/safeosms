@@ -18,27 +18,30 @@ class cUtileriasParaContabilidad{
 		
 	}
 	function setGenerarSaldosDelEjercicio($ejercicio){
-			//$ejercicio 			= $c1;
-			$msg				= "====\tGENERAR SALDO DE CUENTAS CONTABLES\r\n";
-			$msg				.= "====\tEjercicio: $ejercicio\r\n";
-			$msg				.= "CUENTA\tSALDO_INICIAL\r\n";
+		$xQL					= new MQL();
+		//$ejercicio 			= $c1;
+		$msg				= "====\tGENERAR SALDO DE CUENTAS CONTABLES\r\n";
+		$msg				.= "====\tEjercicio: $ejercicio\r\n";
+		$msg				.= "CUENTA\tSALDO_INICIAL\r\n";
 			
-			$ejercicioAnt		= $ejercicio - 1;
-			$saldosAnteriores 	= array();
-			$sqlSAnt			= "SELECT cuenta, tipo, imp14 FROM contable_saldos WHERE ejercicio = $ejercicioAnt AND tipo=1 ";
-				//Cargar en un Array los Saldos del Ejercicio Anterior
-				$rsAnt 			= mysql_query($sqlSAnt, cnnGeneral() );
-					while($rwA = mysql_fetch_array($rsAnt) ){
-						$saldosAnteriores[ $rwA["cuenta"] ]	= $rwA["imp14"];
-					}
+		$ejercicioAnt		= $ejercicio - 1;
+		$saldosAnteriores 	= array();
+		$sqlSAnt			= "SELECT cuenta, tipo, imp14 FROM contable_saldos WHERE ejercicio = $ejercicioAnt AND tipo=1 ";
+		//Cargar en un Array los Saldos del Ejercicio Anterior
+		
+		$rsAnt 			= $xQL->getRecordset($sqlSAnt);
+		while($rwA = $rsAnt->fetch_assoc() ){
+				$saldosAnteriores[ $rwA["cuenta"] ]	= $rwA["imp14"];
+		}
 				//
 	
-			$sqlM			= "DELETE FROM contable_saldos WHERE ejercicio = $ejercicio";
-			my_query($sqlM);
+		$sqlM			= "DELETE FROM contable_saldos WHERE ejercicio = $ejercicio";
+		$xQL->setRawQuery($sqlM);
 	
-			$sqlsc 			= "SELECT * FROM contable_catalogo";
-			$rsc			= mysql_query($sqlsc, cnnGeneral() );
-			while($rwc = mysql_fetch_array($rsc)){
+		$sqlsc 			= "SELECT * FROM contable_catalogo";
+		$rsc			= $xQL->getRecordset($sqlsc);
+		
+			while($rwc = $rsc->fetch_assoc() ){
 				$cuenta 	= $rwc["numero"];
 				$monto		= ( !isset($saldosAnteriores[$cuenta]) ) ? 0 : $saldosAnteriores[$cuenta];
 
@@ -57,10 +60,10 @@ class cUtileriasParaContabilidad{
 					$ejercicio,
 					3,
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'false')";
-				my_query($sqlis1);
+				$xQL->setRawQuery($sqlis1);
 				$msg	.= "$cuenta\t$monto\r\n";
 			}
-			@mysql_free_result($rsc);
+			
 			return $msg;	
 	}
 	function setRegenerarSaldosByMvto($ejercicio = false, $periodo = false){
@@ -749,7 +752,7 @@ class cPolizaCompacW{
 	}
 	function initByID($strID = ""){
 		$xPol		= new cPoliza(false);
-		$xPol->setPorCodigo($strID);
+		$xPol->initByCodigo($strID);
 
 		$this->mNumeroDePoliza	= $xPol->getNumero();
 		$this->mEjercicio		= $xPol->getEjercicio();

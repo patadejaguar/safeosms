@@ -447,7 +447,6 @@ $sqlProducto	= 'SELECT "public"."producto_credito"."tipo_credito_id" FROM "publi
 
 
 
-
 //$sqlBuilder3 					= new \Simplon\Postgres\Manager\PgSqlQueryBuilder();
 //$sqlBuilder3->setQuery('SELECT MAX( "public"."plan_pago"."id" )  AS "nuevo" FROM "public"."plan_pago"');
 //$sqlBuilder3->setQuery("SELECT currval('plan_pago_id_seq')");

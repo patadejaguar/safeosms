@@ -66,20 +66,35 @@ $next			= "./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop";
 		$dia_siguiente	= sumardias($fechaop, 1);
 		$xAv			= new cAlertasDelSistema($dia_siguiente);
 		$messages		.= $xAv->setGenerarAlCierre($dia_siguiente);
+		
+		
+		
 		$messages		.= vencer_notificaciones();
 		$messages		.= vencer_llamadas();
-		
 		$messages		.= vencer_compromisos();
+		
+		
 		$xLlam			= new cUtileriasParaSeguimiento();
 		$xLlam->setCancelarLlamadasAnteriores($fechaop);
 		if(SEGUIMIENTO_GENERAR_AL_CIERRE == true){
 			$messages	.= setLlamadasDiariasCreditosNo360($fechaop, $idrecibo);
 			$messages	.= setLlamadasDiariasPorMora($fechaop, $idrecibo);
+			
+			//
+			
+			$xUtils		= new cUtileriasParaSeguimiento();
+			
+			if(SEGUIMIENTO_NOTIF_CBZA_PREV == true){
+				$xUtils->setGenNotificacionCobroPrev();
+			}
 		}
 	
 		$xLog->setWrite($messages);
 		$xLog->setClose();
-		if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre del Seguimiento"); }
+		
+		if(ENVIAR_MAIL_LOGS == true){ 
+			$xLog->setSendToMail("TR.Eventos del Cierre del Seguimiento"); 
+		}
 	}
 	if ($parser != false){
 		header("Location: $next"); flush();

@@ -250,6 +250,7 @@ $lang["20150402"][]	= array("HERRAMIENTAS", "Herramientas", "Tools");
 $lang["20150402"][]	= array("TITULO_PERSONAL", "Profesion/Oficio", "Personal title");
 $lang["20150402"][]	= array("NUMERO_CLABE", "Numero de CLABE", "Reference code");
 $lang["20150402"][]	= array("OTRAS_REFERENCIAS", "Otras Referencias", "Other references");
+
 $lang["20150402"][]	= array("REFERENCIAS_BANCARIAS", "Referencias Bancarias", "Bank Data");
 $lang["20150402"][]	= array("REFERENCIAS_COMERCIALES", "Referencias Comerciales", "Bussiness Data");
 $lang["20150402"][]	= array("REFERENCIAS_PERSONALES", "Referencias Personales", "Family Data");
@@ -633,11 +634,24 @@ $lang["20180501"][]	= array("MAXVALOR", "Monto Max.", "Max Value");
 $lang["20180501"][]	= array("MAXNUMERO", "Num. Max.", "Max Number");
 $lang["20180501"][]	= array("CARTERA", "Portafolio", "Portafolio");
 $lang["20180501"][]	= array("AYUDA", "Ayuda", "Help");
-//$lang["20180503"][]	= array("", "", "");
 
 $lang["20180503"][]	= array("COTEJO", "Cotejo", "To Check");
 $lang["20180503"][]	= array("DEVOLVER", "Devolver", "Give Back");
-//$lang["20180503"][]	= array("", "", "");
+
+$lang["20180801"][]	= array("REFBANCS", "Referencias Bancarias", "Bank Data");
+$lang["20180801"][]	= array("REFCOMS", "Referencias Comerciales", "Bussiness Data");
+$lang["20180801"][]	= array("REFPERS", "Referencias Personales", "Family Data");
+$lang["20180801"][]	= array("LIQUIDACION", "Finiquito", "Final Payment");
+$lang["20180801"][]	= array("CASTIGADOS", "Castigados", "Uncollectible");
+$lang["20180801"][]	= array("EJECUTIVO", "Ejecutivo", "Assigned");
+$lang["20180801"][]	= array("CUOTA", "Cuota", "Payment Fee");
+$lang["20180801"][]	= array("CAPTPER", "Periodo", "Period");
+$lang["20180801"][]	= array("MINVALOR", "Monto Min.", "Min Value");
+$lang["20180801"][]	= array("MINNUMERO", "Num. Min.", "Min Number");
+$lang["20180801"][]	= array("MINIMO", "Min.", "Min");
+$lang["20180801"][]	= array("TASAMORA", "Tasa Moratorio", "Rate");
+$lang["20180801"][]	= array("ABRIR", "Abrir", "Go to");
+//$lang["20180801"][]	= array("", "", "");
 
 
 header('Content-type: application/json');

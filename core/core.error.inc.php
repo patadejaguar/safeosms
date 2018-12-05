@@ -13,13 +13,22 @@ function saveError($type = 0, $usr = false, $text = ""){
 }
 function setLog($texto, $codigo_de_error = false, $usuario = false){
 	$codigo_de_error	= ($codigo_de_error == false) ? DEFAULT_CODIGO_DE_ERROR : $codigo_de_error;
-	if(MODO_DEBUG == true){$codigo_de_error = 2; }
+	if(MODO_DEBUG == true AND SAFE_ON_DEV == true){ $codigo_de_error = 2; }
 	$txt				= $texto;
 	if(is_array($texto)){
 		$txt			= json_encode($texto);
 	}
 	$xErr		= new cError($codigo_de_error);
 	return $xErr->setNewError($codigo_de_error, $usuario, $txt);
+}
+function setAgregarEvento_($mensaje, $codigoError,$persona = false, $contrato=false, $recibo = false){
+	$xErr		= new cError($codigoError);
+	$xErr->setIDDocto($contrato);
+	$xErr->setIDRecibo($recibo);
+	
+	$usuario	= getUsuarioActual();
+	$xErr->setNewError($codigoError, $usuario, $mensaje,false, $persona);
+	$mensaje	= null;
 }
 function setError($str = ""){ setLog("Error : $str");}
 function setArchivarRegistro($src , $tipo = 0){
@@ -43,12 +52,15 @@ class cError {
 	public $COMMON			= "common";	
 	public $ERR_NO_ACTIVO	= 404;
 	public $ERR_MODULO		= 97;
-	
+	private $mIDDocto		= 0;
+	private $mIDRecibo		= 0;
 	
 	function __construct($codigo = false){
 		$codigo			= ( $codigo == false ) ? DEFAULT_CODIGO_DE_ERROR : $codigo;
 		$this->mCodigo	= $codigo;
 	}
+	function setIDDocto($id){ $this->mIDDocto = $id; }
+	function setIDRecibo($id){ $this->mIDRecibo = $id; }
 	function setNewError($tipo = 0, $usr = false, $txt = "", $fecha = false, $persona = 0){
 		$xMQL	= new MQL();
 	
@@ -63,19 +75,32 @@ class cError {
 		$hora 	= date("H:i:s");
 		$llen	= strlen($txt);
 		$xlim	= 4096;
-		if(MODO_DEBUG ){
+		if(MODO_DEBUG){
 			$xlim	= 6144;
 		}
 		if($llen>$xlim){
 			$txt	= substr($txt, 0, $xlim);
 		}
-		if($txt !== ""){
-			$sqlIE 	= "INSERT INTO general_log( fecha_log, hour_log, type_error, usr_log, text_log, ip_private, ip_proxy, ip_public, `idpersona`) 
-		    			VALUES('$fecha', '$hora', '$tipo', '$usr', '$txt', '$ip1', '$ip2', '$ip3', '$persona')";
-			$xMQL->setRawQuery($sqlIE);
-			$txt	= null;
-			$sqlIE	= null;
+		$f1		= "";
+		$v1		= "";
+		
+		$f2		= "";
+		$v2		= "";
+		if($this->mIDDocto>1){
+			$f1	= ",`iddocumento`";
+			$v1	= ",'"  . $this->mIDDocto . "'";
 		}
+		if($this->mIDRecibo>1){
+			$f2	= ",`idrecibo`";
+			$v2	= ",'"  . $this->mIDRecibo . "'";
+		}
+		if($txt !== ""){
+			$sqlIE 	= "INSERT INTO general_log( fecha_log, hour_log, type_error, usr_log, text_log, ip_private, ip_proxy, ip_public, `idpersona` $f1 $f2) 
+		    			VALUES('$fecha', '$hora', '$tipo', '$usr', '$txt', '$ip1', '$ip2', '$ip3', '$persona' $v1 $v2 )";
+			$xMQL->setRawQuery($sqlIE);
+		}
+		$txt	= null;
+		$sqlIE	= null;
 		return $xMQL->getLastInsertID();
 	}
 	function setGoErrorPage($codigo = false){
@@ -102,23 +127,16 @@ class cError {
 		$hcod	= "";
 		$tipo	= $this->mTipo;
 		$title	= "Aviso";
+		$cls	= "notice";
 		if($tipo == "security"){
 			$title	= "Advertencia";
+			$cls	= "error";
 		}
-		foreach ($str as $idx =>$txt){
-			$hcod	.= "<div class='num $tipo-num'>$txt</div>";
-		}
-		$html	= "<div class='error $tipo-error'>
-				
-				<div class='code $tipo-code'>
-				$hcod
-				</div>
 
-				<div class='message $tipo-message'>
+		$html	= "<div class='cuadro'>
 						<h3>$title</h3>
-						<hr /><hr />
-						<p>" . $this->mDescripcion . "</p><hr />
-						</div>
+						<hr />
+						<p class='$cls'>" . $this->mDescripcion . "</p><hr /><span class='error-num'>" . $this->mCodigo . "</span>
 						</div>";
 		$hcod	= null;
 		return $html;
@@ -153,7 +171,12 @@ class cCoreLog{
 		$id		= ($id == false) ? $this->mIDError : $id;
 	}
 	function getDescription(){	}
-	function guardar($codigo, $persona = 0){ $xErr	= new cError(); $xErr->setNewError($codigo, false, $this->mMessages, false, $persona);	}
+	function guardar($codigo, $persona = 0, $contrato=0, $recibo=0){ 
+		$xErr	= new cError();
+		$xErr->setIDDocto($contrato);
+		$xErr->setIDRecibo($recibo);
+		$xErr->setNewError($codigo, false, $this->mMessages, false, $persona);	
+	}
 	function add($msg, $level = "common"){
 		$this->mMessages	.= ($level == $this->DEVELOPER AND (MODO_DEBUG == false)) ? "" : $msg;
 		$msg					= null;
@@ -164,6 +187,11 @@ class cCoreLog{
 	function getMessages($put = OUT_TXT){ $xH	 = new cHObject(); return $xH->Out($this->mMessages, $put);	}
 	function OCat(){if($this->mOCat == null){$this->mOCat = new cErrorCodes(); } return $this->mOCat; }
 	function setNoLog(){ $this->mForceNoLog = false; }
+	function getListadoDeEventosSQL($persona=false, $documento=false, $recibo=false, $buscar=""){
+		$xL			= new cSQLListas();
+		$sql		= $xL->getListadoDeEventos("", "", "", "", "", $buscar, $persona, $documento, $recibo);
+		return $sql;
+	}
 }
 
 
@@ -174,10 +202,14 @@ class cErrorCodes {
 	public $ELIMINAR_RAW 		= 21;
 	public $CREDITO_ELIMINADO 	= 1010;
 	public $CREDITO_MODIFICADO	= 1051;
+	public $CREDITO_CASTIGADO	= 1052;
+	public $CREDITO_PLANNEW		= 20019;
 	public $PERSONA_MODIFICADA	= 102;
 	public $PERSONA_NO_EN_LISTA	= 103;
+	public $PERSONA_INOUT_TADA	= 104;
 	public $ERROR_LOGIN			= 98;
 	public $SUCCESS_LOGIN		= 10;
+	public $OPERACION_NO_REG	= 501;
 	//public $PERSONA_ELIMINADA	= 102;
 	public $PASSWORD_MODIFICADO	= 911;
 	public $SIN_PERMISO_REGLA	= 400;
@@ -187,7 +219,7 @@ class cErrorCodes {
 	public $NOMINA_ELIMINADA	= 20104;
 	public $NOMINA_ENVIO_DUP	= 20105;
 	public $USUARIO_NUEVO		= 901;
-	
+	public $PERMISO_NUEVO		= 91;
 	
 }
 

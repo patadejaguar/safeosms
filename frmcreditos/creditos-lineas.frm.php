@@ -70,7 +70,12 @@ $xHG->col("monto_ejercido", "TR.EJERCIDO", "15%", true);
 //$xHG->col("periocidad", "TR.PERIOCIDAD", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+
+
+$xHG->OButton("TR.PANEL", "jsPanelLineas('+ data.record.clave +')", "web.png");
+$xHG->OButton("TR.AGREGAR CREDITO", "jsAddCredito('+ data.record.clave +')", "cash_stack_add.png");
+//$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+
 
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idcreditos_lineas +')", "delete.png");
 
@@ -82,14 +87,22 @@ echo $xFRM->get();
 ?>
 <script>
 var xG	= new Gen();
+var xC	= new CredGen();
+
 function jsEdit(id){
-	xG.w({url:"../frmcreditos/creditos-lineas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivlineas});
+//	xG.w({url:"../frmcreditos/creditos-lineas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivlineas});
 }
 function jsAdd(){
 	xG.w({url:"../frmcreditos/frmcreditoslineas.php?", tiny:true, callback: jsLGiddivlineas});
 }
+function jsPanelLineas(id){
+	xG.w({url:"../frmcreditos/creditos-lineas.panel.frm.php?clave=" + id, principal:true, callback: jsLGiddivlineas});
+}
 function jsDel(id){
 	//xG.rmRecord({tabla:"creditos_lineas", id:id, callback:jsLGiddivlineas});
+}
+function jsAddCredito(id){
+	xC.addCredito({origen:CNF.credito.origen.lineas, idorigen:id});
 }
 </script>
 <?php

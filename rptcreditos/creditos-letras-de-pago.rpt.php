@@ -18,7 +18,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.REPORTE DE LETRAS PENDIENTE DE PAGO", HP_REPORT);
+$xHP		= new cHPage("TR.REPORTE DE LETRAS NO PAGADAS", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $xQL		= new MQL();
@@ -54,30 +54,43 @@ $senders		= getEmails($_REQUEST);
 
 $ByProducto		= $xFil->CreditosPorProducto($producto);
 $ByPeriocidad	= $xFil->CreditosPorFrecuencia($frecuencia);
+
 $ByFechas		= " AND (`tmp_creds_prox_letras`.`fecha_de_pago` >= '$FechaInicial' AND `tmp_creds_prox_letras`.`fecha_de_pago` <='$FechaFinal') ";
 $sql			= "SELECT   `personas`.`codigo`,
          `personas`.`nombre`,
          `creditos_solicitud`.`numero_solicitud` AS `credito`,
+		`creditos_solicitud`.`pagos_autorizados` AS `pagos`,
          `creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `periocidad`,
-         `tmp_creds_prox_letras`.`periodo_socio` AS `periodo`,
+         
+		`creditos_solicitud`.`fecha_ministracion` AS `fecha_de_ministracion`,
+		`creditos_solicitud`.`fecha_ultimo_mvto` AS `fecha_ultima_letra`,
+
+		
+		`creditos_solicitud`.`ultimo_periodo_afectado` AS `ultima_letra`,
+		`tmp_creds_prox_letras`.`periodo_socio` AS `periodo`,
+         `creditos_estatus`.`estatus_actual` AS `estatus_actual`,
+         
+         `creditos_tipo_de_pago`.`descripcion` AS `forma_de_pago`,
+         ROUND((`creditos_solicitud`.`tasa_interes`*100),2) AS `tasa_interes`,
+		ROUND((`creditos_solicitud`.`tasa_moratorio`*100),2) AS `tasa_mora`,
+
+         `creditos_solicitud`.`monto_autorizado` AS `monto_original`,
+         `creditos_solicitud`.`saldo_actual` AS `saldo_principal`,
+
+		`tmp_creds_prox_letras`.`fecha_de_pago` AS `fecha_de_pago`,
          DATE_FORMAT(`tmp_creds_prox_letras`.`fecha_de_pago`, '%W') AS `dia_de_pago`,
-         `tmp_creds_prox_letras`.`fecha_de_pago` AS `fecha_de_pago`,
+         
          `tmp_creds_prox_letras`.`capital`,
          `tmp_creds_prox_letras`.`interes`,
          `tmp_creds_prox_letras`.`iva`,
          `tmp_creds_prox_letras`.`otros`,
          `tmp_creds_prox_letras`.`letra` AS `monto_letra`,
-         `tmp_creds_prox_letras`.`saldo_principal` AS `saldo_letra`,
-         `creditos_estatus`.`estatus_actual` AS `estatus_actual`,
-         `creditos_solicitud`.`fecha_ministracion` AS `fecha_de_ministracion`,
-         `creditos_tipo_de_pago`.`descripcion` AS `forma_de_pago`,
-         (`creditos_solicitud`.`tasa_interes`*100) AS `tasa_interes`,
-         `creditos_solicitud`.`pagos_autorizados` AS `pagos`,
-         `creditos_solicitud`.`ultimo_periodo_afectado` AS `ultima_letra`,
-         `creditos_solicitud`.`fecha_ultimo_mvto` AS `fecha_ultima_letra`,
-         `creditos_solicitud`.`monto_autorizado` AS `monto_original`,
-         (`creditos_solicitud`.`tasa_moratorio`*100) AS `tasa_mora`,
-         `creditos_solicitud`.`saldo_actual` AS `saldo_principal`
+         `tmp_creds_prox_letras`.`saldo_principal` AS `saldo_letra`
+
+
+         
+         
+
 FROM     `tmp_creds_prox_letras` 
 INNER JOIN `creditos_solicitud`  ON `tmp_creds_prox_letras`.`docto_afectado` = `creditos_solicitud`.`numero_solicitud` 
 INNER JOIN `personas`  ON `creditos_solicitud`.`numero_socio` = `personas`.`codigo` 
@@ -85,7 +98,9 @@ INNER JOIN `creditos_periocidadpagos`  ON `creditos_periocidadpagos`.`idcreditos
 INNER JOIN `creditos_estatus`  ON `creditos_estatus`.`idcreditos_estatus` = `creditos_solicitud`.`estatus_actual` 
 INNER JOIN `creditos_tipo_de_pago`  ON `creditos_solicitud`.`tipo_de_dias_de_pago` = `creditos_tipo_de_pago`.`idcreditos_tipo_de_pago` 
 INNER JOIN `creditos_tipoconvenio`  ON `creditos_tipoconvenio`.`idcreditos_tipoconvenio` = `creditos_solicitud`.`tipo_convenio` 
-WHERE    ( `creditos_solicitud`.`saldo_actual` >0 ) $ByFechas $ByProducto $ByPeriocidad ";
+WHERE    ( `creditos_solicitud`.`saldo_actual` >0 ) $ByFechas $ByProducto $ByPeriocidad 
+ORDER BY `creditos_solicitud`.`numero_solicitud`
+";
 
 
 
@@ -107,9 +122,39 @@ $xRPT->setBodyMail($body);
 
 $xRPT->addContent($body);
 
-$xRPT->setProcessSQL();
 
+$xRPT->setFormato("capital", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("interes", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("iva", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("monto_letra", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("saldo_principal", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("saldo_letra", $xRPT->FMT_MONEDA);
+$xRPT->setFormato("monto_original", $xRPT->FMT_MONEDA);
+
+$xRPT->setFormato("fecha_de_pago", $xRPT->FMT_FECHA);
+$xRPT->setFormato("fecha_de_ministracion", $xRPT->FMT_FECHA);
+$xRPT->setFormato("fecha_ultima_letra", $xRPT->FMT_FECHA);
+
+$xRPT->setOmitir("codigo");
+
+
+
+$xRPT->addCampoSuma("ahorro");
+$xRPT->addCampoSuma("capital");
+$xRPT->addCampoSuma("interes");
+$xRPT->addCampoSuma("iva");
+$xRPT->addCampoSuma("otros");
+$xRPT->addCampoSuma("monto_letra");
+$xRPT->addCampoSuma("saldo_principal");
+$xRPT->addCampoSuma("saldo_letra");
+$xRPT->addCampoSuma("monto_original");
+
+
+$xRPT->setProcessSQL();
 $xRPT->setResponse();
 $xRPT->setSenders($senders);
+
+
 echo $xRPT->render(true);
+
 ?>

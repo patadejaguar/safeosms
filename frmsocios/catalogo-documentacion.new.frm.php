@@ -40,6 +40,8 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
+$xHP->addJTagSupport();
+
 $xHP->init();
 
 /* ===========		FORMULARIO EDICION 		============*/
@@ -80,6 +82,8 @@ $xSel2->addOptions(array(
 		"entregta" => "Entrega T",
 		SYS_NINGUNO => "Ninguno"
 ));
+
+
 $xFRM->OHidden("clave_de_control", $xTabla->clave_de_control()->v());
 $xFRM->OText("nombre_del_documento", $xTabla->nombre_del_documento()->v(), "TR.NOMBRE DEL DOCUMENTO");
 $xFRM->addHElem($xSel->get("clasificacion", "TR.CLASIFICACION",$xTabla->clasificacion()->v()) );
@@ -90,10 +94,14 @@ $xFRM->addHElem($xSel2->get("checklist", "TR.CHECKLIST",$xTabla->checklist()->v(
 
 $xFRM->OSiNo("TR.ARCHIVO","almacen", $xTabla->almacen()->v());
 
-$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
+$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v(), true);
 
-$xFRM->OSiNo("TR.ES IDENTIFICACION_OFICIAL","estatus", $xTabla->es_ident()->v());
+$xFRM->OSiNo("TR.ES IDENTIFICACION_OFICIAL","es_ident", $xTabla->es_ident()->v());
 
+$xFRM->OSiNo("TR.ES DE CONTRATO","es_cont", $xTabla->es_cont()->v());
+
+$arrV	= array("todas" => "Para Cualquiera", "pf" => "Personas Fisicas", "pm" => "Personas Morales", "originacion" => "De Originacion", "analisis" => "De Analisis");
+$xFRM->OTagControl("tags", $xTabla->tags()->v(), "TR.TAGS", $arrV);
 
 $xFRM->addCRUD($xTabla->get(), true);
 //$xFRM->addCRUDSave($xTabla->get(), $clave, true);

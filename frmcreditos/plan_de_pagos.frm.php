@@ -32,7 +32,9 @@ $ConPagosEsp	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGE
 function jsaEmularPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo, 
 		$dia1, $dia2, $dia3, $idotros, $montootros, $primer_pago, $PrimeraFecha, $completo, $sinintereses, $guardaruno, $promovido, $residual, $ajustecap){
 	$xEm			= new cPlanDePagosGenerador();
-	$xT				= new cTipos();	
+	$xT				= new cTipos();
+	$xF				= new cFecha();
+	
 	$xCred			= new cCredito($idcredito);
 	$completo		= $xT->cBool($completo);
 	$sinintereses	= $xT->cBool($sinintereses);
@@ -43,18 +45,28 @@ function jsaEmularPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		$xEm->setIgnorarIntsNoPag($sinintereses);
 		$xEm->setMostrarCompleto($completo);
 		$xEm->setGuardarPrimeraDiferencia($guardaruno);
-		$xCred->setCambiarFechaMinistracion($fechaMinistracion, true);
+		
+		if($xF->getInt($fechaMinistracion) == $xF->getInt($xCred->getFechaDeMinistracion()) ){
+			
+		} else {
+			$xCred->setCambiarFechaMinistracion($fechaMinistracion, true);
+		}
+		
 		$xEm->initPorCredito($idcredito);
 		$xEm->setDiasDeAbonoFijo($dia1, $dia2, $dia3);
 		$primer_pago= $xT->cBool($primer_pago);
 		$xEm->setFechaArbitraria($PrimeraFecha);
-		$xEm->setTipoDePago($TipoDePago);
 		$xEm->setMontoParcialidad($promovido);
 		$xEm->setValorResidual($residual);
 		$xEm->setAjustarCapital($ajustecap);
-		
+		if($xCred->getEsAutorizado() == true OR $xCred->getEsSolicitado() == true){
+			
+			$xEm->setTipoDeCuota($TipoDePago);
+		} else {
+			
+		}
 		$parcial 	= $xEm->getParcialidadPresumida($redondeo, $idotros, $montootros, $primer_pago);
-		$xEm->setCompilar($TipoDePago);
+		$xEm->setCompilar();
 		return $xEm->getVersionFinal();
 	}
 }
@@ -63,6 +75,8 @@ function jsaGuardarPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		$dia1, $dia2, $dia3, $idotros, $montootros, $primer_pago, $PrimeraFecha, $completo, $sinintereses, $guardaruno, $promovido, $residual, $ajustecap){
 	$xEm			= new cPlanDePagosGenerador();
 	$xT				= new cTipos();
+	$xF				= new cFecha();
+	
 	$completo		= $xT->cBool($completo);
 	$sinintereses	= $xT->cBool($sinintereses);
 	$guardaruno		= $xT->cBool($guardaruno);
@@ -72,19 +86,33 @@ function jsaGuardarPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 	if($xCred->init() == true){
 		$xEm->setIgnorarIntsNoPag($sinintereses);
 		$xEm->setMostrarCompleto($completo);
-		$xEm->setGuardarPrimeraDiferencia($guardaruno);	
-		$xCred->setCambiarFechaMinistracion($fechaMinistracion, true);
+		$xEm->setGuardarPrimeraDiferencia($guardaruno);
+		
+		if($xF->getInt($fechaMinistracion) == $xF->getInt($xCred->getFechaDeMinistracion()) ){
+			
+		} else {
+			$xCred->setCambiarFechaMinistracion($fechaMinistracion, true);
+		}
+		
 		$xEm->initPorCredito($idcredito);
 		$xEm->setDiasDeAbonoFijo($dia1, $dia2, $dia3);
 		$primer_pago		= $xT->cBool($primer_pago);
 		$xEm->setFechaArbitraria($PrimeraFecha);
 		$xEm->setMontoParcialidad($promovido);
+		
 		$xEm->setValorResidual($residual);
 		$xEm->setAjustarCapital($ajustecap);
-		
+		if($xCred->getEsAutorizado() == true OR $xCred->getEsSolicitado() == true){
+			
+			$xEm->setTipoDeCuota($TipoDePago);
+		} else {
+			
+		}
 		$parcial 			= $xEm->getParcialidadPresumida($redondeo, $idotros, $montootros, $primer_pago);
+		$xEm->setCompilar();
 		
-		$xEm->setCompilar($TipoDePago);
+		
+		
 		return $xEm->getVersionFinal(true);
 	}
 }
@@ -102,6 +130,11 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $auto		= parametro("auto", false, MQL_BOOL);
+
+
+
+$xHP->addJExcelSupport();
+
 $xHP->init();
 
 $xFRM		= new cHForm("frm", "plan_de_pagos.frm.php");
@@ -116,15 +149,23 @@ if($credito > DEFAULT_CREDITO){
 	$xFRM->addCerrar();
 	$xFRM->OHidden("idsolicitud", $credito);
 	$xFRM->OHidden("idsocio", $persona);
+	$xFRM->OHidden("idsaldoactual", $xCred->getSaldoActual());
 	
 	$xFRM->addHElem( $xCred->getFicha(true, "", false, true) );
 	
-	$xFRM->addHElem( $xSel->getListaDeTipoDePago("", $xCred->getTipoDePago())->get(true) );
-
+	
+	if($xCred->getEsAfectable() == true){
+		$xFRM->OHidden("idfechaministracion", $xCred->getFechaDeMinistracion());
+		$xFRM->OHidden("idtipodepago", $xCred->getTipoDePago());
+	} else {
+		$xFRM->ODate("idfechaministracion", $xCred->getFechaDeMinistracion(), "TR.Fecha de ministracion");
+		$xFRM->addHElem( $xSel->getListaDeTipoDePago("", $xCred->getTipoDePago())->get(true) );
+	}
+	
 	//if(getCantidadRendonda($cantidad, $redondeo))
 	$xFRM->addHElem( $xSel->getListaDeTipoDeRedondeo("", $xCred->getFactorRedondeo() )->get(true) );
 	
-	$xFRM->ODate("idfechaministracion", $xCred->getFechaDeMinistracion(), "TR.Fecha de ministracion");
+	
 	
 	if($xCred->getTipoEnSistema() == SYS_PRODUCTO_NOMINA){	
 		
@@ -132,7 +173,12 @@ if($credito > DEFAULT_CREDITO){
 	$xGen		= new cPlanDePagosGenerador();
 	$xGen->initPorCredito($credito, $xCred->getDatosInArray());
 	//$xFRM->addHElem("<div id='id' class='tx4'>" . $xGen->getControlDias() . "</div>");
-	$xFRM->addHElem($xGen->getControlDias());
+	if($xCred->getPeriocidadDePago() == CREDITO_TIPO_PERIOCIDAD_MENSUAL){
+		$xFRM->OHidden("dia_primer_abono", $xF->dia());
+	} else {
+		$xFRM->addHElem($xGen->getControlDias());
+	}
+	
 	if($xCred->getPeriocidadDePago() != CREDITO_TIPO_PERIOCIDAD_DECENAL){
 		if($xCred->getPeriocidadDePago() == CREDITO_TIPO_PERIOCIDAD_QUINCENAL){
 			$xFRM->OHidden("dia_tercer_abono", 0);
@@ -209,7 +255,8 @@ if($credito > DEFAULT_CREDITO){
 			$xFRM->OHidden("idmontopromovido", 0);
 		}
 	} else {
-		$xFRM->OMoneda("idmontopromovido", $xCred->getMontoDeParcialidad(), "TR.Monto Promovido");
+		//$xFRM->OMoneda("idmontopromovido", $xCred->getMontoDeParcialidad(), "TR.Monto Promovido");
+		$xFRM->OMoneda("idmontopromovido", 0, "TR.Monto Promovido");
 	}
 	$xFRM->addObservaciones();
 	$xFRM->OCheck("TR.MOSTRAR COMPLETO", "idcompleto");
@@ -218,6 +265,7 @@ if($credito > DEFAULT_CREDITO){
 	$xFRM->addHTML("<div id='iddatos_pago'></div>");
 	$xFRM->OButton("TR.Calcular", "jsEmularPagos()", $xFRM->ic()->CALCULAR, "idcplan");
 	$xFRM->OButton("TR.Guardar", "jsGuardarPagos()", $xFRM->ic()->GUARDAR, "idgplan");
+	
 	
 	$xFRM->OHidden("idperiocidad", $xCred->getPeriocidadDePago());
 	$idnumeroplan = $xCred->getNumeroDePlanDePagos();
@@ -229,6 +277,7 @@ if($credito > DEFAULT_CREDITO){
 	}
 	//Agregar Valor residual del Credito
 	$xFRM->OHidden("idvalorresidual", $xCred->getvalorResidual());
+	$xFRM->OButton("TR.EXPORTAR", "$('.sqltable').tableExport({bootstrap: false,position:'top',fileName:'PlanDePagos'});", $xFRM->ic()->EXPORTAR, "idtoexport");
 	
 	$xFRM->addJsInit("jsInitComponents()");
 } else {
@@ -319,6 +368,7 @@ function jsGetPlanDePagos(){
 }
 function jsGetPrimeraFecha(v){
 	$("#idprimerafecha").val( String($("#idprimerafecha").val()).replace(/\//g, "-") );
+	
 	var idprimerafecha		= $("#idprimerafecha").val();
 	var dia_primer_abono	= $("#dia_primer_abono").val();
 	var dia_segundo_abono	= $("#dia_segundo_abono").val();
@@ -337,6 +387,8 @@ function jsGetPrimeraFecha(v){
 	aDias.sort();
 	var mAbsDiasMax			= aDias[2];
 	var mIgnore				= false;
+	
+	
 	if(dia_primer_abono > mDiasMax||dia_segundo_abono > mDiasMax||dia_tercer_abono > mDiasMax){
 		ready				= false;
 		msg 				= "Numero de dia invalido";
@@ -361,6 +413,7 @@ function jsGetPrimeraFecha(v){
 				}
 				break;			
 			case 14:
+				//$("#dia_primer_abono").val(mWDia);
 				if(mWDia == dia_primer_abono){
 					ready = true;
 				} else {
@@ -380,11 +433,8 @@ function jsGetPrimeraFecha(v){
 					ready	= false;
 					msg		= "No calcule los pagos a  dias 31, no todos los meses tienen 31 dias";					
 				} else {
-					if(mMDia == dia_primer_abono){
-						ready = true;
-					} else {
-						msg 	= "La fecha de pago " + dia_primer_abono + " debe ser el mismo dia de Calculo  " + mMDia;
-					}
+					$("#dia_primer_abono").val(mMDia);
+					ready = true;
 				}
 				break;
 			default:
@@ -412,8 +462,17 @@ function jsSetAnualidad(obj){
 	xP.setAnualidadLetra({credito:dd[0], periodo:dd[1], monto:obj.value });
 }
 function jsSetCapital(obj){
-	var dd	= String(obj.id).split("-");	
-	xP.setPagoEspecial({credito:dd[0], periodo:dd[1], monto:obj.value });
+	
+	var idx		= obj.id;
+	var dd		= String(obj.id).split("-");
+	var idsdo	= flotante($("#idsaldoactual").val());
+	var idmto	= flotante(obj.value);
+	if(idmto > idsdo){
+		xG.alerta({msg:"CREDITO_NO_MAYOR"});
+		$("#" + idx).val(0);
+	} else {
+		xP.setPagoEspecial({credito:dd[0], periodo:dd[1], monto:idmto });
+	}
 }
 </script>
 <?php

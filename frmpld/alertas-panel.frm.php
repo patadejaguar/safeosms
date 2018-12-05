@@ -71,15 +71,12 @@ if($xAlert->init() == true){
 	$xFRM->OHidden("persona", $xAlert->getPersonaDeOrigen() );
 	$xFRM->OHidden("personadestino", $xAlert->getPersonDeDestino() );
 	
-	$xFRM->OButton("TR.PANEL DE PERSONA", "var xP=new PersGen();xP.goToPanel(" . $xAlert->getPersonaDeOrigen() . ")", $xFRM->ic()->PERSONA, "cmdpanelpersona", "persona");
+	$xFRM->addCerrar();
 	
+	$xFRM->OButton("TR.PANEL DE PERSONA", "var xP=new PersGen();xP.goToPanel(" . $xAlert->getPersonaDeOrigen() . ")", $xFRM->ic()->PERSONA, "cmdpanelpersona", "persona");
 	$xFRM->OButton("TR.MODIFICAR ESTATUS", "jsModificarEstatus($clave)", $xFRM->ic()->EDITAR, "cmdeditaralerta", "editar");
 	
-	if($xAlert->getEsEnviadoRMS() == false){
-		$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR, "cmdenviarrms", "yellow");
-	} else {
-	    $xFRM->addAviso($xFRM->getT("MS.ALERTA_ENVIADO_RMS"), "idmsgs", false, "warning");
-	}
+
 
 	$xFRM->addHElem($xAlert->getFicha());
 	
@@ -94,6 +91,17 @@ if($xAlert->init() == true){
 		//$xLi->getListadoDeCompromisosSimple()
 		//$xLista->
 		//$xListaC	= new cAMLListasProveedores();
+	}
+
+	if($xAlert->getEsEnviadoRMS() == false){
+		if($xAlert->getIsChecked() == false){
+			$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR, "cmdenviarrms", "yellow");
+		} else {
+			$xFRM->addTag($xFRM->getT("DICTAMINADO", "warning"));
+		}
+	} else {
+		$xFRM->addTag($xFRM->getT("MS.ALERTA_ENVIADO_RMS", "warning"));
+		
 	}
 	
 }

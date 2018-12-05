@@ -14,6 +14,8 @@
 //=====================================================================================================
 $xHP		= new cHPage("", HP_FORM);
 
+$xUser		= new cSystemUser(); $xUser->init();
+
 $oficial 	= elusuario($iduser);
 //$wonner		= $iduser;
 $tabla 		= parametro("t", "", MQL_RAW);// ( isset($_GET["t"]) ) ? $_GET["t"] : "";
@@ -47,10 +49,15 @@ if($comando == SYS_DEFAULT){
 		$conTitulo	= false;
 		$xData		= new cSQLTabla($tabla);
 		$mObj		= $xData->obj();
-		
+		if($tabla == TOPERACIONES_MVTOS OR $tabla == TOPERACIONES_RECIBOS){
+			if($xUser->getPuedeEditarRecibos() == false){
+				$mObj = null;
+				$xFRM->addAviso("TR.NECESITA PERMISOS PARA EDITAR ESTO", "", false, "error");
+			}
+		}
 		if($mObj == null){
-			$xFRM->addAviso(MSG_NO_PARAM_VALID);
-			$xFRM->addHTML("<script>var g = new Gen(); g.close(); </script>");
+			$xFRM->addAviso(MSG_NO_PARAM_VALID, "", false, "error");
+			$xFRM->addCerrar("", 10);
 		} else {
 			$filtro		= ($filtro == "") ? $mObj->getKey() . "=" . $clave . "" : $filtro;
 			$data		= $mObj->query()->getRow(" $filtro ");

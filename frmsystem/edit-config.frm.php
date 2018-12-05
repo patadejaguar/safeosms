@@ -32,8 +32,9 @@ $jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = paramet
 $cnt			= parametro("idconf", "", MQL_RAW);
 $arrNoEdits		= array("demo.sipakal.com"=>"demo.sipakal.com", "english.sipakal.com" => "english.sipakal.com");
 $URL			= $xHP->getServerName();//$_SERVER["SERVER_NAME"] == "") ? $_SERVER['SERVER_ADDR'] : $_SERVER["SERVER_NAME"];
-if(MODO_DEBUG == false OR isset($arrNoEdits[$URL]) === true ){
-	$xHP->goToPageError();
+
+if(MODO_DEBUG == false OR isset($arrNoEdits[$URL]) === true OR SAFE_ON_DEV == false ){
+	$xHP->goToPageError(999);
 }
 
 $xHP->init();

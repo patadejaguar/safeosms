@@ -34,6 +34,9 @@ $conseguimiento			= parametro("conseguimiento", false, MQL_BOOL);
 $conempleador			= parametro("conempleador", false, MQL_BOOL);
 $sinempleador			= parametro("sinempleador", false, MQL_BOOL);
 
+$tipodecuota			= parametro("tipodecuota", 0, MQL_INT); $tipodecuota = parametro("tipocuota", $tipodecuota, MQL_INT); $tipodecuota = parametro("idtipodecuota", $tipodecuota, MQL_INT);
+
+
 
 $oficial				= parametro("oficial", SYS_TODAS ,MQL_INT);
 $sucursal				= parametro("sucursal", "", MQL_RAW); $sucursal	= strtolower($sucursal);
@@ -46,10 +49,14 @@ $ByEmpresa				= $xLi->OFiltro()->CreditosPorEmpresa($empresa);
 $ByTipoAut				= $xLi->OFiltro()->CreditosPorAutorizacion($tipoautorizacion);
 $ByDestino				= $xLi->OFiltro()->CreditosPorDestino($destino);
 
+$ByTipoCuota			= $xLi->OFiltro()->CreditosPorTipoDeCuota($tipodecuota);
 
 $FechaInicial			= $xF->getFechaISO( parametro("on", fechasys()) );
 $FechaFinal				= $xF->getFechaISO( parametro("off", fechasys()) );
 $senders				= getEmails($_REQUEST);
+
+$tipoensistema			= parametro("tipoensistema", false, MQL_INT);
+$ByTipoSistema			= $xLi->OFiltro()->CreditosProductosPorTSistema($tipoensistema);
 
 if($estatus == CREDITO_ESTADO_AUTORIZADO OR $estatus == CREDITO_ESTADO_SOLICITADO){ $BySaldo		= ""; }
 
@@ -132,7 +139,9 @@ $setSql	= "SELECT
 	`creditos_solicitud`.`monto_autorizado`                            	AS `monto_original`,
 	`creditos_solicitud`.`saldo_actual`                                	AS `saldo_capital`,
 	$saldo_migrado
-	`oficiales`.`nombre_corto` AS	`oficial`, `creditos_solicitud`.`monto_parcialidad`
+	`oficiales`.`nombre_corto` AS	`oficial`,
+	IF(`creditos_tipo_de_pago`.`con_capital`= 0, getMontoCuotaCred(`numero_solicitud`, (`ultimo_periodo_afectado`+1)),
+	`creditos_solicitud`.`monto_parcialidad`) AS `monto_parcialidad`
 	
 FROM
 	`creditos_solicitud` `creditos_solicitud` 
@@ -170,12 +179,13 @@ FROM
 	$ByTipoAut
 	$BySucursal
 	$ByOficial
-	
+	$ByTipoCuota
 	$ByDestino
 	$BySeguimiento
 	$ByConEmpleador
 	$BySinEmpleador
 	$ByMunicipio
+	$ByTipoSistema
 	ORDER BY `creditos_solicitud`.`tipo_convenio`, `personas`.`nombre` ";
 
 /*$setSql = "SELECT socios.nombre,	socios.alias_dependencia AS 'empresa',

@@ -42,6 +42,9 @@ if($persona > DEFAULT_SOCIO AND $relacionado > DEFAULT_SOCIO){
 		$txt	.= "ERROR\tNo existe la persona $persona\r\n";
 	}
 	if(MODO_DEBUG == true){ $txt .= $xPer->getMessages(); }
+	
+	setAgregarEvento_($txt, 10101, $relacionado);
+	setAgregarEvento_($txt, 10101, $persona, $documento);
 }
 $rs["msg"]		= $txt;
 header('Content-type: application/json');

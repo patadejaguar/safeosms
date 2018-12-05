@@ -37,7 +37,11 @@ $pempresa			= parametro("periodoempresa", 0, MQL_INT);// (isset($_REQUEST["perio
 $sumaoperaciones	= parametro("idtotaloperaciones", 0, MQL_FLOAT);
 $montodesglose		= parametro("idplandesglose", 0, MQL_FLOAT);
 $origencobranza		= parametro("idorigencbza",$xOrgOps->TIPO_ENVENTANILLA, MQL_INT);
+
 $oficialcbza		= parametro("oficialcobranza",getUsuarioActual(), MQL_INT);
+
+
+
 $xBase				= new cBases();
 
 
@@ -795,7 +799,8 @@ if($procesado != SYS_AUTOMATICO){
 	$saldo	= setNoMenorQueCero($xCred->getSaldoActual());
 	
 	$xNRec->setMontoHistorico($saldo);
-	if($saldo == 0){
+	
+	if($xCred->getEsPagado() == true){
 		$xFRM->OButton("TR.CARTA_FINIQUITO", "var xC=new CredGen();xC.getFormatoFiniquito($solicitud)", $xFRM->ic()->LEGAL);
 	}
 

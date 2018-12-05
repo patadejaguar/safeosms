@@ -123,6 +123,7 @@ if($credito <= DEFAULT_CREDITO){
 	$xT->endRow();*/	
 }
 $xFRM->addHTML($xT->get());
+
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);

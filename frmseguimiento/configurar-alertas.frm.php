@@ -44,26 +44,31 @@ $xHP->init();
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
-
+$xFRM->addCerrar();
 
 /* ===========		GRID JS		============*/
 
 $xHG	= new cHGrid("iddivseguimiento",$xHP->getTitle());
 
-$xHG->setSQL("SELECT * FROM `sistema_programacion_de_avisos` LIMIT 0,100");
+$xHG->setSQL("SELECT * FROM `sistema_programacion_de_avisos` WHERE estatus=1 LIMIT 0,100");
 $xHG->addList();
+$xHG->setOrdenar();
+
 $xHG->addKey("idprograma");
-$xHG->col("nombre_del_aviso", "TR.NOMBRE DEL AVISO", "10%");
-$xHG->col("forma_de_creacion", "TR.FORMA DE CREACION", "10%");
-$xHG->col("programacion", "TR.PROGRAMACION", "10%");
+$xHG->col("nombre_del_aviso", "TR.NOMBRE", "20%");
+//$xHG->col("forma_de_creacion", "TR.FORMA DE CREACION", "30%");
+$xHG->col("programacion", "TR.PROGRAMACION", "20%");
+$xHG->col("intent_command", "TR.COMANDO", "40%");
 //$xHG->col("destinatarios", "TR.DESTINATARIOS", "10%");
 //$xHG->col("microformato", "TR.MICROFORMATO", "10%");
 //$xHG->col("tipo_de_medios", "TR.TIPO DE MEDIOS", "10%");
 //$xHG->col("intent_check", "TR.INTENT CHECK", "10%");
-//$xHG->col("intent_command", "TR.INTENT COMMAND", "10%");
+//
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idprograma +')", "edit.png");
+$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idprograma +')", "undone.png");
+
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idprograma +')", "delete.png");
 $xFRM->addHElem("<div id='iddivseguimiento'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
@@ -79,6 +84,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	///xG.rmRecord({tabla:"sistema_programacion_de_avisos", id:id, callback:jsLGiddivseguimiento});
+}
+function jsBaja(id){
+	xG.recordInActive({tabla:"sistema_programacion_de_avisos", id: id, preguntar : true, callback: jsLGiddivseguimiento});
 }
 </script>
 <?php

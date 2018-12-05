@@ -20,7 +20,7 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $jxc 		= new TinyAjax();
-$jsCampo	= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "oficial_seguimiento" : "oficial_credito";
+//$jsCampo	= (CREDITO_USAR_OFICIAL_SEGUIMIENTO == true) ? "oficial_seguimiento" : "oficial_credito";
 
 function jsaGetCreditos($convenio, $estatus, $periocidad, $oficial){
 	$xLi		= new cSQLListas();
@@ -72,9 +72,11 @@ $xFRM->addSeccion("idlista", "TR.LISTA DE CREDITOS");
 $xFRM->addHTML("<div id='id-listado-de-creditos'></div>");
 $xFRM->endSeccion();
 
-$xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR);
-$xFRM->OButton("TR.Guardar", "jsSetOficial()", $xFRM->ic()->GUARDAR);
+//$xFRM->addCerrar();
+$xFRM->addGuardar("jsSetOficial()");
+$xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR, "idcmdobten", "blue2");
 $xFRM->OButton("TR.Cargar Archivo", "jsCargarArchivo()", $xFRM->ic()->EXPORTAR);
+//$xFRM->OButton("TR.Guardar", "jsSetOficial()", $xFRM->ic()->GUARDAR);
 
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
@@ -83,16 +85,26 @@ $jxc ->drawJavaScript(false, true);
 var Frm 					= document.frmAsignarOficiales;
 var divLiteral				= STD_LITERAL_DIVISOR;
 var xGen					= new Gen();
-var fld						= "<?php echo $jsCampo; ?>";
+var mUseAmbos				= <?php echo (CREDITO_USAR_OFICIAL_SEGUIMIENTO == false) ? "true" : "false"; ?>;
 function jsSetOficial(){
+	xG.confirmar({msg:"CONFIRMA LA APLICACION MASIVA", callback: jsSetOficial2});
+}
+function jsSetOficial2(){
 	var vOficial		= $("#idoficial").val();
 	$('.coolCheck input:checked').each(function() {
 	    var mID			= $(this).attr('id');
 		var aID			= mID.split(divLiteral);
 		var cred		= entero(aID[1]);
-		xGen.save({tabla: "creditos_solicitud", id : cred, content : fld + "=" +  vOficial});		    
+		var strUp		= "";
+		//if(mUseAmbos == true){
+			strUp		= "oficial_seguimiento=" + vOficial + "&oficial_credito=" + vOficial; 
+		//} else {
+		//	strUp		= "oficial_seguimiento=" + vOficial;
+		//}
+		
+		xGen.save({tabla: "creditos_solicitud", id : cred, content : strUp, preguntar : false, nomsg:true});
+	    
 	});		
-  	//document.getElementById("PMsg").innerHTML = "";
 }
 function jsEchoMsg(msg){ xGen.alerta({msg:msg}); }
 function jsMarkAll(){

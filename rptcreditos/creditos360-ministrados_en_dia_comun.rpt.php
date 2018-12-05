@@ -57,8 +57,7 @@ $xRPT->addContent( $body );
 //$xT->setKeyField("creditos_solicitud");
 $xRPT->addContent( $xT->Show( $xHP->getTitle() ) );
 $xRPT->setTitle($xHP->getTitle());
-
-
+$xRPT->setSumarRegistros($xT->getRowCount());
 
 
 $xRPT->setResponse();

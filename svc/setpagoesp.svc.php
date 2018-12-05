@@ -34,12 +34,15 @@ $letra		= parametro("letra", false, MQL_INT);
 
 $rs				= array();
 $rs["error"]	= true;
-$rs["message"]	= "Sin datos validos";
+$rs["message"]	= "No ae agrega el pago";
 if($monto >= 0){
 	$_SESSION["$credito-$letra-" . OPERACION_CLAVE_PAGO_CAPITAL . ""] = $monto;
+	$xPagEsp	= new cCreditosPlanPagoEsp();
+	if($xPagEsp->add($credito, $letra, $monto) > 0){
+		$rs["error"]	= false;
+		$rs["message"]	= "Agregado anualidad a la letra $letra del Credito $credito por un monto $monto";
+	}
 	//setLog($_SESSION["$credito-$letra-" . OPERACION_CLAVE_ANUALIDAD_C . ""]);
-	$rs["error"]	= false;
-	$rs["message"]	= "Agregado anualidad a la letra $letra del Credito $credito por un monto $monto";
 }
 header('Content-type: application/json');
 echo json_encode($rs);

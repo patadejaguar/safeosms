@@ -94,11 +94,12 @@ include_once("../core/core.html.inc.php");
 	
 	$xCUtils		= new cUtileriasParaCreditos();
 	
+	$messages		.=  $xCUtils->setCreditosCuadrarPlanes();
+	
 	$messages		.= $xCUtils->setEstatusDeCreditos($idrecibo, $fechaop, false, true, false, true );
 	//setLog("pasa la memoria");
 	if ( date("Y-m-t", strtotime($fechaop) ) == date("Y-m-d", strtotime($fechaop) )  ){
 		$messages		.= $xCUtils->setGenerarMvtoFinDeMes( $xF->getDiaInicial(), $xF->getDiaFinal(), false, false, $idrecibo );
-		
 	}
 	//$xLog->setWrite($messages);
 	//$xLog->setClose();

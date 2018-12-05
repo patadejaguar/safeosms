@@ -56,7 +56,10 @@ $OnEdit			= false;
 $TasaComision	= 0;
 $EsOriginador	= false;
 $EsAdministrado	= false;
-$EsRecalc		= true; //Indica si se recalcula 
+$EsRecalc		= true; //Indica si se recalcula
+
+$arrOmitidos	= array();
+
 //$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
@@ -291,19 +294,32 @@ function jsaAsociar($idpersona, $idcontrol){
 	return $xP->getMessages();
 }
 
-function jsaActualizarCredito($credito, $montosolicitado){
+function jsaActualizarCredito($credito, $montosolicitado, $tasa_credito){
 	$montosolicitado	= setNoMenorQueCero($montosolicitado);
-	
+	$msg		= "";
 	if($montosolicitado > 0 AND $credito > DEFAULT_CREDITO){
 		$xCred		= new cCredito($credito);
-		$msg		= "";
+		
 		if($xCred->init() == true){
-			$msg	.= $xCred->setCambiarMontoSolicitado($montosolicitado, true);
-			$msg	.= $xCred->setCambiarMontoAutorizado($montosolicitado, true);
+			if($xCred->getEsSolicitado() == true){
+				$msg	.= $xCred->setCambiarMontoSolicitado($montosolicitado, true);
+			}
+			if($xCred->getEsAutorizado() == true){
+				$msg	.= $xCred->setCambiarMontoSolicitado($montosolicitado, true);
+				$msg	.= $xCred->setCambiarMontoAutorizado($montosolicitado, true);
+			}
+			$tasa_credito	=  $tasa_credito / 100;
+			$tasa_act		= $xCred->getTasaDeInteres();
+			if($tasa_act == $tasa_credito){
+				$msg		.= "WARN\tNo hay cambios de Tasa $tasa_act\r\n";
+			} else {
+				$msg		.=  $xCred->setCambiarTasaNormal($tasa_credito);
+			}
 		}
 		$msg		.= $xCred->getMessages();
-		return $msg;
+		
 	}
+	return $msg;
 }
 
 function jsaAgregarOmitidos($idomitir, $idquitar, $idid){
@@ -323,7 +339,7 @@ $jxc ->exportFunction('jsaGetCostos', array('entidadfederativa', 'precio_vehicul
 $jxc ->exportFunction('jsaGetResidual', array('precio_vehiculo','monto_aliado', 'plazo', 'residuales', 'monto_anticipo','idoriginacion_leasing','idolvidar', 'idnuevo', 'tipo_rac', 'administrado'));
 
 $jxc ->exportFunction('jsaAsociar', array('persona', 'idoriginacion_leasing'), "#idavisos");
-$jxc ->exportFunction('jsaActualizarCredito', array('credito', 'total_credito'), "#idavisos");
+$jxc ->exportFunction('jsaActualizarCredito', array('credito', 'total_credito', 'tasa_credito'), "#idavisos");
 
 $jxc ->exportFunction('jsaAgregarOmitidos', array('idomitidos1', 'idomitidos2', 'idid'), "#idavisos");
 
@@ -438,7 +454,7 @@ if($clave >0){
 	$xLeas	= new cCreditosLeasing($clave);
 	$xLeas->init();
 	
-	
+	$arrOmitidos	= $xLeas->getOmitidos();
 }
 
 
@@ -907,7 +923,11 @@ foreach ($rs as $rw){
 	if($OnEdit == false){
 		$xFRM->OHidden("idactive$idx", "false");
 	} else {
-		$txtsi	= $xChk->get("", "idactive$idx", true);
+		if(isset($arrOmitidos[$idx])){
+			$txtsi	= $xChk->get("", "idactive$idx", false);
+		} else {
+			$txtsi	= $xChk->get("", "idactive$idx", true);
+		}
 	}
 	$tt		.= "<th>" . $xEsc->descripcion_escenario()->v() . "$txtsi</th>";
 }
@@ -1491,7 +1511,7 @@ function jsCalcularEscenariosII(){
 		}
 		//Actualizar el Programa
 		if(mEsRecalc == true){
-
+			//xG.alerta({msg: $("#tasa_credito").val()});
 			if(entero(idcotiza)>0){
 				xG.save({form:'frmcotizacion',tabla:'originacion_leasing', id:idcotiza, nomsg: true});
 				jsaActualizarCredito();
@@ -1865,7 +1885,16 @@ function jsActualizaResiduales(vDesde){
 	return true;
 }
 function jsActualizaResidualesPost(){
-	
+	var idcotiza			= $("#idoriginacion_leasing").val();
+	//Actualizar el Programa
+	if(mEsRecalc == true){
+		if(entero(idcotiza)>0){
+			jsaActualizarCredito();
+		}
+		xG.spinEnd();
+	} else {
+		setLog("No Modificable");
+	}
 }
 function jsGetPlanCliente(){
 	var idcredito	= $("#credito").val();

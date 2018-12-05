@@ -32,9 +32,12 @@ $rs["message"]	= "Sin datos validos";
 
 
 $xP	= new cSystemPermissions($clave);
+$xP->setCuandoSeActualiza();
+
 if($xP->init() == true){
 
 	if($enable == true){
+		//setLog($perfil);
 		$xP->setAgregarPermiso($perfil);
 		$rs["error"]	= false;
 	} else {

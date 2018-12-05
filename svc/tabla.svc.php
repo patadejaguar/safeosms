@@ -40,6 +40,7 @@ if($tabla !== false ){
 				$obj->setData($obj->query()->initByID($clave));
 			}
 			$rs		= $obj->query()->getCampos();
+			//setLog($rs);
 			$cadena		= json_encode($rs);
 					
 		} else {

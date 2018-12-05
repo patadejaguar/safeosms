@@ -22,6 +22,13 @@ $form		= "";
 $subpath	= "";
 header("Content-Type: text/css");
 header("X-Content-Type-Options: nosniff");
+
+$xRuls		= new cReglaDeNegocio();
+$xUsr		= new cSystemUser();
+
+$useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
+$useAltUser		= $xUsr->getPuedeUsarPrintPOS();
+
 ?>
 body, html {
 	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
@@ -144,3 +151,14 @@ td.firm {
 	color: #000162;
 	text-align: right;
 }
+<?php 
+$useAlt			= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_USE_TICKETS);
+if($useAlt == true OR $useAltUser == true){
+echo "@media print {
+	.noprint { display: none; }
+	body { margin: 0 !important; }
+    @page { margin: 4pt !important; }
+}";
+}
+
+?>

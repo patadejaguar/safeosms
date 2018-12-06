@@ -2556,6 +2556,19 @@ class cCreditosProductosReglas {
 	private $mTiempo		= 0;
 	private $mTexto			= "";
 	private $mObservacion	= "";
+	private $mMontoMax		= 0;
+	private $mMontoMin		= 0;
+	private $mTasaMax		= 0;
+	private $mTasaMin		= 0;
+	private $mNumMax		= 0;
+	private $mNumMin		= 0;
+	
+	public $TIPO_MONTO		= "MONTO_CREDITO";
+	public $TIPO_MORA		= "TASA_MORATORIO";
+	public $TIPO_INTERES	= "TASA_INTERES";
+	public $TIPO_CUOTA		= "TIPO_CUOTA";
+	public $TIPO_PAGOS		= "TIPO_PAGOS";
+	public $TIPO_PERIODICIDAD = "PERIODICIDAD";
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -2582,8 +2595,14 @@ class cCreditosProductosReglas {
 		if(isset($data[$xT->getKey()])){
 			$xT->setData($data);
 			
-			$this->mClave	= $data[$xT->getKey()];
+			$this->mClave		= $data[$xT->getKey()];
 			
+			$this->mMontoMax	= $data[$xT->MONTO_MAX];
+			$this->mMontoMin	= $data[$xT->MONTO_MIN];
+			$this->mTasaMax		= $data[$xT->TASA_MAX];
+			$this->mTasaMin		= $data[$xT->TASA_MIN];
+			$this->mNumMax		= $data[$xT->NUM_MAXIMO];
+			$this->mNumMin		= $data[$xT->NUM_MINIMO];
 			
 			$this->mObj		= $xT;
 			$this->setIDCache($this->mClave);
@@ -2603,6 +2622,14 @@ class cCreditosProductosReglas {
 	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
+	function getRsByPdtoAndTipo($producto, $tipo){
+		$sql	= "SELECT `creditos_productos_reglas`.* FROM `creditos_productos_reglas` WHERE    ( `creditos_productos_reglas`.`sujeto` = '" . $tipo . "' ) AND ( `creditos_productos_reglas`.`producto_id` = $producto ) ";
+		$xQL	= new MQL();
+		$rs	= $xQL->getRecordset($sql);
+		return $rs;
+	}
+	function getMontoMax(){ return $this->mMontoMax; }
+	function getMontoMin(){ return $this->mMontoMin; }
 	
 }
 

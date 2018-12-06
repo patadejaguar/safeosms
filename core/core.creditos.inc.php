@@ -6852,7 +6852,20 @@ class cProductoDeCredito {
 		return $txt;
 	}	
 		
-	function getMontoMaximoOtorgable(){ return $this->mMontoMaximo; }
+	function getMontoMaximoOtorgable(){ 
+		$monto_maximo	= $this->mMontoMaximo;
+		$xRuls			= new cCreditosProductosReglas();
+		$rs				= $xRuls->getRsByPdtoAndTipo($this->mClaveDeConvenio, $xRuls->TIPO_MONTO);
+		
+		foreach($rs as $data){
+			if( $xRuls->init($data) ){
+				if($xRuls->getMontoMax()>$monto_maximo){
+					$monto_maximo	= $xRuls->getMontoMax();
+				}
+			}
+		}
+		return $monto_maximo;
+	}
 	function getMontoFondoDefuncion(){ return $this->mMontoFondoDef; }
 	function initOtrosCargos($fecha = false){
 		if($this->mInitOCargos == false OR $fecha !== false){

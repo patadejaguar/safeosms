@@ -49,6 +49,9 @@ if($tabla != null){
 					$valor	= $obj->valor()->v();
 					$xQL->setRawQuery("UPDATE `tesoreria_monedas` SET `quivalencia_en_moneda_local`=$valor WHERE `clave_de_moneda`='$moneda' ");
 					break;
+				case "creditos_garantias":
+					setAgregarEvento_($rs["message"], 20022, $obj->socio_garantia()->v(), $obj->solicitud_garantia()->v());
+					break;
 			}
 			
 		}

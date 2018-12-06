@@ -13,7 +13,7 @@ if(isset($safe_sesion_en_segundos)){
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
 $codename 								= "DevLeo"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201808";
+$version 								= "201811";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);

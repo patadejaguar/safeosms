@@ -339,6 +339,27 @@ function check_calculated_risk()
 //  }
 }
 
+function check_residual_risk()
+{
+//  elements = document.getElementsByClassName("residual_risk");
+//  checkbox = document.getElementById("checkbox_residual_risk");
+
+//  if(checkbox.checked)
+//  {
+//    for(i=0; i<elements.length; i++)
+//    {
+//      elements[i].style.display = "";
+//    }
+//  }
+//  else
+//  {
+//    for(i=0; i<elements.length; i++)
+//    {
+//      elements[i].style.display = "none";
+//    }
+//  }
+}
+
 function check_submission_date()
 {
 //  elements = document.getElementsByClassName("submission_date");
@@ -734,6 +755,9 @@ function check_mitigation_team()
 }
 $(document).ready(function(){
     if($(".risk-datatable").length){
+        var sortColumns = [["calculated_risk", "desc"], ["id", "asc"], ["subject", "asc"], ["residual_risk", "desc"]];
+        var defaultSortColumnIndex = 0;
+        var defaultSortColumn = sortColumns[$("#sort").val()];
         var columnOptions = [];
         var columnNames = [];
         $(".risk-datatable tr.main th").each(function(index){
@@ -741,11 +765,16 @@ $(document).ready(function(){
             if(columnNames.indexOf(name) > -1){
                 return;
             }
-            columnNames.push(name)
+            columnNames.push(name);
+//            if($("form[name='get_risks_by'] input.hidden-checkbox[name='"+ name +"']").length > 0 &&  !$("form[name='get_risks_by'] input.hidden-checkbox[name='"+ name +"']").is(':checked')){
             if(!$("form[name='get_risks_by'] input.hidden-checkbox[name='"+ name +"']").is(':checked')){
                 columnOptions.push(index);
             }
+            if(name == defaultSortColumn[0]) {
+                defaultSortColumnIndex = index;
+            }
         })
+        
         
         var riskDataTables = [];
         $(".risk-datatable").each(function(index){
@@ -756,19 +785,22 @@ $(document).ready(function(){
                 bLengthChange: false,
                 processing: true,
                 serverSide: true,
-                bSort: false,
+                bSort: true,
+//                ordering: false,
                 pagingType: "full_numbers",
                 dom : "flrti<'#view-all-"+ index +".view-all'>p",
                 ajax: {
-                    url: '/api/reports/dynamic',
+                    url: BASE_URL + '/api/reports/dynamic',
                     type: "post",
                     data: function(d){
-                        d.status = $("#status").val();
-                        d.group = $("#group").val();
-                        d.sort = $("#sort").val();
-                        d.group_value = $this.data('group');
+                        d.status            = $("#status").val();
+                        d.group             = $("#group").val();
+                        d.sort              = $("#sort").val();
+                        d.affected_asset    = $("#affected_asset").val();
+                        d.group_value       = $this.data('group');
                     }
                 },
+                order: [[defaultSortColumnIndex, defaultSortColumn[1]]],
                 columnDefs : [
                     {
                         "targets" : columnOptions,
@@ -777,7 +809,15 @@ $(document).ready(function(){
                     {
                         "targets" : 15,
                         "className" : "risk-cell",
-                    }
+                    },
+                    {
+                        "targets" : 16,
+                        "className" : "risk-cell",
+                    },
+                    {
+                        "targets" : [21, 22, 23, 26, 27, 28, 29, 30],
+                        "orderable" : false,
+                    },
                 ]
             });
             riskDatatable.on('draw', function(e, settings){
@@ -795,6 +835,7 @@ $(document).ready(function(){
         $('.view-all').html("All");
         
         $("form[name='get_risks_by'] .hidden-checkbox").click(function(e){
+            
             for(var key in riskDataTables){
                 var column = riskDataTables[key].column("th[data-name='"+ $(this).attr('name') +"']");
                 if($(this).is(':checked')){
@@ -803,6 +844,28 @@ $(document).ready(function(){
                     column.visible(false);
                 }
             }
+            
+            var checkBoxes = $("form[name='get_risks_by'] .hidden-checkbox");
+            var viewColumns = [];
+            checkBoxes.each(function(){
+                if($(this).is(':checked'))
+                    viewColumns.push($(this).attr('name'));
+            })
+            $.ajax({
+                type: "POST",
+                url: BASE_URL + "/api/set_custom_display",
+                data: {
+                    columns: viewColumns,
+                },
+                success: function(data){
+                    console.log('success')
+                },
+                error: function(xhr,status,error){
+                    if(!retryCSRF(xhr, this))
+                    {
+                    }
+                }
+            });
         })
         
         $(".expand-all").click(function(e){

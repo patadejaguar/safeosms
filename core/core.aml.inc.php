@@ -1569,6 +1569,7 @@ class cAMLAlertas {
 	private $mFechaEnvio	= false;
 	private $mNotasChecking	= "";
 	private $mNotasSistema	= "";
+	private $mNotasReporte	= "";
 
 	private $mInstrumentoF	= 0;//Instrumento Financiero
 	private $mTipoDocumento	= 0;

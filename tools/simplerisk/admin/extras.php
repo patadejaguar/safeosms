@@ -14,15 +14,7 @@
         $escaper = new Zend\Escaper\Escaper('utf-8');
 
         // Add various security headers
-        header("X-Frame-Options: DENY");
-        header("X-XSS-Protection: 1; mode=block");
-
-        // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-        if (CSP_ENABLED == "true")
-        {
-                // Add the Content-Security-Policy header
-		header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-        }
+	add_security_headers();
 
         // Session handler is database
         if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -50,6 +42,7 @@
         // Check if access is authorized
         if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
         {
+		set_unauthenticated_redirect();
                 header("Location: ../index.php");
                 exit(0);
         }
@@ -111,15 +104,44 @@
                 </thead>
                 <tbody>
                 <tr>
+                  <td width="155px"><b>API</b></td>
+                  <td>Enables an API for integration of SimpleRisk with other tools and automation tasks.</td>
+                  <td width="60px"><?php echo (api_extra() ? '<a href="api.php">Yes</a>' : '<a href="api.php">No</a>'); ?></td>
+                </tr>
+		<!--
+                <tr>
+                  <td width="155px"><b>ComplianceForge DSP</b></td>
+                  <td>Adds the controls from the <a href="https://www.complianceforge.com/digital-security-program-dsp/" target="_blank">ComplianceForge Digital Security Program (DSP)</a> into SimpleRisk for use with our Governance functionality.</td>
+                  <td width="60px"><?php echo (complianceforge_extra() ? '<a href="complianceforge.php">Yes</a>' : '<a href="complianceforge.php">No</a>'); ?></td>
+                </tr>
+		-->
+                <tr>
+                  <td width="155px"><b>ComplianceForge SCF</b></td>
+                  <td>Adds the controls from the <a href="https://www.securecontrolsframework.com/" target="_blank">ComplianceForge Secure Controls Framework (SCF)</a> into SimpleRisk for use with our Governance functionality.</td>
+                  <td width="60px"><?php echo (complianceforge_scf_extra() ? '<a href="complianceforge_scf.php">Yes</a>' : '<a href="complianceforge_scf.php">No</a>'); ?></td>
+                </tr>
+                <tr>
                   <td width="155px"><b>Custom Authentication</b></td>
-                  <td>Currently provides support for Active Directory Authentication and Duo Security multi-factor authentication, but will have other custom authentication types in the future.</td>
+                  <td>Provides support for Active Directory Authentication, SAML/Single Sign-On and Duo Security multi-factor authentication.</td>
                   <td width="60px"><?php echo (custom_authentication_extra() ? '<a href="authentication.php">Yes</a>' : '<a href="authentication.php">No</a>'); ?></td>
+                </tr>
+                <tr>
+                  <td width="155px"><b>Customization</b></td>
+                  <td>Enables the ability to add and remove different types of fields and dynamically create page templates.</td>
+                  <td width="60px"><?php echo (customization_extra() ? '<a href="customization.php">Yes</a>' : '<a href="customization.php">No</a>'); ?></td>
                 </tr>
                 <tr>
                   <td width="155px"><b>Encrypted Database</b></td>
                   <td>Encryption of sensitive text fields in the database.</td>
                   <td width="60px"><?php echo (encryption_extra() ? '<a href="encryption.php">Yes</a>' : '<a href="encryption.php">No</a>'); ?></td>
                 </tr>
+		<!--
+                <tr>
+                  <td width="155px"><b>Governance</b></td>
+                  <td>TBD</td>
+                  <td width="60px"><?php echo (governance_extra() ? '<a href="governance.php">Yes</a>' : '<a href="governance.php">No</a>'); ?></td>
+                </tr>
+		-->
                 <tr>
                   <td width="155px"><b>Import / Export</b></td>
                   <td>Enables the import and export of CSV files containing risk information.</td>
@@ -131,19 +153,14 @@
                   <td width="60px"><?php echo (notification_extra() ? '<a href="notification.php">Yes</a>' : '<a href="notification.php">No</a>'); ?></td>
                 </tr>
                 <tr>
-                  <td width="155px"><b>Team-Based Separation</b></td>
-                  <td>Restriction of risk viewing to team members the risk is categorized as.</td>
-                  <td width="60px"><?php echo (team_separation_extra() ? '<a href="separation.php">Yes</a>' : '<a href="separation.php">No</a>'); ?></td>
-                </tr>
-                <tr>
-                  <td width="155px"><b>Assessments</b></td>
+                  <td width="155px"><b>Risk Assessments</b></td>
                   <td>Enables ability to create custom risk assessment forms and send them to users.</td>
                   <td width="60px"><?php echo (assessments_extra() ? '<a href="assessments.php">Yes</a>' : '<a href="assessments.php">No</a>'); ?></td>
                 </tr>
                 <tr>
-                  <td width="155px"><b>API</b></td>
-                  <td>Enables an API for integration of SimpleRisk with other tools and automation tasks.</td>
-                  <td width="60px"><?php echo (api_extra() ? '<a href="api.php">Yes</a>' : '<a href="api.php">No</a>'); ?></td>
+                  <td width="155px"><b>Team-Based Separation</b></td>
+                  <td>Restriction of risk viewing to team members the risk is categorized as.</td>
+                  <td width="60px"><?php echo (team_separation_extra() ? '<a href="separation.php">Yes</a>' : '<a href="separation.php">No</a>'); ?></td>
                 </tr>
                 <tbody>
                 </table>

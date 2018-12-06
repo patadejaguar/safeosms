@@ -6,6 +6,7 @@
 
 // Include required configuration files
 require_once(realpath(__DIR__ . '/alerts.php'));
+require_once(realpath(__DIR__ . '/functions.php'));
 
 // Include Zend Escaper for HTML Output Encoding
 require_once(realpath(__DIR__ . '/Component_ZendEscaper/Escaper.php'));
@@ -17,7 +18,7 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 function simplerisk_service_call($data)
 {
         // Call the URL
-        $url = "https://services.simplerisk.it/index.php";
+        $url = "https://services.simplerisk.com/index.php";
         $options = array(
                 'http' => array(
                 'header' => "Content-type: application/x-www-form-urlencoded\r\r",
@@ -87,33 +88,56 @@ function download_extra($name)
 
 	$result = simplerisk_service_call($data);
 	
-	// Write the extra to a file in the temporary directory
-	$extra_file = sys_get_temp_dir() . '/' . $name . '.tgz';
-	$result = file_put_contents($extra_file, $result);
+	// If the service returned an unmatched IP address
+	if ($result[0] == "<result>Unmatched IP Address</result>")
+	{
+                // Display an alert
+                set_alert(true, "bad", "Your SimpleRisk instance was registered with a different IP address. Please contact support@simplerisk.com for assistance.");
 
-	// Decompress from gz
-        $p = new PharData($extra_file);
-        $p->decompress();
+                // Return a failure
+                return 0;
+	}
+	// Otherwise
+	else
+	{
+		// Write the extra to a file in the temporary directory
+		$extra_file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
+		$result = file_put_contents($extra_file, $result);
 
-        // Extract the tar to the tmp directory
-        $phar = new PharData(sys_get_temp_dir() . '/' . $name . ".tar");
-        $phar->extractTo(sys_get_temp_dir(), null, true);
+        	// Decompress the extra file
+        	$buffer_size = 4096;
+        	$out_file_name = str_replace('.gz', '', $extra_file);
+        	$file = gzopen($extra_file, 'rb');
+        	$out_file = fopen($out_file_name, 'wb');
+        	while (!gzeof($file))
+        	{
+        	        fwrite($out_file, gzread($file, $buffer_size));
+        	}
+        	fclose($out_file);
+        	gzclose($file);
 
-	// Copy to the extras directory
-	$source = sys_get_temp_dir() . '/' . $name;
-	$destination = $extras_dir . '/' . $name;
-	recurse_copy($source, $destination);
+        	// Extract the tar to the tmp directory
+        	$phar = new PharData(sys_get_temp_dir() . '/' . $name . ".tar");
+        	$phar->extractTo(sys_get_temp_dir(), null, true);
 
-	// Clean up files
-	unlink(sys_get_temp_dir() . '/' . $name . '.tgz');
-        unlink(sys_get_temp_dir() . '/' . $name . ".tar");
-        delete_dir($source);
+		// Copy to the extras directory
+		$source = sys_get_temp_dir() . '/' . $name;
+		$destination = $extras_dir . '/' . $name;
+		recurse_copy($source, $destination);
 
-	// Display an alert
-	set_alert(true, "good", "Extra installed successfully.");
+		// Clean up files
+		$file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
+		delete_file($file);
+		$file = sys_get_temp_dir() . '/' . $name . '.tar';
+		delete_file($file);
+        	delete_dir($source);
 
-	// Return a success
-	return 1;
+		// Display an alert
+		set_alert(true, "good", "Extra installed successfully.");
+
+		// Return a success
+		return 1;
+	}
 }
 
 /**************************
@@ -155,20 +179,6 @@ function recurse_copy($src, $dst) {
         }
         // Return a success or failure
         return $result;
-}
-
-/************************
- * FUNCTION: DELETE DIR *
- ************************/
-function delete_dir($dir)
-{
-        $files = array_diff(scandir($dir), array('.','..'));
-
-        foreach ($files as $file) {
-                (is_dir("$dir/$file")) ? delete_dir("$dir/$file") : unlink("$dir/$file");
-        }
-
-        return rmdir($dir);
 }
 
 /***************************

@@ -14,15 +14,7 @@ require_once(realpath(__DIR__ . '/includes/Component_ZendEscaper/Escaper.php'));
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-	// Add the Content-Security-Policy header
-	header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -79,8 +71,11 @@ if (isset($_POST['password_reset']))
 	}
 	else
 	{
-		// Display an alert
-		set_alert(true, "bad", "There was a problem with your password reset request.  Please try again.");
+        if (isset($_SESSION['alert']) && $_SESSION['alert'] == true){
+        }else{
+            // Display an alert
+            set_alert(true, "bad", "There was a problem with your password reset request.  Please try again.");
+        }
 	}
 }
 
@@ -158,12 +153,12 @@ if (isset($_POST['password_reset']))
 						    echo "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n";
 						    echo "<tr><td colspan=\"2\"><label class=\"login--label\">" . $escaper->escapeHtml($lang['PasswordReset']) . "</label></td></tr>\n";
                             if(isset($username)){
-                                echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['Username']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" name=\"user\" value=\"{$username}\" id=\"user\" type=\"text\" /></td></tr>\n";
+                                echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['Username']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" name=\"user\" value=\"" . $escaper->escapeHtml($username) . "\" id=\"user\" type=\"text\" /></td></tr>\n";
                             }else{
                                 echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['Username']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" name=\"user\" id=\"user\" type=\"text\" /></td></tr>\n";
                             }
                             if(isset($token)){
-                                echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['ResetToken']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" autocomplete=\"off\" value=\"{$token}\" name=\"token\" id=\"token\" type=\"text\" maxlength=\"20\" /></td></tr>\n";
+                                echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['ResetToken']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" autocomplete=\"off\" value=\"" . $escaper->escapeHtml($token) . "\" name=\"token\" id=\"token\" type=\"text\" maxlength=\"20\" /></td></tr>\n";
                             }else{
                                 echo "<tr><td width=\"20%\">" . $escaper->escapeHtml($lang['ResetToken']) . ":&nbsp;</td><td width=\"80%\"><input class=\"input-medium\" autocomplete=\"off\" name=\"token\" id=\"token\" type=\"text\" maxlength=\"20\" /></td></tr>\n";
                             }

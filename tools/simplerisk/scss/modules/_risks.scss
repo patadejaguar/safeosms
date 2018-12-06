@@ -2,6 +2,7 @@
   padding-top: 5px;
   position: relative;
   z-index: 1030;
+  margin-bottom: 20px;
 
   .span9{
     padding: 0px;
@@ -11,9 +12,11 @@
 }
 
 .tab-data{
-  padding-top: 51px;
+/*  padding-top: 51px;*/
+  &.plan-projects{
+      padding-top: 0px;
+  }
 }
-
 
 .tabs div.tab.add {
     margin-left: 0px;
@@ -153,10 +156,11 @@
     width: 120px;
     height: 120px;
     text-align: center;
+    float: left;
 
     span{
       display: block;
-      font-size: 50px;
+      font-size: 30px;
       font-weight: 400;
       line-height: auto;
     }
@@ -184,6 +188,7 @@
 
   .score{
     margin-bottom: 20px;
+    margin-right: 10px;
   }
 
   .row-fluid .span2 {
@@ -254,16 +259,16 @@
 
 
 .score--wrapper{
-  width: 130px;
+  width: 260px;
   float: left;
 /*  margin-bottom: 25px; */
 }
 
 .details--wrapper{
   float: left;
-  padding-right: 130px;
+  padding-right: 260px;
   width: 100%;
-  margin-right: -130px;
+  margin-right: -260px;
 }
 
 #risk-submit-form{
@@ -345,16 +350,32 @@ div.doc-link {
       margin-left: 10px;
     }
 }
-#risk-table-container{
-    padding-bottom: 50px;
-    .risk-datatable{
-        &.table-bordered{
-            margin-bottom: 0px;
-        }
-         thead th{
+
+.risk-datatable{
+    &.table-bordered{
+        margin-bottom: 0px;
+    }
+    &.dataTable{
+        thead th, table.dataTable thead td{
             border-bottom: 0px;
         }
+        td.reorder{
+            text-align: left;
+        }
     }
+    &.dataTable.no-footer{
+        border-bottom: 1px solid #dddddd;
+    }
+    &.table.dataTable thead{
+        .sorting_asc, .sorting_desc{
+/*            background-image: none;*/
+        }
+    } 
+    
+}
+
+#risk-table-container{
+    padding-bottom: 50px;
     .dataTables_wrapper.no-footer .dataTables_scrollBody{
         border-bottom: 0px;
     }
@@ -363,3 +384,77 @@ div.doc-link {
 #export-dynamic-risk-report{
     cursor: pointer;
 }
+
+.table-scroll{
+    overflow-x: auto;
+    > table.table{
+        margin-bottom: 0px;
+    }
+}
+
+.modal{
+    z-index: 9999;
+}
+
+#risks-open-by-team-container{
+    margin-top: 14px;
+}
+
+.select-mitigating-controls{
+    margin-top: 10px;
+}
+.mitigation-controls-table-container td.sorting_1{
+    padding: 0px;
+}
+
+/*------------------------------------------------------------
+## New additions to expand text-areas at pc
+------------------------------------------------------------*/
+@media screen and (min-width:1025px) {
+  #assets, #assessment, #notes, #current_solution, #security_requirements, #security_recommendations, #active-textfield, #comments, .custom-longtext{
+      width:100%;
+/*      max-width:300px;*/
+      transition: all 1s ease;
+  }
+
+  #assets:not([disabled]):focus, #assessment:not([disabled]):focus, #notes:not([disabled]):focus, 
+  #current_solution:not([disabled]):focus, #security_requirements:not([disabled]):focus, #security_recommendations:not([disabled]):focus, #active-textfield:not([disabled]):focus,
+  #assets:not([disabled]):active, #assessment:not([disabled]):active, #notes:not([disabled]):active, #comments:not([disabled]):focus,
+  #current_solution:not([disabled]):active, #security_requirements:not([disabled]):active, #security_recommendations:not([disabled]):active, #active-textfield:not([disabled]):active, #comments:not([disabled]):active{
+      &.enable-popup{
+        position: fixed;
+        max-width:1600px;
+        top: 25%;
+        left: 25%;
+        width: 50% !important;
+        height: 50%;
+        margin:auto;
+        z-index: 2001;
+        overflow: auto;
+      }
+  }
+
+  .affected-assets-title{
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    max-width:2600px;
+    width: 100% !important;
+    height: 100% !important;
+    margin:auto;
+    z-index: 2000;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.8);
+    color: rgba(0, 0, 0, 0.8);
+    padding-top:10%;
+    text-align: center !important;
+    font-size: 42px;
+    color: #fff;
+  }
+  
+  .ui-widget-content{
+      z-index: 9999;
+  }
+}
+

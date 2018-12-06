@@ -8,21 +8,14 @@ require_once(realpath(__DIR__ . '/../includes/functions.php'));
 require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
 require_once(realpath(__DIR__ . '/../includes/display.php'));
 require_once(realpath(__DIR__ . '/../includes/alerts.php'));
+require_once(realpath(__DIR__ . '/../includes/permissions.php'));
 
 // Include Zend Escaper for HTML Output Encoding
 require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -42,8 +35,11 @@ if (!isset($_SESSION))
 // Include the language file
 require_once(language_file());
 
+// Load CSRF Magic
+require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
+
 function csrf_startup() {
-    csrf_conf('rewrite-js', "realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.js')");
+    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
 }
 
 // Check for session timeout or renegotiation
@@ -52,9 +48,13 @@ session_check();
 // Check if access is authorized
 if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 {
+  set_unauthenticated_redirect();
   header("Location: ../index.php");
   exit(0);
 }
+
+// Enforce that the user has access to risk management
+enforce_permission_riskmanagement();
 
 // If the risks were saved to projects
 if (isset($_POST['update_projects']))
@@ -370,10 +370,7 @@ if (isset($_POST['delete_project']))
               </div> <!-- status-tabs -->
 
               <div id="active-projects" class="sortable">
-
-
                     <?php get_project_tabs(1) ?>
-
               </div>
               <div id="on-hold-projects" class="sortable">
                     <?php get_project_tabs(2) ?>
@@ -434,6 +431,7 @@ if (isset($_POST['delete_project']))
 
 </script>
 
+<?php display_set_default_date_format_script(); ?>
 </body>
 
 </html>

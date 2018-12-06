@@ -4,6 +4,7 @@ require_once(realpath(__DIR__ . '/../../includes/functions.php'));
 require_once(realpath(__DIR__ . '/../../includes/authenticate.php'));
 require_once(realpath(__DIR__ . '/../../includes/display.php'));
 require_once(realpath(__DIR__ . '/../../includes/alerts.php'));
+require_once(realpath(__DIR__ . '/../../includes/permissions.php'));
 
 // Include Zend Escaper for HTML Output Encoding
 require_once(realpath(__DIR__ . '/../../includes/Component_ZendEscaper/Escaper.php'));
@@ -14,7 +15,7 @@ header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
 
 // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
+if (csp_enabled())
 {
   // Add the Content-Security-Policy header
   header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
@@ -50,7 +51,19 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
   header("Location: ../../index.php");
   exit(0);
 }
+
+// Enforce that the user has access to risk management
+enforce_permission_riskmanagement();
+
 ?>
+
+<script>
+	Highcharts.setOptions({
+		global: {
+			timezone: '<?php echo get_setting("default_timezone"); ?>'
+		}
+	});
+</script>
 
 <div class="row-fluid details risk-test">
     <a href="#" class='show-score-overtime' > <i class="fa fa-caret-right"></i>&nbsp; <?php echo $escaper->escapeHtml($lang['ShowRiskScoreOverTime']); ?></a>
@@ -59,11 +72,12 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 
 <div class="row-fluid score-overtime-container" style="display: none;">
     <div class="well">
-        <div class="socre-overtime-chart"></div>
+        <div class="score-overtime-chart"></div>
     </div>
 </div>
 
 <input type="hidden" id="_RiskScoringHistory" value="<?php echo $lang['RiskScoringHistory']; ?>">
-<input type="hidden" id="_RiskScore" value="<?php echo $lang['RiskScore']; ?>">
+<input type="hidden" id="_RiskScore" value="<?php echo $lang['InherentRisk']; ?>">
+<input type="hidden" id="_ResidualRiskScore" value="<?php echo $lang['ResidualRisk']; ?>">
 <input type="hidden" id="_DateAndTime" value="<?php echo $lang['DateAndTime']; ?>">
 

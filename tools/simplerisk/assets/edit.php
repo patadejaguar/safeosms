@@ -14,20 +14,12 @@ require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
 {
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
 }
 
 // Start the session
@@ -35,8 +27,8 @@ session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
 
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
@@ -50,15 +42,16 @@ session_check();
 // Check if access is authorized
 if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 {
-  header("Location: ../index.php");
-  exit(0);
+    set_unauthenticated_redirect();
+    header("Location: ../index.php");
+    exit(0);
 }
 
 // Check if the user has access to manage assets
 if (!isset($_SESSION["asset"]) || $_SESSION["asset"] != 1)
 {
-  header("Location: ../index.php");
-  exit(0);
+    header("Location: ../index.php");
+    exit(0);
 }
 else $manage_assets = true;
 
@@ -90,7 +83,6 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
 }
 
 ?>
-
 <!doctype html>
 <html>
 
@@ -130,13 +122,12 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
         <div class="row-fluid">
           <div class="span12">
             <div class="hero-unit">
-              <h4><?php echo $escaper->escapeHtml($lang['EditAssets']); ?></h4>
               <form name="edit_asset" method="post" action="">
-                <button type="submit" name="update_asset" class="btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button>
-
-                <?php display_edit_asset_table(); ?>
-                
-                <button type="submit" name="update_asset" class="btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button>
+                  <h4><?php echo $escaper->escapeHtml($lang['EditAssets']); ?><button type="submit" name="update_asset" class="pull-right btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button></h4><br>
+                  <?php display_edit_asset_table(); ?>
+                  <div class="row-fluid">
+                      <button type="submit" name="update_asset" class="pull-right btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button>
+                  </div>
               </form>
             </div>
           </div>

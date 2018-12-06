@@ -8,21 +8,14 @@ require_once(realpath(__DIR__ . '/../includes/functions.php'));
 require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
 require_once(realpath(__DIR__ . '/../includes/display.php'));
 require_once(realpath(__DIR__ . '/../includes/alerts.php'));
+require_once(realpath(__DIR__ . '/../includes/permissions.php'));
 
 // Include Zend Escaper for HTML Output Encoding
 require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -50,9 +43,13 @@ session_check();
 // Check if access is authorized
 if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 {
+  set_unauthenticated_redirect();
   header("Location: ../index.php");
   exit(0);
 }
+
+// Enforce that the user has access to risk management
+enforce_permission_riskmanagement();
 
 // Check if the user has access to plan mitigations
 if (!isset($_SESSION["plan_mitigations"]) || $_SESSION["plan_mitigations"] != 1)
@@ -60,7 +57,7 @@ if (!isset($_SESSION["plan_mitigations"]) || $_SESSION["plan_mitigations"] != 1)
   $plan_mitigations = false;
 
   // Display an alert
-  set_alert(true, "bad", "You do not have permission to plan mitigations.  Any mitigations that you attempt to submit will not be recorded.  Please contact an Administrator if you feel that you have reached this message in error.");
+  set_alert(true, "bad", $lang['MitigationPermissionMessage']);
 }
 else $plan_mitigations = true;
 
@@ -170,7 +167,7 @@ if (isset($_GET['id']) || isset($_POST['id']))
   // Get the details of the risk
   $risk = get_risk_by_id($id);
 
-  // If the risk was found use the values for the risk
+// If the risk was found use the values for the risk
   if (count($risk) != 0)
   {
     $submitted_by = $risk[0]['submitted_by'];
@@ -183,20 +180,23 @@ if (isset($_GET['id']) || isset($_POST['id']))
     $source = $risk[0]['source'];
     $category = $risk[0]['category'];
     $team = $risk[0]['team'];
+    $additional_stakeholders = $risk[0]['additional_stakeholders'];
     $technology = $risk[0]['technology'];
     $owner = $risk[0]['owner'];
     $manager = $risk[0]['manager'];
     $assessment = $risk[0]['assessment'];
     $notes = $risk[0]['notes'];
-    $sub_date = $risk[0]['submission_date'];
-    $submission_date = date( "m/d/Y", strtotime( $sub_date ) );
+    $submission_date = $risk[0]['submission_date'];
+    //$submission_date = date( "m/d/Y", strtotime( $sub_date ) );
     $mitigation_id = $risk[0]['mitigation_id'];
     $mgmt_review = $risk[0]['mgmt_review'];
     $calculated_risk = $risk[0]['calculated_risk'];
-    $risk_level = get_risk_level_name($calculated_risk);
+    $residual_risk = $risk[0]['residual_risk'];
     $next_review = $risk[0]['next_review'];
     $color = get_risk_color($calculated_risk);
-
+    $residual_color = get_risk_color($residual_risk);
+    $risk_level = get_risk_level_name($calculated_risk);
+    $residual_risk_level = get_risk_level_name($residual_risk);
     $scoring_method = $risk[0]['scoring_method'];
     $CLASSIC_likelihood = $risk[0]['CLASSIC_likelihood'];
     $CLASSIC_impact = $risk[0]['CLASSIC_impact'];
@@ -240,8 +240,16 @@ if (isset($_GET['id']) || isset($_POST['id']))
   // If the risk was not found use null values
   else
   {
-    $submitted_by = "";
-    $status = "Risk ID Does Not Exist";
+     $submitted_by = "";
+    // If Risk ID exists.
+    if(check_risk_by_id($id)){
+        $status = $lang["RiskDisplayPermission"];
+    }
+    // If Risk ID does not exist.
+    else{
+        $status = $lang["RiskIdDoesNotExist"];
+    }
+
     $subject = "N/A";
     $reference_id = "N/A";
     $regulation = "";
@@ -250,22 +258,32 @@ if (isset($_GET['id']) || isset($_POST['id']))
     $source = "";
     $category = "";
     $team = "";
+    $additional_stakeholders = "";
     $technology = "";
     $owner = "";
     $manager = "";
     $assessment = "";
     $notes = "";
     $submission_date = "";
+
     $mitigation_id = "";
     $mgmt_review = "";
     $calculated_risk = "0.0";
 
+    $residual_risk = "";
+    $next_review = "";
+    $color = "";
+    $residual_color = "";
+
+    $risk_level = "";
+    $residual_risk_level = "";
     $scoring_method = "";
     $CLASSIC_likelihood = "";
     $CLASSIC_impact = "";
     $AccessVector = "";
     $AccessComplexity = "";
     $Authentication = "";
+
     $ConfImpact = "";
     $IntegImpact = "";
     $AvailImpact = "";
@@ -277,13 +295,35 @@ if (isset($_GET['id']) || isset($_POST['id']))
     $ConfidentialityRequirement = "";
     $IntegrityRequirement = "";
     $AvailabilityRequirement = "";
+    $DREADDamagePotential = "";
+    $DREADReproducibility = "";
+    $DREADExploitability = "";
+    $DREADAffectedUsers = "";
+    $DREADDiscoverability = "";
+    $OWASPSkillLevel = "";
+    $OWASPMotive = "";
+    $OWASPOpportunity = "";
+    $OWASPSize = "";
+    $OWASPEaseOfDiscovery = "";
+    $OWASPEaseOfExploit = "";
+    $OWASPAwareness = "";
+    $OWASPIntrusionDetection = "";
+    $OWASPLossOfConfidentiality = "";
+    $OWASPLossOfIntegrity = "";
+    $OWASPLossOfAvailability = "";
+    $OWASPLossOfAccountability = "";
+    $OWASPFinancialDamage = "";
+    $OWASPReputationDamage = "";
+    $OWASPNonCompliance = "";
+    $OWASPPrivacyViolation = "";
+    $custom = "";
   }
 
   if ($submission_date == "")
   {
     $submission_date = "N/A";
   }
-  else $submission_date = date("m/d/Y", strtotime($submission_date));
+  else $submission_date = date(get_default_date_format(), strtotime($submission_date));
 
   // Get the mitigation for the risk
   $mitigation = get_mitigation_by_id($id);
@@ -292,33 +332,37 @@ if (isset($_GET['id']) || isset($_POST['id']))
   if ($mitigation == false)
   {
     // Set the values to empty
-    $mitigation_date = "N/A";
-    $mitigation_date = "";
-    $planning_strategy = "";
-    $mitigation_effort = "";
-    $mitigation_cost = 1;
-    $mitigation_owner = $owner;
-    $mitigation_team = $team;
-    $current_solution = "";
-    $security_requirements = "";
-    $security_recommendations = "";
-    $planning_date = "";
+    $mitigation_date    = "N/A";
+    $mitigation_date    = "";
+    $planning_strategy  = "";
+    $mitigation_effort  = "";
+    $mitigation_cost    = 1;
+    $mitigation_owner   = $owner;
+    $mitigation_team    = $team;
+    $current_solution   = "";
+    $security_requirements      = "";
+    $security_recommendations   = "";
+    $planning_date      = "";
+    $mitigation_percent = 0;
+    $mitigation_controls = "";
   }
   // If a mitigation exists
   else
   {
     // Set the mitigation values
-    $mitigation_date = $mitigation[0]['submission_date'];
-    $mitigation_date = date(DATETIME, strtotime($mitigation_date));
-    $planning_strategy = $mitigation[0]['planning_strategy'];
-    $mitigation_effort = $mitigation[0]['mitigation_effort'];
-    $mitigation_cost = $mitigation[0]['mitigation_cost'];
-    $mitigation_owner = $mitigation[0]['mitigation_owner'];
-    $mitigation_team = $mitigation[0]['mitigation_team'];
-    $current_solution = $mitigation[0]['current_solution'];
-    $security_requirements = $mitigation[0]['security_requirements'];
-    $security_recommendations = $mitigation[0]['security_recommendations'];
-    $planning_date = ($mitigation[0]['planning_date'] && $mitigation[0]['planning_date'] != "0000-00-00") ? date('m/d/Y', strtotime($mitigation[0]['planning_date'])) : "";
+    $mitigation_date    = $mitigation[0]['submission_date'];
+    $mitigation_date    = date(get_default_datetime_format("g:i A T"), strtotime($mitigation_date));
+    $planning_strategy  = $mitigation[0]['planning_strategy'];
+    $mitigation_effort  = $mitigation[0]['mitigation_effort'];
+    $mitigation_cost    = $mitigation[0]['mitigation_cost'];
+    $mitigation_owner   = $mitigation[0]['mitigation_owner'];
+    $mitigation_team    = $mitigation[0]['mitigation_team'];
+    $current_solution   = $mitigation[0]['current_solution'];
+    $security_requirements      = $mitigation[0]['security_requirements'];
+    $security_recommendations   = $mitigation[0]['security_recommendations'];
+    $planning_date      = ($mitigation[0]['planning_date'] && $mitigation[0]['planning_date'] != "0000-00-00") ? date(get_default_date_format(), strtotime($mitigation[0]['planning_date'])) : "";
+    $mitigation_percent = (isset($mitigation[0]['mitigation_percent']) && $mitigation[0]['mitigation_percent'] >= 0 && $mitigation[0]['mitigation_percent'] <= 100) ? $mitigation[0]['mitigation_percent'] : 0;
+    $mitigation_controls = isset($mitigation[0]['mitigation_controls']) ? $mitigation[0]['mitigation_controls'] : "";
   }
 
   // Get the management reviews for the risk
@@ -330,6 +374,7 @@ if (isset($_GET['id']) || isset($_POST['id']))
     // Set the values to empty
     $review_date = "N/A";
     $review = "";
+    $review_id = 0;
     $next_step = "";
     $next_review = "";
     $reviewer = "";
@@ -340,17 +385,29 @@ if (isset($_GET['id']) || isset($_POST['id']))
   {
     // Set the management review values
     $review_date = $mgmt_reviews[0]['submission_date'];
-    $review_date = date(DATETIME, strtotime($review_date));
+    $review_date = date(get_default_datetime_format("g:i A T"), strtotime($review_date));
     $review = $mgmt_reviews[0]['review'];
+    $review_id = $mgmt_reviews[0]['id'];
     $next_step = $mgmt_reviews[0]['next_step'];
-    $next_review = next_review($risk_level, $id, $next_review, false);
+    
+    // If next_review_date_uses setting is Residual Risk.
+    if(get_setting('next_review_date_uses') == "ResidualRisk")
+    {
+        $next_review = next_review($residual_risk_level, $id-1000, $next_review, false);
+    }
+    // If next_review_date_uses setting is Inherent Risk.
+    else
+    {
+        $next_review = next_review($risk_level, $id-1000, $next_review, false);
+    }
+    
     $reviewer = $mgmt_reviews[0]['reviewer'];
     $comments = $mgmt_reviews[0]['comments'];
   }
 }
 
 // Check if a new risk mitigation was submitted and the user has permissions to plan mitigations
-if ((isset($_POST['submit'])) && $plan_mitigations)
+if ((isset($_POST['update_mitigation'])) && $plan_mitigations)
 {
   $status = "Mitigation Planned";
   $planning_strategy = (int)$_POST['planning_strategy'];
@@ -364,14 +421,15 @@ if ((isset($_POST['submit'])) && $plan_mitigations)
 
   $planning_date = $_POST['planning_date'];
 
-  if (!validate_date($planning_date, 'm/d/Y'))
+  if (!validate_date($planning_date, get_default_date_format()))
   {
     $planning_date = "0000-00-00";
   }
   // Otherwise, set the proper format for submitting to the database
   else
   {
-    $planning_date = date("Y-m-d", strtotime($planning_date));
+//    $planning_date = date("Y-m-d", strtotime($planning_date));
+    $planning_date = get_standard_date_from_default_format($planning_date);
   }
 
   // If a mitigation does not exist
@@ -537,121 +595,127 @@ if ((isset($_POST['submit'])) && $plan_mitigations)
         </div>
       </div>
     </div>
-  </body>
+  </div>
+  <input type="hidden" id="enable_popup" value="<?php echo get_setting('enable_popup'); ?>">
+</body>
   <script type="text/javascript">
   $( function() {
-    $("#comment-submit").attr('disabled','disabled');
-    $("#cancel_disable").attr('disabled','disabled');
-            $("#rest-btn").attr('disabled','disabled');
-            $("#comment-text").click(function(){
-                $("#comment-submit").removeAttr('disabled');
-                $("#rest-btn").removeAttr('disabled');
-            });
+        $("#comment-submit").attr('disabled','disabled');
+        $("#cancel_disable").attr('disabled','disabled');
+        $("#rest-btn").attr('disabled','disabled');
+        $("#comment-text").click(function(){
+            $("#comment-submit").removeAttr('disabled');
+            $("#rest-btn").removeAttr('disabled');
+        });
 
-            $("#comment-submit").click(function(){
-                var submitbutton = document.getElementById("comment-text").value;
-                 if(submitbutton == ''){
+        $("#comment-submit").click(function(){
+            var submitbutton = document.getElementById("comment-text").value;
+            if(submitbutton == ''){
                $("#comment-submit").attr('disabled','disabled');
                $("#rest-btn").attr('disabled','disabled');
-           }
-           });
-             $("#rest-btn").click(function(){
+            }
+        });
+        $("#rest-btn").click(function(){
 
-               $("#comment-submit").attr('disabled','disabled');
+            $("#comment-submit").attr('disabled','disabled');
+        });
+        $("#active-textfield").click(function(){
 
+            $("#cancel_disable").removeAttr('disabled');
+        });
 
-           });
-            $("#active-textfield").click(function(){
-                
-                $("#cancel_disable").removeAttr('disabled');
-            });
+        $("#active-button").click(function(){
+            $("#cancel_disable").removeAttr('disabled');
+        });
+        $("select").change(function changeOption(){
+            $("#cancel_disable").removeAttr('disabled');
+        });
 
-            $("#active-button").click(function(){
-                $("#cancel_disable").removeAttr('disabled');
-            });
-              $("select").change(function changeOption(){
-                   $("#cancel_disable").removeAttr('disabled');
-             });
+        $("#tabs" ).tabs({
+            activate:function(event,ui){
+                if(ui.newPanel.selector== "#tabs1"){
+                    $("#tab_details").addClass("tabList");
+                    $("#tab_mitigation").removeClass("tabList");
+                    $("#tab_review").removeClass("tabList");
+                } else if(ui.newPanel.selector== "#tabs2"){
+                    $("#tab_mitigation").addClass("tabList");
+                    $("#tab_review").removeClass("tabList");
+                    $("#tab_details").removeClass("tabList");
+                }else{
+                    $("#tab_review").addClass("tabList");
+                    $("#tab_mitigation").removeClass("tabList");
+                    $("#tab_details").removeClass("tabList");
+                }
 
-      $("#tabs" ).tabs({
-          activate:function(event,ui){
-              if(ui.newPanel.selector== "#tabs1"){
-                  $("#tab_details").addClass("tabList");
-                  $("#tab_mitigation").removeClass("tabList");
-                  $("#tab_review").removeClass("tabList");
-              } else if(ui.newPanel.selector== "#tabs2"){
-                  $("#tab_mitigation").addClass("tabList");
-                  $("#tab_review").removeClass("tabList");
-                  $("#tab_details").removeClass("tabList");
-              }else{
-                  $("#tab_review").addClass("tabList");
-                  $("#tab_mitigation").removeClass("tabList");
-                  $("#tab_details").removeClass("tabList");
-              }
+            }
+        });
+        $("#tabs").tabs({ active: 1});
 
-          }
-      });
-      $("#tabs").tabs({ active: 1});
+        $('.collapsible--toggle span').click(function(event) {
+            event.preventDefault();
+            $(this).parents('.collapsible--toggle').next('.collapsible').slideToggle('400');
+            $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
+        });
 
-      $('.collapsible--toggle span').click(function(event) {
-        event.preventDefault();
-        $(this).parents('.collapsible--toggle').next('.collapsible').slideToggle('400');
-        $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
-      });
-
-      $('.add-comments').click(function(event) {
-        event.preventDefault();
-        $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
-        $(this).toggleClass('rotate');
-        $('#comment').fadeToggle('100');
-        $(this).parent().find('span i').removeClass('fa-caret-right');
-        $(this).parent().find('span i').addClass('fa-caret-down');
-      });
+        $('.add-comments').click(function(event) {
+            event.preventDefault();
+            $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
+            $(this).toggleClass('rotate');
+            $('#comment').fadeToggle('100');
+            $(this).parent().find('span i').removeClass('fa-caret-right');
+            $(this).parent().find('span i').addClass('fa-caret-down');
+        });
 
         $('.collapsible').hide();
 
-      $(".add-comment-menu").click(function(event){
-        event.preventDefault();
-        $commentsContainer = $("#comment").parents('.well');
-        $commentsContainer.find(".collapsible--toggle").next('.collapsible').slideDown('400');
-        $commentsContainer.find(".add-comments").addClass('rotate');
-        $('#comment').show();
-        $commentsContainer.find(".add-comments").parent().find('span i').removeClass('fa-caret-right');
-        $commentsContainer.find(".add-comments").parent().find('span i').addClass('fa-caret-down');
-        $("#comment-text").focus();
-      })
-
-
+        $(".add-comment-menu").click(function(event){
+            event.preventDefault();
+            $commentsContainer = $("#comment").parents('.well');
+            $commentsContainer.find(".collapsible--toggle").next('.collapsible').slideDown('400');
+            $commentsContainer.find(".add-comments").addClass('rotate');
+            $('#comment').show();
+            $commentsContainer.find(".add-comments").parent().find('span i').removeClass('fa-caret-right');
+            $commentsContainer.find(".add-comments").parent().find('span i').addClass('fa-caret-down');
+            $("#comment-text").focus();
+        })
 
   });
   </script>
   <script>
-  /*
-  * Function to add the css class for textarea title and make it popup.
-  * Example usage:
-  * focus_add_css_class("#foo", "#bar");
-  */
-  function focus_add_css_class(id_of_text_head, text_area_id){
-      look_for = "textarea" + text_area_id;
-      console.log(look_for);
-      if( !$(look_for).length ){
-          text_area_id = text_area_id.replace('#','');
-          look_for = "textarea[name=" + text_area_id;
+    /*
+    * Function to add the css class for textarea title and make it popup.
+    * Example usage:
+    * focus_add_css_class("#foo", "#bar");
+    */
+    function focus_add_css_class(id_of_text_head, text_area_id){
+        // If enable_popup setting is false, disable popup
+        if($("#enable_popup").val() != 1){
+            $("textarea").removeClass("enable-popup");
+            return;
+        }else{
+            $("textarea").addClass("enable-popup");
+        }
+      
+        look_for = "textarea" + text_area_id;
+        if( !$(look_for).length ){
+            text_area_id = text_area_id.replace('#','');
+            look_for = "textarea[name=" + text_area_id;
+        }
+        $(look_for).focusin(function() {
+            $(id_of_text_head).addClass("affected-assets-title");
+            $('.ui-autocomplete').addClass("popup-ui-complete")
+        });
+        $(look_for).focusout(function() {
+            $(id_of_text_head).removeClass("affected-assets-title");
+            $('.ui-autocomplete').removeClass("popup-ui-complete")
+        });
       }
-      $(look_for).focusin(function() {
-          $(id_of_text_head).addClass("affected-assets-title");
-          $('.ui-autocomplete').addClass("popup-ui-complete")
+      $(document).ready(function() {
+          focus_add_css_class("#SecurityRequirementsTitle", "#security_requirements");
+          focus_add_css_class("#CurrentSolutionTitle", "#current_solution");
+          focus_add_css_class("#SecurityRecommendationsTitle", "#security_recommendations");
+          $( ".datepicker" ).datepicker();
       });
-      $(look_for).focusout(function() {
-          $(id_of_text_head).removeClass("affected-assets-title");
-          $('.ui-autocomplete').removeClass("popup-ui-complete")
-      });
-  }
-  $(document).ready(function() {
-      focus_add_css_class("#SecurityRequirementsTitle", "#security_requirements");
-      focus_add_css_class("#CurrentSolutionTitle", "#current_solution");
-      focus_add_css_class("#SecurityRecommendationsTitle", "#security_recommendations");
-      $( ".datepicker" ).datepicker();
-  });
-</script>
-  </html>
+  </script>
+  <?php display_set_default_date_format_script(); ?>
+</html>

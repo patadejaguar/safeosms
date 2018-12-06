@@ -14,15 +14,7 @@ require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -50,6 +42,7 @@ session_check();
 // Check if access is authorized
 if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 {
+  set_unauthenticated_redirect();
   header("Location: ../index.php");
   exit(0);
 }
@@ -72,7 +65,7 @@ if ((isset($_POST['search'])) && $manage_assets)
   if ($AvailableIPs === false)
   {
     // Display an alert
-    set_alert(true, "bad", "IP was not in a recognizable format.");
+    set_alert(true, "bad", $escaper->escapeHtml($lang['IPFormatNotRecognized']));
   }
 }
 

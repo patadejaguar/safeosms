@@ -14,15 +14,7 @@ require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Include the language file
 require_once(language_file());
@@ -119,7 +111,7 @@ else
   echo "<div class=\"navbar\">\n";
   echo "<div class=\"navbar-inner\">\n";
   echo "<div class=\"container\">\n";
-  echo "<a class=\"brand\" href=\"http://www.simplerisk.org/\">SimpleRisk</a>\n";
+  echo "<a class=\"brand\" href=\"http://www.simplerisk.org/\"><img src='../images/logo@2x.png' alt='SimpleRisk' /></a>\n";
   echo "</div>\n";
   echo "</div>\n";
   echo "</div>\n";
@@ -134,6 +126,7 @@ else
       </div>
     </div>
   </div>
+    <?php display_set_default_date_format_script(); ?>
 </body>
 
 </html>

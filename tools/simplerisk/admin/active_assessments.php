@@ -1,85 +1,85 @@
 <?php
-        /* This Source Code Form is subject to the terms of the Mozilla Public
-         * License, v. 2.0. If a copy of the MPL was not distributed with this
-         * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+    /* This Source Code Form is subject to the terms of the Mozilla Public
+     * License, v. 2.0. If a copy of the MPL was not distributed with this
+     * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-        // Include required functions file
-        require_once(realpath(__DIR__ . '/../includes/functions.php'));
-        require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
-	require_once(realpath(__DIR__ . '/../includes/display.php'));
-	require_once(realpath(__DIR__ . '/../includes/alerts.php'));
+    // Include required functions file
+    require_once(realpath(__DIR__ . '/../includes/functions.php'));
+    require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
+    require_once(realpath(__DIR__ . '/../includes/display.php'));
+    require_once(realpath(__DIR__ . '/../includes/alerts.php'));
 
-	// If the assessments extra is enabled
-	if (assessments_extra())
-	{
-		// Include the assessments extra
-		require_once(realpath(__DIR__ . '/../extras/assessments/index.php'));
-	}
+    // Include Zend Escaper for HTML Output Encoding
+    require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
+    $escaper = new Zend\Escaper\Escaper('utf-8');
 
-        // Include Zend Escaper for HTML Output Encoding
-        require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
-        $escaper = new Zend\Escaper\Escaper('utf-8');
+    // Add various security headers
+    add_security_headers();
 
-        // Add various security headers
-        header("X-Frame-Options: DENY");
-        header("X-XSS-Protection: 1; mode=block");
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
 
-        // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-        if (CSP_ENABLED == "true")
-        {
-                // Add the Content-Security-Policy header
-		header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-        }
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
 
-        // Session handler is database
-        if (USE_DATABASE_FOR_SESSIONS == "true")
-        {
-		session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-        }
+    if (!isset($_SESSION))
+    {
+        session_name('SimpleRisk');
+        session_start();
+    }
 
-        // Start the session
-	session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+    // Include the language file
+    require_once(language_file());
 
-        if (!isset($_SESSION))
-        {
-        	session_name('SimpleRisk');
-        	session_start();
-        }
+    require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
 
-        // Include the language file
-        require_once(language_file());
+    // Check for session timeout or renegotiation
+    session_check();
 
-        require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
+    // Check if access is authorized
+    if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
+    {
+        set_unauthenticated_redirect();
+        header("Location: ../index.php");
+        exit(0);
+    }
 
-        // Check for session timeout or renegotiation
-        session_check();
+    // Check if access is authorized
+    if (!isset($_SESSION["admin"]) || $_SESSION["admin"] != "1")
+    {
+        header("Location: ../index.php");
+        exit(0);
+    }
 
-        // Check if access is authorized
-        if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
-        {
-                header("Location: ../index.php");
-                exit(0);
-        }
+    // Check if assessment extra is enabled
+    if(assessments_extra())
+    {
+        // Include the assessments extra
+        require_once(realpath(__DIR__ . '/../extras/assessments/index.php'));
+    }
+    else
+    {
+        header("Location: ../index.php");
+        exit(0);
+    }
+    
+    // If we should delete an active assessment
+    if (isset($_POST['delete_active_assessments']))
+    {
+        // Get the selected assessments
+        $tokens = $_POST['tokens'];
 
-        // Check if access is authorized
-        if (!isset($_SESSION["admin"]) || $_SESSION["admin"] != "1")
-        {
-                header("Location: ../index.php");
-                exit(0);
-        }
+        // Delete the assessments
+        delete_active_questionnaires($tokens);
 
-	// If we should delete an active assessment
-	if (isset($_POST['delete_active_assessments']))
-	{
-		// Get the selected assessments
-                $assessments = $_POST['assessments'];
-
-                // Delete the assessments
-		delete_active_assessments($assessments);
-
-		// Display an alert
-		set_alert(true, "good", "The assessment(s) were deleted successfully.");
-	}
+        // Display an alert
+        set_alert(true, "good", "The assessment(s) were deleted successfully.");
+        
+        refresh();
+    }
 ?>
 
 <!doctype html>
@@ -116,7 +116,7 @@
     </script>
 
 <?php
-	view_top_menu("Configure");
+    view_top_menu("Configure");
 
         // Get any alert messages
         get_alert();

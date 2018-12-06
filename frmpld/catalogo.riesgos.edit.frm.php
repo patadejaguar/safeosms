@@ -60,7 +60,9 @@ $xSel3->setOptionSelect($xTabla->forma_de_reportar()->v(OUT_TXT));
 $xSel4	= $xSel->getListaDeFrecuenciaChequeoRiesgo("frecuencia_de_chequeo");
 $xSel4->setOptionSelect($xTabla->frecuencia_de_chequeo()->v(OUT_TXT));
 
-$xFRM->OMoneda("clave_de_control", $xTabla->clave_de_control()->v(), "TR.clave de control");
+//$xFRM->OMoneda("clave_de_control", $xTabla->clave_de_control()->v(), "TR.clave de control");
+$xFRM->ODisabled_13("clave_de_control", $xTabla->clave_de_control()->v(), "TR.clave de control");
+
 $xFRM->OText("descripcion", $xTabla->descripcion()->v(), "TR.descripcion");
 $xFRM->addHElem( $xSel1->get(true) );
 $xFRM->OMoneda("valor_ponderado", $xTabla->valor_ponderado()->v(), "TR.valor ponderado");
@@ -68,6 +70,7 @@ $xFRM->OMoneda("unidades_ponderadas", $xTabla->unidades_ponderadas()->v(), "TR.u
 $xFRM->addHElem( $xSel2->get(true) );
 $xFRM->addHElem( $xSel3->get(true) );
 $xFRM->addHElem( $xSel4->get(true) );
+
 $xFRM->OTextArea("fundamento_legal", $xTabla->fundamento_legal()->v(), "TR.fundamento legal");
 
 

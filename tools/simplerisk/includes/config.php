@@ -32,7 +32,7 @@ define('CSP_ENABLED', 'false');
 
 // Set the default language (Can be overridden per user)
 // Options: en, bp, es, ar, ca, cs, da, de, el, fi, fr, he, hi, hu, it, ja, ko, nl, no, pl, pt, ro, ru, sr, sv, tr, uk, vi, zh-CN, zh-TW
-define('LANG_DEFAULT', 'en');
+define('LANG_DEFAULT', 'es');
 
 // Set the default Timezone
 // List of supported timezones here: http://www.php.net/manual/en/timezones.php

@@ -8,21 +8,14 @@ require_once(realpath(__DIR__ . '/../includes/functions.php'));
 require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
 require_once(realpath(__DIR__ . '/../includes/display.php'));
 require_once(realpath(__DIR__ . '/../includes/alerts.php'));
+require_once(realpath(__DIR__ . '/../includes/permissions.php'));
 
 // Include Zend Escaper for HTML Output Encoding
 require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-  // Add the Content-Security-Policy header
-  header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -42,7 +35,12 @@ if (!isset($_SESSION))
 // Include the language file
 require_once(language_file());
 
+// Load CSRF Magic
 require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
+
+function csrf_startup() {
+    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
+}
 
 // Check for session timeout or renegotiation
 session_check();
@@ -50,9 +48,13 @@ session_check();
 // Check if access is authorized
 if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
 {
+  set_unauthenticated_redirect();
   header("Location: ../index.php");
   exit(0);
 }
+
+// Enforce that the user has access to risk management
+enforce_permission_riskmanagement();
 
 // Check if a risk ID was sent
 if (isset($_GET['id']))
@@ -167,6 +169,7 @@ if (isset($_GET['id']))
     $source = $risk[0]['source'];
     $category = $risk[0]['category'];
     $team = $risk[0]['team'];
+    $additional_stakeholders = $risk[0]['additional_stakeholders'];
     $technology = $risk[0]['technology'];
     $owner = $risk[0]['owner'];
     $manager = $risk[0]['manager'];
@@ -177,10 +180,12 @@ if (isset($_GET['id']))
     $mitigation_id = $risk[0]['mitigation_id'];
     $mgmt_review = $risk[0]['mgmt_review'];
     $calculated_risk = $risk[0]['calculated_risk'];
+    $residual_risk = $risk[0]['residual_risk'];
     $next_review = $risk[0]['next_review'];
     $color = get_risk_color($calculated_risk);
-	$risk_level = get_risk_level_name($calculated_risk);
-
+    $residual_color = get_risk_color($residual_risk);
+    $risk_level = get_risk_level_name($calculated_risk);
+    $residual_risk_level = get_risk_level_name($residual_risk);
     $scoring_method = $risk[0]['scoring_method'];
     $CLASSIC_likelihood = $risk[0]['CLASSIC_likelihood'];
     $CLASSIC_impact = $risk[0]['CLASSIC_impact'];
@@ -225,7 +230,15 @@ if (isset($_GET['id']))
   else
   {
     $submitted_by = "";
-    $status = "Risk ID Does Not Exist";
+    // If Risk ID exists.
+    if(check_risk_by_id($id)){
+        $status = $lang["RiskDisplayPermission"];
+    }
+    // If Risk ID does not exist.
+    else{
+        $status = $lang["RiskIdDoesNotExist"];
+    }
+
     $subject = "N/A";
     $reference_id = "N/A";
     $regulation = "";
@@ -234,22 +247,32 @@ if (isset($_GET['id']))
     $source = "";
     $category = "";
     $team = "";
+    $additional_stakeholders = "";
     $technology = "";
     $owner = "";
     $manager = "";
     $assessment = "";
     $notes = "";
     $submission_date = "";
+
     $mitigation_id = "";
     $mgmt_review = "";
     $calculated_risk = "0.0";
 
+    $residual_risk = "";
+    $next_review = "";
+    $color = "";
+    $residual_color = "";
+
+    $risk_level = "";
+    $residual_risk_level = "";
     $scoring_method = "";
     $CLASSIC_likelihood = "";
     $CLASSIC_impact = "";
     $AccessVector = "";
     $AccessComplexity = "";
     $Authentication = "";
+
     $ConfImpact = "";
     $IntegImpact = "";
     $AvailImpact = "";
@@ -261,6 +284,28 @@ if (isset($_GET['id']))
     $ConfidentialityRequirement = "";
     $IntegrityRequirement = "";
     $AvailabilityRequirement = "";
+    $DREADDamagePotential = "";
+    $DREADReproducibility = "";
+    $DREADExploitability = "";
+    $DREADAffectedUsers = "";
+    $DREADDiscoverability = "";
+    $OWASPSkillLevel = "";
+    $OWASPMotive = "";
+    $OWASPOpportunity = "";
+    $OWASPSize = "";
+    $OWASPEaseOfDiscovery = "";
+    $OWASPEaseOfExploit = "";
+    $OWASPAwareness = "";
+    $OWASPIntrusionDetection = "";
+    $OWASPLossOfConfidentiality = "";
+    $OWASPLossOfIntegrity = "";
+    $OWASPLossOfAvailability = "";
+    $OWASPLossOfAccountability = "";
+    $OWASPFinancialDamage = "";
+    $OWASPReputationDamage = "";
+    $OWASPNonCompliance = "";
+    $OWASPPrivacyViolation = "";
+    $custom = "";
   }
 
   // If the current scoring method was changed to Classic
@@ -328,7 +373,7 @@ if (isset($_GET['id']))
   {
     $submission_date = "N/A";
   }
-  else $submission_date = date("m/d/Y", strtotime($submission_date));
+  else $submission_date = date(get_default_date_format(), strtotime($submission_date));
 
   // Get the mitigation for the risk
   $mitigation = get_mitigation_by_id($id);
@@ -338,7 +383,7 @@ if (isset($_GET['id']))
   {
     // Set the mitigation values
     $mitigation_date = $mitigation[0]['submission_date'];
-    $mitigation_date = date("m/d/Y", strtotime($mitigation_date));
+    $mitigation_date = date(get_default_date_format(), strtotime($mitigation_date));
     $planning_strategy = $mitigation[0]['planning_strategy'];
     $mitigation_effort = $mitigation[0]['mitigation_effort'];
     $mitigation_cost = $mitigation[0]['mitigation_cost'];
@@ -347,7 +392,9 @@ if (isset($_GET['id']))
     $current_solution = $mitigation[0]['current_solution'];
     $security_requirements = $mitigation[0]['security_requirements'];
     $security_recommendations = $mitigation[0]['security_recommendations'];
-    $planning_date = ($mitigation[0]['planning_date'] && $mitigation[0]['planning_date'] != "0000-00-00") ? date('m/d/Y', strtotime($mitigation[0]['planning_date'])) : "";
+    $planning_date = ($mitigation[0]['planning_date'] && $mitigation[0]['planning_date'] != "0000-00-00") ? date(get_default_date_format(), strtotime($mitigation[0]['planning_date'])) : "";
+    $mitigation_percent = (isset($mitigation[0]['mitigation_percent']) && $mitigation[0]['mitigation_percent'] >= 0 && $mitigation[0]['mitigation_percent'] <= 100) ? $mitigation[0]['mitigation_percent'] : 0;
+    $mitigation_controls = isset($mitigation[0]['mitigation_controls']) ? $mitigation[0]['mitigation_controls'] : "";
   }
   // Otherwise
   else
@@ -364,6 +411,8 @@ if (isset($_GET['id']))
     $security_requirements = "";
     $security_recommendations = "";
     $planning_date = "";
+    $mitigation_percent = 0;
+    $mitigation_controls = "";
   }
 
   // Get the management reviews for the risk
@@ -373,11 +422,23 @@ if (isset($_GET['id']))
   {
     // Set the mitigation values
     $review_date = $mgmt_reviews[0]['submission_date'];
-    $review_date = date(DATETIME, strtotime($review_date));
+    $review_date = date(get_default_datetime_format("g:i A T"), strtotime($review_date));
 
     $review = $mgmt_reviews[0]['review'];
+    $review_id = $mgmt_reviews[0]['id'];
     $next_step = $mgmt_reviews[0]['next_step'];
-    $next_review = next_review($risk_level, $id-1000, $next_review, false);
+    
+    // If next_review_date_uses setting is Residual Risk.
+    if(get_setting('next_review_date_uses') == "ResidualRisk")
+    {
+        $next_review = next_review($residual_risk_level, $id-1000, $next_review, false);
+    }
+    // If next_review_date_uses setting is Inherent Risk.
+    else
+    {
+        $next_review = next_review($risk_level, $id-1000, $next_review, false);
+    }
+    
     $reviewer = $mgmt_reviews[0]['reviewer'];
     $comments = $mgmt_reviews[0]['comments'];
   }else
@@ -386,6 +447,7 @@ if (isset($_GET['id']))
     // Set the values to empty
     $review_date = "N/A";
     $review = "";
+    $review_id = "";
     $next_step = "";
     $next_review = "";
     $reviewer = "";
@@ -396,18 +458,8 @@ if (isset($_GET['id']))
 // If the risk details were updated
 if (isset($_POST['update_details']))
 {
-  // Check if the subject is null
-  if (isset($_POST['subject']) && $_POST['subject'] == "")
-  {
-    $empty_subject = true;
-
-    // Display an alert
-    set_alert(true, "bad", "The subject of a risk cannot be empty.");
-  }
-  else $empty_subject = false;
-
   // If the user has permission to modify risks
-  if (!$empty_subject && isset($_SESSION["modify_risks"]) && $_SESSION["modify_risks"] == 1 && $access)
+  if (isset($_SESSION["modify_risks"]) && $_SESSION["modify_risks"] == 1 && $access)
   {
     $reference_id = $_POST['reference_id'];
     $regulation = (int)$_POST['regulation'];
@@ -416,6 +468,7 @@ if (isset($_POST['update_details']))
     $source = (int)$_POST['source'];
     $category = (int)$_POST['category'];
     $team = (int)$_POST['team'];
+    $additional_stakeholders = empty($_POST['additional_stakeholders']) ? "" : implode(",", $_POST['additional_stakeholders']);
     $technology = (int)$_POST['technology'];
     $owner = (int)$_POST['owner'];
     $manager = (int)$_POST['manager'];
@@ -423,14 +476,20 @@ if (isset($_POST['update_details']))
     $notes = try_encrypt($_POST['notes']);
     $assets = $_POST['assets'];
     $submission_date = $_POST['submission_date'];
-    $tmp_s_date = date("Y-m-d H:i:s", strtotime($submission_date));
+//    $tmp_s_date = date("Y-m-d H:i:s", strtotime($submission_date));
+    $tmp_s_date = get_standard_date_from_default_format($submission_date);
     // Update risk
     $error = update_risk($id);
-
-
     
-    
-    
+    // If customization extra is enabled
+    if(customization_extra())
+    {
+        // Include the extra
+        require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+        
+        // Save custom fields
+        save_risk_custom_field_values($id);
+    }
     
     // Classic Risk Scoring Inputs
     $scoring_method = (int)$_POST['scoring_method'];
@@ -490,14 +549,6 @@ if (isset($_POST['update_details']))
         
 //    }
     
-    
-    
-    
-    
-    
-    
-    
-    
     if ($error == 1)
     {
       // Display an alert
@@ -512,7 +563,7 @@ if (isset($_POST['update_details']))
     }
   }
   // Otherwise, the user did not have permission to modify risks
-  else if (!$empty_subject)
+  else 
   {
     // Display an alert
     set_alert(true, "bad", "You do not have permission to modify risks.  Your attempt to modify the details of this risk was not recorded.  Please contact an Administrator if you feel that you have reached this message in error.");
@@ -526,51 +577,59 @@ if ((isset($_POST['edit_details'])) && ($_SESSION['modify_risks'] != 1))
   set_alert(true, "bad", "You do not have permission to modify risks.  Any risks that you attempt to modify will not be recorded.  Please contact an Administrator if you feel that you have reached this message in error.");
 }
 
-// Check if a mitigation was updated
-if (isset($_POST['update_mitigation']) && $access)
+// Check if the user has access to plan mitigations
+if ((isset($_POST['update_mitigation']) || isset($_POST['edit_mitigation'])) && (!isset($_SESSION["plan_mitigations"]) || $_SESSION["plan_mitigations"] != 1))
 {
-  $planning_strategy = (int)$_POST['planning_strategy'];
-  $mitigation_effort = (int)$_POST['mitigation_effort'];
-  $mitigation_cost = (int)$_POST['mitigation_cost'];
-  $mitigation_owner = (int)$_POST['mitigation_owner'];
-  $mitigation_team = (int)$_POST['mitigation_team'];
-  $current_solution = try_encrypt($_POST['current_solution']);
-  $security_requirements = try_encrypt($_POST['security_requirements']);
-  $security_recommendations = try_encrypt($_POST['security_recommendations']);
-  $planning_date = $_POST['planning_date'];
+    // Display an alert
+    set_alert(true, "bad", $lang['MitigationPermissionMessage']);
+}
+else 
+{
+    // Check if a mitigation was updated
+    if (isset($_POST['update_mitigation']) && $access)
+    {
+      $planning_strategy = (int)$_POST['planning_strategy'];
+      $mitigation_effort = (int)$_POST['mitigation_effort'];
+      $mitigation_cost = (int)$_POST['mitigation_cost'];
+      $mitigation_owner = (int)$_POST['mitigation_owner'];
+      $mitigation_team = (int)$_POST['mitigation_team'];
+      $current_solution = try_encrypt($_POST['current_solution']);
+      $security_requirements = try_encrypt($_POST['security_requirements']);
+      $security_recommendations = try_encrypt($_POST['security_recommendations']);
+      $planning_date = $_POST['planning_date'];
 
-  if (!validate_date($planning_date, 'm/d/Y'))
-  {
-    $planning_date = "0000-00-00";
-  }
-  // Otherwise, set the proper format for submitting to the database
-  else
-  {
-    $planning_date = date("Y-m-d", strtotime($planning_date));
-  }
+      if (!validate_date($planning_date, get_default_date_format()))
+      {
+        $planning_date = "0000-00-00";
+      }
+      // Otherwise, set the proper format for submitting to the database
+      else
+      {
+    //    $planning_date = date("Y-m-d", strtotime($planning_date));
+        $planning_date = get_standard_date_from_default_format($planning_date);
+      }
 
-  // If we don't yet have a mitigation
-  if ($mitigation_id == 0)
-  {
-    $status = "Mitigation Planned";
+      // If we don't yet have a mitigation
+      if ($mitigation_id == 0)
+      {
+        $status = "Mitigation Planned";
 
-    // Submit mitigation and get the mitigation date back
-    $mitigation_date = submit_mitigation($id, $status, $_POST);
-    $mitigation_date = date(DATETIME, strtotime($mitigation_date));
-  }
-  else
-  {
-    // Update mitigation and get the mitigation date back
-    $mitigation_date = update_mitigation($id, $_POST);
-    $mitigation_date = date(DATETIME, strtotime($mitigation_date));
-  }
+        // Submit mitigation and get the mitigation date back
+        submit_mitigation($id, $status, $_POST);
+      }
+      else
+      {
+        // Update mitigation and get the mitigation date back
+        update_mitigation($id, $_POST);
+      }
 
 
-  // Display an alert
-  set_alert(true, "good", "The risk mitigation has been successfully modified.");
+      // Display an alert
+      set_alert(true, "good", "The risk mitigation has been successfully modified.");
 
-  // Redirect back to the page the workflow started on
-  header("Location: " . $_SESSION["workflow_start"] . "?id=". $id . "&type=1");
+      // Redirect back to the page the workflow started on
+      header("Location: " . $_SESSION["workflow_start"] . "?id=". $id . "&type=1");
+    }
 }
 
 // If the user updated the subject and they have the permission to modify the risk
@@ -604,53 +663,61 @@ else if (isset($_POST['update_subject']) && (!isset($_SESSION["modify_risks"]) |
 <html>
 
 <head>
-  <script src="../js/jquery.min.js"></script>
-  <script src="../js/jquery-ui.min.js"></script>
-  <script src="../js/bootstrap.min.js"></script>
-  <script src="../js/cve_lookup.js"></script>
-  <script src="../js/basescript.js"></script>
-  <script src="../js/highcharts/code/highcharts.js"></script>
-  <script src="../js/common.js"></script>
-  <title>SimpleRisk: Enterprise Risk Management Simplified</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-  <link rel="stylesheet" href="../css/bootstrap.css">
-  <link rel="stylesheet" href="../css/bootstrap-responsive.css">
-  <link rel="stylesheet" href="../css/divshot-util.css">
-  <link rel="stylesheet" href="../css/divshot-canvas.css">
-  <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/theme.css">
+    <title>SimpleRisk: Enterprise Risk Management Simplified</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 
-  <script type="text/javascript">
-      function showScoreDetails() {
-        document.getElementById("scoredetails").style.display = "";
-        document.getElementById("hide").style.display = "block";
-        document.getElementById("show").style.display = "none";
-      }
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/jquery-ui.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/jquery.dataTables.js"></script>
+    <script src="../js/cve_lookup.js"></script>
+    <script src="../js/basescript.js"></script>
+    <script src="../js/highcharts/code/highcharts.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/pages/risk.js"></script>
+    <script src="../js/bootstrap-multiselect.js"></script>
 
-      function hideScoreDetails() {
-        document.getElementById("scoredetails").style.display = "none";
-        document.getElementById("updatescore").style.display = "none";
-        document.getElementById("hide").style.display = "none";
-        document.getElementById("show").style.display = "";
-      }
+    <link rel="stylesheet" href="../css/bootstrap.css">
+    <link rel="stylesheet" href="../css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="../css/jquery.dataTables.css">
+    <link rel="stylesheet" href="../css/divshot-util.css">
+    <link rel="stylesheet" href="../css/divshot-canvas.css">
+    <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/bootstrap-multiselect.css">
 
-      function updateScore() {
-        document.getElementById("scoredetails").style.display = "none";
-        document.getElementById("updatescore").style.display = "";
-        document.getElementById("show").style.display = "none";
-      }
+    <script type="text/javascript">
+        function showScoreDetails() {
+            document.getElementById("scoredetails").style.display = "";
+            document.getElementById("hide").style.display = "block";
+            document.getElementById("show").style.display = "none";
+        }
+
+        function hideScoreDetails() {
+            document.getElementById("scoredetails").style.display = "none";
+            document.getElementById("updatescore").style.display = "none";
+            document.getElementById("hide").style.display = "none";
+            document.getElementById("show").style.display = "";
+        }
+
+        function updateScore() {
+            document.getElementById("scoredetails").style.display = "none";
+            document.getElementById("updatescore").style.display = "";
+            document.getElementById("show").style.display = "none";
+        }
       
-  </script>
+    </script>
   <?php display_asset_autocomplete_script(get_entered_assets()); ?>
 </head>
 
 <body>
 
   <?php
-  view_top_menu("RiskManagement");
-
+    view_top_menu("RiskManagement");
+    // Get any alert messages
+    get_alert();
   ?>
   <div class="tabs new-tabs">
     <div class="container-fluid">
@@ -675,7 +742,7 @@ else if (isset($_POST['update_subject']) && (!isset($_SESSION["modify_risks"]) |
       </div>
       <div class="span9">
 
-        <div id="show-alert"></div>
+<!--        <div id="show-alert"></div>-->
         <div class="row-fluid" id="tab-content-container">
             <div class='tab-data' id="tab-container">
                 <?php
@@ -687,6 +754,9 @@ else if (isset($_POST['update_subject']) && (!isset($_SESSION["modify_risks"]) |
         </div>
         
       </div>
+    </div>
+  </div>
+    <input type="hidden" id="enable_popup" value="<?php echo get_setting('enable_popup'); ?>">
       <script>
         /*
         * Function to add the css class for textarea title and make it popup.
@@ -694,8 +764,15 @@ else if (isset($_POST['update_subject']) && (!isset($_SESSION["modify_risks"]) |
         * focus_add_css_class("#foo", "#bar");
         */
         function focus_add_css_class(id_of_text_head, text_area_id){
+            // If enable_popup setting is false, disable popup
+            if($("#enable_popup").val() != 1){
+                $("textarea").removeClass("enable-popup");
+                return;
+            }else{
+                $("textarea").addClass("enable-popup");
+            }
+            
             look_for = "textarea" + text_area_id;
-            console.log(look_for);
             if( !$(look_for).length ){
                 text_area_id = text_area_id.replace('#','');
                 look_for = "textarea[name=" + text_area_id;
@@ -739,145 +816,125 @@ else if (isset($_POST['update_subject']) && (!isset($_SESSION["modify_risks"]) |
             
         });
     </script>
-    </body>
+</body>
+
     <script type="text/javascript">
 
-    $( function() {
-       
-        $("#comment-submit").attr('disabled','disabled');
-        $("#cancel_disable").attr('disabled','disabled');
-        $("#rest-btn").attr('disabled','disabled');
-        $("#comment-text").click(function(){
-            $("#comment-submit").removeAttr('disabled');
-            $("#rest-btn").removeAttr('disabled');
-        });
+        $( function() {
+           
+            $("#comment-submit").attr('disabled','disabled');
+            $("#cancel_disable").attr('disabled','disabled');
+            $("#rest-btn").attr('disabled','disabled');
+            $("#comment-text").click(function(){
+                $("#comment-submit").removeAttr('disabled');
+                $("#rest-btn").removeAttr('disabled');
+            });
 
-        $("#comment-submit").click(function(){
-            var submitbutton = document.getElementById("comment-text").value;
-             if(submitbutton == ''){
-           $("#comment-submit").attr('disabled','disabled');
-           $("#rest-btn").attr('disabled','disabled');
-       }
-       });
-         $("#rest-btn").click(function(){
-
-           $("#comment-submit").attr('disabled','disabled');
-
-
-       });
-       
-       $(".active-textfield").click(function(){
+            $("#comment-submit").click(function(){
+                var submitbutton = document.getElementById("comment-text").value;
+                 if(submitbutton == ''){
+               $("#comment-submit").attr('disabled','disabled');
+               $("#rest-btn").attr('disabled','disabled');
+           }
+           });
+            $("#rest-btn").click(function(){
+               $("#comment-submit").attr('disabled','disabled');
+            });
+           
+           $(".active-textfield").click(function(){
                 $("#cancel_disable").removeAttr('disabled');
             });
-            
-       $("select").change(function changeOption(){
+                
+           $("select").change(function changeOption(){
                 $("#cancel_disable").removeAttr('disabled');
-       });
-             
-//      $(document).on('change', '.hidden-file-upload', function(event) {
-//        event.preventDefault();
+           });
+                 
 
-//        var $parent = $(this).parents('.file-uploader');
-//        var files = $(this)[0].files;
-//        if(files.length > 1){ $msg = files.length+" Files Added"; }else{ $msg = "1 File Added"; }
-//        $($parent).find('.file-count').html($msg);
+          $("#tabs").tabs({ active: 0});
+          <?php if (isset($_POST['edit_mitigation'])): ?>
+          $("#tabs").tabs({ active: 1});
 
-//        var files = $(this)[0].files;
+          <?php elseif (!isset($_POST['tab_type']) && (isset($_POST['edit_details']) ||(isset($_GET['type']) && $_GET['type']) =='0')): ?>
+         // $("#tabs").tabs({ active: 0});
 
-//        $(files).each(function(index, el) {
-//          var $file = "<li>"+el.name+"</li>";
-//          $($parent).find('.file-list').html($file);
-//        });
+          <?php elseif ((isset($_POST['tab_type']) || isset($_GET['tab_type'])) || isset($_GET['type']) && $_GET['type']=='1'): ?>
+          $("#tabs").tabs({ active: 1});
 
-//        var fileName = $(this).val();
-//        $(this).prev('label').text(fileName);
+          <?php else: ?>
+          $("#tabs").tabs({ active: 2});
+          <?php endif; ?>
 
-//      });
+          $('.collapsible').hide();
 
-      $("#tabs").tabs({ active: 0});
-      <?php if (isset($_POST['edit_mitigation'])): ?>
-      $("#tabs").tabs({ active: 1});
+          $('.collapsible--toggle span').click(function(event) {
+            event.preventDefault();
+            $(this).parents('.collapsible--toggle').next('.collapsible').slideToggle('400');
+            $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
+          });
 
-      <?php elseif (!isset($_POST['tab_type']) && (isset($_POST['edit_details']) ||(isset($_GET['type']) && $_GET['type']) =='0')): ?>
-     // $("#tabs").tabs({ active: 0});
-
-      <?php elseif ((isset($_POST['tab_type']) || isset($_GET['tab_type'])) || isset($_GET['type']) && $_GET['type']=='1'): ?>
-      $("#tabs").tabs({ active: 1});
-
-      <?php else: ?>
-      $("#tabs").tabs({ active: 2});
-      <?php endif; ?>
-
-      $('.collapsible').hide();
-
-      $('.collapsible--toggle span').click(function(event) {
-        event.preventDefault();
-        $(this).parents('.collapsible--toggle').next('.collapsible').slideToggle('400');
-        $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
-      });
-
-      $('.add-comments').click(function(event) {
-        event.preventDefault();
-        $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
-        $(this).toggleClass('rotate');
-        $('#comment').fadeToggle('100');
-        $(this).parent().find('span i').removeClass('fa-caret-right');
-        $(this).parent().find('span i').addClass('fa-caret-down');
-      });
+          $('.add-comments').click(function(event) {
+            event.preventDefault();
+            $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
+            $(this).toggleClass('rotate');
+            $('#comment').fadeToggle('100');
+            $(this).parent().find('span i').removeClass('fa-caret-right');
+            $(this).parent().find('span i').addClass('fa-caret-down');
+          });
 
 
-      $("#tabs" ).tabs({
-        activate:function(event,ui){
-          if(ui.newPanel.selector== "#tabs1"){
-            $("#tab_details").addClass("tabList");
-            $("#tab_mitigation").removeClass("tabList");
-            $("#tab_review").removeClass("tabList");
-          } else if(ui.newPanel.selector== "#tabs2"){
-            $("#tab_mitigation").addClass("tabList");
-            $("#tab_review").removeClass("tabList");
-            $("#tab_details").removeClass("tabList");
-          }else{
-            $("#tab_review").addClass("tabList");
-            $("#tab_mitigation").removeClass("tabList");
-            $("#tab_details").removeClass("tabList");
+          $("#tabs" ).tabs({
+            activate:function(event,ui){
+              if(ui.newPanel.selector== "#tabs1"){
+                $("#tab_details").addClass("tabList");
+                $("#tab_mitigation").removeClass("tabList");
+                $("#tab_review").removeClass("tabList");
+              } else if(ui.newPanel.selector== "#tabs2"){
+                $("#tab_mitigation").addClass("tabList");
+                $("#tab_review").removeClass("tabList");
+                $("#tab_details").removeClass("tabList");
+              }else{
+                $("#tab_review").addClass("tabList");
+                $("#tab_mitigation").removeClass("tabList");
+                $("#tab_details").removeClass("tabList");
 
-          }
+              }
 
-        }
-      });
-//      $("#tabs" ).removeClass('ui-tabs')
+            }
+          });
+    //      $("#tabs" ).removeClass('ui-tabs')
 
-      $('#edit-subject').click(function (){
-        $('.edit-subject').show();
-        $('#static-subject').hide();
-      });
-      
-      $(".add-comment-menu").click(function(event){
-        event.preventDefault();
-        $commentsContainer = $("#comment").parents('.well');
-        $commentsContainer.find(".collapsible--toggle").next('.collapsible').slideDown('400');
-        $commentsContainer.find(".add-comments").addClass('rotate');
-        $('#comment').show();
-        $commentsContainer.find(".add-comments").parent().find('span i').removeClass('fa-caret-right');
-        $commentsContainer.find(".add-comments").parent().find('span i').addClass('fa-caret-down');
-        $("#comment-text").focus();
-      })
-      $( ".datepicker" ).datepicker();
-    });
+          $('#edit-subject').click(function (){
+            $('.edit-subject').show();
+            $('#static-subject').hide();
+          });
+          
+          $(".add-comment-menu").click(function(event){
+            event.preventDefault();
+            $commentsContainer = $("#comment").parents('.well');
+            $commentsContainer.find(".collapsible--toggle").next('.collapsible').slideDown('400');
+            $commentsContainer.find(".add-comments").addClass('rotate');
+            $('#comment').show();
+            $commentsContainer.find(".add-comments").parent().find('span i').removeClass('fa-caret-right');
+            $commentsContainer.find(".add-comments").parent().find('span i').addClass('fa-caret-down');
+            $("#comment-text").focus();
+          })
+          $( ".datepicker" ).datepicker();
+        });
 
-    $('body').on('click', '[name=view_all_reviews], .view-all-reviews', function(e){
-        e.preventDefault();
-        var tabContainer = $(this).parents('.tab-data');
-        if($('.current_review', tabContainer).is(":visible")){
-            $('.all_reviews', tabContainer).show();
-            $('.current_review', tabContainer).hide();
-	    $('.all_reviews_btn', tabContainer).html("<?php echo $escaper->escapeHtml($lang['LastReview']); ?>");
-        }else{
-            $('.all_reviews', tabContainer).hide();
-            $('.current_review', tabContainer).show();
-	    $('.all_reviews_btn', tabContainer).html("<?php echo $escaper->escapeHtml($lang['ViewAllReviews']); ?>");
-        }
-    });
+        $('body').on('click', '[name=view_all_reviews], .view-all-reviews', function(e){
+            e.preventDefault();
+            var tabContainer = $(this).parents('.tab-data');
+            if($('.current_review', tabContainer).is(":visible")){
+                $('.all_reviews', tabContainer).show();
+                $('.current_review', tabContainer).hide();
+	        $('.all_reviews_btn', tabContainer).html("<?php echo $escaper->escapeHtml($lang['LastReview']); ?>");
+            }else{
+                $('.all_reviews', tabContainer).hide();
+                $('.current_review', tabContainer).show();
+	        $('.all_reviews_btn', tabContainer).html("<?php echo $escaper->escapeHtml($lang['ViewAllReviews']); ?>");
+            }
+        });
 
     </script>
-    </html>
+    <?php display_set_default_date_format_script(); ?>
+</html>

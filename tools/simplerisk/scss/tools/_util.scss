@@ -27,7 +27,7 @@
 }
 
 #load {
-    position: absolute;
+    position: fixed;
     z-index: 1;
     border: none;
     background: #eee;
@@ -51,8 +51,8 @@
 .redalert,
 .greenalert {
     background: #f67975;
-		color: #982f2c !important;
-		border: none;
+    color: #982f2c !important;
+    border: none;
     font-weight: 600;
     float: none;
     text-align: center;
@@ -61,19 +61,18 @@
     color: #fff;
     padding: 3px;
     border-radius: 2px;
-		//margin-top: 10px;
-		//margin-bottom: 10px;
-		margin-left: -20px;
-		border: 1px solid #982f2c;
-		max-width: 1140px;
-		width: 100%;
-		margin: 10px auto;
+    //margin-top: 10px;
+    //margin-bottom: 10px;
+    margin-left: -20px;
+    border: 1px solid #982f2c;
+    max-width: 1140px;
+    width: 100%;
+    margin: 10px auto;
 
-
-		position: fixed;
+    position: fixed;
     top: 67px;
     right: 20px;
-    z-index: 1032;
+    z-index: 99999;
     max-width: 400px;
     box-shadow: 0px 0px 10px 1px rgba(0,0,0,.1);
 
@@ -160,13 +159,19 @@
 }
 
 #Custom{
-	width: 50px !important;
+	width: 60px !important;
 }
 
 
 .reviewdate,
 .reviewername{
 	line-height: 33px !important;
+}
+
+.item-block:nth-child(even){
+    .control-block--header, .framework-block--header {
+      background-color: #ececec; 
+    }
 }
 
 .project-block:nth-child(even) .project-block--header{
@@ -250,6 +255,8 @@ div#show-alert + #tab-content-container .tab-data {
 		}
 	}
 
+}
 
-
+.dropdown-menu > li > a > label{
+    color: #333333;
 }

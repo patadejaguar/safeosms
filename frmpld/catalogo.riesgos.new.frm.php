@@ -60,6 +60,7 @@ $xSel4	= $xSel->getListaDeFrecuenciaChequeoRiesgo("frecuencia_de_chequeo");
 $xSel4->setOptionSelect($xTabla->frecuencia_de_chequeo()->v(OUT_TXT));
 
 $xFRM->OMoneda("clave_de_control", $xTabla->clave_de_control()->v(), "TR.clave de control");
+
 $xFRM->OText("descripcion", $xTabla->descripcion()->v(), "TR.descripcion");
 $xFRM->addHElem( $xSel1->get(true) );
 $xFRM->OMoneda("valor_ponderado", $xTabla->valor_ponderado()->v(), "TR.valor ponderado");

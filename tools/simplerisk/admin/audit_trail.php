@@ -13,15 +13,7 @@
         $escaper = new Zend\Escaper\Escaper('utf-8');
 
         // Add various security headers
-        header("X-Frame-Options: DENY");
-        header("X-XSS-Protection: 1; mode=block");
-
-        // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-        if (CSP_ENABLED == "true")
-        {
-                // Add the Content-Security-Policy header
-		header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-        }
+	add_security_headers();
 
         // Session handler is database
         if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -43,12 +35,17 @@
 
         require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
 
+    function csrf_startup() {
+        csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
+    }
+
         // Check for session timeout or renegotiation
         session_check();
 
         // Check if access is authorized
         if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
         {
+		set_unauthenticated_redirect();
                 header("Location: ../index.php");
                 exit(0);
         }
@@ -109,7 +106,7 @@
                 <option value="90"<?php echo ($days == 90) ? " selected" : ""; ?>>Past Quarter</option>
                 <option value="180"<?php echo ($days == 180) ? " selected" : ""; ?>>Past 6 Months</option>
                 <option value="365"<?php echo ($days == 365) ? " selected" : ""; ?>>Past Year</option>
-                <<option value="36500"<?php echo ($days == 36500) ? " selected" : ""; ?>>All Time</option>
+                <option value="36500"<?php echo ($days == 36500) ? " selected" : ""; ?>>All Time</option>
               </select>
               </form>
               <?php get_audit_trail(NULL, $days); ?>

@@ -8,6 +8,7 @@
     require_once(realpath(__DIR__ . '/../../includes/functions.php'));
     require_once(realpath(__DIR__ . '/../../includes/authenticate.php'));
     require_once(realpath(__DIR__ . '/../../includes/display.php'));
+    require_once(realpath(__DIR__ . '/../../includes/permissions.php'));
 
     // Include Zend Escaper for HTML Output Encoding
     require_once(realpath(__DIR__ . '/../../includes/Component_ZendEscaper/Escaper.php'));
@@ -18,7 +19,7 @@
     header("X-XSS-Protection: 1; mode=block");
 
     // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-    if (CSP_ENABLED == "true")
+    if (csp_enabled())
     {
             // Add the Content-Security-Policy header
     header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
@@ -54,6 +55,9 @@
         header("Location: ../../index.php");
         exit(0);
     }
+
+    // Enforce that the user has access to risk management
+    enforce_permission_riskmanagement();
 
 ?>
 

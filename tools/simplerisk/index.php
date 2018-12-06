@@ -4,6 +4,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Include required functions file
+
 require_once(realpath(__DIR__ . '/includes/functions.php'));
 require_once(realpath(__DIR__ . '/includes/authenticate.php'));
 require_once(realpath(__DIR__ . '/includes/display.php'));
@@ -14,15 +15,7 @@ require_once(realpath(__DIR__ . '/includes/Component_ZendEscaper/Escaper.php'));
 $escaper = new Zend\Escaper\Escaper('utf-8');
 
 // Add various security headers
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-
-// If we want to enable the Content Security Policy (CSP) - This may break Chrome
-if (CSP_ENABLED == "true")
-{
-	// Add the Content-Security-Policy header
-	header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-}
+add_security_headers();
 
 // Session handler is database
 if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -35,6 +28,7 @@ session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
 
 if (!isset($_SESSION))
 {
+	sess_gc(1440);
 	session_name('SimpleRisk');
 	session_start();
 }
@@ -54,71 +48,52 @@ if (isset($_POST['submit']))
 	// If the user is valid
 	if (is_valid_user($user, $pass))
 	{
-		// If the custom authentication extra is installed
-		if (custom_authentication_extra())
+        	$uid = get_id_by_user($user);
+        	$array = get_user_by_id($uid);
+
+            	if($array['change_password'])
 		{
-			// Include the custom authentication extra
-			require_once(realpath(__DIR__ . '/extras/authentication/index.php'));
+                	$_SESSION['first_login_uid'] = $uid;
 
-			// Get the enabled authentication for the user
-			$enabled_auth = enabled_auth($user);
+            		if (encryption_extra())
+            		{
+                		// Load the extra
+                		require_once(realpath(__DIR__ . '/extras/encryption/index.php'));
 
-			// If no multi factor authentication is enabled for the user
-			if ($enabled_auth == 1)
-			{
-				// Grant the user access
-				grant_access();
+                		// Get the current password encrypted with the temp key
+                		check_user_enc($user, $pass);
+            		}
 
-				// If the encryption extra is enabled
-				if (encryption_extra())
-				{
-					// Load the extra
-					require_once(realpath(__DIR__ . '/extras/encryption/index.php'));
+            		header("location: reset_password.php");
+			exit;
+        	}
 
-					// Check user enc
-					check_user_enc($user, $pass);
-				}
+		// Create the SimpleRisk instance ID if it doesn't already exist
+		create_simplerisk_instance_id();
 
-				// Select where to redirect the user next
-				select_redirect();
-			}
-			// If Duo authentication is enabled for the user
-			else if ($enabled_auth == 2)
-			{
-				// Set session access to duo
-				$_SESSION["access"] = "duo";
-			}
-			// If Toopher authentication is enabled for the user
-			else if ($enabled_auth == 3)
-			{
-				// Set session access to toopher
-				$_SESSION["access"] = "toopher";
-			}
-		}
-		// Otherwise the custom authentication extra is not installed
-		else
-		{
-			// Grant the user access
-			grant_access();
+		// Ping the server
+		ping_server();
 
-			// If the encryption extra is enabled
-			if (encryption_extra())
-			{
-				// Load the extra
-				require_once(realpath(__DIR__ . '/extras/encryption/index.php'));
+        // Set the user permissions
+        set_user_permissions($user, $pass);
 
-				// Check user enc
-				check_user_enc($user, $pass);
-			}
+        // Get base url
+        $base_url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}{$_SERVER['SCRIPT_NAME']}";
+        $base_url = htmlspecialchars( $base_url, ENT_QUOTES, 'UTF-8' );
+        $base_url = pathinfo($base_url)['dirname'];
 
-			// Select where to redirect the user next
-			select_redirect();
-		}
+        // Filter out authentication extra from the base url
+        $base_url = str_replace("/extras/authentication", "", $base_url);
+        $_SESSION['base_url'] = $base_url;
+
+        	// Set login status
+        	login($user, $pass);
+
   	}
   	// If the user is not a valid user
   	else
   	{
-    		$_SESSION["access"] = "denied";
+		$_SESSION["access"] = "denied";
 
 		// Display an alert
 		set_alert(true, "bad", "Invalid username or password.");
@@ -128,7 +103,7 @@ if (isset($_POST['submit']))
 		{
 			// Add the login attempt and block if necessary
 			add_login_attempt_and_block($user);
-    		}
+		}
   	}
 }
 
@@ -163,8 +138,6 @@ if (isset($_SESSION["access"]) && ($_SESSION["access"] == "duo"))
     		// If the response is not null
     		if ($resp != NULL)
     		{
-      			// Grant the user access
-      			grant_access();
 
       			// If the encryption extra is enabled
       			if (encryption_extra())
@@ -176,16 +149,18 @@ if (isset($_SESSION["access"]) && ($_SESSION["access"] == "duo"))
         			check_user_enc($user, $pass);
       			}
 
+      			// Grant the user access
+      			grant_access();
+
 			// Select where to redirect the user next
 			select_redirect();
     		}
   	}
 }
 ?>
-
 <html ng-app="SimpleRisk">
 <head>
-  <title>Simple Risk</title>
+  <title>SimpleRisk: Enterprise Risk Management Simplified</title>
   <!-- build:css vendor/vendor.min.css -->
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen" />
   <!-- endbuild -->
@@ -199,6 +174,7 @@ if (isset($_SESSION["access"]) && ($_SESSION["access"] == "duo"))
   <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="css/theme.css">
 
+  <script src="js/jquery.min.js"></script>
 </head>
 <body ng-controller="MainCtrl" class="login--page">
   <?php view_top_menu("Home"); ?>
@@ -245,8 +221,12 @@ if (isset($_SESSION["access"]) && ($_SESSION["access"] == "duo"))
     // If the custom authentication extra is enabled
     if (custom_authentication_extra())
     {
-        // Display the SSO login link
-        echo "<tr><td colspan=\"2\"><label><a href=\"extras/authentication/login.php\">" . $escaper->escapeHtml($lang['GoToSSOLoginPage']) . "</a></label></td></tr>\n";
+        // If SSO Login is enabled or not set yet
+	if(get_settting_by_name("GO_TO_SSO_LOGIN") === false || get_settting_by_name("GO_TO_SSO_LOGIN") === '1')
+        {
+            // Display the SSO login link
+            echo "<tr><td colspan=\"2\"><label><a href=\"extras/authentication/login.php\">" . $escaper->escapeHtml($lang['GoToSSOLoginPage']) . "</a></label></td></tr>\n";
+        }
     }
 
     echo "<a href=\"reset.php\">" . $escaper->escapeHtml($lang['ForgotYourPassword']) . "</a>";
@@ -262,11 +242,6 @@ if (isset($_SESSION["access"]) && ($_SESSION["access"] == "duo"))
     echo "</div>\n";
   }
   ?>
+  <script src="js/bootstrap.min.js"></script>
 </body>
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
-
-
-
-
 </html>

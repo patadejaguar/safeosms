@@ -1,16 +1,4 @@
-  
-
-    function hideNextReview(){
-    }
-    function showNextReview(){
-    }
-    function showScoreDetails(){
-    }
-    
-    function hideScoreDetails(){
-    }
-    
-  function addRisk($this){
+function addRisk($this){
     var tabContainer = $this.parents('.tab-data');
     var getForm = $this.parent().parent().parent().parent();
     var div = getForm.parent().parent();
@@ -32,10 +20,13 @@
         processData: false,
         success: function(data){
             var message = $(data).filter('#alert');
+            var is_red_alert = $(".redalert", message).length;
             var risk_id = $(data).filter('#risk_hid_id');
+            var messate_html = "<div id=\"alert\" class=\"container-fluid\">"+message.html()+"</div>";
 
-            $('#show-alert').html(message);
-            if (message[0].innerText != 'The subject of a risk cannot be empty.'){
+            $('#show-alert').html(messate_html);
+            // If error was returned
+            if (!is_red_alert){
                 if (isNaN(index)){
                     var subject = $('input[name="subject"]', getForm).val();
                     var subject = subject.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -51,7 +42,7 @@
                 
                 $.ajax({
                     type: "GET",
-                    url: "../api/management/risk/viewhtml?id=" + risk_id[0].innerText,
+                    url: BASE_URL + "/api/management/risk/viewhtml?id=" + risk_id[0].innerText,
                     success: function(data){
                         tabContainer.html(data.data);
 
@@ -159,10 +150,21 @@
                 terms.push( ui.item.value );
                 // add placeholder to get the comma-and-space at the end
                 terms.push( "" );
+
+                terms = terms.reverse().filter(function (e, i, arr) {
+                    return arr.indexOf(e, i+1) === -1;
+                }).reverse();
+
                 this.value = terms.join( ", " );
                 return false;
               }
-          });  
+          })
+        .focus(function(){
+            var self = $(this);
+            window.setTimeout(function(){
+                self.autocomplete("search", "");
+            }, 1000)
+        });
           
         /**
         * Set background on focus of textarea
@@ -178,7 +180,12 @@
         * Set Risk Scoring Method dropdown and show/hide the sub views
         */
         handleSelection($("[name=scoring_method]", tabContainer).val(), tabContainer)
-  }
+        
+        /**
+        * Build multiselect box
+        */
+        $(".multiselect", tabContainer).multiselect();
+    }
     
     /*
     * Function to add the css class for textarea title and make it popup.
@@ -186,8 +193,15 @@
     * focus_add_css_class("#foo", "#bar");
     */
     function focus_add_css_class(id_of_text_head, text_area_id, parent){
+        // If enable_popup setting is false, disable popup
+        if($("#enable_popup").val() != 1){
+            $("textarea").removeClass("enable-popup");
+            return;
+        }else{
+            $("textarea").addClass("enable-popup");
+        }
+        
         look_for = "textarea" + text_area_id;
-        console.log(look_for);
         if( !$(look_for, parent).length ){
             text_area_id = text_area_id.replace('#','');
             look_for = "textarea[name=" + text_area_id;
@@ -203,31 +217,31 @@
     }
 
   
-  /**
-  * Add empty container
-  * 
-  */
-  function addTabContainer(){
-        $('.tab-show button').show();
-        var num_tabs = $("div.container-fluid div.new").length + 1;
+/**
+* Add empty container
+* 
+*/
+function addTabContainer(){
+    $('.tab-show button').show();
+    var num_tabs = $("div.container-fluid div.new").length + 1;
 
-        $('.tab-show').removeClass('selected');
-        $("div.tab-append").append(
-          "<div class='tab new tab-show form-tab selected' id='tab"+num_tabs+"'><div><span>New Risk ("+num_tabs+")</span></div>"
-          +"<button class='close tab-close' aria-label='Close' data-id='"+num_tabs+"'>"
-          +"<i class='fa fa-close'></i>"
-          +"</button>"
-          +"</div>"
-        );
-        $('.tab-data').css({'display':'none'});
-        var tabContainerID = 'tab-container' + num_tabs;
-        $("#tab-content-container").append(
-          "<div class='tab-data' id='tab-container"+num_tabs+"'>&nbsp;</div>"
-        );
-        
-        return tabContainerID;
+    $('.tab-show').removeClass('selected');
+    $("div.tab-append").append(
+        "<div class='tab new tab-show form-tab selected' id='tab"+num_tabs+"'><div><span>New Risk ("+num_tabs+")</span></div>"
+        +"<button class='close tab-close' aria-label='Close' data-id='"+num_tabs+"'>"
+        +"<i class='fa fa-close'></i>"
+        +"</button>"
+        +"</div>"
+    );
+    $('.tab-data').css({'display':'none'});
+    var tabContainerID = 'tab-container' + num_tabs;
+    $("#tab-content-container").append(
+        "<div class='tab-data' id='tab-container"+num_tabs+"'>&nbsp;</div>"
+    );
 
-  }
+    return tabContainerID;
+
+}
 
   /**
   * Check edit status
@@ -247,8 +261,24 @@
       return false;
   }
   
+  function showScoreDetails() {
+  }
+
+  function hideScoreDetails() {
+  }
+
+  function updateScore() {
+  }
+
   
 $(document).ready(function(){
+    if(jQuery.ui !== undefined){
+        jQuery.ui.autocomplete.prototype._resizeMenu = function () {
+            var ul = this.menu.element;
+            ul.outerWidth(this.element.outerWidth());
+        }                
+    }
+
     /**
     * Open new risk
     * 
@@ -260,7 +290,7 @@ $(document).ready(function(){
         var tabContainer = $("#" + tabContainerID);
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/viewhtml?id=" + riskID,
+            url: BASE_URL + "/api/management/risk/viewhtml?id=" + riskID,
             success: function(data){
                 tabContainer.html(data.data);
                 callbackAfterRefreshTab(tabContainer, 0);
@@ -281,7 +311,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: value=="yes" ? "../api/management/risk/viewhtml?id=" + riskID : "../api/management/risk/viewhtml?action=editmitigation&id=" + riskID,
+            url: value=="yes" ? (BASE_URL + "/api/management/risk/viewhtml?id=" + riskID) : (BASE_URL + "/api/management/risk/viewhtml?action=editmitigation&id=" + riskID),
             success: function(data){
                 tabContainer.html(data.data);
                 callbackAfterRefreshTab(tabContainer, 1);
@@ -302,7 +332,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "GET",
-            url: value=="yes" ? "../api/management/risk/viewhtml?id=" + riskID : "../api/management/risk/viewhtml?action=editreview&id=" + riskID,
+            url: value=="yes" ? (BASE_URL + "/api/management/risk/viewhtml?id=" + riskID) : (BASE_URL + "/api/management/risk/viewhtml?action=editreview&id=" + riskID),
             success: function(data){
                 tabContainer.html(data.data);
                 callbackAfterRefreshTab(tabContainer, 2);
@@ -381,7 +411,7 @@ $(document).ready(function(){
         $('#show-alert').html('');
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveSubject?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/saveSubject?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -459,7 +489,7 @@ $(document).ready(function(){
         var tabContainer = $(this).parents('.tab-data');
         $(".scoredetails", tabContainer).hide();
         $(".updatescore", tabContainer).show();
-        $(".show", tabContainer).style.hide();
+        $(".show", tabContainer).hide();
 
     })
 
@@ -472,7 +502,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?action=editdetail&id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?action=editdetail&id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 0);
@@ -496,7 +526,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 0);
@@ -525,7 +555,7 @@ $(document).ready(function(){
         $('#show-alert').html('');
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveDetails?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/saveDetails?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -572,7 +602,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?action=editmitigation&id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?action=editmitigation&id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 1);
@@ -587,7 +617,6 @@ $(document).ready(function(){
         })
     })
     
-
     $('body').on('click', '.cancel-edit-mitigation', function(e){
         e.preventDefault();
         var tabContainer = $(this).parents('.tab-data');
@@ -595,7 +624,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 1);
@@ -624,17 +653,19 @@ $(document).ready(function(){
         $('#show-alert').html('');
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveMitigation?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/saveMitigation?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
             contentType: false,
             processData: false,
-            success: function(data){
-                $('.content-container', tabContainer).html(data.data);
+            success: function(result){
+                var data = result.data;
+                $('.content-container', tabContainer).html(data.html);
+                $('.score--wrapper', tabContainer).html(data.score_wrapper_html);
                 callbackAfterRefreshTab(tabContainer, 1);
-                if(data.status_message){
-                    $('#show-alert').html(data.status_message);
+                if(result.status_message){
+                    $('#show-alert').html(result.status_message);
                 }
             }
         })
@@ -668,7 +699,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?action=editreview&id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?action=editreview&id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 2);
@@ -690,7 +721,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/editdetails?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/editdetails?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
                 callbackAfterRefreshTab(tabContainer, 2);
@@ -719,7 +750,7 @@ $(document).ready(function(){
         $('#show-alert').html('');
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveReview?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/saveReview?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -731,6 +762,7 @@ $(document).ready(function(){
                 if(data.status_message){
                     $('#show-alert').html(data.status_message);
                 }
+                $('.save-review').prop('disabled', false)
             }
         })
         .fail(function(xhr, textStatus){
@@ -744,11 +776,13 @@ $(document).ready(function(){
                     $('#show-alert').html(xhr.responseJSON.status_message);
                 }
             }
+            $('.save-review').prop('disabled', false)
         });
     }
     
     $('body').on('click', '.save-review', function(e){
         e.preventDefault();
+        $('.save-review').prop('disabled', true)
         updateReview($(this));
     });
 
@@ -773,7 +807,7 @@ $(document).ready(function(){
         
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/view_all_reviews?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/view_all_reviews?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
             },
@@ -793,10 +827,9 @@ $(document).ready(function(){
         
         var getForm = $this.parents('form', tabContainer);
         var form = new FormData($(getForm)[0]);
-
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/closerisk?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/closerisk?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -834,7 +867,7 @@ $(document).ready(function(){
         var risk_id = $('.large-text', tabContainer).html();
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/closerisk?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/closerisk?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
             },
@@ -853,8 +886,8 @@ $(document).ready(function(){
         var tabContainer = $(this).parents('.tab-data');
         var risk_id = $('.large-text', tabContainer).html();
         $.ajax({
-            type: "GET",
-            url: "../api/management/risk/reopen?id=" + risk_id,
+            type: "POST",
+            url: BASE_URL + "/api/management/risk/reopen?id=" + risk_id,
             success: function(data){
                 if($('.show-score').is(":visible")){
                     $('.overview-container', tabContainer).html(data.data);
@@ -865,12 +898,13 @@ $(document).ready(function(){
                     $('.show-score').hide();
                     $('.hide-score').show();
                 }
-
-            
             },
             error: function(xhr,status,error){
-                if(xhr.responseJSON && xhr.responseJSON.status_message){
-                    $('#show-alert').html(xhr.responseJSON.status_message);
+                if(!retryCSRF(xhr, this))
+                {
+                    if(xhr.responseJSON && xhr.responseJSON.status_message){
+                        $('#show-alert').html(xhr.responseJSON.status_message);
+                    }
                 }
             }
         })
@@ -889,7 +923,7 @@ $(document).ready(function(){
         var risk_id = $('.large-text', tabContainer).html();
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/changestatus?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/changestatus?id=" + risk_id,
             success: function(data){
                 $('.content-container', tabContainer).html(data.data);
             },
@@ -910,7 +944,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/updateStatus?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/updateStatus?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -952,7 +986,7 @@ $(document).ready(function(){
         var visibleScoredetails = $('.hide-score', tabContainer).is(':visible');
         $.ajax({
             type: "GET",
-            url: "../api/management/risk/scoreaction?id=" + risk_id + "&scoring_method=" + scoring_method,
+            url: BASE_URL + "/api/management/risk/scoreaction?id=" + risk_id + "&scoring_method=" + scoring_method,
             success: function(data){
                 $('.score-overview-container', tabContainer).html(data.data);
                 if(visibleScoredetails){
@@ -991,7 +1025,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveScore?id=" + risk_id + "&action=" + action,
+            url: BASE_URL + "/api/management/risk/saveScore?id=" + risk_id + "&action=" + action,
             data: form,
             async: true,
             cache: false,
@@ -1053,26 +1087,27 @@ $(document).ready(function(){
     
     /**** End js for view html *******/
 
-    
-    
-    
-    
     /****** start comment *******/
-
     $('body').on('click', '.collapsible--toggle span', function(event) {
         event.preventDefault();
+        var container = $(this).parents('.well');
         $(this).parents('.collapsible--toggle').next('.collapsible').slideToggle('400');
         $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
+        if($('.collapsible', container).is(':visible') && $('.add-comments', container).hasClass('rotate')){
+            $('.add-comments', container).click()
+        }
     });
 
     $('body').on('click', '.add-comments', function(event) {
         event.preventDefault();
-        $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
+        var container = $(this).parents('.well');
+        if(!$('.collapsible', container).is(':visible')){
+            $(this).parents('.collapsible--toggle').next('.collapsible').slideDown('400');
+            $(this).parent().find('span i').removeClass('fa-caret-right');
+            $(this).parent().find('span i').addClass('fa-caret-down');
+        }
         $(this).toggleClass('rotate');
-        var tabContainer = $(this).parents('.tab-data');
-        $('.comment-form', tabContainer).fadeToggle('100');
-        $(this).parent().find('span i').removeClass('fa-caret-right');
-        $(this).parent().find('span i').addClass('fa-caret-down');
+        $('.comment-form', container).fadeToggle('100');
     });
 
     function saveComment($this){
@@ -1089,7 +1124,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: "../api/management/risk/saveComment?id=" + risk_id,
+            url: BASE_URL + "/api/management/risk/saveComment?id=" + risk_id,
             data: form,
             async: true,
             cache: false,
@@ -1198,6 +1233,7 @@ $(document).ready(function(){
         var form = $(this).parents('form');
         popupowasp(form);
     })
+    
     
 })
 

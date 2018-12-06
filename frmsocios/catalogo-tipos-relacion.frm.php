@@ -47,34 +47,44 @@ $xHG->setSQL("SELECT   `idsocios_relacionestipos`,
          `subclasificacion`,
          `descripcion_larga`,
          `puntos_en_scoring`,
-         getBooleanMX(`requiere_domicilio`) AS `requiere_domicilio`,
-         getBooleanMX(`requiere_actividadeconomica`) AS `requiere_actividadeconomica`,
-         getBooleanMX(`requiere_validacion`) AS `requiere_validacion`,
-         getBooleanMX(`tiene_vinculo_patrimonial`) AS `tiene_vinculo_patrimonial`,
-         getBooleanMX(`mostrar`) AS `mostrar`,
-         getBooleanMX(`checar_aml`) AS `checar_aml`,
+         (`requiere_domicilio`) AS `requiere_domicilio`,
+         (`requiere_actividadeconomica`) AS `requiere_actividadeconomica`,
+         (`requiere_validacion`) AS `requiere_validacion`,
+         (`tiene_vinculo_patrimonial`) AS `tiene_vinculo_patrimonial`,
+         (`mostrar`) AS `mostrar`,
+         (`checar_aml`) AS `checar_aml`,
          `tags`
-FROM     `socios_relacionestipos` LIMIT 0,100");
+FROM `socios_relacionestipos` WHERE `mostrar`=1 LIMIT 0,100");
 $xHG->addList();
 $xHG->setOrdenar();
 
 $xHG->addKey("idsocios_relacionestipos");
-$xHG->col("descripcion_relacionestipos", "TR.NOMBRE", "10%");
-$xHG->col("subclasificacion", "TR.CLASIFICACION", "10%");
+
+$xHG->col("descripcion_relacionestipos", "TR.NOMBRE", "35%");
+$xHG->col("subclasificacion", "TR.CLASIFICACION", "7%");
+
 //$xHG->col("descripcion_larga", "TR.DESCRIPCION", "10%");
 //$xHG->col("tipo_relacion", "TR.TIPO RELACION", "10%");
-$xHG->col("puntos_en_scoring", "TR.CALIFICACION", "10%");
-$xHG->col("requiere_domicilio", "TR.DOMICILIO", "10%");
-$xHG->col("requiere_actividadeconomica", "TR.ACTIVIDAD_ECONOMICA", "10%");
-$xHG->col("requiere_validacion", "TR.VALIDACION", "10%");
-$xHG->col("tiene_vinculo_patrimonial", "TR.VINCULO PATRIMONIAL", "10%");
-$xHG->col("mostrar", "TR.MOSTRAR", "10%");
-$xHG->col("checar_aml", "TR.AML", "10%");
-$xHG->col("tags", "TR.TAGS", "10%");
+//$xHG->col("puntos_en_scoring", "TR.CALIFICACION", "7%");
+
+$xHG->OColSiNo("requiere_domicilio", "TR.DOMICILIO", "7%");
+$xHG->OColSiNo("requiere_actividadeconomica", "TR.ACTIVIDAD_ECONOMICA", "7%");
+$xHG->OColSiNo("requiere_validacion", "TR.VALIDACION", "7%");
+$xHG->OColSiNo("tiene_vinculo_patrimonial", "TR.VINCULO", "7%");
+$xHG->OColSiNo("checar_aml", "TR.AML", "7%");
+
+//$xHG->OColSiNo("mostrar", "TR.MOSTRAR", "7%");
+//$xHG->col("tags", "TR.TAGS", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsocios_relacionestipos +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsocios_relacionestipos +')", "delete.png");
+
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.idsocios_relacionestipos +')", "undone.png");
+
+if(MODO_DEBUG == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsocios_relacionestipos +')", "delete.png");
+}
+
 $xFRM->addHElem("<div id='iddivrelaciones'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();
@@ -89,6 +99,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"socios_relacionestipos", id:id, callback:jsLGiddivrelaciones});
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"socios_relacionestipos", id:id, callback:jsLGiddivrelaciones, preguntar:true });
 }
 </script>
 <?php

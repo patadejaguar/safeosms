@@ -105,7 +105,7 @@ $tech		= 91;//Sistema Externo
 $propietario= 1;//1 = Admin
 $manager	= 1;//1 = Admin
 $equipo		= "";//Assests
-$notas		= $xAlert->getMensajes();
+$notas		= "Notas del Checking:" .  $xAlert->getNotasChecking() . "\r\nNotas del Sistema:" . $xAlert->getNotasSistema();
 $fecha_crea	= date("Y-m-d H:m:s", strtotime($xAlert->getFechaRegistro()));
 $enviadopor	= 1;//Admin
 $nivel		= 3.6;

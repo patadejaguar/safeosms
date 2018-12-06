@@ -14,25 +14,47 @@ function refreshFilelist($parent, currentButtonId){
             return;
         }
         $(this).attr("id", "file-upload-"+filesLength)
-        var name = $(this)[0].files[0].name;
+        var name = escapeHtml($(this)[0].files[0].name);
+        
         filesHtml += "<li >\
             <div class='file-name'>"+name+"</div>\
             <a href='#' class='remove-file' data-id='file-upload-"+filesLength+"'><i class='fa fa-remove'></i></a>\
         </li>";
         filesLength++;
     });
-    $($parent).find('.file-list').html(filesHtml);
+    $parent.find('.file-list').html(filesHtml);
     var totalFilesLength = $('.exist-files > li', $parent).length + filesLength;
     if(totalFilesLength > 1){
         $msg = "<span class='file-count'>" + totalFilesLength + "</span> Files Added"; 
     }else{ 
         $msg = "<span class='file-count'>" + totalFilesLength + "</span> File Added"; 
     }
-    $($parent).find('.file-count-html').html($msg);
+    $parent.find('.file-count-html').html($msg);
+
+    var name = $parent.find('.file_name').data('file');
+    if(!name)
+        name = "file";
+
     if(currentButtonId){
-        $parent.prepend($('<input id="'+currentButtonId+'" name="file[]" class="hidden-file-upload active" type="file">'))
+        $parent.prepend($('<input id="'+currentButtonId+'" name="'+name+'[]" class="hidden-file-upload active" type="file">'))
     }
     
+}
+/**
+* HTMLSPECIALCHARS
+* 
+* @param text
+*/
+function escapeHtml(text) {
+  var map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+
+  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 /**
 * popup when click "Score Using CVSS"
@@ -47,11 +69,11 @@ function popupcvss(parent)
     var pattern = /cve\-\d{4}-\d{4}/i;
 
     // If the field is a CVE ID
-    if (cve_id.match(pattern))
+    if (cve_id !== undefined && cve_id.match(pattern))
     {
-        my_window = window.open('cvss_rating.php?cve_id='+ cve_id ,'popupwindow','width=850,height=680,menu=0,status=0');
+        my_window = window.open(BASE_URL + '/management/cvss_rating.php?cve_id='+ cve_id ,'popupwindow','width=850,height=680,menu=0,status=0');
     }
-    else my_window = window.open('cvss_rating.php','popupwindow','width=850,height=680,menu=0,status=0');
+    else my_window = window.open(BASE_URL + '/management/cvss_rating.php','popupwindow','width=850,height=680,menu=0,status=0');
     
 }
 
@@ -62,7 +84,7 @@ function popupcvss(parent)
 function popupdread(parent)
 {
     parentOfScores = parent;
-    my_window = window.open('dread_rating.php','popupwindow','width=660,height=500,menu=0,status=0');
+    my_window = window.open(BASE_URL + '/management/dread_rating.php','popupwindow','width=660,height=500,menu=0,status=0');
 }
 
 /**
@@ -72,7 +94,7 @@ function popupdread(parent)
 function popupowasp(parent)
 {
     parentOfScores = parent;
-    my_window = window.open('owasp_rating.php','popupwindow','width=665,height=570,menu=0,status=0');
+    my_window = window.open(BASE_URL + '/management/owasp_rating.php','popupwindow','width=665,height=570,menu=0,status=0');
 }
 
 function closepopup()
@@ -92,24 +114,58 @@ function closepopup()
 * 
 * @param risk_id
 */
-function riskScoringChart(renderTo, risk_id){
+function riskScoringChart(renderTo, risk_id, risk_levels){
+    var backgroundColor = "#f5f5f5";
+    // Creates stops array
+    var stops = [
+        [0, backgroundColor],
+    ];
+    
+    risk_levels.sort(function(a, b){
+        if(Number(a.value) > Number(b.value) ){
+            return -1;
+        }
+        if(Number(a.value) < Number(b.value) ){
+            return 1;
+        }
+    })
+    risk_levels.push({value: 0, color: "#fff"});
+    
+    var to = 10;
+    var plotBands = [];
+    for(var i=0; i<risk_levels.length; i++){
+        var risk_level = risk_levels[i];
+        plotBands.push({
+            color: risk_level.color,
+            to: to,
+            from: Number(risk_level.value),
+        })
+        to = Number(risk_level.value);
+    }
+    // For all plots, change Date axis to local timezone
+    Highcharts.setOptions({                                            
+        global : {
+            useUTC : false
+        }
+    });
     var chartObj = new Highcharts.Chart( {
         chart: {
             renderTo: renderTo,
-            type: 'spline'
+            type: 'spline',
         },
         title: {
             text: $('#_RiskScoringHistory').length ? $("#_RiskScoringHistory").val() : 'Risk Scoring History'
         },
-
-        yAxis: {
+        yAxis: [{
             title: {
                 text: $('#_RiskScore').length ? $('#_RiskScore').val() : "Risk Score"
             },
             min: 0, 
-            max: 10
-        },
-         xAxis: {
+            max: 10,
+            gridLineWidth: 0, 
+            plotBands: plotBands,
+        }],
+        xAxis: [{
             type: 'datetime',
             dateTimeLabelFormats: { // don't display the dummy year
                 millisecond: '%Y-%m-%d<br/>%H:%M:%S',
@@ -123,13 +179,12 @@ function riskScoringChart(renderTo, risk_id){
             title: {
                 text: $("#_DateAndTime").val() ? $("#_DateAndTime").val() : "Date and time"
             }
-        },
+        }],
         legend: {
             layout: 'vertical',
             align: 'right',
             verticalAlign: 'middle'
         },
-
         plotOptions: {
             spline: {
                 marker: {
@@ -137,9 +192,9 @@ function riskScoringChart(renderTo, risk_id){
                 }
             }                    
         },
-
         series: [
-            {name: $('#_RiskScore').length ? $('#_RiskScore').val() : "Risk Score" }
+            {name: $('#_RiskScore').length ? $('#_RiskScore').val() : "Inherent Risk" },
+            {name: $('#_ResidualRiskScore').length ? $('#_ResidualRiskScore').val() : "ResidualRisk Score" },
         ]
 
     });
@@ -148,17 +203,21 @@ function riskScoringChart(renderTo, risk_id){
     chartObj.showLoading('<img src="../images/progress.gif">');
     $.ajax({
         type: "GET",
-        url: "../api/scoring_history?risk_id=" + risk_id,
+        url: BASE_URL + "/api/management/risk/residual_scoring_history?id=" + risk_id,
         dataType: 'json',
         success: function(data){
-            var histories = data.data;
-            var chartData = [];
-            for(var i=0; i<histories.length; i++){
-                var date = new Date(histories[i].last_update.replace(/\s/, 'T'));
-                chartData.push([date.getTime(), Number(histories[i].calculated_risk)]);
+            var residual_histories = data.data;
+            var residualChartData = [];
+            for(var i=0; i<residual_histories.length; i++){
+                // var date = new Date(histories[i].last_update.replace(/\s/, 'T'));
+                // Added the three lines below to make the timestamp work properly with Safari
+                var parts = residual_histories[i].last_update.split(/[ \/:-]/g);
+                var dateFormatted = parts[1] + "/" + parts[2] + "/" + parts[0] + " " + parts[3] + ":" + parts[4] + ":" + parts[5];
+                var date = new Date(dateFormatted);
+                residualChartData.push([date.getTime(), Number(residual_histories[i].residual_risk)]);
             }
             
-            chartObj.series[0].setData(chartData)
+            chartObj.series[1].setData(residualChartData)
             chartObj.hideLoading();
             
         },
@@ -168,11 +227,43 @@ function riskScoringChart(renderTo, risk_id){
             }
         }
     })
-    
+    $.ajax({
+        type: "GET",
+        url: BASE_URL + "/api/management/risk/scoring_history?id=" + risk_id,
+        dataType: 'json',
+        success: function(data){
+            var histories = data.data;
+            var chartData = [];
+            for(var i=0; i<histories.length; i++){
+                // var date = new Date(histories[i].last_update.replace(/\s/, 'T'));
+                // Added the three lines below to make the timestamp work properly with Safari
+                var parts = histories[i].last_update.split(/[ \/:-]/g);
+                var dateFormatted = parts[1] + "/" + parts[2] + "/" + parts[0] + " " + parts[3] + ":" + parts[4] + ":" + parts[5];
+                var date = new Date(dateFormatted);
+                chartData.push([date.getTime(), Number(histories[i].calculated_risk)]);
+            }
+            
+            chartObj.series[0].setData(chartData)
+
+            chartObj.hideLoading();
+            
+        },
+        error: function(xhr,status,error){
+            if(xhr.responseJSON && xhr.responseJSON.status_message){
+                $('#show-alert').html(xhr.responseJSON.status_message);
+            }
+        }
+    })
 }
 
-
 $(document).ready(function(){
+    if(jQuery.ui !== undefined){
+        jQuery.ui.autocomplete.prototype._resizeMenu = function () {
+            var ul = this.menu.element;
+            ul.outerWidth(this.element.outerWidth());
+        }                
+    }
+
     $(document).on('click', '.exist-files .remove-file', function(event) {
         event.preventDefault();
         var $parent = $(this).parents('.file-uploader');
@@ -191,7 +282,6 @@ $(document).ready(function(){
     
     $(document).on('change', '.hidden-file-upload.active', function(event) {
 //        event.preventDefault();
-
         var $parent = $(this).parents('.file-uploader');
         $(this).removeClass("active")
         var currentButtonId = $(this).attr('id');
@@ -203,28 +293,46 @@ $(document).ready(function(){
     $('body').on('click', '.show-score-overtime', function(e){
         e.preventDefault();
         var tabContainer = $(this).parents('.risk-session');
-        var risk_id = $('.large-text', tabContainer).html();
-        $('.score-overtime-container', tabContainer).show();
+            
+        $.ajax({
+            type: "GET",
+            url: BASE_URL + "/api/risk_levels",
+            dataType: 'json',
+            success: function(result){
+                var risk_id = $('.large-text', tabContainer).html();
+                $('.score-overtime-container', tabContainer).show();
 
-        riskScoringChart($('.socre-overtime-chart', tabContainer)[0], risk_id);
+                var risk_levels = result.data.risk_levels;
+                riskScoringChart($('.score-overtime-chart', tabContainer)[0], risk_id, risk_levels);
 
-        $('.hide-score-overtime', tabContainer).show();
-        $('.show-score-overtime', tabContainer).hide();
+                $('.hide-score-overtime', tabContainer).show();
+                $('.show-score-overtime', tabContainer).hide();
+            },
+            error: function(xhr,status,error){
+                if(xhr.responseJSON && xhr.responseJSON.status_message){
+                    $('#show-alert').html(xhr.responseJSON.status_message);
+                }
+            }
+        })
         
         return false;
     })
 
     $('body').on('click', '.hide-score-overtime', function(e){
         e.preventDefault();
+
         var tabContainer = $(this).parents('.risk-session');
         var risk_id = $('.large-text', tabContainer).html();
+
         $('.score-overtime-container', tabContainer).hide();
-
-//        riskScoringChart($('.socre-overtime-chart', tabContainer)[0], risk_id);
-
         $('.hide-score-overtime', tabContainer).hide();
         $('.show-score-overtime', tabContainer).show();
+
         return false;
     })
     
+    if($("#tab-container .multiselect").length){
+        $("#tab-container .multiselect").multiselect();
+    }
+
 })

@@ -48,6 +48,9 @@ if($tabla !== false ){
 			case "creditos_periocidadpagos";
 			$campo	= "estatusactivo";
 			break;
+			case "socios_relacionestipos":
+				$campo	= "mostrar";
+				break;
 		}
 		if($tabla == "creditos_tipoconvenio"){
 			$xProd	= new cProductoDeCredito($clave);

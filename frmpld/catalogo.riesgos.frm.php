@@ -33,7 +33,7 @@ $xHP->init();
 
 
 
-$xFRM	= new cHForm("frmaml_risk_catalog", "catalogo.riesgos.frm.php?action=$action");
+$xFRM		= new cHForm("frmaml_risk_catalog", "catalogo.riesgos.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
@@ -46,18 +46,24 @@ $xHG	= new cHGrid("iddivriskcatalog",$xHP->getTitle());
 $xHG->setSQL($xLi->getListadoDeCatalogoRiesgos());
 $xHG->addList();
 $xHG->addKey("clave_de_control");
-$xHG->col("descripcion", "TR.DESCRIPCION", "40%");
-$xHG->col("tipo_de_riesgo", "TR.TIPO", "10%");
-$xHG->col("valor_ponderado", "TR.VALOR", "10%");
-$xHG->col("unidades_ponderadas", "TR.UNIDADES", "10%");
-$xHG->col("unidad_de_medida", "TR.MEDIDA", "10%");
+
+$xHG->col("descripcion", "TR.DESCRIPCION", "35%");
+$xHG->col("tipo_de_riesgo", "TR.TIPO", "15%");
+
+$xHG->col("valor_ponderado", "TR.VALOR", "7%");
+
+$xHG->ColMoneda("unidades_ponderadas", "TR.UNIDADES", "10%");
+$xHG->col("unidad_de_medida", "TR.MEDIDA", "7%");
 $xHG->col("forma_de_reportar", "TR.REPORTE", "7%");
 $xHG->col("frecuencia_de_chequeo", "TR.CHEQUEO", "7%");
 //$xHG->col("fundamento_legal", "TR.FUNDAMENTO LEGAL", "10%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "add.png");
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_de_control +')", "delete.png");
+
 $xFRM->addHElem("<div id='iddivriskcatalog'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();

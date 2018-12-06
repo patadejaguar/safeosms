@@ -7,6 +7,7 @@
     require_once(realpath(__DIR__ . '/../../includes/functions.php'));
     require_once(realpath(__DIR__ . '/../../includes/authenticate.php'));
     require_once(realpath(__DIR__ . '/../../includes/display.php'));
+    require_once(realpath(__DIR__ . '/../../includes/permissions.php'));
 
     // Include Zend Escaper for HTML Output Encoding
     require_once(realpath(__DIR__ . '/../../includes/Component_ZendEscaper/Escaper.php'));
@@ -17,7 +18,7 @@
     header("X-XSS-Protection: 1; mode=block");
 
     // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-    if (CSP_ENABLED == "true")
+    if (csp_enabled())
     {
             // Add the Content-Security-Policy header
     header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
@@ -55,6 +56,9 @@
         exit(0);
     }
 
+    // Enforce that the user has access to risk management
+    enforce_permission_riskmanagement();
+
     // Check if a risk ID was sent
     if (isset($_GET['id']) || isset($_POST['id']))
     {
@@ -90,16 +94,23 @@
         // If the risk was found use the values for the risk
         if (count($risk) != 0)
         {
-                $status = $risk[0]['status'];
-                $subject = $risk[0]['subject'];
-                $calculated_risk = $risk[0]['calculated_risk'];
+            $status = $risk[0]['status'];
+            $subject = $risk[0]['subject'];
+            $calculated_risk = $risk[0]['calculated_risk'];
         }
         // If the risk was not found use null values
         else
         {
-                $status = "Risk ID Does Not Exist";
-                $subject = "N/A";
-                $calculated_risk = "0.0";
+            // If Risk ID exists.
+            if(check_risk_by_id($id)){
+                $status = $lang["RiskDisplayPermission"];
+            }
+            // If Risk ID does not exist.
+            else{
+                $status = $lang["RiskIdDoesNotExist"];
+            }
+            $subject = "N/A";
+            $calculated_risk = "0.0";
         }
     }
 
@@ -142,6 +153,6 @@
     </div>
 </div>
 
-        <input type="hidden" id="_token_value" value="<?php echo csrf_get_tokens(); ?>">
-        <input type="hidden" id="_lang_reopen_risk" value="<?php echo $lang['ReopenRisk']; ?>">
-        <input type="hidden" id="_lang_close_risk" value="<?php echo $lang['CloseRisk']; ?>">
+<input type="hidden" id="_token_value" value="<?php echo csrf_get_tokens(); ?>">
+<input type="hidden" id="_lang_reopen_risk" value="<?php echo $lang['ReopenRisk']; ?>">
+<input type="hidden" id="_lang_close_risk" value="<?php echo $lang['CloseRisk']; ?>">

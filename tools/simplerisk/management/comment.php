@@ -7,21 +7,14 @@
         require_once(realpath(__DIR__ . '/../includes/functions.php'));
         require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
 	require_once(realpath(__DIR__ . '/../includes/display.php'));
+	require_once(realpath(__DIR__ . '/../includes/permissions.php'));
 
         // Include Zend Escaper for HTML Output Encoding
         require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
         $escaper = new Zend\Escaper\Escaper('utf-8');
 
         // Add various security headers
-        header("X-Frame-Options: DENY");
-        header("X-XSS-Protection: 1; mode=block");
-
-        // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-        if (CSP_ENABLED == "true")
-        {
-                // Add the Content-Security-Policy header
-		header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-        }
+	add_security_headers();
 
         // Session handler is database
         if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -49,9 +42,13 @@
         // Check if access is authorized
         if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
         {
+		set_unauthenticated_redirect();
                 header("Location: ../index.php");
                 exit(0);
         }
+
+	// Enforce that the user has access to risk management
+	enforce_permission_riskmanagement();
 
         // Check if a risk ID was sent
         if (isset($_GET['id']) || isset($_POST['id']))
@@ -95,36 +92,59 @@
                 // If the risk was not found use null values
                 else
                 {
-                        $status = "Risk ID Does Not Exist";
-                        $subject = "N/A";
-                        $calculated_risk = "0.0";
+                    // If Risk ID exists.
+                    if(check_risk_by_id($id)){
+                        $status = $lang["RiskDisplayPermission"];
+                    }
+                    // If Risk ID does not exist.
+                    else{
+                        $status = $lang["RiskIdDoesNotExist"];
+                    }
+                    $subject = "N/A";
+                    $calculated_risk = "0.0";
                 }
+
+                // Get the mitigation for the risk
+                $mitigation = get_mitigation_by_id($id);
+                if ($mitigation == true){
+                    $mitigation_percent = isset($mitigation[0]['mitigation_percent']) ? $mitigation[0]['mitigation_percent'] : 0;
+                }
+                else
+                {
+                    $mitigation_percent = 0;
+                }
+                
         }
 
         // Check if a new comment was submitted
         if (isset($_POST['submit']))
         {
-                $comment = $_POST['comment'];
-               if($comment == null){
-                    set_alert(true, "bad", "Your comment not added to the risk.Please fill the comment field");
-                }
-               if($comment != null){
-                // Add the comment
-                add_comment($id, $_SESSION['uid'], $comment);
+               // Make sure the user has permission to comment
+               if($_SESSION["comment_risk_management"] == 1) {
+                   $comment = $_POST['comment'];
+                   if($comment == null){
+                        set_alert(true, "bad", "Your comment not added to the risk.Please fill the comment field");
+                    }
+                   if($comment != null){
+                        // Add the comment
+                        add_comment($id, $_SESSION['uid'], $comment);
 
-		// Display an alert
-		set_alert(true, "good", "Your comment has been successfully added to the risk.");
+       	                // Display an alert
+                        set_alert(true, "good", "Your comment has been successfully added to the risk.");
+                    }
                }
-		// Check that the id is a numeric value
-		if (is_numeric($id))
-		{
-                	// Create the redirection location
-                	$url = "view.php?id=" . $id;
+        }
+        else {
+           set_alert(true, "bad", "You do not have permission to add comments to risks");
+        }
+        // Check that the id is a numeric value
+        if (is_numeric($id))
+        {
+            // Create the redirection location
+            $url = "view.php?id=" . $id;
 
-	                // Redirect to risk view page
-        	        header("Location: " . $url);
-		}
-                
+            // Redirect to risk view page
+            header("Location: " . $url);
         }
 ?>
 
@@ -164,7 +184,7 @@
         <div class="span9">
           <div class="row-fluid">
             <div class="well">
-              <?php view_top_table($id, $calculated_risk, $subject, $status, false); ?>
+              <?php view_top_table($id, $calculated_risk, $subject, $status, false, $mitigation_percent); ?>
             </div>
           </div>
           <div class="row-fluid">

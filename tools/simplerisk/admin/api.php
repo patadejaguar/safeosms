@@ -14,15 +14,7 @@
         $escaper = new Zend\Escaper\Escaper('utf-8');
 
         // Add various security headers
-        header("X-Frame-Options: DENY");
-        header("X-XSS-Protection: 1; mode=block");
-
-        // If we want to enable the Content Security Policy (CSP) - This may break Chrome
-        if (CSP_ENABLED == "true")
-        {
-                // Add the Content-Security-Policy header
-		header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
-        }
+	add_security_headers();
 
         // Session handler is database
         if (USE_DATABASE_FOR_SESSIONS == "true")
@@ -50,6 +42,7 @@
         // Check if access is authorized
         if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
         {
+		set_unauthenticated_redirect();
                 header("Location: ../index.php");
                 exit(0);
         }
@@ -96,9 +89,15 @@ function display()
                 // But the extra is not activated
                 if (!api_extra())
                 {
-                        echo "<form name=\"activate\" method=\"post\" action=\"\">\n";
-                        echo "<input type=\"submit\" value=\"" . $escaper->escapeHtml($lang['Activate']) . "\" name=\"activate\" /><br />\n";
-                        echo "</form>\n";
+			// If the extra is not restricted based on the install type
+			if (!restricted_extra("api"))
+			{
+                        	echo "<form name=\"activate\" method=\"post\" action=\"\">\n";
+                        	echo "<input type=\"submit\" value=\"" . $escaper->escapeHtml($lang['Activate']) . "\" name=\"activate\" /><br />\n";
+                        	echo "</form>\n";
+			}
+			// The extra is restricted
+			else echo $escaper->escapeHtml($lang['YouNeedToUpgradeYourSimpleRiskSubscription']);
                 }
                 // Once it has been activated
                 else
@@ -112,7 +111,7 @@ function display()
         // Otherwise, the Extra does not exist
         else
         {
-                echo "<a href=\"https://www.simplerisk.it/extras\" target=\"_blank\">Purchase the Extra</a>\n";
+                echo "<a href=\"https://www.simplerisk.com/extras\" target=\"_blank\">Purchase the Extra</a>\n";
         }
 }
 

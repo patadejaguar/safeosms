@@ -1993,6 +1993,8 @@ class cCantidad {
 	function getFicha(){
 		return "<div class='tx1'><div class='cantidad-moneda' style='min-width:24%'>" . $this->moneda() . "</div><div class='cantidad-letras' style='min-width:74%'>" . $this->letras() . "</div></div>";
 	}
+	function l($monto = false){ return $this->letras($monto); }
+	function m($monto = false){ return $this->moneda($monto); }
 }
 
 /*================================================================= CLASE PARA MIGRAR ============================================*/

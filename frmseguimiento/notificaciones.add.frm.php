@@ -110,6 +110,7 @@ if($credito > DEFAULT_CREDITO AND $monto > TOLERANCIA_SALDOS){
 	//$xFRM->addCerrar();
 } else {
 	if($credito <= DEFAULT_CREDITO){
+		$xFRM->addEnviar();
 		$xFRM->addCreditBasico();
 	} else {
 		$xCred	= new cCredito($credito);

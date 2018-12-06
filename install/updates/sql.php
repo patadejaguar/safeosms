@@ -4383,9 +4383,9 @@ $sql["20181101"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codi
 $sql["20181101"][]	= "SELECT setNuevoPermisoX('creditos.ben-prop-real.frm.php')";
 $sql["20181101"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codigos`, `description_error`, `type_err`) VALUES ('10101', 'Relacion Persona-Persona Agregada', 'common') ";
 $sql["20181101"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codigos`, `description_error`, `type_err`) VALUES ('10102', 'Relacion Persona-Persona Eliminada', 'common')";
-//$sql["20181101"][]	= "";
-//$sql["20181101"][]	= "";
-//$sql["20181101"][]	= "";
+$sql["20181101"][]	= "CREATE TABLE IF NOT EXISTS `aml_riesgos_calif` ( `idaml_riesgos_calif` INT NOT NULL AUTO_INCREMENT,  `objeto_de_origen` VARCHAR(50) NULL,  `clave_de_origen` INT(8) NOT NULL,  `probabilidad` INT(4) NULL DEFAULT '0' COMMENT 'probabilidad de ocurrencia',  `impacto` FLOAT(8,4) NULL DEFAULT '0',  `consecuencia` INT(4) NULL DEFAULT '0' COMMENT 'tipo de consecuencias',  `contagio` INT(4) NULL DEFAULT '0' COMMENT 'tipo de contagio operacional, legal',  `estatus` INT(1) NULL DEFAULT '1',  PRIMARY KEY (`idaml_riesgos_calif`)) ENGINE = InnoDB ";
+$sql["20181101"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codigos`, `description_error`, `type_err`) VALUES ('20022', 'Garantia Registrada', 'common')";
+$sql["20181101"][]	= "INSERT INTO `general_error_codigos` (`idgeneral_error_codigos`, `description_error`, `type_err`) VALUES ('20023', 'Garantia en Resguardo', 'common')";
 //$sql["20181101"][]	= "";
 //$sql["20181101"][]	= "";
 //$sql["20181101"][]	= "SELECT setNuevoPermisoX('')";

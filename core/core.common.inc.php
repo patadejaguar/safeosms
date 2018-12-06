@@ -939,7 +939,8 @@ class cSocio{
 		if( $xObj->isInit() == true){
 			$this->mDatosDomicilio	= $xObj->getDatosInArray();
 			$this->mOBDomicilio		= $xObj;
-			$this->mMessages		= "OK\tDomicilio Iniciado con el ID " . $xObj->getClaveUnica() . "\r\n";
+			//$this->mMessages		= "OK\tDomicilio Iniciado con el ID " . $xObj->getClaveUnica() . "\r\n";
+			$this->mMessages		= "OK\tEL Domicilio con ID " . $xObj->getClaveUnica() . " parece valido\r\n";
 		}
 		return $this->mOBDomicilio;
 	}
@@ -1996,7 +1997,7 @@ class cSocio{
 			if($this->getNivelDeRiesgo() != $NRiesgo){
 				//$ready		= false;
 				//$EsOperable	= false;
-				$xLog->add("ERROR\t" . $this->mCodigo . "\tRiesgo\tEl riesgo($NRiesgo) es diferente al actual(" . $this->getNivelDeRiesgo() . ") \r\n");
+				$xLog->add("ERROR\t" . $this->mCodigo . "\tRiesgo\tEl riesgo($NRiesgo) es diferente al actual(" . $this->getNivelDeRiesgo() . ") \r\n", $xLog->DEVELOPER);
 				if($corregir == true){ 
 					$this->setAMLAutoActualizarNivelRiesgo();
 					$xReg->add($xReg->PERS_FALLA_AML1, true);
@@ -2923,6 +2924,7 @@ class cSocio{
 		$xRuls			= new cReglaDeNegocio();
 		$SinFechaAnt	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_SOLICITUD_SIN_FECHA_ANT);		//regla de negocio
 		$SinPerAnt		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_SOLICITUD_SIN_PERIODO_ANT);		//regla de negocio
+		$xCant			= new cCantidad();
 		//Datos a Manejar
 		$monto_maximo 		= 0;		
 		
@@ -2943,7 +2945,7 @@ class cSocio{
 		$dias				= ( $periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO OR $periocidad == CREDITO_TIPO_PERIOCIDAD_DIARIO ) ? ( $xF->setRestarFechas($fecha_de_venc, $fecha_de_min) ) : ($periocidad * $pagos) ;
 		if(MODO_MIGRACION == true  ){
 			//omitir evaluacion
-			$xLog->add("WARN\t$socio\t$solicitud\tNo se evalua el periodo\r\n");
+			$xLog->add("WARN\t$socio\t$solicitud\tNo se evalua el periodo\r\n", $xLog->DEVELOPER);
 		} else {
 			$xPC			= new cPeriodoDeCredito();
 			$xPC->init();
@@ -2974,7 +2976,7 @@ class cSocio{
 		
 		if( $convenio <= 0 ){
 			$sucess			= false;
-			$xLog->add("ERROR\t$socio\tEl tipo de Convenio no es Valido\r\n");
+			$xLog->add("ERROR\t$socio\tEl tipo de Convenio $convenio no es Valido\r\n");
 		} else {
 			$xConv					= new cProductoDeCredito($convenio);
 			
@@ -3076,6 +3078,8 @@ class cSocio{
 			if( $monto > $monto_maximo ){
 				$xLog->add("ERROR\t$socio\tEl Monto Solicitado $monto es mayor al Maximo Permitido $monto_maximo ($producto_monto_maximo)\r\n");
 				$sucess				= false;				
+			} else {
+				$xLog->add("OK\t$socio\tEl Monto Solicitado $monto es menor o igual al Maximo Permitido " . $xCant->m($monto_maximo) . " (Por Producto: " . $xCant->m($producto_monto_maximo) . ")\r\n");
 			}
 			if($periocidad == CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO AND $pagos > 1){
 				$xLog->add("ERROR\t$socio\tLos pagos debe ser Igual a 1\r\n");

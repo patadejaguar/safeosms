@@ -317,7 +317,7 @@ $xTxt		= new cHText();
 $xTxt2		= new cHText();
 $xChk		= new cHCheckBox();
 $xChk->setDivClass("");
-$xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
+$xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR, "idcmdbuscarpers", "blue");
 $xFRM->addToolbar($xChk->get("TR.Todos", "idtodo"));
 $xTxt->addEvent("jsGetPersonasByKey(this)", "onkeyup");$xTxt2->addEvent("jsGetPersonasByKey2(this)", "onkeyup");
 $xTxt->setDivClass("");

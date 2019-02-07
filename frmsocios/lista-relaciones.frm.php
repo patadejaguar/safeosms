@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.LISTA DE RELACIONES", HP_FORM);
+$xHP		= new cHPage("TR.ARBOL_DE_RELACIONES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -76,8 +76,8 @@ WHERE (`idsocios_relaciones`>0)");
 $xHG->addList();
 $xHG->setOrdenar();
 
-$xHG->col("relacion", "TR.NOMBRE AVAL", "20%");
-$xHG->col("relacionado", "TR.AVALADO", "20%");
+$xHG->col("relacion", "TR.NOMBRE", "20%");
+$xHG->col("relacionado", "TR.RELACIONADO", "20%");
 $xHG->col("contrato", "TR.CONTRATO", "10%");
 $xHG->col("tipo", "TR.TIPO", "10%");
 $xHG->col("consanguinidad", "TR.CONSANGUINIDAD", "10%");

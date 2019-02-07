@@ -37,6 +37,8 @@ $xFRM		= new cHForm("frmcambiarperiodo", "cambiarperiodo.frm.php");
 $xSel		= new cHSelect();
 $msg		= "";
 
+$xFRM->setTitle($xHP->getTitle());
+
 if(setNoMenorQueCero($periodo) > 0){
 	$xP		= new cPeriodoDeCredito($periodo);
 	$msg	= $xP->setCambiar($periodo);
@@ -49,7 +51,11 @@ $xFRM->OButton("TR.Agregar Nuevo", "addPeriodo()", $xFRM->ic()->AGREGAR);
 
 $xT			= new cTabla($xLi->getListadoDePeriodosDeCredito($xF->get()));
 $xFRM->addHTML($xT->Show());
-$xFRM->addSubmit("", "", "setTerminar()");
+$xFRM->addRefrescar();
+$xFRM->addSubmit();
+
+
+$xFRM->OButton("TR.Salir", "var xG = new Gen(); xG.salir()", $xFRM->ic()->SALIR, "cmsalir", "yellow");
 
 echo $xFRM->get();
 
@@ -60,7 +66,6 @@ var xG	= new Gen();
 	function setPeriodo(Id){
 		document.frmupdateperiodo.cPeriodo.value = Id;
 	}
-	function setTerminar(){	window.location = "../utils/clssalir.php";	}
 	function jsToAction(){
 		if ( document.getElementById("idPeriodo").value == "nuevo" ){
 			jsGenericWindow("./frmperiodos.php");

@@ -169,12 +169,12 @@ class cSystemUser{
 	}
 	function getFicha(){
 		if($this->mUserIniciado == false){ $this->init(); }
-		$xP		= new cGeneral_niveles();
-		$xP->setData($xP->query()->initByID($this->getNivel()));
+		$xSysN	= new cSystemPerfiles($this->getNivel()); $xSysN->init();
+		
 		$tdUniq	= "";
 		
 		
-		if(getUsuarioActual() == $this->getID()){
+		if(getUsuarioActual() == $this->getID() OR (MODO_DEBUG == true)){
 			$tdUniq = "				<tr>
 				<th class='izq'>Clave API</th><td>" . $this->getCTX() . "</td>
 				<th class='izq'>Cuenta Contable de Caja</th><td>" . $this->getCuentaContableDeCaja() . "</td>
@@ -187,7 +187,7 @@ class cSystemUser{
 				<th class='izq'>Nombre Completo</th><td>" . $this->getNombreCompleto() . "</td>
 				</tr>
 				<tr>
-				<th class='izq'>Nivel</th><td>" . $xP->descripcion_del_nivel()->v() . "</td>
+				<th class='izq'>Nivel</th><td>" . $xSysN->getNombre() . "</td>
 				<th class='izq'>Estado</th><td>" . $this->getEstado() . "</td>
 				</tr>
 				$tdUniq
@@ -209,22 +209,24 @@ class cSystemUser{
 			$inCache		= false;
 		}
 		if(isset($D["niveldeacceso"])){
-			$this->mDatosInArray	= $D;
-			$this->mNivel			= $D["niveldeacceso"];
-			$this->mClaveDePersona	= setNoMenorQueCero($D["codigo_de_persona"]);
-			$this->mID				= $D["idusuarios"];
-			$this->mPWD				= $D["contrasenna"];
-			$this->mNombreUser		= $D["nombreusuario"];
-			$this->mAlias			= $D["alias"];
-			$this->mEstado			= $D["estatus"];
-			$this->mCuentaDeCaja	= setNoMenorQueCero($D["cuenta_contable_de_caja"]) <= 0 ? CUENTA_DE_CUADRE : $D["cuenta_contable_de_caja"];
-			$this->mFechaExpira		= $D["expira"];
-			$this->mCorporativo		= ($D["corporativo"] == 1) ? true : false;
-			$this->mSucursal		= $D["sucursal"];
-			$this->mPuesto			= $D["puesto"];
-			$this->mNombreCompleto	= $D["apellidopaterno"] . " " . $D["apellidomaterno"] . " " . $D["nombres"];
-			$this->mOptions			= $D["opciones"];
-			$this->mUserIniciado	= true;
+			$this->mDatosInArray		= $D;
+			$this->mNivel				= $D["niveldeacceso"];
+			$this->mClaveDePersona		= setNoMenorQueCero($D["codigo_de_persona"]);
+			$this->mID					= $D["idusuarios"];
+			$this->mPWD					= $D["contrasenna"];
+			$this->mNombreUser			= $D["nombreusuario"];
+			$this->mAlias				= $D["alias"];
+			$this->mEstado				= $D["estatus"];
+			$this->mCuentaDeCaja		= setNoMenorQueCero($D["cuenta_contable_de_caja"]) <= 0 ? CUENTA_DE_CUADRE : $D["cuenta_contable_de_caja"];
+			$this->mFechaExpira			= $D["expira"];
+			$this->mCorporativo			= ($D["corporativo"] == 1) ? true : false;
+			$this->mSucursal			= $D["sucursal"];
+			$this->mPuesto				= $D["puesto"];
+			$this->mNombreCompleto		= $D["apellidopaterno"] . " " . $D["apellidomaterno"] . " " . $D["nombres"];
+			$this->mOptions				= $D["opciones"];
+			$this->mCorreoElectronico	= $D["uuid_mail"];
+			
+			$this->mUserIniciado		= true;
 			if($this->mNivel == 99){
 				if( isset($_SESSION["tmp.nivel.de.user"]) ){
 					$this->mNivel	= setNoMenorQueCero($_SESSION["tmp.nivel.de.user"]);
@@ -434,56 +436,89 @@ class cSystemUser{
 	function initByCTX($ctx){
 		$res	= false;
 		$xQL	= new MQL();
-		$ctx	= urldecode($ctx);
-		$ctx	= base64_decode($ctx);
-		$ctx	= strtolower($ctx);
-		$saveLog= true;
-		//setLog($sql);
-		$xCache	= new cCache();
-		$cid	= "ctx-$ctx";
-		$DD		= explode("-", $ctx);
-		$DD1	= (isset($DD[0])) ? explode(".", $DD[0]) : array();
-		$DD2	= (isset($DD[1])) ? explode(".", $DD[1]) : array();
-		$idx1	= (isset($DD1[0])) ? setNoMenorQueCero($DD1[0]) : null;
-		$idx2	= (isset($DD2[0])) ? setNoMenorQueCero($DD2[0]) : null;
-		if($idx1 !== null AND $idx2 !== null){
-			$c1		= (isset($DD1[1])) ? $DD1[1] : md5(rand(9999,99999));
-			$c2		= (isset($DD2[1])) ? $DD2[1] : md5(rand(99991,999991));
-			$idx1	= $idx1+1;
-			$idx2	= $idx2+1;
-			/*$sql	= "SELECT	`t_03f996214fba4a1d05a68b18fece8e71`.* FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE
-			CONCAT( getHash(`idusuarios`), '-',getHash(`f_34023acbff254d34664f94c3e08d836e`) ) = '$ctx' LIMIT 0,1";*/
-			$sql	= "SELECT	`t_03f996214fba4a1d05a68b18fece8e71`.* FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE 
-			SUBSTRING(getHash(`idusuarios`), $idx1,5 ) = '$c1' AND SUBSTRING(getHash(`f_34023acbff254d34664f94c3e08d836e`), $idx2,5) = '$c2' LIMIT 0,1";
-			
-			
-			$DCTX	= $xCache->get($cid);
-			if(!is_array($DCTX)){
-				$DCTX		= $xQL->getDataRow($sql);
-			} else {
-				$saveLog	= false;
-			}
-			if(isset($DCTX["idusuarios"])){
+
+		if(substr($ctx, 0,3) === "AA-"){
+			$xApi	= new cSistemaApis();
+			if($xApi->initByAPIKey($ctx) == true){
 				$this->mTypeById 	= true;
-				$this->mCodeUser	= $DCTX["idusuarios"];
-				$this->mEstado		= $DCTX["estatus"];
-				$usr				= $DCTX["f_28fb96d57b21090705cfdf8bc3445d2a"];
-				 
-				//SN_b80bb7740288fda1f201890375a60c8f
-				//Iniciar Session
-				//$xSVC				= new MQLService("", "");
-				//$xSVC->setKey(getClaveCifradoTemporal());			
-				$pass				= $DCTX["f_34023acbff254d34664f94c3e08d836e"];
-				//$pass				= $xSVC->getEncryptData($pass);
+				$this->mCodeUser	= $xApi->getUsuario();
+				$this->mID			= $xApi->getUsuario();
+				
 				if(isset($_SESSION)){
 					$_SESSION[SYS_USER_ID] = $this->mCodeUser;
 				}
-				$this->initSession($usr, "", $pass, $saveLog);
-				$xCache->set($cid, $DCTX, $xCache->EXPIRA_5MIN);
-				$res				= true;
-				$this->init();
+				
+				if($this->init() === true){
+					
+					if($this->getEsBaja() == false){
+						
+						if($this->initSession($this->getNombreDeUsuario(),"", $this->mPWD) == true){
+							
+							$xApi->setDefuse(1);
+							$res	= true;
+						}
+					}
+				}
+			}
+			setAgregarEvento_($xApi->getMessages(), 10);
+		} else {
+			
+			
+			if(USUARIOS_POR_CTX == false){
+				setAgregarEvento_("ERROR\tUsuario por contexto deshabilitado\r\n", 98);
+			} else {
+				$ctx	= urldecode($ctx);
+				$ctx	= base64_decode($ctx);
+				$ctx	= strtolower($ctx);
+				$saveLog= true;
+				//setLog($sql);
+				$xCache	= new cCache();
+				$cid	= "ctx-$ctx";
+				$DD		= explode("-", $ctx);
+				$DD1	= (isset($DD[0])) ? explode(".", $DD[0]) : array();
+				$DD2	= (isset($DD[1])) ? explode(".", $DD[1]) : array();
+				$idx1	= (isset($DD1[0])) ? setNoMenorQueCero($DD1[0]) : null;
+				$idx2	= (isset($DD2[0])) ? setNoMenorQueCero($DD2[0]) : null;
+				if($idx1 !== null AND $idx2 !== null){
+					$c1		= (isset($DD1[1])) ? $DD1[1] : md5(rand(9999,99999));
+					$c2		= (isset($DD2[1])) ? $DD2[1] : md5(rand(99991,999991));
+					$idx1	= $idx1+1;
+					$idx2	= $idx2+1;
+					/*$sql	= "SELECT	`t_03f996214fba4a1d05a68b18fece8e71`.* FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE
+					 CONCAT( getHash(`idusuarios`), '-',getHash(`f_34023acbff254d34664f94c3e08d836e`) ) = '$ctx' LIMIT 0,1";*/
+					$sql	= "SELECT	`t_03f996214fba4a1d05a68b18fece8e71`.* FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE
+				SUBSTRING(getHash(`idusuarios`), $idx1,5 ) = '$c1' AND SUBSTRING(getHash(`f_34023acbff254d34664f94c3e08d836e`), $idx2,5) = '$c2' LIMIT 0,1";
+					
+					
+					$DCTX	= $xCache->get($cid);
+					if(!is_array($DCTX)){
+						$DCTX		= $xQL->getDataRow($sql);
+					} else {
+						$saveLog	= false;
+					}
+					
+					if(isset($DCTX["idusuarios"])){
+						$this->mTypeById 	= true;
+						$this->mCodeUser	= $DCTX["idusuarios"];
+						$this->mEstado		= $DCTX["estatus"];
+						$this->mCorreoElectronico = $DCTX["uuid_mail"];
+						$usr				= $DCTX["f_28fb96d57b21090705cfdf8bc3445d2a"];
+						
+						$pass				= $DCTX["f_34023acbff254d34664f94c3e08d836e"];
+						//$pass				= $xSVC->getEncryptData($pass);
+						if(isset($_SESSION)){
+							$_SESSION[SYS_USER_ID] = $this->mCodeUser;
+						}
+						$this->initSession($usr, "", $pass, $saveLog);
+						$xCache->set($cid, $DCTX, $xCache->EXPIRA_5MIN);
+						$res				= true;
+						$this->init();
+					}
+				}
 			}
 		}
+		
+
 		return $res;
 	}
 	function getNombreDeUsuario(){ return $this->mNombreUser;  }
@@ -504,7 +539,14 @@ class cSystemUser{
 			$this->mNombreCompleto	= $xPer->getNombreCompleto();
 			
 			$xT->alias($alias);
-			$this->mCorreoElectronico	= $xPer->getCorreoElectronico();
+			
+			//=============== Actualizar Email
+			if(!filter_var($this->mCorreoElectronico, FILTER_VALIDATE_EMAIL)){
+				if(filter_var($xPer->getCorreoElectronico(), FILTER_VALIDATE_EMAIL)){
+					$this->mCorreoElectronico	= $xPer->getCorreoElectronico();
+					$this->setCorreoElectronico($this->mCorreoElectronico);
+				}
+			}
 			
 			$ready			= $xT->query()->update()->save( $this->getID() );
 			if($ready == false){
@@ -772,10 +814,76 @@ class cSystemUser{
 	}
 	function getEnDesarrollo(){
 		$res	= false;
-		if(MODO_DEBUG == true AND (MODO_CORRECION == true OR MODO_MIGRACION == true) ){
+		if(MODO_DEBUG == true AND (MODO_CORRECION == true OR MODO_MIGRACION == true OR SAFE_ON_DEV == true) ){
 			return true;
 		}
 		return $res;
+	}
+	function setID($id){ $this->mID = $id; }
+	function initByEmail($email){
+		$res	= false;
+		if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$xT		= new cT_03f996214fba4a1d05a68b18fece8e71();
+			$xQL	= new MQL();
+			$data	= $xQL->getDataRow("SELECT * FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE `uuid_mail`='$email' LIMIT 0,1");
+			if(isset($data[$xT->CODIGO_DE_PERSONA])){
+				$this->mCodeUser	= $data[$xT->IDUSUARIOS];
+				$this->mTypeById	= true;
+				
+				if($this->init() == true){
+					$res			= true;
+				} else {
+					$this->mMessages	.= "ERROR\tEl Usuario no existe : $email\r\n";
+					$res				= false;
+				}
+			} else {
+				$this->mMessages	.= "ERROR\tNo existe el usuario con Correo Electronico $email\r\n";
+				$res				= false;
+			}
+		} else {
+			$this->mMessages	.= "ERROR\tCorreo Electronico invalido\r\n";
+			$res				= false;
+		}
+		setAgregarEvento_($this->mMessages, 10);
+		return $res;
+	}
+	function sendLinkRestoration(){
+		$xFMT	= new cFormato(901);
+		$xApiK	= new cSistemaApis();
+		$nctx	= $xApiK->add($this->getID(), 1, time());
+		$res	= false;
+		
+		if($nctx === false){
+			$this->mMessages	.= "ERROR\tError al generar el Link\r\n";
+			$res				= false;
+		} else {
+			$idxuser = $this->getID();
+			$hst	= SAFE_HOST_URL . "frmsocios/socios.usuario.frm.php?action=editpass&usuario=$idxuser&ctx=$nctx";
+			$arrV	= array(
+					"var_dirijido_a" => $this->getNombreCompleto(),
+					"var_parrafo_inicio" => "Se genera un vinculo de acceso",
+					"var_url_action" => "$hst",
+					"var_title_url_action" => "Cambiar Credenciales",
+					"var_parrafo_fin" => "",
+					"var_parrafo_despedida" => ""
+			);
+			$xFMT->setProcesarVars($arrV);
+			
+			$xNot	= new cNotificaciones();
+			$xNot->sendMailTemplate("", $this->getCorreoElectronico(), $arrV);
+			$this->mMessages	.= "OK\tSe ha enviado la Liga de recuperacion a " . $this->getCorreoElectronico() . "\r\n";
+			$res				= true;
+		}
+		setAgregarEvento_($this->mMessages, 10);
+		return $res;
+	}
+	function setCorreoElectronico($email = ""){
+		
+		if(filter_var($email, FILTER_VALIDATE_EMAIL)){
+			$xQL	= new MQL();
+			$xQL->setRawQuery("UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `uuid_mail`='$email' WHERE `idusuarios`=" . $this->mID);
+			$this->mCorreoElectronico = $email;
+		}
 	}
 }
 class cSystemUserRulesList {
@@ -1210,7 +1318,7 @@ class cSystemPermissions{
 		$PSVC		= array("personas.actividades.economicas.php" => true,
 				"listanegra.svc.php" => true, "equivalente.moneda.svc.php" => true,
 				"cantidad_en_letras.php" => true, "peps.svc.php" => true, "cotizador.plan.svc.php" => true, "pc.svc.php" => true, 
-				"importar.svc.php" => true, "exportar.svc.php" => true, "tareas.cron.php"
+				"importar.svc.php" => true, "exportar.svc.php" => true, "tareas.cron.php" => true, "recover-pass.frm.php" => true
 		);			//servicios publicos
 		return $PSVC;
 	}
@@ -1534,6 +1642,289 @@ class cSystemPerfiles {
 			$xCache->set($idx, $data);
 		}
 		return $data;
+	}
+}
+class cSistemaApis {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "sistema_apis";
+	private $mTipo			= 0;
+	private $mActivo		= false;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mVigencia		= 0;
+	public $TIPO_RECUPERA	= 2;
+	public $TIPO_ACCESO		= 1;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cSistema_apis();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mTiempo	= $data[$xT->TIEMPO];
+			$this->mActivo	= ($data[$xT->ESTATUS] == 1) ? true : false;
+			$this->mUsuario	= $data[$xT->IDUSUARIO];
+			$this->mTipo	= $data[$xT->TIPO_API];
+			$this->mVigencia= $data[$xT->VIGENCIA];
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($idusuario, $usos = 1, $semilla = ""){
+		$xSVC	= new MQLService("none", "");
+		$xQL	= new MQL();
+		$xUser	= new cSystemUser($idusuario);
+		$txt	= false;
+		if($xUser->init() === true){
+			$ctx		= $xUser->getCTX();
+			$tiempo		= time();
+			$semilla	= ($semilla === "") ? $tiempo : $semilla;
+			$xSVC->setKey($semilla);
+			$txt	=  "AA-" . $xSVC->getEncryptData($ctx);
+			
+			$xA		= new cSistema_apis();
+			$xA->idsistema_apis("NULL");
+			$xA->idusuario($xUser->getID());
+			$xA->tiempo($tiempo);
+			if($usos == 1){
+				$xA->tipo_api($this->TIPO_RECUPERA); //de recuperacion
+			} else {
+				$xA->tipo_api($this->TIPO_ACCESO);
+			}
+			$xA->uuid($txt);
+			$xA->vigencia($usos);
+			$run	= true;
+			
+			if($this->initByUser($idusuario) == true){
+				if($this->getEs5Minutos() == true){
+					$this->mMessages	.= "ERROR\tTiene que esperar 5 minutos para generar API\r\n";
+					$txt	= false;
+					$run	= false;
+				}
+			}
+			
+			if($run == true){
+				$res	= $xA->query()->insert()->save();
+				if($res === false){
+					$this->mMessages	.= "ERROR\tNo se guardo la API\r\n";
+					$txt	= false;
+				} else {
+					
+				}
+			}
+		}
+		return $txt;
+	}
+	function initByUser($idusuario){
+		$xUser	= new cSystemUser($idusuario); 
+		if($xUser->init() == true){
+			$xQL	= new MQL();
+			$sql	= "SELECT * FROM `sistema_apis` WHERE `idusuario`=" . $xUser->getID() . " AND `estatus`=1 ORDER BY `tiempo` DESC LIMIT 0,1";
+			$data	= $xQL->getDataRow($sql);
+			
+			return $this->init($data);
+		}
+		
+		return false;
+	}
+	function initByAPIKey($apikey){
+		$sql	= "SELECT * FROM `sistema_apis` WHERE `uuid`='" . $apikey . "' AND `estatus`=1 AND `vigencia`>=1 LIMIT 0,1";
+		$xQL	= new MQL();
+		$data	= $xQL->getDataRow($sql);
+		
+		return $this->init($data);
+	}
+	
+	function getEs5Minutos(){
+		$es	= false;
+		if($this->mActivo == true){
+			
+			$minimo	= time() - 300;
+			if($this->mTiempo >= $minimo){
+				$es	= true;
+			}
+		}
+		return $es;
+	}
+	function getUsuario(){ return $this->mUsuario; }
+	function setDefuse($num = 1){
+		if($this->mVigencia<=$num){
+			$this->setBaja();
+		} else {
+			$sql	= "UPDATE `sistema_apis`SET `vigencia`=(`vigencia`-$num) WHERE `idsistema_apis`=" . $this->mClave;
+			$xQL	= new MQL();
+			$xQL->setRawQuery($sql);
+		}
+
+	}
+	function setBaja(){
+		$sql	= "UPDATE `sistema_apis`SET `vigencia`=0,`estatus`=0 WHERE `idsistema_apis`=" . $this->mClave;
+		$xQL	= new MQL();
+		return $xQL->setRawQuery($sql);
+	}
+}
+
+class cSystemUserNotes {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "usuarios_web_notas";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mOficial		= 0;
+	
+	
+	public $ESTADO_ACT		= 10;
+	public $ESTADO_INAC		= 0;
+	public $TIPO_PENDIENTE	= 2;
+	public $REL_BAJO		= 1;
+	public $REL_ALTO		= 100;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cUsuarios_web_notas();//Tabla
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			//$data[$xT->];//
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mTexto	= $data[$xT->TEXTO];
+			$this->mOficial	= $data[$xT->OFICIAL];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($oficial, $mensaje, $relevancia= 0, $tipo = false,$persona = false, $documento = false, $oficial_origen=false, $fecha = false){
+		$xF			= new cFecha();
+		$fecha			= $xF->getFechaISO($fecha);
+		$documento		= setNoMenorQueCero($documento);
+		$persona		= setNoMenorQueCero($persona);
+		$tipo			= setNoMenorQueCero($tipo);
+		$oficial_origen	= setNoMenorQueCero($oficial_origen);
+		$oficial_origen	= ($oficial_origen <= 0) ? getUsuarioActual() : $oficial_origen;
+		$relevancia		= ($relevancia<=0) ? $this->REL_BAJO : $relevancia;
+		$mensaje		= setCadenaVal($mensaje);
+		
+		if($tipo<=0){
+			$tipo	= $this->TIPO_PENDIENTE;
+		}
+		$xT			= new cUsuarios_web_notas();//Tabla
+		$xT->idusuarios_web_notas("NULL");
+		$xT->documento($documento);
+		$xT->estado($this->ESTADO_ACT);
+		$xT->fecha($fecha);
+		$xT->oficial($oficial);
+		$xT->oficial_de_origen($oficial_origen);
+		$xT->relevancia($relevancia);
+		$xT->socio($persona);
+		$xT->texto($mensaje);
+		$xT->tiempo(time());
+		$xT->tipo($tipo);
+		$res	= $xT->query()->insert()->save();
+		return ($res === false) ? false : true;
+	}
+	function setInactivo(){
+		$xQL	= new MQL();
+		$res	= $xQL->setRawQuery("UPDATE usuarios_web_notas SET estado=" . $this->ESTADO_INAC . " WHERE idusuarios_web_notas=" . $this->mClave . " ");
+		$xQL	= null;
+		$res	= ($res === false) ? false : true;
+		if($res == false){
+			$this->mMessages	.= "ERROR\tTarea " . $this->mClave . " no se actualiza\r\n";
+		} else {
+			$this->mMessages	.= "OK\tTarea " . $this->mClave . " actualizado\r\n";
+		}
+		return $res;
+	}
+	function sendByEmail(){
+		$xUsr	= new cSystemUser($this->mOficial);
+		if($xUsr->init() == true){
+			$xNot	= new cNotificaciones();
+			$xNot->setDirijidoA($xUsr->getNombreCompleto());
+			$xNot->setParrafoInicio($this->mTexto);
+			$xNot->sendMailTemplate("Notificacion", $xUsr->getCorreoElectronico());
+			$this->mMessages	.= $xNot->getMessages();
+		}
+		$this->mMessages	.= $xUsr->getMessages();
 	}
 }
 ?>

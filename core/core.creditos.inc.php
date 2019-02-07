@@ -2063,73 +2063,168 @@ class cCredito {
 		$this->setCuandoSeActualiza(MQL_DEL);
 		return $xLog->getMessages();
 	}
-	function getEvolucionDeSaldos() {
+	function getEvolucionDeSaldos(){
 	}
-	function setAbonoCapital($monto, $parcialidad = 0, $cheque = DEFAULT_CHEQUE, $tipo_de_pago = FALLBACK_TIPO_PAGO_CAJA, $recibo_fiscal = DEFAULT_RECIBO_FISCAL,$observaciones = "", $grupo = false, $fecha = false, $recibo = false) {
+	function setAbonoInteres($monto, $parcialidad = 0, $cheque = DEFAULT_CHEQUE, $tipo_de_pago = FALLBACK_TIPO_PAGO_CAJA, $recibo_fiscal = DEFAULT_RECIBO_FISCAL,$observaciones = "", $grupo = false, $fecha = false, $recibo = false, $esMora= false) {
 		if($this->mCreditoInicializado == false){$this->init();}
-		$parcialidad 				= setNoMenorQueCero ( $parcialidad );
-		$recibo						= setNoMenorQueCero($recibo);
-		$this->mReciboDeOperacion	= setNoMenorQueCero($this->mReciboDeOperacion);
-		$socio 						= $this->mNumeroSocio;
 		$xF							= new cFecha();
+		$xLog						= new cCoreLog();
+		$fecha						= ($fecha === false) ? $this->mFechaOperacion : $fecha;
+		$fecha						= $xF->getFechaISO($fecha);
+		
+		$parcialidad 				= setNoMenorQueCero ($parcialidad);
+		$parcialidad				= ($parcialidad<=0) ? $this->getNumeroDeParcialidad() : $parcialidad;
+		$parcialidad				= ($parcialidad<=0) ? SYS_UNO : $parcialidad;
+		
+		$grupo 						= setNoMenorQueCero ($grupo);
+		$grupo						= ($grupo<=0) ? $this->mGrupoAsociado : $grupo;
+		$grupo						= ($grupo<=0) ? DEFAULT_GRUPO : $grupo;
+		
+		$recibo						= setNoMenorQueCero($recibo);
+		$recibo						= ($recibo <= 0) ? $this->mReciboDeOperacion : $recibo;
+		$this->mReciboDeOperacion	= setNoMenorQueCero($recibo);
+		$socio 						= $this->mNumeroSocio;
 		$cheque						= setNoMenorQueCero($cheque);
 		
-		if($parcialidad <= 0){
-			$parcialidad			= $this->getNumeroDeParcialidad();
-		}
-		if($parcialidad <= 0){
-			$parcialidad			= SYS_UNO;
-		}
+		
+		$interesPagado				= ($esMora == false) ? $this->mInteresNormalPagado : $this->mInteresMoratorioPag;
+		$tipoOperacion				= ($esMora == false) ? OPERACION_CLAVE_PAGO_INTERES : OPERACION_CLAVE_PAGO_MORA;
+		$tipoOpIVA					= ($esMora == false) ? OPERACION_CLAVE_PAGO_IVA_INTS : OPERACION_CLAVE_PAGO_IVA_OTROS;
 		
 		if ($monto != 0) {
-			$this->mMessages .= "WARN\tRECIBO HEREDADO :  $recibo\r\n";
-			$grupo = setNoMenorQueCero ( $grupo );
-			if ($grupo <= DEFAULT_GRUPO){$grupo = $this->mGrupoAsociado;}
-			if ($fecha === false){ $fecha = $this->mFechaOperacion; }
-			$fecha					= $xF->getFechaISO($fecha);
+			$xLog->add("WARN\tRECIBO HEREDADO :  $recibo\r\n", $xLog->DEVELOPER);
 			$CRecibo 				= new cReciboDeOperacion ( RECIBOS_TIPO_PAGO_CREDITO, true, $recibo );
+			if($CRecibo->init() == true){
+				$xLog->add("OK\Se inicializa el Recibo: $recibo\r\n", $xLog->DEVELOPER);
+			} else {
+				$recibo 			= $CRecibo->setNuevoRecibo ( $socio, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, $observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo );
+				$CRecibo 			= new cReciboDeOperacion ( RECIBOS_TIPO_PAGO_CREDITO, true, $recibo );
+			}
+			
 			// Set a Mvto Contable
 			$CRecibo->setGenerarPoliza();
 			$CRecibo->setGenerarTesoreria();
 			$CRecibo->setGenerarBancos();
-			if ($recibo <= 0) {
-				if (setNoMenorQueCero ( $this->mReciboDeOperacion ) > 0) {
-					$CRecibo->setNumeroDeRecibo ( $this->mReciboDeOperacion, true );
-					$recibo = $this->mReciboDeOperacion;
-				}
-			} else {
-				$this->mReciboDeOperacion = $recibo;
-			}
 			
-			// Agregar recibo si no hay
-			if (setNoMenorQueCero ( $recibo ) <= 0) {
-				$recibo = $CRecibo->setNuevoRecibo ( $socio, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, $observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo );
-				// Checar si se agrego el recibo
-				if (setNoMenorQueCero ( $recibo ) > 0) {
-					$this->mMessages .= "OK\tSe Agrego Exitosamente el Recibo $recibo de la Cuenta " . $this->mNumeroCredito . " \r\n";
-					$this->mReciboDeOperacion = $recibo;
-					$this->mSucess = true;
-				} else {
-					$this->mMessages .= "ERROR\tSe Fallo al Agregar el Recibo $recibo de la Cuenta " . $this->mNumeroCredito . " \r\n";
-					$this->mSucess = false;
-				}
-			}
-			$this->mReciboDeOperacion = $recibo;
-			
-			if (setNoMenorQueCero ( $recibo ) > 0) {
-				// Agregar el Movimiento
-				$CRecibo->setNuevoMvto ( $fecha, $monto, OPERACION_CLAVE_PAGO_CAPITAL, $parcialidad, $observaciones, 1, TM_ABONO, $socio, $this->mNumeroCredito );
-				$this->mNuevoSaldo 	= $this->mSdoCapitalInsoluto - ($monto);
-				$this->mMessages 	.= $CRecibo->getMessages();
+			if($CRecibo->init() == true){
+				$recibo						= $CRecibo->getCodigoDeRecibo();
+				$this->mReciboDeOperacion	= $recibo;
+				// Operacion: Agregar el Movimiento
+				$CRecibo->setNuevoMvto ( $fecha, $monto, $tipoOperacion, $parcialidad, $observaciones, 1, TM_ABONO, $socio, $this->mNumeroCredito );
+				$interesPagado 				= $interesPagado - ($monto);
 				$this->mSucess 		= true;
 				// Actualizar la Cuenta
-				// $arrAct = array( "saldo_actual" => $this->mNuevoSaldo );
-				$this->mMessages 	.= "WARN\tSALDO\tSe Actualiza el Saldo de " . $this->mSdoCapitalInsoluto . " a " . $this->mNuevoSaldo . " al $fecha \r\n";
-				// $this->setUpdate($arrAct);
+				$CRecibo->setFinalizarRecibo(true);
 			} else {
-				$this->mMessages 	.= "ERROR\tNo Existe Recibo con el cual trabajar ($recibo) \r\n";
+				$this->mSucess		= false;
+				$recibo				= 0;
+				$xLog->add("ERROR\tNo Existe Recibo con el cual trabajar ($recibo) \r\n", $xLog->DEVELOPER);
 			}
-			// afectar el capital
+			// Credito: afectar el Interes
+			if ($this->mSucess == true) {
+				$OMon				= $this->getOMontos();
+				$moraPagado			= $this->getInteresMoratorioPagado();
+				$normalPagado		= $this->getInteresNormalPagado();
+				
+				if($esMora == false){
+					$this->setInteresNormalPagado($interesPagado);
+					$OMon->setInteresesPagados($interesPagado, $moraPagado);
+					
+					if($this->isAFinalDePlazo() == true){
+						
+					} else {
+						$LPlan 					= $this->getOPlanDePagos();
+						$xLetra					= $LPlan->getOLetra($parcialidad);
+						$LPlan->setPagosAutorizados($this->getPagosAutorizados());
+						
+						$parcialidad_interes	= 0;
+						
+						if($xLetra != null){
+							$parcialidad_fecha_pago	= $xLetra->getFechaDePago();
+							$parcialidad_interes	= $xLetra->getInteres();
+							$parcialidad_capital	= $xLetra->getCapital();
+						}
+						
+						$amortizable	= setNoMenorQueCero(($monto - $parcialidad_interes));
+						$NLetra			= $parcialidad+1;
+						
+						if($amortizable > 0.01){
+							if($this->getPagosSinCapital() == true){
+								$nueva_parcialidad = $LPlan->setAmortizarLetras($amortizable, $NLetra, OPERACION_CLAVE_PLAN_INTERES);
+							} else {
+								$LPlan->setAmortizarLetras($amortizable, $NLetra, OPERACION_CLAVE_PLAN_INTERES);
+							}
+						}
+					}
+				} else {
+					$this->setInteresMoratorioPagado($interesPagado);
+					$OMon->setInteresesPagados($normalPagado, $interesPagado);
+				}
+
+			}
+		
+			$this->mFechaOperacion	= $fecha;
+			$this->mObjRec 			= $CRecibo;
+			$xLog->add($CRecibo->getMessages(), $xLog->DEVELOPER);
+			$this->mMessages 		.= $xLog->getMessages();
+		}
+		return $recibo;
+	}
+	function setAbonoCapital($monto, $parcialidad = 0, $cheque = DEFAULT_CHEQUE, $tipo_de_pago = FALLBACK_TIPO_PAGO_CAJA, $recibo_fiscal = DEFAULT_RECIBO_FISCAL,$observaciones = "", $grupo = false, $fecha = false, $recibo = false) {
+		if($this->mCreditoInicializado == false){$this->init();}
+		$xF							= new cFecha();
+		$xLog						= new cCoreLog();
+		$fecha						= ($fecha === false) ? $this->mFechaOperacion : $fecha;
+		$fecha						= $xF->getFechaISO($fecha);
+		
+		$parcialidad 				= setNoMenorQueCero ($parcialidad);
+		$parcialidad				= ($parcialidad<=0) ? $this->getNumeroDeParcialidad() : $parcialidad;
+		$parcialidad				= ($parcialidad<=0) ? SYS_UNO : $parcialidad;
+		
+		$grupo 						= setNoMenorQueCero ($grupo);
+		$grupo						= ($grupo<=0) ? $this->mGrupoAsociado : $grupo;
+		$grupo						= ($grupo<=0) ? DEFAULT_GRUPO : $grupo;
+		
+		$recibo						= setNoMenorQueCero($recibo);
+		$recibo						= ($recibo <= 0) ? $this->mReciboDeOperacion : $recibo;
+		$this->mReciboDeOperacion	= setNoMenorQueCero($recibo);
+		$socio 						= $this->mNumeroSocio;
+		$cheque						= setNoMenorQueCero($cheque);
+		
+		
+		if ($monto != 0) {
+			$xLog->add("WARN\tRECIBO HEREDADO :  $recibo\r\n", $xLog->DEVELOPER);
+			$CRecibo 				= new cReciboDeOperacion ( RECIBOS_TIPO_PAGO_CREDITO, true, $recibo );
+			if($CRecibo->init() == true){
+				
+			} else {
+				$recibo 			= $CRecibo->setNuevoRecibo ( $socio, $this->mNumeroCredito, $fecha, $parcialidad, RECIBOS_TIPO_PAGO_CREDITO, $observaciones, $cheque, $tipo_de_pago, $recibo_fiscal, $grupo );
+				$CRecibo 			= new cReciboDeOperacion ( RECIBOS_TIPO_PAGO_CREDITO, true, $recibo );
+			}
+			
+			// Set a Mvto Contable
+			$CRecibo->setGenerarPoliza();
+			$CRecibo->setGenerarTesoreria();
+			$CRecibo->setGenerarBancos();
+			if($CRecibo->init() == true){
+				$recibo						= $CRecibo->getCodigoDeRecibo();
+				$this->mReciboDeOperacion	= $recibo;
+				// Operacion: Agregar el Movimiento
+				$CRecibo->setNuevoMvto ( $fecha, $monto, OPERACION_CLAVE_PAGO_CAPITAL, $parcialidad, $observaciones, 1, TM_ABONO, $socio, $this->mNumeroCredito );
+				$this->mNuevoSaldo 	= $this->mSdoCapitalInsoluto - ($monto);
+				$this->mSucess 		= true;
+				// Actualizar la Cuenta
+				$xLog->add("WARN\tSALDO\tSe Actualiza el Saldo de " . $this->mSdoCapitalInsoluto . " a " . $this->mNuevoSaldo . " al $fecha \r\n");
+				$CRecibo->setFinalizarRecibo(true);
+			} else {
+				$this->mSucess		= false;
+				$recibo				= 0;
+				$xLog->add("ERROR\tNo Existe Recibo con el cual trabajar ($recibo) \r\n");
+			}
+
+			
+
+			// Credito: afectar el capital
 			if ($this->mSucess == true) {
 				$EsPagado			= ($this->mNuevoSaldo <= TOLERANCIA_SALDOS) ? true : false;
 				if($this->isAFinalDePlazo() == false){
@@ -2150,11 +2245,11 @@ class cCredito {
 					$this->setUpdate($arrUpdate);
 				}
 			}
-			$CRecibo->setFinalizarRecibo(true);
+			
 			$this->mFechaOperacion	= $fecha;
 			$this->mObjRec 			= $CRecibo;
-			$this->mMessages 		.= $CRecibo->getMessages();
-			// Agrega el Devengado de Interes
+			$xLog->add($CRecibo->getMessages(), $xLog->DEVELOPER);
+			$this->mMessages 		.= $xLog->getMessages();
 		}
 		return $recibo;
 	}
@@ -3817,9 +3912,16 @@ class cCredito {
 		
 		return $nuevoID;
 	}
-	function getInteresNormalPorPagar($fecha = false) {
-		$DInt = $this->getInteresDevengado ( $fecha );
-		return $this->mInteresNormalDevengado - $this->mInteresNormalPagado + $DInt [SYS_INTERES_NORMAL];
+	function getInteresNormalPorPagar($fecha = false, $parcialidad = false){
+		$parcialidad	= setNoMenorQueCero($parcialidad);
+		$interes		= 0;
+		if($parcialidad > 0){
+			
+		}
+		$DInt 			= $this->getInteresDevengado ( $fecha );
+		$interes		= $this->mInteresNormalDevengado - $this->mInteresNormalPagado + $DInt [SYS_INTERES_NORMAL];
+		
+		return $interes;
 	}
 	function getEsAfectable() {
 		$afectable = true;
@@ -4233,9 +4335,11 @@ class cCredito {
 	} // END FUNCTION
 	function getInteresDevengado($fecha_de_calculo = false, $parcialidad = false, $fecha_anterior = false, $solo_mora_corriente = false) {
 		$xCache				= new cCache();
+		$xF					= new cFecha();
+		$fecha_de_calculo	= $xF->getFechaISO($fecha_de_calculo);
 		
-		if ($this->mCreditoInicializado == false) { 	$this->init();	}
-		$FECHA_DE_OPERACION = ($fecha_de_calculo == false) ? fechasys () : $fecha_de_calculo;
+		if($this->mCreditoInicializado == false) { 	$this->init();	}
+		$FECHA_DE_OPERACION = $fecha_de_calculo;
 		$OProd 				= $this->getOProductoDeCredito ();
 		$xF	 				= new cFecha( 0, $FECHA_DE_OPERACION );
 		$xT					= new cTipos();
@@ -5205,6 +5309,13 @@ class cCredito {
 		}
 	}
 	function getFechaDesvinculo(){ return $this->mFechaDesvinculo; }
+	function getTienePagosEspeciales(){
+		$tiene	= false;
+		$xEsp	= new cCreditosPlanPagoEsp();
+		$tiene	= ($xEsp->getCountByCredito($this->mNumeroCredito) > 0 ) ? true : false;
+		
+		return $tiene;
+	}
 } // END CLASS
 
 
@@ -5506,16 +5617,34 @@ class cPlanDePagos{
 	}
 	function getLetrasInArray($tipo, $inicio = 0){
 		$arrDev		= array();
-		$sql1 		= "SELECT periodo_socio, afectacion_real FROM operaciones_mvtos 
-		WHERE (recibo_afectado = " . $this->mNumeroDePlan . ") 
-		AND ( socio_afectado=" . $this->getClaveDePersona() . ") AND ( docto_afectado=" . $this->getClaveDeCredito() . ")
-		AND ( periodo_socio >= $inicio ) AND	(tipo_operacion=$tipo) ORDER BY periodo_socio";
-		$xQL		= new MQL();
-		//TODO: Mejorar carga a cache
-		$rs			= $xQL->getRecordset($sql1);
-		if($rs){
-			while($rw = $rs->fetch_assoc()){
-				$arrDev[$rw["periodo_socio"]]	= $rw["afectacion_real"];
+		$numeroPlan	= $this->mNumeroDePlan;
+		$persona	= $this->getClaveDePersona();
+		$credito	= $this->getClaveDeCredito();
+		if($numeroPlan > 0 AND $persona > 0 AND $credito > 0){
+			$inCache	= true;
+			$xCache		= new cCache();
+			$idxc		= "letra-in-array-$credito-$numeroPlan-$tipo-$inicio";
+			$arrDev		= $xCache->get($idxc);
+			
+			if(!is_array($arrDev)){
+				$inCache	= false;
+				$sql1 		= "SELECT periodo_socio, afectacion_real FROM operaciones_mvtos 
+				WHERE (recibo_afectado = " . $numeroPlan . ") 
+				AND ( socio_afectado=" . $persona . ") AND ( docto_afectado=" . $credito . ")
+				AND ( periodo_socio >= $inicio ) AND	(tipo_operacion=$tipo) ORDER BY periodo_socio";
+				$xQL		= new MQL();
+				//TODO: Mejorar carga a cache
+				$rs			= $xQL->getRecordset($sql1);
+				if($rs){
+					while($rw = $rs->fetch_assoc()){
+						$arrDev[$rw["periodo_socio"]]	= $rw["afectacion_real"];
+					}
+				}
+				$xQL		= null;
+				$rs			= null;
+			}
+			if($inCache == false){
+				$xCache->set($idxc, $arrDev);
 			}
 		}
 		return $arrDev;

@@ -11,7 +11,7 @@
 .tx14 #idpersonaasociada, .element-text #idpersonaasociada, .tx4 #iddocumento, .tx14 #idactividad, .tx14 #idactividadscian,
 .tx13 #idsocio, .element-text #idsocio, .element-text #idsolicitud, .tx13 #idsolicitud, .element-text #idparcialidad, .tx13 #idparcialidad, .tx13 #idgrupo,
 .element-text #idcuenta, .tx13 #idcuenta, .tx13 #idcuentarelacionada, .tx34 #iddocumento , .tx34 #idgrupo, .tx13 #idcuentainteres, .tx13 #idsocio2, .tx13 #idsocio3,
-.tx13 #idsocio4, .tx13 #idsocio5, .tx13 #idsocio6, .tx13 #idsocio7, .tx13 #idsocio8, .tx13 #idsocio9, .tx13 #idsocio10, .tx13 #idsocio11,
+.tx13 #idsocio4, .tx13 #idsocio5, .tx13 #idsocio6, .tx13 #idsocio7, .tx13 #idsocio8, .tx13 #idsocio9, .tx13 #idsocio10, .tx13 #idsocio11, .tx13 #tipo_aeconomica, .tx13 #clave_scian,
 .element-text #idsocio2, .element-text #idsocio3, .tx13 #idsocio1, .tx13 #idsocio0,
 .tx13 #idpersonaasociada, .element-text #idpersonaasociada, .tx4 #iddocumento, .tx13 #idactividad, .tx13 #idactividadscian, .tx4 #nombrearchivo,
 .tx14 #idrecibo, .element-text #idrecibo, .tx13 #idrecibo
@@ -55,8 +55,9 @@ width: 98%;  }
 input, select, textarea { border-radius: 5px 0 5px 0; }
 
 input:required:valid { background-color: #CAED9E; }
-.fieldform{ max-width:1108px; text-align: center;	margin: 0 auto; }
-
+.fieldform{
+	max-width:1108px; text-align: center;	margin: 0 auto;
+}
 input[type="text"], input[type="number"], input[type="email"], input[type="tel"] {
 	border: 1px solid #ccc;
     border-top: 1px solid #444;
@@ -182,7 +183,7 @@ select {font: .9em "Trebuchet MS", Arial, Helvetica, sans-serif !important;}
 /* ------------------------------------------------------------------------------ */
 
 fieldset {
-    background-color: #AAA;
+    background-color: #F9F9F9;
     border:1px solid #888;
     border-radius:3px;
     padding: 2px; margin: 1px;
@@ -201,8 +202,7 @@ caption, legend, .ui-tooltip h3, .ui-tooltip-title {
     background: linear-gradient(to bottom, #ffa366 0%, #da5700 100%);
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffa366', endColorstr='#da5700', GradientType=0);
     border-color: #804620;
-    text-transform:uppercase;
-    line-height: 1.5em;
+    line-height: 1.8em;
     font-size: .95em;
     text-align: center;
     border-radius: 4px;
@@ -571,12 +571,12 @@ ol.rounded-list {
 	margin: 0 0 0 2em;
 }*/
 td ol.rounded-list , th ol.rounded-list {
-	margin: 0 !important; padding: 0 !important; max-width: 95%;
+	margin: 0 !important; padding: 0 !important; max-width: 98%;
 }
 ol.rounded-list a{
 	position: relative;
 	display: block;
-	padding: .5em .4em .4em 2em;
+	padding: .3em .2em .2em 2.1em;
 	margin: .2em 0;
 	/**padding: .4em;*/
 	/*background: #ddd;*/
@@ -613,14 +613,14 @@ ol.rounded-list a:before{
 	position: absolute;
 	left: .3em;
 	top: 50%;
-	margin-top: -1em;
+	margin-top: -0.9em;
 	background: #87ceeb;
-	height: 1.2em;
-	width: 1.2em;
-	line-height: 1.3em;
-	border: .3em solid #fff;
+	height: 1.4em;
+	width: 1.4em;
+	line-height: 1.5em;
+	border: .2em solid #fff;
 	text-align: center;
-	border-radius: 1.5em;
+	border-radius: 1em;
 	transition: all .3s ease-out;
 }
 .inv {
@@ -660,7 +660,7 @@ ol.rounded-list a:before{
 .coolCheck input[type=checkbox] {
 	display: none !important;
 }
-.medio { width:48%; display:inline-block; }
+.medio { width:48%; display:inline-flex; }
 .medio label.button {width:100%}
 .tx1.medmed { width:48% !important; }
 
@@ -1551,4 +1551,9 @@ background-color: #38495A;
 .inajax {
 	border: 1px solid #26A95E !important;
 	/*background: transparent url(../images/null.png) left no-repeat !important;*/
+}
+nav label.chk-lbl, nav div.coolCheck:after, nav div.coolCheck:before {
+	background-color: inherit;
+	color: rgb(255,255,255);
+	text-shadow: rgb(32, 32, 32) 0px -1px 3px;
 }

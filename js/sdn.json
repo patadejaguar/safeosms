@@ -22,29 +22,5 @@
 	}
     }
 }
-/*
 
-*/
-  /*<sdnEntry>
-    <uid>10</uid>
-    <lastName>ABASTECEDORA NAVAL Y INDUSTRIAL, S.A.</lastName>
-    <sdnType>Entity</sdnType>
-    <programList>
-      <program>CUBA</program>
-    </programList>
-    <akaList>
-      <aka>
-        <uid>4</uid>
-        <type>a.k.a.</type>
-        <category>strong</category>
-        <lastName>ANAINSA</lastName>
-      </aka>
-    </akaList>
-    <addressList>
-      <address>
-        <uid>7</uid>
-        <country>Panama</country>
-      </address>
-    </addressList>
-  </sdnEntry>*/
   

@@ -5,236 +5,114 @@
  * @package
  */
 //=====================================================================================================
-	include_once("../core/go.login.inc.php");
-	include_once("../core/core.error.inc.php");
-	include_once("../core/core.html.inc.php");
-	include_once("../core/core.init.inc.php");
-	include_once("../core/core.db.inc.php");
-	$theFile			= __FILE__;
-	$permiso			= getSIPAKALPermissions($theFile);
-	if($permiso === false){	header ("location:../404.php?i=999");	}
-	$_SESSION["current_file"]	= addslashes( $theFile );
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.SUCURSAL", HP_FORM);
+$xHP		= new cHPage("TR.SUCURSALES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
-$xLoc		= new cLocal();
-$xValid		= new cTiposLimpiadores();
-
-
-
-
-
-
-//$jxc = new TinyAjax();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-
+$observaciones= parametro("idobservaciones");
+$xHP->addJTableSupport();
 $xHP->init();
 
 
-$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$clave 			= parametro("codigo_sucursal", null, MQL_RAW); $clave = parametro("id", $clave, MQL_RAW);
-$clave			= $xValid->cleanSucursal($clave);
 
-
-$xTabla			= new cGeneral_sucursales();
-
-if($clave !== ""){
-	$xTabla->setData( $xTabla->query()->initByID($clave));
-}
-$xTabla->setData($_REQUEST);
-
-
-
-$persona		= parametro("idsocio", $xTabla->clave_de_persona()->v(), MQL_INT);
-$gerente		= parametro("gerente_sucursal", $xTabla->gerente_sucursal()->v(), MQL_INT);
-$cumplimiento	= parametro("titular_de_cumplimiento", $xTabla->titular_de_seguimiento()->v(), MQL_INT);
-
-//inicializar la persona
-$xSoc			= new cSocio($persona);
-$ODom			= null;
-if($xSoc->init() == true){
-	$ODom		= $xSoc->getODomicilio();
-}
-$xSel			= new cHSelect();
-if($clave == null){
-	$step		= MQL_ADD;
-	$clave		= "";//$xTabla->query()->getLastID() + 1;
-} else {
-	$step		= MQL_MOD;
-	if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
-}
-$xFRM	= new cHForm("frmgeneral_sucursales", "sucursales.frm.php?action=$step");
+$xFRM		= new cHForm("frm", "./");
+$xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
+/* ===========        GRID JS        ============*/
 
-if($action == MQL_ADD){		//Agregar
-	//$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
+$xHG    = new cHGrid("iddivsucursales",$xHP->getTitle());
+
+$xHG->setSQL($xLi->getListadoDeSucursales());
+$xHG->addList();
+$xHG->setOrdenar();
+$xHG->col("clave", "TR.CLAVE", "10%");
+$xHG->col("nombre", "TR.NOMBRE", "10%");
+
+//$xHG->col("persona", "TR.PERSONA", "10%");
+//$xHG->col("clave_en_numero", "TR.CLAVE EN NUMERO", "10%");
+if(getEsModuloMostrado(false, MMOD_CONTABILIDAD)){
+	$xHG->col("centro_de_costo", "TR.CENTRO_DE_COSTOS", "10%");
+}
+if(SISTEMA_CAJASLOCALES_ACTIVA == true){
+	$xHG->col("caja_local", "TR.CAJA_LOCAL", "10%");
+}
+$xHG->col("hora_inicial", "TR.HORARIO INICIAL", "10%");
+$xHG->col("hora_final", "TR.HORARIO FINAL", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+
+$xHG->OButton("TR.DOMICILIO", "var xPv=new PersVivGen();xPv.getVerVivienda('+ data.record.iddomicilio +')", "direction-signs.png");
+
+$xHG->OButton("TR.EDITAR", "jsEdit(\''+ data.record.clave +'\')", "edit.png");
+
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave +')", "undone.png");
+
+$xSoc	= new cSocio(EACP_ID_DE_PERSONA);
+if($xSoc->init() == true){
+	$xFRM->addHElem( $xSoc->getFicha() );
 	
-	
-	
-	if($clave !== ""){
-		$xTabla->setData( $xTabla->query()->initByID($clave));
-		$xTabla->setData($_REQUEST);
-		$xTabla->codigo_sucursal( $clave );
-		
-		//modificar la parte de personas asociadas
-		$xTabla->gerente_sucursal($gerente);
-		$xTabla->titular_de_cumplimiento($cumplimiento);
-		$xTabla->clave_de_persona($persona);
-		
-		if($ODom === null){
-			$xTabla->calle( EACP_DOMICILIO_CALLE );
-			$xTabla->codigo_postal( EACP_CODIGO_POSTAL );
-			$xTabla->colonia( EACP_COLONIA );
-			$xTabla->telefono( EACP_TELEFONO_PRINCIPAL );
-			$xTabla->municipio( EACP_MUNICIPIO );
-			$xTabla->localidad( EACP_LOCALIDAD );
-			$xTabla->estado( EACP_ESTADO );
-			$xTabla->numero_exterior( EACP_DOMICILIO_NUM_EXT );
-			$xTabla->numero_interior( EACP_DOMICILIO_NUM_INT );
-		} else {
-			$xTabla->calle( $ODom->getCalle() );
-			$xTabla->codigo_postal( $ODom->getCodigoPostal() );
-			$xTabla->colonia( $ODom->getColonia() );
-			$xTabla->telefono( $xSoc->getTelefonoPrincipal() );
-			$xTabla->municipio( $ODom->getMunicipio() );
-			$xTabla->localidad( $ODom->getLocalidad() );
-			$xTabla->estado( $ODom->getEstado() );
-			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
-			$xTabla->numero_interior( $ODom->getNumeroInterior() );
-		}
-		if( $xTabla->caja_local_residente()->v()<= 0 ){
-			//Agregar nueva Caja Local
-			$xCL	= new cCajaLocal();
-			$numcl	= setNoMenorQueCero($xTabla->clave_numerica()->v());
-			$res	= $xCL->add($xTabla->nombre_sucursal()->v(), $numcl, false, $clave, $xTabla->codigo_postal()->v(), $xTabla->localidad()->v(), $xTabla->estado()->v(), $xTabla->municipio()->v() );
-			if($res !== false){
-				$xTabla->caja_local_residente($xCL->getClave());
-			} else {
-				$xTabla->caja_local_residente(DEFAULT_CAJA_LOCAL);
-			}
-		}
-		
-		$xTabla->query()->insert()->save();
-		$xFRM->addAvisoRegistroOK();
-		$xFRM->addCerrar();
-	}
-	
-} else if($action == MQL_MOD){		//Modificar
-	//iniciar
-	//$clave 		= parametro($xTabla->getKey(), null, MQL_RAW);
-	
-	if($clave !== ""){
-		$xTabla->setData( $xTabla->query()->initByID($clave));
-		$xTabla->setData($_REQUEST);
-		$xTabla->codigo_sucursal( $clave );
-		//modificar la parte de personas asociadas
-		$xTabla->gerente_sucursal($gerente);
-		$xTabla->titular_de_cumplimiento($cumplimiento);
-		$xTabla->clave_de_persona($persona);
-		
-		if($ODom === null){
-			$xTabla->calle( EACP_DOMICILIO_CALLE );
-			$xTabla->codigo_postal( EACP_CODIGO_POSTAL );
-			$xTabla->colonia( EACP_COLONIA );
-			$xTabla->telefono( EACP_TELEFONO_PRINCIPAL );
-			$xTabla->municipio( EACP_MUNICIPIO );
-			$xTabla->localidad( EACP_LOCALIDAD );
-			$xTabla->estado( EACP_ESTADO );
-			$xTabla->numero_exterior( EACP_DOMICILIO_NUM_EXT );
-			$xTabla->numero_interior( EACP_DOMICILIO_NUM_INT );
-		} else {
-			
-			$xTabla->calle( $ODom->getCalle() );
-			$xTabla->codigo_postal( $ODom->getCodigoPostal() );
-			$xTabla->colonia( $ODom->getColonia() );
-			$xTabla->telefono( $xSoc->getTelefonoPrincipal() );
-			$xTabla->municipio( $ODom->getMunicipio() );
-			$xTabla->localidad( $ODom->getLocalidad() );
-			$xTabla->estado( $ODom->getEstado() );
-			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
-			$xTabla->numero_interior( $ODom->getNumeroInterior() );
-		}				
-		$xTabla->query()->update()->save($clave);
-		$xFRM->addAvisoRegistroOK();
-		$xFRM->addCerrar();
-	}
-} else {
-	$xFRM->addGuardar();
-	$xFRM->addPersonaBasico("", false, $xTabla->clave_de_persona()->v(), "", "TR.Persona Vinculada");
-	if($step == MQL_MOD){
-		$xFRM->ODisabled_13("idxsucursal", $xTabla->codigo_sucursal()->v(), "TR.codigo sucursal");
-		$xFRM->OHidden("codigo_sucursal", $clave);
-		
-	} else {
-		$xFRM->OText("codigo_sucursal", $xTabla->codigo_sucursal()->v(), "TR.codigo sucursal");
-	}
-	
-	$xFRM->OText("nombre_sucursal", $xTabla->nombre_sucursal()->v(), "TR.nombre de sucursal");
-	$xFRM->OMoneda("clave_numerica", $xTabla->clave_numerica()->v(), "TR.clave en numero");
-	//$xFRM->OMoneda("caja_local_residente", , "TR.caja_local", );
-	if(SISTEMA_CAJASLOCALES_ACTIVA == false AND $step !== MQL_MOD){
-		$xQL->getDataValue("caja_local_residente", DEFAULT_CAJA_LOCAL);
-	} else {
-		$xFRM->addHElem( $xSel->getListaDeCajasLocales("caja_local_residente", false, $xTabla->caja_local_residente()->v() )->get(true));
-	}
-	//$xFRM->addPersonaBasico("2", false, $xTabla->gerente_sucursal()->v(), "", "TR.gerente_de_sucursal");
-	//$xFRM->addPersonaBasico("3", false, $xTabla->titular_de_cumplimiento()->v(), "", "TR.Oficial_de_Cumplimiento");
-	$xFRM->addHElem( $xSel->getListaDeUsuarios("gerente_sucursal", $xTabla->gerente_sucursal()->v())->get("TR.GERENTE_DE_SUCURSAL", true)) ;
-	$xFRM->addHElem( $xSel->getListaDeUsuarios("titular_de_cumplimiento", $xTabla->titular_de_cumplimiento()->v())->get("TR.OFICIAL_DE_CUMPLIMIENTO", true));
-	
-	$xFRM->addHElem($xSel->getListaDeHoras("hora_de_inicio_de_operaciones", $xTabla->hora_de_inicio_de_operaciones()->v(), true)->get("TR.hora de inicio de operaciones", true) );
-	$xFRM->addHElem( $xSel->getListaDeHoras("hora_de_fin_de_operaciones", $xTabla->hora_de_fin_de_operaciones()->v(), true)->get("TR.hora cierre de operaciones", true));
-	
-	if(MODULO_CONTABILIDAD_ACTIVADO == false AND $step !== MQL_MOD){
-		$xFRM->OHidden("centro_de_costo", DEFAULT_CENTRO_DE_COSTO);
-	} else {
-		$xFRM->addHElem($xSel->getListaDeCentroDeCostoCont("centro_de_costo", $xTabla->centro_de_costo()->v())->get(true));
-	}
-	
-	$xFRM->OButton("TR.AGREGAR PERSONA", "jsAgregarPersonaNueva()", $xFRM->ic()->PERSONA, "add_new_persona", "persona");
-	
-	if($step !== MQL_MOD){
-		//Lista de Sucursales
-		$xT	= new cTabla($xLi->getListadoDeSucursales());
-		$xT->setEventKey("jsModificar");
-		$xFRM->addHTML( $xT->Show() );
-	}	
-	
-	$xFRM->OHidden("mail", EACP_MAIL);
-	$xFRM->OHidden("tel", EACP_TELEFONO_PRINCIPAL);
+	$xFRM->OButton("TR.PANEL PERSONA", "var xP=new PersGen();xP.goToPanel(" . $xSoc->getCodigo() . ")", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
+	$xFRM->OButton("TR.Agregar Referencias_Domiciliarias", "var xP= new PersGen();xP.setAgregarVivienda(" . $xSoc->getCodigo() . ")", "vivienda", "cmdagregarvivienda" );
 	
 }
 
+$xFRM->addHElem("<div id='iddivsucursales'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+
+
+$xFRM->addCerrar();
 
 echo $xFRM->get();
 ?>
+
 <script>
-var xG	= new Gen();
-var xP	= new PersGen();
-
-
-function jsModificar(sucursal){
-	xG.go({url: "frmtipos/sucursales.frm.php?id=" + sucursal})
+var xG    = new Gen();
+function jsEdit(id){
+    xG.w({url:"../frmtipos/sucursales.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivsucursales});
 }
-
-function jsAgregarPersonaNueva(){
-	
-	
-	var tel			= $("#tel").val();
-	var mail		= $("#mail").val();
-	var nombres		= $("#nombre_sucursal").val();
-
-	xP.goToAgregarMorales({nombre:nombres,tipoingreso:Configuracion.personas.tipoingreso.otros,telefono:tel,email:mail});
+function jsAdd(){
+    xG.w({url:"../frmtipos/sucursales.new.frm.php?", tiny:true, callback: jsLGiddivsucursales});
 }
-
-
+function jsDel(id){
+    //xG.rmRecord({tabla:"tmp_1274089405", id:id, callback:jsLGiddivsucursales });
+}
+function jsDeact(id){
+   //xG.recordInActive({tabla:"tmp_1274089405", id:id, callback:jsLGiddivsucursales, preguntar:true });
+}
 </script>
 <?php
+
+
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();
+
 ?>

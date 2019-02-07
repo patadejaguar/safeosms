@@ -4104,5 +4104,53 @@ BEGIN
 
 DELIMITER ;
 
+-- - --------------------------------
+-- - Funcion que obtiene un mail por persona
+-- - 21/dic/2018
+-- - --------------------------------
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS `getMailByPersona`$$
+
+CREATE FUNCTION `getMailByPersona`(IDPers BIGINT(25) ) RETURNS VARCHAR(80)
+BEGIN
+	
+	DECLARE mMail VARCHAR(100) DEFAULT '';
+	
+	SET mMail = ( SELECT `correo_electronico` FROM `socios_general` WHERE `codigo`=IDPers LIMIT 0,1);
+	 
+	IF ISNULL(mMail) THEN
+		SET mMail = '';
+	END IF;
+	RETURN mMail;
+    END$$
+
+DELIMITER ;
+
+
+-- --------------------------------
+-- - Funcion devuelve un plan de pago por Credito
+-- - 11/Enero/2019
+-- - --------------------------------
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS `getPlanDePagoByCred`$$
+
+CREATE FUNCTION `getPlanDePagoByCred`(IDDocto BIGINT(20)) RETURNS BIGINT(20)
+BEGIN
+	DECLARE IDRec BIGINT(20) DEFAULT 0;
+	
+	SET IDRec = ( SELECT `idoperaciones_recibos` FROM `operaciones_recibos` WHERE `docto_afectado`=IDDocto AND  `tipo_docto`=11 ORDER BY `fecha_operacion` DESC LIMIT 0,1 );
+	
+	 
+	IF ISNULL(IDRec) THEN
+		SET IDRec = 0;
+	END IF;
+	RETURN IDRec;
+    END$$
+
+DELIMITER ;
 
 

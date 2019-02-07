@@ -68,6 +68,10 @@ $xFRM->OMoneda("unidades_ponderadas", $xTabla->unidades_ponderadas()->v(), "TR.u
 $xFRM->addHElem( $xSel2->get(true) );
 $xFRM->addHElem( $xSel3->get(true) );
 $xFRM->addHElem( $xSel4->get(true) );
+
+$xFRM->addHElem( $xSel->getListaDeRiesgosDeProbabilidad("probabilidad_id", $xTabla->probabilidad_id()->v())->get(true) );
+$xFRM->addHElem( $xSel->getListaDeRiesgosConsecuencias("impacto_id", $xTabla->impacto_id()->v())->get(true) );
+
 $xFRM->OTextArea("fundamento_legal", $xTabla->fundamento_legal()->v(), "TR.fundamento legal");
 
 $xFRM->addCRUD($xTabla->get(), true);

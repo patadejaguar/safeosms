@@ -86,6 +86,8 @@ class cReciboDeOperacion{
 	private $mOFactura				= null;
 	private $mFechaDeCaptura		= false;
 	private $mForceCeros			= false;
+	private $mFolioExterno			= '';
+	
 	private $mSucursal				= "";
 	private $mIDCache				= "";
 	private $mSaldoHistorico		= 0;
@@ -168,13 +170,16 @@ class cReciboDeOperacion{
 			$DR			= array();
 			$recibo		= $this->mCodigoDeRecibo;
 			$xCache		= new cCache();
+			$inCache	= true;
+			
 			if($arrInicial != false AND is_array($arrInicial)){
 				$DR		= $arrInicial;
 			} else {
 				$DR		= $xCache->get($this->mIDCache);
 				if(!is_array($DR)){
-					$xLi	= new cSQLListas();
-					$DR		= obten_filas($xLi->getInicialDeRecibos($this->mCodigoDeRecibo, $this->mSocio));
+					$xLi		= new cSQLListas();
+					$DR			= obten_filas($xLi->getInicialDeRecibos($this->mCodigoDeRecibo, $this->mSocio));
+					$inCache	= false;
 				}
 			}
 			$ORec							= new cOperaciones_recibos();
@@ -189,22 +194,19 @@ class cReciboDeOperacion{
 				$this->mNumeroCheque		= $DR["cheque_afectador"];
 				$this->mFechaDeOperacion	= $DR["fecha_operacion"];
 				$this->mObservaciones		= $DR["observacion_recibo"];
-				$this->mPathToFormato		= $DR["path_formato"];
-				$this->mTipoDescripcion		= $DR["descripcion_recibostipo"];
-				$this->mAplicadoA			= $DR["origen"];
+				
+				
+				
 				$this->mReciboFiscal		= $DR["recibo_fiscal"];
 				$this->mTotalRecibo			= $DR["total_operacion"];
-				
-				$this->mPathToFormato		= $DR["path_formato"];
-				$this->mOrigen				= $DR["origen"];
 				
 				$this->mIndiceOrigen		= $DR["indice_origen"];
 				$this->mTiempo				= $DR["tiempo"];
 				$this->mDatosByArray		= $DR;
 				$this->mFechaDeVcto			= $this->mFechaDeOperacion;
 				$this->mUsuario				= $ORec->idusuario()->v();
-				$this->mMoneda				=  strtoupper( $ORec->clave_de_moneda()->v() );
-				$this->mUnidadesOriginales	=  strtoupper( $ORec->unidades_en_moneda()->v() );
+				$this->mMoneda				= strtoupper( $ORec->clave_de_moneda()->v() );
+				$this->mUnidadesOriginales	= strtoupper( $ORec->unidades_en_moneda()->v() );
 				$this->mTipoOrigenAML		= $ORec->origen_aml()->v();
 				$this->mClavePersonAsoc		= $ORec->persona_asociada()->v();
 				$this->mPeriodoActivo		= $ORec->periodo_de_documento()->v();
@@ -215,10 +217,31 @@ class cReciboDeOperacion{
 				$this->mOficialCbza			= $DR[$ORec->IDUSUARIO_CBZA];
 				$this->mOrigenCbza			= $DR[$ORec->IDTIPOCBZA];
 				
-				$this->setIDcache($ORec->idoperaciones_recibos()->v());
-				$xCache->set($this->mIDCache, $DR);
-				unset($DR);
+				$this->mTipoDescripcion		= "";
+				$this->mPathToFormato		= "";
+				if(isset($DR["path_formato"])){
+					$this->mTipoDescripcion		= $DR["descripcion_recibostipo"];
+					$this->mPathToFormato		= $DR["path_formato"];
+					$this->mOrigen				= $DR["origen"];
+					$this->mAplicadoA			= $DR["origen"];
+				} else {
+					$mTO						= $this->getOTipoRecibo();
+					if($mTO == null){
+ 
+					} else {
+						$this->mTipoDescripcion	= $mTO->getNombre();
+						$this->mPathToFormato	= $mTO->getPathForma();
+						$this->mOrigen			= $mTO->getOrigen();
+						$this->mAplicadoA		= $mTO->getOrigen();
+					}
+				}
 				
+				$this->setIDcache($DR[$ORec->IDOPERACIONES_RECIBOS]);
+				
+				if($inCache == false){
+					$xCache->set($this->mIDCache, $DR);
+				}
+				unset($DR);
 				if(MODULO_CAPTACION_ACTIVADO == false AND $this->mOrigen == $this->ORIGEN_MIXTO){
 					$this->mOrigen		= $this->ORIGEN_COLOCACION;
 				}
@@ -280,10 +303,12 @@ class cReciboDeOperacion{
 		if($Tipo == RECIBOS_TIPO_PAGO_CREDITO AND $persona_asociada <= DEFAULT_SOCIO){
 			$xCred			= new cCredito($documento);
 			if($xCred->init() == true){
-				$persona_asociada		= $xCred->getClaveDeEmpresa();
+				if($xCred->getEsNomina() == true){
+					$persona_asociada		= $xCred->getClaveDeEmpresa();
+				}
 			}
 		}
-		if($persona_asociada <= DEFAULT_SOCIO ){
+		/*if($persona_asociada <= DEFAULT_SOCIO ){
 			if($socio <= DEFAULT_SOCIO){
 				$persona_asociada	= DEFAULT_EMPRESA;
 			} else {
@@ -292,7 +317,7 @@ class cReciboDeOperacion{
 					$persona_asociada	 = $xSoc->getClaveDeEmpresa();
 				}
 			}
-		}
+		}*/
 		//
 		$cuenta_bancaria	= setNoMenorQueCero($cuenta_bancaria);
 		if($cuenta_bancaria > 0){
@@ -331,6 +356,7 @@ class cReciboDeOperacion{
 		$xRec->tipo_pago($TipoPago);
 		$xRec->periodo_de_documento($periodo);
 		$xRec->cuenta_bancaria($cuenta_bancaria);
+		$xRec->f_ext($this->mFolioExterno);
 		
 		if ($this->mAfectar == true){
 			$xsr = $xRec->query()->insert()->save();// my_query($sql_i_rec);
@@ -921,6 +947,32 @@ class cReciboDeOperacion{
 					}
 					if($Credito->init() == true){
 						if($Credito->getEsAfectable() == true){
+							if($Credito->isAFinalDePlazo() == false){
+								//Reestructurar Plan de Pagos
+								$xEm	= new cPlanDePagosGenerador();
+								if($xEm->initPorCredito($docto, $Credito->getDatosInArray()) == true){
+									if($Credito->getTienePagosEspeciales() == true){
+										$xLog->add("WARN\tCredito con Pagos especiales, no se genera el plan de pago\r\n");
+										setNuevaTarea_("Necesita Actualizar el Plan de Pago", false, $Credito->getOficialDeCredito(), false, $Credito->getClaveDePersona(), $Credito->getClaveDeCredito());
+									} else {
+										if($Credito->getEsAutorizado() == true OR $Credito->getEsAutorizado() == true OR $Credito->getEsRechazado() == true){
+											$xLog->add("WARN\tCredito con Estado Inactivo : " . $Credito->getEstadoActual() . "\r\n");
+										} else {
+											
+											
+											$xEm->setFechaArbitraria($Credito->getFechaPrimeraParc());
+											
+											$parcial 			= $xEm->getParcialidadPresumida(100);
+											$xEm->setCompilar();
+											$xEm->getVersionFinal(true);
+											
+											$xLog->add($xEm->getMessages(), $xLog->DEVELOPER);
+										}
+									}
+								}
+							}
+							//=============================
+							
 							$Credito->setReestructurarIntereses(false, false, true);
 						}
 						if($RestLetra == true){
@@ -962,7 +1014,9 @@ class cReciboDeOperacion{
 	 * @deprecated 1.9.42
 	 */	
 	function getDatosReciboInArray(){ return $this->mDatosByArray;	}
-	function getURI_Formato(){ return $this->mPathToFormato . $this->mCodigoDeRecibo; }
+	function getURI_Formato(){ 
+		return $this->mPathToFormato . $this->mCodigoDeRecibo; 
+	}
 	/**
 	 * Funcion que Retorna una Ficha Descriptiva por el recibo
 	 * @param boolean $fieldset
@@ -1205,6 +1259,7 @@ class cReciboDeOperacion{
 	function setCambiarTipo($NTipo = false){
 		$NTipo		= setNoMenorQueCero($NTipo);
 		$res		= false;
+		if($this->mReciboIniciado == false){ $this->init(); }
 		if($NTipo > 0){
 			$xQL	= new MQL();
 			$res	= $xQL->setRawQuery("UPDATE `operaciones_recibos` SET `tipo_docto`=$NTipo WHERE `idoperaciones_recibos`=" . $this->getCodigoDeRecibo());
@@ -1217,6 +1272,7 @@ class cReciboDeOperacion{
 		if($res === false) {
 			$this->mMessages	.= "WARN\tNo se Actualizo El tipo $NTipo\r\n";
 		}
+		$this->addEventoLog();
 		return $res;
 	}
 	function setCambiarTipoPago($tipo = ""){
@@ -1256,13 +1312,16 @@ class cReciboDeOperacion{
 			$res 	= ($res === false) ? false : true;
 			if($res == true){
 				$this->setCuandoSeActualiza();
-				$xLog->add("OK\tCambio de Tipo $NTipo exitoso\r\n");
+				$xLog->add("OK\tCambio de Tipo $tipoActual a $tipo exitoso\r\n");
 			}
 		}
 		if($res === false) {
-			$xLog->add("WARN\tNo se Actualizo El tipo $NTipo\r\n");
+			$xLog->add("WARN\tNo se Actualizo de tipo $tipoActual a $tipo\r\n");
+		} else {
+			$this->addEventoLog(2013, $xLog->getMessages());
 		}
 		$this->mMessages	.= $xLog->getMessages();
+		
 		
 		return $res;
 	}
@@ -1300,9 +1359,7 @@ class cReciboDeOperacion{
 			//actualizar bancos
 			$xQL->setRawQuery("UPDATE `bancos_operaciones` SET `fecha_expedicion`='$fecha' WHERE`recibo_relacionado`=$recibo");
 			//ejecutar aviso
-			$xLog		= new cCoreLog();
-			$xLog->add($this->mMessages);
-			$xLog->guardar($xLog->OCat()->EDICION_RAW, $this->getCodigoDeSocio());
+			$this->addEventoLog();
 		}
 	}
 	function setPeriodo($periodo = false, $actualizacion = false){
@@ -1321,6 +1378,8 @@ class cReciboDeOperacion{
 			//Actualiza los recibos al nuevo
 			$ql->setRawQuery("UPDATE `empresas_cobranza`, `operaciones_recibos` SET `recibo`= `operaciones_recibos`.`idoperaciones_recibos`, `tiempocobro`=UNIX_TIMESTAMP(`operaciones_recibos`.`fecha_operacion`), `estado`=0 
 			WHERE `empresas_cobranza`.`recibo`=0 AND `operaciones_recibos`.`docto_afectado`=`empresas_cobranza`.`clave_de_credito` AND `operaciones_recibos`.`periodo_de_documento`=`empresas_cobranza`.`parcialidad` AND `operaciones_recibos`.`tipo_docto`= 2");
+			$this->addEventoLog();
+			
 		}
 	}
 	function setTotalPorProrrateo($total){
@@ -1338,6 +1397,7 @@ class cReciboDeOperacion{
 			if($ops === false){
 				$this->mMessages	.= "ERROR\t$recibo\tFallo al actualizar el Operaciones al prorrateo\r\n";
 			}
+			$this->addEventoLog();
 			//$this->mMessages	.= $rec[SYS_INFO];
 			//$this->mMessages	.= $ops[SYS_INFO];
 		}
@@ -1396,6 +1456,7 @@ class cReciboDeOperacion{
 		} else {
 			$this->mMessages	.= "WARN\tEl Recibo $idrecibo no tuvo cambios\r\n";
 		}
+		$this->addEventoLog();
 		return true;
 	}
 	function setCambiarRelacionados($NDocumento= false, $NPersona = false, $AfectarOperaciones = false){
@@ -2068,9 +2129,22 @@ class cReciboDeOperacion{
 				$this->setCuandoSeActualiza();
 			}
 		}
+		$this->addEventoLog();
 	}
 	function getOficialDeCobranza(){ return $this->mOficialCbza; }
 	function getTipoOrigenCbza(){ return $this->mOrigenCbza; }
+	function setFolioExterno($folio){$this->mFolioExterno	= $folio; }
+	function initByFolioExterno($folio){
+		$xQL	= new MQL();
+		$data	= $xQL->getDataRow("SELECT * FROM `operaciones_recibos` WHERE `f_ext` ='$folio' LIMIT 0,1");
+		return $this->init($data);
+	}
+	function addEventoLog($codigoErr = 2013, $msg = ""){
+		if($this->mReciboIniciado == false){ $this->init(); }
+		
+		$msg	= ($msg == "") ? $this->mMessages : $msg;
+		setAgregarEvento_($msg, $codigoErr, $this->getCodigoDeSocio(), $this->getCodigoDeDocumento(), $this->getCodigoDeRecibo());
+	}
 }
 
 class cMovimientoDeOperacion{
@@ -2442,13 +2516,15 @@ class cTipoDeRecibo{
 			"ninguno" 		=> 0,
 			"ninguna"		=> 0,
 		);
-		$xCache	= new cCache();
-		$xT		= new cOperaciones_recibostipo();//Tabla
+		$xCache				= new cCache();
+		$inCache			= true;
+		$xT					= new cOperaciones_recibostipo();//Tabla
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
 				$xQL	= new MQL();
 				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mCodigo . " LIMIT 0,1");
+				$inCache	= false;
 			}
 		}
 		if(isset($data[$xT->getKey()])){
@@ -2465,7 +2541,9 @@ class cTipoDeRecibo{
 			$this->mNombre			= $this->aDatos["descripcion_recibostipo"];
 			
 			$this->setIDCache($this->mCodigo);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			if($inCache == false){
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
 			$this->mInit			= true;
 			$xT 					= null;
 		}

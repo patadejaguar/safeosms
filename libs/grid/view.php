@@ -21,9 +21,9 @@
 // *****************************************************************************
 
         //Define where you have placed the grid folder.
-        define("GRID_SOURCE", "");       
+		if(!defined("GRID_SOURCE")){ define("GRID_SOURCE", "../"); }
         
-        include(GRID_SOURCE."class/gridclasses.php"); //Include the grid engine.
+        include(GRID_SOURCE . "class/gridclasses.php"); //Include the grid engine.
         
         session_start();
        

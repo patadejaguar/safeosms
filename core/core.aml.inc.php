@@ -129,6 +129,7 @@ class cAML {
 			$arrV["variable_docto_fecha"]				= $fechacorta;
 			$arrV["variable_docto_hora"]				= $hora;
 			$arrV["variable_nivel_de_riesgo"]			= $riesgo;
+			$arrV["variable_nombre_de_riesgo"]			= $nombre_riesgo;
 			$arrV["variable_tipo_de_riesgo"]			= $nombreRies;
 			$arrV["variable_clasificacion_de_riesgo"]	= $claseRies;
 			$arrV["variable_codigo_de_alerta"]			= $id_de_alerta;
@@ -167,13 +168,14 @@ class cAML {
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }	
 	function setReportarUsuario($usuarioreportado, $motivo, $mensaje, $documento = false, $fecha = false, $persona = false, $tipo_de_documento = iDE_RECIBO){
 		$msg				= "";
-		$xF					= new cFecha(0, $fecha);
+		$xF					= new cFecha();
 		$documento			= setNoMenorQueCero($documento);
 		$persona			= setNoMenorQueCero($persona);
 		$usuarioreportado	= setNoMenorQueCero($usuarioreportado);
 		$cDUsr1				= new cVistaUsuarios(); $cDUsr1->setData( $cDUsr1->query()->initByID($usuarioreportado) );
 		$PersonaDeDestino	= $cDUsr1->codigo_de_persona()->v();
 		$tipo_de_docto		= setNoMenorQueCero($tipo_de_documento);
+		$fecha				= $xF->getFechaISO($fecha);
 
 		
 		if($documento > DEFAULT_CREDITO){
@@ -273,7 +275,7 @@ class cAMLPersonas {
 			
 			$PersonaCoincide	= $xPer->codigo()->v();
 			$PersonaDeDestino	= getOficialAML();
-			$TipoDeAlerta		= 901002;
+			//$TipoDeAlerta		= 901002;
 			$minimo				= 90;
 			
 			$parecido		= 0;
@@ -283,6 +285,7 @@ class cAMLPersonas {
 			$divisor		= 1;
 			$parecido_a2	= 0;
 			$parecido_a1	= 0;
+			$parecido_n		= 80; //80% de precision
 			
 			similar_text( $mNombre, $nombre, $parecido_n);
 			similar_text( $mApp1, $apellido1, $parecido_a1);
@@ -338,53 +341,10 @@ class cAMLPersonas {
 		
 	}
 	function setGuardarPerfilTransaccional($tipo, $pais, $monto, $numero, $observaciones, $fecha = false, $origen = "", $destino = ""){
-		$fecha	= ($fecha == false) ? fechasys(): $fecha;
-		$xPT	= new cPersonas_perfil_transaccional();
-		$xTT	= new cPersonas_perfil_transaccional_tipos();
-		$xF		= new cFecha();
-		$ql		= new MQL();
-		$pais	= strtoupper($pais);
-		$origen	= setCadenaVal($origen);
-		$destino= setCadenaVal($destino);
-		$res	= false;
+		$xPerfil	= new cAMLPersonasPerfilTransaccional($this->mClaveDePersona);
+		$res		= $xPerfil->add($tipo, $pais, $monto, $numero, $observaciones, $fecha, $destino);
 		
-		$persona	= $this->mClaveDePersona;
-		$id	= $xPT->query()->getLastID();
-		$xPT->cantidad_calculada(0);
-		$fv	= $xF->setSumarDias(AML_KYC_PERFIL_VIGENCIA, $fecha);
-		$xTT->setData( $xTT->query()->initByID($tipo) );
-		$ntipo	= $xTT->nombre_del_perfil()->v();
-		//Eliminar perfil parecido..
-		$sql		= "DELETE FROM personas_perfil_transaccional WHERE clave_de_persona = $persona AND clave_de_tipo_de_perfil = $tipo AND pais_de_origen='$pais' ";
-		$ql->setRawQuery($sql);
-		
-		$xPT->afectacion( $xTT->afectacion()->v() );
-		$xPT->cantidad_maxima($monto);
-		$xPT->clave_de_persona( $persona );
-		$xPT->clave_de_tipo_de_perfil($tipo);
-		$xPT->fecha_de_calculo( $xF->getInt($fecha) );
-		$xPT->fecha_de_registro( $xF->getInt($fecha) );
-		$xPT->fecha_de_vencimiento( $xF->getInt($fv) );
-		$xPT->idpersonas_perfil_transaccional($id);
-		$xPT->maximo_de_operaciones($numero);
-		$xPT->observaciones($observaciones);
-		$xPT->operaciones_calculadas(0);
-		$xPT->pais_de_origen($pais);
-		$xPT->recurso_origen($origen);
-		$xPT->recurso_aplicacion($destino);
-		$xPT->idusuario(getUsuarioActual());
-		
-		$id		= $xPT->query()->insert()->save();
-		if($id === false){
-			$this->mMessages .= "ERROR\tError al agregar el perfil tipo $ntipo por un monto de $monto\r\n";
-		} else {
-			$xPT = new cAMLPersonasPerfilTransaccional($persona);
-			$xPT->setCuandoSeActualiza();
-			
-			$this->mMessages .= "OK\tSe agrego el perfil $id de tipo $ntipo por un monto de $monto\r\n";
-		}
-		
-		
+		$this->mMessages	.= $xPerfil->getMessages();
 		return $res;
 	}
 	function getOPersona($data = false){
@@ -404,8 +364,8 @@ class cAMLPersonas {
 				(`clave_de_persona` =" . $this->mClaveDePersona . ") AND (`estado_en_sistema` =" . AML_KYC_DOCTO_ACTIVO . ") ";
 		$mql		= new cPersonas_documentacion();
 		$tdoctos	= new cPersonas_documentacion_tipos();
-		$TipoDeAlerta		= 801005;
-		$PersonaDeDestino	= getOficialAML();
+		//$TipoDeAlerta		= 801005;
+		//$PersonaDeDestino	= getOficialAML();
 					
 		$q			= $mql->query()->select(); $q->set($sql);
 		$data		= $q->exec();
@@ -423,7 +383,7 @@ class cAMLPersonas {
 				$tdoctos->setData( $tdoctos->query()->initByID($valor) );
 				//var_dump($doctos[$valor]);
 				if( !isset( $doctos[$valor] ) ){	
-					$msg	.= "ERROR\t" . $this->mClaveDePersona . "\tDocumento ($valor) " . $tdoctos->nombre_del_documento()->v() . " NO encontrado\r\n" ;
+					$msg	.= "ERROR\t$clave\t" . $this->mClaveDePersona . "\tDocumento ($valor) " . $tdoctos->nombre_del_documento()->v() . " NO encontrado\r\n" ;
 				} else {
 					$msg	.= "OK\t" . $this->mClaveDePersona . "\tDocumento " . $tdoctos->nombre_del_documento()->v() . " encontrado\r\n" ;
 				}
@@ -460,7 +420,10 @@ class cAMLPersonas {
 		$oficial	= getUsuarioActual();
 		$sql		= "UPDATE personas_documentacion SET fecha_de_verificacion='$fecha', oficial_que_verifico=$oficial, resultado_de_la_verificacion=$resultado,
 				     notas='$observaciones' WHERE clave_de_control=$clave_de_docto ";
-		$q			= my_query($sql);
+		$xQL		= new MQL();
+		$res		= $xQL->setRawQuery($sql);
+		$xQL		= nuLL;
+		return ($res === false) ? false : true;
 	}
 	function setVerificarDocumentosVencidos($fecha_de_verificacion = false){
 		//Validar documentos Vencidos
@@ -472,7 +435,7 @@ class cAMLPersonas {
 			WHERE    ( `personas_documentacion`.`clave_de_persona` = " . $persona . " )";
 		$rs				= $xQL->getDataRecord($sql);
 		$xLog			= new cCoreLog();
-		$xCO			= new cPersonas_documentacion();
+		//$xCO			= new cPersonas_documentacion();
 		$xF				= new cFecha();
 		$markT			= (AML_KYC_DIAS_PARA_REVISAR_DOCTOS * SYS_FACTOR_DIAS);
 		$FechaVer		= $xF->getInt($fecha_de_verificacion);
@@ -497,17 +460,19 @@ class cAMLPersonas {
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function getOAcumuladoDeOperaciones($fecha_inicial, $fecha_final = false, $moneda = false, $tipo = false){
 		$xF					= new cFecha();
-		$xQL				= new cSQLListas();
+		$xLi				= new cSQLListas();
 		$moneda				= ($moneda == false) ? AML_CLAVE_MONEDA_LOCAL : $moneda;
-		$fecha_final		= ($fecha_final == false) ? $fecha_inicial : $fecha_final;
-		$periodo_inicial	= date("Ym", $xF->getInt($fecha_inicial));
-		$periodo_final		= date("Ym", $xF->getInt($fecha_final));
-		$ql					= new MQL();
+		$fecha_final		= ($fecha_final === false) ? $fecha_inicial : $fecha_final;
+		$fecha_inicial		= $xF->getFechaISO($fecha_inicial);
+		$fecha_final		= $xF->getFechaISO($fecha_final);
+		//$periodo_inicial	= date("Ym", $xF->getInt($fecha_inicial));
+		//$periodo_final		= date("Ym", $xF->getInt($fecha_final));
+		$xQL					= new MQL();
 		$persona			= $this->getCodigoDePersona();
-		$sql				= $xQL->getAMLAcumuladoOperacionesRT($persona, $fecha_final, $moneda, $tipo );
+		$sql				= $xLi->getAMLAcumuladoOperacionesRT($persona, $fecha_final, $moneda, $tipo );
 		
-		$datos				= $ql->getDataRow($sql);
-		
+		$datos				= $xQL->getDataRow($sql);
+		$xQL				= null;
 		$xT					= new cAMLTipoDatos_PersonasTransacciones();
 		$xT->set($datos);
 		return $xT;
@@ -530,7 +495,7 @@ class cAMLPersonas {
 		$xLog			= new cCoreLog();
 		$xPerf			= new cAMLPersonasPerfilTransaccional($this->mClaveDePersona);
 		$xF				= new cFecha();
-		$fecha			= ($fecha == false) ? fechasys() : $fecha;
+		$fecha			= $xF->getFechaISO( $fecha);
 		
 		$persona		= $this->getCodigoDePersona();
 		$sql			= $xLi->getAMLAcumuladoOperacionesRT($this->mClaveDePersona, $fecha);
@@ -620,15 +585,23 @@ class cAMLPersonas {
 		$primerapellido		= ($primerapellido == "") ? $AlterApp1 : $primerapellido;
 		$segundoapellido	= ($segundoapellido == "") ? $AlterApp2 : $segundoapellido;
 		$xProv				= new cAMLListasProveedores();
+		$xListaInt			= new cAMLListaNegraInterna();
 		
-		$result				= $xProv->getConsultaInterna($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
+		$arrRes				= $xListaInt->getBuscarLPB($nombre, $primerapellido, $segundoapellido);
 		
-		if($useGWS == true AND $result == false){
-			$result			= $xProv->getConsultaGWS($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
+		if(count($arrRes)>1){
+			foreach($arrRes as $idx => $data){
+				$result		= true;
+				$this->mMessages	.= "WARN\t$idx\tSe encontro la coincidencia en PERSONAS BLOQUEADAS : $data\r\n";
+			}
+		} else {
+			$result				= $xProv->getConsultaInterna($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
+			
+			if($useGWS == true AND $result == false){
+				$result			= $xProv->getConsultaGWS($nombre, $primerapellido, $segundoapellido, $this->mClaveDePersona);
+			}
+			$this->mMessages	.= $xProv->getMessages();
 		}
-		
-		$this->mMessages	.= $xProv->getMessages();
-		
 		return $result;
 	}
 	function getBuscarEnListaPEP($nombre = "", $primerapellido = "", $segundoapellido = ""){
@@ -716,6 +689,27 @@ class cAMLPersonas {
 			$xOmit			= new cAMLPersonasOmisiones();
 			$xMat			= new cAMLMatrizDeRiesgo();
 			$omitido		= $xOmit->initByPersona($this->getCodigoDePersona());
+			
+			//Buscar en Lista Negra Interna
+			$xListaInt		= new cAMLListaNegraInterna();
+			$arrRes			= $xListaInt->getBuscarLPB($this->mOSocio->getNombreCompleto());
+			
+			if(count($arrRes)>=1){
+				$riesgoMantenido	= SYS_RIESGO_ALTO;
+				$riesgo				= SYS_RIESGO_ALTO;
+				$xMat->initByTopico($xMat->O_PERSONA_BLOQUEADO);
+				$riesgoMantenido	= $xMat->getMantenerRiesgo($xMat->getNivelRiesgo(), $riesgoMantenido);
+				
+				$xLog->add($xListaInt->getMessages());
+				
+				if($xMat->getEsFinalizador() == true AND $reportar == true){
+					$xAML->setForceAlerts();
+					$xAML->sendAlerts($this->mClaveDePersona, getOficialAML(), $xMat->getTipoRiesgo(), $xLog->getMessages());
+				}
+				
+				$factores++;
+			}
+			
 			
 			//if($xOmit->initByPersona($this->getCodigoDePersona()) == true){
 				//La persona está omitida
@@ -1276,6 +1270,56 @@ class cAMLPersonasPerfilTransaccional {
 		$xCache		= new cCache();
 		$xCache->clean($persona);
 	}
+	function add($tipo, $pais, $monto, $numero, $observaciones, $fecha = false, $origen = "", $destino = ""){
+		$xF			= new cFecha();
+		$xQL		= new MQL();
+		$fecha		= $xF->getFechaISO($fecha);
+		$xPT		= new cPersonas_perfil_transaccional();
+		$xTT		= new cPersonas_perfil_transaccional_tipos();
+		
+		$pais		= strtoupper($pais);
+		$origen		= setCadenaVal($origen);
+		$destino	= setCadenaVal($destino);
+		$res		= false;
+		
+		$persona	= $this->mClaveDePersona;
+		$id			= $xPT->query()->getLastID();
+		
+		$xPT->cantidad_calculada(0);
+		$fv			= $xF->setSumarDias(AML_PERSONA_DIAS_VENCPF, $fecha);
+		$xTT->setData( $xTT->query()->initByID($tipo) );
+		$ntipo		= $xTT->nombre_del_perfil()->v();
+		//Eliminar perfil parecido..
+		$sql		= "DELETE FROM personas_perfil_transaccional WHERE clave_de_persona = $persona AND clave_de_tipo_de_perfil = $tipo AND pais_de_origen='$pais' ";
+		$xQL->setRawQuery($sql);
+		
+		$xPT->afectacion( $xTT->afectacion()->v() );
+		$xPT->cantidad_maxima($monto);
+		$xPT->clave_de_persona( $persona );
+		$xPT->clave_de_tipo_de_perfil($tipo);
+		$xPT->fecha_de_calculo( $xF->getInt($fecha) );
+		$xPT->fecha_de_registro( $xF->getInt($fecha) );
+		$xPT->fecha_de_vencimiento( $xF->getInt($fv) );
+		$xPT->idpersonas_perfil_transaccional($id);
+		$xPT->maximo_de_operaciones($numero);
+		$xPT->observaciones($observaciones);
+		$xPT->operaciones_calculadas(0);
+		$xPT->pais_de_origen($pais);
+		$xPT->recurso_origen($origen);
+		$xPT->recurso_aplicacion($destino);
+		$xPT->idusuario(getUsuarioActual());
+		
+		$id		= $xPT->query()->insert()->save();
+		if($id === false){
+			$this->mMessages .= "ERROR\tError al agregar el perfil tipo $ntipo por un monto de $monto\r\n";
+			$res		= false;
+		} else {
+			$this->setCuandoSeActualiza();
+			$this->mMessages .= "OK\tSe agrego el perfil $id de tipo $ntipo por un monto de $monto\r\n";
+			$res		= true;
+		}
+		return $res;
+	}
 }
 class cAMLOperaciones{
 	private $mMessages			= "";
@@ -1422,6 +1466,7 @@ class cAMLRiesgos {
 	private $mCodigo		= false;
 	private $mObj			= null;
 	private $mIsInit		= false;
+	private $mInit			= false;
 	private $mMessages		= "";
 	
 	private $mFechaOrigen	= false;
@@ -1442,39 +1487,69 @@ class cAMLRiesgos {
 	private $mOficial		= 0;//persona_de_destino 
 	private $mUsuario		= 0;
 	
+	//private $mProbabilidadId	= 0;
+	//private $mImpactoId			= 0;
+	
+	private $mTiempo		= 0;
+	private $mIDCache		= "";
+	private $mTabla			= "aml_risk_register";
+	
 	function __construct($id = false){
 		$this->mCodigo	= setNoMenorQueCero($id);
-			
 	}
-	function init(){
-		$this->mObj		= new cAml_risk_register();
-		$xF				= new cFecha();
-		if($this->mCodigo > 0){
-			$data			= $this->mObj->query()->initByID($this->mCodigo);
-			$clave			= (isset($data["clave_de_riesgo"])) ? $data["clave_de_riesgo"] : 0; 
-			if($clave > 0){
-				$this->mObj->setData( $data );
-				$this->mIsInit			= true;
-				$this->mFechaOrigen		= $xF->getFechaByInt($this->mObj->fecha_de_reporte()->v());
-				$this->mFechaChecking	= $xF->getFechaByInt($this->mObj->fecha_de_checking()->v());
-				$this->mFechaRegistro	= $xF->getFechaByInt($this->mObj->fecha_de_reporte()->v());
-				$this->mFechaEnvio		= $xF->getFechaByInt($this->mObj->fecha_de_envio()->v());
-				$this->mNotasChecking	= $this->mObj->notas_de_checking()->v();
-				$this->mNotasSistema	= $this->mObj->mensajes_del_sistema()->v();
-				$this->mNotasPrev		= $this->mObj->acciones_tomadas()->v();
-				$this->mNotasReporte	= $this->mObj->razones_de_reporte()->v();
-				$this->mPersona			= $this->mObj->persona_relacionada()->v();
-				$this->mDocumento		= $this->mObj->documento_relacionado()->v();
-				$this->mTercero			= $this->mObj->tercero_relacionado()->v();
-				$this->mTipo			= $this->mObj->tipo_de_riesgo()->v();
-				$this->mTipoDocumento	= $this->mObj->tipo_de_documento()->v();
-				$this->mTipoOperacion	= $this->mObj->tipo_de_operacion()->v();
-				$this->mInstrumentoF	= $this->mObj->instrumento_financiero()->v();
-				$this->mUsuario			= $this->mObj->usuario()->v();
+	function init($data = false){
+		
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cAml_risk_register();//Tabla
+		$xF			= new cFecha();
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
 			}
-			
 		}
-		return $this->mIsInit;
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			
+			$this->mClave	= $data[$xT->getKey()];
+			$this->mFechaOrigen		= $xF->getFechaByInt($data[$xT->FECHA_DE_REPORTE]);
+			$this->mFechaChecking	= $xF->getFechaByInt($data[$xT->FECHA_DE_CHECKING]);
+			$this->mFechaRegistro	= $xF->getFechaByInt($data[$xT->FECHA_DE_REPORTE]);
+			$this->mFechaEnvio		= $xF->getFechaByInt($data[$xT->FECHA_DE_ENVIO]);
+			
+			$this->mNotasChecking	= $data["notas_de_checking"];
+			$this->mNotasSistema	= $data["mensajes_del_sistema"];
+			$this->mNotasPrev		= $data["acciones_tomadas"];
+			$this->mNotasReporte	= $data["razones_de_reporte"];
+			$this->mPersona			= $data["persona_relacionada"];
+			$this->mDocumento		= $data["documento_relacionado"];
+			$this->mTercero			= $data["tercero_relacionado"];
+			
+			$this->mTipo			= $data["tipo_de_riesgo"];
+			$this->mTipoDocumento	= $data["tipo_de_documento"];
+			$this->mTipoOperacion	= $data["tipo_de_operacion"];
+			$this->mInstrumentoF	= $data["instrumento_financiero"];
+			$this->mUsuario			= $data["usuario"];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$this->mIsInit	= true;
+			$xT 			= null;
+		} else {
+			//Para que no reviente
+			$this->mObj		= $xT;
+		}
+		
+		return $this->mInit;
 	}
 	function add($persona , $tipo, $fecha, $valor, $documento, $tipo_de_documento = false, $usuario = 
 			false, $hora = false, $instrumento = false, $tipo_de_operacion = false, 
@@ -1555,7 +1630,16 @@ class cAMLRiesgos {
 	function getNotasReporte(){ return $this->mNotasReporte; }
 	function getNotasPrevencion(){ return $this->mNotasPrev; }
 	function getUsuarioOrigen(){ return $this->mUsuario; }
-	function getOficialDest(){ return $this->mOficial; }		
+	function getOficialDest(){ return $this->mOficial; }
+	
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	
 }
 class cAMLAlertas {
 	protected $mMessages= "";
@@ -1591,7 +1675,8 @@ class cAMLAlertas {
 	private $mNivelRiesgo	= 0;
 	private $mHoraProceso	= "";
 	private $mIsChecked		= false;
-	
+	private $mEsActivo		= true;
+	private $mEsFalsoPos	= false;
 			
 	function __construct($id = false){
 		$this->mCodigo	= setNoMenorQueCero($id);
@@ -1657,6 +1742,9 @@ class cAMLAlertas {
 				$this->mDescripcion         = $this->mNotasSistema;
 				$this->mNivelRiesgo			= $data[$xT->RIESGO_CALIFICADO];
 				$this->mHoraProceso			= $data[$xT->HORA_DE_PROCESO];
+				$this->mEsActivo			= ($data[$xT->ESTADO_EN_SISTEMA] <= 0) ? false : true;
+				$this->mEstadoActual		= $data[$xT->ESTADO_EN_SISTEMA];
+				$this->mEsFalsoPos			= ($data[$xT->ES_FS] <= 0) ? false : true;
 				//$this->mTipoOperacion	= $this->mObj->tipo_de_operacion()->v();
 				
 				
@@ -1732,6 +1820,7 @@ class cAMLAlertas {
 				false, false, $this->getTercero(), $this->getMensajes(), $inmediato);
 		$this->mMessages	.= "OK\tAlerta # $clave de fecha $fecha promocionada a RIESGO\r\n";
 		$this->mMessages	.= $xRiesgo->getMessages();
+		$this->setCuandoSeActualiza();
 	}
 	/**
 	 * Dsecarta Alertas con Dictamen
@@ -1769,6 +1858,7 @@ class cAMLAlertas {
 		$xLog->add("WARN\tALERTA_AML Con Clave $clave se ha descartado\r\n");
 		
 		$this->mMessages	.= $xLog->getMessages();
+		$this->setCuandoSeActualiza();
 		return $res;
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
@@ -1845,13 +1935,22 @@ class cAMLAlertas {
 	}
 	function setEnviadoRMS(){
 		$xQL					= new MQL();
-		$xF						= new cFecha();
+		//$xF						= new cFecha();
 		$tt						= time();
 		$xQL->setRawQuery("UPDATE `aml_alerts` SET `envio_rms`=$tt WHERE `clave_de_control` = " . $this->mCodigo);
 		$this->mEnviadoRMS		= true;
 		$this->setCuandoSeActualiza();
 	}
 	function getEsEnviadoRMS(){ return $this->mEnviadoRMS; }
+	function getRMSNivelRiesgo(){
+		$riesgo	= 1;
+		
+		$xTipoR	= new cAMLCatalogoDeRiesgos($this->getTipoDeAlerta());
+		if($xTipoR->init()){
+			$riesgo	= $xTipoR->getRMSNivelRiesgo();
+		}
+		return $riesgo;
+	}
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function getIDCache(){ return $this->mIDCache; }
 	function setIDCache($clave = 0){
@@ -1866,6 +1965,42 @@ class cAMLAlertas {
 		$xQL->setRawQuery("UPDATE `aml_alerts` SET `mensaje`='$txt' WHERE `clave_de_control`=$id ");
 		$this->setCuandoSeActualiza();
 	}
+	function setEsFalsoPositivo($notas = "", $fecha = false, $recursivo = false){
+		$fecha	= ($fecha == false) ? fechasys() : $fecha;
+		$xF		= new cFecha();
+		$xLog	= new cCoreLog();
+		$xQL	= new MQL();
+		$fecha	= $xF->getInt($fecha);
+		$clave	= $this->mCodigo;
+		$iduser	= getUsuarioActual();
+		//setLog($notas);
+		$notas	= setCadenaVal($notas);
+		$res	= true;
+		//setLog($notas);
+		//Actualizar la alerta
+		$sql = "UPDATE aml_alerts SET fecha_de_checking=$fecha, estado_en_sistema=" . SYS_CERO . ", notas_de_checking=\"$notas\", `usuario_checking`=$iduser, `es_fs`=1 WHERE clave_de_control=$clave";
+		$res 	= $xQL->setRawQuery($sql);
+		$res	= ($res === false) ? false : true;
+		if($recursivo == true){
+			$this->init();
+			$tipo	= $this->getTipoDeAlerta();
+			$persona= $this->getPersonaDeOrigen();
+			
+			$sql 	= "UPDATE aml_alerts SET `fecha_de_checking`=$fecha, `estado_en_sistema`=" . SYS_CERO . ", `notas_de_checking`=\"$notas\", `usuario_checking`=$iduser, `es_fs`=1 WHERE
+			`estado_en_sistema`=" . SYS_UNO . " AND `fecha_de_checking`<= $fecha AND `tipo_de_aviso`=$tipo AND `persona_de_origen`=$persona ";
+			$res 	= $xQL->setRawQuery($sql);
+			$xLog->add("WARN\tALERTA_AML Descartada recursivamente al tipo $tipo\r\n");
+			$res	= ($res === false) ? false : true;
+		}
+		$xLog->add("WARN\tALERTA_AML Con Clave $clave se ha marcado como Falso Positivo\r\n");
+		
+		$this->mMessages	.= $xLog->getMessages();
+		$this->setCuandoSeActualiza();
+		return $res;
+	}
+	function getEsActivo(){ return $this->mEsActivo; }
+	function getEsFalsoPos(){ return $this->mEsFalsoPos; }
+	
 }
 
 
@@ -1882,10 +2017,10 @@ class cAMLMatrizDeRiesgo {
 	public $P_RIESGO_ES_PEP=	 "PERSONA_RIESGO_ES_PEP";
 	public $P_RIESGO_EN_EXCEPCION= "PERSONA_RIESGO_EN_EXCEPCION";
 	
-	public $P_RIESGO_ACTIVIDAD	= "PERSONA_RIESGO_ACTIVIDAD";
-	public $P_RIESGO_PAIS		= "PERSONA_RIESGO_PAIS";
-	public $P_RIESGO_DOM_PAIS	= "PERSONA_RIESGO_DOM_PAIS";
-	public $P_RIESGO_SIN_DOM	= "PERSONA_RIESGO_SIN_DOM";
+	public $P_RIESGO_ACTIVIDAD		= "PERSONA_RIESGO_ACTIVIDAD";
+	public $P_RIESGO_PAIS			= "PERSONA_RIESGO_PAIS";
+	public $P_RIESGO_DOM_PAIS		= "PERSONA_RIESGO_DOM_PAIS";
+	public $P_RIESGO_SIN_DOM		= "PERSONA_RIESGO_SIN_DOM";
 	
 	public $P_RIESGO_PM_NO_REP		= "PERSONA_MORAL_SIN_REPRESENTANTE";
 	public $P_RIESGO_SIN_PERFIL_T	= "PERSONA_SIN_PERFIL_T";
@@ -1897,9 +2032,9 @@ class cAMLMatrizDeRiesgo {
 	public $O_RIESGO_ORIGEN			= "OPERACION_RIESGO_PAIS_ORIGEN";
 	public $O_RIESGO_ORIGEN_LOC		= "OPERACION_RIESGO_LOC_ORIGEN";
 	
-	public $O_PERSONA_ALTORIESGO= "OPERACION_PERSONA_ALTO_RIESGO";
-	public $O_PERSONA_BLOQUEADO	= "OPERACION_PERSONA_BLOQUEADA";
-	public $O_PERSONA_PEPS		= "OPERACION_PERSONA_PEPS";
+	public $O_PERSONA_ALTORIESGO	= "OPERACION_PERSONA_ALTO_RIESGO";
+	public $O_PERSONA_BLOQUEADO		= "OPERACION_PERSONA_BLOQUEADA";
+	public $O_PERSONA_PEPS			= "OPERACION_PERSONA_PEPS";
 	
 	
 	private $mClave				= false;
@@ -2112,6 +2247,7 @@ class cAMLRiesgosNiveles {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
+	private $mColor		= "";
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){return $this->mIDCache; }
@@ -2122,22 +2258,33 @@ class cAMLRiesgosNiveles {
 	}
 	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
 	function init($data = false){
-		$xCache	= new cCache();
+		$xCache		= new cCache();
+		$xT			= new cAml_risk_levels();
+		$inCache	= true;
+		
 		if(!is_array($data)){
-			$data	= $xCache->get($this->mIDCache);
+			$data			= $xCache->get($this->mIDCache);
+			
 			if(!is_array($data)){
-				$xQL	= new MQL();
-				$data	= $xQL->getDataRow("SELECT * FROM `" . TAML_NIVEL_DE_RIESGOS . "` WHERE `clave_de_control`=". $this->mClave . " LIMIT 0,1");
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . TAML_NIVEL_DE_RIESGOS . "` WHERE `clave_de_control`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
 			}
 		}
 		
-		if(isset($data["clave_de_control"])){
-			$this->mObj		= new cAml_risk_levels(); //Cambiar
-			$this->mObj->setData($data);
-			$this->mClave	= $this->mObj->clave_de_control()->v();
-			$this->mNombre	= $this->mObj->nombre_del_nivel()->v();
+		if(isset($data[$xT->CLAVE_DE_CONTROL])){
+			$xT->setData($data);
+			$this->mObj		= $xT;
+			
+			$this->mClave	= $data[$xT->CLAVE_DE_CONTROL];//$this->mObj->clave_de_control()->v();
+			$this->mNombre	= $data[$xT->NOMBRE_DEL_NIVEL];//$this->mObj->nombre_del_nivel()->v();
+			$this->mColor	= $data[$xT->HCOLOR];
+			
 			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			
+			if($inCache == false){
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
 			$this->mInit	= true;
 		}
 		return $this->mInit;
@@ -2151,7 +2298,14 @@ class cAMLRiesgosNiveles {
 	function getNombre(){return $this->mNombre;}
 	function getClave(){return $this->mClave;}
 	function add(){}
-
+	function getColor(){ return $this->mColor; }
+	function initByRiesgo($riesgo){
+		$xQL		= new MQL();
+		$riesgo		= setNoMenorQueCero($riesgo);
+		$data		= $xQL->getDataRow("SELECT * FROM `" . TAML_NIVEL_DE_RIESGOS . "` WHERE `clave_de_control`>=$riesgo LIMIT 0,1");
+		
+		return $this->init($data);
+	}
 }
 class cPersonasConsultaEnListas {
 	private $mClave			= false;
@@ -2239,7 +2393,7 @@ class cAMLListaNegraInterna {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mTable		= "aml_listanegra_int";
 	private $mClaveDePersona	= 0;
 	function __construct($clave = false, $persona = false){ 
 		$this->mClave			= setNoMenorQueCero($clave); $this->setIDCache($this->mClave);
@@ -2249,7 +2403,7 @@ class cAMLListaNegraInterna {
 	function setIDCache($clave = 0){
 		$clave = ($clave <= 0) ? $this->mClave : $clave;
 		$clave = ($clave <= 0) ? microtime() : $clave;
-		$this->mIDCache	= "aml_listanegra_int" . "-" . $clave;
+		$this->mIDCache	= $this->mTable . "-" . $clave;
 		
 	}
 	private function setCleanCache(){
@@ -2258,7 +2412,7 @@ class cAMLListaNegraInterna {
 			 $xCache->clean($this->mIDCache); 
 		}
 		if($this->mClaveDePersona > DEFAULT_SOCIO){
-			$xCache->clean("aml_listanegra_int" . "-persona-" . $this->mClaveDePersona);
+			$xCache->clean($this->mTable . "-persona-" . $this->mClaveDePersona);
 		}
 	}
 	function initPorPersona($persona = false){
@@ -2267,7 +2421,7 @@ class cAMLListaNegraInterna {
 		$res		= false;
 		if($persona > 0){
 			$xCache	= new cCache();
-			$idx 	= "aml_listanegra_int" . "-persona-" . $this->mClaveDePersona;
+			$idx 	= $this->mTable . "-persona-" . $this->mClaveDePersona;
 			$data	= $xCache->get($idx);
 			if(!is_array($data)){
 				$xQL	= new MQL();
@@ -2339,11 +2493,76 @@ class cAMLListaNegraInterna {
 			$xT->persona($persona);
 			$xT->riesgo($riesgo);
 			$xT->sucursal(getSucursal());
-			$res			= $xT->query()->insert()->save();
+			
 			$xSoc			= NEW cSocio($persona);
+			if($xSoc->init() == true){
+				$xT->nombre_comp($xSoc->getNombreCompleto());
+				$xT->id_comp("");
+			}
+			
+			$res			= $xT->query()->insert()->save();
 			$xSoc->setCuandoSeActualiza();
 			
+			$res		= ($res === false) ? false : true;
+			if($res == true){
+				$this->mMessages	.= "OK\tSe agrega a la Persona con ID $persona\r\n";
+			}
+			return $res;
 		}
+	}
+	function addLPB($idinterno = "", $nombre = "", $observaciones = ""){
+		
+		$xF					= new cFecha();
+		$FechaVencimiento	= $xF->getDiaFinalAnnio();
+		$FechaRegistro		= $xF->getFechaISO(false);
+		$persona			= DEFAULT_SOCIO;
+		$riesgo				= SYS_RIESGO_ALTO;
+		
+		$xT					= new cAml_listanegra_int();
+		$xT->clave_interna("NULL");
+		$xT->estatus(SYS_UNO);
+		$xT->fecha_de_registro($FechaRegistro);
+		$xT->fecha_de_vencimiento($FechaVencimiento);
+		$xT->idmotivo(901);
+		$xT->idusuario(getUsuarioActual());
+		$xT->observaciones($observaciones);
+		$xT->persona($persona);
+		$xT->riesgo($riesgo);
+		
+		$xT->sucursal(getSucursal());
+		
+		$xT->nombre_comp($nombre);
+		$xT->id_comp($idinterno);
+		
+		$res			= $xT->query()->insert()->save();
+		
+		$res		= ($res === false) ? false : true;
+		if($res == true){
+			$this->mMessages	.= "OK\tSe agrega a la Persona con nombre $nombre con ID Interno $idinterno\r\n";
+		}
+		return $res;
+	}
+	function getBuscarLPB($nombre, $primerAp="", $segundoAp=""){
+		$nn		= $nombre . " " . $primerAp . " " . $segundoAp;
+		//$nn		= strtolower($nn);
+		//$texto = htmlentities("ejemplo á é í ó ú ñ", ENT_QUOTES, "UTF-8");
+		//$texto = html_entity_decode("ejemplo &ntilde;", ENT_QUOTES, "UTF-8");
+		$nn		= html_entity_decode($nn, ENT_QUOTES, "UTF-8");
+		
+		//$nn		= utf8_encode($nn);
+		$nn		= trim($nn);
+		$xQL	= new MQL();
+		$res	= array();
+		$rs		= $xQL->getDataRecord("SELECT * FROM `aml_listanegra_int` WHERE (`nombre_comp` LIKE '%$nn%') OR (`id_comp` LIKE '%$nn%') OR (`nombre_comp` SOUNDS LIKE '$nn')");
+		$txt	= "";
+		foreach ($rs as $rw){
+			$res[$rw["id_comp"]]	= $rw["nombre_comp"];
+			$txt	.= ($txt == "") ? $rw["nombre_comp"] : "," . $rw["nombre_comp"];
+		}
+		if($txt != ""){
+			$this->mMessages	.= "WARN\tSe encontraron las siguientes coincidencias : ". setCadenaVal($txt) . " \r\n";
+		}
+		return $res;
 	}
 }
 
@@ -2354,45 +2573,58 @@ class cAMLCatalogoDeRiesgos {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mTable		= "aml_risk_catalog";
+	private $mTabla		= "aml_risk_catalog";
 	private $mTipoRiesgo		= 0;
 	private $mValorPonderado	= 0;
 	private $mUnidadMedida		= "";
 	private $mPonderacion		= 0;
 	private $mFormaReporte		= "I";//Inmediato
 	private $mFormaChequeo		= "I";
+	private $mProbabilidadId	= 0;
+	private $mImpactoId			= 0;
+	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
-	function getIDCache(){ return $this->mIDCache; }
-	function setIDCache($clave = 0){
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
 		$clave = ($clave <= 0) ? $this->mClave : $clave;
 		$clave = ($clave <= 0) ? microtime() : $clave;
-		$this->mIDCache	= "aml_risk_catalog-" . $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
 	}
 	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
 	function init($data = false){
 		$xCache	= new cCache();
 		$xT		= new cAml_risk_catalog();//Tabla
+		$inCache= true;
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
 				$xQL	= new MQL();
 				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache= false;
 			}
 		}
-		if(isset($data[$xT->getKey()])){
+		if(isset($data[$xT->CLAVE_DE_CONTROL])){
 			$xT->setData($data);
 			$this->mObj				= $xT; //Cambiar
-			$this->mFormaChequeo	= $xT->frecuencia_de_chequeo()->v();
-			$this->mTipoRiesgo		= $xT->tipo_de_riesgo()->v();
-			$this->mFormaReporte	= $xT->forma_de_reportar()->v();
-			$this->mPonderacion		= $xT->unidades_ponderadas()->v();
-			$this->mValorPonderado	= $xT->valor_ponderado()->v();
-			$this->mUnidadMedida	= strtoupper($xT->unidad_de_medida()->v());
-			$this->mNombre			= $xT->descripcion()->v();
-			//`tipo_de_riesgo`,`valor_ponderado`,`unidades_ponderadas`,`unidad_de_medida`,`forma_de_reportar`,`frecuencia_de_chequeo`,
-			$this->mClave			= $xT->clave_de_control()->v();
+			//$data[$xT->];//
+			$this->mFormaChequeo	= $data[$xT->FRECUENCIA_DE_CHEQUEO];//$xT->frecuencia_de_chequeo()->v();
+			$this->mTipoRiesgo		= $data[$xT->TIPO_DE_RIESGO];//$xT->tipo_de_riesgo()->v();
+			$this->mFormaReporte	= $data[$xT->FORMA_DE_REPORTAR];//$xT->forma_de_reportar()->v();
+			$this->mPonderacion		= $data[$xT->UNIDADES_PONDERADAS];//$xT->unidades_ponderadas()->v();
+			$this->mValorPonderado	= $data[$xT->VALOR_PONDERADO];//$xT->valor_ponderado()->v();
+			$this->mUnidadMedida	= strtoupper($data[$xT->UNIDAD_DE_MEDIDA]);//$xT->unidad_de_medida()->v());
+			$this->mNombre			= $data[$xT->DESCRIPCION];//$xT->descripcion()->v();
+			
+			$this->mClave			= $data[$xT->CLAVE_DE_CONTROL];//$xT->clave_de_control()->v();
+			$this->mProbabilidadId	= $data[$xT->PROBABILIDAD_ID];//
+			$this->mImpactoId		= $data[$xT->IMPACTO_ID];//
+			
 			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			if($inCache == false){
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			
 			$this->mInit	= true;
 			$xT 			= null;
 		}
@@ -2409,8 +2641,29 @@ class cAMLCatalogoDeRiesgos {
 	function getUnidadDeMedida(){ return $this->mUnidadMedida; }
 	function getValorPonderado(){ return $this->mValorPonderado; }
 	function getUnidadesPonderadas(){ return $this->mPonderacion; }
-	function setCuandoSeActualiza(){
-		$this->setCleanCache();
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function getRMSNivelRiesgo(){
+		$RIESGO	= 1;
+		$xProb	= new cRiesgosProbabilidad( $this->mProbabilidadId );
+		$xImp	= new cRiesgosImpacto($this->mImpactoId);
+
+		
+		if($xProb->init() == true){
+			if($xImp->init() == true){
+				$PROBABILIDAD	= $xProb->getRiesgoRMS();
+				$IMPACTO		= $xImp->getRiesgoRMS();
+				$this->mMessages .= "Evaluar : $PROBABILIDAD x $IMPACTO\r\n";
+				$xForm		= new cFormula();
+				$xForm->init($xForm->AML_RMS_RIESGO);
+				$formula	= $xForm->getFormula();
+				//$RIESGO = $PROBABILIDAD * $IMPACTO;
+				eval( $formula );
+				
+				
+			}
+			
+		}
+		return $RIESGO;
 	}
 	function add(){}
 
@@ -2423,7 +2676,8 @@ class cAMLPersonasPerfilTransTipos {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mTable		= "personas_perfil_transaccional_tipos";
+	private $mTabla		= "personas_perfil_transaccional_tipos";
 	private $mTipoExhibicion	= "";
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -2530,7 +2784,7 @@ class cAMLListasProveedores {
 			//
 			$cdata		= json_decode(json_encode(simplexml_load_string($data2)), true);
 			$items		= 0;
-			$ndata		= array();
+			//$ndata		= array();
 			//{"folio":"281579","fecha_busqueda":"15 de Diciembre del 2016, 13:54 pm",
 			
 			if(isset($cdata["busqueda_peps"])){
@@ -2556,7 +2810,7 @@ class cAMLListasProveedores {
 					//"observaciones":"Periodo: 2012-2018. Lugar y fecha de nacimiento: 20 de julio de 1966 en Atlacomulco, Estado de M\u00e9xico; 
 					//Cargos anteriores: Secretario de Administraci\u00f3n (2000 a 2002), Diputado por el Estado de M\u00e9xico (Dtto. XIII, Legislatura LV) (2003 a 2004) y Coordinador del Grupo Parlamentario del PRI, Gobernador del Estado de M\u00e9xico (16-Sep-2005 al 15-Sep-2011)"}},"no_encontrados":[]}}
 					//"busqueda_peps":{"encontrados":{"pep":{"nombre":"Enrique","apellido_paterno":"Pe\u00f1a","apellido_materno":"Nieto",
-					$xLog->add("Coincide GWS:\t" . $subobj["curp"] . " - Coincidencia " . $subobj["primerapellido"] . " ". $subobj["segundoapellido"] . " " . $subobj["nombres"] . " encontrado con  " . $subobj["tipo"] . "\r\n");
+					$xLog->add("Coincide GWS:\t$idx :" . $subobj["curp"] . " - Coincidencia " . $subobj["primerapellido"] . " ". $subobj["segundoapellido"] . " " . $subobj["nombres"] . " encontrado con  " . $subobj["tipo"] . "\r\n");
 					$items++;
 					$dataOut[]					= $subobj;
 					$result						= true;
@@ -2608,11 +2862,23 @@ class cAMLListasProveedores {
 		return $data;
 	}
 	function getConsultaInterna($nombre = "", $primerapellido = "", $segundoapellido = "", $persona = false, $Peps = false){
+		$persona			= setNoMenorQueCero($persona);
+		$persona			= ($persona <= 0) ? DEFAULT_SOCIO : $persona;
+		$run				= true;
+		
+		if(strlen(trim("$nombre$primerapellido$segundoapellido")) <= 3 AND $persona> DEFAULT_SOCIO){
+			$xSoc			= new cSocio($persona);
+			if($xSoc->init() == true){
+				$nombre				= $xSoc->getNombre();
+				$primerapellido		= $xSoc->getApellidoPaterno();
+				$segundoapellido	= $xSoc->getApellidoMaterno();
+			}
+		}
+		
 		$nombre				= urlencode($nombre);
 		$primerapellido		= urlencode($primerapellido);
 		$segundoapellido	= urlencode($segundoapellido);
-		$persona			= setNoMenorQueCero($persona);
-		$persona			= ($persona <= 0) ? DEFAULT_SOCIO : $persona;
+
 		
 		$xUser				= new cSystemUser();
 		$xLog				= new cCoreLog();
@@ -2649,21 +2915,28 @@ class cAMLListasProveedores {
 				$items++;
 				//if($this->mClaveDePersona > DEFAULT_SOCIO){
 				$dd			= base64_encode(json_encode($subobj));
-
-				$nombre 	= $subobj["nombres"] . " ". $subobj["primerapellido"] . " ". $subobj["segundoapellido"];
-				if($this->mNoGuardar == false){
-					$xPList->add($persona, $nombre, $tipo, $proveedor, $mURL, false, $dd);
+				if(isset($subobj["nombres"])){
+					$nombre = $subobj["nombres"] . " ". $subobj["primerapellido"] . " ". $subobj["segundoapellido"];
+				} else {
+					$nombre = "";
 				}
-				$this->mDataBusqueda[]	= $subobj;
-				//}
-				//{"codigo":"16145","primerapellido":"CALLE","segundoapellido":"QUIROS","nombres":" LUIS SANTIAGO","curp":"SDNTK-16145","tipo":"metaphone"}
-				//var_dump($subobj);
-				//setLog( $subobj->primerapellido );
-				//foreach ($subobj as $cls){
-				//}
-				$nombre		= setCadenaVal($nombre);
-				
-				$xLog->add( "Coincide:\t" . $subobj["curp"] . " : Coincidencia $nombre encontrado con  " . $subobj["tipo"] . "\r\n");
+				if(strlen(trim(str_replace(" ", "", $nombre)))<=3){
+					$xLog->add( "WARN:\tSe Omite la coincidencia " . $subobj["curp"] . " : Coincidencia $nombre encontrado con  " . $subobj["tipo"] . "\r\n", $xLog->DEVELOPER);
+				} else {
+					if($this->mNoGuardar == false){
+						$xPList->add($persona, $nombre, $tipo, $proveedor, $mURL, false, $dd);
+					}
+					$this->mDataBusqueda[]	= $subobj;
+					//}
+					//{"codigo":"16145","primerapellido":"CALLE","segundoapellido":"QUIROS","nombres":" LUIS SANTIAGO","curp":"SDNTK-16145","tipo":"metaphone"}
+					//var_dump($subobj);
+					//setLog( $subobj->primerapellido );
+					//foreach ($subobj as $cls){
+					//}
+					$nombre		= setCadenaVal($nombre);
+					
+					$xLog->add( "Coincide:\t" . $subobj["curp"] . " : Coincidencia $nombre encontrado con  " . $subobj["tipo"] . "\r\n");
+				}
 			}
 		}
 		//setLog("NUMERO DE ITEMS $items");
@@ -2703,7 +2976,9 @@ class cAMLRiesgoProducto {
 	private $mNombre	= "";
 	private $mMessages	= "";
 	private $mIDCache	= "";
-	private $mTable		= "";
+	private $mTable		= "aml_riesgo_producto";
+	private $mTabla		= "aml_riesgo_producto";
+	
 	private $mTipoProd	= 0;
 	private $mClaveProd	= 0;
 	private $mNivelRiesgo= 1;
@@ -2712,7 +2987,7 @@ class cAMLRiesgoProducto {
 	function setIDCache($clave = 0){
 		$clave = ($clave <= 0) ? $this->mClave : $clave;
 		$clave = ($clave <= 0) ? microtime() : $clave;
-		$this->mIDCache	= "aml_riesgo_producto-" . $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
 	}
 	private function setCleanCache(){
 		if($this->mIDCache !== ""){
@@ -2756,7 +3031,7 @@ class cAMLRiesgoProducto {
 	function add(){}
 	function getNivelDeRiesgo(){ return $this->mNivelRiesgo; }
 	function initByTipoAndProd($tipo, $producto){
-		$idc	= "aml_riesgo_producto-p-t-$producto-$tipo";
+		$idc	= $this->mTabla . "-p-t-$producto-$tipo";
 		$xCache	= new cCache();
 		$data	= $xCache->get($idc);
 		if(isset($data["idaml_riesgo_producto"])){

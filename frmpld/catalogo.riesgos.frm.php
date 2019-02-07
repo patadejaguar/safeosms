@@ -50,12 +50,15 @@ $xHG->addKey("clave_de_control");
 $xHG->col("descripcion", "TR.DESCRIPCION", "35%");
 $xHG->col("tipo_de_riesgo", "TR.TIPO", "15%");
 
-$xHG->col("valor_ponderado", "TR.VALOR", "7%");
+//$xHG->ColMoneda("valor_ponderado", "TR.VALOR", "7%");
+//$xHG->ColMoneda("unidades_ponderadas", "TR.UNIDADES", "10%");
 
-$xHG->ColMoneda("unidades_ponderadas", "TR.UNIDADES", "10%");
 $xHG->col("unidad_de_medida", "TR.MEDIDA", "7%");
 $xHG->col("forma_de_reportar", "TR.REPORTE", "7%");
 $xHG->col("frecuencia_de_chequeo", "TR.CHEQUEO", "7%");
+
+$xHG->col("impacto", "TR.IMPACTO", "7%");
+$xHG->col("probabilidad", "TR.PROBABILIDAD", "7%");
 //$xHG->col("fundamento_legal", "TR.FUNDAMENTO LEGAL", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");

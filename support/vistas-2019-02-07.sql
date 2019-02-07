@@ -53,7 +53,9 @@ CONCAT(
 `t_03f996214fba4a1d05a68b18fece8e71`.`codigo_de_persona` AS  `codigo_de_persona`,
 `t_03f996214fba4a1d05a68b18fece8e71`.`alias`,
 `t_03f996214fba4a1d05a68b18fece8e71`.`corporativo`,
-`t_03f996214fba4a1d05a68b18fece8e71`.`usr_options` AS `opciones`
+`t_03f996214fba4a1d05a68b18fece8e71`.`usr_options` AS `opciones`,
+`t_03f996214fba4a1d05a68b18fece8e71`.`uuid_mail` AS `uuid_mail`
+
 from `t_03f996214fba4a1d05a68b18fece8e71` 
 $$
 

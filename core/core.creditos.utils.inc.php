@@ -100,10 +100,11 @@ class cUtileriasParaCreditos{
 		return $xLog->getMessages() ;
 	}			//END FUNCTION
 	function setValidarCreditos($fecha, $AppSucursal = true, $ReportToOficial = false){
-			if ( !isset($fecha) ){
-				$fecha 				= fechasys();
-			}
-			$msg	= "====\t\tVALIDADOR DE CREDITOS V 1.0.01\r\n";
+		$xF		= new cFecha();
+		$xQL	= new MQL();
+		$fecha	= $xF->getFechaISO($xF);
+		
+		$msg	= "====\t\tVALIDADOR DE CREDITOS V 1.0.01\r\n";
 			$cierre_sucursal	= "";
 			if ($AppSucursal == true){
 				//$cierre_sucursal = "AND (`creditos_solicitud`.`sucursal`='" . getSucursal() . "')";
@@ -124,27 +125,28 @@ class cUtileriasParaCreditos{
 								AND	(`creditos_solicitud`.`saldo_actual`>$tolerancia_en_pesos)
 							";
 
-				$rs_PAM = mysql_query($sqlValidacion, cnnGeneral());
+				$rs_PAM 	= $xQL->getRecordset($sqlValidacion);
 				if(!$rs_PAM){
 					$msg	.= "LA CONSULTA NO SE EJECUTO (CODE: " . mysql_errno() . ")";
-				}
-				$i = 1;
-				while($rw = mysql_fetch_array($rs_PAM)){
-					$solicitud		= $rw["numero_solicitud"];
-					$socio			= $rw["numero_socio"];
-					$oficial		= $rw["oficial_credito"];
-					$txt			= "";
-
-					$msg			.= "$i\tVERIFICANDO EL CREDITO $solicitud DE LA PERSONA # $socio\r\n";
-					$clsCred	= new cCredito($solicitud, $socio);
-					$clsCred->init($rw);
-					$txt		= $clsCred->setVerificarValidez();
-					if ( $ReportToOficial == true AND (trim($txt) != "") ){
-						$cOficial	= new cOficial(99);
-						$cOficial->addNote(iDE_CREDITO, $oficial , $socio, $solicitud, $txt);
+				} else {
+					$i = 1;
+					while($rw = $rs_PAM->fetch_assoc()){
+						$solicitud		= $rw["numero_solicitud"];
+						$socio			= $rw["numero_socio"];
+						$oficial		= $rw["oficial_credito"];
+						$txt			= "";
+	
+						$msg			.= "$i\tVERIFICANDO EL CREDITO $solicitud DE LA PERSONA # $socio\r\n";
+						$clsCred	= new cCredito($solicitud, $socio);
+						$clsCred->init($rw);
+						$txt		= $clsCred->setVerificarValidez();
+						if ( $ReportToOficial == true AND (trim($txt) != "") ){
+							$cOficial	= new cOficial($oficial);
+							$cOficial->addNote(MEMOS_TIPO_PENDIENTE, $oficial , $socio, $solicitud, $txt);
+						}
+						$msg	.= $txt;
+						$i++;
 					}
-					$msg	.= $txt;
-					$i++;
 				}
 		$this->mMessages	.= $msg;
 		return $msg;
@@ -597,7 +599,7 @@ class cUtileriasParaCreditos{
 					$FECHA_DE_ULTIMO_PAGO	= $fecha;
 					$xLog->add("WARN\tPagos sin Capital Dias $dias_transcurridos , Saldo $saldo_calculado , Fecha $fecha\r\n", $xLog->DEVELOPER);
 				} else {
-					if(isset($saldo_calculado)){
+					if(!isset($saldo_calculado)){
 						$saldo_calculado	= 0;
 						$xLog->add("WARN\tNo existe el Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
 					}
@@ -2133,6 +2135,42 @@ class cUtileriasParaCreditos{
 		
 		return $xLog->getMessages();
 	}
+	function setRegenerarPlanPagosNoExistentes(){
+		$xQL	= new MQL();
+		$xLog	= new cCoreLog();
+		
+		$sql	= "SELECT   `creditos_solicitud`.* FROM `creditos_solicitud` WHERE ( `creditos_solicitud`.`saldo_actual` >=0 ) AND getPlanDePagoByCred(`creditos_solicitud`.`numero_solicitud`)=0";
+		$rs		= $xQL->getRecordset($sql);
+		
+		while($rw = $rs->fetch_assoc()){
+			$idcredito	= $rw["numero_solicitud"];
+			$xCred		= new cCredito($idcredito);
+			if($xCred->init() == true){
+				
+				$xEm	= new cPlanDePagosGenerador();
+				if($xEm->initPorCredito($idcredito, $xCred->getDatosInArray()) == true){
+					
+					if($xCred->getEsAutorizado() == true OR $xCred->getEsAutorizado() == true OR $xCred->getEsRechazado() == true){
+						$xLog->add("WARN\tCredito con Estado Inactivo : " . $xCred->getEstadoActual() . "\r\n");
+					} else {
+						
+						
+						$xEm->setFechaArbitraria($xCred->getFechaPrimeraParc());
+						
+						$parcial 			= $xEm->getParcialidadPresumida(100);
+						$xEm->setCompilar();
+						//echo $xEm->getVersionFinal(false);
+						$xEm->getVersionFinal(true);
+						
+						$xLog->add($xEm->getMessages());
+					}
+				}
+			}//end init
+		}
+		$this->mMessages	.= $xLog->getMessages();
+		return $xLog->getMessages();
+	}
+	
 }
 
 
@@ -2476,7 +2514,18 @@ class cSQLFiltros {
 	
 		return $filtro;
 	}
-	
+	function RecibosArchPorFecha($FechaInicial, $FechaFinal=false){
+		$filtro		= "";
+		$xF			= new cFecha();
+		$FechaInicial	= $xF->getFechaISO($FechaInicial);
+		if($FechaFinal == false){
+			$filtro	= " AND (`operaciones_recibos_arch`.`fecha_operacion`  = '$FechaInicial')";
+		} else {
+			$filtro	= " AND (`operaciones_recibos_arch`.`fecha_operacion`  >= '$FechaInicial') AND (`operaciones_recibos_arch`.`fecha_operacion`  <= '$FechaFinal') ";
+		}
+		
+		return $filtro;
+	}
 	function RecibosPorPersonaAsociada($persona = false){
 		$persona	= setNoMenorQueCero($persona);
 		$ByTipo		= ($persona > 0) ? " AND (`operaciones_recibos`.`persona_asociada`= $persona)" : "";

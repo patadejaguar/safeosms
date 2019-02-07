@@ -88,16 +88,21 @@ $xHG->addKey("clave_de_control");
 
 $xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "25%");
 $xHG->OColSiNo("entregado", "TR.EN ARCHIVO", "10%");
+
+
 if($credito <= DEFAULT_CREDITO AND ($cuenta <= 0 OR $cuenta== DEFAULT_CUENTA_CORRIENTE)){
 	$xHG->OToolbar("TR.AGREGAR", "jsAdd($persona)", "grid/add.png");
 	$xHG->OButton("TR.CARGAR", "jsUpload($persona, ' + data.record.clave_de_control + ',' + data.record.entregado + ')", "upload.png");
+	$xHG->OButton("TR.VER", "jsVer($persona, ' + data.record.clave_de_control + ',' + data.record.entregado + ')", "view.png");
 } else {
 	if($credito>DEFAULT_CREDITO){
 		$xHG->OToolbar("TR.AGREGAR", "jsAddCont($persona, $credito)", "grid/add.png");
 		$xHG->OButton("TR.CARGAR", "jsUploadCont($persona,$credito,' + data.record.clave_de_control + ',' + data.record.entregado + ')", "upload.png");
+		$xHG->OButton("TR.VER", "jsVerCont($persona,$credito,' + data.record.clave_de_control + ',' + data.record.entregado + ')", "view.png");
 	}
 
 }
+
 
 
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
@@ -152,6 +157,20 @@ function jsUploadCont(idp, idcont, tipodocto, entregado){
 		xG.alerta({msg: "MSG_CONCEPTO_EXISTE"});
 	} else {
 		xG.w({url:"../frmsocios/personas_documentos.add.frm.php?persona=" + idp + "&tipo=" + tipodocto + "&contrato=" + idcont, tiny:true, callback: jsLGiddivlstdoctos});
+	}
+}
+function jsVer(idp, tipodocto, entregado){
+	if(entregado == 0){
+		xG.alerta({msg: "MSG_CONCEPTO_NOEXIS"});
+	} else {
+		var xP=new PersGen();xP.getDocumento({persona:idp, tipo: tipodocto});
+	}
+}
+function jsVerCont(idp, idcont, tipodocto, entregado){
+	if(entregado == 0){
+		xG.alerta({msg: "MSG_CONCEPTO_NOEXIS"});
+	} else {
+		var xP=new PersGen();xP.getDocumento({persona:idp, tipo: tipodocto, contrato:idcont});
 	}
 }
 </script>

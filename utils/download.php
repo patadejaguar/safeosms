@@ -13,64 +13,77 @@
 	//$xUsr	= new cSystemUser(); $xUsr->init();
 //=====================================================================================================
 $xLog	= new cCoreLog();
+
+$pabsoluto	= parametro("pathabsoluto", false, MQL_BOOL);
+$type		= parametro("type", "");
+$type		= strtolower($type);
+$file		= parametro("file", "", MQL_RAW);
+
+$download	= parametro("download", "", MQL_RAW);
+
+$xDoc		= new cDocumentos();
+if($download == ""){
+	$download	= $xDoc->cleanNombreArchivo($file, true);
+}
+
 /**
  * @see : File Download by Agata Report Team Project
  * header("Location: download.php?type=$mimetype&download=$download&file=$Output");
  */
-if(isset($_GET) && is_array($_GET))
-{
-    foreach ($_GET as $key=>$val)
-    {
-        ${$key}=$val;
-    }
-}
-if(isset($_POST) && is_array($_POST))
-{
-    foreach ($_POST as $key=>$val)
-    {
-        ${$key}=$val;
-    }
-}
-switch ($type)
-{
-    case ('txt'):
-        $content_type = 'text/plain';
-        break;
-    case ('csv'):
-        $content_type = 'text/plain';
-        break;
-    case ('sbk'):
-        $content_type = 'text/enriched';
-        break;
-    case ('gz'):
-    	$content_type = 'application/x-gzip';
-    	break;   
-    case 'xml':
-        $content_type = 'text/xml';
-        break;
-    case 'xlsx':
-        $content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        	break;
-     case 'xls':
-     	$content_type = 'application/vnd.ms-excel';
-        break;
-    case 'pdf':
-        $content_type = 'application/pdf';
-        break;
-    case 'ps':
-        $content_type = 'application/postscript';
-        break;
-    case 'sxw':
-        $content_type = 'application/sxw';
-        break;
-    case 'dia':
-        $content_type = 'application/dia';
-        break;
-    case "sql":
-    	$content_type = 'application/octet-stream';
-    	break;
-}
-	$largo	= strlen($file) - (strlen($type) + 1);
+	/*if(isset($_GET) && is_array($_GET))
+	{
+	    foreach ($_GET as $key=>$val)
+	    {
+	        ${$key}=$val;
+	    }
+	}
+	if(isset($_POST) && is_array($_POST))
+	{
+	    foreach ($_POST as $key=>$val)
+	    {
+	        ${$key}=$val;
+	    }
+	}*/
+	switch ($type)
+	{
+	    case ('txt'):
+	        $content_type = 'text/plain';
+	        break;
+	    case ('csv'):
+	        $content_type = 'text/plain';
+	        break;
+	    case ('sbk'):
+	        $content_type = 'text/enriched';
+	        break;
+	    case ('gz'):
+	    	$content_type = 'application/x-gzip';
+	    	break;   
+	    case 'xml':
+	        $content_type = 'text/xml';
+	        break;
+	    case 'xlsx':
+	        $content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+	        	break;
+	     case 'xls':
+	     	$content_type = 'application/vnd.ms-excel';
+	        break;
+	    case 'pdf':
+	        $content_type = 'application/pdf';
+	        break;
+	    case 'ps':
+	        $content_type = 'application/postscript';
+	        break;
+	    case 'sxw':
+	        $content_type = 'application/sxw';
+	        break;
+	    case 'dia':
+	        $content_type = 'application/dia';
+	        break;
+	    case "sql":
+	    	$content_type = 'application/octet-stream';
+	    	break;
+	}
+	$largo				= strlen($file) - (strlen($type) + 1);
 	$xLog->add("WARN\tDescargando el recurso $file de tipo $content_type\r\n");
 	if($type == "sbk"){
 		if(strpos($file, $type, $largo) === false){
@@ -89,7 +102,12 @@ switch ($type)
 		if(strpos($file, $type, $largo) === false){
 			$file		= $file . "." . $type;
 		}
-		$file			= PATH_BACKUPS . $file;
+		if($pabsoluto == true){
+			
+		} else {
+			$file			= PATH_BACKUPS . $file;
+		}
+		
 	}
 
 	if ($type != 'html')

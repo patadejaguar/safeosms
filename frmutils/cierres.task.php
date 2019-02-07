@@ -9,6 +9,7 @@ $url		= "";
 $rs			= "";
 //http://192.168.1.210/frmutils/cierres.task.php?f=2014-06-16&cmd=1
 $host		= getSafeHost();
+$iptask		= get_real_ip();
 
 switch ($cmd){
 	case 1:
@@ -31,6 +32,7 @@ switch ($cmd){
 		break;
 	default:
 		//echo $host;
+		setAgregarEvento_("Comando Desconocido desde la IP $iptask", 5);
 		break;
 }
 echo $rs;
@@ -39,30 +41,34 @@ echo $rs;
 function sendURLQuery($url){
 	$rs		= false;
 	//@session_start();
-	
-	$xUsr	= new cSystemUser(TASK_USR, false);
-	$key	= getClaveCifradoTemporal();
-	$xQL	= new MQLService("", "");
-	$xQL->setKey($key);
-	$pwd	= $xQL->getEncryptData(TASK_PWD);
-	
-	if($xUsr->initSession(TASK_USR, $pwd) == true){
+	$iptask	= get_real_ip();
+	if($iptask == TASK_IP){
+		$xUsr	= new cSystemUser(TASK_USR, false);
+		$key	= getClaveCifradoTemporal();
+		$xQL	= new MQLService("", "");
+		$xQL->setKey($key);
+		$pwd	= $xQL->getEncryptData(TASK_PWD);
 		
-		$ctx	= $xUsr->getCTX();
-		
-		$ch 	= curl_init();
-		$url	= "$url&ctx=$ctx";//SAFE_HOST_URL . "/clslogin.php". "?o=$o";
-		
-		set_time_limit(0);// to infinity for example
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL,$url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
-		curl_setopt($ch, CURLOPT_TIMEOUT,1000);
-		$rs 	= curl_exec($ch); 
-		curl_close ($ch);
-		
+		if($xUsr->initSession(TASK_USR, $pwd) == true){
+			
+			$ctx	= $xUsr->getCTX();
+			
+			$ch 	= curl_init();
+			$url	= "$url&ctx=$ctx";//SAFE_HOST_URL . "/clslogin.php". "?o=$o";
+			
+			set_time_limit(0);// to infinity for example
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL,$url);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
+			curl_setopt($ch, CURLOPT_TIMEOUT,1000);
+			$rs 	= curl_exec($ch); 
+			curl_close ($ch);
+			
+		}
+	} else {
+		setAgregarEvento_("Error al Iniciar el Cierre desde la IP $iptask", 5);
 	}
 	return $rs;
 }
@@ -106,33 +112,5 @@ function getSafeHost(){
 		}
 	}
 	return $host;
-}
-function get_real_ip()
-{
-	
-	if (isset($_SERVER["HTTP_CLIENT_IP"]))
-	{
-		return $_SERVER["HTTP_CLIENT_IP"];
-	}
-	elseif (isset($_SERVER["HTTP_X_FORWARDED_FOR"]))
-	{
-		return $_SERVER["HTTP_X_FORWARDED_FOR"];
-	}
-	elseif (isset($_SERVER["HTTP_X_FORWARDED"]))
-	{
-		return $_SERVER["HTTP_X_FORWARDED"];
-	}
-	elseif (isset($_SERVER["HTTP_FORWARDED_FOR"]))
-	{
-		return $_SERVER["HTTP_FORWARDED_FOR"];
-	}
-	elseif (isset($_SERVER["HTTP_FORWARDED"]))
-	{
-		return $_SERVER["HTTP_FORWARDED"];
-	}
-	else
-	{
-		return $_SERVER["REMOTE_ADDR"];
-	}
 }
 ?>

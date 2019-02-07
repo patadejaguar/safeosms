@@ -210,6 +210,7 @@ if($doc1 == false){
 			 	$municipio	= $xFi->getEntero($tmp->ID_MUN);
 			 	$tipo		= strtolower($xFi->getV($tmp->TIPO));
 			 	$tipo2		= strtoupper($xFi->getV($tmp->TIPO));
+			 	$tipo3		= $xFi->getV($tmp->TIPO);
 			 	//validar si existe el codigo postal
 			 	
 			 	$sqlBuilder->setQuery($sql1)->setConditions(array('idcodigopostal' => "$cp"));
@@ -233,7 +234,7 @@ if($doc1 == false){
 			 			$arrC["fecha_revision"]			= $fecha;
 			 			$arrC["tipo_colonia"]			= $tipo;
 			 			$arrC["codigo_postal_id"]		= $idcp;
-			 			$arrC["activo"]					= true;
+			 			$arrC["activo"]					= "t";
 			 			$arrC["tipo_asentamiento_id"]	= "1";
 			 			
 			 			if(isset($arrTC[$tipo2])){
@@ -244,7 +245,7 @@ if($doc1 == false){
 			 				$idcol 				= $dbConn->insert('colonia', $arrC);
 			 				$res				= true;
 			 				$xFx->setWrite(implode("|", $arrC) . "\r\n");
-			 				$xLog->add("OK\tSe agrega la colonia $nombre -$cp-$initCol- relacionado con idCP $idcp\r\n");
+			 				$xLog->add("OK\tSe agrega la colonia $nombre -$cp-$initCol- relacionado con idCP $idcp ---  Estado: $estado Municipio $municipio\r\n");
 			 				$initCol++;
 			 			} catch (\Simplon\Postgres\PostgresException $e){
 			 				$xLog->add($e->getMessage());
@@ -267,7 +268,7 @@ if($doc1 == false){
 			 		try {
 			 			$idcpN 				= $dbConn->insert('codigo_postal', $arrI);
 			 			$xFcp->setWrite(implode("|", $arrI) . "\r\n");
-			 			$xLog->add("OK\tSe agrega el CP $cp con nuevo id $idcpN o $initCP\r\n");
+			 			$xLog->add("OK\tSe agrega el CP $cp con nuevo id $idcpN o $initCP ----  Estado: $estado Municipio $municipio\r\n");
 			 			$initCP++;
 			 		} catch (\Simplon\Postgres\PostgresException $e){
 			 			$xLog->add($e->getMessage());
@@ -292,7 +293,7 @@ if($doc1 == false){
 			 				$idcol 				= $dbConn->insert('colonia', $arrC);
 			 				$res				= true;
 			 				$xFx->setWrite(implode("|", $arrC) . "\r\n");
-			 				$xLog->add("OK\tSe agrega la colonia nueva $nombre -$cp-$initCol- relacionado con idCP nuevo $idcpN o $initCP\r\n");
+			 				$xLog->add("OK\tSe agrega la colonia nueva $nombre -$cp-$initCol- relacionado con idCP nuevo $idcpN o $initCP --- Estado: $estado Municipio $municipio\r\n");
 			 				$initCol++;
 			 			} catch (\Simplon\Postgres\PostgresException $e){
 			 				$xLog->add($e->getMessage());

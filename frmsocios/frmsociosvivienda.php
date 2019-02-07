@@ -205,7 +205,15 @@ if($action != SYS_NINGUNO){
 	$xFRM->addHElem( $xTxt->getNumero("idtelefono2", "", "TR.TELEFONO_MOVIL") );
 	
 	$xFRM->addObservaciones();
-	$xFRM->addHElem( $xChk->get("TR.Domicilio Principal ?", "idprincipal") );
+	
+	$xEstat	= new cPersonasEstadisticas($persona);
+	if($xEstat->getTotalDomicilios()<=0){
+		$xFRM->OHidden("idprincipal", 1);
+	} else {
+		$xFRM->addHElem( $xChk->get("TR.Domicilio Principal ?", "idprincipal") );
+	}
+	
+	
 	$xFRM->addHElem( $xChk->get("TR.Domicilio ENCONSTRUCCION ?", "idconstruye") );
 	
 	

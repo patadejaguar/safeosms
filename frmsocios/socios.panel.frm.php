@@ -55,9 +55,18 @@ function jsaReActividadE($idsocio){
 	$ql		= new cSQLListas();
 		
 	$myCab = new cTabla($ql->getListadoDeActividadesEconomicas($idsocio),0, "idtbllistaactividadps");
-	$myCab->addEditar(USUARIO_TIPO_OFICIAL_CRED);
-	$myCab->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
+	//$myCab->addEditar(USUARIO_TIPO_OFICIAL_CRED);
+	$myCab->OButton("TR.Editar", "var xA=new PersAEGen();xA.setEditarActividad({id:_REPLACE_ID_});", $myCab->ODicIcons()->EDITAR);
+	
 	$myCab->OButton("TR.Verificar", "jsVerificarAE(_REPLACE_ID_)", $myCab->ODicIcons()->SALUD);
+	$myCab->addBaja(USUARIO_TIPO_OFICIAL_CRED);
+	
+	
+	if(MODO_DEBUG == true){
+		$myCab->addEliminar(USUARIO_TIPO_OFICIAL_CRED);
+	}
+	
+	
 	$myCab->setKeyField("idsocios_aeconomica");
 	return  $myCab->Show();
 }
@@ -490,7 +499,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	/*Validacion*/
 	if(MODO_DEBUG == true){
 		$xHTabs->addTab("TR.Validacion", $xSoc->getValidacion(OUT_HTML));
-		$xFRM->OButton("TR.Reporte SIC", "jsGetCirculoDeCredito()", $xBtn->ic()->REPORTE);
+		$xFRM->OButton("TR.Reporte SIC", "jsGetCirculoDeCredito($idsocio)", $xBtn->ic()->REPORTE);
 		
 		//Acciones de Correccion
 		if($xSoc->getEsPersonaFisica() == false){
@@ -849,11 +858,7 @@ var idemp	= $("#idempresa").val();
 var xrl		= "../frmempresas/layout-cedula.frm.php?empresa=" + idemp;
 xG.w({ url: xrl, tiny : true }); 	
 }*/
-function jsGetCirculoDeCredito(){
-	var ff 		= window.prompt("Fecha de Corte:");
-	var xrl		= "../rptlegal/circulo_de_credito.rpt.php?persona=" + mSocio  + "&fechafinal=" + ff;
-	xG.w({ url: xrl, tab : true });  
-}
+function jsGetCirculoDeCredito(id){	xPG.getReporteSIC(id); }
 function jsGetOperaciones(){ 	}
 function jsGoToPanelCredito(idx){ var xCred = new CredGen(); xCred.goToPanelControl(idx); }
 //function jsListaDeNominas(idnomina){ var EmpG	= new EmpGen(); EmpG.getOrdenDeCobranza(idnomina);	}

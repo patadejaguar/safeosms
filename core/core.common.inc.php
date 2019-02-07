@@ -244,8 +244,7 @@ class cCajaLocal{
 		$sucursal		= ($sucursal == "") ? getSucursal() : $sucursal;
 		$numero			= setNoMenorQueCero($numero);
 		if($numero	<= 0){
-			$xCL		= new cSocios_cajalocal();
-			$numero		= $xCL->query()->getLastID()+1;
+			$numero		= $xQL->getContarDe("socios_cajalocal");
 		}
 		$xCP			= new cDomiciliosColonias();
 		$idcp			= $xCP->getClavePorCodigoPostal($codigo_postal);
@@ -410,6 +409,7 @@ class cSucursal{
 	private $mColonia			= "";
 	private $mCentroDeCosto		= 0;
 	private $mOficialAML		= 0;
+	private $mIDDomicilio		= 0;
 	
 	function __construct($clave = false){	
 		if ( $clave == false ){	$clave = getSucursal(); }
@@ -419,17 +419,25 @@ class cSucursal{
 	}
 	function init($datos = false){
 		$xCach 					= new cCache();
+		$xT						= new cGeneral_sucursales();
+		$inCache				= false;
 		if(!is_array($datos)){
 			$datos				= $xCach->get("sucursal-" . $this->mClave);
 			$sql				= "SELECT * FROM general_sucursales	WHERE	(`general_sucursales`.`codigo_sucursal` =\"" . $this->mClave . "\") ";
-			$D					= ($datos == null) ? obten_filas($sql) : $datos;
+			if(!is_array($datos)){
+				$D				= obten_filas($sql);
+				$inCache		= false;
+			}
+			
 		} else {
 			$D					= $datos;
 		}
 		$this->mInitPersona		= false;
-		$xT						= new cTipos();
+		//$xT						= new cTipos();
 		
-		if(isset($D["titular_de_cobranza"])){
+		if(isset($D[$xT->NOMBRE_SUCURSAL])){
+			$xT->setData($D);
+			
 			$this->mTitularCobranza		= $D["titular_de_cobranza"];
 			$this->mTitularContable		= $D["titular_de_contabilidad"];
 			$this->mGerente				= $D["gerente_sucursal"];
@@ -444,10 +452,14 @@ class cSucursal{
 			$this->mClaveNumerica		= $D["clave_numerica"];
 			$this->mCentroDeCosto		= $D["centro_de_costo"];
 			$this->mOficialAML			= $D["titular_de_cumplimiento"];
+			$this->mIDDomicilio			= $D[$xT->IDDOMICILIO];
 			$this->mOficialAML			= ($this->mOficialAML<=0) ? AML_OFICIAL_DE_CUMPLIMIENTO : $this->mOficialAML;
+			
 			$this->mDatosInArray		= $D;
 			//Guardar en cache
-			$xCach->set("sucursal-" . $this->mClave, $D);
+			if($inCache == false){
+				$xCach->set("sucursal-" . $this->mClave, $D);
+			}
 			//$xL							= new cLocal($this->mClave);
 			//$this->mMessages		.= "ERROR\tLa Persona " . $this->mClaveDePersona . " de Sucursal No existe\r\n";
 			$this->mDomicilioCorto		= EACP_DOMICILIO_CORTO;
@@ -465,56 +477,78 @@ class cSucursal{
 			$this->mNumeroExt			= EACP_DOMICILIO_NUM_EXT;
 			$this->mNumeroInt			= EACP_DOMICILIO_NUM_INT;
 			$this->mColonia				= EACP_COLONIA;
+			
 			if(SISTEMA_CAJASLOCALES_ACTIVA == true){
 				$xCL	= new cCajaLocal($this->mCajaLocalRes);
 				if($xCL->init() == true){
 					$this->mRegionLocal	= $xCL->getRegion();
 				}
 			}
-			if(setNoMenorQueCero($this->mClaveDePersona) > 0 AND $this->mClaveDePersona != DEFAULT_SOCIO){
-			$xSoc						= new cSocio($this->mClaveDePersona);
-			if($xSoc->existe($this->mClaveDePersona) == true){
-				if( $xSoc->init() == true){
-					//verificar si existe domicilio
-					$xViv		= new cPersonasVivienda($this->mClaveDePersona);
-					$xDB		= new cSQLTabla(TPERSONAS_DIRECCIONES);
-					$sql 		= $xDB->getQueryInicial() . " WHERE socio_numero=" . $this->mClaveDePersona . "  ORDER BY principal DESC, fecha_alta DESC LIMIT 0,1";
-					$DCOL		= $xCach->get("sucursal-dom-". $this->mClave);
-					if($DCOL == null){
-						$DCOL		= obten_filas($sql);
-						$xCach->set("sucursal-dom-". $this->mClave, $DCOL);
-					}
-					$this->mTelefono	= $xSoc->getTelefonoPrincipal();
-					if(isset($DCOL["idsocios_vivienda"]) ){
-						$xViv->init(false, $DCOL);
-						$this->mMunicipio			= $xViv->getMunicipio();
-						$this->mEstado				= $xViv->getEstado(OUT_TXT);
-						$this->mCodigoPostal		= $xViv->getCodigoPostal();
-						$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
-						$this->mDomicilioCorto		= $xViv->getCalleConNumero();
-						$this->mNombreLocalidad		= $xViv->getCiudad();
-						$this->mClaveLocalidad		= $xViv->getClaveDeLocalidad();
-						$this->mInitPersona			= true;
-						$this->mClaveDeMunicipio 	= $xViv->getClaveDeMunicipio();
-						$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
-						$this->mClaveDeEstadoABC	= $xViv->getClaveDeEstadoABC();
-						$this->mClaveDeEstadoSIC	= $xViv->getClaveDeEstadoEnSIC();
-						$this->mCalle				= $xViv->getCalle();
-						$this->mNumeroExt			= $xViv->getNumeroExterior();
-						$this->mNumeroInt			= $xViv->getNumeroInterior();
-						$this->mColonia				= $xViv->getColonia();
-						
-					} else {
-						$this->mMessages		.= "ERROR\tLa Persona " . $this->mClaveDePersona . " de Sucursal, no tiene Domicilio\r\n";
-					}
-				} else {
-					$this->mMessages		.= "ERROR\tLa Persona " . $this->mClaveDePersona . " de Sucursal NO EXISTE\r\n";
-					$this->mInitPersona		= false;					
+			if($this->mIDDomicilio>0){
+				$xViv		= new cPersonasVivienda(false, false, $this->mIDDomicilio);
+				if($xViv->init() == true){
+					$this->mMunicipio			= $xViv->getMunicipio();
+					$this->mEstado				= $xViv->getEstado(OUT_TXT);
+					$this->mCodigoPostal		= $xViv->getCodigoPostal();
+					$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
+					$this->mDomicilioCorto		= $xViv->getCalleConNumero();
+					$this->mNombreLocalidad		= $xViv->getCiudad();
+					$this->mClaveLocalidad		= $xViv->getClaveDeLocalidad();
+					$this->mClaveDeMunicipio 	= $xViv->getClaveDeMunicipio();
+					$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
+					$this->mClaveDeEstadoABC	= $xViv->getClaveDeEstadoABC();
+					$this->mClaveDeEstadoSIC	= $xViv->getClaveDeEstadoEnSIC();
+					$this->mCalle				= $xViv->getCalle();
+					$this->mNumeroExt			= $xViv->getNumeroExterior();
+					$this->mNumeroInt			= $xViv->getNumeroInterior();
+					$this->mColonia				= $xViv->getColonia();
 				}
-			}
-			//Guardar en la session
-				if(isset($_SESSION)){
-					
+			} else {
+				if(setNoMenorQueCero($this->mClaveDePersona) > 0 AND $this->mClaveDePersona != DEFAULT_SOCIO){
+				$xSoc						= new cSocio($this->mClaveDePersona);
+				if($xSoc->existe($this->mClaveDePersona) == true){
+					if( $xSoc->init() == true){
+						//verificar si existe domicilio
+						$xViv		= new cPersonasVivienda($this->mClaveDePersona);
+						$xDB		= new cSQLTabla(TPERSONAS_DIRECCIONES);
+						$sql 		= $xDB->getQueryInicial() . " WHERE socio_numero=" . $this->mClaveDePersona . "  ORDER BY principal DESC, fecha_alta DESC LIMIT 0,1";
+						$DCOL		= $xCach->get("sucursal-dom-". $this->mClave);
+						if($DCOL == null){
+							$DCOL		= obten_filas($sql);
+							$xCach->set("sucursal-dom-". $this->mClave, $DCOL);
+						}
+						$this->mTelefono	= $xSoc->getTelefonoPrincipal();
+						if(isset($DCOL["idsocios_vivienda"]) ){
+							$xViv->init(false, $DCOL);
+							$this->mMunicipio			= $xViv->getMunicipio();
+							$this->mEstado				= $xViv->getEstado(OUT_TXT);
+							$this->mCodigoPostal		= $xViv->getCodigoPostal();
+							$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
+							$this->mDomicilioCorto		= $xViv->getCalleConNumero();
+							$this->mNombreLocalidad		= $xViv->getCiudad();
+							$this->mClaveLocalidad		= $xViv->getClaveDeLocalidad();
+							$this->mInitPersona			= true;
+							$this->mClaveDeMunicipio 	= $xViv->getClaveDeMunicipio();
+							$this->mClaveDeEstado		= $xViv->getClaveDeEstado();
+							$this->mClaveDeEstadoABC	= $xViv->getClaveDeEstadoABC();
+							$this->mClaveDeEstadoSIC	= $xViv->getClaveDeEstadoEnSIC();
+							$this->mCalle				= $xViv->getCalle();
+							$this->mNumeroExt			= $xViv->getNumeroExterior();
+							$this->mNumeroInt			= $xViv->getNumeroInterior();
+							$this->mColonia				= $xViv->getColonia();
+							
+						} else {
+							$this->mMessages		.= "ERROR\tLa Persona " . $this->mClaveDePersona . " de Sucursal, no tiene Domicilio\r\n";
+						}
+					} else {
+						$this->mMessages		.= "ERROR\tLa Persona " . $this->mClaveDePersona . " de Sucursal NO EXISTE\r\n";
+						$this->mInitPersona		= false;					
+					}
+				}
+				//Guardar en la session
+					if(isset($_SESSION)){
+						
+					}
 				}
 			}
 			$this->mInit					= true;
@@ -674,7 +708,9 @@ class cSucursal{
 	function setActualizarPorPersona(){
 		if($this->mInit == false){ $this->init(); }
 		if($this->mInitPersona == true){
-			$xSuc		= new cGeneral_sucursales();
+			$xSuc	= new cSucursal();
+			//TODO: Validar la funcionalidad de este codigo que actualiza datos por la persona
+			/*$xSuc		= new cGeneral_sucursales();
 			$xSuc->setData( $xSuc->query()->initByID($this->mClave) );
 			$xSuc->calle( $this->mCalle );
 			$xSuc->codigo_postal( $this->mCodigoPostal );
@@ -685,13 +721,38 @@ class cSucursal{
 			$xSuc->municipio( $this->mMunicipio );
 			$xSuc->estado( $this->mEstado );
 			$xSuc->telefono( $this->mTelefono );
-			$xSuc->query()->update()->save($this->mClave);
+			$xSuc->query()->update()->save($this->mClave);*/
 		}
 	}	
 	function getNuevaClaveDePersona(){
 		$xCL				= new cCajaLocal($this->getCajaLocalResidente()); $xCL->init();
 		$codigo				= $xCL->getUltimoSocioRegistrado(true)+1;
 		return $codigo;
+	}
+	function setIDDomicilio($id){
+		$id		= setNoMenorQueCero($id);
+		$ODom	= new cPersonasVivienda(false, false,$id);
+		
+		$xTabla	= new cGeneral_sucursales();
+		$xTabla->setData( $xTabla->query()->initByID($this->mClave));
+		$res	= false;
+		
+		if($ODom->init() == true){
+			
+			$xTabla->iddomicilio($ODom->getIDVivienda());
+			$xTabla->calle( $ODom->getCalle() );
+			$xTabla->codigo_postal( $ODom->getCodigoPostal() );
+			$xTabla->colonia( $ODom->getColonia() );
+			$xTabla->telefono( $ODom->getTelefonoFijo() );
+			$xTabla->municipio( $ODom->getMunicipio() );
+			$xTabla->localidad( $ODom->getLocalidad() );
+			$xTabla->estado( $ODom->getEstado() );
+			$xTabla->numero_exterior( $ODom->getNumeroExterior() );
+			$xTabla->numero_interior( $ODom->getNumeroInterior() );
+			$res 	= $xTabla->query()->update()->save($this->mClave);
+		}
+		
+		return $res;
 	}
 }
 /**
@@ -4356,7 +4417,8 @@ class cPersonasTipoDeIngreso{
  */
 class cOficial{
 	protected $mCodigoDeOficial		= false;
-	protected $mDatosInArray		= array();
+	private $mOficialDeOrigen		= false;
+	private $mDatosInArray			= array();
 	private $mMessages				= "";
 	private $mMail					= "";
 	private $mOPers					= null;
@@ -4367,31 +4429,20 @@ class cOficial{
 		$oficial	= setNoMenorQueCero($oficial);
 		$oficial	= ($oficial <= 0) ? getUsuarioActual() : $oficial;
 		$this->mCodigoDeOficial	= $oficial;
+		$this->mOficialDeOrigen		= getUsuarioActual();
 	}
 	/**
 	 * Agrega una Nota al Oficial de Destino
 	 * @return bool Estatus de la Operacion
 	 */
 	function addNote($tipo, $oficial, $socio, $docto, $texto, $fecha = false){
-		$xF					= new cFecha();
-		$xT					= new cTipos();
-		$xQL				= new MQL();
-		$oficial_de_origen	= $this->mCodigoDeOficial;
-		$oficial			= setNoMenorQueCero($oficial);
-		$oficial			= ($oficial <= 0) ? $this->getCodigo() : 1;
-		$fecha				= $xF->getFechaISO($fecha);
-		
-		$msg				= "";
-		$texto				= $xT->cChar( trim($texto) );
-		
-		$sqlFR		= "INSERT INTO usuarios_web_notas( tipo, oficial, oficial_de_origen, socio, documento, fecha, texto)
-    					VALUES
-						('$tipo', $oficial, $oficial_de_origen, $socio, $docto, '$fecha', '$texto')";
-		$x 			=  $xQL->setRawQuery($sqlFR);
-		if($x == false){
+		$xUN	= new cSystemUserNotes();
+		$res	= $xUN->add($oficial, $texto,false, $tipo, $socio, $docto);
+		$msg	= $xUN->getMessages();
+		if($res == false){
 			$msg		.= "ERROR\tAviso al oficial $oficial NO GENERADO ($tipo|$socio|$docto|$fecha)\r\n";
 		} else {
-			$msg		.= "ERROR\tAviso al oficial $oficial Agregado con Exito ($tipo|$socio|$docto|$fecha)\r\n";
+			$msg		.= "OK\tAviso al oficial $oficial Agregado con Exito ($tipo|$socio|$docto|$fecha)\r\n";
 		}
 		return $msg;
 	}
@@ -5857,9 +5908,11 @@ class cPersonasVivienda{
 	private $mNumeroExt				= "";
 	//private $mReferencia			= "";
 	
-	function __construct($persona = false, $tipo = false){
-		$this->mPersona	= setNoMenorQueCero($persona);
-		$this->mTipo	= setNoMenorQueCero($tipo);
+	function __construct($persona = false, $tipo = false, $clave = false){
+		$this->mPersona		= setNoMenorQueCero($persona);
+		$this->mTipo		= setNoMenorQueCero($tipo);
+		$this->mIDCargado	= setNoMenorQueCero($clave);
+		
 		//Iniciar Variables Globales
 		$this->mCodigoPostal		= EACP_CODIGO_POSTAL;
 		$this->mClaveDeLocal		= EACP_CLAVE_DE_LOCALIDAD;
@@ -5881,10 +5934,14 @@ class cPersonasVivienda{
 			$this->mClaveDeEstadoSIC	= $xLoc->DomicilioEstadoClaveSIC();
 			$this->mCodigoPostal		= $xLoc->DomicilioCodigoPostal();
 			$this->mNombreEntidadFed	= $xLoc->DomicilioEstado();
-		}				
+		}
+		if($this->mIDCargado>0){
+			$this->setID($this->mIDCargado);
+		}
 	}
 	function getClaveDePersona(){ return $this->mPersona; }
-	function setID($id){ 
+	function setID($id){
+		$id		= setNoMenorQueCero($id);
 		if($id >0){
 			$this->mIDCargado	= $id;
 			$this->setIDCache($id);
@@ -6626,9 +6683,11 @@ class cPersonaActividadEconomica {
 		}
 	}
 	function isInit(){ return $this->mInit; }
-	function setID($id, $init=false){ 
+	function setID($id, $init=false){
+		
 		$this->mIDCargado = setNoMenorQueCero($id);
-		if($init == true AND $this->mIDCargado > 0){
+		
+		if($this->mIDCargado > 0){
 			$sql		= "SELECT * FROM `socios_aeconomica` WHERE `idsocios_aeconomica`="  . $this->mIDCargado . " LIMIT 0,1";
 			$xCache		= new cCache();
 			$xT			= new cSocios_aeconomica();
@@ -6647,8 +6706,11 @@ class cPersonaActividadEconomica {
 					$xCache->set($idx, $data);
 				}
 			}
-			
+			if($init == true){
+				$this->init($data);
+			}
 		}
+		return $this->mIDCargado;
 	}
 	function setIDCache($clave = 0, $persona = 0){
 		if($clave > 0){
@@ -6683,6 +6745,7 @@ class cPersonaActividadEconomica {
 					$data					= $ql->getDataRow($sql);
 					$xDB					= null;
 					$inCache				= false;
+					
 				}
 			}
 			$this->mDatosInArray			= $data;
@@ -6857,14 +6920,19 @@ class cPersonaActividadEconomica {
 	function getClaveDeDomicilio(){ return $this->mIDDomicilio; }
 	function getCodigoPostal(){ return $this->mCodigoPostal;	}
 	function getClaveDeEmpresa(){ return $this->mClaveEmpresa; }
+	function getClaveDePersona(){ return $this->mPersona; }
 	function getClaveDePais(){ return $this->mClaveDePais; }
 	function getSalarioMensual(){ return $this->mIngresoMensual; }
 	function getSectorEconomico(){ return $this->mSectorEconomico; }
 	function getNombreComercial(){ return $this->mNombreComercial; }
 	function getOEmpresa(){ return $this->mOEmp;	}
 	function getNumeroDeSeguridadSocial(){ return $this->mNSS;	}
-	function setUpdatePorEmpresa($guardarVinculado = false){
+	function setUpdatePorEmpresa($guardarVinculado = false, $idempresa = false){
 		$idx		= false;
+		$idempresa	= setNoMenorQueCero($idempresa);
+		$idempresa	= ($idempresa <= 0) ? $this->mClaveEmpresa : $idempresa;
+		$this->mClaveEmpresa	= $idempresa;
+		
 		if($this->mInit == true){
 			if($this->mClaveEmpresa != FALLBACK_CLAVE_EMPRESA){
 				$xEmp				= new cEmpresas($this->mClaveEmpresa);
@@ -6901,7 +6969,9 @@ class cPersonaActividadEconomica {
 		$ClaveUnica		= setNoMenorQueCero($ClaveUnica);
 		if($this->mInit == true){
 			$ODom			= new cPersonasVivienda($this->mPersona, PERSONAS_TIPO_DOM_LABORAL);
-			if(setNoMenorQueCero($ClaveUnica) > 1){ $ODom->setID($ClaveUnica); }
+			if(setNoMenorQueCero($ClaveUnica) > 1){ 
+				$ODom->setID($ClaveUnica); 
+			}
 			$ODom->init();
 			if($ODom->isInit() == true){
 				$this->mOB->ae_clave_de_localidad($ODom->getClaveDeLocalidad());
@@ -7292,6 +7362,19 @@ class cPersonaActividadEconomica {
 		$this->obj()->descripcion($describe);
 		$this->mDescripcion		= $describe;
 		$this->obj()->query()->update()->save($this->obj()->idsocios_aeconomica()->v());
+	}
+	function setEstatusActivoI($activo){
+		if($this->mIDCargado>0){
+			if($activo == true){
+				if($this->mEstatusActual == 0){
+					$xQL	= new MQL();
+					$xQL->setRawQuery("UPDATE `socios_aeconomica` SET estado_actual=99 WHERE `idsocios_aeconomica`=" . $this->mIDCargado);
+				}
+			} else {
+				$xQL	= new MQL();
+				$xQL->setRawQuery("UPDATE `socios_aeconomica` SET estado_actual=0 WHERE `idsocios_aeconomica`=" . $this->mIDCargado);
+			}
+		}
 	}
 	function getAntiguedadEnMeses($Fecha = false){
 		$xF		= new cFecha();

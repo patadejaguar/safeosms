@@ -845,6 +845,9 @@ class cFecha {
 		}
 		return date ( "Y-m-t", strtotime ( $this->get () ) );
 	}
+	function getDiaFinalAnnio($dateme = false) {
+		return $this->anno($dateme) . "-12-31";
+	}
 	function getFechaMesAnterior($dateme = false, $MesesAnteriores = 1) {
 		$dateme = ($dateme == false) ? $this->mFecha : $dateme;
 		return date ( "Y-m-d", strtotime ( "$dateme-$MesesAnteriores month" ) );

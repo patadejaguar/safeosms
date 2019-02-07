@@ -1325,15 +1325,15 @@ class cNotificaciones {
 	private $mTitulo	= "";
 	private $mMessages	= "";
 	private $mOriginalM	= "";
-
-	private $mCanal		= "";
+	private $mTexto			= "";
+	private $mCanal			= "";
+	private $mFecha			= false;
 	private $mTitleFrom		= "";
 	public $MEDIO_MAIL		= "email";
 	public $MEDIO_SMS		= "sms";
 	public $MEDIO_WSMS		= "wsms";
-	
-	
-	
+	private $mArrVars		= array("var_dirijido_a" => "","var_url_action" => "","var_title_url_action" => "","var_parrafo_inicio" => "","var_parrafo_fin" => "","var_parrafo_despedida" => "");
+		
 	private $mMailSrv		= "";
 	private $mMailSrvTLS	= false;
 	private $mMailSrvPort	= "";
@@ -1360,6 +1360,9 @@ class cNotificaciones {
 		$this->mMailSrvUsr	= ADMIN_MAIL;
 		$this->mMailSrvPwd	= ADMIN_MAIL_PWD;
 		$this->mTitleFrom	= EACP_NAME . "";
+		
+		
+		
 	}
 	function setCanal($canal){ $this->mCanal	= $canal; }
 	function setMailSettings($server = "", $port = "", $tls = null,  $usr = "", $pwd = "", $from="", $toName=""){
@@ -1487,7 +1490,17 @@ class cNotificaciones {
 	}
 	function sendMail($subject = "", $body = "", $to = "", $arrFile = false){
 		$omsg		= "";
-		if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+		$send		= true;
+		//$omsg
+		if(trim($this->mMailSrv) == "" OR trim($this->mMailSrvPort) == "" OR trim($this->mMailSrvUsr) == "" OR trim($this->mMailSrvPwd) == "" ){
+			$omsg	.= "ERROR\t$to\tDatos Incompletos\r\n";
+			$omsg	.= "ERROR\t$to\tServer: " . $this->mMailSrv . "\r\n";
+			$omsg	.= "ERROR\t$to\tPort: " . $this->mMailSrvPort . "\r\n";
+			$omsg	.= "ERROR\t$to\tUser: " . $this->mMailSrvUsr . "\r\n";
+			$send	= false;
+		}
+		
+		if (filter_var($to, FILTER_VALIDATE_EMAIL) AND $send == true) {
 			
 			
 			//Create a new PHPMailer instance
@@ -1564,7 +1577,7 @@ class cNotificaciones {
 				$omsg	.= "OK\tMensaje Enviado a $to con exito.\r\n";
 			}
 		} else {
-			$omsg	.= "ERROR\tCorreo Invalido $to\r\n";
+			$omsg	.= "ERROR\tCorreo o datos Invalidos : $to\r\n";
 		}
 		if(MODO_DEBUG == true){ setLog($omsg); }
 		$this->mMessages	.= $omsg;
@@ -1626,6 +1639,7 @@ class cNotificaciones {
 	function sendMailTemplate($titulo, $mail,$arr = array(), $idforma = 901){
 		$xFmt	= new cFormato($idforma);
 		$txt	= "";
+		$arr	= array_merge($this->mArrVars, $arr);
 		//variable_nombre_de_la_entidad
 		if(isset($arr["var_dirijido_a"])){
 			$this->mMailToName	= $arr["var_dirijido_a"];
@@ -1647,6 +1661,24 @@ class cNotificaciones {
 			$txt	= $xFmt->get();
 		}
 		$this->sendMail($titulo, $txt, $mail );
+	}
+	function setParrafoInicio($txt){
+		$this->mArrVars["var_parrafo_inicio"]	= $txt;
+	}
+	function setParrafoFinal($txt){
+		$this->mArrVars["var_parrafo_fin"]	= $txt;
+	}
+	function setParrafoDespedida($txt){
+		$this->mArrVars["var_parrafo_despedida"]	= $txt;
+	}
+	function setURLAction($url){
+		$this->mArrVars["var_url_action"]	= $url;
+	}
+	function setURLActionTitle($txt){
+		$this->mArrVars["var_title_url_action"]	= $txt;
+	}
+	function setDirijidoA($txt){
+		$this->mArrVars["var_dirijido_a"]	= $txt;
 	}
 }
 

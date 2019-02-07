@@ -39,6 +39,8 @@ $xRPT->setConCreditos(false);
 $xRPT->setConOperacion(false);
 $xRPT->setConRecibos(false);
 
+$xRPT->addCheckBox("TR.INCLUIR PERSONA_MORAL", "cualquiera", false);
+
 //$xRPT->addControl($xChk->get("TR.OMITIRCEROS", "nocero"), "nocero", "nocero", true);
 
 echo $xRPT->get();

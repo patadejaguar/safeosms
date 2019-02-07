@@ -33,6 +33,9 @@ $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaac
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
+$corporativo= parametro("idcorporativo", false, MQL_BOOL);
+
+
 $xHP->init();
 
 
@@ -47,7 +50,8 @@ if($xUser->init() == true){
 	$xFRM->OHidden("clave", $clave);
 	$xFRM->setAction("../frmsecurity/usuarios.edit.frm.php?action=" . MQL_MOD);
 	
-	
+
+	$xFRM->addSeccion("idife", "TR.INFORMACION");
 	
 	$idpersona	= $xUser->getClaveDePersona();
 	if($idpersona > DEFAULT_SOCIO){
@@ -56,26 +60,33 @@ if($xUser->init() == true){
 			$xFRM->addHElem( $xSoc->getFicha(false, false, "", true) );
 		}
 	}
-	
 	$xFRM->addHElem($xUser->getFicha());
+	$xFRM->endSeccion();
+	
 	
 	if($action == MQL_MOD){
 		$xFRM->addCerrar("", 5);
+		/*var_dump($_REQUEST["idcorporativo"]);
+		exit;*/
+		
+		/*var_dump(parametro("idcorporativo", $xUser->getEsCorporativo(), MQL_BOOL));
+		exit;*/
+		
 		$rawnombre			= parametro("nombreusuario", $xUser->getNombreDeUsuario(), MQL_RAW);
 		$rawsucursal		= parametro("idsucursal", $xUser->getSucursal(), MQL_RAW);
 		$rawpuesto			= parametro("idpuesto", $xUser->getPuesto(), MQL_RAW);
 		$rawcuenta			= parametro("idcuentacontable", $xUser->getCuentaContableDeCaja(), MQL_RAW);
-		$rawcorp			= parametro("idcorporativo", $xUser->getEsCorporativo(), MQL_BOOL);
+		$rawcorp			= parametro("idcorporativo", false, MQL_BOOL);
 		$nivel				= parametro("idtipousuario", $xUser->getNivel(), MQL_INT);
-		
+		$email				= parametro("correoelectronico", "", MQL_RAW);
 		
 		$xUser->setCodigoDePersona($persona);	
 		$xUser->setNombreUsuario($rawnombre);
 		$xUser->setSucursal($rawsucursal);
 		$xUser->setPuesto($rawpuesto);
-		
 		$xUser->setEsCorporativo($rawcorp);
-		if($nivel>0){
+		
+		if($nivel > 0){
 			$xUser->setNivelAcceso($nivel);
 		}
 		
@@ -84,9 +95,13 @@ if($xUser->init() == true){
 	} else {
 		
 		$xFRM->addGuardar();
+		$xFRM->addSeccion("idntt", "TR.PERSONA");
 		
 		$xFRM->addPersonaBasico("", false, $idpersona, "", "TR.PERSONA USUARIO");
 		$xFRM->OText_13("nombreusuario", $xUser->getNombreDeUsuario(), "TR.NOMBRE USUARIO");
+		$xFRM->OMail("correoelectronico", $xUser->getCorreoElectronico());
+		$xFRM->endSeccion();
+		$xFRM->addSeccion("idtct", "TR.DATOS_GENERALES");
 		
 		$xFRM->addHElem( $xSel->getListaDeNivelDeUsuario("idtipousuario", $xUser->getNivel(), $xUsrCurr->getTipoEnSistema())->get(true) );
 		
@@ -96,22 +111,21 @@ if($xUser->init() == true){
 		if(MULTISUCURSAL == false){
 			
 			$xFRM->OHidden("idsucursal", $xUser->getSucursal() );
+			$xFRM->OHidden("idcorporativo", $xUser->getEsCorporativo());
 		} else {
 			$xFRM->addHElem( $xSel->getListaDeSucursales("idsucursal", $xUser->getSucursal())->get(true));
+			$xFRM->OCheck_13("TR.CORPORATIVO", "idcorporativo", $xUser->getEsCorporativo());
 		}
 		
 		
 		if(MODULO_CONTABILIDAD_ACTIVADO == true){
-			
 			$xFRM->addHElem($xText->getDeCuentaContable("idcuentacontable", CUENTA_CONTABLE_EFECTIVO, true, CUENTA_CONTABLE_EFECTIVO, "TR.CUENTA_CONTABLE DE CAJA") );
 		} else {
 			$xFRM->OHidden("idcuentacontable", CUENTA_CONTABLE_EFECTIVO);
 		}
-		$xFRM->OCheck("TR.CORPORATIVO", "idcorporativo", $xUser->getEsCorporativo());
+		$xFRM->endSeccion();
 		
 	}
-	
-	
 } else {
 	$xFRM->addCerrar("", 3);
 }	

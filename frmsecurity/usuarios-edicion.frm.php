@@ -84,6 +84,7 @@ $sql		= "SELECT
 	`usuarios`.`puesto`         AS `puesto`,
 	`usuarios`.`niveldeacceso`  AS `nivel_de_acceso`,
 	`usuarios`.`estatus`        AS `estatus`,
+	`usuarios`.`uuid_mail`        AS `email`,
 	`usuarios`.`expira`,
 	`usuarios`.`sucursal`
 	 
@@ -105,6 +106,9 @@ $xHG->col("sucursal", "TR.SUCURSAL", "10%");
 //$xHG->col("nombre_completo", "TR.NOMBRE_COMPLETO", "40%");
 $xHG->col("alias", "TR.ALIAS", "20%");
 $xHG->col("puesto", "TR.PUESTO", "10%");
+
+$xHG->col("email", "TR.CORREO_ELECTRONICO", "10%");
+
 $xHG->col("estatus", "TR.ESTATUS", "10%");
 
 if( $xUser->getPuedeEditarUsuarios() == true ){

@@ -54,9 +54,11 @@ $xFRM->OBuscar("", "", "", "jsBuscar");
 
 $xHG    = new cHGrid("iddivlistaavales",$xHP->getTitle());
 
-$xHG->setSQL("SELECT `socios_relaciones`.`idsocios_relaciones` AS `clave`, 
-		`personas`.`nombre` AS `nombre_aval`,
-         `socios`.`nombre` AS `avalado`,
+$xHG->setSQL("SELECT `socios_relaciones`.`idsocios_relaciones` AS `clave`,
+
+		`socios`.`nombre` AS `avalado`, 
+		`personas`.`nombre` AS `aval`,
+         
 		`creditos`.`solicitud` AS `credito`,
          `socios_relacionestipos`.`descripcion_relacionestipos` AS `tipo`,
          `creditos`.`convenio` AS `producto`,
@@ -72,12 +74,14 @@ WHERE    ( `socios_relacionestipos`.`subclasificacion` = 5 )");
 $xHG->addList();
 $xHG->setOrdenar();
 
-$xHG->col("nombre_aval", "TR.NOMBRE AVAL", "20%");
 $xHG->col("avalado", "TR.AVALADO", "20%");
+$xHG->col("aval", "TR.AVAL", "20%");
+
+
 $xHG->col("tipo", "TR.TIPO", "10%");
 $xHG->col("credito", "TR.CREDITO", "8%");
 $xHG->col("producto", "TR.PRODUCTO", "10%");
-$xHG->col("saldo", "TR.SALDO", "8%");
+$xHG->ColMoneda("saldo", "TR.SALDO", "8%");
 
 
 //$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");

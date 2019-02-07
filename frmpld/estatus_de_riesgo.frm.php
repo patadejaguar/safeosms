@@ -40,7 +40,7 @@ if($clave == null){
 	if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
 }
 
-$xFRM			= new cHForm("frmaml_risk_register", "estatus_de_riesgo.frm.php?action=$step&codigo=$codigo");
+$xFRM			= new cHForm("frmestatusriesgo", "estatus_de_riesgo.frm.php?action=$step&codigo=$codigo");
 $xFRM->addSubmit();
 $xFRM->setTitle($xHP->getTitle());
 

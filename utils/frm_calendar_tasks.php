@@ -24,6 +24,8 @@ $xQL				= new MQL();
 $xRuls				= new cReglaDeNegocio();
 
 $noUsarChat			= $xRuls->getValorPorRegla($xRuls->reglas()->RN_NO_USAR_HCHAT);
+$SyncApp			= $xRuls->getValorPorRegla($xRuls->reglas()->SYNC_APP);		//regla de negocio
+$SyncAML			= $xRuls->getValorPorRegla($xRuls->reglas()->SYNC_AML_MIG);		//regla de negocio
 
 function jsaRespaldarDB($fecha){ 
 	$xSys	= new cSystemTask(); 
@@ -31,7 +33,7 @@ function jsaRespaldarDB($fecha){
 	return $xSys->getMessages(); 
 }
 function jsaSetCumplido($Key){ 
-	$xNot	= new cUsuariosNotas($Key);
+	$xNot	= new cSystemUserNotes($Key);
 	if($xNot->init() == true){
 		$xNot->setInactivo();
 	}
@@ -307,7 +309,7 @@ function jsaSetToLocalHost($fecha, $version){
 	$lurl .= '://'.$_SERVER['HTTP_HOST'] . "/";
 	// Get path to script
 	//$myUrl .= $_SERVER['REQUEST_URI'];
-	$mailpass		= "Pruebas014";
+	$mailpass		= "Pruebas2019";
 	$mailid			= "pruebas@opencorebanking.com";
 	
 	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
@@ -469,6 +471,9 @@ $xNotif		= new cHNotif();
 $alerts		= "";
 $xSel		= new cHSelect();
 $xUsr->init();
+$xFRM->setTitle($xHP->getTitle());
+//===================================================== Optiones
+
 $xFRM->addSeccion("idsoptions", "TR.Opciones");
 	$xFRM->ODate("idDateValue", false, "TR.FECHA DE FILTRO");
 	$xSelC		= $xSel->getListaDeProductosDeCredito("", false, true);
@@ -477,10 +482,23 @@ $xFRM->addSeccion("idsoptions", "TR.Opciones");
 	$xFRM->addHElem($xSelC->get(true));
 	$xFRM->OMoneda("idclave", 0, "TR.CLAVE");
 $xFRM->endSeccion();
-$xFRM->addSeccion("idsexavisos", "TR.AVISOS");
+
+
+//===================================================== Avisos
+$xFRM->addSeccion("idsexavisos", "TR.INFORMACION");
 $xFRM->addHElem("<div id=\"tcalendar-task\"></div>");
 
-$xFRM->setTitle($xHP->getTitle());
+$xFRM->endSeccion();
+
+//===================================================== Lista de Cajas Abiertas
+
+$sql		=  $xLi->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA, fechasys());
+$xT2			= new cTabla($sql);
+//$xT2->setOmitidos("codigo");
+$xFRM->addSeccion("idlistacajas", "TR.Cajas_Abiertas");
+$xT2->setNoFilas();
+$xFRM->addHElem( $xT2->Show() );
+$xFRM->endSeccion();
 
 //if(getEsModuloMostrado(USUARIO_TIPO_CAJERO)){
 
@@ -491,12 +509,14 @@ $xFRM->OButton("TR.Tareas", "jsGetInformes()", "tarea", "idtareas");
 
 if(MODULO_AML_ACTIVADO == true){
 	$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas");
+	$xFRM->OButton("TR.Reporte de CONDUCTA_INADECUADA", "var xG=new Gen();xG.w({url:'../frmpld/reportar_empleado.frm.php?',tiny:true})", $xFRM->ic()->COMENTARIO, "idhacerreporte");
 }
 
-//=====================================================
+
+
+//===================================================== Actividad de Usuarios
 $xCh3		= new cChart("iddivevtsuser");
 $xCh3->setAlto("480");
-
 
 $sql3	= "SELECT `general_error_codigos`.`description_error` AS `descripcion`, COUNT(`general_log`.`idgeneral_log`) AS `eventos`
 		
@@ -512,21 +532,21 @@ $xCh3->addSQL($sql3,"descripcion", "eventos");
 //$xCh3->setAlto(400);
 $xCh3->setHorizontal(true);
 $xCh3->setTamanioTitulo(300);
-
 $xCh3->setAutoWith();
-
 $xCh3->setProcess($xCh3->BAR);
 
-
+$xFRM->addSeccion("idevtsuser", "TR.LOG_FILE");
 $xFRM->addHElem($xCh3->getDiv());
 $xFRM->addJsInit($xCh3->getJs());
-
+$xFRM->endSeccion();
 
 
 
 //============================== Charts de creditos por ministrar
 $xCEs			= new cCreditosEstadisticas();
+$xFRM->addSeccion("idstatsclientes", "TR.KPIS .- CLIENTES");
 $xFRM->addHElem( $xNotif->getDash("TR.Clientes con Creditos", $xCEs->getNumeroClientesConCredito(), $xFRM->ic()->PERSONA, $xNotif->NOTICE) );
+$xFRM->endSeccion();
 
 $xChCred		= new cChart("idchartcredito");
 $xChCred->addData($xCEs->getNumeroCreditosPorAutorizar(), "TR.Creditos Por Autorizar" );
@@ -537,10 +557,12 @@ $xChCred->addData($xCEs->getNumeroCreditosPorMinistrar(),"TR.Creditos Por Minist
 
 $xChCred->setProcess($xChCred->BAR);
 
+$xFRM->addSeccion("idstatscreditos", "TR.KPIS .- CREDITOS");
 $xFRM->addHElem($xChCred->getDiv());
 $xFRM->addJsInit($xChCred->getJs());
+$xFRM->endSeccion();
 
-if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_SEGUIMIENTO) == true){
+if(getEsModuloMostrado(USUARIO_TIPO_CAJERO) == true){
 	//==================== Cartera de Credito
 	if(GARANTIA_LIQUIDA_EN_CAPTACION== false){
 		$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3");
@@ -597,8 +619,11 @@ if($xProy->getProyeccionMensual(fechasys(), $xProy->PROY_SISTEMA, SYS_TODAS) == 
 	
 	$xChProy->setFuncConvert("enmiles");
 	$xChProy->setProcess($xChProy->BAR);
+	
+	$xFRM->addSeccion("idstatsproyeccion", "TR.KPIS .- PROYECCION");
 	$xFRM->addHElem($xChProy->getDiv());
 	$xFRM->addJsInit($xChProy->getJs());
+	$xFRM->endSeccion();
 }
 //$xFRM->addHElem( $xNotif->get("Nada") );
 //$xFRM->addHElem( $xNotif->getDash("Creditos", "1000", "info", $xNotif->WARNING) );
@@ -669,9 +694,10 @@ if( $xUsr->getNivel() == USUARIO_TIPO_OFICIAL_AML OR (MODO_DEBUG == true)  ) {
 $xChUser->setAlto("300");
 $xChUser->setProcess($xChUser->BAR);
 
+$xFRM->addSeccion("idstatsusers", "TR.KPIS .- USUARIO");
 $xFRM->addHElem($xChUser->getDiv());
 $xFRM->addJsInit($xChUser->getJs());
-
+$xFRM->endSeccion();
 
 
 
@@ -689,9 +715,12 @@ FROM     `originacion_leasing` INNER JOIN `creditos_etapas`  ON `originacion_lea
 	
 	$xCh2->setProcess($xCh2->BAR);
 	
+	$xFRM->addSeccion("idstatsleasing", "TR.KPIS .- LEASING");
 	
 	$xFRM->addHElem($xCh2->getDiv());
 	$xFRM->addJsInit($xCh2->getJs());
+	
+	$xFRM->endSeccion();
 }
 
 
@@ -711,10 +740,18 @@ $xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()
 if(getEsModuloMostrado(false, MMOD_CRED_LEASING) == true){
 	$xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange");
 }
+if(getEsModuloMostrado(USUARIO_TIPO_GERENTE) == true){
+	if($SyncApp == true){
+		$xFRM->OButton("TR.Sync App Catalogos", "var xApp=new AppGen();xApp.sync({catalogos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappcat", "yellow");
+		$xFRM->OButton("TR.Sync App Avisos", "var xApp=new AppGen();xApp.sync({avisos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappmsg", "yellow");
+	}
+}
+
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION) == true){
 	$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange");
 	$xFRM->OButton("TR.AGREGAR CREDITOS_LINEAS", "jsAgregarLineaCredito()", $xFRM->ic()->CREDITO, "cmdaddlineacredito", "gorange");
 }
+
 $xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
 $xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
 $xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO, "cmdpanelcred", "credito");
@@ -724,7 +761,14 @@ $xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
 	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
 }
-
+if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML, MMOD_AML)){
+	$xFRM->OButton("TR.Acceso al RMS", "var xg=new Gen();xG.w({url:'"  . AML_RMS_URL . "', tab:true});", $xFRM->ic()->ADELANTE, "cmdbtnaccrms", "green2");
+	if($SyncAML == true){
+		$xFRM->OButton("TR.SYNC AML", "jsSyncAMLImport()", $xFRM->ic()->SYNC, "cmdbtnsyncaml", "green");
+		$xFRM->OButton("TR.SYNC AML Personas", "jsSyncAMLImportPersonas()", $xFRM->ic()->SYNC, "cmdbtnsyncaml2", "green");
+		$xFRM->OButton("TR.SYNC AML Creditos", "jsSyncAMLImportCreditos()", $xFRM->ic()->SYNC, "cmdbtnsyncaml3", "green");
+	}
+}
 if(MODO_DEBUG == true){
 	$srv	= $xHP->getServerName();
 	if(strpos($srv, "localhost") === false AND strpos($srv, "test") === false){
@@ -747,6 +791,8 @@ if(MODO_DEBUG == true){
 	$xFRM->OButton("TR.OPERACIONES", "var xG=new Gen();xG.w({url:'../frmtipos/operaciones_tipos.lista.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
 	
 	$xFRM->OButton("TR.USUARIOS", "var xG=new Gen();xG.w({url:'../frmsecurity/usuarios-edicion.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn102", "green2");
+	
+	$xFRM->OButton("TR.SUCURSALES", "var xG=new Gen();xG.w({url:'../frmtipos/sucursales.frm.php', principal:true});", $xFRM->ic()->HOME, "cmdbtn102", "green2");
 	
 	$xFRM->OButton("TR.PERMISOS", "var xG=new Gen();xG.w({url:'../frmsecurity/permisos.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
 	
@@ -774,7 +820,6 @@ $xFRM->OButton("TR.Salir", "var xG = new Gen(); xG.salir()", $xFRM->ic()->SALIR,
 //$xFRM->addSeccion("idmastareas", "TR.Tareas");
 
 
-$xFRM->endSeccion();
 
 $horasql		= $xQL->getDataValue("SELECT NOW() AS 'tiempo' ", "tiempo");
 
@@ -783,7 +828,8 @@ $sysinfo		= "";
 if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	$xUL			= new cHUl(); $xUL2		= new cHUl();
 	$sysinfo		=  $xUL->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)
-	->li("Version S.A.F.E.: " . SAFE_VERSION)->li("Revision S.A.F.E: " . SAFE_REVISION)
+	->li("Version S.A.F.E.: " . SAFE_VERSION)
+	->li("Revision S.A.F.E: " . SAFE_REVISION)
 	
 	->li("Path Temporal: " . PATH_TMP)
 	->li("Path Backups: " . PATH_BACKUPS)->li("Fecha del Sistema: " . date("Y-m-d H:i:s"))
@@ -791,7 +837,8 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	->li("SAFE DB version : " . SAFE_DB_VERSION)
 	->li("SAFE Host : " . SAFE_HOST_URL)
 	->li("SAFE Actualizaciones : " . URL_UPDATES)
-	->li("Clave de Oficial AML : " . getOficialAML())
+	->li("Tiempo SQL : " . $horasql)
+	->li("Descargar Actualizacion SQL ", " onclick=\"var xG=new Gen();xG.w({url:'" . URL_UPDATES . "install/updates/sql.php?version=" . SAFE_DB_VERSION . "&out=sql'});\" ")
 	->end();
 	
 	$sysinfo2		= $xUL2
@@ -810,7 +857,7 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	->li("Estado : " . $xLoc->DomicilioEstado())
 	->li("Clave Estado : " . $xLoc->DomicilioEstadoClaveABC() )
 	->li("C.P. : " . $xLoc->DomicilioCodigoPostal())
-	->li("Tiempo SQL : " . $horasql)
+	->li("Clave de Oficial AML : " . getOficialAML())
 	->end();
 	
 	$xFRM->addSeccion("idmaslogs", "TR.Configuracion del Sistema");
@@ -892,9 +939,13 @@ var xG		= new Gen();
 var xCred	= new CredGen();
 var xP		= new PersGen();
 $(document).ready( function(){
-	<?php if($noUsarChat == false){ ?>
+	<?php 
+		if($noUsarChat == false){ 
+	?>
 	Mibew.ChatPopup.init({"id":"5b287945db28a4bc","url":"https:\/\/help.sipakal.com\/chat?locale=es","preferIFrame":true,"modSecurity":false,"forceSecure":true,"width":640,"height":640,"resizable":true,"styleLoader":"https:\/\/help.sipakal.com\/chat\/style\/popup\/\/force_secure"});
-	<?php } ?>
+	<?php
+		}
+	?>
 	//$('#idDateValue').pickadate({format: 'dd-mm-yyyy',formatSubmit:'yyyy-mm-dd'});
 	window.localStorage.clear();
 });
@@ -1031,6 +1082,47 @@ function jsActualizarEstPers(){
 function jsActualizarProyeccionMensual(){
 	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: jsaActualizarProyeccionMensual});
 }
-
+function jsSyncAMLImport(){
+	var idDateValue = $("#idDateValue").val();
+	
+	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: function(){
+			xG.svc({
+				url:'walook-sync.svc.php?action=operaciones&fecha=' + idDateValue,
+				callback: function(data){
+						if(typeof data != "undefined"){
+							xG.alerta({msg : "Proceso Terminado"});
+						}
+					}
+				})
+		}});
+}
+function jsSyncAMLImportPersonas(){
+	var idDateValue = $("#idDateValue").val();
+	
+	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: function(){
+			xG.svc({
+				url:'walook-sync.svc.php?action=personas&fecha=' + idDateValue,
+				callback: function(data){
+						if(typeof data != "undefined"){
+							xG.alerta({msg : "Proceso Terminado"});
+						}
+					}
+				})
+		}});
+}
+function jsSyncAMLImportCreditos(){
+	var idDateValue = $("#idDateValue").val();
+	
+	xG.confirmar({msg: 'CONFIRMA_ACTUALIZACION . MSG_WARN_DEL_INFO_ANT', callback: function(){
+			xG.svc({
+				url:'walook-sync.svc.php?action=creditoss&fecha=' + idDateValue,
+				callback: function(data){
+						if(typeof data != "undefined"){
+							xG.alerta({msg : "Proceso Terminado"});
+						}
+					}
+				})
+		}});
+}
 </script>
 <?php $xHP->fin(); ?>

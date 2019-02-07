@@ -20,6 +20,7 @@ $xF			= new cFecha();
 $xlistas	= new cSQLListas();
 $xRuls		= new cReglaDeNegocio();
 $jxc 		= new TinyAjax();
+$xHP->addJTableSupport();
 
 //$UsarFotos	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_FOTOS);		//regla de negocio
 
@@ -69,6 +70,7 @@ $clave		= parametro("id", SYS_TODAS);
 $xHP->init("jsGetListadoAvisos()");
 //$jsb		= new jsBasicForm("");
 
+$tipo		= parametro("tipo", 0, MQL_INT);
 
 
 $xFRM		= new cHForm("frm_alertas", "./");
@@ -92,8 +94,12 @@ $selcat->setOptionSelect(SYS_TODAS);
 
 
 $xFRM->addSeccion("iddivtools", $xHP->getTitle());
-$xFRM->addHElem( $selcat->get(true) );
-$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR);
+if($tipo > 0){
+	$xFRM->OHidden("idsubtipo", $tipo);
+} else {
+	$xFRM->addHElem( $selcat->get(true) );
+}
+$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR, "idcmdobtener", "blue");
 
 
 $xFRM->OSiNo("TR.FILTRO POR FECHA", "idporfecha"); $xFRM->addControEvt("chk-idporfecha", "jsDisFechas", "change");

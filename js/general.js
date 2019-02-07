@@ -37,6 +37,8 @@ var ValidGen	= function(){};
 var SegGen		= function(){};
 var FechaGen	= function(){};
 var LeasGen		= function(){};
+var AppGen		= function(){};
+
 //---------------------------- Funciones generales
 /*function parseFechaMX(str) {
 	// this example parses dates like "month/date/year"
@@ -67,31 +69,42 @@ Gen.prototype.cerrarDialogos = function(){
 	$(".ui-dialog-content").dialog("close");
 }
 Gen.prototype.isKey	= function(opts){
-	var charCode = 0;
+	var charCode 	= 0;
+	var strL		= 1;
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	if (typeof opts.evt != "undefined" ) {
+		str			= $(opts.evt.target).val();
+		strL		= String(str).length;
 		charCode = ( opts.evt.charCode) ? opts.evt.charCode : ((opts.evt.which) ? opts.evt.which : opts.evt.keyCode);
 	}
 	var callbackF 	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
 	var mNum 		= (typeof opts.numerico == "undefined") ? false : true;
+	var mMin 		= (typeof opts.min == "undefined") ? 1 : opts.min;
 	var mAmbos		= (typeof opts.ambos == "undefined") ? false : true;
 	
 	var isKeyCode	= false;
 	
 	if(mAmbos == true){
 		if ( (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105) || (charCode >= 65 && charCode <= 90) ){
-			setTimeout(callbackF, 10);
+			if(strL >= mMin){
+				setTimeout(callbackF, 10);
+			}
 			isKeyCode		= true;
 		}		
 	} else {
 		if(mNum == true){
 			if ( (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105) ){
-				setTimeout(callbackF, 10);
+				if(strL >= mMin){
+					setTimeout(callbackF, 10);
+				}
 				isKeyCode		= true;
 			}
 		} else {
 			if (charCode >= 65 && charCode <= 90){
-				setTimeout(callbackF, 0); isKeyCode		= true;
+				if(strL >= mMin){
+					setTimeout(callbackF, 0);
+				}
+				isKeyCode		= true;
 			}
 		}
 	}
@@ -1921,15 +1934,21 @@ Gen.prototype.editar	= function(opts){
 Gen.prototype.LoadFromCache	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var callback	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var onerror		= (typeof opts.onerror == "undefined") ? function(){} : opts.onerror;
+	
 	var idx			= (typeof opts.indice == "undefined") ? null : opts.indice;
 	//var campo		= (typeof opts.campo == "undefined") ? null : opts.campo;
-	if (idx != null) {
+	if (idx !== null){
 		var mjs		= session(idx);
-		if (mjs != null) {
+		if (mjs === null) {
+			onerror(idx);
+		} else {
 			try {
-			mjs		= jQuery.parseJSON( mjs );
+				mjs		= jQuery.parseJSON( mjs );
+			} catch (e){
+				console.log(e);
+			}
 			callback(mjs);
-			} catch (e){}
 		}
 	}
 }
@@ -2212,6 +2231,17 @@ CredGen.prototype.getDescripcion	= function(idcredito, dest){
 		$("#" + dest).val( session("docto-descripcion-" + idcredito) );
 	}
 }
+CredGen.prototype.getReporteSIC	= function(id){
+	var xF	= new FechaGen();
+	var xG	= new Gen();
+	var ff 		= window.prompt("Fecha de Corte:");
+	if(ff){
+	ff			= xF.get(ff);
+		var xrl		= "../rptlegal/circulo_de_credito.rpt.php?cualquiera=true&creditoref=" + id + "&fechafinal=" + ff;
+		xG.w({ url: xrl, tab : true });
+	}
+}
+
 /*Gen.prototype.DataList	= function(opts){
 
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -2768,16 +2798,22 @@ PersGen.prototype.getBuscarGrupos	= function(id){
 PersGen.prototype.getDocumento	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var docto	= (typeof opts.docto == "undefined") ? "" : opts.docto;
+	var contrato= (typeof opts.contrato == "undefined") ? 0 : opts.contrato;
 	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
 	var persona	= (typeof opts.persona == "undefined") ? "" : opts.persona;
-	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&docto=" + docto + "&id=" + id, tiny : true, h: 600, w : 800});
+	var tipo	= (typeof opts.tipo == "undefined") ? 0 : opts.tipo;
+	
+	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&contrato=" + contrato + "&docto=" + docto + "&id=" + id + "&tipo=" + tipo, tiny : true, h: 600, w : 800});
 }
 PersGen.prototype.getDescargarDocumento	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var docto	= (typeof opts.docto == "undefined") ? "" : opts.docto;
+	var contrato= (typeof opts.contrato == "undefined") ? 0 : opts.contrato;
 	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
 	var persona	= (typeof opts.persona == "undefined") ? "" : opts.persona;
-	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&docto=" + docto + "&id=" + id, tiny : true, h: 600, w : 800});
+	var tipo	= (typeof opts.tipo == "undefined") ? 0 : opts.tipo;
+	
+	var xG		= new Gen(); xG.w({ url : "../frmsocios/socios.docto.frm.php?persona="  + persona + "&contrato=" + contrato + "&docto=" + docto + "&id=" + id + "&tipo=" + tipo, tiny : true, h: 600, w : 800});
 }
 PersGen.prototype.getNombre		= function(idpersona, dest){
 	var srUp 	= "../svc/personas.svc.php?persona=" + idpersona;
@@ -3161,6 +3197,16 @@ PersRelGen.prototype.setBajaRelacion		= function(id){
 		xG.svc({url: "referencias.del.svc.php?id=" + id});
 	}
 	xG.confirmar({msg: "CONFIRMA_BAJA", callback: siBaja});
+}
+PersGen.prototype.getReporteSIC	= function(id){
+	var xF	= new FechaGen();
+	var xG	= new Gen();
+	var ff 		= window.prompt("Fecha de Corte:");
+	if(ff){
+		ff			= xF.get(ff);
+		var xrl		= "../rptlegal/circulo_de_credito.rpt.php?cualquiera=true&persona=" + id + "&fechafinal=" + ff;
+		xG.w({ url: xrl, tab : true });
+	}
 }
 //--------------------------- INIT CAPTACION
 CaptGen.prototype.goToPanel	= function(idcuenta){
@@ -3964,18 +4010,69 @@ PersAEGen.prototype.setActividadPorCodigo	 = function (obj){
 	var nGen		=  new Gen();
 	var mAsignar	= function (objs){
 		if ($("#iddescripcion" + obj.id).length >0) {
-				//{"codigo":"380006","clavepostal":"24026","nombre":"Colonia Granjas(Campeche, Campeche)","estado":"4","municipio":"2","colonia":"Granjas"}
-				//{"clave_interna":"99","clave_de_actividad":"9999999","nombre_de_la_actividad":"DESCONOCIDO_MIGRADO","descripcion_detallada":"","productos":"","clasificacion":"CLASE","clave_de_superior":"0"}}
-				//if ($("#iddescripcion" + obj.id).length >0) {
 			$("#iddescripcion" + obj.id).val(objs.nombre_de_la_actividad);
 		}
 	}
 	nGen.LoadFromCache({
 		callback : mAsignar,
-		indice : "ae-" + obj.value
+		indice : "ae-" + obj.value,
+		onerror: function(idx){
+			//xG.alerta({msg: "No existe el Indice " + idx});
+			xG.svc({url:"ae.svc.php?clave="+idx,
+				   callback: function(data){
+						if(data.nombre_de_la_actividad){
+							if ($("#iddescripcion" + obj.id).length >0) {
+								$("#iddescripcion" + obj.id).val(objs.nombre_de_la_actividad);
+							}
+						} else {
+							xG.alerta({tipo:"error", msg: "ACTIVIDAD_ECONOMICA NO VALIDA"});
+						}
+					  }
+			});
+		}
 	});
 
 }
+PersAEGen.prototype.setActividadPorCodigoSCIAN	 = function (obj){
+	var xG		=  new Gen();
+	var mAsignar	= function (objs){
+		if ($("#iddescripcion" + obj.id).length >0) {
+			$("#iddescripcion" + obj.id).val(objs.nombre_de_la_actividad);
+		}
+	}
+	xG.LoadFromCache({
+		callback : mAsignar,
+		indice : "ae-scian-" + obj.value,
+		onerror: function(idx){
+			//xG.alerta({msg: "No existe el Indice " + idx});
+			xG.svc({url:"ae.svc.php?scian=true&clave="+idx,
+				   callback: function(data){
+						if(data.nombre_de_la_actividad){
+							if ($("#iddescripcion" + obj.id).length >0) {
+								$("#iddescripcion" + obj.id).val(objs.nombre_de_la_actividad);
+							}
+						} else {
+							xG.alerta({tipo:"error", msg: "ACTIVIDAD_ECONOMICA NO VALIDA"});
+						}
+					  }
+			});
+		}
+	});
+
+}
+PersAEGen.prototype.setEditarActividad = function (opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var persona		= (typeof opts.persona == "undefined") ? 0 : opts.persona;
+	var principal	= (typeof opts.principal == "undefined") ? 0 : opts.principal;
+	var id			= (typeof opts.id == "undefined") ? 0 : opts.id;
+	id				= (typeof opts.clave == "undefined") ? id : opts.clave;
+	id				= entero(id);
+	
+	var xG			=  new Gen();
+	
+	var xG	= new Gen(); xG.w({ url : "../frmsocios/personas-ae.edit.frm.php?clave="  + id, tiny : true, h: 600, w : 800});
+}
+
 PlanGen.prototype.setEliminarLetra = function (opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var monto		= (typeof opts.monto == "undefined") ? 0 : opts.monto;
@@ -4471,3 +4568,38 @@ CssGen.prototype.get 	= function(stat){
 	this.CANCELADO	= "cancelado";
 	this.EFECTUADO	= "efectuado";
 	this.VENCIDO	= "vencido";*/
+
+AppGen.prototype.sync = function(opts){
+	var xG		= new Gen();
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var mAvisos		= (typeof opts.avisos == "undefined") ? false : opts.avisos;
+	var mCatalogos	= (typeof opts.catalogos == "undefined") ? false : opts.catalogos;
+	var xmsg		= (typeof opts.msg == "undefined") ? "MSG_CONFIRMA_IMPORTAR" : opts.msg;
+	
+	xG.confirmar({
+		msg : xmsg, 
+		callback : function(){
+			xG.spinInit();
+			if(mAvisos == true){
+				xG.svc({url: "app-sync.svc.php?tipo=avisos",
+					callback : function(res){
+						xG.spinEnd();
+						xG.alerta({msg: res.message});
+					}
+				});
+			} //end avisos
+			if(mCatalogos == true){
+					xG.svc({url: "app-sync.svc.php?tipo=catalogos",
+					callback : function(res){
+						xG.spinEnd();
+						xG.alerta({msg: res.message});
+					}
+				});
+			}
+			
+
+		}
+	});
+	
+}

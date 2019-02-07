@@ -51,11 +51,13 @@ class Grid
 	var $text_page 			= "Pagina";
 	var $text_gotopage 		= "Ir a la Pagina";
 	var $text_totalrows 		= "Registros Totales:";
-	var $text_edit 			= "<img src='../images/edit.png'>";
-	var $text_save 			= "<img src='../images/floppy.png'>";
+	var $text_edit 			= "<img src='../images/grid/edit.png'>";
+	var $text_save 			= "<img src='../images/grid/save.png'>";
 	var $text_delete 		= "<img src='../images/minus.png'>";
-	var $text_add 			= "<img src='../images/plus.png'>";
-	var $text_cancel 		= "<img src='../images/delete.png'>";
+	var $text_add 			= "<img src='../images/grid/add.png'>";
+	var $text_cancel 		= "<img src='../images/grid/cancel.png'>";
+	var $icon_print			= "../images/grid/print.png";
+	
 	var $editmode_add 		= true;
 	var $editmode_edit 		= true;
 	var $editmode_delete 		= true;
@@ -426,13 +428,14 @@ class Grid
 			if ($this->show_excel_ico == true)
 			{
 				$table_main .= 				"<div style=\"position: absolute; top: .6em; right: 5em; cursor: pointer;\">";
-				$table_main .= 					"<a href=\"$lpath/excel.php?grid_id=".$this->id."\"><img border=\"0\" src=\"../images/grid/excel.png\" alt=\"\" /></a>";
+				$table_main .= 					"<a href=\"$lpath/class/excel.php?grid_id=".$this->id."\"><img width=\"24px\" border=\"0\" src=\"../images/grid/excel.png\" alt=\"\" /></a>";
 				$table_main .= 				"</div>";
 			}
 			if ($this->show_print_ico == true)
 			{
 				$table_main .= 				"<div style=\"position: absolute; top: .6em; right: 2em; cursor: pointer;\">";
-				$table_main .= 					"<a target=\"_blank\" href=\"$lpath/class/print.php?grid_id=".$this->id."\"><img border=\"0\" src=\"../images/grid/print2.gif\" alt=\"\" /></a>";
+				//$table_main .= 					"<a target=\"_blank\" href=\"$lpath/class/print.php?grid_id=".$this->id."\"><img border=\"0\" src=\"../images/grid/print2.gif\" alt=\"\" /></a>";
+				$table_main .= 					"<a target=\"_blank\" href=\"$lpath/class/print.php?grid_id=".$this->id."\"><img width=\"24px\" border=\"0\" src=\"" . $this->icon_print . "\" alt=\"\" /></a>";
 				$table_main .= 				"</div>";
 			}
 		}
@@ -550,7 +553,8 @@ class Grid
 						if ($this->id_row_value_edit_form != "" and $row[$this->column_id->name] == $this->id_row_value_edit_form)
 							$cell_info = "<a id='cmdcancel' href='#' onclick=\"HTML_AJAX.replace('$this->id', 'gridajax', 'AjaxShowEditForm', '$this->id', 'false');\">".$this->text_cancel."</a>";
 						else
-							$cell_info = "<a href='#' onclick=\"HTML_AJAX.replace('$this->id', 'gridajax', 'AjaxDeleteRow', '$this->id', '".$this->column_id->name."','".$row[$this->column_id->name]."');\">".$this->text_delete."</a>";
+							//$cell_info = "<a href='#' onclick=\"HTML_AJAX.replace('$this->id', 'gridajax', 'AjaxDeleteRow', '$this->id', '".$this->column_id->name."','".$row[$this->column_id->name]."');\">".$this->text_delete."</a>";
+							$cell_info = "";
 					}
 					else
 						$cell_info = "";

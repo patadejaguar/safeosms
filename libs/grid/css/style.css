@@ -3,7 +3,9 @@ font-family: Verdana, Arial, Helvetica, Sans-serif;
      font-size: 10px;
      color: #616161;
 }
-
+img {
+	visibility:hidden;
+}
 #onGrid A:link {color: black; text-decoration: none;} 
 #onGrid A:active {color: black; text-decoration: none;}
 #onGrid A:hover {color: black; text-decoration: none;} 

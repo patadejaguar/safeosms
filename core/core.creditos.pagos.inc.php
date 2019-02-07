@@ -2612,7 +2612,7 @@ class cCreditosMontos {
 		}
 	}
 	function setInteresesPagados($IntPNormal = 0, $IntPMora = 0){
-		if($this->mObj == null){$this->init();}
+		if($this->mObj == null){ $this->init(); }
 		if($this->mInit == true){
 			$this->mObj->interes_n_pag($IntPNormal);
 			$this->mObj->interes_m_pag($IntPMora);
@@ -4240,6 +4240,12 @@ class cCreditosPlanPagoEsp {
 		$xQL	= null;
 		
 		return $this->init($data);
+	}
+	function getCountByCredito($credito){
+		$xQL	= new MQL();
+		$items	= $xQL->getDataValue("SELECT COUNT(*) AS `items` FROM `creditos_pagos_esp` WHERE `credito`=$credito", "items");
+		$xQL	= null;
+		return $items;
 	}
 }
 

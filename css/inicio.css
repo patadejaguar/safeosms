@@ -30,7 +30,7 @@ body {
 		width: 20.85em; /* 353 + 2 + 45 = 400 */
 		max-width: 100%;
 }
-#submit {
+#submit, .button {
     height: 2.9em;
     width: 10em;		
 }
@@ -128,7 +128,7 @@ input[type='password'] { background-position: 5px -52px !important; }
 #inputs input:focus {   background-color: #fff;    border-color: #e8c291;    outline: none;  -moz-box-shadow: 0 0 0 1px #e8c291 inset;   -webkit-box-shadow: 0 0 0 1px #e8c291 inset;  box-shadow: 0 0 0 1px #e8c291 inset; }
 /*#actions { margin: 25px 0 0 0;}*/
 
-#submit
+#submit, .button
 {		
     background-color: #ffb94b;
     background-image: -webkit-gradient(linear, left top, left bottom, from(#fddb6f), to(#ffb94b));
@@ -159,7 +159,7 @@ input[type='password'] { background-position: 5px -52px !important; }
     color: #8f5a0a;
 }
 
-#submit:hover,#submit:focus
+#submit:hover,#submit:focus , .button:hover,.button:focus
 {		
     background-color: #fddb6f;
     background-image: -webkit-gradient(linear, left top, left bottom, from(#ffb94b), to(#fddb6f));
@@ -169,9 +169,9 @@ input[type='password'] { background-position: 5px -52px !important; }
     background-image: -o-linear-gradient(top, #ffb94b, #fddb6f);
     background-image: linear-gradient(top, #ffb94b, #fddb6f);
 }
-#submit:active { outline: none; -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset;  -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset; }
-#submit::-moz-focus-inner{  border: none;}
-#actions a {    color: #3151A2; float: right; line-height: 35px; margin-left: 10px;}
+#submit:active, .button:active { outline: none; -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset;  -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset; }
+#submit::-moz-focus-inner, .button::-moz-focus-inner{  border: none;}
+#actions a { color: #3151A2; float: right; line-height: 35px; text-decoration: none; color: #8f5a0a; }
 #back { display: block;    text-align: center;    position: relative;    top: 60px;    color: #999; }
 
 .error, .credito-estado-20 {   background:#ffecec url('../images/notification/error.png') no-repeat 10px 50%;   border:1px solid #f5aca6; }
@@ -181,3 +181,6 @@ input[type='password'] { background-position: 5px -52px !important; }
 #banner { right: 0;	bottom: 0;	position:fixed !important; }
 th {text-align: right;}
 table {width:100%;}
+#actions a.button {
+	font-size: 14px;
+}

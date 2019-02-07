@@ -35,8 +35,16 @@ function jsaDescartaRiesgo($id, $observaciones, $fecha, $recursivo){
 	return $xAML->getMessages(OUT_HTML);
 }
 
+function jsaSetFalsoPositivo($id, $observaciones, $fecha, $recursivo){
+	$xAML	= new cAMLAlertas($id);
+	$xAML->setEsFalsoPositivo($observaciones, $fecha, $recursivo);
+	return $xAML->getMessages(OUT_HTML);
+}
+
+
 $jxc->exportFunction('jsaConfirmaRiesgo', array('idriesgo', 'idnotas', 'ides24', 'idfechaactual'), "#idmsgs");
 $jxc->exportFunction('jsaDescartaRiesgo', array('idriesgo', 'idnotas', 'idfechaactual', 'iddescartar'), "#idmsgs");
+$jxc->exportFunction('jsaSetFalsoPositivo', array('idriesgo', 'idnotas', 'idfechaactual', 'iddescartar'), "#idmsgs");
 
 $jxc->process();
 
@@ -75,6 +83,9 @@ $xFRM->endSeccion();
 $xFRM->OButton("TR.Confirmar Riesgo", "jsConfirmaRiesgo()", $xFRM->ic()->OK, "idconfirma", "yellow" );
 $xFRM->OButton("TR.Descartar Riesgo", "jsDescartaRiesgo()", $xFRM->ic()->NO, "iddescarta", "green" );
 
+$xFRM->OButton("TR.ES FALSOPOS", "jsSetFalsoPositivo()", $xFRM->ic()->NO, "idfalsopositivo", "gray" );
+
+
 switch ($xAlert->getTipoDeDocto()){
 	case iDE_RECIBO:
 		$recibo		= $xAlert->getDocumento();
@@ -90,20 +101,27 @@ echo $xFRM->get();
 var xG		= new Gen();
 function jsDescartaRiesgo(){ xG.confirmar({ msg : "Desea Descartar la Alerta_AML como Riesgo?", callback : "jsDescartaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia"}); }
 function jsConfirmaRiesgo(){ xG.confirmar({ msg : "Desea Confirmar la Alerta_AML como Riesgo?", callback : "jsConfirmaRiesgo2()", evaluador : jsRazonNoVacia(), alert : "La observacion no puede quedar vacia" }); }
+function jsSetFalsoPositivo(){ xG.confirmar({ msg : "Desea Guardar como FALSOPOS?", callback : "jsSetFalsoPositivo2()" }); }
+
 function jsRazonNoVacia(){
 	var valid	= new ValidGen();
 	xG.cleanText("#idnotas");
 	//$("#idnotas").val()
 	return valid.NoVacio( $("#idnotas").val() );
 }
+function jsSetFalsoPositivo2(){
+	xG.postajax("jsSalir()");
+	jsaSetFalsoPositivo();
+}
+
 function jsDescartaRiesgo2(){
+	xG.postajax("jsSalir()");
 	jsaDescartaRiesgo();
-	setTimeout("jsSalir()", 2000);
+	
 }
 function jsConfirmaRiesgo2(){
-	
+	xG.postajax("jsSalir()");
 	jsaConfirmaRiesgo();
-	setTimeout("jsSalir()", 2000);
 }
 function jsSalir(){ xG.close(); }
 </script>

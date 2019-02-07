@@ -25,15 +25,19 @@ $msg		= "";
 $xLog		= new cCoreLog();
 $xRuls		= new cReglaDeNegocio();
 
-$useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
-$LockCobros	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
-$NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
-$NoCaptAntI	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NO_CAP_ANT_INT); //No pagar Capital antes de los Intereses
-$NoArrPena	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_NOARRASTRA_PENAS); //No arrastrar penas
+$useMoraBD		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
+$LockCobros		= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_COBRO_BLOQ);
+$NoMoraNom		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
+$NoCaptAntI		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NO_CAP_ANT_INT); //No pagar Capital antes de los Intereses
+$NoArrPena		= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_NOARRASTRA_PENAS); //No arrastrar penas
+$SoloExigibles	= $xRuls->getValorPorRegla($xRuls->reglas()->RECIBOS_LIQ_SOLO_EXIG); //No arrastrar penas
 
 $EsPagoAdelantado	= false;
+$EsLiquidacion		= false;
 
+$interes_exigible	= 0;
 $interes_a_pagar	= 0;
+
 $vendedor			= parametro("vendedor", 0, MQL_INT);
 
 
@@ -94,7 +98,12 @@ $monto_a_operar 	= $DPar[4];
 $operacion 			= $DPar[5];
 
 
-if( $aPagaCompleto[$operacion] == true ){ $pago_total = true ; $monto_a_operar	=   TESORERIA_MONTO_MAXIMO_OPERADO; $msg	.= "WARN\tOperacion de Pago Completo\r\n"; }
+if( $aPagaCompleto[$operacion] == true ){ 
+	$pago_total 	= true ;
+	$monto_a_operar	=   TESORERIA_MONTO_MAXIMO_OPERADO; 
+	$msg	.= "WARN\tOperacion de Pago Completo\r\n";
+	$EsLiquidacion	= true;
+}
  
 $mTipoPago			= (isset($DPar[6])) ?  trim($DPar[6]) : DEFAULT_TIPO_PAGO;
 $mReciboFiscal		= (isset($DPar[7])) ? $DPar[7] : DEFAULT_RECIBO_FISCAL;
@@ -222,6 +231,7 @@ for($ix=0; $ix <= $limParms; $ix++){
 	
 	if($pago_total == true){
 		$monto_penas				= $xCred->getPenasPorCobrar();
+		$interes_exigible			= $xCred->getInteresNormalPorPagar($fecha_operacion, $parcialidad);
 	}
 	$interes_normal					= ( $interes_normal_devengado - $interes_normal_pagado ) + $interes_normal_calculado;
 	$xLog->add("WARN\tINTS_N\t$interes_normal = ( $interes_normal_devengado - $interes_normal_pagado ) + $interes_normal_calculado\r\n", $xLog->DEVELOPER);
@@ -252,6 +262,7 @@ if ( $xCred->isAFinalDePlazo() == false ){
 		if($useMoraBD == true){
 			if($pago_total == true){
 				if($xLetra->initSuma($fecha_operacion) == true){
+
 					$interes_moratorio		= $xLetra->getMora();
 					$interes_normal			= $xLetra->getInteres();
 					
@@ -397,8 +408,18 @@ foreach ($rsm as $rwm ){
 						if($pago_total == false){
 							$xLog->add("WARN\tSin cambios en Intereses $MTipo\r\n", $xLog->DEVELOPER);
 						} else {
-							$xLog->add("WARN\t$MTipo\tINT.DEV.C\tInteres de la Letra Restadondo $monto a  $interes_normal\r\n", $xLog->DEVELOPER);
+							if($SoloExigibles == true AND $pago_total == true){
+								
+								$monto			= $interes_exigible;
+								$interes_normal	= $interes_exigible;
+								
+								$xLog->add("WARN\t$MTipo\tINT.DEV.C\tInteres Exigible a $interes_exigible\r\n", $xLog->DEVELOPER);
+								
+							}
+							$xLog->add("WARN\t$MTipo\tINT.DEV.C\tInteres de la Letra Restando $monto a  $interes_normal\r\n", $xLog->DEVELOPER);
 							$interes_normal	= setNoMenorQueCero(($interes_normal - $monto));
+							
+							
 						}
 					}
 				}

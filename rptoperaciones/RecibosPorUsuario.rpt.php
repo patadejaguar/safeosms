@@ -108,7 +108,7 @@ if ( $empresa >0 AND $empresa != DEFAULT_EMPRESA AND $empresa != FALLBACK_CLAVE_
 
 $xRpt->setTitle($titulo);
 
-$xRpt->addContent( $xRpt->getEncabezado($titulo, $fechaInicial, $fechaFinal, $oficial ) );
+$xRpt->addContent( $xRpt->getEncabezado($titulo, $FechaInicial, $FechaFinal, $cajero ) );
 
 $xRpt->setSQL($setSql);
 $xRpt->addCampoSuma("total");

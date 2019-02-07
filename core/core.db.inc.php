@@ -921,25 +921,42 @@ class cSQLListas {
 	}
 	function getListadoDeTareas($usuario = false, $FechaInicial = false, $FechaFinal = false, $estado = false){
 		$ByUsuario		= (setNoMenorQueCero($usuario) > 0) ? " AND (`usuarios_web_notas`.`oficial` =$usuario) " : "";
-		$ByEstado		= " AND	(`usuarios_web_notas`.`estado` != 40)";
+		$ByEstado		= " AND	(`usuarios_web_notas`.`estado` > 0)";
 		$FechaFinal		= ($FechaFinal == false) ? $FechaInicial : $FechaFinal;
 		$ByFecha		= ($FechaInicial == false) ? "" : " AND ( (`usuarios_web_notas`.`fecha` >='$FechaInicial') AND (`usuarios_web_notas`.`fecha` <='$FechaFinal') )";
-		if ( MODO_DEBUG == true ){		$ByUsuario = "";	}
+		//if ( MODO_DEBUG == true ){		$ByUsuario = "";	}
 	
-		$sql			= "SELECT
+		/*$sql			= "SELECT
 				`usuarios_web_notas`.`idusuarios_web_notas` AS `codigo`,
 				getFechaMX(`usuarios_web_notas`.`fecha`) AS 'fecha',
 				`usuarios_web_notas`.`socio` AS 'persona',
 				`usuarios_web_notas`.`texto`
 					FROM
 					`usuarios_web_notas` `usuarios_web_notas`
-					INNER JOIN `usuarios` `usuarios`
+					RIGHT OF JOIN `usuarios` `usuarios`
 					ON `usuarios_web_notas`.`oficial_de_origen` = `usuarios`.`idusuarios`
 					WHERE `usuarios_web_notas`.`idusuarios_web_notas` > 0 
 					$ByFecha
 					$ByUsuario
 					$ByEstado
+				ORDER BY `usuarios_web_notas`.`fecha` DESC, `usuarios_web_notas`.`relevancia` LIMIT 0,50 ";*/
+		$sql			= "SELECT
+				`usuarios_web_notas`.`idusuarios_web_notas` AS `codigo`,
+				getFechaMX(`usuarios_web_notas`.`fecha`) AS 'fecha',
+				`usuarios_web_notas`.`socio` AS 'persona',
+				`usuarios_web_notas`.`texto`,
+				         `entidad_niveles_de_riesgo`.`nombre_del_nivel` AS `relevancia`,
+				         `socios_memotipos`.`descripcion_memo` AS `tipo`
+				FROM     `usuarios_web_notas` 
+				INNER JOIN `entidad_niveles_de_riesgo`  ON `usuarios_web_notas`.`relevancia` = `entidad_niveles_de_riesgo`.`clave_de_nivel` 
+				INNER JOIN `socios_memotipos`  ON `usuarios_web_notas`.`tipo` = `socios_memotipos`.`tipo_memo` 
+				LEFT OUTER JOIN `socios_general`  ON `usuarios_web_notas`.`socio` = `socios_general`.`codigo` 
+									WHERE `usuarios_web_notas`.`idusuarios_web_notas` > 0
+					$ByFecha
+					$ByUsuario
+					$ByEstado
 				ORDER BY `usuarios_web_notas`.`fecha` DESC, `usuarios_web_notas`.`relevancia` LIMIT 0,50 ";
+		
 		
 		return $sql;		
 	}
@@ -1666,7 +1683,8 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		
 		SUM(`capital`+`interes`+`iva`+`ahorro`+`otros`+`mora`+`iva_moratorio`) AS `total`,
 		`creditos_causa_de_vencimientos`.`descripcion_de_la_causa` AS `causamora`,
-		getLastActByIDCred(`letras`.`credito`) AS `seguimiento`
+		getLastActByIDCred(`letras`.`credito`) AS `seguimiento`,
+		`personas`.`telefono`, `personas`.`correo_electronico`
 		
 FROM     `letras` 
 INNER JOIN `creditos_solicitud`  ON `letras`.`credito` = `creditos_solicitud`.`numero_solicitud` 
@@ -3613,7 +3631,8 @@ FROM
 			`contable_centrodecostos`.`nombre_centrodecostos`    AS `centro_de_costo`,
 			`socios_cajalocal`.`descripcion_cajalocal`           AS `caja_local`,
 			`general_sucursales`.`hora_de_inicio_de_operaciones` AS `hora_inicial`,
-			`general_sucursales`.`hora_de_fin_de_operaciones`    AS `hora_final` 
+			`general_sucursales`.`hora_de_fin_de_operaciones`    AS `hora_final`,
+			`general_sucursales`.`iddomicilio`
 		FROM
 			`general_sucursales` `general_sucursales` 
 				INNER JOIN `socios_cajalocal` `socios_cajalocal` 
@@ -3975,15 +3994,15 @@ FROM
 		$ByPersona	= ($persona > DEFAULT_SOCIO) ? " AND (`aml_listanegra_int`.`persona`=$persona) " : "";
 		$sql 	= "SELECT   `aml_listanegra_int`.`clave_interna`,
           `aml_listanegra_int`.`persona`,
-         CONCAT(`socios_general`.`nombrecompleto`, ' ',
+         IF(`aml_listanegra_int`.`persona` <= " . DEFAULT_SOCIO . ", `aml_listanegra_int`.`nombre_comp` ,CONCAT(`socios_general`.`nombrecompleto`, ' ',
          `socios_general`.`apellidopaterno`, ' ',
-         `socios_general`.`apellidomaterno`) AS `nombre`,
+         `socios_general`.`apellidomaterno`)) AS `nombre`,
          `aml_listanegra_int`.`fecha_de_registro`,
          `aml_listanegra_int`.`fecha_de_vencimiento`,
          `entidad_niveles_de_riesgo`.`nombre_del_nivel` AS `riesgo`,
          `aml_risk_types`.`nombre_del_riesgo` AS `motivo`,
          `usuarios`.`alias` AS `usuario`,
-         `aml_listanegra_int`.`observaciones`,
+         IF(`aml_listanegra_int`.`persona` <= " . DEFAULT_SOCIO . ", CONCAT(`aml_listanegra_int`.`id_comp`, ' ', `aml_listanegra_int`.`observaciones`) ,`aml_listanegra_int`.`observaciones`) AS `observaciones`,
          GetBooleanMX( `aml_listanegra_int`.`estatus`) AS `estatus`
 		FROM     `aml_listanegra_int` 
 		INNER JOIN `entidad_niveles_de_riesgo`  ON `aml_listanegra_int`.`riesgo` = `entidad_niveles_de_riesgo`.`clave_de_nivel` 
@@ -4045,11 +4064,14 @@ FROM
 
 		`riesgos_chequeo`.`nombre_chequeo` AS `frecuencia_de_chequeo`,
          `riesgos_reporte`.`nombre_reporte` AS `forma_de_reportar`,
-         `riesgos_medidas`.`nombre_medida` AS `unidad_de_medida`
+         `riesgos_medidas`.`nombre_medida` AS `unidad_de_medida`,`riesgos_consecuencias`.`nombre_consecuencia` AS `impacto`, `riesgos_probabilidad`.`nombre_probabilidad` AS `probabilidad`
 		FROM `aml_risk_catalog`
 				INNER JOIN `aml_risk_types`  ON `aml_risk_catalog`.`tipo_de_riesgo` = `aml_risk_types`.`clave_de_control`
 				INNER JOIN `riesgos_chequeo`  ON `aml_risk_catalog`.`frecuencia_de_chequeo` = `riesgos_chequeo`.`eq_aml`
-				INNER JOIN `riesgos_reporte`  ON `aml_risk_catalog`.`forma_de_reportar` = `riesgos_reporte`.`eq_aml` ,`riesgos_medidas`";
+				INNER JOIN `riesgos_reporte`  ON `aml_risk_catalog`.`forma_de_reportar` = `riesgos_reporte`.`eq_aml`
+				INNER JOIN `riesgos_medidas` ON `aml_risk_catalog`.`unidad_de_medida` = `riesgos_medidas`.`eq_aml`
+				INNER JOIN `riesgos_probabilidad` ON `aml_risk_catalog`.`probabilidad_id` = `riesgos_probabilidad`.`idriesgos_probabilidad`
+				INNER JOIN `riesgos_consecuencias` ON `aml_risk_catalog`.`impacto_id` = `riesgos_consecuencias`.`idriesgos_consecuencias`";
 	
 		return $sql;
 	}
@@ -5710,6 +5732,7 @@ class cSysTablas {
 		$tlog	= array(
 				$this->SOCIOS_GENERAL => true,
 				$this->CREDITOS_SOLICITUD => true,
+				$this->OPERACIONES_RECIBOS => true,
 				$this->LEASING_ACTIVOS => true
 		);
 		

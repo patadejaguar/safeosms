@@ -29,15 +29,13 @@ function jsaCompletar($id){
 	$msg	= "";
 	if($xAlert->init() == true){
 		$persona	= $xAlert->getPersonaDeOrigen();
-		//$xSoc		= new cSocio($persona);
-		//if($xSoc->init() == true){
-		$xCon	= new cAMLListasProveedores();
-		$xCon->setNoGuardar();
-		
-		$xCon->getConsultaInterna("", "", "", $persona);
-		$msg	= $xCon->getMessages();
+		$xAMLP		= new cAMLPersonas($persona);
+		if($xAMLP->init() == true){
+			$xAMLP->getBuscarEnListaNegra();
+			$msg	= $xAMLP->getMessages();
+		}
+
 		$xAlert->setActMensajesDelSistema($msg);
-		//}
 	}
 	return $msg;
 }
@@ -74,7 +72,7 @@ if($xAlert->init() == true){
 	$xFRM->addCerrar();
 	
 	$xFRM->OButton("TR.PANEL DE PERSONA", "var xP=new PersGen();xP.goToPanel(" . $xAlert->getPersonaDeOrigen() . ")", $xFRM->ic()->PERSONA, "cmdpanelpersona", "persona");
-	$xFRM->OButton("TR.MODIFICAR ESTATUS", "jsModificarEstatus($clave)", $xFRM->ic()->EDITAR, "cmdeditaralerta", "editar");
+	$xFRM->OButton("TR.DICTAMEN", "jsModificarEstatus($clave)", $xFRM->ic()->EDITAR, "cmdeditaralerta", "editar");
 	
 
 
@@ -84,7 +82,7 @@ if($xAlert->init() == true){
 	if($xAlert->getTipoDeAlerta() == 901001){
 		$xT		= new cTabla($xLi->getListadoDePersonasConsultasL($persona));
 		$xFRM->addHElem( $xT->Show() );
-		$xFRM->OButton("TR.COMPLETAR", "jsCompletar($clave)", $xFRM->ic()->LLENAR);
+		$xFRM->OButton("TR.ACTUALIZAR BUSQUEDA", "jsCompletar($clave)", $xFRM->ic()->BUSCAR, "idcmfill", "white");
 		
 		
 		//$xLista		= new cPersonasConsultaEnListas();
@@ -92,18 +90,25 @@ if($xAlert->init() == true){
 		//$xLista->
 		//$xListaC	= new cAMLListasProveedores();
 	}
+	if($xAlert->getEsActivo() == true){
 
-	if($xAlert->getEsEnviadoRMS() == false){
-		if($xAlert->getIsChecked() == false){
-			$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR, "cmdenviarrms", "yellow");
+		if($xAlert->getEsEnviadoRMS() == false){
+			if($xAlert->getIsChecked() == false){
+				$xFRM->OButton("TR.ENVIAR A RMS", "jsEnviarRMS($clave)", $xFRM->ic()->EXPORTAR, "cmdenviarrms", "yellow");
+			} else {
+				$xFRM->addTag($xFRM->getT("DICTAMINADO", "warning"));
+			}
 		} else {
-			$xFRM->addTag($xFRM->getT("DICTAMINADO", "warning"));
+			$xFRM->addTag($xFRM->getT("MS.ALERTA_ENVIADO_RMS", "warning"));
+			
 		}
-	} else {
-		$xFRM->addTag($xFRM->getT("MS.ALERTA_ENVIADO_RMS", "warning"));
-		
 	}
-	
+	if($xAlert->getEsRiesgo()){
+		$xFRM->addTag($xFRM->getT("TR.ES RIESGO"), "error");
+	}
+	if($xAlert->getEsFalsoPos()){
+		$xFRM->addTag($xFRM->getT("TR.ES FALSOPOS"), "warning");
+	}
 }
 
 $xFRM->OHidden("idalerta", $clave);

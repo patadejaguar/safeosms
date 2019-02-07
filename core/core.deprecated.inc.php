@@ -79,7 +79,7 @@ $smf	= "idusuario, codigo_eacp, socio_afectado, docto_afectado, recibo_afectado,
 			sucursal ";
 define("PK_MODEL_FIELDS", $smf);
 
-if(MODO_DEBUG == true) { /*ini_set("display_errors", "on");*/ }
+//if(MODO_DEBUG == true) { /*ini_set("display_errors", "on");*/ }
 /* --------------------------------------------------------------------------------------------------------*/
 /**
  * Obtiene el resultado de una fila
@@ -1091,6 +1091,8 @@ class cFormula{
 	public $PHP_MORA_TOLE_PID	= "php_mora_tolera_pid";
 	public $PHP_INT_FLAT_MOD	= "php_interes_pago_flat_mod";
 	public $JS_LEAS_COT_VARS	= "js_leasing_cot_vars";
+	public $AML_RMS_RIESGO		= "rms_calculo_riesgo";
+	
 	function __construct($aplicado_a = ""){
 		$this->mClave	= $aplicado_a;
 		if($this->mClave != ""){ $this->init($this->mClave); }

@@ -77,6 +77,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		$xFRM->setTitle($xHP->getTitle());
 		
 		$xFRM->addGuardar();
+		$xFRM->addSeccion("idntt", "TR.PERSONA");
 		/*$xFRM->OButton("TR.Baja", "jsSetBaja()", $xFRM->ic()->BLOQUEAR);*/
 		/*$xFRM->OButton("TR.Suspender", "jsSetSuspender()", $xFRM->ic()->BLOQUEAR);*/
 		//$xFRM->addAtras();
@@ -89,6 +90,9 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		
 		$xFRM->addPersonaBasico();
 		
+		$xFRM->endSeccion();
+		$xFRM->addSeccion("idndt", "TR.DATOS");
+		
 		$xText2->addEvent("posAction()", "onchange");
 		$xFRM->addHElem( $xText2->get("idNombreUsuario", "", $xText->lang("NOMBRE DE", "USUARIO")) );
 			
@@ -96,7 +100,8 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		$xText2->addEvent("evalPWD()", "onblur");
 		$xFRM->addHElem( $xText2->getPassword("idContrasenna2", $xText->lang("CONFIRME", "PASSWORD"), "") );
 		
-		
+		$xFRM->endSeccion();
+		$xFRM->addSeccion("idtct", "TR.DATOS_GENERALES");
 		
 		$xSel->addEvent("update_puesto", "onchange");
 		$xFRM->addHElem( $xSel->get("idNivelAcceso", $xText->lang("TIPO DE", "ROL"), "2", TCATALOGOS_USUARIOS_ROLES) );
@@ -121,6 +126,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		} else {
 			$xFRM->OHidden("idcuentacontable", CUENTA_CONTABLE_EFECTIVO);
 		}
+		//$xFRM->OMail("correoelectronico", "");
 		
 		$xFRM->OCheck("TR.CORPORATIVO", "corporativo");
 		
@@ -130,7 +136,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		$xFRM->addHTML("<p class='aviso' id='thAction'>$msg</p>");
 		$xFRM->addHTML('<input type="hidden" id="idUsuario" name="idUsuario" />');
 		//$xFRM->addJsInit("var blurred = false; window.onblur = function() { blurred = true; };window.onfocus = function() { var xG=new Gen();xG.setGVals();blurred && (location.reload()); };");
-		
+		$xFRM->endSeccion();
 	} else {
 		$sucess					= true;
 		
@@ -148,6 +154,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 		$sucursal 				= parametro("idSucursal", "matriz", MQL_RAW);
 		$cuentacontable			= parametro("idcuentacontable",0, MQL_INT);
 		$corporativo			= parametro("corporativo", false, MQL_BOOL);
+		
 		
 		if($clavedepersona <= DEFAULT_SOCIO){
 			$sucess				= false;

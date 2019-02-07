@@ -1,4 +1,6 @@
 <?php
+//error_reporting(E_ALL);
+//ini_set('display_errors', 'on');
 /**
  * @author Balam Gonzalez Luis Humberto
  * @version 0.0.01
@@ -57,9 +59,16 @@ function jsaEditarPermisoUsr($idusuario, $idp, $vv){
 		
 	}
 }
-
+function jsaSendMensajePorMail($idaviso){
+	$xMS	= new cSystemUserNotes($idaviso);
+	if($xMS->init() == true){
+		$xMS->sendByEmail();
+	}
+	return $xMS->getMessages();
+}
 
 $jxc->exportFunction('jsaSavePin', array('idpin', 'usuario'), "#idmsg");
+$jxc->exportFunction('jsaSendMensajePorMail', array('idkey'), "#idmsg");
 
 if(MODO_DEBUG == true){
 	$jxc->exportFunction('jsaNivel', array('usuario', 'idnivel'), "#idmsg");
@@ -75,26 +84,23 @@ $fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaa
 $persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
 $cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
-$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
-$monto			= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
-$recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
-$empresa		= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
-$grupo			= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
-$ctabancaria 	= parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);$action	= strtolower($action);
+
+
 $usuario		= parametro("usuario", 0, MQL_INT);
 $observaciones	= parametro("idobservaciones");
 $pass1			= parametro("idpass1", "", MQL_RAW);
 $pass2			= parametro("idpass2", "", MQL_RAW);
 $idpin			= parametro("idpin", 0, MQL_INT);
 
-
+$xHP->addJTableSupport();
 $xHP->init();
 
 $xFRM			= new cHForm("frm", "./");
 $xSel			= new cHSelect();
 $xTxt			= new cHText();
 $xChk			= new cHCheckBox();
-
+$xFRM->setNoAcordion();
 $xChk->setDivClass("tx18");
 
 
@@ -105,7 +111,9 @@ if($usuario<=0){
 }
 
 if($usuario >0 AND $persona <= DEFAULT_SOCIO){
-	$xUser	= new cSystemUser($usuario); $xUser->init(); $persona = $xUser->getClaveDePersona();
+	$xUser		= new cSystemUser($usuario); 
+	$xUser->init(); 
+	$persona 	= $xUser->getClaveDePersona();
 	
 }
 
@@ -113,7 +121,9 @@ if($usuario >0 AND $persona <= DEFAULT_SOCIO){
 $xSoc		= new cSocio($persona);
 
 if($xSoc->init() == true){
-	if($xSoc->getEsUsuario(true) == true){
+	
+	if($xSoc->getEsUsuario(true) == true OR (MODO_DEBUG == true AND $persona == DEFAULT_SOCIO)){
+		
 		$pass1		= $svc->getDecryptData($pass1);
 		$pass2		= $svc->getDecryptData($pass2);
 		
@@ -129,40 +139,70 @@ if($xSoc->init() == true){
 			$usuario	= $xUser->getID();
 		}
 		
-		if(($xUser2->getID() !== $xUser->getID()) AND $xUser2->getPuedeEditarUsuarios() == false ){
-			$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
-		} else {
-			//Reporte de Eliminados
-			$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
-		}
+
 		
 		
 		$xFRM->OHidden("idsocio", $persona);
 		$xFRM->OHidden("usuario", $usuario);
 		
 		
-
 		
-		if($action == SYS_NINGUNO OR ($pass1 !== $pass2)){
+		$xFRM->addHElem( $xUser->getFicha());
+		//Es el mismo usuario
+		if($action == SYS_NINGUNO){
 			
-			$xFRM->addHElem( $xUser->getFicha());
-			$xFRM->setNoAcordion();
-			$xFRM->addSeccion("idnomsg", "TR.Cambio de password");
-			$xTxt->addEvent("var xG=new Gen(); this.value=xG.enc(this.value)", "onchange");
+			if(($xUser2->getID() !== $xUser->getID()) AND $xUser2->getPuedeEditarUsuarios() == false ){
+				$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA);
+			} else {
+				//Reporte de Eliminados
+				$xFRM->OButton("TR.VER ELIMINADOS", "jsVerEliminados", $xFRM->ic()->REGISTROS);
+			}
 			
-			$xFRM->addHElem($xTxt->getPassword("idpass1", "TR.PASSWORD"));
-			$xFRM->addHElem($xTxt->getPassword("idpass2", "TR.CONFIRME PASSWORD"));
-			
-			$xFRM->endSeccion();
-			
+			$xFRM->addCerrar();
 			if( $xUser2->getID() == $xUser->getID() ){
+				$idxuser	= $xUser->getID();
+				$xFRM->OButton("TR.CAMBIAR PASSWORD", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpass'});", $xFRM->ic()->PASSWORD, "cmdchangepass", "red");
+				$xFRM->OButton("TR.CAMBIAR PIN", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpin'});", $xFRM->ic()->PASSWORD, "cmdchangepin", "yellow");
+				
+			} else if ($xUser2->getPuedeEditarUsuarios() == true){
+				$idxuser	= $usuario;
+				$email 		= $xUser->getCorreoElectronico();
+				$xFRM->OButton("TR.REESTABLECER PASSWORD", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpass'});", $xFRM->ic()->PASSWORD, "cmdchangepass", "red");
+				//$xFRM->OButton("TR.CAMBIAR PIN", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpin'});", $xFRM->ic()->PASSWORD, "cmdchangepin", "yellow");
+			}
+		} else {
+			
+			if($action == "editpass" AND ( $xUser2->getID() == $xUser->getID() ) ){
+				$xFRM->addSeccion("idsecccampass", "TR.Cambio de password");
+				$xTxt->addEvent("var xG=new Gen(); this.value=xG.enc(this.value)", "onchange");
+				
+				$xFRM->addHElem($xTxt->getPassword("idpass1", "TR.PASSWORD"));
+				$xFRM->addHElem($xTxt->getPassword("idpass2", "TR.CONFIRME PASSWORD"));
+				
+				$xFRM->endSeccion();
+				$xFRM->addGuardar();
+			}
+			
+			if($action == "editpin" AND ( $xUser2->getID() == $xUser->getID() ) ){
 				$xFRM->addSeccion("idnewpass", "TR.Cambio de Pin");
 				$xFRM->ONumero("idpin", "", "TR.PIN");
 				$xFRM->setValidacion("idpin", "jsSavePin");
 				$xFRM->endSeccion();
+				$xFRM->addGuardar();
 			}
 			
-			$xFRM->addGuardar();
+			if($action == "savepass"){
+				
+				if($xUser->setPassword($pass1) == true){
+					$xFRM->addAvisoRegistroOk("TR.El password ha cambiado\r\n");
+				} else {
+					$xFRM->addAvisoRegistroError($xUser->getMessages());
+				}
+			}
+		}
+		
+		if($action == SYS_NINGUNO OR ($pass1 !== $pass2)){
+			//$xFRM->addGuardar();
 			
 			if(MODO_DEBUG == true){
 				$xFRM->OHidden("idvalor", "");
@@ -170,6 +210,7 @@ if($xSoc->init() == true){
 			}
 			
 			$xFRM->setAction("socios.usuario.frm.php?action=" . MQL_ADD);
+			
 			if($pass1 !== $pass2){
 				$xFRM->addAvisoRegistroError("MS.MSG_PASS_NO_IGUAL");
 			}
@@ -267,18 +308,80 @@ if($xSoc->init() == true){
 			$xFRM->addHElem($xTbl->get());
 			$xFRM->endSeccion();
 			
-			$xFRM->addAviso("", "idmsg");
-		} else {
-			if($xUser->setPassword($pass1) == true){
-				$xFRM->addAvisoRegistroOk("TR.El password ha cambiado\r\n");
-			} else {
-				$xFRM->addAvisoRegistroError($xUser->getMessages());
+			$xFRM->addSeccion("idlistanotas", "TR.NOTAS");
+			$xHG    = new cHGrid("iddivusernotes","TR.NOTAS");
+			
+			$xHG->setSQL($xLi->getListadoDeTareas($usuario));
+			
+			$xHG->addList();
+			$xHG->setOrdenar();
+			
+			$xHG->addKey("idusuarios_web_notas");
+			
+			//$xHG->col("tipo", "TR.TIPO", "10%");
+			//$xHG->col("oficial", "TR.OFICIAL", "10%");
+			//$xHG->col("oficial_de_origen", "TR.OFICIAL DE ORIGEN", "10%");
+			
+			$xHG->col("persona", "TR.PERSONA", "10%");
+			
+			//$xHG->col("documento", "TR.DOCUMENTO", "10%");
+			$xHG->col("fecha", "TR.FECHA", "10%");
+			$xHG->col("texto", "TR.TEXTO", "60%");
+			//$xHG->col("estado", "TR.ESTADO", "10%");
+			//$xHG->col("relevancia", "TR.RELEVANCIA", "10%");
+			//$xHG->col("tiempo", "TR.TIEMPO", "10%");
+			
+			$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+			$xHG->OButton("TR.ENVIAR EMAIL", "jsSendMail('+ data.record.codigo +')", "mail-send.png");
+			if(MODO_DEBUG == true){
+				$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.codigo +')", "edit.png");
+				$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.codigo +')", "delete.png");
 			}
-			$xFRM->addCerrar();
+			$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.codigo +')", "undone.png");
+			$xFRM->addHElem("<div id='iddivusernotes'></div>");
+			$xFRM->addJsCode( $xHG->getJs(true) );
+			
+			/* ===========        GRID JS        ============*/
+			
+			$xHG2    = new cHGrid("iddivcoords",$xHP->getTitle());
+			
+			$xHG2->setSQL("SELECT * FROM `usuarios_coordenadas` WHERE `idusuario`=$usuario ORDER BY `tiempo` DESC LIMIT 0,100");
+			$xHG2->addList();
+			$xHG2->setOrdenar();
+			$xHG2->addKey("idusuarios_coordenadas");
+			
+			//$xHG2->col("idusuario", "TR.IDUSUARIO", "10%");
+			$xHG2->col("tiempo", "TR.TIEMPO", "10%");
+			$xHG2->col("latitud", "TR.LATITUD", "10%");
+			$xHG2->col("longitud", "TR.LONGITUD", "10%");
+			//$xHG2->col("idenfuente", "TR.IDENFUENTE", "10%");
+			
+			//$xHG2->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+			//$xHG2->OButton("TR.EDITAR", "jsEdit('+ data.record.idusuarios_coordenadas +')", "edit.png");
+			//$xHG2->OButton("TR.ELIMINAR", "jsDel('+ data.record.idusuarios_coordenadas +')", "delete.png");
+			//$xHG2->OButton("TR.BAJA", "jsDeact('+ data.record.idusuarios_coordenadas +')", "undone.png");
+			
+			$xHG2->OButton("TR.MAPA", "jsGetMapa('+ data.record.longitud +',' + data.record.latitud  +')", "placeholder.png");
+			
+			$xFRM->addHElem("<div id='iddivcoords'></div>");
+			$xFRM->addJsCode( $xHG2->getJs(true) ); 
+			
+			$xFRM->endSeccion();
+			
+			
+			
+			$xFRM->addAviso("", "idmsg");
+			$xFRM->OHidden("idkey", "0");
+		} else {
+
+			//xFRM->addCerrar();
 		}
 		
+	} else {
+		$xFRM->addAvisoInicial($xSoc->getNombreCompleto() . " No Puede ser Usuario.<br />Debe existir una relacion Usuario-Persona", true);
 	}
 } else {
+	
 	$xFRM->addAvisoInicial("No se puede editar este usuario", true);
 }
 
@@ -286,6 +389,12 @@ echo $xFRM->get();
 ?>
 <script>
 var xG	= new Gen();
+function jsSendMail(id){
+	xG.confirmar({msg: "MSG_CONFIRM_SEND_MSG", callback : function(){
+			$("#idkey").val(id);
+			jsaSendMensajePorMail();
+		}});
+}
 function jsVerEliminados(){
 	var iduser = $("#usuario").val();
 	xG.w({url:"../frmsecurity/eliminados.frm.php?usuario=" +  iduser});
@@ -315,6 +424,22 @@ function jsEditPermiso(idx,regla){
 		
 	}
 	
+}
+
+function jsEdit(id){
+    xG.w({url:"../frmsecurity/usuarios-notas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivusernotes});
+}
+function jsAdd(){
+    xG.w({url:"../frmsecurity/usuarios-notas.new.frm.php?", tiny:true, callback: jsLGiddivusernotes});
+}
+function jsDel(id){
+    xG.rmRecord({tabla:"usuarios_web_notas", id:id, callback:jsLGiddivusernotes });
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"usuarios_web_notas", id:id, callback:jsLGiddivusernotes, preguntar:true });
+}
+function jsGetMapa(lg, lt){
+	xG.w({url:"https://www.google.com/maps/@" + lt +"," + lg  + ",17z", tab:true});
 }
 </script>
 <?php

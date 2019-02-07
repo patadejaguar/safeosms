@@ -464,6 +464,7 @@ class cHPage {
 				$this->addJsFile("$path/js/hotkeys.min.js"); //shortcut
 				$this->addJsFile("$path/js/moment.min.js");
 				$this->addJsFile("$path/js/notify.min.js");
+				$this->addJsFile("$path/js/magic-grid.min.js");
 
 				if(defined("SAFE_LANG")){
 					$jslang		= strtolower( SAFE_LANG );
@@ -603,7 +604,7 @@ class cHPage {
 	}
 	function setNoDefaultCSS(){
 		$this->mDefaultCSS	= false;
-		unset($this->mCSS[$this->mPath . "/css/grid960.css"]);
+		//unset($this->mCSS[$this->mPath . "/css/grid960.css"]);
 		unset($this->mCSS[ $this->mPath . $this->mGeneralCSS ]);
 		unset($this->mCSS[ $this->mPath . "/css/reporte.css" ]);
 		unset($this->mCSS[ $this->mPath . "/css/recibo.css" ]);
@@ -889,6 +890,11 @@ class cHPage {
 		$this->addCSS("$path/css/chartist.min.css");
 		$this->addJsFile("$path/js/chartist.min.js");
 		$this->addJsFile("$path/js/chartist-plugin-barlabels.min.js");
+	}
+	function addGanttSupport(){
+		$path	= $this->mPath;
+		$this->addCSS("$path/css/gantti/gantti.css");
+		//$this->addCSS("$path/css/gantti/screen.css");
 	}
 	function addJTableSupport(){
 		$path	= $this->mPath;
@@ -1457,14 +1463,14 @@ class cHForm {
 			$this->OButton($t1, "var xP= new PersGen();xP.setAgregarRelacionesSN($clave_de_persona)", $this->ic()->RELACIONES, "cmdagregarrelaciones", "persona");
 			
 			
-			$this->OButton("TR.Agregar Actividad Economica", "var xP=new PersGen();xP.setAgregarActividadE($clave_de_persona)", $this->ic()->EMPLEADOR, "cmdagregaractividad");
+			$this->OButton("TR.Agregar Actividad_Economica", "var xP=new PersGen();xP.setAgregarActividadE($clave_de_persona)", $this->ic()->EMPLEADOR, "cmdagregaractividad");
 			$this->OButton("TR.Agregar Relacion_Patrimonial", "var xP=new PersGen();xP.setAgregarPatrimonio($clave_de_persona)", "balance", "cmagregarpatrimonio");
 			$this->OButton("TR.Agregar Otras_referencias", "var xP=new PersGen();xP.setAgregarOtrasReferencias($clave_de_persona)", $this->ic()->RELACIONES, "cmdagregarotrasrefs");
 			$this->OButton("TR.Agregar Documento", "var xP=new PersGen();xP.setAgregarDocumentos($clave_de_persona)", $this->ic()->ARCHIVOS, "cmdagregardocumento", "white");
 			
 		}
 		if(MODULO_AML_ACTIVADO == true){
-			$this->OButton("TR.AGREGAR perfil transaccional", "var xP= new PersGen();xP.setAgregarPerfilTransaccional($clave_de_persona)", "perfil", "cmdagregartransaccional", "white");
+			$this->OButton("TR.PERFIL_TRANSACCIONAL", "var xP= new PersGen();xP.setAgregarPerfilTransaccional($clave_de_persona)", "perfil", "cmdagregartransaccional", "white");
 		}
 		$this->OButton("TR.Checklist", "var xP=new PersGen();xP.setFormaCheck($clave_de_persona);", $this->ic()->OK, "cmdchecklist", "green");
 		if(MODULO_AML_ACTIVADO == true){
@@ -1716,9 +1722,8 @@ class cHForm {
 		$titulo	= ($titulo == "") ? "TR.BUSCAR" : $titulo;
 		$id		= ($id == "") ? "idbuscar" : $id;		
 		if($funcion !== ""){
-			$xTxt->addEvent("var xG=new Gen();xG.isKey({evt:event,ambos:true, callback:$funcion });", "onkeyup");
+			$xTxt->addEvent("var xG=new Gen();xG.isKey({evt:event,ambos:true,min:2, callback:$funcion });", "onkeyup");
 		}
-		
 		$this->addHElem( $xTxt->getNormal($id, $valor, $titulo, $html) );
 		
 		return $xTxt;
@@ -1872,7 +1877,11 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 	function OTextArea($id, $valor, $titulo, $add = true){
 		$xTxt	= new cHTextArea();
 		if($add == true){
-			$this->addHElem( $xTxt->get($id, $valor, $titulo) );
+			$titulo	= $this->getT($titulo);
+			$tit	= "<label for='$id'>$titulo<label>";
+			$txt	= $xTxt->get($id, $valor, "");
+			$this->addDivSolo($tit, $txt, "tx14", "tx34");
+			//$this->addHElem( $xTxt->get($id, $valor, $titulo) );
 		}
 		return $xTxt;
 	}
@@ -1919,9 +1928,15 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 		}
 		return $xSel;
 	}	
-	function OFile($id , $valor = "", $titulo = ""){
+	function OFile($id , $valor = "", $titulo = "", $accept = ""){
 		$xFil		= new cHFile();
+		
+		if($accept != ""){
+			$xFil->setNoCleanProps();
+			$xFil->setProperty("accept", $accept);
+		}
 		$this->addHElem( $xFil->getBasic($id, $valor, $titulo) );
+		$xFil		= null;
 		$this->setEnc("multipart/form-data");
 	}
 	function OFileText($id , $valor = "", $titulo = ""){
@@ -2365,9 +2380,8 @@ class cHText extends cHInput {
 				$npersona				= $xSoc->getNombreCompleto(OUT_HTML);
 			}
 		}
-		//$titulo			= $xLn->get("clave de persona");//($titulo == "") ? $xLn->get("clave de persona") : $xLn->getT($titulo);
-		$titulo2		= ($titulo == "")  ? $xLn->get("nombre completo") : $xLn->getT($titulo);;
-		//$this->addEvent("envsoc()", "onchange");
+		$titulo2						= ($titulo == "")  ? $xLn->getT("TR.NOMBRE_COMPLETO") : $xLn->getT($titulo);
+		$tit1							= $xLn->getT("TR.CLAVE_DE_PERSONA");
 		$this->addEvent("var xPG = new PersGen();xPG.getNombre(this.value, 'nombresocio$id');$blurEvents", "onblur");
 		$this->mIncLabel				= true;
 		if($SinBoton == false){
@@ -2379,9 +2393,9 @@ class cHText extends cHInput {
 		$xhNSocio->setIncludeLabel(false);
 		$xhNSocio->setProperty("name", "nombresocio$id");
 		$xhNSocio->setProperty("disabled", "disabled");
-		$this->setDivClass("tx14");
-		$xhNSocio->setDivClass("tx34");
-		return "<div class='tx1'> ". $this->get("idsocio$id", $persona, $xLn->get("clave de persona")) . $xhNSocio->get("nombresocio$id", $npersona) . "</div>";		
+		$this->setDivClass("tx14 blue");
+		$xhNSocio->setDivClass("tx34 blue");
+		return "<div class='medio'> ". $this->get("idsocio$id", $persona, $tit1) . $xhNSocio->get("nombresocio$id", $npersona) . "</div>";		
 	}
 	function getDeCredito($id="", $credito = false, $titulo = ""){
 		$this->mArrProp["type"]			= "number";
@@ -2401,10 +2415,10 @@ class cHText extends cHInput {
 		$dSol->setIncludeLabel(false);
 		$dSol->setProperty("name", "nombresolicitud");
 		$dSol->setProperty("disabled", "true");
-		$this->setDivClass("tx14");
-		$dSol->setDivClass("tx34");
+		$this->setDivClass("tx14 green");
+		$dSol->setDivClass("tx34 green");
 		
-		return "<div class='tx1' id='divcredito$id'> ". $this->get("idsolicitud", "", "TR.CLAVE_DE_CREDITO") . $dSol->get("nombresolicitud", "", "TR.DESCRIPCION") . "</div>";
+		return "<div class='medio' id='divcredito$id'> ". $this->get("idsolicitud", "", "TR.CLAVE_DE_CREDITO") . $dSol->get("nombresolicitud", "", "TR.DESCRIPCION CREDITO") . "</div>";
 	}
 	function getDeRecibo($id="", $recibo = false, $titulo = ""){
 		$this->mArrProp["type"]			= "number";
@@ -2423,10 +2437,10 @@ class cHText extends cHInput {
 		$dSol->setIncludeLabel(false);
 		$dSol->setProperty("name", "nombrerecibo");
 		$dSol->setProperty("disabled", "true");
-		$this->setDivClass("tx14");
-		$dSol->setDivClass("tx34");
+		$this->setDivClass("tx14 green");
+		$dSol->setDivClass("tx34 green");
 		
-		return "<div class='tx1' id='divrecibo$id'> ". $this->get("idrecibo", "", "TR.CLAVE_DE RECIBO") . $dSol->get("nombrerecibo", "", "TR.DESCRIPCION") . "</div>";
+		return "<div class='medio' id='divrecibo$id'> ". $this->get("idrecibo", "", "TR.CLAVE_DE RECIBO") . $dSol->get("nombrerecibo", "", "TR.DESCRIPCION RECIBO") . "</div>";
 	}
 	function getDeGrupo($id="", $grupo = false){
 		$id								= ($id == "") ? "idgrupo" : $id;
@@ -2444,7 +2458,7 @@ class cHText extends cHInput {
 		$this->setDivClass("tx14");
 		$dSol->setDivClass("tx34");
 		//$this->addEvent("var xg = new Gen(); xg.letras({monto: this.value, id: '$id-EnLetras'});", "onblur");
-		return "<div class='tx1' id='div$id'> ". $this->get($id, $grupo, "TR.codigo de grupo") . $dSol->get("nombregrupo", "", "TR.NOMBRE DEL GRUPO") . "</div>";
+		return "<div class='medio' id='div$id'> ". $this->get($id, $grupo, "TR.codigo de grupo") . $dSol->get("nombregrupo", "", "TR.NOMBRE GRUPO") . "</div>";
 	}
 		
 	function getDeCuentaCaptacion($id = "", $cuenta = false){
@@ -2858,7 +2872,7 @@ class cHText extends cHInput {
 		$this->mLIDs[]					= $id;
 		$this->mArrProp["name"]			= $id;
 		$this->addEvent("var xg$id=new PersAEGen();xg$id.getListaDeActividades(this, event);", "onkeyup");
-		$this->addEvent("var xg$id=new PersAEGen();xg$id.setActividadPorCodigo(this);", "onchange");
+		$this->addEvent("var xAE=new PersAEGen();xAE.setActividadPorCodigo(this);", "onblur");
 	
 		$xhN		= new cHInput("iddescripcion$id", "", "TR.NOMBRE ACTIVIDAD_ECONOMICA UIF");
 		$xhN->setIncludeLabel(false);
@@ -2888,16 +2902,17 @@ class cHText extends cHInput {
 		$this->mLIDs[]					= $id;
 		$this->mArrProp["name"]			= $id;
 		//$this->addEvent("var xg$id=new PersAEGen();xg$id.getListaDeActividades(this, event);", "onkeyup");
-		//$this->addEvent("var xg$id=new PersAEGen();xg$id.setActividadPorCodigo(this);", "onchange");
 		
-		$xhN		= new cHInput("iddescripcion$id", "", "TR.NOMBRE ACTIVIDAD_ECONOMICA SCIAN");
+		
+		$xhN		= new cHInput("iddescripcionscian$id", "", "TR.NOMBRE ACTIVIDAD_ECONOMICA SCIAN");
 		$xhN->setIncludeLabel(false);
-		$xhN->setProperty("name", "iddescripcion$id");
+		$xhN->setProperty("name", "iddescripcionscian$id");
 		$xhN->setProperty("disabled", "disabled");
-		
+		$this->setNoCleanProps();
 		$xBtn		= new cHImg();
 		$this->setClearHTML();
 		$this->addHTMLCode($xBtn->get16("common/search.png", " onclick=\"var xPA=new PersAEGen(); xPA.getBuscarActsSCIAN('$id');\" "));
+		$this->addEvent("var xAE=new PersAEGen();xAE.setActividadPorCodigoSCIAN(this);", "onblur");
 		
 		$this->setDivClass("tx13 green");
 		$xhN->setDivClass("tx23 green");
@@ -3944,10 +3959,14 @@ class cHSelect {
 		$xS->setLabel("TR.REGIMEN_MATRIMONIAL");
 		return $xS;
 	}
-	function getListaDePerfilTransaccional($id = ""){
+	function getListaDePerfilTransaccional($id = "", $selected = false){
 		$id		= ($id == "") ? "idtipotransaccion" : $id; $this->mLIDs[]	= $id;
 		$sqlSc		= "SELECT * FROM `personas_perfil_transaccional_tipos` ";
+		$selected	= setNoMenorQueCero($selected);
 		$xS 		= new cSelect($id, $id, $sqlSc);
+		if($selected>0){
+			$xS->setOptionSelect($selected);
+		}
 		$xS->setEsSql();
 		return $xS;
 	}
@@ -4425,20 +4444,22 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}	
-	function getListadoGenerico($tabla , $id = ""){
+	function getListadoGenerico($tabla , $id = "", $selected= false){
 		$id			= ($id == "") ? "id$tabla" : $id; $this->mLIDs[]	= $id;
 		$sqlSc		= "SELECT * FROM $tabla LIMIT 0,100";
 		if(strpos($tabla, "FROM") > 0){
 			$sqlSc	= $tabla;
 		}
 		$xS 		= new cSelect($id, $id, $sqlSc);
-		
+		if($selected !== false){
+			$xS->setOptionSelect($selected);
+		}
 		$xS->setEsSql();
 		return $xS;		
 	}
 	function getListaDeCatalogoGenerico($buscador , $id = "", $selected = null){
 		$id			= ($id == "") ? "id$buscador" : $id; $this->mLIDs[]	= $id;
-		$sqlSc		= "SELECT `clave`,`descripcion`  FROM `sistema_catalogo` WHERE `tabla_virtual` = '$buscador' LIMIT 0,20";
+		$sqlSc		= "SELECT `clave`,`descripcion`  FROM `sistema_catalogo` WHERE `tabla_virtual` = '$buscador' LIMIT 0,100";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		if($selected !== null){
 			$xS->setOptionSelect($selected);
@@ -4790,6 +4811,8 @@ class cHSelect {
 		if(setNoMenorQueCero($selected) > 0){
 			$xS->setOptionSelect($selected);
 		}
+		$xS->setDivClass("tx4 green");
+		$xS->setLabel("TR.CREDITOS_PERIODOS");
 		//$xS->addEspOption(SYS_TODAS);
 		//$xS->setOptionSelect(SYS_TODAS);
 		return $xS;
@@ -5556,6 +5579,7 @@ GROUP BY `operaciones_mvtos`.`recibo_afectado`";
 		$xS->setEsSql();
 		$selected	= setNoMenorQueCero($selected);
 		$xS->setOptionSelect($selected);
+		
 		$xS->setLabel("TR.LISTADO DE VIVIENDA");
 		return $xS;
 	}
@@ -5754,6 +5778,7 @@ class cHDate{
 		$this->mFecha 		= ($Fecha == false) ? fechasys() : $Fecha;
 		$this->mIndex		= $Index;
 		$this->mTipoFecha	= ($TipoDeFecha == false) ? FECHA_TIPO_OPERATIVA : $TipoDeFecha;
+		$this->setDivClass("tx4 tx18");
 	}
 	function setIsSelect($select = true){	$this->mSelects		= $select;	}
 	function setID($id){ $this->mId	= $id; }
@@ -5929,7 +5954,7 @@ class cHInput {
 		foreach( $this->mArrProp as $key => $valP ){ $nProps	.= " $key=\"$valP\" "; }
 		//si existe la propiedad size tomarla para sumar, si no poner 50
 		$lbl		= ($this->mIncLabel == true) ? "<label for=\"" . $this->mId . "\"$csslbl>" . $this->mLbl . "</label>"  : "";
-		$ctrl		= ($this->mDivClass == "") ? "$lbl<input  id=\"" . $this->mId . "\"  $nProps $nEvents > $otherStrings" : "<div class=\"" . $this->mDivClass .   "\">$lbl<input  id=\"" . $this->mId . "\"  $nProps $nEvents > $otherStrings</div>";
+		$ctrl		= ($this->mDivClass == "") ? "$lbl<input id=\"" . $this->mId . "\" $nProps $nEvents> $otherStrings" : "<div class=\"" . $this->mDivClass .   "\">$lbl<input  id=\"" . $this->mId . "\"  $nProps $nEvents > $otherStrings</div>";
 		if($this->mType == "button"){
 			$ctrl	= "$lbl<a id=\"" . $this->mId . "\" $nProps $nEvents>$otherStrings " . $this->mValue . "</a>";
 		}
@@ -7225,13 +7250,13 @@ class cHUl {
 		$this->mCls		= $class;
 	}
 	function setTags($tags = "a"){ $this->mTags = $tags; }
-	function li($str = "") {
+	function li($str = "", $props="") {
 		if($this->mObj == null){
 			$this->mObj	= new cHLi($this);
 		}
 		
 		if(trim($str) !== ""){
-			$this->mObj->add($str);
+			$this->mObj->add($str,"", $props);
 		}
 		
 		return $this->mObj;
@@ -7263,9 +7288,9 @@ class cHLi{
 		$parent			= null;
 		$this->mParent	= null;
 	}
-	function add($str, $closeTag = ""){
+	function add($str, $closeTag = "", $props=""){
 		if($closeTag == ""){ $closeTag	= $this->mTag; }
-		$init	= ($closeTag == "") ? "" : "<$closeTag>";
+		$init	= ($closeTag == "") ? "" : "<$closeTag$props>";
 		$end	= ($closeTag == "") ? "" : "</$closeTag>";
 		if(trim($str) == ""){
 			$init	= "";
@@ -7284,8 +7309,8 @@ class cHLi{
 	}
 	function setT($cls){ $this->mT = $cls; }
 	function setClass($cls){ $this->mCls = $cls;}
-	function li($str = ""){
-		$this->add($str);
+	function li($str = "", $props=""){
+		$this->add($str, "", $props);
 		return $this;
 	}
 }
@@ -7925,6 +7950,7 @@ class cFormato {
 			$this->mArr["variable_rfc_del_socio"] 					= $cSoc->getRFC();
 			$this->mArr["variable_curp_del_socio"] 					= $cSoc->getCURP();
 			$this->mArr["variable_persona_identificacion_oficial"] 	= $cSoc->getClaveDeIdentificacion();
+			$this->mArr["variable_persona_nombre_completo"]			= $cSoc->getNombreCompleto(OUT_TXT);
 			
 			$this->mArr["variable_numero_de_socio"] 				= $cSoc->getCodigo();
 			$this->mArr["variable_persona_id_interna"] 				= $cSoc->getIDInterna();
@@ -11144,6 +11170,7 @@ class cFIcons {
 	
 	public $REGISTROS 	= "registros";
 	public $CONTABLE 	= "contabilidad";
+	public $COMENTARIO 	= "fa-comments-o";
 	public $TIPO 		= "perfil";
 	public $PERSONA 	= "fa-address-card-o";
 	public $ELIMINAR	= "fa-trash";
@@ -11198,6 +11225,8 @@ class cFIcons {
 	public $ADELANTE	= "siguiente";
 	public $BIENES		= "fa-car";
 	public $NOTA		= "fa-list-alt";
+	public $NOTIFICACION		= "fa-bell-o";
+	public $NONOTIFICACION		= "fa-bell-slash-o";
 	public $TAREA		= "tarea";
 	public $TELEFONO	= "fa-phone";
 	public $CALCULAR	= "fa-calculator";
@@ -11207,7 +11236,7 @@ class cFIcons {
 	public $FILTRO		= "fa-filter";
 	public $CONTRATO	= "fa-file-word-o";
 	public $LEGAL		= "fa-legal";
-	public $LLENAR		= "fa-battery-three-quarters";
+	public $LLENAR		= "fa-check-square-o ";
 	public $LLENO		= "fa-battery-full";
 	public $ESTADO_CTA	= "fa-line-chart";
 	public $GRUPO		= "fa-group";
@@ -11232,6 +11261,8 @@ class cFIcons {
 	public $GRAFICO3	= "fa-bar-chart";
 	public $LEASING		= "fa-bus";
 	public $SMS			= "fa-commenting-o";
+	public $DOMICILIO	= "fa-home";
+	public $SYNC		= "fa-refresh";
 	//public $CALCULAR	= "fa-superscript";
 	/*	private $mIcons	= array("editar" => "fa-edit",
 						"referencias" => "fa-group",

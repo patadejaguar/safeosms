@@ -147,6 +147,7 @@ $analitycs
     </fieldset>
     <fieldset id=\"actions\">
          <input type=\"submit\" id=\"submit\" value=\"" . $xLng->getT("TR.Iniciar") . "\">
+		<a class=\"button\" href=\"public/recover-pass.frm.php\" >" . $xLng->getT("TR.RECPASS") . "</a>
     </fieldset>
     $msg
   $demohtml   

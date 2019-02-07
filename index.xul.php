@@ -202,7 +202,7 @@ if($menu === null){
 	"<div id=\"jpanel\">
 	<a href=\"#navmenu\" class=\"menu-trigger\" id=\"menugo\">
 	<i class=\"fa fa-reorder fa-2x\"></i></a> <h1 id='htitle'>$mTit</h1>
-	<span id=\"idbtninfouser\" style=''>" . $xUser->getNombreDeUsuario() . " / " . getSucursal() . "</span>
+	<span id=\"idbtninfouser\" style='cursor:pointer' onclick=\"setInFrame('../frmsocios/socios.usuario.frm.php')\">" . $xUser->getNombreDeUsuario() . " / " . getSucursal() . "</span>
 	</div>
  
 	<nav id=\"navmenu\">" . $menu . "</nav> ";

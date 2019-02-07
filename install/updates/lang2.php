@@ -651,7 +651,20 @@ $lang["20180801"][]	= array("MINNUMERO", "Num. Min.", "Min Number");
 $lang["20180801"][]	= array("MINIMO", "Min.", "Min");
 $lang["20180801"][]	= array("TASAMORA", "Tasa Moratorio", "Rate");
 $lang["20180801"][]	= array("ABRIR", "Abrir", "Go to");
-//$lang["20180801"][]	= array("", "", "");
+
+$lang["20181201"][]	= array("RECPASS", "Recuperar Acceso", "Recover Password");
+
+
+$lang["20190101"][]	= array("VISTAMATRIZ", "Vista Matriz de Riesgo", "Risk Matriz");
+$lang["20190101"][]	= array("AVISOS", "Avisos", "Alerts");
+$lang["20190101"][]	= array("KPIS", "Indicadores", "KPIs");
+$lang["20190101"][]	= array("PERIODO", "Periodo", "Period");
+$lang["20190101"][]	= array("MESA_DE_CREDITO", "Mesa de Cred.", "Credit Committee");
+$lang["20190101"][]	= array("FALSOPOS", "Falso/Positivo", "False-Positive");
+$lang["20190101"][]	= array("BUSQUEDA", "Busqueda", "Search");
+//$lang["20190101"][]	= array("", "", "");
+
+
 
 
 header('Content-type: application/json');

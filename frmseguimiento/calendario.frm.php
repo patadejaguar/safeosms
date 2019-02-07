@@ -96,7 +96,7 @@ function jsProcesarNotificaciones(data){
 			var evt 	= {
 						title: notificacion.nombre, 
 						start: notificacion.fecha + "T" + notificacion.hora,
-						backgroundColor: css.background, 
+						backgroundColor: css.background,
 						icon: "fa-briefcase", 
 						textColor: "black", 
 						borderColor: css.border,
@@ -139,7 +139,7 @@ function jsRunCalendar(){
 	
 	$('#calendario').fullCalendar({
 		disableDragging: true,
-		
+
 		header: {
 			left: 'prev,next today',
 			center: 'title',
@@ -151,6 +151,10 @@ function jsRunCalendar(){
 	    	   element.find(".fc-list-item-marker").empty();
 	    	   element.find(".fc-list-item-marker").prepend("<i class='fa " + event.icon +"'></i>");
 	    	}
+	    	if(event.backgroundColor){
+	    		element.find(".fc-list-item-title").css("background-color", event.backgroundColor);
+		    	//fc-list-item-title fc-widget-content
+		    }
 	        //if(event.imageurl) {
 	            //eventElement.find("div.fc-content").prepend("<img src='" + event.imageurl +"' width='12' height='12'>");
 	        //}
@@ -177,6 +181,14 @@ function jsRunCalendar(){
 				xSeg.getListaDeLlamadas({callback:jsProcesarLLamadas , fecha : fi, fechaFinal : ff, todo:idtodas});
 				xSeg.getListaDeCompromisos({callback:jsProcesarCompromisos , fecha : fi, fechaFinal : ff, todo:idtodas});
 				xSeg.getListaDeNotificaciones({callback:jsProcesarNotificaciones , fecha : fi, fechaFinal : ff, todo:idtodas});
+			}
+			if(view.name == "list"){
+//				element.find(".fc-list-item-title").text( $(this).attr("info")  + "----" + $(this).attr("title") );
+/*element.find(".fc-list-item-title").each(function(idx, elm){
+	
+	$(elm).attr("text", "miau");
+	//console.log(evt);
+}).end();*/
 			}
 		},
 	    eventClick: function(calEvent, jsEvent, view) {

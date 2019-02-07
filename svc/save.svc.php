@@ -25,7 +25,10 @@ $clave		= parametro("id", null, MQL_RAW);
 $content	= parametro("content", "", MQL_RAW);
 
 $arrT		= array("originacion_leasing");
-
+$persona	= 0;
+$contrato	= 0;
+$recibo		= 0;
+$errCode	= $xLog->OCat()->EDICION_RAW;
 //rm = eliminar
 //save = actualizar
 //add = guardar
@@ -77,8 +80,6 @@ if($tabla != null AND $clave != null){
 			}
 		}
 		//setLog($aAntes); setLog($aDespues);
-		
-		
 		$itemsUpd	= count($aDiffA);
 
 		$txtan		= json_encode($aDiffA);
@@ -99,6 +100,7 @@ if($tabla != null AND $clave != null){
 			$xCache->clean("$tabla-$clave");
 			
 			$res				= $obj->query()->update()->save("$key='$clave'");
+			
 			//Logea si se habilita
 			
 			if($xTT->isLog($tabla) == true){
@@ -123,7 +125,7 @@ if($tabla != null AND $clave != null){
 						foreach ($rs as $rw){
 							$idsoc	= $rw["numero_socio"];
 							$xQL->setRawQuery("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc"); //setLog("UPDATE socios_general SET sucursal='$xsuc' WHERE  codigo = $idsoc");
-							setCambio($tabla, $clave, $xT->SUCURSAL, "", $xsuc);
+							//setCambio($tabla, $clave, $xT->SUCURSAL, "", $xsuc);
 							$xCache->clean("socios_general-$idsoc");
 						}
 						
@@ -134,14 +136,35 @@ if($tabla != null AND $clave != null){
 					$xT		= new cOperaciones_recibos();
 					//setLog($aDiffD);
 					$idrecibo	= $clave;
-					
+					$xRec		= new cReciboDeOperacion(false, false, $idrecibo);
 					if(isset($aDiffD[$xT->TIPO_PAGO])){
-						$xRec	= new cReciboDeOperacion(false, false, $idrecibo);
 						if($xRec->init() == true){
 							$xRec->setCambiarTipoPago($aDiffD[$xT->TIPO_PAGO]);
 							$xLog->add($xRec->getMessages());
 						}
 					}
+					$xRec->addEventoLog(2013, "El Usuario " . getUsuarioActual() . " Actualiza ($txtde) antes ($txtan) de el ID $clave en $tabla");
+					break;
+				case TPERSONAS_ACTIVIDAD_ECONOMICA :
+					$xT		= new cSocios_aeconomica();
+					$xAE	= new cPersonaActividadEconomica(); 
+					
+					$xAE->setID($clave);
+					$xAE->init();
+					
+					if($xAE->isInit() == true){
+						$persona	= $xAE->getClaveDePersona();
+						//setError($persona);
+						if( isset($aDiffD[$xT->DEPENDENCIA_AE]) ){
+							$nvinc	= $aDiffD[$xT->DEPENDENCIA_AE];
+							$xAE->setUpdatePorEmpresa(true, $nvinc);
+						}
+						if( isset($aDiffD[$xT->DOMICILIO_VINCULADO]) ){
+							$nvinc	= $aDiffD[$xT->DOMICILIO_VINCULADO];
+							$xAE->setUpdatePorDomicilio($nvinc);
+						}
+					}
+					$xLog->add($xAE->getMessages());
 					break;
 
 			}
@@ -170,7 +193,7 @@ if($tabla != null AND $clave != null){
 		if(in_array($tabla, $arrT)){
 			//setError($tabla);
 		} else {
-			$xLog->guardar($xLog->OCat()->EDICION_RAW);
+			$xLog->guardar($errCode, $persona, $contrato, $recibo);
 		}
 
 	}

@@ -25,19 +25,32 @@ include_once("../core/core.operaciones.inc.php");
 include_once("../core/core.common.inc.php");
 include_once("../core/core.html.inc.php");
 
-    ini_set("display_errors", "off");
-    ini_set("max_execution_time", 1600);
-    ini_set("memory_limit", SAFE_MEMORY_LIMIT);
-    
-    $key		 	= (isset($_GET["k"]) ) ? true : false;
-    $parser			= (!isset($_GET["s"]) ) ? false : $_GET["s"];
-    
-    //Obtiene la llave del
-//if ($key == MY_KEY) {
-	$messages		= "";
-	$fechaop		= parametro("f", false, MQL_DATE);
-	$xF				= new cFecha(0, $fechaop);
-	$fechaop		= $xF->getFechaISO($fechaop);
+ini_set("display_errors", "off");
+ini_set("max_execution_time", 1600);
+ini_set("memory_limit", SAFE_MEMORY_LIMIT);
+
+$key		 	= (isset($_GET["k"]) ) ? true : false;
+$parser			= parametro("s", false, MQL_BOOL);
+
+$messages		= "";
+$fechaop		= parametro("f", false, MQL_DATE);
+$xF				= new cFecha(0, $fechaop);
+$fechaop		= $xF->getFechaISO($fechaop);
+
+$xCierre		= new cCierreDelDia($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop);
+$forzar			= parametro("forzar", false, MQL_BOOL);	
+
+
+$next			= "./cierre_de_captacion.frm.php?s=true&k=" . $key . "&f=$fechaop";
+
+if($EsCerrado == true AND $forzar == false){
+	setAgregarEvento_("Cierre De Colocacion Existente", 5);
+	if ($parser == true){
+		header("Location: $next");
+	}
+} else {
+	
 	getEnCierre(true);
 	/**
 	 * Generar el Archivo HTMl del LOG
@@ -147,10 +160,10 @@ include_once("../core/core.html.inc.php");
 
 	if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre del colocacion");	}
 
-	if ($parser != false){
-		header("Location: ./cierre_de_captacion.frm.php?s=true&k=" . $key . "&f=$fechaop");
+	if ($parser == true){
+		header("Location: $next&forzar=true");
 	}
 	getEnCierre(false);
-//}
 
+}
 ?>

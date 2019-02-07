@@ -30,15 +30,27 @@ include_once("../core/core.sys.inc.php");
 ini_set("display_errors", "off");
 ini_set("max_execution_time", 900);
 ini_set("memory_limit", SAFE_MEMORY_LIMIT);
-$key			= parametro("k", true, MQL_BOOL);
-$parser			= parametro("s", false, MQL_RAW);
-$fechaop		= parametro("f", fechasys(), MQL_DATE);
-getEnCierre(true);
-$messages		= "";
-	
-    //Obtiene la llave del
-//if ($key == MY_KEY) {
 
+$showForm		= false;
+$key			= parametro("k", true, MQL_BOOL);
+$parser			= parametro("s", false, MQL_BOOL);
+$messages		= "";
+$fechaop		= parametro("f", false, MQL_DATE);
+$xF				= new cFecha(0, $fechaop);
+$fechaop		= $xF->getFechaISO($fechaop);
+
+$xCierre		= new cCierreDelDia($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop);
+$forzar			= parametro("forzar", false, MQL_BOOL);
+
+$next			= "./cierre_de_sistema.frm.php?s=true&k=" . $key . "&f=$fechaop";
+if($EsCerrado == true AND $forzar == false){
+	setAgregarEvento_("Cierre De Sistema Existente", 5);
+} else {
+
+
+
+	getEnCierre(true);
 	//2011-01-26 ; manejar fechas
 	$xF				= new cFecha(0, $fechaop);
 	$fechaop		= $xF->getFechaISO($fechaop);
@@ -108,7 +120,7 @@ $messages		= "";
 	$messages 		.= "=======================================================================================\r\n";
 	$messages 		.= "=========================		INICIANDO EL CIERRE DE SISTEMA     ====================\r\n";
 	$messages 		.= "=========================		RECIBO: $idrecibo				   ====================\r\n";
-//2011-01-26 : Agrega un recibo estadistico de control diario
+	//2011-01-26 : Agrega un recibo estadistico de control diario
 	$xNRec		= new cReciboDeOperacion(RECIBOS_TIPO_ESTADISTICO);
 	$diaSig		= $xF->setSumarDias(1);
 	$xIdNRec	= $xNRec->setNuevoRecibo(DEFAULT_SOCIO,DEFAULT_CREDITO, $diaSig, 1, RECIBOS_TIPO_ESTADISTICO, "MOVIMIENTOS_ESTADISTICOS_DEL_DIA", "NA", "ninguno", "NA", DEFAULT_GRUPO);
@@ -173,6 +185,7 @@ $messages		= "";
 	//$ql->setRawQuery("CALL `tmp_personas_aport_cal`() ");
 	
 	//$ql->setRawQuery("CALL `sp_personas_estadisticas`() ");
+	$ql->setRawQuery("UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `uuid_mail`=getMailByPersona(`codigo_de_persona`)");
 	
 	$xSys		= new cSystemTask();
 	$xDB		= new cSAFEData();
@@ -203,53 +216,54 @@ $messages		= "";
 
 	//
 	//Limpiar el Cache
-//$xSys->setPowerOff();
-//apagar el sistema
 	$xCache			= new cCache(); $xCache->clean();
 	if(SAFE_LANG == "es"){
 		$ql->setRawQuery("SET lc_time_names = 'es_MX'");
 	}
-	if ( $parser != false ){
-		$log		= $aliasFil;
-		$xPage		= new cHPage("TR.Cierre del Dia", HP_FORM);
-		$xBtn		= new cHButton("iact");
-		$oFRM		= new cHForm("frmSubmit", "");
 
-		$oFRM->setTitle($xPage->getTitle() . " " . $xF->getFechaCorta() );
-		echo $xPage->getHeader();
-		echo $xPage->setBodyinit();
-		
-		
-		$oFRM->addHTML( "<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS DEL SISTEMA</a><br /><br />");
-		
-		$log		= getSucursal() . "-eventos-al-cierre-de-colocacion-del-dia-$fechaop";
-		$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE COLOCACION</a><br /><br />");
-		
-		if(MODULO_SEGUIMIENTO_ACTIVADO == true){
-			$log		= getSucursal() . "-eventos-al-cierre-de-seguimiento-del-dia-$fechaop";
-			$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE SEGUIMIENTO</a><br /><br />");
-		}
-		if(MODULO_CONTABILIDAD_ACTIVADO == true){
-			$log		= getSucursal() . "-eventos-al-cierre-de-contabilidad-del-dia-$fechaop";
-			$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE CONTABILIDAD</a><br /><br />");
-		}
-
-		if(MODULO_CAPTACION_ACTIVADO == true){
-			$log		= getSucursal() . "-eventos-al-cierre-de-captacion-del-dia-$fechaop";
-			$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE CAPTACION</a><br /><br />");
-		}
-		if(MODULO_AML_ACTIVADO == true){
-			$log		= getSucursal() . "-eventos-al-cierre-de-riesgos-del-dia-$fechaop";
-			$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE RIESGOS</a><br /><br />");
-		}
-		//Inicio
-		$oFRM->addFootElement( $xBtn->getRegresar() . $xBtn->getSalir()  );
-		
-		echo $oFRM->get();
-		
-		$xPage->fin();
-  }
   getEnCierre(false);
-//}
+
+}
+
+
+if ( $parser == true ){
+	$log		= $aliasFil;
+	$xPage		= new cHPage("TR.Cierre del Dia", HP_FORM);
+	$xBtn		= new cHButton("iact");
+	$oFRM		= new cHForm("frmSubmit", "");
+	
+	$oFRM->setTitle($xPage->getTitle() . " " . $xF->getFechaCorta() );
+	$xPage->init();
+	
+	
+	$oFRM->addHTML( "<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS DEL SISTEMA</a><br /><br />");
+	
+	$log		= getSucursal() . "-eventos-al-cierre-de-colocacion-del-dia-$fechaop";
+	$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE COLOCACION</a><br /><br />");
+	
+	if(MODULO_SEGUIMIENTO_ACTIVADO == true){
+		$log		= getSucursal() . "-eventos-al-cierre-de-seguimiento-del-dia-$fechaop";
+		$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE SEGUIMIENTO</a><br /><br />");
+	}
+	if(MODULO_CONTABILIDAD_ACTIVADO == true){
+		$log		= getSucursal() . "-eventos-al-cierre-de-contabilidad-del-dia-$fechaop";
+		$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE CONTABILIDAD</a><br /><br />");
+	}
+	
+	if(MODULO_CAPTACION_ACTIVADO == true){
+		$log		= getSucursal() . "-eventos-al-cierre-de-captacion-del-dia-$fechaop";
+		$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE CAPTACION</a><br /><br />");
+	}
+	if(MODULO_AML_ACTIVADO == true){
+		$log		= getSucursal() . "-eventos-al-cierre-de-riesgos-del-dia-$fechaop";
+		$oFRM->addHTML("<a href=\"../utils/download.php?type=txt&download=$log&file=$log\" target=\"_blank\" class='button'>Descargar Archivo de EVENTOS de CIERRE DE RIESGOS</a><br /><br />");
+	}
+	//Inicio
+	$oFRM->addFootElement( $xBtn->getRegresar() . $xBtn->getSalir()  );
+	
+	echo $oFRM->get();
+	
+	$xPage->fin();
+}
 
 ?>

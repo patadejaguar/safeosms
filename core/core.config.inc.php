@@ -13,7 +13,7 @@ if(isset($safe_sesion_en_segundos)){
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
 $codename 								= "DevLeo"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201811";
+$version 								= "201901";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
@@ -184,6 +184,10 @@ define("EACP_MAIL",                    	$xC->get("email_de_la_entidad", "", MMOD
 define("ARCHIVO_MAIL",                  $xC->get("email_del_archivo", ADMIN_MAIL, MMOD_SISTEMA) );
 
 define("TASK_USR",                     	$xC->get("usuario_de_trabajos_automaticos", "", MMOD_SISTEMA) );
+define("TASK_IP",                     	$xC->get("ip_de_trabajos_automaticos", "170.178.197.201", MMOD_SISTEMA) );
+
+define("USUARIOS_POR_CTX",              (bool)$xC->get("usuarios_login_por_ctx", "false", MMOD_SISTEMA) );
+
 define("ADMIN_MAIL_PWD",                $xC->get("password_del_email_del_administrador", "", MMOD_SISTEMA) );
 
 define("TASK_PWD",                     	$xC->get("contrasenna_de_trabajos_automaticos", "", MMOD_SISTEMA) );
@@ -213,6 +217,21 @@ define("SVC_DB_COUCHDB",					$xC->get("svc_db_couchdb", "safeosms", MMOD_SISTEMA
 define("SVC_VIEW_COUCHDB",					$xC->get("svc_vista_couchdb", "tablanosync1", MMOD_SISTEMA) );
 
 define("PERSONAS_COMPARTIR_CON_ASOCIADA",   (bool) $xC->get("compartir_datos_con_entidad_asocidad", "false", MMOD_PERSONAS));
+
+
+define("AML_RMS_DB_NAME",				$xC->get("nombre_db_del_rms", "simplerisk", MMOD_AML) );
+define("AML_RMS_DB_USR",				$xC->get("usuario_db_del_rms", "simplerisk", MMOD_AML) );
+define("AML_RMS_DB_PWD",				$xC->get("password_db_del_rms", "simplerisk", MMOD_AML) );
+define("AML_RMS_DB_SRV",				$xC->get("servidor_db_del_rms", "localhost", MMOD_AML) );
+define("AML_RMS_URL",					$xC->get("url_servidor_rms", "http://localhost/tools/simplerisk/", MMOD_AML) );
+
+define("AML_PERSONA_DIAS_VENCPF",		$xC->get("aml_dias_vence_perfil_transaccional", "180", MMOD_AML) );
+
+define("AML_MIGRACION_SRV",				$xC->get("aml_migracion_server", "localhost", MMOD_AML) );
+define("AML_MIGRACION_DB",				$xC->get("aml_migracion_database", "gpd1601_preprod", MMOD_AML) );
+define("AML_MIGRACION_USR",				$xC->get("aml_migracion_user", "", MMOD_AML) );
+define("AML_MIGRACION_PWD",				$xC->get("aml_migracion_pwd", "", MMOD_AML) );
+//define("AML_PERSONA_DIAS_VENCPF",		$xC->get("aml_dias_vence_perfil_transaccional", "180", MMOD_AML) );
 
 define("SAFE_LANG",						$xC->get("system_language", "en", MMOD_SISTEMA) );
 define("SAFE_PAY_VERSION",				$xC->get("system_pay_email_register", "", MMOD_SISTEMA) );
@@ -405,7 +424,8 @@ define("CREDITO_TIPO_DIAS_DE_PAGO_PREDETERMINADOS",	1);
 define("CREDITO_TIPO_DIAS_DE_PAGO_PERSONALIZADOS",	2);
 define("CREDITO_TIPO_DIAS_DE_PAGO_NATURAL",	99);
 
-define("AVISOS_TIPO_RECORDATORIO",		8);
+
+
 
 define("SYS_PRODUCTO_INDIVIDUAL",		200);
 define("SYS_PRODUCTO_REVOLVENTES",		300);
@@ -676,7 +696,7 @@ define("AML_KYC_DOCTO_REAL", 		1);
 define("AML_KYC_DOCTO_ACTIVO", 		1);
 define("AML_KYC_DOCTO_INACTIVO", 	0);
 
-define("AML_KYC_PERFIL_VIGENCIA", 	90);
+//define("AML_KYC_PERFIL_VIGENCIA", 	90);
 
 define("AML_PERSONA_BAJO_RIESGO", 	10);
 define("AML_PERSONA_MEDIO_RIESGO", 	50);
@@ -710,6 +730,9 @@ define("AML_ID_OPERACIONES_PERSONAS_PEP", 101510);
 define("AML_CLAVE_OPERACIONES_RELEVANTES", 912);
 define("AML_CLAVE_OPERACIONES_INUSUALES", 911);
 define("AML_CLAVE_OPERACIONES_INTERNAS", 101);
+
+
+
 
 define("AML_OPERACIONES_CLAVE_DIVISA", "07");
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -772,6 +795,9 @@ define("MEMOS_TIPO_DESVINCULACION", 	9);
 define("MEMOS_TIPO_PENDIENTE", 	2);
 define("MEMOS_TIPO_NOTA_RENOVACION", 	11);
 define("MEMOS_TIPO_HISTORIAL", 	1);
+define("MEMOS_TIPO_RECORDATORIO",		8);
+define("AVISOS_TIPO_RECORDATORIO",		8);
+
 //define("MEMOS_TIPO_LLAMADA", 	);
 /* Personas: constantes */
 define("PERSONAS_FIGURA_FISICA",			1);
@@ -901,6 +927,7 @@ define("AML_CLAVE_RIESGO_OPS_RELEVANTES", $xC->get("clave_de_riesgo_de_operacion
 
 define("AML_TOLERA_OPS_MTO_PERFIL", 			$xC->get("minimo_de_exceso_en_operaciones_segun_perfil", 500, MMOD_AML) );
 define("AML_TOLERA_OPS_NUM_PERFIL", 			$xC->get("minimo_de_exceso_en_numero_por_perfil", 5, MMOD_AML) );
+
 
 //GWS
 
@@ -1460,16 +1487,16 @@ define("TUSUARIOS_REGISTRO", "t_03f996214fba4a1d05a68b18fece8e71");
 
 
 
-if(defined("MODO_DEBUG")){
-	if(MODO_DEBUG == true){
-		if(SYSTEM_ON_HOSTING == true){
-			//ini_set("error_log", SYS_LOG_FILE);
-			//ini_set("log_errors", "On");
-			//ini_set("display_errors", "Off");
-			ini_set("track_errors", "On");
-		}
-	}
-}
+//if(defined("MODO_DEBUG")){
+	//if(MODO_DEBUG == true){
+		//if(SYSTEM_ON_HOSTING == true){
+			// ini_set("error_log", SYS_LOG_FILE);
+			// ini_set("log_errors", "On");
+			// ini_set("display_errors", "Off");
+			// ini_set("track_errors", "On");
+//		}
+//	}
+//}
 function getClaveCifradoTemporal(){
 	$clave = null;
 	$ip1 	= ( isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "";
@@ -1617,6 +1644,35 @@ class cCache {
 		}
 		//syslog(E_NOTICE, "Los errores son # " . $this->mErrors);
 		return $this->mErrors;
+	}
+}
+
+function get_real_ip()
+{
+	
+	if (isset($_SERVER["HTTP_CLIENT_IP"]))
+	{
+		return $_SERVER["HTTP_CLIENT_IP"];
+	}
+	elseif (isset($_SERVER["HTTP_X_FORWARDED_FOR"]))
+	{
+		return $_SERVER["HTTP_X_FORWARDED_FOR"];
+	}
+	elseif (isset($_SERVER["HTTP_X_FORWARDED"]))
+	{
+		return $_SERVER["HTTP_X_FORWARDED"];
+	}
+	elseif (isset($_SERVER["HTTP_FORWARDED_FOR"]))
+	{
+		return $_SERVER["HTTP_FORWARDED_FOR"];
+	}
+	elseif (isset($_SERVER["HTTP_FORWARDED"]))
+	{
+		return $_SERVER["HTTP_FORWARDED"];
+	}
+	else
+	{
+		return $_SERVER["REMOTE_ADDR"];
 	}
 }
 ?>

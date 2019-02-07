@@ -37,6 +37,8 @@ $xSel	= new cHSelect();
 $xFec	= new cHDate();
 $xTa	= new cHTextArea();
 
+$xTxt->setDiv13();
+
 if($action == SYS_NINGUNO){
 	$xUsers 			= $xSel->getUsuarios("idusuarioreportado");
 	$xMot				= $xSel->getListaDeRiesgosAML("", AML_CLAVE_OPERACIONES_INTERNAS);

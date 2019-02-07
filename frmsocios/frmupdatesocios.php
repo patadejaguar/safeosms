@@ -58,7 +58,10 @@ $tipo_de_persona	= false;
 /* ===========		FORMULARIO		============*/
 $clave				= $persona;
 $xTabla				= new cSocios_general();
-if($clave != null){$xTabla->setData( $xTabla->query()->initByID($clave));}
+if($clave != null){
+	$xTabla->setData( $xTabla->query()->initByID($clave) );
+}
+
 $xTabla->setData($_REQUEST);
 
 if($clave == null){
@@ -75,18 +78,29 @@ $xFRM	= new cHForm("frmsocios_general", "frmupdatesocios.php?action=$step");
 $clave 		= parametro($xTabla->getKey(), null, MQL_INT);
 
 if( ($action == MQL_ADD OR $action == MQL_MOD) AND ($clave != null) ){
-	$xTabla->setData( $xTabla->query()->initByID($clave));
+	
+	$xTabla->setData( $xTabla->query()->initByID($clave) );
 	$DOriginal	= $xTabla->query()->getCampos(true);
+
 	$xTabla->setData($_REQUEST);
 	$DCambios	= $xTabla->query()->getCampos(true);
 	
 	$DDif		= array_diff($DOriginal, $DCambios);
 	$str		= json_encode($DDif);
 	
+
+	
 	if($action == MQL_ADD){
 		$xTabla->query()->insert()->save();
 	} else {
 		$xTabla->query()->update()->save($clave);
+		
+		//Guardar Detalles de la actualizacion
+		foreach ($DDif as $idxD => $vvD){
+			$vva		= $DOriginal[$idxD];
+			setCambio(TPERSONAS_GENERALES, $clave, $idxD, $vva, $vvD);
+		}
+		
 	}
 	$xSoc		= new cSocio($xTabla->codigo()->v());
 	//if($xSoc->init() == true){

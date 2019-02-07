@@ -8,7 +8,10 @@ faker.locale 	= "es_MX";
 var arrDecenas	= [10,20,30,40,50,60,70,80,90,100];
 var arrCentenas	= [100,200,300,400,500,600,700,800,909,1000];
 var arrCols		= [97000,24000,93000,77000];
-
+var Tipos = {
+	TEXTO : "TEXTO",
+	MONEDA : "MONEDA"
+};
 LocalFaker.prototype.run = function(frm){
 	var self	= this;
 	
@@ -38,6 +41,15 @@ LocalFaker.prototype.run = function(frm){
 			self.setNuevaLinea();
 			break;
 		default:
+			self.genIfExists("idobservaciones", Tipos.TEXTO);
+			self.genIfExists("observaciones", Tipos.TEXTO);
+			
+			self.genIfExists("notas_de_checking", Tipos.TEXTO);
+			self.genIfExists("acciones_tomadas", Tipos.TEXTO);
+			self.genIfExists("razones_de_reporte", Tipos.TEXTO);
+			
+			
+			
 			alert("No hay Prueba para este Formulario");
 			break;
 	}
@@ -380,4 +392,13 @@ LocalFaker.prototype.setNuevoGrupo = function(){
 	//$("#idsocio7").val();
 	//$("#idsocio8").val();
 	//$("#idsocio9").val();
+}
+LocalFaker.prototype.genIfExists	= function(id, tipo){
+	if(document.getElementById(id)){
+		switch(tipo){
+			case Tipos.TEXTO:
+				$("#" + id).val(faker.random.words());
+				break;
+		}
+	}
 }

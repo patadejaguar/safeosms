@@ -24,6 +24,7 @@ $xQL		= new MQL();
 $xF			= new cFecha();
 $xHSel		= new cHSelect();
 $xTT		= new cTipos();
+$xLog		= new cCoreLog();
 
 //$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 $clave			= parametro("id", "", MQL_RAW); $clave		= parametro("clave", $clave, MQL_RAW);
@@ -39,151 +40,243 @@ $rs["error"]	= true;
 $rs["message"]	= "Sin datos validos $action";
 
 $xDB			= new cCouchDB();
-
-if($action == SYS_NINGUNO){
-
-
 $xDB->getCnn();
-//var_dump($xDB->getCnn()); exit;
-//$cc		= $xDB->cnn();
 
-//===== Dump productos de Credito ======
-$sql1	= $xHSel->getListaDeProductosDeCredito("", false, true)->getSQL();
-$rs1	= $xQL->getRecordset($sql1);
-foreach ($rs1 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "creditos_productos:". $rw["idcreditos_tipoconvenio"];
-	$xObj->clave		= $rw["idcreditos_tipoconvenio"];
-	$xObj->descripcion	= $rw["descripcion"];
-	$xObj->tabla		= "creditos_productos";
 
-	$xDB->setDoc($xObj);
-}
+if($tipo == "catalogos"){
 
-//===== Dump productos de Credito ======
-$sql1	= $xHSel->getListaDePeriocidadDePago()->getSQL();
-$rs1	= $xQL->getRecordset($sql1);
-foreach ($rs1 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "creditos_frecuencia:". $rw["idcreditos_periocidadpagos"];
-	$xObj->clave		= $rw["idcreditos_periocidadpagos"];
-	$xObj->descripcion	= $rw["descripcion_periocidadpagos"];
-	$xObj->tabla		= "creditos_frecuencia";
+
+
+	$xDB->setCreateVistas();
+	//var_dump($xDB->getCnn()); exit;
+	//$cc		= $xDB->cnn();
 	
-	$xDB->setDoc($xObj);
-}
-//===== Dump Destinos de Credito ======
-$sql1	= $xHSel->getListaDeDestinosDeCredito()->getSQL();
-$rs1	= $xQL->getRecordset($sql1);
-foreach ($rs1 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "creditos_destinos:". $rw["idcreditos_destinos"];
-	$xObj->clave		= $rw["idcreditos_destinos"];
-	$xObj->descripcion	= $rw["destino"];
-	$xObj->tabla		= "creditos_destinos";
+	//===== Dump productos de Credito ======
+	$sql1	= $xHSel->getListaDeProductosDeCredito("", false, true)->getSQL();
+	$rs1	= $xQL->getRecordset($sql1);
+	foreach ($rs1 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "creditos_productos:". $rw["idcreditos_tipoconvenio"];
+		$xObj->clave		= $rw["idcreditos_tipoconvenio"];
+		$xObj->descripcion	= $rw["descripcion"];
+		$xObj->tabla		= "creditos_productos";
 	
-	$xDB->setDoc($xObj);
-}
-
-//===== Dump de tipos de Documentos.
-$rs1	= $xQL->getRecordset("SELECT `clave_de_control`,`nombre_del_documento`,`clasificacion`,`tags` FROM `personas_documentacion_tipos` WHERE `estatus`=1 AND (`tags` LIKE '%pf%' OR `clasificacion` = 'IP')");
-foreach ($rs1 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "documentos_tipos:". $rw["clave_de_control"];
-	$xObj->clave		= $rw["clave_de_control"];
-	$xObj->descripcion	= $rw["nombre_del_documento"];
-	$xObj->tabla		= "documentos_tipos";
-	$xObj->tags			= $rw["tags"];
-	$xObj->clasificacion= $rw["clasificacion"];
+		$xDB->setDoc($xObj);
+	}
 	
-	$xDB->setDoc($xObj);
-}
-/*var MTipoDeDocumentos = {
-	clave : "",
-	nombre : "",
-	clasificacion : "",
-	tags : ""
-}*/
-
-/*
-var MTipoDeIdentificacion = {
- clave : "",
- nombre : "",
- clasificacion : "",
- tags : "",
- tabla : ""
- }
- */
-
-//===== Dump de tipos de Identificacion.
-$rs1	= $xQL->getRecordset("SELECT `clave_de_control`,`nombre_del_documento`,`clasificacion`,`tags` FROM `personas_documentacion_tipos` WHERE `estatus`=1 AND `clasificacion` = 'IP'");
-foreach ($rs1 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "identificacion_tipos:". $rw["clave_de_control"];
-	$xObj->clave		= $rw["clave_de_control"];
-	$xObj->descripcion	= $rw["nombre_del_documento"];
-	$xObj->tabla		= "identificacion_tipos";
-	$xObj->tags			= $rw["tags"];
-	$xObj->clasificacion= $rw["clasificacion"];
+	//===== Dump productos de Credito ======
+	$sql1	= $xHSel->getListaDePeriocidadDePago()->getSQL();
+	$rs1	= $xQL->getRecordset($sql1);
+	foreach ($rs1 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "creditos_frecuencia:". $rw["idcreditos_periocidadpagos"];
+		$xObj->clave		= $rw["idcreditos_periocidadpagos"];
+		$xObj->descripcion	= $rw["descripcion_periocidadpagos"];
+		$xObj->tabla		= "creditos_frecuencia";
+		
+		$xDB->setDoc($xObj);
+	}
+	//===== Dump Destinos de Credito ======
+	$sql1	= $xHSel->getListaDeDestinosDeCredito()->getSQL();
+	$rs1	= $xQL->getRecordset($sql1);
+	foreach ($rs1 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "creditos_destinos:". $rw["idcreditos_destinos"];
+		$xObj->clave		= $rw["idcreditos_destinos"];
+		$xObj->descripcion	= $rw["destino"];
+		$xObj->tabla		= "creditos_destinos";
+		
+		$xDB->setDoc($xObj);
+	}
 	
-	$xDB->setDoc($xObj);
-}
-
-//===== Dump productos de Usuarios ======
-
-$rs2	= $xQL->getRecordset("SELECT   `t_03f996214fba4a1d05a68b18fece8e71`.`idusuarios`,
-         `t_03f996214fba4a1d05a68b18fece8e71`.`f_28fb96d57b21090705cfdf8bc3445d2a`,
-         `t_03f996214fba4a1d05a68b18fece8e71`.`alias`,
-         `t_03f996214fba4a1d05a68b18fece8e71`.`pin_app`,
-         `t_03f996214fba4a1d05a68b18fece8e71`.`sucursal`,
-         `t_03f996214fba4a1d05a68b18fece8e71`.`f_f2cd801e90b78ef4dc673a4659c1482d`
-FROM     `t_03f996214fba4a1d05a68b18fece8e71`
-WHERE    ( `t_03f996214fba4a1d05a68b18fece8e71`.`estatus` = 'activo' )");
-$xT		= new cT_03f996214fba4a1d05a68b18fece8e71();
-foreach ($rs2 as $rw){
-	$xObj				= new stdClass();
-	$xObj->_id			= "usuarios:" . $rw[$xT->F_28FB96D57B21090705CFDF8BC3445D2A];
-	$xObj->clave		= $rw[$xT->IDUSUARIOS];
-	$xObj->nombre		= $rw[$xT->F_28FB96D57B21090705CFDF8BC3445D2A];
-	$xObj->pin			= $rw[$xT->PIN_APP];
-	$xObj->sucursal		= $rw[$xT->SUCURSAL];
-	$xObj->nivel		= $rw[$xT->F_F2CD801E90B78EF4DC673A4659C1482D];
-	$xObj->alias		= $rw[$xT->ALIAS];
-	$xObj->tabla		= "usuarios";
-	$xDB->setDoc($xObj);
-}
-
-//===== Dump de Avisos para los usuarios
-$maxFSync	= $xF->setRestarDias(7, fechasys() );
-$rs7	= $xQL->getRecordset("SELECT * FROM `usuarios_web_notas` WHERE `estado`=10 AND `fecha`>='$maxFSync' ");
-$xT		= new cUsuarios_web_notas();
-
-foreach ($rs7 as $rw){
-	$xT->setData($rw);
+	//===== Dump de tipos de Documentos.
+	$rs1	= $xQL->getRecordset("SELECT `clave_de_control`,`nombre_del_documento`,`clasificacion`,`tags` FROM `personas_documentacion_tipos` WHERE `estatus`=1 AND (`tags` LIKE '%pf%' OR `clasificacion` = 'IP')");
+	foreach ($rs1 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "documentos_tipos:". $rw["clave_de_control"];
+		$xObj->clave		= $rw["clave_de_control"];
+		$xObj->descripcion	= $rw["nombre_del_documento"];
+		$xObj->tabla		= "documentos_tipos";
+		$xObj->tags			= $rw["tags"];
+		$xObj->clasificacion= $rw["clasificacion"];
+		
+		$xDB->setDoc($xObj);
+	}
+	/*var MTipoDeDocumentos = {
+		clave : "",
+		nombre : "",
+		clasificacion : "",
+		tags : ""
+	}*/
 	
-	$xObj				= new stdClass();
-	$xObj->_id			= "mensajes:". $rw[$xT->IDUSUARIOS_WEB_NOTAS];
-	$xObj->clave		= $rw[$xT->IDUSUARIOS_WEB_NOTAS];
-	$xObj->tabla		= "mensajes";
-	$xObj->user			= $rw[$xT->OFICIAL];
-	$xUsr				= new cSystemUser($rw[$xT->OFICIAL_DE_ORIGEN]);
-	$xUsr->init();
+	/*
+	var MTipoDeIdentificacion = {
+	 clave : "",
+	 nombre : "",
+	 clasificacion : "",
+	 tags : "",
+	 tabla : ""
+	 }
+	 */
 	
-	$xObj->oficial_org	= $xUsr->getAlias();
-	$xObj->mensaje		= $rw[$xT->TEXTO];
-	$xObj->entidad		= EACP_CLAVE_CASFIN;
-	$xObj->fecha		=$rw[$xT->FECHA];
+	//===== Dump de tipos de Identificacion.
+	$rs1	= $xQL->getRecordset("SELECT `clave_de_control`,`nombre_del_documento`,`clasificacion`,`tags` FROM `personas_documentacion_tipos` WHERE `estatus`=1 AND `clasificacion` = 'IP'");
+	foreach ($rs1 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "identificacion_tipos:". $rw["clave_de_control"];
+		$xObj->clave		= $rw["clave_de_control"];
+		$xObj->descripcion	= $rw["nombre_del_documento"];
+		$xObj->tabla		= "identificacion_tipos";
+		$xObj->tags			= $rw["tags"];
+		$xObj->clasificacion= $rw["clasificacion"];
+		
+		$xDB->setDoc($xObj);
+	}
 	
-	$xDB->setDoc($xObj);
-}
+	//===== Dump productos de Usuarios ======
+	
+	$rs2	= $xQL->getRecordset("SELECT   `t_03f996214fba4a1d05a68b18fece8e71`.`idusuarios`,
+	         `t_03f996214fba4a1d05a68b18fece8e71`.`f_28fb96d57b21090705cfdf8bc3445d2a`,
+	         `t_03f996214fba4a1d05a68b18fece8e71`.`alias`,
+	         `t_03f996214fba4a1d05a68b18fece8e71`.`pin_app`,
+	         `t_03f996214fba4a1d05a68b18fece8e71`.`sucursal`,
+	         `t_03f996214fba4a1d05a68b18fece8e71`.`f_f2cd801e90b78ef4dc673a4659c1482d`
+	FROM     `t_03f996214fba4a1d05a68b18fece8e71`
+	WHERE    ( `t_03f996214fba4a1d05a68b18fece8e71`.`estatus` = 'activo' )");
+	$xT		= new cT_03f996214fba4a1d05a68b18fece8e71();
+	foreach ($rs2 as $rw){
+		$xObj				= new stdClass();
+		$xObj->_id			= "usuarios:" . $rw[$xT->F_28FB96D57B21090705CFDF8BC3445D2A];
+		$xObj->clave		= $rw[$xT->IDUSUARIOS];
+		$xObj->nombre		= $rw[$xT->F_28FB96D57B21090705CFDF8BC3445D2A];
+		$xObj->pin			= $rw[$xT->PIN_APP];
+		$xObj->sucursal		= $rw[$xT->SUCURSAL];
+		$xObj->nivel		= $rw[$xT->F_F2CD801E90B78EF4DC673A4659C1482D];
+		$xObj->alias		= $rw[$xT->ALIAS];
+		$xObj->tabla		= "usuarios";
+		$xDB->setDoc($xObj);
+	}
+	
+	//===== Dump de Avisos para los usuarios
+	//------------- Eliminar Notas
+	
+	/*{
+		"selector": {
+		"tabla": {
+		"$eq": "mensajes"
+		}
+	}
+	}
+	
+	{
+	  "_id" : "_design/example",
+	  "views" : {
+	    "foo" : {
+	      "map" : "function(doc){ emit(doc._id, doc._rev)}"
+	    }
+	  }
+	}
+	*/
 
 
-$rs["message"]			= $xDB->getMessages();
-$rs["message"]			.= "OK\tSync Terminado\r\n";
-//$rs		= $xQL->get
-//$rs		= $cc->getAllDocs();
-$rs["error"]	= false;
-
+} else if($tipo == "avisos"){
+	
+	$maxFSync	= $xF->setRestarDias(3, fechasys() );
+	$rs7		= $xQL->getRecordset("SELECT * FROM `usuarios_web_notas` WHERE `estado`=10 AND `fecha`>='$maxFSync' ");
+	$xT			= new cUsuarios_web_notas();
+	$arrExis	= array();
+	
+	foreach ($rs7 as $rw){
+		$idx	= "mensajes:". $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+		$mId	= $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+		
+		if($xDB->getDoc($idx)){
+			$arrExis[$idx]	= $idx;
+		}
+	}
+	
+	$DMensajes	= $xDB->getTablaCatalogo("mensajes");
+	foreach ($DMensajes as $obj){
+		//
+		$v	= $obj->value;
+		if(isset($arrExis[$v->_id])){
+			$xLog->add("WARN\tOmitir eliminar el ID: " . $v->_id . " porque existe \r\n");
+		} else {
+			$xDB->delDoc($v->_id);
+		}
+	}
+	
+	foreach ($rs7 as $rw){
+		$xT->setData($rw);
+		
+		$xObj				= new stdClass();
+		$xObj->_id			= "mensajes:". $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+		
+		$xObj->clave		= $rw[$xT->IDUSUARIOS_WEB_NOTAS];
+		$xObj->tabla		= "mensajes";
+		$xObj->user			= $rw[$xT->OFICIAL];
+		$xUsr				= new cSystemUser($rw[$xT->OFICIAL_DE_ORIGEN]);
+		$xUsr->init();
+		
+		$xObj->oficial_org	= $xUsr->getAlias();
+		$xObj->mensaje		= $rw[$xT->TEXTO];
+		$xObj->entidad		= EACP_CLAVE_CASFIN;
+		$xObj->fecha		=$rw[$xT->FECHA];
+		$xObj->estatus		= 1;
+		if(isset($arrExis[$v->_id])){
+			$xLog->add("WARN\tOmitir Guardar el ID: " . $xObj->_id . " porque existe \r\n");
+		} else {
+			$xDB->setDoc($xObj);
+		}
+		
+	}
+	//===================================================== Importar Coordenadas
+	$DCoord			= $xDB->getTablaCatalogo("usuarios_coordenadas");
+	/*
+	 {
+	 "_id": "usuarios_coordenadas@99@1548463142",
+	 "_rev": "1-90106767c9904b3faa92141c3e300c30",
+	 "user": 99,
+	 "createtime": 1548463142,
+	 "tabla": "usuarios_coordenadas",
+	 "latitud": 21.0038591,
+	 "longitud": -89.61102860000001
+	 }
+	 */
+	foreach ($DCoord as $obj){
+		//
+		$v		= $obj->value;
+		$sql	= "";
+		$xUC	= new cUsuarios_coordenadas();
+		$existe = $xQL->getDataValue("SELECT COUNT(*) AS 'existe' FROM `usuarios_coordenadas` WHERE `idenfuente`='" . $v->_id . "' ", "existe");
+		if($existe>0){
+			$xLog->add("WARN\tOmitir eliminar Coordenada con ID: " . $v->_id . " porque existe \r\n");
+			$xDB->delDoc($v->_id);
+		} else {
+			$xUC->idusuarios_coordenadas("NULL");
+			$xUC->idenfuente($v->_id);
+			$xUC->idusuario($v->user);
+			$xUC->latitud($v->latitud);
+			$xUC->longitud($v->longitud);
+			$xUC->tiempo($v->createtime);
+			$res	= $xUC->query()->insert()->save();
+			if($res === false){
+				$xLog->add("ERROR\tAl agregar Coordenada con ID: " . $v->_id . "\r\n");
+				$xDB->delDoc($v->_id);
+			} else {
+				$xLog->add("OK\Coordenada con ID: " . $v->_id . " Guardada\r\n");
+			}
+		}
+		
+	}
+	
+	//==========================================================================
+	
+	$xLog->add($xDB->getMessages());
+	$xLog->add("OK\tSync Terminado\r\n");
+	//$rs		= $xQL->get
+	//$rs		= $cc->getAllDocs();
+	$rs["error"]	= false;
 
 } else {
 	if($tipo == "personas"){
@@ -261,9 +354,9 @@ $rs["error"]	= false;
 			
 			if($monto > TOLERANCIA_SALDOS){
 				$xCred->add($producto, $idpersona, false, $monto, $periocidad, $pagos, false, $destino);
-				$rs["message"] .= $xCred->getMessages();
+				$xLog->add($xCred->getMessages());
 			} else {
-				$rs["message"] .= "ERROR\tNo se importa al Credito\r\n"; 
+				$xLog->add("ERROR\tNo se importa al Credito\r\n"); 
 			}
 			
 			
@@ -282,8 +375,8 @@ $rs["error"]	= false;
 			$rs["persona"]	= $xSoc->getClaveDePersona();
 		}
 		
-		$rs["message"]		.= $xSoc->getMessages();
-		$rs["message"]		.= $xDB->getMessages();
+		$xLog->add($xSoc->getMessages());
+		$xLog->add($xDB->getMessages());
 		
 	/*  public '_id' => string 'preclientes:patadejaguar@gmail.com:1516665558' (length=45)
 
@@ -315,6 +408,8 @@ $rs["error"]	= false;
 					EACP_CLAVE_DE_PAIS, DEFAULT_REGIMEN_FISCAL, $ocupacion);*/
 	}
 }
+$rs["message"]	= $xLog->getMessages();
+
 
 header('Content-type: application/json');
 echo json_encode($rs);

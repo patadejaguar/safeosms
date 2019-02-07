@@ -122,12 +122,17 @@ $xFRM->OButton("TR.Garantias", "jsGoToGarantias()", "garantia");
 
 
 $xFRM->OButton("TR.Comisiones", "jsGoToComisiones()", "dinero");
-$xFRM->OButton("TR.Permisos", "jsGoToPermisos()", "permisos");
-$xFRM->OButton("TR.Scripting", "jsGoToScript()", "codigo");
-
-$xFRM->OButton("TR.Contabilidad de Capital", "jsGoToContableCapital()", "contabilidad");
-$xFRM->OButton("TR.Contabilidad de Intereses", "jsGoToContableInteres()", "contabilidad");
-
+if(getEsModuloMostrado(USUARIO_TIPO_GERENTE)){
+	$xFRM->OButton("TR.Permisos", "jsGoToPermisos()", "permisos");
+}
+//if(getEsModuloMostrado(USUARIO_TIPO_GERENTE)){
+if(MODO_DEBUG == true){
+	$xFRM->OButton("TR.Scripting", "jsGoToScript()", "codigo");
+}
+if(getEsModuloMostrado(USUARIO_TIPO_GERENTE, MMOD_CONTABILIDAD) == true){
+	$xFRM->OButton("TR.Contabilidad de Capital", "jsGoToContableCapital()", "contabilidad");
+	$xFRM->OButton("TR.Contabilidad de Intereses", "jsGoToContableInteres()", "contabilidad");
+}
 $xFRM->OButton("TR.Duplicar", "jsClonarProducto()", $xFRM->ic()->EJECUTAR, "idduplicar", "blue2");
 
 $xFRM->OButton("TR.Otros Cargos", "jsOtrosCargos()", $xFRM->ic()->CONTROL);

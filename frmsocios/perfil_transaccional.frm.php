@@ -16,92 +16,89 @@
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
 $xHP		= new cHPage("TR.PERFIL_TRANSACCIONAL", HP_FORM);
+$xQL		= new MQL();
+$xLi		= new cSQLListas();
+$xF			= new cFecha();
+$xDic		= new cHDicccionarioDeTablas();
+//$jxc 		= new TinyAjax();
+//$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
+//$jxc ->process();
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
+$persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
+$monto		= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT); 
+$recibo		= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$empresa	= parametro("empresa", 0, MQL_INT); $empresa	= parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT); $empresa	= parametro("dependencia", $empresa, MQL_INT);
+$grupo		= parametro("idgrupo", 0, MQL_INT); $grupo	= parametro("grupo", $grupo, MQL_INT);
+$ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = parametro("cuentabancaria", $ctabancaria, MQL_INT);
 
-$DDATA		= $_REQUEST;
-$jxc = new TinyAjax();
-
-function jsaGuardarPerfil($persona, $tipo, $pais, $monto, $numero, $observaciones, $origen, $finalidad){
-    $xAP	= new cAMLPersonas($persona);
-    $xAP->init();
-    $xAP->setGuardarPerfilTransaccional($tipo, $pais, $monto, $numero, $observaciones, false, $origen, $finalidad);
-	$QL		= new cSQLListas();
-	$xT		= new cTabla($QL->getListadoDePerfil($persona) );
-	$xT->addTool(SYS_DOS);
-    return $xT->Show() . $xAP->getMessages(OUT_HTML);
-}
-
-$jxc ->exportFunction('jsaGuardarPerfil', array('idpersona', 'idtipotransaccion', 'idpais', 'idmonto', 'idnumero', 'idobservaciones', 'idorigen', 'idfinalidad'), "#idperfil");
-$jxc ->process();
-
-$persona	= (isset($DDATA["persona"])) ? $DDATA["persona"] : DEFAULT_SOCIO;
-$persona	= (isset($DDATA["socio"])) ? $DDATA["socio"] : $persona;
-
-$credito	= (isset($DDATA["credito"])) ? $DDATA["credito"] : DEFAULT_CREDITO;
-$jscallback	= (isset($DDATA["callback"])) ? $DDATA["callback"] : "";
-
-$tiny		= (isset($DDATA["tiny"])) ? $DDATA["tiny"] : "";
-
-$form		= (isset($DDATA["form"])) ? $DDATA["form"] : "";
-
-echo $xHP->getHeader();
+$observaciones= parametro("idobservaciones");
+$xHP->addJTableSupport();
+$xHP->init();
 
 
-echo $xHP->setBodyinit();
 
-$xFRM		= new cHForm("frmperfiltransaccional", "perfil_transaccional.frm.php");
-$xFRM->setNoAcordion();
-$xBtn		= new cHButton();		
-$xTxt		= new cHText();
-$xDate		= new cHDate();
+$xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
-//$xNot		= new cHNotif();
-//$btn		= $xNot->getNoticon("10", "alert('A')", "fa-save");
-
 $xFRM->setTitle($xHP->getTitle());
-$xFRM->addSeccion("idadd", "TR.AGREGAR PERFIL_TRANSACCIONAL");
-$xFRM->addHElem( $xSel->getListaDePaises()->get("TR.pais de origen", true  ) );
 
-$xFRM->addHElem( $xSel->getListaDePerfilTransaccional()->get("TR.tipo de perfil", true  ) );
 
-$xTxt->setDivClass("");
+$xFRM->addCerrar();
 
-$xFRM->OMoneda("idmonto", 0, "TR.MAXMONTO de operaciones");
-$xFRM->OMoneda("idnumero", 0, "TR.MAXNUMERO de operaciones");
+/* ===========        GRID JS        ============*/
 
-$xFRM->addDivSolo($xTxt->get("idorigen", "", "TR.DESCRIPCION ORIGEN"), $xTxt->get("idfinalidad", "", "TR.DESCRIPCION DESTINO"), "tx24", "tx24");
+$xHG    = new cHGrid("iddivpf",$xHP->getTitle());
 
-$xFRM->addObservaciones();
-$xFRM->endSeccion();
-$QL		= new cSQLListas();
-$xT		= new cTabla($QL->getListadoDePerfil($persona) );
-$xT->addTool(SYS_DOS);
-$xFRM->addSeccion("trlista", "TR.LISTA DE PERFIL_TRANSACCIONAL");
-$xFRM->addHTML("<div id='idperfil'>" . $xT->Show() . "</div>");
-$xFRM->endSeccion();
-$xFRM->addHTML("<input type='hidden' value='$persona' id='idpersona' />");
+$xHG->setSQL($xLi->getListadoDePerfil($persona));
 
-$xFRM->addSubmit("", "setGuardarRegistro()");
+$xHG->addList();
+
+$xHG->setOrdenar();
+
+//$xHG->col("clave", "TR.CLAVE", "10%");
+$xHG->col("fecha", "TR.FECHA", "10%");
+//$xHG->col("tipo", "TR.TIPO", "10%");
+$xHG->col("perfil", "TR.PERFIL", "10%");
+
+//$xHG->col("pais", "TR.PAIS", "10%");
+
+$xHG->col("numero", "TR.NUMERO", "10%");
+$xHG->ColMoneda("monto", "TR.MONTO", "10%");
+
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave +')", "undone.png");
+$xFRM->addHElem("<div id='iddivpf'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+
+$xFRM->OHidden("idpersona", $persona);
 
 echo $xFRM->get();
 
-
-//$jsb->show();
-$jxc ->drawJavaScript(false, true);
 ?>
-<!-- HTML content -->
 <script>
-var xG	= new Gen();
-function setGuardarRegistro(){
-	xG.confirmar({
-		callback : function(){
-			jsaGuardarPerfil(); xG.postajax("jsOnFin()");			
-		}
-	});
+var xG    = new Gen();
+function jsEdit(id){
+    xG.w({url:"../frmsocios/personas.perfil-transaccional.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivpf});
 }
-function jsOnFin(){
-	document.getElementById("id-frmperfiltransaccional").reset();
+function jsAdd(){
+	var idpersona = $("#idpersona").val(); 
+    xG.w({url:"../frmsocios/personas.perfil-transaccional.new.frm.php?persona=" + idpersona, tiny:true, callback: jsLGiddivpf});
+}
+function jsDel(id){
+    //xG.rmRecord({tabla:"tmp_2638159739", id:id, callback:jsLGiddivpf });
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"personas_perfil_transaccional", id:id, callback:jsLGiddivpf, preguntar:true });
 }
 </script>
 <?php
+//$jxc ->drawJavaScript(false, true);
 $xHP->fin();
+exit;
 ?>

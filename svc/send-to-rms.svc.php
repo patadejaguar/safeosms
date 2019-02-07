@@ -108,33 +108,34 @@ $equipo		= "";//Assests
 $notas		= "Notas del Checking:" .  $xAlert->getNotasChecking() . "\r\nNotas del Sistema:" . $xAlert->getNotasSistema();
 $fecha_crea	= date("Y-m-d H:m:s", strtotime($xAlert->getFechaRegistro()));
 $enviadopor	= 1;//Admin
-$nivel		= 3.6;
+$nivel		= $xAlert->getRMSNivelRiesgo();
 
 if($xAlert->getEsEnviadoRMS() == false){
 
 
-	$cnn 		= new mysqli( "localhost", "simplerisk", "simplerisk", "simplerisk");
+	$cnn 		= new mysqli( AML_RMS_DB_SRV, AML_RMS_DB_USR, AML_RMS_DB_PWD, AML_RMS_DB_NAME);
 	$cnn->set_charset("utf8");
 	
 	$rs1		= $cnn->query("SELECT COUNT(*) AS 'items' FROM `risks` WHERE `id`=$clave");
 	if(!$rs1){
-		$rs["message"] = "La base de Datos no está disponible";
+		$rs["message"] = "ERROR\tLa base de Datos no está disponible\r\n";
 	} else {
 		$row	= $rs1->fetch_assoc();
 		$contar	= setNoMenorQueCero($row["items"]);
 		if($contar > 0){
-			$rs["message"] = "El registro ya existe";
+			$rs["message"] = "WARN\tEl registro en el RMS existe\r\n";
 		} else {
-			$cnn->query("$sqlL1 ($clave,'$estatus','$describe','$clave', $regulation, '$clave',	$location,	$origen, $categoria, $team,	$tech,
+			$rs	= $cnn->query("$sqlL1 ($clave,'$estatus','$describe','$clave', $regulation, '$clave',	$location,	$origen, $categoria, $team,	$tech,
 			$propietario,	$manager,	'$equipo',	'$notas',	'$fecha_crea',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00',	0,	0,	0,	NULL,	$enviadopor)");
 			
-			$cnn->query("$sqlL2 (NULL, $clave, $nivel, '$fecha_crea')");
-			
-			$cnn->query("$sqlL3  ('$clave', '1', '$nivel', '4', '3', 'N', 'L', 'N', 'C', 'C', 'C', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10')");
-			
-			$xAlert->setEnviadoRMS();
-		
-			$rs["message"] = "El registro de riesgos se ha efectuado";
+			if($rs){
+				$cnn->query("$sqlL2 (NULL, $clave, $nivel, '$fecha_crea')");
+				$cnn->query("$sqlL3  ('$clave', '1', '$nivel', '4', '3', 'N', 'L', 'N', 'C', 'C', 'C', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', 'ND', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10', '10')");
+				$xAlert->setEnviadoRMS();
+				$rs["message"] = "OK\tEl registro de riesgos se ha efectuado\r\n";
+			} else {
+				$rs["message"] = "ERROR\tError al Guardar el registro\r\n";
+			}
 		}
 		
 		$rs["error"]	= false;
@@ -142,7 +143,7 @@ if($xAlert->getEsEnviadoRMS() == false){
 	}
 } else {
 	$rs["error"]	= false;
-	$rs["message"] = "El registro no se puede volver a enviar";
+	$rs["message"] = "WARN\tEl registro existe como enviado\r\n";
 }
 
 /*

@@ -58,6 +58,7 @@ $FechaExtraccion		= date("Ymd", strtotime($FechaFinal));
 $estatus_actual 		= parametro("f2", false, MQL_INT);
 $persona				= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $creditoref				= parametro("creditoref", 0, MQL_INT);
+$cualquiera				= parametro("cualquiera", false, MQL_BOOL);
 
 if($creditoref > DEFAULT_CREDITO AND $persona <= DEFAULT_SOCIO){
 	$xCredImp			= new cCredito($creditoref);
@@ -573,7 +574,7 @@ foreach($datos as $rw){
 			$FechaCierreCuenta		= $FechaClave;
 			$FechaAperturaCuenta	= $xCred->getFechaDeMinistracion();
 			$FechaUltimoPago		= $FechaCierreCuenta;
-			$xOfic->addNote(AVISOS_TIPO_RECORDATORIO, false, $xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), "Fechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)");
+			$xOfic->addNote(MEMOS_TIPO_PENDIENTE, false, $xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), "Fechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)");
 			$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\t$icnt\tFechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)\r\n", $xLog->DEVELOPER);
 			//setLog("3....$FechaUltimoPago");
 		} else {
@@ -591,7 +592,7 @@ foreach($datos as $rw){
 	if($xF->getInt($FechaAperturaCuenta) >= $xF->getInt($FechaUltimoPago)){
 		$FechaClave = ($xF->getInt($FechaUltimoPago) > $xF->getInt($xCred->getFechaDeMinistracion()) ) ? $FechaUltimoPago : $xCred->getFechaDeMinistracion();
 		$FechaAperturaCuenta	= $xCR->getDate( $xF->setRestarDias(3, $FechaClave) );
-		$xOfic->addNote(AVISOS_TIPO_RECORDATORIO, false, $xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), "Fechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)");
+		$xOfic->addNote(MEMOS_TIPO_PENDIENTE, false, $xCred->getClaveDePersona(), $xCred->getClaveDeCredito(), "Fechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)");
 		$xLog->add("WARN\t$idpersona-$idcredito\t$sucres\t$icnt\tFechas Incorrectas en Pagos($FechaUltimoPago) y Ministracion($FechaAperturaCuenta)\r\n", $xLog->DEVELOPER);
 	}
 	//=================================== Formatear
@@ -740,7 +741,7 @@ foreach($datos as $rw){
 	//============================== ELEMENTOS DE CONTROL
 	$linea					.= "$TotalSaldosActuales|$TotalSaldosVencidos|$TotalElementosNombres|$TotalElementosDireccion|$TotalElementosEmpleo|$TotalElementosCuenta|$NombreOtorgante|$DomicilioDevolucion";
 	//
-	if($xSoc->getEsPersonaFisica() == true){
+	if($xSoc->getEsPersonaFisica() == true OR $cualquiera == true){
 		if($toJson == true){
 			$arrLinea		= explode("|", $linea);
 			$jsonNew		= array();

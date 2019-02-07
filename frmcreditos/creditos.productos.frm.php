@@ -213,20 +213,33 @@ switch ($opcion){
 		$xFRM->OText("descripcion_tipoconvenio", $xTabla->descripcion_tipoconvenio()->v(), "TR.Nombre");
 		$xFRM->OText("descripcion_completa", $xTabla->descripcion_completa()->v(), "TR.descripcion completa");
 		$xFRM->OText("nombre_corto", $xTabla->nombre_corto()->v(), "TR.NOMBRE_CORTO");
-		$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.Estado Actual del Producto", array("baja"=>"BAJA", "activo"=>"ACTIVO"));
+		$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.estatus", array("baja"=>"BAJA", "activo"=>"ACTIVO"));
 		
-		$xFRM->OSelect("tipo_de_convenio", $xTabla->tipo_de_convenio()->v() , "TR.TIPO_AGRUPACION", 			array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
-		$xFRM->OSelect("tipo_de_integracion", $xTabla->tipo_de_integracion()->v(), "TR.TIPO_AGRUPACION", 	array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+		//$xFRM->OSelect("tipo_de_convenio", $xTabla->tipo_de_convenio()->v() , "TR.TIPO_AGRUPACION", 			array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+		if(PERSONAS_CONTROLAR_POR_GRUPO == true){
+			$xFRM->OSelect("tipo_de_integracion", $xTabla->tipo_de_integracion()->v(), "TR.TIPO_AGRUPACION", 	array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+			$xFRM->addControEvt("tipo_de_integracion", "jsUpdateTipoConv", "blur");
+			$xFRM->addControEvt("tipo_de_integracion", "jsUpdateTipoConv", "change");
+			//$xFRM->OSelect("tipo_de_convenio", $xTabla->tipo_de_convenio()->v() , "TR.TIPO_AGRUPACION", 			array("1"=>"INDIVIDUAL", "3"=>"GRUPAL"));
+			$xFRM->OHidden("tipo_de_convenio", $xTabla->tipo_de_convenio()->v());
+		} else {
+			$xFRM->OHidden("tipo_de_integracion", $xTabla->tipo_de_integracion()->v());
+			$xFRM->OHidden("tipo_de_convenio", $xTabla->tipo_de_convenio()->v());
+		}
+
 		
 		$d2 	= $ql->getArrayRecord("SELECT * FROM creditos_modalidades");
 		$xFRM->OSelect("tipo_de_credito", $xTabla->tipo_de_credito()->v() , "TR.Clasificacion Legal", $d2);
 			
 		//		
-		$xFRM->OMoneda("tipo_de_interes", $xTabla->tipo_de_interes()->v(), "TR.tipo de interes");
-		$xFRM->OMoneda("perfil_de_interes", $xTabla->perfil_de_interes()->v(), "TR.perfil de interes");
+		//$xFRM->OMoneda("tipo_de_interes", $xTabla->tipo_de_interes()->v(), "TR.tipo de interes");
+		$xFRM->OHidden("tipo_de_interes", $xTabla->tipo_de_interes()->v());
+		//$xFRM->OMoneda("perfil_de_interes", $xTabla->perfil_de_interes()->v(), "TR.perfil de interes");
+		$xFRM->OHidden("perfil_de_interes", $xTabla->perfil_de_interes()->v());
 		
 		$d5 	= $ql->getArrayRecord("SELECT * FROM `creditos_periocidadpagos` ");
 		$xFRM->OSelect("tipo_de_periocidad_preferente", $xTabla->tipo_de_periocidad_preferente()->v(), "TR.tipo de periocidad preferente", $d5);
+		
 		//$f1 	= array(CREDITO_PRODUCTO_NOMINA =>"NOMINA", CREDITO_PRODUCTO_INDIVIDUAL=>"INDIVIDUAL", CREDITO_PRODUCTO_GRUPOS => "GRUPO");
 		
 		/*define("SYS_PRODUCTO_INDIVIDUAL",		200);
@@ -242,8 +255,10 @@ define("SYS_PRODUCTO_ARREND", 			500);
 		$xSelTS	= $xSel->getListaDeCatalogoGenerico("cpdtos_tipo_sistema", "tipo_en_sistema", $xTabla->tipo_en_sistema()->v());
 		$xFRM->addHElem( $xSelTS->get("TR.TIPO EN SISTEMA", true) );
 		
-				
-		$xFRM->OText("clave_de_tipo_de_producto", $xTabla->clave_de_tipo_de_producto()->v(), "TR.clave de tipo de producto en SIC");
+		$xSelTX	= $xSel->getListaDeCatalogoGenerico("cat_sic_tipo_pdto", "clave_de_tipo_de_producto", $xTabla->clave_de_tipo_de_producto()->v());
+		$xFRM->addHElem( $xSelTX->get("TR.clave de tipo de producto en SIC", true) );
+		
+		//$xFRM->OText("clave_de_tipo_de_producto", $xTabla->clave_de_tipo_de_producto()->v(), "TR.clave de tipo de producto en SIC");
 		
 		$xFRM->OText("path_del_contrato", $xTabla->path_del_contrato()->v(), "TR.URl del contrato");
 		$xFRM->OMoneda("codigo_de_contrato", $xTabla->codigo_de_contrato()->v(), "TR.Numero de formato en el sistema");
@@ -267,7 +282,9 @@ function jsKeyAction(evt, ctrl){
 		if (cta.length > 2) { jsaGetCuentas();	}
 	}
 }
-
+function jsUpdateTipoConv(){
+	 $('#tipo_de_convenio').val( $('#tipo_de_integracion').val() ); 
+}
 </script>
 <?php
 $jxc ->drawJavaScript(false, true);

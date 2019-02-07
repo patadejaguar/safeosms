@@ -42,6 +42,8 @@ $mails		= getEmails($_REQUEST);
 $xFMT			= new cFormato(8802);
 $xRuls			= new cReglaDeNegocio();
 $NoWiki			= $xRuls->getValorPorRegla($xRuls->reglas()->AML_NO_WIKI);
+$xLog			= new cCoreLog();
+
 
 $txtLst			= "";
 $ByTipoPersona	= "";
@@ -69,9 +71,14 @@ $ByJWAPaterno	= ($apaterno == "") ? "" : " AND jaro_winkler_similarity(apellidop
 $ByJWAMaterno	= ($amaterno == "") ? "" : " AND jaro_winkler_similarity(apellidomaterno, '$amaterno' ) >= $umbral ";
 
 $OrderBy		= ($UseMeta == true OR $UseJW) ? "" : "ORDER BY	`socios_general`.`apellidopaterno`,	`socios_general`.`apellidomaterno`,	`socios_general`.`nombrecompleto` ";
-if($ByNombre !="" AND $amaterno == "" AND $apaterno == ""){
+
+
+if($ByNombre !== "" AND ($ByAPaterno !== "" OR $ByAMaterno !== "")){
+	$ByTipoPersona	= " AND `personalidad_juridica`= " . PERSONAS_FIGURA_FISICA;
+} else {
 	$ByTipoPersona	= " AND `personalidad_juridica`= " . PERSONAS_FIGURA_MORAL;
 }
+
 if($ByAMaterno != "" AND $ByAPaterno != "" ){
 	//$ByAPaterno	= "AND ( (apellidopaterno SOUNDS LIKE '%$apaterno%' OR apellidopaterno LIKE '%$apaterno%') OR (apellidomaterno SOUNDS LIKE '%$amaterno%' OR apellidomaterno LIKE '%$amaterno%') ) ";
 	//$ByAMaterno	= "";
@@ -131,7 +138,12 @@ if($UseMeta == true){
 
 $json			= array();
 $mql			= new MQL();
-$rs				= $mql->getRecordset($sql);
+if( strlen(trim(str_replace(" ", "", "$nombre$amaterno$apaterno"))) <= 3){
+	$rs			= false;
+	$xLog->add("ERROR\tNo hay parametros de Busqueda($nombre-$amaterno-$apaterno)");
+} else {
+	$rs			= $mql->getRecordset($sql);
+}
 $idx			= 0;
 $xLng			= new cLang();
 if($rs){
@@ -313,7 +325,9 @@ if($rs){
 			
 		}
 		$idx++;
-	}
+	} //End While
+	$xLog->add("INFO\tItems encontrados $idx");
+	
 	/*if($idx <= 0){
 		//Consultar el Wikipedia
 		$xWiki		= new cWikipedia();
@@ -425,9 +439,9 @@ if($rs){
 		}	
 	}
 } else {
-	
-	$json			= $json["error"] = $mql->getMessages(OUT_TXT);
+	$xLog->add($mql->getMessages(OUT_TXT), $xLog->DEVELOPER);
 }
+$json["error"] = $xLog->getMessages();
 
 header('Content-type: application/json');
 echo json_encode($json);

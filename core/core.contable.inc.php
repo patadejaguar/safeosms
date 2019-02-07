@@ -350,7 +350,7 @@ class SectorCuenta{
 	var $mSuma;
 	var $mTitle;
 	var $factor;
-function SectorCuenta($ejercicio, $periodo, $cuenta){
+function __construct($ejercicio, $periodo, $cuenta){
 	$this->mPeriodo = $periodo;
 	$this->mEjercicio =$ejercicio;
 	$this->mCuenta = $cuenta;

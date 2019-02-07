@@ -256,7 +256,12 @@ GROUP BY
 		return $datos;
 	}
 	function getCreditoPrioritario(){ return $this->mCreditoPrioritario; }
-
+	function getTotalDomicilios(){ 
+		$xQL	= new MQL();
+		$numero	= setNoMenorQueCero($xQL->getDataValue("SELECT COUNT(*) AS `numero` FROM `socios_vivienda` WHERE `socio_numero`=" . $this->mPersona, "numero"));
+		$xQL	= null;
+		return $numero;
+	}
 }
 
 class cPersonasUtilerias {

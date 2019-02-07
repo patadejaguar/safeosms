@@ -30,6 +30,14 @@ function setAgregarEvento_($mensaje, $codigoError,$persona = false, $contrato=fa
 	$xErr->setNewError($codigoError, $usuario, $mensaje,false, $persona);
 	$mensaje	= null;
 }
+function setNuevoEvento_($mensaje, $codigoError,$persona = false, $contrato=false, $recibo = false){
+	setAgregarEvento_($mensaje, $codigoError,$persona, $contrato, $recibo);
+}
+function setNuevaTarea_($mensaje, $tipo, $usuario, $relevancia = false, $persona = false, $contrato=false){
+	$xUN	= new cSystemUserNotes();
+	$xUN->add($usuario, $mensaje, $relevancia, $tipo, $persona, $contrato);
+	$xUN	= null;
+}
 function setError($str = ""){ setLog("Error : $str");}
 function setArchivarRegistro($src , $tipo = 0){
 	$xT	= new cSistema_eliminados();
@@ -64,9 +72,9 @@ class cError {
 	function setNewError($tipo = 0, $usr = false, $txt = "", $fecha = false, $persona = 0){
 		$xMQL	= new MQL();
 	
-		$ip1 	= ( isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "0";
-		$ip2 	= ( isset($_SERVER['HTTP_VIA']) ) ? $_SERVER['HTTP_VIA'] : "DESCONOCIDO";
-		$ip3 	= ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : "DESCONOCIDO";
+		$ip1 	= get_real_ip();//isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "0";
+		$ip2 	= ( isset($_SERVER['HTTP_VIA']) ) ? $_SERVER['HTTP_VIA'] : "";
+		$ip3 	= ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : "";
 		$defUsr	= isset($_SESSION["SN_b80bb7740288fda1f201890375a60c8f"]) ? $_SESSION["SN_b80bb7740288fda1f201890375a60c8f"] : "USUARIO_DESCONOCIDO";
 			
 		$usr	= ($usr == false ) ? $defUsr : $usr; 
@@ -112,12 +120,13 @@ class cError {
 		$sql_errors 		= "SELECT  idgeneral_error_codigos, description_error, type_err 
     							FROM general_error_codigos WHERE idgeneral_error_codigos=$id
     							LIMIT 0,1 ";
-		$mql				= new MQL();
-		$rs					= $mql->getDataRecord($sql_errors);
-		foreach ($rs as $rw){
-			$this->mCodigo		= $rw["idgeneral_error_codigos"];
-			$this->mDescripcion = $rw["description_error"];
-			$this->mTipo		= $rw["type_err"];
+		$xQL				= new MQL();
+		$rw					= $xQL->getDataRow($sql_errors);
+		$xT					= new cGeneral_error_codigos();
+		if(isset($rw[$xT->IDGENERAL_ERROR_CODIGOS])){
+			$this->mCodigo		= $rw[$xT->IDGENERAL_ERROR_CODIGOS];
+			$this->mDescripcion = $rw[$xT->DESCRIPTION_ERROR];
+			$this->mTipo		= $rw[$xT->TYPE_ERR];
 		}
 	}
 	function getDescription(){ 	return $this->mDescripcion;	}
@@ -134,9 +143,14 @@ class cError {
 		}
 
 		$html	= "<div class='cuadro'>
+						<fieldset id=\"inputs\">
 						<h3>$title</h3>
 						<hr />
 						<p class='$cls'>" . $this->mDescripcion . "</p><hr /><span class='error-num'>" . $this->mCodigo . "</span>
+						</fieldset>
+						<fieldset id=\"actions\">
+								<a class=\"button\" onclick=\"window.history.back(1)\"><img src='images/back-button.png' height='24px' style='margin-top:6px' alt='Atras' /></a>
+						</fieldset>
 						</div>";
 		$hcod	= null;
 		return $html;
@@ -223,4 +237,81 @@ class cErrorCodes {
 	
 }
 
+
+class cErrorLog {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "general_log";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mHora			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	function getIDCache(){ return $this->mIDCache; }
+	function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cGeneral_log();
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->IDGENERAL_LOG])){
+			$xT->setData($data);
+			$this->mClave	= $data[$xT->IDGENERAL_LOG];
+			$this->mFecha	= $data[$xT->FECHA_LOG];
+			$this->mHora	= $data[$xT->HOUR_LOG];
+			
+			$xD				= new DateTime($this->mFecha . " " . $this->mHora);
+			$this->mTiempo	= $xD->getTimestamp();
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function getTiempo(){ return $this->mTiempo; } 
+	function getAntiguedadEnMinutos(){
+		$ahora	= time();
+		$antes	= $this->getTiempo();
+		
+		if($antes> 60){
+			return ceil( ( ($ahora-$antes) / 60),0 );
+		}
+		return 0;
+	}
+}
 ?>

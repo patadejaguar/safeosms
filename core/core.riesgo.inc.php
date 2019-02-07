@@ -261,6 +261,8 @@ class cReglasDeNegocioLista {
 	public $PERSONAS_USAR_FOTOS					= "PERSONAS.PANEL_CON_FOTOS";
 	public $PERSONAS_SE_ELIMINAN				= "PERSONAS.SE_PUEDEN_ELIMINAR";
 	
+	public $SYNC_APP							= "SISTEMA.USAR_APP";
+	public $SYNC_AML_MIG						= "SISTEMA.USAR_AML_SYNC";
 	
 	public $CREDITOS_AUTORIZACION_SIN_TASA		= "CREDITOS.AUTORIZACION.SIN_TASA";
 	public $CREDITOS_AUTORIZACION_SIN_DISP		= "CREDITOS.AUTORIZACION.SIN_DISPERSION";
@@ -350,6 +352,7 @@ class cReglasDeNegocioLista {
 	public $RECIBOS_CON_RECFISCAL				= "RECIBOS.CON.RECIBO_FISCAL";
 	
 	public $RECIBOS_NOARRASTRA_PENAS			= "RECIBOS.NO.ARRASTRA_PENAS";
+	public $RECIBOS_LIQ_SOLO_EXIG				= "RECIBOS.CREDITOS.LIQ.SOLOEXIG";
 	
 	public $AML_CIERRE_NV_RIESGO				= "AML.CIERRE.NO_VALIDAR_RIESGO";
 	public $AML_AUTOENVIAR_RMS					= "AML.RIESGO_AUTOENVIAR_RMS";
@@ -389,8 +392,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->RN_NO_USAR_HCHAT]				= $this->RN_NO_USAR_HCHAT;
 		
 		$arr[$this->SEGUIMIENTO_TODOS_PUEDEN]		= $this->SEGUIMIENTO_TODOS_PUEDEN;
-		//$arr[$this->]			= $this->;
-		//$arr[$this->]			= $this->;
+		$arr[$this->SYNC_AML_MIG]					= $this->SYNC_AML_MIG;
+		$arr[$this->SYNC_APP]						= $this->SYNC_APP;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -508,7 +511,7 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_CON_VENDEDOR]				= $this->RECIBOS_CON_VENDEDOR;
 		$arr[$this->RECIBOS_CON_RECFISCAL]				= $this->RECIBOS_CON_RECFISCAL;
 		$arr[$this->RECIBOS_NOARRASTRA_PENAS]			= $this->RECIBOS_NOARRASTRA_PENAS;
-		//$arr[$this->]			= $this->;
+		$arr[$this->RECIBOS_LIQ_SOLO_EXIG]				= $this->RECIBOS_LIQ_SOLO_EXIG;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		
@@ -664,8 +667,8 @@ class cReglaDeNegocio {
 			if($this->mCodigoPersona > DEFAULT_SOCIO){
 				$xFMT->setPersona($this->mCodigoPersona);
 				$vvar	= $xFMT->getVariables();
-				
 				$xFMT->addVars("nombre_de_persona", $vvar["variable_persona_nombre_completo"]);
+				
 				$xFMT->addVars("clave_de_persona", $this->mCodigoPersona);
 				$xFMT->addVars("idpersona", $this->mCodigoPersona);
 				$xFMT->addVars("persona", $this->mCodigoPersona);
@@ -971,28 +974,25 @@ class cRiesgos {
 	}
 }
 
-
-
-class cUsuariosNotas {
+class cRiesgosProbabilidad {
 	private $mClave			= false;
 	private $mObj			= null;
 	private $mInit			= false;
 	private $mNombre		= "";
 	private $mMessages		= "";
 	private $mIDCache		= "";
-	private $mTabla			= "usuarios_web_notas";
+	private $mTabla			= "riesgos_probabilidad";
 	private $mTipo			= 0;
 	private $mUsuario		= 0;
 	private $mFecha			= false;
 	private $mTiempo		= 0;
 	private $mTexto			= "";
 	private $mObservacion	= "";
-	public $EST_ACTIVO		= 10;
-	public $EST_INACTIVO	= 40;
+	private $mRiesgoRMS		= 0;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
-	function getIDCache(){ return $this->mIDCache; }
-	function setIDCache($clave = 0){
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
 		$clave = ($clave <= 0) ? $this->mClave : $clave;
 		$clave = ($clave <= 0) ? microtime() : $clave;
 		$this->mIDCache	= $this->mTabla . "-" . $clave;
@@ -1001,7 +1001,7 @@ class cUsuariosNotas {
 	function init($data = false){
 		$xCache		= new cCache();
 		$inCache	= true;
-		$xT			= new cUsuarios_web_notas();//Tabla
+		$xT			= new cRiesgos_probabilidad();//Tabla
 		
 		
 		if(!is_array($data)){
@@ -1014,10 +1014,10 @@ class cUsuariosNotas {
 		}
 		if(isset($data[$xT->getKey()])){
 			$xT->setData($data);
-			
-			$this->mClave	= $data[$xT->getKey()];
-			
-			
+			//$data[$xT->];//
+			$this->mClave		= $data[$xT->getKey()];
+			$this->mNombre		= $data[$xT->NOMBRE_PROBABILIDAD];
+			$this->mRiesgoRMS	= $data[$xT->RMS_EQ];
 			$this->mObj		= $xT;
 			$this->setIDCache($this->mClave);
 			if($inCache == false){	//Si es Cache no se Guarda en Cache
@@ -1036,35 +1036,83 @@ class cUsuariosNotas {
 	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
-	function setInactivo(){
+	function getRiesgoRMS(){ return $this->mRiesgoRMS; }
+	function getMaximoRMS(){
 		$xQL	= new MQL();
-		$res	= $xQL->setRawQuery("UPDATE usuarios_web_notas SET estado=" . $this->EST_INACTIVO . " WHERE idusuarios_web_notas=" . $this->mClave . " ");
+		$max	= $xQL->getDataValue("SELECT MAX(`rms_eq`) AS `maximo` FROM  " . $this->mTabla, "maximo");
 		$xQL	= null;
-	}
-	
-	function addNote($tipo, $oficial, $socio, $docto, $texto, $fecha = false){
-		$xF					= new cFecha();
-		$xT					= new cTipos();
-		$xQL				= new MQL();
-		$oficial_de_origen	= getUsuarioActual();
-		$oficial			= setNoMenorQueCero($oficial);
-		$oficial			= ($oficial <= 0) ? $this->getCodigo() : 1;
-		$fecha				= $xF->getFechaISO($fecha);
-		
-		$msg				= "";
-		$texto				= $xT->cChar( trim($texto) );
-		
-		$sqlFR		= "INSERT INTO usuarios_web_notas( tipo, oficial, oficial_de_origen, socio, documento, fecha, texto)
-    					VALUES
-						('$tipo', $oficial, $oficial_de_origen, $socio, $docto, '$fecha', '$texto')";
-		$x 			=  $xQL->setRawQuery($sqlFR);
-		if($x == false){
-			$msg		.= "ERROR\tAviso al oficial $oficial NO GENERADO ($tipo|$socio|$docto|$fecha)\r\n";
-		} else {
-			$msg		.= "ERROR\tAviso al oficial $oficial Agregado con Exito ($tipo|$socio|$docto|$fecha)\r\n";
-		}
-		return $msg;
+		return $max;
 	}
 }
-
+class cRiesgosImpacto {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "riesgos_consecuencias";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mRiesgoRMS		= 0;
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cRiesgos_consecuencias();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			//$data[$xT->];//
+			$this->mClave		= $data[$xT->getKey()];
+			$this->mNombre		= $data[$xT->NOMBRE_CONSECUENCIA];
+			$this->mRiesgoRMS	= $data[$xT->RMS_EQ];
+			
+			$this->mObj			= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+	function getRiesgoRMS(){ return $this->mRiesgoRMS; }
+	function getMaximoRMS(){ 
+		$xQL	= new MQL();
+		$max	= $xQL->getDataValue("SELECT MAX(`rms_eq`) AS `maximo` FROM  " . $this->mTabla, "maximo");
+		$xQL	= null;
+		return $max;
+	}
+}
 ?>

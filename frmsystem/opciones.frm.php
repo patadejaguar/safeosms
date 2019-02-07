@@ -22,6 +22,10 @@ $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
 $xCatConf	= new cConfigCatalogo();
+$xRuls		= new cReglaDeNegocio();
+
+$SyncApp	= $xRuls->getValorPorRegla($xRuls->reglas()->SYNC_APP);		//regla de negocio
+$SyncAML	= $xRuls->getValorPorRegla($xRuls->reglas()->SYNC_AML_MIG);		//regla de negocio
 
 //$tab = new TinyAjaxBehavior();
 //$tab -> add(TabSetValue::getBehavior("idide", $x));
@@ -455,14 +459,29 @@ $xFRM->OHidden("idclave", "");
 $xFRM->OHidden("idvalor", "");
 
 $xFRM->addAviso("", "idmsg");
-
-$xFRM->OButton("TR.Sync App", "jsSyncCatalogos()", $xFRM->ic()->EJECUTAR, "cmdexecapp", "yellow");
-
+if($SyncApp == true){
+	$xFRM->OButton("TR.Sync App Catalogos", "jsSyncCatalogos()", $xFRM->ic()->EJECUTAR, "cmdexecapp", "yellow");
+}
 //var_dump(MODO_MIGRACION);
 if(MODO_DEBUG == true){
 	$xFRM->OButton("TR.EDITAR ARCHIVO DE CONFIGURACION", "jsGoEditConfig()", $xFRM->ic()->CONTROL, "cmdeditconfig", "red");
 }
-$xFRM->OButton("TR.OPCIONES DE SISTEMA", "jsGoEditConfigSistema()", $xFRM->ic()->CONTROL, "cmdeditsistema", "orange");
+$xFRM->OButton("TR.OPCIONES DE SISTEMA", "jsGoEditConfigSistema()", $xFRM->ic()->CONTROL, "cmdeditsistema", "orange2");
+$xFRM->OButton("TR.OPCIONES DE ENTIDAD", "jsGoEditConfigSistema('entidad')", $xFRM->ic()->EMPRESA, "cmdeditdentidad", "gblue");
+$xFRM->OButton("TR.OPCIONES DE DOMICILIO", "jsGoEditConfigSistema('entidad.domicilio')", $xFRM->ic()->DOMICILIO, "cmdeditdom", "gorange");
+$xFRM->OButton("TR.OPCIONES DE LEYES", "jsGoEditConfigSistema('entidad.legal')", $xFRM->ic()->LEGAL, "cmdeditlega", "gred");
+
+if(MODULO_SEGUIMIENTO_ACTIVADO == true){
+	$xFRM->OButton("TR.OPCIONES DE SEGUIMIENTO", "jsGoEditConfigSistema('mmod-seguimiento')", $xFRM->ic()->SMS, "cmdeditseg", "ggreen");
+}
+if(MODULO_CAJA_ACTIVADO == true){
+	$xFRM->OButton("TR.OPCIONES DE BANCOS", "jsGoEditConfigSistema('" + MMOD_BANCOS + "')", $xFRM->ic()->CONTROL, "cmdeditbanco", "green2");
+	$xFRM->OButton("TR.OPCIONES DE TESORERIA", "jsGoEditConfigSistema('tesoreria')", $xFRM->ic()->CAJA, "cmdeditteso", "green2");
+}
+if(MODULO_AML_ACTIVADO == true){
+	$xFRM->OButton("TR.OPCIONES DE PLD", "jsGoEditConfigSistema('pld')", $xFRM->ic()->NOTIFICACION, "cmdeditaml", "blue4");
+}
+
 if(CREDITO_CONTROLAR_POR_PERIODOS == false){
 	$xFRM->OButton("TR.CREDITOS_PERIODOS", "jsGoPeriodosDeCredito()", $xFRM->ic()->CREDITO, "cmdperiodoscreditos", "blue");
 }
@@ -495,8 +514,15 @@ function jsActualizarParam(id, obj){
 function jsGoEditConfig(){
 	xG.w({url: "../frmsystem/edit-config.frm.php", tab:true});
 }
-function jsGoEditConfigSistema(){
-	xG.w({url: "../install/configuracion.editar.frm.php?tipo=sistema", tab:true});
+function jsGoEditConfigSistema(tema){
+	tema	= (typeof tema == "undefined") ? "sistema" : tema;
+	if(tema == "pld"){
+		tema = "aml";
+	}
+	if(tema == "mmod-seguimiento"){
+		tema = "seguimiento";
+	}
+	xG.w({url: "../install/configuracion.editar.frm.php?tipo=" + tema, tab:true});
 }
 function jsGoPeriodosDeCredito(){
 	xG.w({url: "../frmcreditos/cambiarperiodo.frm.php", tab:true});
@@ -505,19 +531,8 @@ function jsGoReglasDeNegocio(){
 	xG.w({url: "../frmsecurity/entidad-reglas.frm.php", tab:true});
 }
 function jsSyncCatalogos(){
-	
-	xG.confirmar({ msg : "¿ Confirma ejecutar el SYNC con Catalogos de la App ?",
-		callback : function(){
-			xG.spinInit();
-				
-			xG.svc({url:"app-sync.svc.php", 
-				callback : function (dd){
-					xG.spinEnd();
-					xG.alerta({ msg: dd.message });
-				}
-			});		
-		}
-	});
+	var xApp	= new AppGen();
+	xApp.sync({msg : "¿ Confirma ejecutar el SYNC con Catalogos de la App ?", catalogos:true });
 }
 </script>
 <?php

@@ -46,6 +46,9 @@ $xSel		= new cHSelect();
 $xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
+
+$xFRM->OBuscar("idbuscar", "", "", "jsBuscar");
+
 $xHG	= new cHGrid("iddivlistanegra",$xHP->getTitle());
 
 $xHG->setSQL($xLi->getListadoDePersonasConsultasLInt($persona));
@@ -62,12 +65,15 @@ $xHG->col("estatus", "TR.ESTATUSACTIVO", "10%");
 
 $xHG->col("observaciones", "TR.OBSERVACIONES", "10%");
 
+$xHG->setOrdenar();
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_interna +')", "edit.png");
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave_interna +')", "delete.png");
 $xFRM->addHElem("<div id='iddivlistanegra'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
+
+
 echo $xFRM->get();
 ?>
 <script>
@@ -80,6 +86,15 @@ function jsAdd(){
 }
 function jsDel(id){
 	//xG.rmRecord({tabla:"aml_listanegra_int", id:id, callback:jsLGiddivlistanegra});
+}
+function jsBuscar(){
+	var idbuscar= $("#idbuscar").val(); 
+	var str		= " AND `aml_listanegra_int`.`nombre_comp` LIKE  '%" + idbuscar + "%' ";
+	str			= base64.encode(str);
+	str			= "&w=" + str;
+	$("#iddivlistanegra").jtable("destroy");
+	jsLGiddivlistanegra(str);
+	
 }
 </script>
 <?php

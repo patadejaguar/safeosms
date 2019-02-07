@@ -67,30 +67,36 @@ $jxc ->drawJavaScript(false, true);
 ?>
 <script>
 var idfrm	= "<?php echo $idcontrol; ?>";
-function jsGetListadoDeActividades(msrc){
-	var mstr	= new String( msrc.value );
-	if (mstr.length > 4) {
-		jsaGetListadoDeActividades();
-	}	
+var xG		= new Gen();
+
+function jsGetListadoDeActividades(xsrc){
+	if(xsrc){
+		var mstr	= new String( xsrc.value );
+		if (mstr.length > 4) {
+			jsaGetListadoDeActividades();
+		}
+	}
 }
 function jsSetIDActividad(id){
 	var mObj	= processMetaData("#tr-personas_actividad_economica_tipos-" + id);
-	if (window.parent){ msrc = window.parent.document; }
-	if (opener){ msrc = opener.document; }
-	if(msrc == null){} else {
+	var msrc	= xG.winOrigen();
+	if(msrc){
 		if(msrc.getElementById(idfrm)){
 			oid			=  msrc.getElementById(idfrm);
 			oid.value	= id;
 			oid.focus();
 			oid.select();
 			//alert(mObj.nombre_de_la_actividad);
-			session("ae-" + id, JSON.stringify(mObj));
+			var idx	= mObj.clave_de_actividad;
+			session("ae-scian-" + idx, JSON.stringify(mObj));
 			if (msrc.getElementById("iddescripcion" + idfrm)) {
 				msrc.getElementById("iddescripcion" + idfrm).value = mObj.nombre_de_la_actividad;
 			}
 			xG.close();		
 		}		
-	}	
+	}
+	
+
 }
 </script>
 <?php

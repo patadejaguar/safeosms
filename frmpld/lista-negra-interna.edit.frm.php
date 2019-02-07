@@ -42,12 +42,6 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM	= new cHForm("frmlistanegra", "lista-negra-interna.frm.php?action=$action");
-$xFRM->setTitle($xHP->getTitle());
-$xSel		= new cHSelect();
-
-
-
 /* ===========		FORMULARIO EDICION 		============*/
 $xTabla		= new cAml_listanegra_int();
 $xTabla->setData( $xTabla->query()->initByID($clave));

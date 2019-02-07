@@ -85,7 +85,7 @@ $selcat->setOptionSelect(SYS_TODAS);
 
 $xFRM->addHElem( $selcat->get(true) );
 
-$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR);
+$xFRM->OButton("TR.Obtener", "jsGetListadoAvisos()", $xFRM->ic()->DESCARGAR, "idcmdobtener", "blue");
 
 
 $xFRM->OSiNo("TR.FILTRAR POR FECHA", "idporfecha"); $xFRM->addControEvt("chk-idporfecha", "jsDisFechas", "change");

@@ -165,6 +165,8 @@ function jsaAjustarTotal($recibo, $nuevoTotal, $nuevaletra){
 	}
 
 	$msg		.= $xRec->getMessages(OUT_TXT);
+	//setAgregarEvento_($msg, 2013, $xRec->getCodigoDeSocio(), $xRec->getCodigoDeDocumento(), $xRec->getCodigoDeRecibo());
+	
 	return  $msg;
 }
 function jsaSetGenerarPolizaPorRecibo($numero){
@@ -378,6 +380,22 @@ $idrecibo		= "0";
 				//$xRec->getFactura(false, OUT_RXML);
 				//$xDo	= new cDocumentos();
 			}
+			//============================= Eventos del Recibo+
+			
+			$xLog	= new cCoreLog();
+			$sql	= $xLog->getListadoDeEventosSQL(false, false, $idrecibo);
+			
+			
+			$xTEvent= new cTabla($sql, 0, "idtevents");
+			if(MODO_DEBUG == false){
+				$xTEvent->setOmitidos("texto");$xTEvent->setOmitidos("tipo");
+			}
+			$htmlEv	= $xTEvent->Show("TR.EVENTOS");
+			
+			if($xTEvent->getRowCount()>0){
+				$xTabs->addTab("TR.EVENTOS", $htmlEv);
+			}
+			
 			//
 			$xFRM->addHTML($xTabs->get());
 		$xFRM->addHTML( "<input type='hidden' name='cNumeroRecibo' id='idNumeroRecibo' value='$idrecibo'>

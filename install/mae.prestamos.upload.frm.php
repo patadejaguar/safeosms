@@ -237,7 +237,6 @@ if(isset($usrFiles[$i])==true){
 							///Inicializar
 							$xCred->init();
 							$credito	= $xCred->getNumeroDeCredito();
-							
 							//ministrar
 							$xCred->setForceMinistracion();
 							$xCred->setMinistrar(DEFAULT_RECIBO_FISCAL, DEFAULT_CHEQUE, $monto, DEFAULT_CUENTA_BANCARIA, 0, DEFAULT_CUENTA_BANCARIA, "", $ministracion);

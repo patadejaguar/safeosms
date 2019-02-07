@@ -360,14 +360,15 @@ class cTipos {
 		if($this->mNoForceMins == false){
 			$cadena	= strtolower($cadena);
 		}
-		$html	= @htmlentities($cadena, ENT_COMPAT, "UTF-8");
-		if($html == false){ 
+		$html	= @htmlentities($cadena, ENT_QUOTES, "UTF-8");
+		if($html === false){ 
 			$html = htmlentities($cadena); 
 		}
 		
 		$text	= preg_replace('~&([a-z]{1,2})(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);~i', '$1', $html);
 		$text	= htmlspecialchars_decode($text);
-		$text 	= html_entity_decode($text);
+		//$texto = html_entity_decode("ejemplo &ntilde;", ENT_QUOTES, "UTF-8");
+		$text 	= html_entity_decode($text, ENT_QUOTES, "UTF-8");
 		
 		$text	= ($this->mForceMayus == true) ? strtoupper($text) : $text;
 		$text	= ($this->mForceClean == true) ? cleanString($text) : $text;
@@ -1559,6 +1560,15 @@ class cCierreDelDia {
 	private $mMessages		= "";
 	private $mFechaUltima	= false;
 	private $mForce			= false;
+	
+	public $TIPO_COLOCACION		= 1;
+	public $TIPO_CAPTACION		= 2;
+	public $TIPO_SEGUIMIENTO	= 3;
+	public $TIPO_CONTABILIDAD	= 4;
+	public $TIPO_AML			= 5;
+	public $TIPO_RIESGOS		= 6;
+	public $TIPO_SISTEMA		= 9;
+	
 	function __construct($fecha = false){
 		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
 	}
@@ -2003,7 +2013,7 @@ class cCantidad {
 function unidad($numero){
 	$numero 	= intval($numero);
 	$numu 		= "";
-	
+	$arrN		= array();
 	$arrN["pt"]	= array("","um","dois","três","quatro","cinco","seis","sete","oito","nove");
 	$arrN["es"]	= array("","un","dos","tres","cuatro","cinco","seis","siete","ocho","nueve");
 	$arrN["en"] = array("","one", "two","three", "four", "five", "six", "seven", "eight", "nine");
@@ -2015,6 +2025,7 @@ function unidad($numero){
 }
 
 function decena($numdero){
+	$arrN		= array();
 	$arrN["pt"]	= array(10 => "dez",11 => "onze",12 => "dezessete",13 => "treze",14 => "quatorze",15 => "quinze",16 => "dezesseis",17 => "dezessete",18 => "dezoito",19 => "dezenove",
 			20 => "vinte",21 => "vinte e um",22 => "vinte e dois",23 => "vinte e três",24 => "vinte e quatro",25 => "vinte e cinco",26 => "vinte e seis",27 => "vinte e sete",28 => "vinte e oito",29 => "vinte e nove",
 			30 => "trinta",40 => "quarenta",50 => "cinquenta",60 => "sessenta",70 => "setenta",80 => "oitenta",90 => "noventa");
@@ -2086,6 +2097,8 @@ function decena($numdero){
 }
 
 function centena($numc){
+	$arrN		= array();
+	
 	if ($numc >= 100)
 	{
 		$arrN["pt"]	= array(100 => "cem ",200 => "duzentos ",300 => "trezentos ",400 => "quatrocentos ",500 => "quinhentos ",600 => "seiscentos ",700 => "setecentos ",800 => "oitocentos ",900 => "novecentos ");
@@ -2488,7 +2501,7 @@ class cFolios {
 }
 
 function setCambio($tabla, $clave, $campo, $antes, $despues){
-	if($antes == $despues){
+	if($antes === $despues){
 		return false;
 	}
 	$xT	= new cSistemas_modificados();
@@ -2501,7 +2514,10 @@ function setCambio($tabla, $clave, $campo, $antes, $despues){
 	$xT->tiempo(time());
 	$xT->v_antes($antes);
 	$xT->v_despues($despues);
-	$res	= $xT->query()->insert()->save();
+	$xQ	= $xT->query()->insert();
+	
+	$res	= $xQ->save();
+	
 	return ($res === false) ? false : true;
 }
 
@@ -2701,4 +2717,7 @@ class cBases{
 		$xCache->clean("base-arr-sa-$base");
 	}
 }
+
+
+
 ?>

@@ -69,7 +69,7 @@ if($action == SYS_NINGUNO){
 	
 	
 	//$xFRM->addHElem("<div class='tx4'><label for='f1'>" . $xFRM->lang("archivo") . "</label><input type='file'  name='f1' id='f1'  /></div>");
-	$xFRM->OFile("f1");
+	$xFRM->OFileText("f1");
 	
 	$xFRM->addHElem( $xSel->getListaDePersonasXClass("classx")->get("TR.CLASE X", true) );
 	$xFRM->addHElem( $xSel->getListaDePersonasYClass("classy")->get("TR.CLASE Y", true) );

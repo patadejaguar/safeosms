@@ -204,7 +204,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 			$table_s->setRowCSS("credito", "center");
 			$table_s->setKeyField("codigo");
 			$table_s->setWithMetaData();
-			$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo");
+			$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo", "chk");
 			
 			$strTbls .= $table_s->Show("TR.CREDITOS");
 		} else {
@@ -212,7 +212,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 			$sqllike = $sqlL->getListadoDePersonasV2($w1 . $WSoc, "0,100", $extras);
 			$table_s = new cTabla($sqllike);
 			//$table_s->setEventKey("setSocio");
-			$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo");
+			$table_s->OCheckBox("jsAddCola(" . HP_REPLACE_ID . ", this)", "codigo", "chk");
 			$table_s->setEventKey("var xP=new PersGen();xP.goToPanel");
 			//$table_s->OButton("TR.PANEL", 'jsToPanel(_REPLACE_ID_)', $table_s->ODicIcons()->CONTROL );
 
@@ -244,11 +244,11 @@ $xTxt		= new cHText();
 $xTxt2		= new cHText();
 $xChk		= new cHCheckBox();
 $xChk->setDivClass("");
-$xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR);
+$xFRM->OButton("TR.Buscar", "jsShowSocios()", $xFRM->ic()->BUSCAR, "cmdbuscaridx", "blue");
 $xFRM->addToolbar($xChk->get("TR.TODO", "idtodo", false));
 
 $xFRM->OButton("TR.MODIFICAR BATCH", "jsEjecutarBatch()", $xFRM->ic()->EJECUTAR, "idmodbatch", "green");
-$xFRM->OButton("TR.EXPORTAR", "jsEjecutarExportar()", $xFRM->ic()->EJECUTAR, "idexp", "blue2");
+$xFRM->OButton("TR.EXPORTAR -> ASOCIADA", "jsEjecutarExportar()", $xFRM->ic()->EJECUTAR, "idexp", "yellow");
 
 $xTxt->addEvent("jsGetPersonasByKey(this)", "onkeyup");$xTxt2->addEvent("jsGetPersonasByKey2(this)", "onkeyup");
 $xTxt->setDivClass("");
@@ -333,7 +333,10 @@ function initComponents(){
 	$("#idtextobusqueda").focus();
 	$("#idtextobusqueda").select();
 }
-function jsShowSocios(){ jsaShowSocios(); }
+function jsShowSocios(){
+	OListas	= {};
+	jsaShowSocios(); 
+}
 function jsToPanel(idpersona){ var xP = new PersGen(); xP.goToPanel(idpersona); }
 
 function jsMostrarOpciones() {
@@ -351,9 +354,9 @@ function jsMostrarOpciones() {
 
 
 function jsAddCola(id, obj){
-	console.log(id);
 	if (obj.checked == true) {
-		OListas[id] = id;
+		setLog("Add: " + id);
+		OListas[id] = {clave: id, control : obj.id };
 	} else {
 		delete OListas[id];
 	}
@@ -364,7 +367,7 @@ function jsSetUpdate(obj){
 	var campo	= $(obj).attr("data-campo");
 	var valor	= $(obj).val();
 	var cnt		= campo + "=" + valor;
-	setLog(cnt);
+	//setLog(cnt);
 	xG.save({tabla:'operaciones_mvtos', id:clave, content: cnt})
 	xG.markTR({src:obj});
 }
@@ -372,16 +375,19 @@ function jsEjecutarBatch(){
 	xG.confirmar({msg: "¿ Desea ejecutar la actualizacion masiva ?", callback: jsEjecutarBatchReady});
 }
 function jsEjecutarExportar(){
-	xG.confirmar({msg: "¿ Desea ejecutar la actualizacion masiva ?", callback: jsEjecutarExportReady});
+	xG.confirmar({msg: "¿ Desea ejecutar la exportacion masiva ?", callback: jsEjecutarExportReady});
 }
 function jsEjecutarExportReady(){
-	for (var itms in OListas) {
-		var idpersona	= OListas[itms];
+	for (var itms in OListas){
+		var idobj		= OListas[itms];
+		var idpersona	= idobj.clave;
 		xG.svc({ url : "../svc/pc.svc.php?cmd=EXPORT&persona=" + idpersona, 
 			callback : function(data){
 				xG.alerta({ msg: data.message });
-			} });
+				delete OListas[itms];
+		}});
 	}
+	//OListas	= {};
 }
 function jsEjecutarBatchReady(){
 	var idsucursal	= $("#idsucursal").val();
@@ -389,10 +395,21 @@ function jsEjecutarBatchReady(){
 	if(idsucursal !== "todas"){
 		cnt = "sucursal=" + idsucursal;
 	}
-	for (var itms in OListas) {
-		var idpersona	= OListas[itms];
-		xG.save({tabla:'socios_general', id:idpersona, content: cnt})
+
+	//console.log(OListas);
+	
+	for (var itmx in OListas) {
+		var idobj		= OListas[itmx];
+		var idpersona	= idobj.clave;
+		
+		xG.alerta({ msg: idpersona + ".." + itmx});
+		xG.save({preguntar:false,nomsg:true, tabla:'socios_general', id : idpersona, content: cnt, 
+			callback: function(){
+				delete OListas[itmx];
+			}});
+		
 	}
+	//OListas	= {};
 }
 </script>
 </html>

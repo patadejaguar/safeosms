@@ -56,6 +56,7 @@ function jsaBuscar($nombre, $papellido, $sapellido, $gws, $insafe){
 	$nombre		= utf8_encode($nombre);
 	
 	$xAml		= new cAMLPersonas(DEFAULT_SOCIO);
+	$xListaInt	= new cAMLListaNegraInterna();
 	$xNot		= new cHNotif();
 	$xBtn		= new cHButton();
 	$xTab		= new cHTabla();
@@ -65,6 +66,29 @@ function jsaBuscar($nombre, $papellido, $sapellido, $gws, $insafe){
 	$xTab->addTH("Proveedor");
 	$xTab->addTH("Texto coincidente");
 	$xTab->addTH("Reporte");
+	
+	//Buscar en la Lista Negra Interna
+	
+	$arrRes		= $xListaInt->getBuscarLPB($nombre, $papellido, $sapellido);
+	if(count($arrRes)<=0){
+		$xTab->initRow();
+		$xTab->addTD($xNot->get($xListaInt->getMessages(), "idnoint", $xNot->SUCCESS), " colspan='3' ");
+		$xTab->endRow();
+			
+	} else {
+		foreach ($arrRes as $idx => $dato){
+			$xTab->initRow();
+			$xTab->addTD("LPB");
+			$xTab->addTD($dato);
+			$xTab->addTD("");
+			$xTab->endRow();
+		}
+		if(MODO_DEBUG){
+			$xTab->initRow();
+			$xTab->addTD($xNot->get($xListaInt->getMessages(), "idsiint", $xNot->ERROR), " colspan='3' ");
+			$xTab->endRow();
+		}
+	}
 	
 	//setLog("$nombre, $papellido, $sapellido");
 	//return "$nombre, $papellido, $sapellido";
@@ -164,8 +188,10 @@ $xTxt		= new cHText();
 $xChk		= new cHCheckBox();
 $xTxt->setDivClass("tx1");
 
+$xFRM->OButton("TR.Nueva Busqueda", "jsaBuscar()", $xFRM->ic()->BUSCAR, "idcmdnewbusq", "blue");
+
 $xFRM->OButton("TR.Buscar en Archivo", "jsaBuscarPrevios()", $xFRM->ic()->ARCHIVAR);
-$xFRM->OButton("TR.Nueva Busqueda", "jsaBuscar()", $xFRM->ic()->BUSCAR);
+
 //$xFRM->addHElem($xTxt->get("idbuscar", "", "TR.Nombre"));
 $xFRM->OText("idnombre", "", "TR.Nombre");
 $xFRM->OText("idpapellido", "", "TR.PRIMER_APELLIDO");

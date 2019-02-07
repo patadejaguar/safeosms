@@ -55,6 +55,25 @@ switch ($cmd){
 		}
 		$rs["message"]	= $xSoc->getMessages();
 		break;
+	case "RECOVER-PASS":
+			$xUsr	= new cSystemUser();
+			
+			if($xUsr->initByEmail($email)){
+				
+				if($xUsr->sendLinkRestoration() == true){
+					$rs["error"]	= true;
+				} else {
+					$rs["error"]	= false;
+				}
+				$rs["message"]	= $xUsr->getMessages();
+			} else {
+				$rs["error"]	= true;
+				$rs["message"]	= $xUsr->getMessages();
+			}
+			
+			
+			
+			break;
 	case "CONSULTA":
 		//numero de credito
 		

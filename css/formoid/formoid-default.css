@@ -544,6 +544,8 @@ Not advised to edit stuff below this line
     width: 100%;
 	height: auto !important;
 	display: inline-block;
+	padding-bottom:3px;
+	margin-bottom:5px;
 }
 
 .toolnav {
@@ -565,6 +567,7 @@ float:left;
 border-right:1px solid #5d5d5d;
 border-left:2px solid #929292;
 width:12.1%; /*135px*/
+max-width: 11em;
 height:2.75em;
 border-bottom:1px solid #575757;
 border-top:1px solid #797979;
@@ -616,19 +619,19 @@ overflow: hidden;
 
 }
 /*Temas de Botones*/
-.toolnav li a.blue,.diag-blue .ui-widget-header {
+.toolnav li a.blue,.diag-blue .ui-widget-header, .alert-blue {
 	text-shadow: 0 -1px 3px #0066cc;
 	background: #2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x
 }
-.toolnav li a.orange,.diag-orange .ui-widget-header {
+.toolnav li a.orange,.diag-orange .ui-widget-header, .alert-orange {
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.orange2 {
+.toolnav li a.orange2, .alert-orange2 {
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #D16713;
 }
-.toolnav li a.gorange {
+.toolnav li a.gorange, .alert-gorange {
 	/*text-shadow: none;*/
 	text-shadow: 0 0 0 #A8122B;
 	color: #D16713;
@@ -642,13 +645,13 @@ overflow: hidden;
 	background: #F9FAF6;
 }
 
-.toolnav li a.gblue {
+.toolnav li a.gblue, .alert-gblue {
 	text-shadow: 0 0 0 #2C4770;
 	color: #1a73e8;
 	font-weight: 500;
 	background: #F9FAF6;
 }
-.toolnav li a.gred {
+.toolnav li a.gred, .alert-gred {
 	text-shadow: 0 0 0 #A8122B;
 	color: #d93025;
 	font-weight: 500;
@@ -662,7 +665,7 @@ overflow: hidden;
 	text-shadow: 0 -1px 3px #468847;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.white{
+.toolnav li a.white, .alert-gwhite{
 text-shadow: none; color: #901429;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 }
@@ -677,20 +680,20 @@ background: #001121;
 text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
-.toolnav li a.whiteblue {
+.toolnav li a.whiteblue, .alert-whiteblue {
 text-shadow: 0 -1px 2px #AAAAAA; color: #000066;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
-.toolnav li a.gris,.toolnav li a.gray {
+.toolnav li a.gris,.toolnav li a.gray, .alert-gray {
 	text-shadow: 0 -1px 3px #381f00;
 	background: #001121 url(../../images/ui/ui-bg_gloss-wave_45_817865_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.gray2, .toolnav li a.grey2 {
+.toolnav li a.gray2, .toolnav li a.grey2, .alert-gray2 {
 	text-shadow: none; color: #252B29;
 	background: #B9CCD2;
 }
-.toolnav li a.gray3 {
+.toolnav li a.gray3, .alert-gray3 {
 	text-shadow:none; color: #704F5D;
 	background: #E5E9E9;
 }
@@ -750,7 +753,7 @@ background: #2C4770;
 	color: white;
 	text-shadow: 0 -1px 3px #202020;
 }
-.toolnav li a.purple, .credito-estado-rechazado {
+.toolnav li a.purple, .credito-estado-rechazado, .alert-purple {
 	text-shadow:none;
 	color: #320032;
 	background: #E0D5F9;
@@ -789,8 +792,8 @@ border-right:1px solid #5d5d5d;
 }
 
 .fieldform legend {
-    position: relative;
-    left: 25%;
+    /*position: relative;
+    left: 25%;*/
     min-width: 50%;
 
 }

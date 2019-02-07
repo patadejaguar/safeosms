@@ -1,3 +1,4 @@
+@import "global.css.php";
 /*@import "global.css";*/
 body {
 	background: #63bad8 url(../images/bg.jpg) 50% 0px repeat-x;
@@ -5,9 +6,11 @@ body {
 #grid {
 	font-family: Verdana, Arial, Helvetica, Sans-serif;
 	color: #616161;
-	font-size: .85em;
+	font-size: 1em;
 	margin: 0 auto;
 	min-height: 300px;
+	border: 1px solid lightgray;
+	margin-top: .2em;
 }
 #grid .grid_table{
 	min-height: 300px;
@@ -66,10 +69,10 @@ body {
 #grid .grid_table_header
 {
 	background-image: url('../images/grid/header.png'); 
-	height: 1.4em; 
+	height: 2.5em; 
 	color: white; 
-	font-weight: bold; 
-	font-size: 1em;
+	text-shadow: 0 -2px 3px #4d4d4d;
+	font-size: 1.1em;
 	text-align: center;
 	text-transform: uppercase;
 }
@@ -88,7 +91,7 @@ body {
 	padding-left: 5px;
 	padding-bottom: 0px;
 	position: relative; 
-	height: 1.6em;
+	height: 2em;
 	overflow: hidden; 
 	cursor:pointer;
 	border-bottom:2px solid #cbc7b8;
@@ -118,7 +121,7 @@ body {
 	padding-left: 5px;
 	padding-bottom: 0px;
 	position: relative; 
-	height: 1.6em; 
+	height: 2em; 
 	overflow: hidden; 
 	cursor:pointer;
 	border-top: 1px solid white;
@@ -149,24 +152,23 @@ body {
 #grid .grid_footer
 {
 	background-color: #f9f9f9; 
-	height: 1.5em; 
+	height: 2em; 
 	color: #616161;
 }
 
 #grid .grid_table_cell
 {
-	padding-left: 2px; 
 	position: relative; 
 	border-bottom: 1px solid lightgray;
-	height: 1.6em;
+	height: 1.8em;
 	overflow: hidden; 
 	margin: 0px;
-	font-size: 0.85em;
+	font-size: 1em;
 }
 #grid .grid_table_cell img
 {
     max-height: 98%;
-    max-width: 14px;
+    max-width:14px ;
     border-style: outset;
     border-width: 1px;
     padding: 1px;
@@ -192,3 +194,31 @@ body {
 	border-collapse: collapse; border-spacing: 0;
 }
 #grid  th, #grid td { padding: 0px; }
+
+fieldset {
+    background-color: #F9F9F9;
+    border:1px solid #888;
+    border-radius:3px;
+    padding: 2px; margin: 1px;
+	max-width:1108px; text-align: center;	margin: 0 auto;
+}
+
+caption, legend, .ui-tooltip h3, .ui-tooltip-title {
+    margin:0px;border:1px solid #888;
+    -webkit-text-shadow: 0 1px 0 #666666;
+    text-shadow: 0 1px 0 #666666;
+    color: #fff;
+    background: #ffa366;
+    background: -moz-linear-gradient(top, #ffa366 0%, #da5700 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #ffa366), color-stop(100%, #da5700));
+    background: -webkit-linear-gradient(top, #ffa366 0%, #da5700 100%);
+    background: -o-linear-gradient(top, #ffa366 0%, #da5700 100%);
+    background: -ms-linear-gradient(top, #ffa366 0%, #da5700 100%);
+    background: linear-gradient(to bottom, #ffa366 0%, #da5700 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffa366', endColorstr='#da5700', GradientType=0);
+    border-color: #804620;
+    line-height: 1.8em;
+    font-size: .95em;
+    text-align: center;
+    border-radius: 4px;
+}

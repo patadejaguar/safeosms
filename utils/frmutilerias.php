@@ -16,6 +16,7 @@ $xHP		= new cHPage("TR.Utilerias del Sistema");
 $xF			= new cFecha();
 
 $oficial 	= elusuario($iduser);
+$xQL		= new MQL();
 
 ini_set("max_execution_time", 2400);
 //ini_set("max_execution_time", 900);
@@ -159,9 +160,9 @@ $xHP->init();
 			case 200:
 				//Actualiza las Tasas de las Cuentas de Captacion
 				$sql 	= "SELECT * FROM captacion_tasas";
-				$ql		= new MQL();
+				
 
-				$rs 	= $ql->getDataRecord($sql);
+				$rs 	= $xQL->getDataRecord($sql);
 				$xTasa	= new cCaptacion_tasas();
 				foreach ($rs as $row){
 					$xTasa->setData($row);
@@ -345,7 +346,7 @@ $xHP->init();
 				/**
 				 * Corrige ultimos pagos
 				 */
-				$xQL		= new MQL();
+				//$xQL		= new MQL();
 				$rs			= $xQL->getDataRecord("SELECT `numero_socio`,`numero_solicitud`,`pagos_autorizados`,`monto_parcialidad`, 
 						SUM(`operaciones_mvtos`.`afectacion_real`) AS `monto`,
 						SUM(IF(`operaciones_mvtos`.`tipo_operacion`=410,0,`operaciones_mvtos`.`afectacion_real`)) AS `accesorios`
@@ -393,31 +394,8 @@ $xHP->init();
 				$cSoc	= new cSocio($socio);
 				$msg	.= $cSoc->setDeleteSocio();
 				break;
-			case 804:
-				$sql_corrr_cast = "SELECT * FROM general_import";
-				$rs_corr_cast = mysql_query($sql_corrr_cast, cnnGeneral());
-				while ($rowc = mysql_fetch_array($rs_corr_cast)) {
-					$sql_corr = "/** Actualiza creditos a Final de Plazo a Castigados */
-			UPDATE creditos_solicitud SET estatus_actual=20
-			WHERE saldo_actual>0 AND periocidad_de_pago=360
-			AND fecha_vencimiento<='2003-04-30' AND tipo_autorizacion=2
-			AND numero_socio=$rowc[0] AND saldo_actual=$rowc[1]";
-					//my_query($sql_corr);
-				}
-				break;
-			case 805:
-				$sql_corrr_cast = "SELECT * FROM general_import";
-				$rs_corr_cast = mysql_query($sql_corrr_cast, cnnGeneral());
-				while ($rowc = mysql_fetch_array($rs_corr_cast)) {
-					$sql_corr = "/** Actualiza creditos Solidarios a Castigados */
-			UPDATE creditos_solicitud SET estatus_actual=20
-			WHERE saldo_actual>0 AND periocidad_de_pago!=360
-			AND fecha_vencimiento<='2006-08-02'
-			AND tipo_autorizacion=1
-			AND numero_socio=$rowc[0]";
-					//my_query($sql_corr);
-				}
-				break;
+
+
 
 			case 810:
 
@@ -425,12 +403,12 @@ $xHP->init();
 				 *  Actualiza el Expediente por Oficial de Credito segun general Import
 				 */
 				$sql = "SELECT * FROM general_import";
-				$rs = mysql_query($sql, cnnGeneral());
-				while ($rw = mysql_fetch_array($rs)){
-					$sql_update = " UPDATE creditos_solicitud SET oficial_seguimiento=$rw[1] WHERE saldo_actual>0 AND numero_socio=$rw[0] AND estatus_actual=20 ";
+				//$rs = mysql_query($sql, cnnGeneral());
+				//while ($rw = mysql_fetch_array($rs)){
+					//$sql_update = " UPDATE creditos_solicitud SET oficial_seguimiento=$rw[1] WHERE saldo_actual>0 AND numero_socio=$rw[0] AND estatus_actual=20 ";
 					//my_query($sql_update);
-				}
-				@mysql_free_result($rs);
+				//}
+				//@mysql_free_result($rs);
 
 				break;
 			case 813:
@@ -440,7 +418,7 @@ $xHP->init();
 				WHERE saldo_actual!=0 AND  fecha_ministracion<CURDATE()
 				AND estatus_actual!=50
 				GROUP BY numero_socio, tipo_convenio, estatus_actual ";
-				$rs = mysql_query($sql_ctw, cnnGeneral());
+				/*$rs = mysql_query($sql_ctw, cnnGeneral());
 				while($rw = mysql_fetch_array($rs)){
 					$cta_ctw = cwcuenta($rw[0], $rw[1], $rw[2]);
 					$sql_compacw = "SELECT * FROM compacw_importados WHERE cuenta='$cta_ctw'";
@@ -453,7 +431,7 @@ $xHP->init();
 						//echo "$sql_u_sdo <br />";
 						my_query($sql_u_sdo);
 					}
-				}
+				}*/
 
 				break;
 				//Actualiza un Credito, Sus Operaciones relacionadas segun el Socio y Numero
@@ -488,13 +466,14 @@ $xHP->init();
 				/**
 				 * Actualiza los Ahorros segun Mvtos Dados
 				 */
-				$sql_u_captacion = "SELECT * FROM general_import";
+				/*$sql_u_captacion = "SELECT * FROM general_import";
 				$rs = mysql_query($sql_u_captacion, cnnGeneral());
 				while($rw = mysql_fetch_array($rs)) {
 					$sql_go_cap = "UPDATE captacion_cuentas SET inversion_fecha_vcto='$rw[2]', inversion_periodo=$rw[5],
 					tasa_otorgada=$rw[3], saldo_cuenta=$rw[1], fecha_afectacion='$rw[4]' WHERE numero_cuenta=$rw[0]";
 					//my_query($sql_go_cap);
-				}
+				}*/
+				
 				break;
 			case 817:
 				/**
@@ -532,7 +511,7 @@ $xHP->init();
 				$sql ="UPDATE operaciones_mvtos, operaciones_tipos SET operaciones_mvtos.afectacion_estadistica=0
 					WHERE operaciones_mvtos.tipo_operacion=operaciones_tipos.idoperaciones_tipos
 					AND operaciones_tipos.afectacion_en_sdpm=0";
-				my_query($sql);
+				$xQL->setRawQuery($sql);
 				break;
 			case 829:
 				//Asocia una Cuenta de Captacion a los Creditos con tasa de credito mayor a cero
@@ -1091,7 +1070,7 @@ $xHP->init();
 
 				break;
 			case 857:
-				$ql						= new MQL();
+				
 				$ForzarCorreccion		= strtoupper($id);
 				$soloTodos				= $id2;
 				$Forzar					= ( $ForzarCorreccion == "SI") ? true : false;
@@ -1104,9 +1083,9 @@ $xHP->init();
 				$msg				.= $xCUtils->setAcumularIntereses($Forzar, false, $TodosSin);
 				//Actualizar Fecha
 				$fechaop				= fechasys();
-				$ql->setRawQuery("SET @fecha_de_corte='$fechaop';");
-				$ql->setRawQuery("CALL `sp_correcciones`()");
-				$ql->setRawQuery("CALL `proc_creditos_letras_del_dia`()");
+				$xQL->setRawQuery("SET @fecha_de_corte='$fechaop';");
+				$xQL->setRawQuery("CALL `sp_correcciones`()");
+				$xQL->setRawQuery("CALL `proc_creditos_letras_del_dia`()");
 				//rehacer intereses
 				$msg				.= $xCUtils->setAcumularMoraDeParcialidades();
 				break;
@@ -1585,8 +1564,8 @@ $xHP->init();
 				break;
 				//===============genera colonias por localidades
 			case 13002:
-				$ql				= new MQL();
-				$rs				= $ql->getDataRecord("SELECT * FROM `catalogos_localidades`");
+				
+				$rs				= $xQL->getDataRecord("SELECT * FROM `catalogos_localidades`");
 				$xLoc			= new cCatalogos_localidades();
 				$xCol			= new cGeneral_colonias();
 				foreach ($rs as $rw){
@@ -1595,7 +1574,7 @@ $xHP->init();
 					$xCol->codigo_de_estado( $xLoc->clave_de_estado()->v() );
 					$xCol->codigo_de_municipio( $xLoc->clave_de_municipio()->v() );
 					$xCol->codigo_postal( $xLoc->clave_de_localidad()->v() );
-					$DEstado		= $ql->getDataRow("SELECT * FROM `general_estados` WHERE idgeneral_estados= " . $xLoc->clave_de_estado()->v());
+					$DEstado		= $xQL->getDataRow("SELECT * FROM `general_estados` WHERE idgeneral_estados= " . $xLoc->clave_de_estado()->v());
 					$NEstado		= "";
 					if( isset($DEstado["nombre"] )){
 						$NEstado = $DEstado["nombre"];	
@@ -1603,7 +1582,7 @@ $xHP->init();
 					}
 					$xCol->estado_colonia($NEstado);
 					$xCol->fecha_de_revision(fechasys());
-					$DMun			= $ql->getDataRow("SELECT * FROM `general_municipios` WHERE `clave_de_municipio`= " . $xLoc->clave_de_municipio()->v() . " AND `clave_de_entidad`=" . $xLoc->clave_de_estado()->v());
+					$DMun			= $xQL->getDataRow("SELECT * FROM `general_municipios` WHERE `clave_de_municipio`= " . $xLoc->clave_de_municipio()->v() . " AND `clave_de_entidad`=" . $xLoc->clave_de_estado()->v());
 					$NMun			= "";
 					if(isset($DMun["nombre_del_municipio"])){
 						$NMun		= $DMun["nombre_del_municipio"];
@@ -1658,14 +1637,14 @@ $xHP->init();
 			case 9001:
 				$desucursal		= $id;
 				$asucursal		= $id2;				
-				$ql				= new MQL();
+				
 				$sql			= "SHOW TABLES IN " . MY_DB_IN;
-				$rs				= $ql->getDataRecord($sql);
+				$rs				= $xQL->getDataRecord($sql);
 				foreach ($rs as $row){
 					$tabla		= $row["Tables_in_" . MY_DB_IN];
 					$isql		= "UPDATE $tabla SET sucursal='$asucursal' WHERE sucursal='$desucursal' ";
-					$ql->setRawQuery($isql);
-					$ql->setRawQuery("UPDATE $tabla SET sucursal=LOWER(sucursal)");
+					$xQL->setRawQuery($isql);
+					$xQL->setRawQuery("UPDATE $tabla SET sucursal=LOWER(sucursal)");
 				}
 				break;
 			case 9002:

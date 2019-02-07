@@ -83,15 +83,32 @@ if($idtelefono1 == ""){
 
 $xFRM->ODate("idfecha", $idfecha, "TR.Fecha");
 $xFRM->addHElem( $xSel->getListaDeHoras("", $idhora)->get(true) );
+
 //$xFRM->addHElem( $xSel->getListaDeEstadoDeLlamada("", $idestado)->get(true) );
 if($persona > DEFAULT_SOCIO AND $credito > DEFAULT_CREDITO){
-	$xFRM->addHElem( $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono1", $idtelefono1)->get(true) );
-	$xFRM->addHElem( $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono2", $idtelefono2)->get(true) );
+	$xSelT1	= $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono1", $idtelefono1);
+	$tel1	= $xSelT1->get(true);
+	$tel2	= $xSel->getListaDeTelefonosPorPersona($persona, "idtelefono2", $idtelefono2)->get(true);
+	if($xSelT1->getCountRows()<=0){
+		$xFRM->OTelefono("idtelefono1", $idtelefono1, "TR.Telefono 1");
+		$xFRM->setValidacion("idtelefono1", "validacion.nozero");
+		
+		$xFRM->OTelefono("idtelefono2", $idtelefono2, "TR.Telefono 2");
+	} else {
+		$xFRM->addHElem( $tel1 );
+		$xFRM->addHElem( $tel1 );
+	}
+
 } else {
-	$xFRM->OText("idtelefono1", $idtelefono1, "TR.Telefono 1");
-	$xFRM->OText("idtelefono2", $idtelefono2, "TR.Telefono 2");
+	$xFRM->OTelefono("idtelefono1", $idtelefono1, "TR.Telefono 1");
+	$xFRM->setValidacion("idtelefono1", "validacion.nozero");
+	
+	$xFRM->OTelefono("idtelefono2", $idtelefono2, "TR.Telefono 2");
 }
-$xFRM->addHElem( $xSel->getListaDeOficiales("", "", $idoficial)->get(true) );
+
+//$xFRM->addHElem( $xSel->getListaDeOficiales("", SYS_USER_ESTADO_ACTIVO, $idoficial)->get(true) );
+$xFRM->OHidden("idoficial", $idoficial);
+
 $xFRM->addObservaciones();
 $xFRM->addGuardar();
 

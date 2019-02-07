@@ -28,17 +28,32 @@ include_once("../core/core.common.inc.php");
 include_once("../core/core.html.inc.php");
 include_once("../core/core.captacion.inc.php");
     
-	ini_set("display_errors", "off");
-    ini_set("max_execution_time", 1600);
-    
-    $key		 		= (isset($_GET["k"]) ) ? true : false;
-    $parser				= (isset($_GET["s"]) ) ? true : false;
-    
-    //Obtiene la llave del
+ini_set("display_errors", "off");
+ini_set("max_execution_time", 1600);
+
+$key			= parametro("k", true, MQL_BOOL);
+$parser			= parametro("s", false, MQL_BOOL);
+
+//Obtiene la llave del
 //if ($key == MY_KEY) {
-	$messages			= "";
-	$fechaop			= parametro("f", fechasys());
-	$xF					= new cFecha(0, $fechaop);
+$messages			= "";
+$fechaop		= parametro("f", false, MQL_DATE);
+$xF				= new cFecha(0, $fechaop);
+$fechaop		= $xF->getFechaISO($fechaop);
+
+$xCierre		= new cCierreDelDia($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop);
+$forzar			= parametro("forzar", false, MQL_BOOL);
+
+$next			= "./cierre_de_seguimiento.frm.php?s=true&k=" . $key . "&f=$fechaop";
+$next			= ($forzar == true) ? $next . "&forzar=true" : $next;
+if($EsCerrado == true AND $forzar == false){
+	setAgregarEvento_("Cierre De Captacion Existente", 5);
+	if ($parser == true){
+		header("Location: $next");
+	}
+} else {
+	
 	getEnCierre(true);
 	//INICIAR
 	if(MODULO_CAPTACION_ACTIVADO == true){
@@ -91,10 +106,10 @@ include_once("../core/core.captacion.inc.php");
 		if(ENVIAR_MAIL_LOGS == true){ $xLog->setSendToMail("TR.Eventos del Cierre del Captacion"); }
 	}
 	if ($parser == true){
-		header("Location: ./cierre_de_seguimiento.frm.php?s=true&k=" . $key . "&f=$fechaop");
+		header("Location: $next");
 	}
 	getEnCierre(false);
-/*} else{
-	setLog("La llave Original $key no correponde a la variable" . MY_KEY);
-}*/
+
+}
+
 ?>

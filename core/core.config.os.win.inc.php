@@ -6,7 +6,7 @@ $V_9003d1df22eb4d38200150	= "demo";						//Password del usuario MySQL
 //$SAFEPathRoot				= "C:\\server2go\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
 $SAFEPathRoot				= "C:\\Users\\LuisHumberto\\Dropbox\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
 //$V_cf1e8c14e54505f60aa10c	= "http://localhost:4001";	//Ruta HTTP del sistema
-$V_cf1e8c14e54505f60aa10c	= "http://127.0.0.1:4001";	//Ruta HTTP del sistema
+$V_cf1e8c14e54505f60aa10c	= "http://127.0.0.1/";	//Ruta HTTP del sistema
 //$V_67e92c8765a9bc7fb2d335	= "localhost";				//Nombre o IP del Servidor Mysql
 $V_67e92c8765a9bc7fb2d335	= "localhost:3306";				//Nombre o IP del Servidor Mysql
 /**

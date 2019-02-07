@@ -459,11 +459,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 			msg : 'CREDITO_FALTA_DREEST'
 		});
 	}
-	function jsGetCirculoDeCredito(id){
-		var ff 		= window.prompt("Fecha de Corte:");
-		var xrl		= "../rptlegal/circulo_de_credito.rpt.php?creditoref=" + id + "&fechafinal=" + ff;
-		xG.w({ url: xrl, tab : true });  
-	}
+	function jsGetCirculoDeCredito(id){ xC.getReporteSIC(id); }
 </script>	
 <?php
 	if($idsolicitud> DEFAULT_CREDITO){

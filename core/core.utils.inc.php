@@ -934,7 +934,7 @@ class cDocumentos {
 	private $mReady			= false;
 	private $mIdxFileL		= "ftp-list-files-";
 	private $mPrePath		= "";
-	
+	private $mRutaLocal		= "";
 	function __construct($nombre = ""){ $this->mNombreArchivo = $nombre; $this->getTipo();	}
 	function getTipo($documento = false){
 		$documento	= ($documento == false) ? $this->mNombreArchivo : $documento;
@@ -957,16 +957,22 @@ class cDocumentos {
 	function isImagen(){ return $this->mEsImagen; }
 	function isDocto(){ return $this->mEsDocto; }
 	function getNombreArchivo(){ return $this->mNombreArchivo; }
+	function setNombreArchivo($f){
+		$this->mNombreArchivo	= $f;
+		$this->getTipo($f);
+	}
+	function getRutaLocal(){ return $this->mRutaLocal; }
+	
 	function getExt(){ return $this->mExt; }
 	
-	function getEmbed($documento = false, $persona = false, $conteo = 0){
+	function getEmbed($archivo = false, $persona = false, $conteo = 0){
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
-		$documento		= ($documento == false) ? $this->mNombreArchivo : $documento;
-		$mfile			= $this->FTPGetFile($documento, $persona);
+		$archivo		= ($archivo == false) ? $this->mNombreArchivo : $archivo;
+		$mfile			= $this->FTPGetFile($archivo, $persona);
 		$rs				= "";
-		$ext			= $this->getTipo($documento);		
+		$ext			= $this->getTipo($archivo);
 		if($conteo > 4){
-			$rs			= ($ext == $this->EXT_PDF) ? "<a class='button'><i class='fa fa-file-pdf-o fa-2x'></i>" . $documento . "</a>"  : "<a class='button'><i class='fa fa-file-image-o fa-2x'></i>" . $documento . "</a>";
+			$rs			= ($ext == $this->EXT_PDF) ? "<a class='button'><i class='fa fa-file-pdf-o fa-2x'></i>" . $archivo . "</a>"  : "<a class='button'><i class='fa fa-file-image-o fa-2x'></i>" . $archivo . "</a>";
 		} else {
 			$d64		= base64_encode($mfile);
 			if($ext == $this->EXT_PDF){
@@ -1033,31 +1039,39 @@ class cDocumentos {
 			}
 		}
 		//$data 				= file_get_contents($ruta_completa);
+		$this->mRutaLocal		= $ruta_completa;
 		return $ruta_completa;
 	}
-	function FTPGetFile($documento = false, $persona = false){
+	function FTPGetFile($archivo = false, $persona = false){
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
-		$documento			= ($documento == false) ? $this->mNombreArchivo : $documento;
+		$archivo			= ($archivo == false) ? $this->mNombreArchivo : $archivo;
 		
 		if($persona != false){ ftp_chdir($this->mCnnFTP, $persona);	}
 		$mark				= ($persona == false) ? "" : "$persona-";
-		$ruta_completa		= PATH_TMP . "/$mark" . $documento;
+		
+		$ruta_completa		= PATH_TMP . "/$mark" . $archivo;
 		//TODO: 01/01/2015 Modificar 2014Nov19 mejorar en cache.- validar mejoras
 		if(is_file($ruta_completa)){
 			
 		} else {
 			$flocal 			= fopen( $ruta_completa, 'w');
-			if (ftp_fget($this->mCnnFTP, $flocal, $documento, FTP_BINARY, 0)) {
+			if (ftp_fget($this->mCnnFTP, $flocal, $archivo, FTP_BINARY, 0)) {
 				//setLog( "Se ha escrito satisfactoriamente sobre $flocal");
 			} else {
-				setLog( "Ha habido un problema durante la descarga de $documento en $flocal");
+				setLog( "Ha habido un problema durante la descarga de $archivo en $flocal");
 			}
 		}
+		$this->mRutaLocal		= $ruta_completa;
 		$data 				= file_get_contents($ruta_completa);
 		return $data;
 	}
 	function FTPConnect(){
-		$conn_id 		= ftp_connect(SYS_FTP_SERVER);
+		if(!function_exists("ftp_connect")){
+			$conn_id 		= false;
+		} else {
+			$conn_id 		= ftp_connect(SYS_FTP_SERVER);
+		}
+		
 		// iniciar sesión con nombre de usuario y contraseña
 		if($conn_id){
 			if(SYS_FTP_PWD !== "" AND SYS_FTP_USER !== ""){
@@ -1710,6 +1724,18 @@ class cCouchDB {
 		
 		return $data->rows;
 	}
+	function getTablaCatalogo($tabla){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$arr	= array(
+				"startkey" => $tabla,
+				"endkey" => $tabla
+		);
+		$this->mCnn->setQueryParameters($arr);
+		
+		$data	= $this->mCnn->getView("catalogos", "porTabla");
+		
+		return $data->rows;
+	}
 	function getCnn(){
 		
 		$this->mCnn		= new PHPOnCouch\CouchClient($this->MURL,$this->MDB);
@@ -1940,6 +1966,95 @@ class cCouchDB {
 		$str	= str_replace("@", "_", $str);
 		$str	= str_replace(".", "_", $str);
 		return $str;
+	}
+	/*function getQuery($str, $tabla){
+		if($this->mCnn === null){ $this->getCnn(); }
+		$arr	= array(
+				"startkey" => $tabla,
+				"endkey" => $tabla
+		);
+		$this->mCnn->setQueryParameters($arr);
+		
+		$data	= $this->mCnn->getView($this->mVista, "porTabla");
+		
+		return $data->rows;
+	}*/
+	function setRawQuery($arr){
+		/*curl -H 'Content-Type: application/json' \
+            -X POST http://127.0.0.1:5984/demo \
+            -d '{"company": "Example, Inc."}'
+            */
+		//$ch = curl_init();
+		
+		/*$customer = array(
+				'firstname' => 'Branko',
+				'lastname' => 'Ajzele',
+				'username' => 'ajzele',
+				'email' => 'branko.ajzele@example.com',
+				'pass' => md5('myPass123')
+		);*/
+		
+		//$payload = json_encode($customer);
+		
+		//curl_setopt($ch, CURLOPT_URL, 'http://127.0.0.1:5984/customers/'.$customer['username']);
+		//curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT'); /* or PUT */
+		//curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+		//curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		//curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+		//		'Content-type: application/json',
+		//		'Accept: */*'
+		//));
+		
+		//curl_setopt($ch, CURLOPT_USERPWD, 'myDBusername:myDBpass');
+		
+		//$response = curl_exec($ch);
+		
+		//curl_close($ch);
+		//curl -X PUT http://127.0.0.1:5984/reviews/01 -d '{"reviewer_name":"Ben", "stars":"5", "details":"Love the calzone!"}'
+		
+		
+	}
+	function setCreateVistas(){
+/*{
+  "_id" : "_design/example",
+  "views" : {
+    "foo" : {
+      "map" : "function(doc){ emit(doc._id, doc._rev)}"
+    }
+  }
+}*/
+		/*    tablanosync1 : {
+        _id: '_design/tablanosync1',
+        views: {
+          porTabla : {
+            map: function (doc) {
+                if(doc.idtemp.entidad1 == ""){
+                    emit(doc.tabla, doc);
+                }
+            }.toString()
+          }
+        }
+    }*/
+		/*    catalogos : {
+        _id: '_design/catalogos',
+        views: {
+          porTabla : {
+            map: function (doc) { emit(doc.tabla, doc) }.toString()
+          }
+        }
+	},*/
+		$this->setRunVista("catalogos", '{"views":{"porTabla":{"map":"function (doc) { emit(doc.tabla, doc) }"} } }');
+		//$this->setRunVista("tablanosync1", '{"views":{"porTabla":{ "map":"function(doc){ if(doc.idtemp.entidad1 == \'\'){ emit(doc.tabla, doc); } }" } } }');
+	}
+	private function setRunVista($nombre, $contenido){
+		$xSys	= new cSystemTask();
+		$cnt	= "Content-Type: application/json";
+		$server	= $this->MURL;
+		$db		= $this->MDB;
+		
+		//curl -X PUT http://localhost:5984/dev-task/_design/task -d @task.json
+		//setLog("curl -H 'Accept: application/json' -H '$cnt' -X PUT '$server" . $db . "/_design/$nombre' -d '$contenido'");
+		$xSys->runcmd("curl -H 'Accept: application/json' -H '$cnt' -X PUT $server" . $db . "/_design/$nombre -d '$contenido'");
 	}
 } 
 

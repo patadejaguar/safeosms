@@ -43,16 +43,21 @@ if($tabla !== false ){
 		$campo	= "estatus";
 		switch ($tabla){
 			case "creditos_lineas";
-			$campo	= "estado";
+				$campo	= "estado";
 			break;
 			case "creditos_periocidadpagos";
-			$campo	= "estatusactivo";
+				$campo	= "estatusactivo";
 			break;
 			case "socios_relacionestipos":
 				$campo	= "mostrar";
 				break;
 		}
-		if($tabla == "creditos_tipoconvenio"){
+		if($tabla == "socios_aeconomica"){
+			$xAc	= new cPersonaActividadEconomica(false, false);
+			$xAc->setID($id, true);
+			$xAc->setEstatusActivoI($activar);
+		
+		} else if($tabla == "creditos_tipoconvenio"){
 			$xProd	= new cProductoDeCredito($clave);
 			if($xProd->init() == true){
 				if($activar == true){

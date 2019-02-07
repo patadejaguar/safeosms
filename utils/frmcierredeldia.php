@@ -27,7 +27,7 @@ $xCierre->setForzar($forzar);
 setFoliosAlMaximo();
 
 
-$msg		= "EL CIERRE SE EFECTUARA UNA VEZ POR DIA, SI EL CIERRE YA ESTA HECHO NO SE ADMITIRAN MAS OPERACIONES.\r\nTENGA CUIDADO. EL EQUIPO SE APAGARA DESPUES DEL CIERRE.\r\nEL PROCESO TARDARA UNOS MINUTOS\r\n";
+$msg		= "EL CIERRE SE EFECTUARA UNA VEZ POR DIA, SI EL CIERRE YA ESTA HECHO NO SE ADMITIRAN MAS OPERACIONES.\r\nTENGA CUIDADO. EL SISTEMA SE BLOQUEARA DESPUES DEL CIERRE.\r\nEL PROCESO TARDARA UNOS MINUTOS\r\n";
 $msg		.= "FECHA DE CIERRE $fecha .LA FECHA DE INICIO EN EL SISTEMA ES " . FECHA_INICIO_OPERACIONES_SISTEMA. "\r\n";
 
 $jxc = new TinyAjax();
@@ -100,25 +100,38 @@ if($action == SYS_UNO){
 	$xBtn		= new cHButton();
 	$xTxt		= new cHText();
 	$xDate		= new cHDate();
-	$xSel		= new cHSelect();	
+	$xSel		= new cHSelect();
+	
+	$xFRM->setTitle($xHP->getTitle());
+	
+	$xFRM->OButton("TR.Ejecutar Cierre", "jsChecarAbiertas()", $xFRM->ic()->EJECUTAR);
 	
 	
-	$xFRM->OButton("TR.Cerrar Dia", "jsChecarAbiertas()", $xFRM->ic()->EJECUTAR);
-	
-	$xFRM->OButton("TR.Salir del Sistema", "var xG = new Gen(); xG.salir();", "salir");
 	$xFRM->addCerrar();
 	$xFRM->addJsBasico();
+	
 	
 
 	$xDate->addEvents(" onchange='jsGetListaDeCierres()' ");
 	$xFRM->addHElem( $xDate->get("TR.Fecha de corte", $fecha) );
+	$xSelP	= $xSel->getListaDePeriodosDeCredito("periodo_actual", false, EACP_PER_SOLICITUDES);
+	$xSelPH	= $xSelP->get(true);
 	
-	$xFRM->addHElem( $xTxt->getNumero("periodo_actual", EACP_PER_SOLICITUDES, "TR.CREDITOS_PERIODOS") );
+	if($xSelP->getCountRows()>0){
+		$xFRM->addHElem( $xSelPH );
+	} else {
+		
+		$xFRM->OHidden("periodo_actual",  EACP_PER_SOLICITUDES);
+	}
+	
+
 	
 	$xFRM->addObservaciones();
 	if(MODO_DEBUG == true){
 		$xFRM->OCheck("TR.FORZAR", "idforzar");
-		$xFRM->OButton("TR.Colocacion", "jsCierreDeColocacion()", $xFRM->ic()->DINERO);
+		
+		$xFRM->OButton("TR.CREDITOS", "jsCierreDeColocacion()", $xFRM->ic()->DINERO);
+		
 		if(MODULO_CAPTACION_ACTIVADO == true){
 			$xFRM->OButton("TR.Captacion", "jsCierreDeCaptacion()", $xFRM->ic()->AHORRO);
 		}
@@ -139,10 +152,13 @@ if($action == SYS_UNO){
 	
 	$xFRM->addAviso($msg);
 
+	$xFRM->OButton("TR.AGREGAR Periodo de mesa_de_credito", "var xG=new Gen();xG.w({url:'../frmcreditos/cambiarperiodo.frm.php?a=1', tiny:true});", $xFRM->ic()->CALENDARIO);
+	$xFRM->OButton("TR.Salir del Sistema", "var xG = new Gen(); xG.salir();", "salir", "idcmdsalir", "red");
+	
 	echo $xFRM->get();
 ?>
 <script>
-var kk 	= "<?php echo MY_KEY; ?>"
+var kk 	= "<?php echo MY_KEY; ?>";
 var xG	= new Gen();
 function jsToCerrarCorte(f){ var xT = new TesGen(); xT.goCerrarCaja(f);  }
 function jsGetListaDeCierres() {   jsaGetListadoCierres();  }
@@ -152,33 +168,29 @@ function jsChecarAbiertas(){
 	var itms		= $("#idabiertas").val();
 	if(entero(itms) > 0 && idomitir == false){
 		alert("EXISTEN CAJAS ABIERTAS!!");
-	} else {	
+	} else {
+		xG.spinInit();
 		frmcierre.submit();
 	}
 }
-function jsCierreDeColocacion(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_colocacion.frm.php?f=" + idfecha + "&k=" + kk});
-}
-function jsCierreDeCaptacion(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_captacion.frm.php?f=" + idfecha + "&k=" + kk});
-}
-function jsCierreDeContabilidad(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_contabilidad.frm.php?f=" + idfecha + "&k=" + kk});
-}
-function jsCierreDeSeguimiento(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_seguimiento.frm.php?f=" + idfecha + "&k=" + kk});
-}
+function jsCierreDeColocacion(){ jsExeCierre("cierre_de_colocacion.frm.php"); }
+function jsCierreDeCaptacion(){ jsExeCierre("cierre_de_captacion.frm.php"); }
+function jsCierreDeContabilidad(){ jsExeCierre("cierre_de_contabilidad.frm.php"); }
+function jsCierreDeSeguimiento(){ jsExeCierre("cierre_de_seguimiento.frm.php"); }
 function jsCierreDeRiesgos(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_riesgos.frm.php?f=" + idfecha + "&k=" + kk});
+	jsExeCierre("cierre_de_riesgos.frm.php");
+}
+function jsExeCierre(pp){
+	var idfecha		= $("#idfecha-0").val();
+	var idomitir	= $('#idforzar').prop('checked');
+	var ff			= (idomitir == true) ? "&forzar=true" : "";
+	xG.w({url:"../frmutils/" + pp + "?f=" + idfecha + "&k=" + kk + ff});
 }
 function jsCierreDeSistema(){
-	var idfecha	= $("#idfecha-0").val();
-	xG.w({url:"../frmutils/cierre_de_sistema.frm.php?s=true&f=" + idfecha + "&k=" + kk});
+	var idfecha		= $("#idfecha-0").val();
+	var idomitir	= $('#idforzar').prop('checked');
+	var ff			= (idomitir == true) ? "&force=true" : "";
+	xG.w({url:"../frmutils/cierre_de_sistema.frm.php?s=true&f=" + idfecha + "&k=" + kk + ff});
 }
 </script>
 <?php

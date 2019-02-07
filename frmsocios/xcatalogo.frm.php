@@ -22,9 +22,12 @@ $xL			= new cLang();
 	$xTabla				= new cPersonas_xclasificacion();
 	
 	$xHP->setNoDefaultCSS();
+	//$xHP->addCSS("../css/formoid/formoid-default.css");
+	
 	echo $xHP->getHeader(true);
 	//HTML Object END
 	echo '<body onmouseup="SetMouseDown(false);" >';
+	echo "<fieldset class=\"fieldform\"><!-- <legend class=\"title title-frm\">" . $xHP->getTitle() . "</legend> -->";
     //Define your grid
 	$_SESSION["grid"]->SetDatabaseConnection(MY_DB_IN, USR_DB, PWD_DB);
 	//Propiedades del GRID
@@ -56,6 +59,8 @@ $xL			= new cLang();
 	//===========================================================================================================
 	$_SESSION["grid"]->SetMaxRowsEachPage(25);
 	$_SESSION["grid"]->PrintGrid(MODE_EDIT);
-
+	
+	echo "</fieldset>";
+	
 echo $xHP->fin();
 ?>

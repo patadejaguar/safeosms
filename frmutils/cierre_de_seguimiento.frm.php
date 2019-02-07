@@ -31,14 +31,28 @@ ini_set("display_errors", "off");
 ini_set("max_execution_time", 900);
 ini_set("memory_limit", SAFE_MEMORY_LIMIT);
 $key			= parametro("k", true, MQL_BOOL);
-$parser			= parametro("s", false, MQL_RAW);
-$fechaop		= parametro("f", fechasys(), MQL_DATE);
-$messages		= "";
+$parser			= parametro("s", false, MQL_BOOL);
 
+$messages		= "";
+$fechaop		= parametro("f", false, MQL_DATE);
 $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
-getEnCierre(true);
+
+$xCierre		= new cCierreDelDia($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop);
+$forzar			= parametro("forzar", false, MQL_BOOL);
+
 $next			= "./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop";
+$next			= ($forzar == true) ? $next . "&forzar=true" : $next;
+if($EsCerrado == true AND $forzar == false){
+	setAgregarEvento_("Cierre De Seguimiento Existente", 5);
+	if ($parser == true){
+		header("Location: $next");
+	}
+} else {
+	
+getEnCierre(true);
+
 	/**
 	 * Generar el Archivo HTMl del LOG
 	 * eventos-del-cierre + fecha_de_cierre + .html
@@ -100,4 +114,6 @@ $next			= "./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop";
 		header("Location: $next"); flush();
 	}
 	getEnCierre(false);
+	
+}
 ?>

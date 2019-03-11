@@ -44,7 +44,7 @@ $foliofiscal		= parametro("foliofiscal");
 
 $xHP->init();
 $jsSum		= "0";
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmgtosefvo", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $sql		= "SELECT  * FROM `operaciones_tipos` WHERE `recibo_que_afecta`=98";
@@ -142,7 +142,7 @@ $nmes 				= $xF->mes();
 $nano 				= $xF->anno();
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmgtosefvo", "./");
 $xBtn		= new cHButton();
 $xTxt		= new cHText();
 $xDate		= new cHDate();

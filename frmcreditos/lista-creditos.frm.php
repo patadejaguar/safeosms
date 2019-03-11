@@ -41,7 +41,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmlistacreds", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
@@ -67,7 +67,8 @@ $xHG->setSQL("SELECT   `personas`.`codigo`,
          `creditos`.`periocidad`,
          `creditos`.`estatus`,
          `creditos`.`pagos`,
-         `creditos`.`estatus_credito`
+         `creditos`.`estatus_credito`,
+		`creditos`.`parcialidad`
 FROM     `personas`
 INNER JOIN `creditos`  ON `personas`.`codigo` = `creditos`.`numero_socio` WHERE (`personas`.`codigo` != " . DEFAULT_SOCIO . ") ");
 $xHG->addList();
@@ -95,7 +96,9 @@ $xHG->col("periocidad", "TR.PERIOCIDAD", "7%");
 $xHG->col("pagos", "TR.PAGOS", "5%");
 
 $xHG->ColMoneda("monto_autorizado", "TR.MONTO ORIGINAL", "10%");
-$xHG->ColMoneda("saldo_actual", "TR.SALDO", "10%");
+$xHG->ColMoneda("saldo_actual", "TR.SALDO CAPITAL", "10%");
+
+$xHG->ColMoneda("parcialidad", "TR.PARCIALIDAD", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 

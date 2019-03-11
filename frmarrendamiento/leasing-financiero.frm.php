@@ -20,6 +20,31 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
+$xRuls			= new cReglaDeNegocio();
+$originador		= 0;
+$suborigen		= 0;
+$EsAdmin		= false;
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$EsOriginador	= false;
+
+if($xUser->getEsOriginador() == true){
+	$xOrg	= new cLeasingUsuarios();
+	if($xOrg->initByIDUsuario($xUser->getID()) == true){
+		$originador	= $xOrg->getOriginador();
+		$suborigen	= $xOrg->getSubOriginador();
+		//$EsActivo	= $xOrg->getEsActivo();
+		//$EsAdmin	= $xOrg->getEsAdmin();
+		if($xOrg->getEsAdmin() == true){
+			$suborigen			= 0;
+		}
+		if($xOrg->getEsActivo() == false){
+			$xHP->goToPageError(403);
+		} else {
+			$EsOriginador	= true;
+		}
+	}
+}
 //$jxc 		= new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -43,11 +68,13 @@ $xFRM		= new cHForm("frmleasing_financiero", "leasing-financiero.frm.php?action=
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
-
+$xFRM->addCerrar();
 /* ===========		GRID JS		============*/
 
-$xHG	= new cHGrid("iddivfinancieros");
+$xHG	= new cHGrid("iddivfinancieros", $xHP->getTitle());
 $xHG->setOrdenar();
+
+
 
 $xHG->setSQL("SELECT * FROM `leasing_financiero` LIMIT 0,100");
 $xHG->addList();
@@ -58,9 +85,11 @@ $xHG->col("limite_inferior", "TR.LIMITEINFERIOR", "20%");
 $xHG->col("limite_superior", "TR.LIMITESUPERIOR", "20%");
 $xHG->col("tasa_financiero", "TR.TASA", "10%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "add.png");
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idleasing_financiero +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idleasing_financiero +')", "delete.png");
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "add.png");
+if($EsOriginador == false){
+	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idleasing_financiero +')", "edit.png");
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idleasing_financiero +')", "delete.png");
+}
 $xFRM->addHElem("<div id='iddivfinancieros'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 

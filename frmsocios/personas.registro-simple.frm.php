@@ -48,7 +48,7 @@ $control		= parametro("control", "idsocio", MQL_RAW);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmpersonaregistrosimp", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

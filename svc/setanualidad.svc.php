@@ -39,7 +39,7 @@ if($monto >= 0){
 	$_SESSION["$credito-$letra-" . OPERACION_CLAVE_ANUALIDAD_C . ""] = $monto;
 	//setLog($_SESSION["$credito-$letra-" . OPERACION_CLAVE_ANUALIDAD_C . ""]);
 	$rs["error"]	= false;
-	$rs["message"]	= "Agregado anualidad a la letra $letra del Credito $credito por un monto $monto";
+	$rs["message"]	= "Agregado anualidad a la Parcialidad $letra del Credito $credito por un monto $monto";
 }
 header('Content-type: application/json');
 echo json_encode($rs);

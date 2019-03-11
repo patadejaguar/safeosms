@@ -36,7 +36,7 @@ if($xFTP->FTPConnect() == false){
 $contents 		= $xFTP->FTPListFiles();
 //$xFTP->FTPMakeDir("PRUEBAS");
 
-$xFRM			= new cHForm("frm", "./");
+$xFRM			= new cHForm("frmdocsexplorer", "./");
 $xBTN			= new cHButton();
 $xDiv			= new cHDiv("tx12");
 

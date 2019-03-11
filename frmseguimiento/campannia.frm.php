@@ -41,7 +41,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmsegcampannia", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

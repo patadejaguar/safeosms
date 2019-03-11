@@ -50,7 +50,7 @@ $xHP->init();
 $ByTipoSistema	= ($tiposistema > 0) ? " AND (`creditos_tipoconvenio`.`tipo_en_sistema`=$tiposistema) " : "";
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmbuscarcreds", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

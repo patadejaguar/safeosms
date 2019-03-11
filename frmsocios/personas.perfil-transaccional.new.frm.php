@@ -43,7 +43,7 @@ $jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = paramet
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmperfiltrasaccionalnew", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

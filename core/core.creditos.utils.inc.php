@@ -2099,7 +2099,9 @@ class cUtileriasParaCreditos{
 				`tmp_creds_prox_letras`.`docto_afectado`
 				
 		HAVING
-		 diferencia >0.99 OR  diferencia < -0.99 ORDER BY diferencia DESC ";
+		 diferencia >1.99 OR  diferencia < -1.99 ORDER BY diferencia DESC ";
+		//setLog($sql);
+		
 		$rs	= $xQL->getRecordset($sql);
 		
 		
@@ -2109,25 +2111,30 @@ class cUtileriasParaCreditos{
 			$idcredito	= $rw["credito"];
 			$xCred		= new cCredito($idcredito);
 			if($xCred->init() == true){
-				$xEm	= new cPlanDePagosGenerador();
-				if($xEm->initPorCredito($idcredito, $xCred->getDatosInArray()) == true){
-					
-					if($xCred->getEsAutorizado() == true OR $xCred->getEsAutorizado() == true OR $xCred->getEsRechazado() == true){
-						$xLog->add("WARN\tCredito con Estado Inactivo : " . $xCred->getEstadoActual() . "\r\n");
-					} else {
-
+				if($xCred->getEsArrendamientoPuro() == false){
+					$xEm	= new cPlanDePagosGenerador();
+					if($xEm->initPorCredito($idcredito, $xCred->getDatosInArray()) == true){
 						
-						$xEm->setFechaArbitraria($xCred->getFechaPrimeraParc());
-						
-						$parcial 			= $xEm->getParcialidadPresumida(100);
-						$xEm->setCompilar();
-						//echo $xEm->getVersionFinal(false);
-						$xEm->getVersionFinal(true);
-						
-						$xLog->add($xEm->getMessages());
+						if($xCred->getEsAutorizado() == true OR $xCred->getEsAutorizado() == true OR $xCred->getEsRechazado() == true){
+							$xLog->add("WARN\t$idcredito\tCredito con Estado Inactivo : " . $xCred->getEstadoActual() . "\r\n");
+						} else {
+							
+							
+							$xEm->setFechaArbitraria($xCred->getFechaPrimeraParc());
+							
+							$parcial 			= $xEm->getParcialidadPresumida($xCred->getFactorRedondeo());
+							$xEm->setCompilar();
+							//echo $xEm->getVersionFinal(false);
+							$xEm->getVersionFinal(true);
+							
+							$xLog->add($xEm->getMessages());
+						}
 					}
-				}
-			}//end init
+				} else {
+					$xLog->add("WARN\t$idcredito\tCredito de Arrendamiento Ignorado\r\n");
+				} //end Arrendamiento
+			
+			}
 		}
 		$this->mMessages	.= $xLog->getMessages();
 		
@@ -2990,6 +2997,14 @@ class cSQLFiltros {
 		}
 		return $By;
 	}
+	function CredsPagosEspPorCredito($credito = false){
+		$filtro		= "";
+		$credito	= setNoMenorQueCero($credito);
+		if($credito > DEFAULT_CREDITO){
+			$filtro	= "	AND	(`creditos_pagos_esp`.`credito` = $credito)";
+		}
+		return $filtro;
+	}
 }
 class cCreditosTiposDeAutorizacion {
 	private $mClave			= false;
@@ -3140,8 +3155,9 @@ class cCreditosEstados {
 }
 
 class cCreditosEstadisticas {
-	function __construct(){
-		
+	private $mCredito	= false;
+	function __construct($credito = false){
+		$this->mCredito	= setNoMenorQueCero($credito);
 	}
 	function getNumeroCreditosPorAutorizar(){
 		$xL		= new cSQLListas();
@@ -3179,8 +3195,12 @@ class cCreditosEstadisticas {
 		$sql	= "SELECT COUNT(`idcreditos_firmantes`) AS `numero` FROM `creditos_firmantes` WHERE `credito`=$credito";
 		$xQL	= new MQL();
 		$items	= $xQL->getDataValue($sql, "numero");
-		
+		$xQL	= null;
 		return $items;
+	}
+	function getNumeroPagosEspeciales($credito = false){
+		$xPagEsp	= new cCreditosPlanPagoEsp();
+		return $xPagEsp->getCountByCredito($credito);
 	}
 }
 

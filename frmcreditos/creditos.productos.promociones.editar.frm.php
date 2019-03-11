@@ -36,7 +36,7 @@ $xHP->init();
 /* ===========		FORMULARIO EDICION 		============*/
 $xTabla		= new cCreditos_productos_promo();
 $xTabla->setData( $xTabla->query()->initByID($clave));
-$xFRM		= new cHForm("frm", "creditos_productos_promo.frm.php?action=$action");
+$xFRM		= new cHForm("frmprodspromsedit", "creditos_productos_promo.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

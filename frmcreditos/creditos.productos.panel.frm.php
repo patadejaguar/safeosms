@@ -109,7 +109,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsprodspanel", "./");
 $xSel		= new cHSelect();
 $xTab		= new cHTabs();
 $xFRM->setTitle($xHP->getTitle());

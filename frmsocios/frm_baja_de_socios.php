@@ -22,7 +22,7 @@ $xF			= new cFecha();
 
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT); $persona = parametro("i", $persona, MQL_INT);
 $xHP->init();
-$xFRM		= new cHForm("frm", "frm_baja_de_socios.php");
+$xFRM		= new cHForm("frmbajasocios", "frm_baja_de_socios.php");
 $xFRM->setTitle($xHP->getTitle());
 
 $xSel		= new cHSelect();

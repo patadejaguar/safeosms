@@ -43,7 +43,7 @@ $xHP->init();
 
 $xTabla		= new cGeneral_dias_festivos();
 $xTabla->setData( $xTabla->query()->initByID($clave));
-$xFRM	= new cHForm("frm", "general_dias_festivos.frm.php?action=$action");
+$xFRM	= new cHForm("frmdiasfestivos", "general_dias_festivos.frm.php?action=$action");
 
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());

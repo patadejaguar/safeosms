@@ -1,7 +1,8 @@
 <?php 
+include_once("libs/aes.php");
 include_once("core/core.config.inc.php");
 include_once("core/core.error.inc.php");
-include_once("core.security.inc.php");
+include_once("core/core.security.inc.php");
 include_once("core/core.db.inc.php");
 include_once("core/core.db.dic.php");
 

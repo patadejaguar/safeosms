@@ -51,7 +51,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM				= new cHForm("frm", "./");
+$xFRM				= new cHForm("frmactualizapersonas", "./");
 $tipo_de_persona	= false;
 
 

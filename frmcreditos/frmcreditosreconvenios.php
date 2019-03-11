@@ -39,7 +39,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "renegociar.frm.php");
+$xFRM		= new cHForm("frmcredsreconv", "renegociar.frm.php");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

@@ -50,7 +50,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmotrasref", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $msg		= "";

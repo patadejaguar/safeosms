@@ -83,7 +83,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init("jsInitComponents()");
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredspreclientespanel", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

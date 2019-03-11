@@ -79,7 +79,7 @@ $jxc ->process();
 
 echo $xHP->getHeader();
 
-$jsb	= new jsBasicForm("frm");
+$jsb	= new jsBasicForm("frmregistropagosemp");
 
 
 echo $xHP->setBodyinit();

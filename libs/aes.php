@@ -87,7 +87,7 @@ class Aes {
 	 * to generate a key schedule
 	 *
 	 * @param key cipher key byte-array (16 bytes)
-	 * @return    key schedule as 2D byte-array (Nr+1 x Nb bytes)
+	 * @return array   key schedule as 2D byte-array (Nr+1 x Nb bytes)
 	 */
 	public static function keyExpansion($key) {  // generate Key Schedule from Cipher Key [§5.2]
 		$Nb = 4;              // block size (in words): no of columns in state (fixed at 4 for AES)
@@ -183,7 +183,7 @@ class AesCtr extends Aes {
 	 * @param plaintext source text to be encrypted
 	 * @param password  the password to use to generate a key
 	 * @param nBits     number of bits to be used in the key (128, 192, or 256)
-	 * @return          encrypted text
+	 * @return string          encrypted text
 	 */
 	public static function encrypt($plaintext, $password, $nBits) {
 		$blockSize = 16;  // block size fixed at 16 bytes / 128 bits (Nb=4) for AES
@@ -253,7 +253,7 @@ class AesCtr extends Aes {
 	 * @param ciphertext source text to be decrypted
 	 * @param password   the password to use to generate a key
 	 * @param nBits      number of bits to be used in the key (128, 192, or 256)
-	 * @return           decrypted text
+	 * @return string          decrypted text
 	 */
 	public static function decrypt($ciphertext, $password, $nBits) {
 		$blockSize = 16;  // block size fixed at 16 bytes / 128 bits (Nb=4) for AES

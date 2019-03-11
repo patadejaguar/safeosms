@@ -306,7 +306,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 
 
 	
-	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_COLOCACION) ){ 
+	if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_COLOCACION) == true AND $xSoc->getEsOperacional() == true ){ 
 		//Agregar otra opciones
 		$xFRM->OButton("TR.Actualizar Datos", "updateDat()", $xFRM->ic()->EDITAR, "edit-socio", "editar");
 		
@@ -348,51 +348,53 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xTblD->setOmitidos("archivo_de_documento");
 	
 	$xTblD->OButton("TR.VER", "var xP=new PersGen();xP.getDocumento({id:" . HP_REPLACE_ID . "})", $xTblD->ODicIcons()->VER, "idview");
+	$xTblD->OButton("TR.MAPA", "var xG=new Gen();xG.getMap({doctopersona:" . HP_REPLACE_ID . "})", $xTblD->ODicIcons()->MAPA, "idmapx");
 	
 	$xHTabs->addTab("TR.DOCUMENTOS", $xTblD->Show()); //tabs
 	
-	if(MODULO_AML_ACTIVADO == true){
-		if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true){
-			$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
-			if($xSoc->getEsGrupoSolidario() == false AND $xSoc->getEsEmpresaConConvenio() == false){
-				$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
-				$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
-				$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
-			}
-			$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
-			
-			$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
-	
-			
-			$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
-			$jsTabs	.= ",\n selected: 6\n";
+
+	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML, MMOD_AML) == true){
+		$xDiv3		= new cHDiv("tx1", "msgcumplimiento");
+		if($xSoc->getEsOperacional() == true){
+			$xFRM->OButton("TR.validar documentos", "jsaValidarDocumentacion()", $xFRM->ic()->VALIDAR, "cmdvalidadoc", "green" );
+			$xFRM->OButton("TR.validar perfil_transaccional", "jsaValidarPerfilT()", $xFRM->ic()->VALIDAR, "cmdvalidaperfil", "green");
+			$xFRM->OButton("TR.validar riesgo", "jsaValidarRiesgo()", $xFRM->ic()->VALIDAR, "cmdvalidariesgo", "green");
 		}
+		
+		$xFRM->OButton("TR.Actualizar Nivel de Riesgo", "jsActualizarNivelDeRiesgo($idsocio)", $xFRM->ic()->RIESGO, "cmdactualizarriesgo");
+		$xFRM->OButton("TR.Consulta en LISTAS", "var xAML = new AmlGen(); xAML.getConsultaListas($idsocio)", $xFRM->ic()->REGISTROS, "cmdconsultalistas");
+	
+				
+		$xHTabs->addTab("TR.cumplimiento", $xDiv3->get(), "tab-cumplimiento"); //tab6
+		$jsTabs	.= ",\n selected: 6\n";
 	}
-	//========================== Datos de personas Morales.
-	if($xSoc->getEsPersonaFisica() == false){
-		$xFRM->OButton("TR.DATOS PERSONA_MORAL", "var xP=new PersGen();xP.goToDatosPM($idsocio, true)", $xFRM->ic()->LEGAL, "cmddatospm", "blue2");
-	}
-	//Arbol de relaciones y perfil transaccional
+
+	
+
+		//Arbol de relaciones y perfil transaccional
 	if(MODULO_AML_ACTIVADO == true){
 		$xFRM->OButton("TR.ARBOL_DE_RELACIONES", "jsSigmaRelaciones()", $xFRM->ic()->EXPORTAR);
 		$xT		= new cTabla($xLi->getListadoDePerfil($idsocio), 0,"idtblarbolrelsps");
 		$xT->addEliminar();
-		$xHTabs->addTab("TR.perfil_transaccional", $xT->Show() );
-		
-		//Agregar Consulta Listas
+		if($xSoc->getEsOperacional() == true){
+			$xHTabs->addTab("TR.perfil_transaccional", $xT->Show() );
+		}
+			
+			//Agregar Consulta Listas
 		$ttl	= "";
 		$xTLNI	= new cTabla($xLi->getListadoDePersonasConsultasLInt($idsocio),0,"idtbllistapersintsps");
 		$xTLNI->setOmitidos("nombre");$xTLNI->setOmitidos("persona");$xTLNI->setOmitidos("observaciones"); $xTLNI->setTitulo("clave_interna", "CLAVE"); $xTLNI->setTitulo("estatus", "ESTATUSACTIVO");
 		$ttl 	.= $xTLNI->Show("TR.LISTA_NEGRA INTERNA");
 		$xTLBI	= new cTabla($xLi->getListadoDePersonasConsultasBInt($idsocio),0,"idtbllistapersbintps");
 		$xTLBI->setOmitidos("nombre");$xTLBI->setTitulo("clave_de_motivo", "MOTIVO");
-		
+			
 		$ttl 	.= $xTLBI->Show("TR.LISTA_OMITIDOS");
 		$xHTabs->addTab("TR.LISTASINTERNAS", $ttl );
 	}
-	if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED)){
-		$xFRM->OButton("TR.Riesgo de Credito", "var xP= new PersGen();xP.getRiesgoDeCredito($idsocio)", $xFRM->ic()->RIESGO);
-	}
+		
+	$xFRM->OButton("TR.Riesgo de Credito", "var xP= new PersGen();xP.getRiesgoDeCredito($idsocio)", $xFRM->ic()->RIESGO);
+	
+	
 //================= Empresa con Convenio
 	if($xSoc->getEsEmpresaConConvenio(true) == true){
 
@@ -577,7 +579,8 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	}
 	
 	//===================================== APORTACIONES y CUOTAS
-	if(PERSONAS_CONTROLAR_POR_APORTS == true ){
+	//$xSoc->setEsCliente();
+	if(PERSONAS_CONTROLAR_POR_APORTS == true AND $xSoc->getEsOperacional() == true){
 		//if($xSoc->getMembresiaDiaPag() == $xF->dia()){
 		$xFRM->OButton("TR.COBRO MEMBRESIA", "var xP=new PersGen();xP.setCobroMembresia($idsocio," . $xF->mes() . ");", $xFRM->ic()->COBROS);
 		$xTLC	= new cTabla($xLi->getListadoDePersonaPerfilCuotas($idsocio),0, "idtbllistapcuotasps");

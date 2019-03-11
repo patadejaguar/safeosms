@@ -41,7 +41,7 @@ $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("obser
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmgtiaspanel", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

@@ -147,9 +147,7 @@ $jxc ->exportFunction('jsaGetPerfilDeProducto', array("idproducto", "idperiocida
 
 $jxc ->process();
 
-if($persona > DEFAULT_SOCIO){
-	$xHP->init();
-}
+
 
 
 $xFRM		= new cHForm("frmsolicitudcredito", "", "frmsolicitudcredito");
@@ -171,7 +169,10 @@ switch($tipoorigen){
 		$xArr	= new cCreditosLeasing($idorigen);
 		if($xArr->init() == true){
 			if($xArr->getDomicilia() == true){
-				$TipoCobro	= $xCred->COBRO_DOMICILIADO;
+				$TipoCobro		= $xCred->COBRO_DOMICILIADO;
+				if($persona<= DEFAULT_SOCIO){
+					$persona	= $xArr->getClaveDePersona();
+				}
 			}
 		}
 		break;
@@ -191,7 +192,9 @@ switch($tipoorigen){
 		break;
 }
 
-
+if($persona > DEFAULT_SOCIO){
+	$xHP->init();
+}
 
 
 

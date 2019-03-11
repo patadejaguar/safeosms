@@ -53,7 +53,7 @@ $tipoderecibo	= RECIBOS_TIPO_PAGO_CREDITO;
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmconvfactrapida", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

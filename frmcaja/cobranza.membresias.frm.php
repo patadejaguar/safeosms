@@ -63,7 +63,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcbramembresia", "./");
 $xFRM->OButton("TR.Obtener", "jsaCargarCobros()", $xFRM->ic()->CARGAR);
 $xSelD		= $xSel->getListaDeDiasDelMes("", $xF->dia());
 $xSelD->addEvent("onchange", "jsaCargarCobros()");

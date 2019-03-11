@@ -149,6 +149,7 @@ function jsTags(){
 	    	var idnivel	= entero(DTag[1]);
 	    	var oPerm	= $("#denegado").val();
 	    	var dPerm	= String(idnivel).concat("@rw");
+	    	
 	    	if(idnivel > 0){
 		    	var txt	= String(oPerm);
 	    		if(dPerm == oPerm){
@@ -159,10 +160,17 @@ function jsTags(){
 		    		var DPerms	= String(oPerm).split(",");
 					for (idx in DPerms){
 						var str	= DPerms[idx];
+						//console.log(str);
 						if(str == dPerm){
-							//console.log(str);
+							console.log(dPerm + "-- -- " + str);
+						} else if (str === ""){
+							console.log("Vacio:" + str);
 						} else {
-							txt = String(txt).concat("," , str);
+							if(txt === ""){
+								txt = str;
+							} else {
+								txt = String(txt).concat("," , str);
+							}
 						}
 					}
 

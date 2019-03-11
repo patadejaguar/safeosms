@@ -86,7 +86,7 @@ if($action == SYS_NINGUNO){
 		$xFRM->OHidden("idcontrato",0);
 		$xFRM->setTitle($xFRM->getT("TR.FOTOGRAFIA"));
 	} else {
-		$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE_EMISION");
+		
 		
 		if($tipodedocto>0){
 			$xFRM->OHidden("idtipodedocto", $tipodedocto);
@@ -98,20 +98,25 @@ if($action == SYS_NINGUNO){
 			$xFRM->addHElem( $xSel->getTiposDeDoctosPersonalesArch("", $ByType, $xSoc->getClaveDePersona())->get(true) );
 		}
 		
-		
+		$xFRM->ODate("idfechacarga", false, "TR.FECHA_DE_EMISION");
 		$xFRM->OText_13("idnumeropagina", 0, "TR.PAGINA");
 
 		if($idcontrato>0){
 			$xFRM->OHidden("idcontrato", $idcontrato);
 			$xFRM->addTag($xFRM->getT("TR.CONTRATO") . " : $idcontrato");
 		} else {
-			$xSelCP			= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
-			$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
-			$selcontratos	= $xSelCP->get(true);
-			if($xSelCP->getCountRows()>1){
-				$xFRM->addHElem($selcontratos);
-			} else {
+			$xTipoF			= new cPersonasDocumentacionTipos($tipodedocto); $xTipoF->init();
+			if($xTipoF->getEsDeContrato() == false){
 				$xFRM->OHidden("idcontrato", 0);
+			} else {
+				$xSelCP			= $xSel->getListaDeContratosPorPers("", "0", $xSoc->getClaveDePersona());
+				$xSelCP->addEspOption("0",  $xFRM->getT("TR.NINGUNO"));
+				$selcontratos	= $xSelCP->get(true);
+				if($xSelCP->getCountRows()>1){
+					$xFRM->addHElem($selcontratos);
+				} else {
+					$xFRM->OHidden("idcontrato", 0);
+				}
 			}
 		}
 	}

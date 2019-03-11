@@ -29,9 +29,13 @@ function jsaGetCreditos($convenio, $estatus, $periocidad){
 	$xTbl 		= new cTabla($sqlCred, 2);
 	$xChk		= new cHCheckBox();
 	$xTbl->setTdClassByType();
+	$xTbl->setOmitidos("vencimiento");
+	
 	//$xTbl->setWithMetaData(true);
 	$xTbl->OButton("TR.GENERAR PLAN_DE_PAGOS", "jsGetPlanDePagos(_REPLACE_ID_);", $xTbl->ODicIcons()->CALENDARIO);
-	$xTbl->addSubQuery("SELECT * FROM `operaciones_recibos` WHERE `tipo_docto`=" . RECIBOS_TIPO_PLAN_DE_PAGO, "docto_afectado", "<mark>PLAN DE PAGOS {{idoperaciones_recibos}}<mark>");
+	$xTbl->OButton("TR.SIMULAR PLAN_DE_PAGOS", "var xC=new CredGen(); xC.getFormaPlanPagos(_REPLACE_ID_,{emular:true});", $xTbl->ODicIcons()->VER);
+	$xTbl->addSubQuery("SELECT * FROM `operaciones_recibos` WHERE `tipo_docto`=" . RECIBOS_TIPO_PLAN_DE_PAGO, "docto_afectado", "<a class='button' onclick='var xC=new CredGen(); xC.getImprimirPlanPagos({{idoperaciones_recibos}})'>Plan de Pagos : {{idoperaciones_recibos}}</a>");
+	
 	return $xTbl->Show();
 }
 function jsaGetCreditosVariados($convenio, $estatus, $periocidad){
@@ -88,8 +92,14 @@ $xSPer->addEspOption(SYS_TODAS, SYS_TODAS);
 $xSPer->setOptionSelect(SYS_TODAS);
 $xFRM->addHElem( $xSPer->get(true));
 $xFRM->addHTML("<div id='id-listado-de-creditos'></div>");
+
+$xFRM->addCerrar();
+
 $xFRM->OButton("TR.Obtener", "jsaGetCreditos()", $xFRM->ic()->EJECUTAR);
 $xFRM->OButton("TR.DESCUADRE", "jsaGetCreditosVariados()", $xFRM->ic()->EJECUTAR);
+
+
+
 //$xFRM->OButton("TR.Actualizar", "jsaSetLetrasPends()", $xFRM->ic()->EJECUTAR);
 echo $xFRM->get();
 $jxc ->drawJavaScript(false, true);
@@ -98,6 +108,8 @@ $jxc ->drawJavaScript(false, true);
 var Frm 					= document.frmAsignarOficiales;
 var divLiteral				= STD_LITERAL_DIVISOR;
 var xGen					= new Gen();
+var xCred					= new CredGen();
+
 var fld						= "<?php echo $jsCampo; ?>";
 function jsSetOficial(){
 	var vOficial		= $("#idoficial").val();
@@ -116,6 +128,9 @@ function jsGetPlanDePagos(idCredito){
 	var gURL = "../frmcreditos/plan_de_pagos.frm.php?auto=true&credito=" + idCredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, full:true });
 	$("#options-" + idCredito).parent().addClass("tr-plan");
+}
+function jsVerPlanDePagos(idCredito){
+	xCred.getImprimirPlanPagosPorCred(idCredito);
 }
 function jsEchoMsg(msg){ xGen.alerta({msg:msg}); }
 function jsMarkAll(){

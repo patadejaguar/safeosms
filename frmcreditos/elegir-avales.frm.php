@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.ELEGIR AVALES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -42,7 +42,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmelegiravales", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

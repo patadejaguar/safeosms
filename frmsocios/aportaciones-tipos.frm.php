@@ -41,7 +41,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmaportstipos", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
@@ -72,6 +72,7 @@ $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.personas_aports_tipos_id +')",
 
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.personas_aports_tipos_id +')", "delete.png");
 
+$xFRM->OButton("TR.GENERAR POR BASE", "jsGetGenerarPorBase()", $xFRM->ic()->AUTOMAGIC, "", "yellow" );
 
 $xFRM->addHElem("<div id='iddivaportst'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
@@ -90,6 +91,10 @@ function jsAdd(){
 function jsDel(id){
 	xG.rmRecord({tabla:"personas_aports_tipos", id:id, callback:jsLGiddivaportst});
 }
+function jsGetGenerarPorBase(){
+	xG.w({url:"../frmsocios/aportaciones-tipos-por-base.frm.php?", tiny:true, callback: jsLGiddivaportst});
+}
+
 </script>
 <?php
 

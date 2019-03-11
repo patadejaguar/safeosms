@@ -37,7 +37,7 @@ $precio		= parametro("idprecio", 0, MQL_FLOAT);
 $xHP->init();
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmoperacionestipos", "./");
 $xSel		= new cHSelect();
 
 $xFRM->setTitle($xHP->getTitle());

@@ -32,7 +32,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $notas		= parametro("idobservaciones");
 
 $xHP->init();
-$xFRM		= new cHForm("frm", "creditos-presupuestos_nuevo.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmcredspresupuestonuevo", "creditos-presupuestos_nuevo.frm.php?action=" . MQL_ADD);
 $msg		= "";
 
 if($action == MQL_ADD){

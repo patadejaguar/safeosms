@@ -834,7 +834,7 @@ if($toJson == true){
 	$xHP		= new cHPage("TR.VISOR CONSULTA", HP_FORM);
 	$xHP->init();
 	
-	$xFRM		= new cHForm("frm", "./");
+	$xFRM		= new cHForm("frmcirculocredsrpt", "./");
 	$xDiv1		= new cHDiv("tx1", "idhvals");
 	
 	$data		= json_encode($lineaJson);

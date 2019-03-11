@@ -44,7 +44,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcobropagoinit", "./");
 $xSel		= new cHSelect();
 $xTxt		= new cHText();
 

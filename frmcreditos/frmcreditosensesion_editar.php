@@ -33,7 +33,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredssesionedit", "./");
 
 $msg		= "";
 //$xFRM->addJsBasico();

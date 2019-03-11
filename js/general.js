@@ -275,6 +275,15 @@ Gen.prototype.ver	= function(id, ver){
 		}
 	}
 }
+Gen.prototype.getMap	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var self	= this;
+	var lt		= (typeof opts.latitud == "undefined") ? 0 : opts.latitud;
+	var lg			= (typeof opts.longitud == "undefined") ? 0 : opts.longitud;
+	var dpersona	= (typeof opts.doctopersona == "undefined") ? 0 : opts.doctopersona;
+	
+	self.w({url:"../frmutils/map.frm.php?latitud=" + lt +"&longitud=" + lg  + "&idpersonadocto=" + dpersona, tiny:true, ajustarAlto:true});
+}
 FrmGen.prototype.isDis	= function(id){
 	
 }
@@ -484,7 +493,7 @@ Gen.prototype.w	= function(opts){
 			}
 			UPDWIN		= window.open(url,name,specs);
 			if (UPDWIN == null) {
-				wm.alerta({ msg : "TR.Error al Abrir la Ventana"});
+				wm.alerta({ msg : "Error al Abrir la Ventana"});
 			} else {
 				UPDWIN.focus();
 			}
@@ -1580,12 +1589,14 @@ Gen.prototype.alerta	= function(opts){
 		if(icn == ""){
 			icn	= "fa-check-square-o";
 		}
+		
 	}
 	if (lvl == "warn"||lvl == 2||lvl == "warning"||mth == "warn"||mth == "warning"||mth=="info") {
 		mth	= "awesome warning";
 		if(icn == ""){
 			icn	= "fa-info-circle";
 		}
+		snd		= "warn-snd";
 	}
 	if(icn == ""){
 		icn	= "fa-bell-o";
@@ -2106,9 +2117,12 @@ CredGen.prototype.getFormaMinistracion	= function(idcredito){
 	var gURL = "../frmcreditos/frmcreditosministracion.php?credito=" + idcredito;
 	var xGen	= new Gen(); xGen.w({ url : gURL, h : 800, w : 900, tiny: true });
 }
-CredGen.prototype.getFormaPlanPagos	= function(idCredito){
+CredGen.prototype.getFormaPlanPagos	= function(idCredito, opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var mEmul	= (typeof opts.emular == "undefined") ? "" : "&emular=true";
+	var mAuto	= (typeof opts.auto == "undefined") ? "" : "&auto=true";
 	//var gURL = "../frmcreditos/frmcreditosplandepagos.php?r=1&credito=" + idCredito;
-	var gURL = "../frmcreditos/plan_de_pagos.frm.php?credito=" + idCredito;
+	var gURL = "../frmcreditos/plan_de_pagos.frm.php?credito=" + idCredito + mEmul + mAuto;
 	var xGen	= new Gen(); xGen.w({ url : gURL, tab:true });
 }
 CredGen.prototype.getFormaSimPlanPagos	= function(idCredito){
@@ -3211,7 +3225,7 @@ PersGen.prototype.getReporteSIC	= function(id){
 //--------------------------- INIT CAPTACION
 CaptGen.prototype.goToPanel	= function(idcuenta){
 	var gURL = "../frmcaptacion/cuentas.panel.frm.php?cuenta=" + idcuenta;
-	var xGen	= new Gen(); xGen.w({ url : gURL, h : 600, w : 800, tiny : true, tab:true });
+	var xGen	= new Gen(); xGen.w({ url : gURL, tab:true, full:true });
 }
 CaptGen.prototype.getImprimirMandato	= function(idcuenta){
 	var gURL = "../rpt_formatos/mandato_en_depositos.rpt.php?cuenta=" + idcuenta;
@@ -4120,6 +4134,7 @@ PlanGen.prototype.setAnualidadLetra = function (opts){
 						xg.alerta({ msg : data.message });
 					}
 				}
+				setTimeout(jscall,10);
 		    } else {
 
 			}
@@ -4141,10 +4156,11 @@ PlanGen.prototype.setPagoEspecial = function (opts){
 		    try { data = JSON.parse(data); } catch (e){}
 		    if (typeof data != "undefined") {
 				if (typeof data.message != "undefined") {
-					if ($.trim(data.message) != "") {
+					if ($.trim(data.message) !== "") {
 						xg.alerta({ msg : data.message });
 					}
 				}
+				setTimeout(jscall,10);
 		    } else {
 
 			}

@@ -33,7 +33,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "ministrar-a-cuenta.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmministraacuenta", "ministrar-a-cuenta.frm.php?action=" . MQL_ADD);
 
 if($action == MQL_ADD){
 	if($cuenta > DEFAULT_CUENTA_CORRIENTE AND $credito > DEFAULT_CREDITO){

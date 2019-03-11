@@ -359,7 +359,7 @@ class cPersonasMembresiasTipos {
 		}
 		return $arr;
 	}
-	function addPerfil($operacion, $monto, $periocidad = false, $fecha = false, $rotacion = "", $membresia = false){
+	function addPerfil($operacion, $monto, $periocidad = false, $fecha = false, $rotacion = "", $membresia = false, $prioridad = 0){
 		$xF			= new cFecha();
 		$xQL		= new MQL();
 		$fecha		= $xF->getFechaISO($fecha);
@@ -369,6 +369,7 @@ class cPersonasMembresiasTipos {
 		$operacion	= setNoMenorQueCero($operacion);
 		$membresia	= setNoMenorQueCero($membresia);
 		$membresia	= ($membresia <= 0) ? $this->mClave : $membresia;
+		$prioridad	= setNoMenorQueCero($prioridad);
 		//Eliminar perfil anterior
 		$xQL->setRawQuery("DELETE FROM `entidad_pagos_perfil` WHERE `tipo_de_membresia`=$membresia AND `tipo_de_operacion`=$operacion");
 		
@@ -381,6 +382,7 @@ class cPersonasMembresiasTipos {
 		$xT->tipo_de_operacion($operacion);
 		$xT->fecha_de_aplicacion($fecha);
 		$xT->rotacion($rotacion);
+		$xT->prioridad($prioridad);
 		//Aplicar a todo lo demas
 		$mes		= $xF->mes($fecha);
 		$ejercicio	= $xF->anno($fecha);
@@ -1688,36 +1690,40 @@ class cPersonasPerfilDePagos {
 			//Contar cuantas existen de la persona
 			$xTE	= new cEntidad_pagos_perfil();
 			$xTP	= new cPersonas_pagos_perfil();
-			foreach ($rsP as $idx => $rw){
-				$xTP->setData($rw);
-				//Si existe el Registro en la configuracion de la entidad
-				if(isset($rsE[$xTP->tipo_de_operacion()->v()])){
-					$rwx	= $rsE[$xTP->tipo_de_operacion()->v()];	//obtiene el registro desde la entidad
-					if($xTP->finalizador()->v() == 0){
-						//Si no es Finalizador.- Actualizar al nuevo monto
-						$xTE->setData($rwx);						//Asigna valores desde la entidad
-						if(round($xTE->monto()->v(), 2) !== round($xTP->monto()->v(),2)){
-						//Actualiza la tabla
-						$xTP->monto($xTE->monto()->v());			//Heredar monto
-						$xTP->fecha_de_aplicacion($xTE->fecha_de_aplicacion()->v());//Hererdar fecha
-						$xTP->periocidad($xTE->periocidad()->v());
-						$xTP->prioridad($xTE->prioridad()->v()); 	//Heredar prioridad
-						$xTP->rotacion($xTE->rotacion()->v()); 		//Heredar rotacion
-						$xTP->query()->update()->save($xTP->idpersonas_pagos_perfil()->v());
-						
-							//setError("Actualizar  a " . $xTE->monto()->v()  );
-						} else {
-							//setError("No se actualiza nada");
+			if($rsP){
+				foreach ($rsP as $idx => $rw){
+					$xTP->setData($rw);
+					//Si existe el Registro en la configuracion de la entidad
+					if(isset($rsE[$xTP->tipo_de_operacion()->v()])){
+						$rwx	= $rsE[$xTP->tipo_de_operacion()->v()];	//obtiene el registro desde la entidad
+						if($xTP->finalizador()->v() == 0){
+							//Si no es Finalizador.- Actualizar al nuevo monto
+							$xTE->setData($rwx);						//Asigna valores desde la entidad
+							if(round($xTE->monto()->v(), 2) !== round($xTP->monto()->v(),2)){
+							//Actualiza la tabla
+							$xTP->monto($xTE->monto()->v());			//Heredar monto
+							$xTP->fecha_de_aplicacion($xTE->fecha_de_aplicacion()->v());//Hererdar fecha
+							$xTP->periocidad($xTE->periocidad()->v());
+							$xTP->prioridad($xTE->prioridad()->v()); 	//Heredar prioridad
+							$xTP->rotacion($xTE->rotacion()->v()); 		//Heredar rotacion
+							$xTP->query()->update()->save($xTP->idpersonas_pagos_perfil()->v());
+							
+								//setError("Actualizar  a " . $xTE->monto()->v()  );
+							} else {
+								//setError("No se actualiza nada");
+							}
 						}
+						//Quitar de la Entidad
+						unset($rsE[$xTP->tipo_de_operacion()->v()]);
 					}
-					//Quitar de la Entidad
-					unset($rsE[$xTP->tipo_de_operacion()->v()]);
 				}
 			}
-			foreach ($rsE as $idx => $rw){
-				$xTE->setData($rw);
-				//Insertar
-				$this->add($xTE->tipo_de_operacion()->v(), $xTE->monto()->v(), $xTE->prioridad()->v(), $xTE->periocidad()->v(), $xTE->rotacion()->v(), $xTE->fecha_de_aplicacion()->v());
+			if($rsE){
+				foreach ($rsE as $idx => $rw){
+					$xTE->setData($rw);
+					//Insertar
+					$this->add($xTE->tipo_de_operacion()->v(), $xTE->monto()->v(), $xTE->prioridad()->v(), $xTE->periocidad()->v(), $xTE->rotacion()->v(), $xTE->fecha_de_aplicacion()->v());
+				}
 			}
 			$this->setCuandoSeActualiza();
 		}
@@ -1753,6 +1759,8 @@ class cPersonasDocumentacion {
 	private $mTable		= "";
 	private $mIDPersona	= 0;
 	private $mTipo		= 0;
+	private $mLongitud	= 0;
+	private $mLatitud	= 0;
 	
 	public $TIPO_FOTO	= 710; //ID Tipo de documentacion
 	public $TIPO_FIRMA	= 510;// 520 Escaneada, es otro tipo de docto
@@ -1766,13 +1774,15 @@ class cPersonasDocumentacion {
 	}
 	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
 	function init($data = false){
-		$xCache	= new cCache();
-		$xT		= new cPersonas_documentacion();//Tabla
+		$xCache		= new cCache();
+		$xT			= new cPersonas_documentacion();//Tabla
+		$inCache	= true;
 		if(!is_array($data)){
 			$data	= $xCache->get($this->mIDCache);
 			if(!is_array($data)){
-				$xQL	= new MQL();
-				$data	= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$xQL		= new MQL();
+				$inCache	= false;
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $xT->get() . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
 			}
 		}
 		if(isset($data[$xT->getKey()])){
@@ -1782,8 +1792,14 @@ class cPersonasDocumentacion {
 			$this->mIDPersona	= $xT->clave_de_persona()->v();
 			$this->mTipo		= $xT->tipo_de_documento()->v();
 			$this->mNombre		= $xT->archivo_de_documento()->v();
-			$this->setIDCache($this->mClave);
-			$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			$this->mLatitud		= $data[$xT->LATITUD];
+			$this->mLongitud	= $data[$xT->LONGITUD];
+			
+			if($inCache == false){
+				$this->setIDCache($this->mClave);
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			
 			$this->mInit		= true;
 			$xT 				= null;
 		}
@@ -1814,7 +1830,8 @@ class cPersonasDocumentacion {
 		return $this->init($data);
 	}
 	function add(){}
-	
+	function getLatitud(){ return $this->mLatitud; }
+	function getLongitud(){ return $this->mLongitud; }
 }
 class cPersonasDocumentacionTipos {
 	private $mClave		= false;
@@ -1826,6 +1843,8 @@ class cPersonasDocumentacionTipos {
 	private $mTable		= "";
 	public $TIPO_FISCAL		= 2;
 	public $TIPO_PARTICULAR	= 1;
+	private $mEsDeContrato	= false;
+	private $mEsIdentifica	= false;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -1849,9 +1868,12 @@ class cPersonasDocumentacionTipos {
 		}
 		if(isset($data[$xT->getKey()])){
 			$xT->setData($data);
-			$this->mObj			= $xT; //Cambiar
-			$this->mClave		= $xT->clave_de_control()->v();
-			$this->mNombre		= $xT->nombre_del_documento()->v();
+			$this->mObj				= $xT; //Cambiar
+			$this->mClave			= $xT->clave_de_control()->v();
+			$this->mNombre			= $xT->nombre_del_documento()->v();
+			$this->mEsDeContrato	= (setNoMenorQueCero($data[$xT->ES_CONT])> 0) ? true : false;
+			$this->mEsIdentifica	= (setNoMenorQueCero($data[$xT->ES_IDENT])> 0) ? true : false;
+			
 			if($inCache == false){
 				$this->setIDCache($this->mClave);
 				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
@@ -1884,6 +1906,8 @@ class cPersonasDocumentacionTipos {
 		}
 		return $this->init($data);
 	}
+	function getEsDeContrato(){ return $this->mEsDeContrato; }
+	function getEsIdentificacion(){ return $this->mEsIdentifica; } 
 }
 
 class cPersonaActividadEconSector {

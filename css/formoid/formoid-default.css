@@ -8,9 +8,9 @@
 .formoid-default {
 	margin:0 auto;
 	background-color:#F8F8F8;
-	font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;
+	/*font-family:'Open Sans','Helvetica Neue','Helvetica',Arial,Verdana,sans-serif;*/
 	/*color:#2E5798;*/
-	padding-bottom: 3em;
+	padding-bottom: 1em;
 }
 .formoid-section {
 	padding-bottom: .2em;
@@ -86,7 +86,7 @@ border-radius: 4px;
 }
 .formoid-default div.selector,
 .formoid-default  select {
-	padding: 0.3em;
+	padding: 0.4em;
 	min-height: 1.8em;
 }
 .formoid-default h2 {

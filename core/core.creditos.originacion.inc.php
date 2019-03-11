@@ -216,6 +216,7 @@ class cCreditosLeasing {
 	private $mMontoComAgencia		= 0;
 	private $mMontoComOrigen		= 0;
 	private $mClavePlanGPS			= 0;
+	private $mPeriodicidad			= 0;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -272,6 +273,7 @@ class cCreditosLeasing {
 			$this->mNumeroPagos		= $data[$xT->PLAZO]; //$data[$xT->];
 			$this->mAnticipo		= $data[$xT->MONTO_ANTICIPO];
 			$this->mValorResidual	= $data[$xT->MONTO_RESIDUAL];
+			
 			
 			$this->mTasaInteres		= ($xT->tasa_credito()->v()/100);
 			$this->mTasaTIIE		= ($xT->tasa_tiie()->v() /100);
@@ -533,11 +535,13 @@ class cCreditosLeasing {
 	function getMontoAjuste(){ return $this->mMontoAjuste; }
 	function getMontoDeducible($monto = 0){
 		$montodeducible	= setNoMenorQueCero(CREDITO_LEASING_LIMITE_DED);
+		$monto			= setNoMenorQueCero($monto);
 		$monto			= ($monto <= 0) ? $this->getTotalCuota() : $monto;
 		$deducible		= ($this->mEsDeCarga == true ) ? $monto : $montodeducible;
 		if($montodeducible <= 0){
 			//$deducible	= $this->getMontoAjuste();
 		}
+		
 		if($deducible > $monto){
 			$deducible	= $monto;
 		}
@@ -653,6 +657,7 @@ class cCreditosLeasing {
 		$rr		= (isset($dd["recibo"])) ? setNoMenorQueCero($dd["recibo"]) : 0;
 		return $rr;
 	}
+	function getNumeroPagos(){ return $this->mNumeroPagos; }
 }
 class cLeasingBonos {
 	private $mClave			= false;
@@ -1487,6 +1492,8 @@ class cLeasingEmulaciones {
 	
 	public $FACTOR_RENTAPROP	= 1;
 	public $FACTOR_RENTADEP		= 1;
+	private $mCreditoActivo		= false;
+	
 	//private $mCuota
 	function __construct($plazo, $TasaInteres, $Frecuencia, $TasaIVA = 0){
 		$this->mPlazo 		= setNoMenorQueCero($plazo,0);
@@ -1590,22 +1597,23 @@ class cLeasingEmulaciones {
 		$residual		= 0;
 		if($xRes->initByPlazoTipo($plazo) == true){
 			if($admin == false){
-			$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
+				$TasaResidual	= ($TasaResidual <= 0) ? $xRes->getPorcientoResidual() : $TasaResidual;
 			}
-			
-			$FactorIVA	= (1/(1+TASA_IVA));
-			$coste		= ($precio+$aliado);
-			$base		= $coste;
-			$tasa		= ($TasaResidual / 100);
-			
-			if($ConIVA == false){
-				$base	= ($coste * $FactorIVA);
+			if($TasaResidual>0){
+				$FactorIVA	= (1/(1+TASA_IVA));
+				$coste		= ($precio+$aliado);
+				$base		= $coste;
+				$tasa		= ($TasaResidual / 100);
+				
+				if($ConIVA == false){
+					$base	= ($coste * $FactorIVA);
+				}
+				
+				if($ConAnt == false){
+					$base	= $base - $anticipo;
+				}
+				$residual	= $base * $tasa;
 			}
-			
-			if($ConAnt == false){
-				$base	= $base - $anticipo;
-			}
-			$residual	= $base * $tasa;
 		}
 		
 		$residual		= round($residual,2);
@@ -1886,10 +1894,11 @@ class cLeasingRentas {
 					
 					
 					$xLetra				= new cCreditosLetraDePago($credito, $idperiodo);
+					
 					if($xLetra->init($dd) == true){
 						$letratotal		= $xLetra->getTotal();
 						$letratotal		= $letratotal * $factorIVA;
-						
+						//setLog("$letratotal --- $factorIVA -- ");
 						$deducible		= $xLeasing->getMontoDeducible($letratotal);
 						$nodeducible	= setNoMenorQueCero(($letratotal - $deducible));
 						if($xLeasing->getMontoAjuste()>0){
@@ -1904,6 +1913,7 @@ class cLeasingRentas {
 						
 						
 					}
+					
 				}
 			}
 			

@@ -1,5 +1,6 @@
 <?php
 /**
+ * Agregar Operaciones Bancarias desde otro formulario
  * @author Balam Gonzalez Luis Humberto
  * @version 0.0.01
  * @package
@@ -43,7 +44,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmmvtosbancslista", "./");
 $xSel		= new cHSelect();
 $xTxt		= new cHText();
 $xFRM->setTitle($xHP->getTitle());
@@ -141,12 +142,16 @@ echo $xFRM->get();
 
 ?>
 <script>
-var xG	= new Gen();
+var xG						= new Gen();
+
 function jsEdit(id){
 	xG.w({url:"../frmbancos/banco-operaciones.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivopsbancs});
 }
 function jsAdd(){
-	xG.w({url:"../frmbancos/banco-operaciones.new.frm.php?", tiny:true, callback: jsLGiddivopsbancs});
+	var idcodigodecuenta		= $("#idcodigodecuenta").val();
+	var idtipooperacionbanco 	= $("#idtipooperacionbanco").val();
+	
+	xG.w({url:"../frmbancos/banco-operaciones.new.frm.php?idtipooperacionbanco=" + idtipooperacionbanco + "&idcuenta=" + idcodigodecuenta, tiny:true, callback: jsLGiddivopsbancs});
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"bancos_operaciones", id:id, callback:jsLGiddivopsbancs});

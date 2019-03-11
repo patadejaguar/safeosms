@@ -60,7 +60,6 @@ function jsaEmularPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		$xEm->setValorResidual($residual);
 		$xEm->setAjustarCapital($ajustecap);
 		if($xCred->getEsAutorizado() == true OR $xCred->getEsSolicitado() == true){
-			
 			$xEm->setTipoDeCuota($TipoDePago);
 		} else {
 			
@@ -70,6 +69,7 @@ function jsaEmularPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		return $xEm->getVersionFinal();
 	}
 }
+
 
 function jsaGuardarPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		$dia1, $dia2, $dia3, $idotros, $montootros, $primer_pago, $PrimeraFecha, $completo, $sinintereses, $guardaruno, $promovido, $residual, $ajustecap){
@@ -116,11 +116,19 @@ function jsaGuardarPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		return $xEm->getVersionFinal(true);
 	}
 }
-
+function jsaLimpiarPagosEsp($idcredito){
+	$xCred			= new cCredito($idcredito);
+	if($xCred->init() == true){
+		$xPagosEsp	= new cCreditosPlanPagoEsp();
+		$xPagosEsp->setLimpiarPorCredito($idcredito, true, $xCred->getPagosAutorizados());
+	}
+}
 $jxc ->exportFunction('jsaEmularPagos', array('idsolicitud', 'idfechaministracion', 'idtipodepago', 'idredondeo', 'dia_primer_abono', 'dia_segundo_abono', 'dia_tercer_abono', 
 		'idtipootros', 'idotros', 'idprimerpago', 'idprimerafecha', 'idcompleto', 'idnointereses', 'idguardaruno', 'idmontopromovido', 'idvalorresidual', 'idajustecapital'), "#iddatos_pago");
 $jxc ->exportFunction('jsaGuardarPagos', array('idsolicitud', 'idfechaministracion', 'idtipodepago', 'idredondeo', 'dia_primer_abono', 'dia_segundo_abono', 'dia_tercer_abono', 
 		'idtipootros', 'idotros', 'idprimerpago', 'idprimerafecha', 'idcompleto', 'idnointereses', 'idguardaruno', 'idmontopromovido', 'idvalorresidual', 'idajustecapital'), "#iddatos_pago");
+
+$jxc ->exportFunction('jsaLimpiarPagosEsp', array('idsolicitud'), "#iddatos_pago");
 
 $jxc ->process();
 
@@ -130,14 +138,14 @@ $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro(
 $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $auto		= parametro("auto", false, MQL_BOOL);
-
+$emular		= parametro("emular", false, MQL_BOOL);
 
 
 $xHP->addJExcelSupport();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "plan_de_pagos.frm.php");
+$xFRM		= new cHForm("frmplanpagos", "plan_de_pagos.frm.php");
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();
 if($credito > DEFAULT_CREDITO){
@@ -227,20 +235,23 @@ if($credito > DEFAULT_CREDITO){
 			}
 			
 			$xFRM->addHElem(  $xSelOtros->get("TR.Otros", true));
-			$xFRM->OMoneda("idotros", $montootros, "TR.Monto otros");
+			$xFRM->OMoneda("idotros", $montootros, "TR.Montootros");
 			
 			
 			if($valotros == true){
 				$xFRM->OHidden("idprimerpago", $valotros);
 			} else {
-				$xFRM->OCheck("TR.Guardar en el primer pago", "idprimerpago");
+				$xFRM->OCheck("TR.MONTOOTROS en primer pago", "idprimerpago");
 			}
 		}
 	}
+	//=============== Opciones varias
+	$xFRM->OCheck_13("TR.MOSTRAR COMPLETO", "idcompleto");
+	$xFRM->OCheck_13("TR.AJUSTAR CAPITAL", "idajustecapital");
+	
 	//=============== Esto debe ser opcional
 	
 	if($SinOptsEnPlan == false){
-		
 		$xFRM->OCheck("TR.IGNORAR INTERESES NO PAGADOS", "idnointereses");
 		$xFRM->OCheck("TR.INCLUIR ACCESORIOS AL ULTIMO PAGO", "idguardaruno");
 	} else {
@@ -259,8 +270,8 @@ if($credito > DEFAULT_CREDITO){
 		$xFRM->OMoneda("idmontopromovido", 0, "TR.Monto Promovido");
 	}
 	$xFRM->addObservaciones();
-	$xFRM->OCheck("TR.MOSTRAR COMPLETO", "idcompleto");
-	$xFRM->OCheck("TR.AJUSTAR CAPITAL", "idajustecapital");
+	
+
 	
 	$xFRM->addHTML("<div id='iddatos_pago'></div>");
 	$xFRM->OButton("TR.Calcular", "jsEmularPagos()", $xFRM->ic()->CALCULAR, "idcplan");
@@ -278,7 +289,14 @@ if($credito > DEFAULT_CREDITO){
 	//Agregar Valor residual del Credito
 	$xFRM->OHidden("idvalorresidual", $xCred->getvalorResidual());
 	$xFRM->OButton("TR.EXPORTAR", "$('.sqltable').tableExport({bootstrap: false,position:'top',fileName:'PlanDePagos'});", $xFRM->ic()->EXPORTAR, "idtoexport");
+	//=============== Pagos Especiales
+	$xPagEsp		= new cCreditosPlanPagoEsp();
+	$numeroPagosEsp	= $xPagEsp->getCountByCredito($credito, true, $xCred->getPagosAutorizados());
 	
+	if($numeroPagosEsp>0){
+		$xFRM->addTag("Tiene $numeroPagosEsp Pagos Especiales", "warning");
+		$xFRM->OButton("TR.ELIMINAR PAGOSESP", "jsEliminarPagosEsp()", $xFRM->ic()->ELIMINAR, "ideliminarpagosesp", "yellow");
+	}
 	$xFRM->addJsInit("jsInitComponents()");
 } else {
 	$xFRM->addJsBasico();
@@ -293,6 +311,8 @@ var xG		= new Gen();
 var xF		= new FechaGen();
 var xP		= new PlanGen();
 var isAuto	= <?php echo ($auto == true) ? "true" : "false" ?>;
+var isEmul	= <?php echo ($emular == true) ? "true" : "false" ?>;
+
 var idPlanA	= <?php echo setNoMenorQueCero($idPlanAnt); ?>;
 function jsInitComponents(){
 	var idprimerafecha		= $("#idprimerafecha").val();
@@ -318,9 +338,25 @@ function jsInitComponents(){
 			break;
 	}
 	if(isAuto == true){
+		xG.postajax("jsAutoSalir()");
 		jsaGuardarPagos(); //generar el Plan directo
-		xG.spin({ callback : jsAutoSalir, time : 10000 });
+		//xG.spin({ callback : jsAutoSalir, time : 10000 });
+		
 	}
+	if(isEmul == true){
+		jsEmularPagos();
+	}
+}
+function jsEliminarPagosEsp(){
+	xG.confirmar({
+		msg : "¿Confirma Eliminar los pagos especiales?",
+		callback : function(){
+			 	//xG.postajax("jsEmularPagos()");
+			 	xG.postajax("window.location.reload(false)");
+			 	jsaLimpiarPagosEsp();
+			 	
+			}
+		});
 }
 function jsAutoSalir(){xG.close();}
 function jsEmularPagos(){
@@ -328,7 +364,7 @@ function jsEmularPagos(){
 	if(xG.happy() == true){
 		jsaEmularPagos();
 		//obtener plan de pagos
-		xG.spin({ time : 3000 });		
+		//xG.spin({ time : 3000 });		
 	}
 }
 
@@ -387,6 +423,7 @@ function jsGetPrimeraFecha(v){
 	aDias.sort();
 	var mAbsDiasMax			= aDias[2];
 	var mIgnore				= false;
+	var mNivelAviso			= "error";
 	
 	
 	if(dia_primer_abono > mDiasMax||dia_segundo_abono > mDiasMax||dia_tercer_abono > mDiasMax){
@@ -396,6 +433,7 @@ function jsGetPrimeraFecha(v){
 		if(mAbsDiasMax > mMesMax){
 			xG.alerta({msg:"Es recomendable que el dia de Abono Maximo(" + mAbsDiasMax + ") No sea mayor al del Mes(" + mMesMax + ")", nivel : "warn"});
 			mIgnore			= true;
+			//ready			= true;
 		}
 		switch(idperiocidad){
 			case 7:
@@ -409,7 +447,7 @@ function jsGetPrimeraFecha(v){
 				if(mMDia == dia_primer_abono||mMDia == dia_segundo_abono||mMDia == dia_tercer_abono){
 					ready = true;
 				} else {
-					msg 	= "Dia Decena " + mMDia + "No coincide con los dias : " + dia_primer_abono + " o " + dia_segundo_abono;
+					msg 	= "Dia Decena " + mMDia + " No coincide con los dias : " + dia_primer_abono + ", " + dia_segundo_abono + " o " + dia_tercer_abono;
 				}
 				break;			
 			case 14:
@@ -425,7 +463,12 @@ function jsGetPrimeraFecha(v){
 				if(mMDia == dia_primer_abono||mMDia == dia_segundo_abono){
 					ready = true;
 				} else {
-					msg 	= "Dia Quincena " + mMDia + "No coincide con los dias : " + dia_primer_abono + " o " + dia_segundo_abono;
+					if(mMes == 2 && mMDia == 28 && (dia_primer_abono > 28 || dia_segundo_abono > 28) ){
+						ready 	= true;
+						msg 	= "Se ignora el mes de febrero y dias mayores, se debe ajusta al dia elegido.";
+					} else {
+						msg 	= "Dia Quincena " + mMDia + " No coincide con los dias : " + dia_primer_abono + " o " + dia_segundo_abono;						
+					}
 				}
 				break;
 			case 30:
@@ -436,6 +479,13 @@ function jsGetPrimeraFecha(v){
 					$("#dia_primer_abono").val(mMDia);
 					ready = true;
 				}
+				break;
+			case 365:
+				//setear fecha
+				$("#dia_primer_abono").val(mMDia);
+				ready 		= true;
+				msg 		= "El Primer Dia de Pago se establece en " + mMDia;
+				mNivelAviso	= "info";
 				break;
 			default:
 				if(idperiocidad == 360){
@@ -453,7 +503,11 @@ function jsGetPrimeraFecha(v){
 		
 	}
 	if(ready == false){
-		xG.alerta({msg:msg, nivel : "error"});
+		xG.alerta({msg:msg, nivel : mNivelAviso});
+	} else {
+		if(mNivelAviso !== "error"){
+			xG.alerta({msg:msg, nivel : mNivelAviso});
+		}
 	}
 	return ready;
 }
@@ -467,12 +521,19 @@ function jsSetCapital(obj){
 	var dd		= String(obj.id).split("-");
 	var idsdo	= flotante($("#idsaldoactual").val());
 	var idmto	= flotante(obj.value);
+	
 	if(idmto > idsdo){
 		xG.alerta({msg:"CREDITO_NO_MAYOR"});
 		$("#" + idx).val(0);
 	} else {
-		xP.setPagoEspecial({credito:dd[0], periodo:dd[1], monto:idmto });
+		xG.spinInit();
+		xP.setPagoEspecial({credito:dd[0], periodo:dd[1], monto:idmto, callback: 
+			function(){
+				jsEmularPagos();
+				xG.spinEnd();
+			} });
 	}
+	
 }
 </script>
 <?php

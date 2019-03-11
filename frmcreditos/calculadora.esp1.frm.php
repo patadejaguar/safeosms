@@ -41,7 +41,7 @@ $xHP->init("jsInitComponents()");
 
 ?><style> #idletra { font-size : 1.3em !important; } </style><?php
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalspe1", "./");
 $xSel		= new cHSelect();
 $xHNotif	= new cHNotif();
 $xTxt		= new cHText();

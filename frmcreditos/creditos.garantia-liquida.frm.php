@@ -46,7 +46,7 @@ $pagolibre		= parametro("pagolibre", false, MQL_BOOL);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./creditos.garantia-liquida.frm.php");
+$xFRM		= new cHForm("frmcredsgtisliqx", "./creditos.garantia-liquida.frm.php");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

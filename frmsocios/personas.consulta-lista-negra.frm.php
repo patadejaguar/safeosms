@@ -32,7 +32,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "personas.consulta-lista-negra.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmpersonaslistanegra", "personas.consulta-lista-negra.frm.php?action=" . MQL_ADD);
 $xFRM->setTitle($xHP->getTitle());
 
 //$xSoc		= new cSocio($persona);

@@ -42,7 +42,7 @@ $clave			= parametro("id", 0, MQL_INT); $clave = parametro("clave", $clave, MQL_
 $xHP->init();
 $observaciones	= parametro("idobservaciones");
 
-$xFRM			= new cHForm("frm", "frmresguardogarantias.php");
+$xFRM			= new cHForm("frmcredsresgtias", "frmresguardogarantias.php");
 $msg			= "";
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addJsBasico();

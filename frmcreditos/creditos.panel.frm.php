@@ -143,7 +143,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 		
 			if( setNoMenorQueCero($idnumeroplan) > 0) {
 				$oFrm->addButtonPlanDePagos($idnumeroplan);
-				if($xCred->getEsCreditoYaAfectado() == true){
+				if($xCred->getEsAfectable() == true){
 					$oFrm->OButton("TR.Parcialidades Pendientes", "var xcg = new CredGen();xcg.getLetrasEnMora($idsolicitud)", $oFrm->ic()->PREGUNTAR);
 				}
 			}

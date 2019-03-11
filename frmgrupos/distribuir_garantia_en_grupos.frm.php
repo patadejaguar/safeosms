@@ -42,7 +42,7 @@ $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("obser
 $xHP->goToPageError(405);
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmdistribuyegargpos", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

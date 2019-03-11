@@ -55,7 +55,7 @@ $xHP->init();
 
 $ByActivos	= ($todos == false) ? " AND (`operaciones_tipos`.`estatus`=1) " : " ";
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmoperacionestiposlista", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

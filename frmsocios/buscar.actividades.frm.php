@@ -38,7 +38,7 @@ $idcontrol 	= parametro("idcontrol", "", MQL_RAW);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmbuscaractividades", "./");
 $xSel		= new cHSelect();
 
 $xFRM->setNoAcordion();

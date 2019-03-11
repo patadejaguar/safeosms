@@ -1375,7 +1375,7 @@ class cSQLListas {
 				
 				`creditos_periocidadpagos`.`descripcion_periocidadpagos` AS `periocidad`,
 				
-				CONCAT(`creditos_solicitud`.`ultimo_periodo_afectado`, '/', `creditos_solicitud`.`pagos_autorizados`) AS 'periodo',
+				CONCAT(`creditos_solicitud`.`ultimo_periodo_afectado`, ' / ', `creditos_solicitud`.`pagos_autorizados`, ' x ', FORMAT(`creditos_solicitud`.`monto_parcialidad`,2)) AS 'periodo',
 				`creditos_solicitud`.`fecha_ministracion`                AS `otorgado`,
 				`creditos_solicitud`.`fecha_vencimiento`                 AS `vencimiento`,
 				`creditos_solicitud`.`monto_autorizado`                  AS `monto`,
@@ -4139,7 +4139,7 @@ FROM
 		INNER JOIN `vehiculos_gps`  ON `originacion_leasing`.`tipo_gps` = `vehiculos_gps`.`idvehiculos_gps`
 		WHERE `originacion_leasing`.`estatus` = 1 $ByOriginador $BySub ORDER BY `originacion_leasing`.`fecha_origen` DESC, `originacion_leasing`.`idoriginacion_leasing`";
 		
-		//setLog($sql);
+
 		return $sql;
 	}
 	function getListadoDeLeasingUsuarios($originador = 0, $idusuario =0){
@@ -4244,7 +4244,11 @@ FROM
 		$xVis	= new cSQLVistas();
 		return $xVis->CreditoLetraIndividualPorPeriodo($credito, $periodo);
 	}
-
+	function OTablas(){
+		$xL	= new cSysTablas();
+		
+		return $xL;
+	}
 }
 
 class cSQLVistas  {
@@ -4253,8 +4257,8 @@ class cSQLVistas  {
 		$sql	= $this->getVistaLetras($credito, $periodo);
 		return $sql;
 	}
-	function CreditosLetrasNoPagadas($credito){
-		$sql	= $this->getVistaLetras($credito, false, false, false, " AND `operaciones_mvtos`.`periodo_socio` >0 ", " total_sin_otros>0 ");
+	function CreditosLetrasNoPagadas($credito, $inverso = false){
+		$sql	= $this->getVistaLetras($credito, false, false, false, " AND `operaciones_mvtos`.`periodo_socio` >0 ", " total_sin_otros>0 ","", false, $inverso);
 		return $sql;
 	}
 	/**
@@ -4269,7 +4273,7 @@ class cSQLVistas  {
 	 * @param mixed $fecha
 	 * @return string
 	 */
-	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $where0 ="", $having="", $where1 = "", $fecha = false){
+	function getVistaLetras($credito=false, $periodo=false, $par1= false, $par2=false, $where0 ="", $having="", $where1 = "", $fecha = false, $inverso = false){
 		$credito	= setNoMenorQueCero($credito);
 		$periodo	= setNoMenorQueCero($periodo);
 		$having		= ($having == "") ? "" : " HAVING $having ";
@@ -4281,8 +4285,9 @@ class cSQLVistas  {
 			$fecha	= $xF->getFechaISO($fecha);
 			$fechaC		= "'$fecha'";
 		}
+		$ODesc		= ($inverso == false) ? "" : "DESC";
 		
-		$sql	= "SELECT
+		$sql		= "SELECT
 		
 		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` AS `codigo_de_base`,
 		`socio_afectado`                         AS `socio_afectado`,
@@ -4339,7 +4344,7 @@ class cSQLVistas  {
 		$where1
 		GROUP BY `operaciones_mvtos`.`docto_afectado`,`operaciones_mvtos`.`periodo_socio`
 		$having
-		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio` ";
+		ORDER BY `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, `operaciones_mvtos`.`docto_afectado`, `operaciones_mvtos`.`periodo_socio` $ODesc";
 		
 		//setLog($sql);
 		return $sql;
@@ -5533,21 +5538,22 @@ class cSysTablas {
 	public $CREDITOS_TIPO_DE_AUTORIZACION 	 = "creditos_tipo_de_autorizacion";
 	public $CREDITOS_TIPO_DE_CALCULO_DE_INTERES 	 = "creditos_tipo_de_calculo_de_interes";
 	public $CREDITOS_TIPO_DE_DISPERSION 	 = "creditos_tipo_de_dispersion";
-	public $CREDITOS_TIPO_DE_PAGO 	 = "creditos_tipo_de_pago";
-	public $CREDITOS_TIPOCONVENIO 	 = "creditos_tipoconvenio";
-	public $CREDITOS_TVALUACION 	 = "creditos_tvaluacion";
-	public $DIAS_EN_MORA 	 = "dias_en_mora";
-	public $DOMICILIOS 	 = "domicilios";
+	public $CREDITOS_TIPO_DE_PAGO 	 	= "creditos_tipo_de_pago";
+	public $CREDITOS_TIPOCONVENIO 	 	= "creditos_tipoconvenio";
+	public $CREDITOS_TVALUACION 	 	= "creditos_tvaluacion";
+	public $CREDITOS_PAGOS_ESP			= "creditos_pagos_esp";
+	public $DIAS_EN_MORA 	 			= "dias_en_mora";
+	public $DOMICILIOS 	 				= "domicilios";
 	public $EACP_CONFIG_BASES_DE_INTEGRACION 	 = "eacp_config_bases_de_integracion";
 	public $EACP_CONFIG_BASES_DE_INTEGRACION_MIEMBROS 	 = "eacp_config_bases_de_integracion_miembros";
-	public $EMPRESAS_COBRANZA 	 = "empresas_cobranza";
-	public $EMPRESAS_OPERACIONES 	 = "empresas_operaciones";
-	public $ENTIDAD_AUTORIZACIONES 	 = "entidad_autorizaciones";
-	public $ENTIDAD_CALIFICACION 	 = "entidad_calificacion";
-	public $ENTIDAD_CONFIGURACION 	 = "entidad_configuracion";
-	public $ENTIDAD_CREDITOS_PROYECCIONES 	 = "entidad_creditos_proyecciones";
-	public $ENTIDAD_NIVELES_DE_RIESGO 	 = "entidad_niveles_de_riesgo";
-	public $ENTIDAD_PAGOS_PERFIL 	 = "entidad_pagos_perfil";
+	public $EMPRESAS_COBRANZA 	 			= "empresas_cobranza";
+	public $EMPRESAS_OPERACIONES 	 		= "empresas_operaciones";
+	public $ENTIDAD_AUTORIZACIONES 	 		= "entidad_autorizaciones";
+	public $ENTIDAD_CALIFICACION 	 		= "entidad_calificacion";
+	public $ENTIDAD_CONFIGURACION 	 		= "entidad_configuracion";
+	public $ENTIDAD_CREDITOS_PROYECCIONES 	= "entidad_creditos_proyecciones";
+	public $ENTIDAD_NIVELES_DE_RIESGO 	 	= "entidad_niveles_de_riesgo";
+	public $ENTIDAD_PAGOS_PERFIL 	 		= "entidad_pagos_perfil";
 	public $ENTIDAD_REGLAS 	 = "entidad_reglas";
 	public $ENTIDAD_REPORTES_PROPS 	 = "entidad_reportes_props";
 	public $GARANTIA_LIQUIDA 	 = "garantia_liquida";
@@ -6500,16 +6506,18 @@ class MQL {
 	function getMessages($out = OUT_TXT ){ return $this->mMessages; }
 	function getDebug(){
 		if($this->mDebug == true){
-			if(function_exists("setLog")){ setLog($this->mMessages); }
+			//if(function_exists("setLog")){ setLog($this->mMessages); }
+			error_log($this->mMessages, E_WARNING);
 			$this->mMessages = "";
 		}
 	}
 	function getLastInsertID(){ return $this->mInsertID; }
 	function onDebug(){ return $this->mDebug; }
 	function setUseCache(){ $this->mUseCache = true; }
-	function getContarDe($tabla){
+	function getContarDe($tabla, $w = ""){
 		$items		= 0;
-		$d			= $this->getDataRow("SELECT COUNT(*) AS `items` FROM `$tabla`");
+		$w			= ($w == "") ? "" : "WHERE $w";
+		$d			= $this->getDataRow("SELECT COUNT(*) AS `items` FROM `$tabla` $w");
 		if(isset($d["items"])){
 			$items	= $d["items"];
 		}

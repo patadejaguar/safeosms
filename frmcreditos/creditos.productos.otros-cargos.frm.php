@@ -40,7 +40,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./", "idfrm");
+$xFRM		= new cHForm("frmcredsprodocargos", "./", "idfrm");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addJsBasico();

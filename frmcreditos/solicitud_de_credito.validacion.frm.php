@@ -23,7 +23,7 @@
 //=====================================================================================================
 $xHP		= new cHPage("TR.Validar Creditos");
 $xHP->init();
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmsolcredvalida", "./");
 $xLog		= new cCoreLog();
 
 

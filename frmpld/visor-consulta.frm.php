@@ -30,7 +30,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmvisorconsulta", "./");
 $xTxt		= new cHTextArea();
 
 $xTb		= new cPersonas_consulta_lista();

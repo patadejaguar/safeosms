@@ -45,7 +45,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcarteragtialiq", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

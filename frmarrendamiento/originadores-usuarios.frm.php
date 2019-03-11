@@ -63,7 +63,7 @@ $observaciones= parametro("idobservaciones");
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmoriginsedit", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

@@ -46,7 +46,7 @@ $persona2	= parametro("persona2", DEFAULT_SOCIO, MQL_INT); $persona2 = parametro
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmpersonasunificar", "./");
 $xSel		= new cHSelect();
 
 //$xFRM->addJsBasico();

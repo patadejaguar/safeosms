@@ -48,7 +48,7 @@ $xHP->addJExcelSupport();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmmatrizriesgo", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setNoAcordion();

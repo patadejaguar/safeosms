@@ -28,7 +28,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmreportslegales", "./");
 $xBtn		= new cHButton();		
 $xTxt		= new cHText();
 $xDate		= new cHDate();

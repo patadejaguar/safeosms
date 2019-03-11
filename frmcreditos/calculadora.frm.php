@@ -33,7 +33,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./"); $xSel	= new cHSelect(); $xTxt	= new cHText();
+$xFRM		= new cHForm("frmcalcfrm", "./"); $xSel	= new cHSelect(); $xTxt	= new cHText();
 
 $msg		= "";
 //$xFRM->addJsBasico();

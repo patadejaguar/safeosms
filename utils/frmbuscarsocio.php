@@ -339,8 +339,9 @@ $xFRM->addSeccion("idopciones", "TR.BUSCAR PERSONAS");
 if($BuscarConID == true){
 $xTxt2->setDivClass("");
 	$lbl	= $xTxt2->getLabel("TR.IDINTERNO");
-	$xFRM->addDivMedio($lbl, $xTxt2->getNormal("idinterna", "", ""), "tx12", "tx12");
-	$xFRM->addDivMedio($xHSel->get("idtipobusqueda", "", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, ""), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));
+	$xFRM->addDiv13($lbl, $xTxt2->getNormal("idinterna", "", ""), "tx12", "tx12");
+	$xHSel->setTags(false);
+	$xFRM->addDiv23($xHSel->get("idtipobusqueda", "", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, ""), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));
 } else {
 	$xFRM->OHidden("idinterna", "");
 	$xFRM->addDivMedio($xHSel->get("idtipobusqueda", "Buscar por :", $buscarPor), $xTxt->getNormal("idtextobusqueda", $persona, "TR.Texto de busqueda"), "tx12", "tx12", array(2=>array("id"=>"idbusqueda")));

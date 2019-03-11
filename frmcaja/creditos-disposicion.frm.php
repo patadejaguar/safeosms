@@ -45,7 +45,7 @@ $CuentaBancaria	= parametro("idcodigodecuenta", 0, MQL_INT);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "creditos-disposicion.frm.php");
+$xFRM		= new cHForm("frmcredsdispone", "creditos-disposicion.frm.php");
 $xSel		= new cHSelect();
 $xCob		= new cHCobros();
 $xFRM->setTitle($xHP->getTitle());

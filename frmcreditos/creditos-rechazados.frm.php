@@ -33,7 +33,7 @@ $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaac
 //function jsaSetSaveRechazados($solicitud, $texto, $fecha){	$xCred		= new cCredito($solicitud); 	$xCred->init(); 	$xCred->setRazonRechazo($texto, "", $fecha); }
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsrechazados", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setNoAcordion();

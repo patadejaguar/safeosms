@@ -37,10 +37,13 @@ $idcodigopostal		= parametro("idcodigopostal", $xLoc->DomicilioCodigoPostal(), M
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "");
+$xFRM		= new cHForm("frmsocioscajaloc", "");
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();
 $xTxt		= new cHText();
+
+$xFRM->addCerrar();
+
 if($action == SYS_NINGUNO){
 	$xFRM->OButton("TR.Agregar CAJA_LOCAL", "var xP=new PersGen();xP.setNuevaCajaLocal();", $xFRM->ic()->AGREGAR);
 	$xT		= new cTabla($xLi->getListadoDeCajasLocales());

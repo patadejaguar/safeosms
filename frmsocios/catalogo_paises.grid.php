@@ -52,6 +52,7 @@ $xHG->setSQL("SELECT   `personas_domicilios_paises`.`clave_de_control`,
 FROM     `personas_domicilios_paises` 
 INNER JOIN `entidad_niveles_de_riesgo`  ON `personas_domicilios_paises`.`es_considerado_riesgo` = `entidad_niveles_de_riesgo`.`clave_de_nivel` LIMIT 0,50 ");
 $xHG->addList();
+$xHG->setOrdenar();
 $xHG->addKey("clave_de_control");
 
 $xHG->col("clave_numerica", "TR.NUMERO", "10%");

@@ -16,7 +16,7 @@ $xDiv		= new cHDiv();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcreditosbuscar", "./");
 $msg		= "";
 
 $xFRM->setTitle($xHP->getTitle());

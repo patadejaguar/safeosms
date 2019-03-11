@@ -144,12 +144,12 @@ echo $xFRM->get();
 <script>
 var xRec	= new RecGen();
 var xCred	= new CredGen();
-var xCta	= new GenCapt();
+var xCta	= new CaptGen();
 var xG		= new Gen();
 
 function jsGoPanelRecibos(id){ var xRec = new RecGen(); xRec.panel(id); }
 function jsRecargar(idcuenta){ 
-	xG.go({url: "cuentas.panel.frm.php?cuenta=" + idcuenta});
+	xG.go({url: "../frmcaptacion/cuentas.panel.frm.php?cuenta=" + idcuenta});
 }
 function jsEditar(idcuenta){
 	xG.w({tiny:true, url: "../frmcaptacion/cuentas.panel.edicion.frm.php?cuenta=" + idcuenta});

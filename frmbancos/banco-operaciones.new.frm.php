@@ -41,6 +41,8 @@ $observaciones	= parametro("idobservaciones"); $observaciones	= parametro("obser
 
 $conciliar		= parametro("conciliar", false, MQL_BOOL);
 
+$operacion		= parametro("idtipooperacionbanco", BANCOS_OPERACION_DEPOSITO, MQL_RAW);
+
 $xHP->init();
 
 
@@ -63,9 +65,11 @@ if($clave<=0){
 	$xTabla->idusuario(getUsuarioActual());
 	$xTabla->usuario_autorizo(getUsuarioActual());
 	$xTabla->estatus($xBancops->NOAUTORIZADO);
+	$xTabla->tipo_operacion($operacion);
+	$xTabla->cuenta_bancaria($cuenta);
 }
 
-$xFRM->ODate("fecha_expedicion", $xTabla->fecha_expedicion()->v());
+
 
 $xFRM->OHidden("idcontrol", $xTabla->idcontrol()->v());
 $xFRM->OHidden("eacp", $xTabla->eacp()->v());
@@ -76,30 +80,42 @@ $xFRM->OHidden("estatus", $xTabla->estatus()->v());
 $xFRM->OHidden("clave_de_conciliacion", $xTabla->clave_de_conciliacion()->v());
 
 
-$xFRM->addHElem( $xSel->getListaDeCuentasBancarias("cuenta_bancaria", true, $xTabla->cuenta_bancaria()->v())->get(true) );
-$xFRM->addHElem( $xSel->getListaDeTiposDeOperacionesBancarias("tipo_operacion", $xTabla->tipo_operacion()->v())->get(true) );
-
+$xFRM->addSeccion("iddivt0", "TR.RELACION");
 $xFRM->OMoneda("numero_de_socio", $xTabla->numero_de_socio()->v(), "TR.CLAVE_DE_PERSONA");
 $xFRM->OMoneda("documento_de_origen", $xTabla->documento_de_origen()->v(), "TR.CONTRATO");
 $xFRM->ONumero("recibo_relacionado", $xTabla->recibo_relacionado()->v(), "TR.RECIBO");
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddivt1", "TR.OPERACION");
+
+if($cuenta>0){
+	$xFRM->OHidden("cuenta_bancaria", $xTabla->cuenta_bancaria()->v());
+} else {
+	$xFRM->addHElem( $xSel->getListaDeCuentasBancarias("cuenta_bancaria", true, $xTabla->cuenta_bancaria()->v())->get(true) );
+}
+
+$xFRM->ODate("fecha_expedicion", $xTabla->fecha_expedicion()->v());
+$xFRM->addHElem( $xSel->getListaDeTiposDeOperacionesBancarias("tipo_operacion", $xTabla->tipo_operacion()->v())->get(true) );
+
+
 //TODO: Validar bien de donde es originado esta Dato
 
 //$xFRM->OMoneda("cuenta_de_origen", $xTabla->cuenta_de_origen()->v(), "TR.CUENTA DE ORIGEN");
 $xFRM->OHidden("cuenta_de_origen", $xTabla->cuenta_de_origen()->v());
+$xFRM->OText_13("numero_de_documento", $xTabla->numero_de_documento()->v(), "TR.CHEQUE / REFERENCIA");
+$xFRM->OText("beneficiario", $xTabla->beneficiario()->v(), "TR.BENEFICIARIO");
+
+$xFRM->endSeccion();
+$xFRM->addSeccion("iddivt2", "TR.MONTO");
 
 $xFRM->addHElem( $xSel->getListaDeMonedas("clave_de_moneda", $xTabla->clave_de_moneda()->v())->get(true) );
-
 $xFRM->addHElem( $xSel->getListaDeTipoDePagoTesoreria("tipo_de_exhibicion", false, $xTabla->tipo_de_exhibicion()->v())->get(true) );
-$xFRM->OText_13("numero_de_documento", $xTabla->numero_de_documento()->v(), "TR.CHEQUE / REFERENCIA");
-
-$xFRM->OText("beneficiario", $xTabla->beneficiario()->v(), "TR.BENEFICIARIO");
 $xFRM->OMoneda("monto_descontado", $xTabla->monto_descontado()->v(), "TR.MONTO DESCONTADO");
 
 $xFRM->OMoneda("monto_real", $xTabla->monto_real()->v(), "TR.MONTO REAL");
 
 //$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.ESTATUS", array("autorizado"=>"AUTORIZADO", "noautorizado"=>"NOAUTORIZADO", "cancelado"=>"CANCELADO"));
 
-
+$xFRM->endSeccion();
 
 
 

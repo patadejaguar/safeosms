@@ -103,7 +103,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 ?> <style> #idavisopago, #idimporte, #iMontoRecibido { font-size : 1.3em !important; } </style><?php
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredslistapends", "./");
 $msg		= "";
 $xFRM->OButton("TR.Obtener", "jsaGetLetras()", $xFRM->ic()->CARGAR);
 $xFRM->OButton("TR.Reporte", "var xg = new CredGen(); xg.getReporteLetrasEnMora($credito, document.getElementById('idfechadecalculo').value)", $xFRM->ic()->CARGAR);

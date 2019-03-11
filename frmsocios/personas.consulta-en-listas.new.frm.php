@@ -47,7 +47,7 @@ $interna		= parametro("idinterna", false, MQL_BOOL);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./personas.consulta-en-listas.new.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmpersonasenlista", "./personas.consulta-en-listas.new.frm.php?action=" . MQL_ADD);
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addCerrar();

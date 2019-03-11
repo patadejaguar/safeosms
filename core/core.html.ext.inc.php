@@ -2298,7 +2298,7 @@ class cHGrid {
 			if(isset($items["dataRaw"])){
 				$isRaw	= $items["dataRaw"];
 				unset($items["dataRaw"]);
-				setLog($items);
+				//setLog($items);
 			}
 			foreach ($items as $props => $vals){
 				switch($props){

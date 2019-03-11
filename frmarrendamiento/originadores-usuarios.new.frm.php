@@ -64,7 +64,7 @@ $observaciones	= parametro("idobservaciones");
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmoriginsnew", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xTabla		= new cLeasing_usuarios();

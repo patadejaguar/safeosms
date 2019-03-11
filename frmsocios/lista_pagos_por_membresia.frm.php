@@ -31,9 +31,29 @@ function jsaActualizarCuotas($clave){
 	}
 	return $xPP->getMessages(OUT_HTML);
 }
+function jsaGenerarPorTipoAportacion($clave){
+	$xQL	= new MQL();
+	$rs		= $xQL->getDataRecord("SELECT * FROM `personas_membresia_tipo`");
+	$xTM	= new cPersonas_membresia_tipo();
+	$xTA	= new cPersonas_aports_tipos();
+	
+	foreach($rs as $data){
+		$idmembresia	= $data[$xTM->IDPERSONAS_MEMBRESIA_TIPO];
+		$rs1			= $xQL->getDataRecord("SELECT * FROM `personas_aports_tipos` WHERE `estatusactivo` = 1");
+		$xMem			= new cPersonasMembresiasTipos();
+		$contar			= 0;
+		foreach($rs1 as $data1){
+			$idoperacion	= $data1[$xTA->OPERACION_TIPO_ID];
+			$rotacion		= $data1[$xTA->PAGADERO];
+			$xMem->addPerfil($idoperacion, 0, CREDITO_TIPO_PERIOCIDAD_MENSUAL, false, "1", $idmembresia, $contar);
+			$contar++;
+		}
+		
+	}
+}
 
 $jxc ->exportFunction('jsaActualizarCuotas', array('idkey'), "#idmsg");
-
+$jxc ->exportFunction('jsaGenerarPorTipoAportacion', array('idkey'), "#idmsg");
 
 $jxc ->process();
 
@@ -70,16 +90,20 @@ INNER JOIN `operaciones_tipos`  ON `entidad_pagos_perfil`.`tipo_de_operacion` = 
 
 $xHG->setSQL($sql);
 $xHG->addList();
+$xHG->setOrdenar();
+
 $xHG->addKey("identidad_pagos_perfil");
 
-$xHG->col("membresia", "TR.MEMBRESIA", "10%");
-$xHG->col("operacion", "TR.OPERACION", "10%");
+$xHG->col("membresia", "TR.MEMBRESIA", "20%");
+$xHG->col("operacion", "TR.OPERACION", "20%");
 $xHG->col("periocidad", "TR.PERIOCIDAD", "10%");
-
-$xHG->col("monto", "TR.MONTO", "10%");
 $xHG->col("prioridad", "TR.PRIORIDAD", "10%");
 $xHG->col("rotacion", "TR.ROTACION", "10%");
-$xHG->col("fecha_de_aplicacion", "TR.FECHA", "10%");
+$xHG->col("monto", "TR.MONTO", "10%");
+
+//$xHG->col("fecha_de_aplicacion", "TR.FECHA", "10%");
+
+$xFRM->OButton("TR.GENERAR POR APORTACION", "jsGenerarPorTipoAportacion()", $xFRM->ic()->AUTOMAGIC);
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 
@@ -111,7 +135,13 @@ function jsPlanMembresia(id){
 function jsDel(id){
 	//xG.rmRecord({tabla:"entidad_pagos_perfil", id:id, callback:jsLGiddivperfilista});
 }
-
+function jsGenerarPorTipoAportacion(){
+	xG.confirmar({msg: "MSG_CONFIRMA_IMPORTAR", callback: function(){
+			xG.postajax("jsLGiddivperfilista()");
+			jsaGenerarPorTipoAportacion();
+			
+		}});
+}
 function jsUpdateCuotas(id){
 	//xG.rmRecord({tabla:"entidad_pagos_perfil", id:id, callback:jsLGiddivperfilista});
 	$("#idkey").val(id);

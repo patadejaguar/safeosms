@@ -39,7 +39,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalcpagos", "./");
 $xSel		= new cHSelect();
 $xTxt		= new cHText();
 $xTxt->setDivClass("txtmon");

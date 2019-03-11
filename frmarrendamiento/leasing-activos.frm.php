@@ -21,7 +21,31 @@ $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
 $xAc		= new cLeasingActivos();
+$xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
+$xRuls			= new cReglaDeNegocio();
+$originador		= 0;
+$suborigen		= 0;
+$EsAdmin		= false;
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$EsOriginador	= false;
 
+if($xUser->getEsOriginador() == true){
+	$xOrg	= new cLeasingUsuarios();
+	if($xOrg->initByIDUsuario($xUser->getID()) == true){
+		$originador	= $xOrg->getOriginador();
+		$suborigen	= $xOrg->getSubOriginador();
+		//$EsActivo	= $xOrg->getEsActivo();
+		$EsAdmin	= $xOrg->getEsAdmin();
+		if($xOrg->getEsAdmin() == true){
+			$suborigen			= 0;
+		}
+		if($xOrg->getEsActivo() == false){
+			$xHP->goToPageError(403);
+		} else {
+			$EsOriginador	= true;
+		}
+	}
+}
 //$jxc 		= new TinyAjax();
 //$tab = new TinyAjaxBehavior();
 //$tab -> add(TabSetValue::getBehavior("idide", $x));
@@ -86,15 +110,17 @@ $xHG->col("motor", "TR.MOTOR", "10%");
 $xHG->col("marca", "TR.MARCA", "10%");
 $xHG->col("color", "TR.COLOR", "10%");
 */
+if($EsOriginador == false){
+	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+	
+	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idleasing_activos +')", "edit.png");
+	
+	$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idleasing_activos +')", "prohibition.png");
+	
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idleasing_activos +')", "delete.png");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+}
 
-
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idleasing_activos +')", "edit.png");
-
-$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idleasing_activos +')", "prohibition.png");
-
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idleasing_activos +')", "delete.png");
 $xFRM->addHElem("<div id='iddivactivos'></div>");
 
 if($todas == false){

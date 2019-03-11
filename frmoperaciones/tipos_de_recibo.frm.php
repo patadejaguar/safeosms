@@ -24,13 +24,51 @@ $xF			= new cFecha();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
 
+$xHP->addJTableSupport();
 
 $xHP->init();
 $xFRM		= new cHForm("frmtiporecibos");
 
 $xFRM->setTitle($xHP->getTitle());
 
-$sql		= "SELECT
+$xFRM->addCerrar();
+
+/* ===========        GRID JS        ============*/
+
+$xHG    = new cHGrid("iddivtiporecibos",$xHP->getTitle());
+
+$xHG->setSQL("SELECT
+    `operaciones_recibostipo`.`idoperaciones_recibostipo` AS `clave`,
+    `operaciones_recibostipo`.`descripcion_recibostipo`   AS `nombre`,
+    `contable_polizasdiarios`.`nombre_del_diario`         AS `poliza`,
+    `operaciones_recibostipo`.`path_formato`              AS `formato`
+FROM
+    `operaciones_recibostipo` `operaciones_recibostipo`
+        LEFT OUTER JOIN `contable_polizasdiarios` `contable_polizasdiarios`
+        ON `operaciones_recibostipo`.`tipo_poliza_generada` =
+        `contable_polizasdiarios`.`idcontable_polizadiarios`
+    ORDER BY
+        `operaciones_recibostipo`.`idoperaciones_recibostipo`");
+$xHG->addList();
+$xHG->setOrdenar();
+$xHG->col("clave", "TR.CLAVE", "5%");
+$xHG->col("nombre", "TR.NOMBRE", "40%");
+$xHG->col("poliza", "TR.POLIZA", "15%");
+$xHG->col("formato", "TR.FORMATO", "30%");
+
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+
+$xHG->OButton("TR.EDITAR", "jsEditarTipoRecibo('+ data.record.clave +')", "edit.png");
+
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave +')", "undone.png");
+
+$xFRM->addHElem("<div id='iddivtiporecibos'></div>");
+$xFRM->addJsCode( $xHG->getJs(true) );
+
+
+/*$sql		= "SELECT
 	`operaciones_recibostipo`.`idoperaciones_recibostipo` AS `clave`,
 	`operaciones_recibostipo`.`descripcion_recibostipo`   AS `nombre`,
 	`contable_polizasdiarios`.`nombre_del_diario`         AS `poliza`,
@@ -45,7 +83,7 @@ FROM
 
 $xT			= new cTabla($sql);
 $xT->OButton("TR.Editar", "jsEditarTipoRecibo(" . HP_REPLACE_ID .  ")", $xFRM->ic()->EDITAR);
-$xFRM->addHElem($xT->Show());
+$xFRM->addHElem($xT->Show());*/
 
 echo $xFRM->get();
 //$jxc ->drawJavaScript(false, true);
@@ -57,6 +95,9 @@ function jsEditarTipoRecibo(id){
 }
 function jsEditarPerfilContable(id){
 	xG.w({ url : "tipos_de_recibo.editor.frm.php?id=" + id, tiny : true, w : 880 , h : 700 });
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"operaciones_recibostipo", id:id, callback:jsLGiddivtiporecibos, preguntar:true });
 }
 </script>
 <?php

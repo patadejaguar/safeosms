@@ -40,6 +40,7 @@ $observaciones= parametro("idobservaciones");
 $tasa		= parametro("tasa", 0, MQL_FLOAT);
 $residual	= parametro("residual", true, MQL_BOOL);
 $opcioniva	= parametro("optiva", true, MQL_BOOL);
+$opcionint	= parametro("optint", true, MQL_BOOL);
 
 $solonomina	= parametro("solonomina", false, MQL_BOOL);
 
@@ -47,7 +48,7 @@ $xHP->init("jsInitComponents()");
 
 ?><style> #idletra { font-size : 1.3em !important; } </style><?php
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalplan", "./");
 $xSel		= new cHSelect();
 $xHNotif	= new cHNotif();
 $xTxt		= new cHText();
@@ -83,7 +84,12 @@ if($opcioniva == true){
 }
 
 $xFRM->OCheck("TR.REDONDEO", "idconredondeo", true);
-$xFRM->OCheck("TR.SOLO INTERES", "idsolointeres");
+if($opcionint == true){
+	$xFRM->OCheck("TR.SOLO INTERES", "idsolointeres");
+} else {
+	$xFRM->OHidden("idsolointeres", 0);
+}
+
 //$xFRM->addJsBasico();
 $xFRM->OButton("TR.CALCULAR", "jsCalcular()", $xFRM->ic()->EJECUTAR);
 $xFRM->OButton("TR.IMPRIMIR", "jsVerCotizacion()", $xFRM->ic()->IMPRIMIR, "idimprimir");

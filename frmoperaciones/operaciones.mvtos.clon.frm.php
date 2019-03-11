@@ -42,7 +42,7 @@ $recibo		= parametro("recibo", false, MQL_INT);
 $tipo		= parametro("idtipo", false, MQL_INT);
 
 $xHP->init();
-$xFRM		= new cHForm("frm", "operaciones.mvtos.clon.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmoperacionesmvtosclon", "operaciones.mvtos.clon.frm.php?action=" . MQL_ADD);
 $xOP	= new cOperaciones_mvtos();
 
 //$xFRM->addJsBasico();

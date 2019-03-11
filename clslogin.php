@@ -12,13 +12,15 @@ $usuario	= parametro("u$mKey", "", MQL_RAW);
 $password	= parametro("p$mKey", "", MQL_RAW);
 $sucursal	= parametro("idsucursal", DEFAULT_SUCURSAL, MQL_RAW);
 $indice		= parametro("o",0, MQL_INT);
-
+$usergps	= parametro("ugps", "", MQL_RAW);
 
 //$xLog					= new cCoreLog();
 $_SESSION["sucursal"]	= strtolower($sucursal);
 $xUsr					= new cSystemUser();
+$xLog					= new cCoreLog();
 
-
+$xLog->setCoords($usergps);
+$xUsr->setCoords($usergps);
 
 if($xUsr->initSession($usuario, $password) === true){
 	$arrFiles	= array(
@@ -36,7 +38,7 @@ if($xUsr->initSession($usuario, $password) === true){
 					
 				} else {
 				//if($xUsr->getSucursalAccede() == false){
-					$xLog	= new cCoreLog();
+					
 					$xLog->add("Sucursal Incorrecta para el Usuario $usuario\r\n");
 					$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
 					$msg	= "Sucursal Incorrecta";
@@ -59,7 +61,7 @@ if($xUsr->initSession($usuario, $password) === true){
 	header ("location:$index");
 
 } else {
-	$xLog	= new cCoreLog();
+	//$xLog	= new cCoreLog();
 	$xLog->add("Datos Incorrectos para el Usuario $usuario\r\n");
 	$xLog->guardar($xLog->OCat()->ERROR_LOGIN);
 	$msg	= "Credenciales incorrectas para iniciar sesion. " . $xUsr->getMessages();

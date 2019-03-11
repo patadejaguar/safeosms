@@ -39,7 +39,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "empresas-pagos.frm.php");
+$xFRM		= new cHForm("frmempresaspagocheque", "empresas-pagos.frm.php");
 
 $msg		= "";
 //$xFRM->addJsBasico();

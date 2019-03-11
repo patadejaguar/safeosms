@@ -41,7 +41,7 @@ $persona	= parametro("i", $persona, MQL_INT);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcuentascapta", "./");
 
 $msg		= "";
 

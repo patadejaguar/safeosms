@@ -575,6 +575,7 @@ if(getEsModuloMostrado(USUARIO_TIPO_CAJERO) == true){
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION)){
 	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", "lista", "idcredaut", false) );
 	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Ministrar", "jsaGetCreditosPorMinistrar()", "lista", "idcrednpoaut", false) );
+	$xFRM->OButton("TR.CARTERA CREDITO", "jsGetCarteraCredito()", $xFRM->ic()->REPORTE5, "carteracred", "blue3");
 }
 if(getEsModuloMostrado(USUARIO_TIPO_GERENTE, MMOD_COLOCACION) == true){
 	$xFRM->OButton("TR.Actualizar Proyeccion", "jsActualizarProyeccionMensual()", $xFRM->ic()->RECARGAR, "idcmdactualizar", "yellow");
@@ -778,8 +779,9 @@ if(MODO_DEBUG == true){
 	} else {
 		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
 		$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
+		
 	}
-	
+	$xFRM->OButton("Buscar en LOG", "jsGoBuscarLog()", $xFRM->ic()->AVISO, "idbuslog", "yellow");
 	$xFRM->OButton("Obtener LOG", "jsaGetLog()", $xFRM->ic()->GRAFICO1, "idglog", "blue3");
 	$xFRM->OButton("TR.Respaldo", "jsaRespaldarDB()", $xFRM->ic()->EJECUTAR, "idrespdb", "green");
 	
@@ -998,9 +1000,11 @@ function jsGetChart(mType){
 }
 
 function jsGetCarteraGtiaLiquida(){
-	xG.w({url:"../frmcreditos/cartera-gtia-liquida.frm.php?", tab: false , h: 600, w : 480, tab:true});
+	xG.w({url:"../frmcreditos/cartera-gtia-liquida.frm.php?", principal:true});
 }
-
+function jsGetCarteraCredito(){
+	xG.w({url:"../frmcreditos/lista-creditos.frm.php?", principal:true});
+}
 function jsCalcularPlanPagos(){
 	xG.w({url:"../frmcreditos/calculadora.plan.frm.php?", tiny: false , h: 600, w : 480, tab:true});
 }
@@ -1029,6 +1033,15 @@ function jsGoPanelPersona(){
 function jsGoPanelCredito(){
 	var id = $("#idclave").val();
 	xCred.goToPanelControl(id, {principal:true, tab:false});
+}
+function jsGoBuscarLog(){
+	var id = $("#idclave").val();
+	if(id > 0){
+		xG.w({url:"../rptsecurity/rpt_system_log.php?buscar=" + id, tab: true});
+	} else {
+		xG.alerta({msg: "MSG_DATA_REQUIRED"})
+	}
+	
 }
 function jsGoPanelRecibo(){
 	var id = $("#idclave").val();

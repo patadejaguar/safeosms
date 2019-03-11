@@ -47,7 +47,7 @@ $idobservaciones	= parametro("idobservaciones");
 $xHP->init();
 
 
-$xFRM		= new cHForm("frm", "llamadas.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmllamadaslista", "llamadas.frm.php?action=" . MQL_ADD);
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();
 $xDat		= new cHDate();

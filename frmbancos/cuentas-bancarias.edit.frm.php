@@ -52,13 +52,15 @@ $xSel		= new cHSelect();
 
 $xFRM->OHidden("idbancos_cuentas", $xTabla->idbancos_cuentas()->v());
 $xFRM->OHidden("fecha_de_apertura", $xTabla->fecha_de_apertura()->v());
+//$xFRM->addHElem( $xSel->getListaDeSucursales("sucursal", $xTabla->sucursal()->v())->get(true) );
+$xFRM->addHElem( $xSel->getListaDeBancos("entidad_bancaria", $xTabla->entidad_bancaria()->v())->get(true) );
 
 $xFRM->OText("descripcion_cuenta", $xTabla->descripcion_cuenta()->v(), "TR.descripcion");
 
-$xFRM->addHElem( $xSel->getListaDeSucursales("sucursal", $xTabla->sucursal()->v())->get(true) );
-$xFRM->addHElem( $xSel->getListaDeBancos("entidad_bancaria", $xTabla->entidad_bancaria()->v())->get(true) );
+
 $xFRM->OSelect("tipo_de_cuenta", $xTabla->tipo_de_cuenta()->v() , "TR.tipo de cuenta", array("cheques"=>"CHEQUES", "inversion"=>"INVERSION"));
 //$xFRM->OHidden("sucursal", $xTabla->sucursal()->v(), "TR.sucursal");
+
 $xFRM->addHElem( $xSel->getListaDeSucursales("sucursal", $xTabla->sucursal()->v())->get(true) );
 
 $xFRM->OSelect("estatus_actual", $xTabla->estatus_actual()->v() , "TR.estatus actual", array("activo"=>"ACTIVO", "baja"=>"BAJA"));

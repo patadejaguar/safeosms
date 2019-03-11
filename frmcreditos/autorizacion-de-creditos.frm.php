@@ -41,7 +41,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmautorizaceds", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();

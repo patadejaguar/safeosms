@@ -48,7 +48,7 @@ $forcesync		= parametro("sync", false, MQL_BOOL);
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmappscliente", "./");
 $xSel		= new cHSelect();
 
 

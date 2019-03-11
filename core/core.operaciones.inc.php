@@ -763,6 +763,8 @@ class cReciboDeOperacion{
 					}
 				}
 			}
+			//Validar Operaciones
+			
 			//Agregar Nivel de Riesgo de Producto
 			$xLog->add($xAml->getMessages(OUT_TXT), $xLog->DEVELOPER);
 		}
@@ -1051,7 +1053,7 @@ class cReciboDeOperacion{
 								
 				$tool	.= "<tr><th class='izq'>" . $xLg->getT("TR.Elabora") . "</th>";
 				//$xF->getFechaDDMM($this->mFechaDeCaptura) 
-				$tool	.= "<td>" . $xUsr->getNombreCompleto(). "-" . date("M/d H:i:s", $this->getTiempo()) . "</td>" ;
+				$tool	.= "<td>" . $xUsr->getNombreCompleto(). "-" . date("M/d H:i:s", $this->getTiempo()) . "-" . $this->getSucursal()  . "</td>" ;
 				
 				if($this->isDeEmpresa() == true){
 					$xEmp	= new cEmpresas($personaAsoc);

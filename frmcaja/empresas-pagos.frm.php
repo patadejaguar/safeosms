@@ -44,7 +44,7 @@ $jxc ->process();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "empresas-pagos.frm.php");
+$xFRM		= new cHForm("frmempresaspagos", "empresas-pagos.frm.php");
 $xSel		= new cHSelect();
 
 $msg		= "";

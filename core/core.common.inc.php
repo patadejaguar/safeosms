@@ -868,6 +868,7 @@ class cSocio{
 	
 	private $mEsExportado			= false;
 	private $mCodigoExportado		= false;
+	public $ESTADO_BAJA				= 20;
 	
 	function __construct($codigo_de_socio, $init = false){
 
@@ -3407,19 +3408,36 @@ class cSocio{
 		$fecha				= $xF->getFechaISO($fecha);
 		$socio				= $this->getCodigo();
 		$ready				= true;
+		$completePath		= "";
 		//si existe el archivo enviado.
 		if(is_array($archivonuevo)){
 			$xDoc			= new cDocumentos();
 			$ready			= $xDoc->FTPUpload($archivonuevo);
 			$archivo		= $xDoc->getNombreArchivo();
-			if(MODO_DEBUG == true){ 	if($ready == false){ $this->mMessages 			.= $xDoc->getMessages(); }	}
+			$completePath	= $xDoc->getCompletePath();
+			if(MODO_DEBUG == true){
+				if($ready == false){ 
+					$this->mMessages 			.= $xDoc->getMessages(); 
+				}	
+			}
 			
 		}
 		if(isset($archivo) AND $ready == true) {
 			$xDoc			= new cDocumentos($archivo);
 			$ready			= $xDoc->FTPMove($archivo, $socio);
+			$lon 			= 0;
+			$lat			= 0;
 			if($ready == true){
-				$ready		= $xDoc->add($tipo, $pagina, $observaciones, $Contrato, $socio, $archivo, $fecha, $FechaVencimiento);
+				if($xDoc->isImagen() == true){
+					$exif 	= exif_read_data( $completePath);
+					if(is_array($exif)){
+						if(isset($exif["GPSLongitude"])){
+							$lon 		= $xDoc->getGps($exif["GPSLongitude"], $exif['GPSLongitudeRef']);
+							$lat		= $xDoc->getGps($exif["GPSLatitude"], $exif['GPSLatitudeRef']);
+						}
+					}
+				}
+				$ready		= $xDoc->add($tipo, $pagina, $observaciones, $Contrato, $socio, $archivo, $fecha, $FechaVencimiento, $lat, $lon);
 			}
 			if(MODO_DEBUG == true){ $xDoc->getMessages(); 	}
 		} else {
@@ -4086,7 +4104,7 @@ class cSocio{
 			
 		} else {
 			$this->addMemo(MEMOS_TIPO_HISTORIAL, "BAJA-SUSPENSION: $notas", $fecha);
-			$this->setUpdate(array("estatusactual" => 20));
+			$this->setUpdate(array("estatusactual" => $this->ESTADO_BAJA));
 		}
 		//agregar Nota
 		
@@ -4357,6 +4375,43 @@ class cSocio{
 		return $res;
 	}
 	function getCodigoExportado(){ return $this->mCodigoExportado; }
+	/**
+	 * Califica si se pueden tener informacion Operacional
+	 */
+	function getEsInactivo(){
+		return ($this->mEstadoActual == $this->ESTADO_BAJA) ? true : false;
+	}
+	function getEsCliente(){
+		$es		= false;
+		if($this->mTipoDeIngreso == TIPO_INGRESO_CLIENTE){
+			$es	= true;
+		} else {
+			$xEst	= new cPersonasEstadisticas($this->getClaveDePersona());
+			if($xEst->init() == true){
+				if($xEst->getTotalCompromisos()>0){
+					$es		= true;
+				}
+			}
+		}
+		return $es;
+	}
+	function getEsOperacional(){
+		$es		= true;
+		if($this->getEsInactivo() == true){
+			$es	= false;
+		} else {
+			if($this->getEsCliente() == false){
+				//
+				if($this->getEsGrupoSolidario() == true){
+					$es			= false;
+				}
+				if($this->getEsEmpresaConConvenio() == true){
+					$es			= false;
+				}
+			}
+		}
+		return $es;
+	}
 }
 /**
  * Clase de Manejo de Tipo de Ingreso

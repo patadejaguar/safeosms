@@ -45,7 +45,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmpersonasnotas", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->OButton("TR.Archivar", "jsaArchivarNota()", $xFRM->ic()->ARCHIVAR);

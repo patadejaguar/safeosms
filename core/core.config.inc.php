@@ -177,6 +177,7 @@ define("ADMIN_MAIL",                   	$xC->get("email_del_administrador", "", 
 define("ADMIN_MAIL_SMTP_SERVER",       	$xC->get("servidor_smtp_para_notificaciones", "smtp.gmail.com", MMOD_SISTEMA) );
 define("ADMIN_MAIL_SMTP_PORT",       	(int) $xC->get("puerto_smtp_para_notificaciones", "587", MMOD_SISTEMA) );
 define("ADMIN_MAIL_SMTP_TLS",       	$xC->get("smtp_seguro_para_notificaciones", "tls", MMOD_SISTEMA) );
+define("ADMIN_MAIL_SMTP_USR",       	$xC->get("user_smtp_para_notificaciones", ADMIN_MAIL, MMOD_SISTEMA) );
 define("ADMIN_MAIL_STORAGE",       		(bool) $xC->get("email_almacenar_en_db", "false", MMOD_SISTEMA) );
 
 define("NOMINA_MAIL",                  	$xC->get("email_de_nominas", "software@grupopadio.com.mx", MMOD_SISTEMA) );

@@ -43,6 +43,9 @@ $xCierre		= new cCierreDelDia($fechaop);
 $EsCerrado		= $xCierre->checkCierre($fechaop);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
+$xRuls			= new cReglaDeNegocio();
+$venceDocs		= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_VENCEN_DOCTOS );
+
 $next			= "./cierre_de_sistema.frm.php?s=true&k=" . $key . "&f=$fechaop";
 $next			= ($forzar == true) ? $next . "&forzar=true" : $next;
 if($EsCerrado == true AND $forzar == false){
@@ -86,11 +89,12 @@ if($EsCerrado == true AND $forzar == false){
 		//Validar Documentos
 		//TODO: Agregar cierre de riesgos
 		//=========== Vencer Documentos
-		$xQL->setRawQuery("UPDATE `personas_documentacion`,`personas_documentacion_tipos`
-			SET `personas_documentacion`.`estatus`=0,`personas_documentacion`.`estado_en_sistema`=0 , `personas_documentacion`.`vencimiento`= NOW()
-			WHERE `personas_documentacion`.`estatus`=1 AND `personas_documentacion`.`tipo_de_documento`=`personas_documentacion_tipos`.`clave_de_control`
-			AND getFechaByInt((`personas_documentacion`.`fecha_de_carga`+(`personas_documentacion_tipos`.`vigencia_dias`*84600)) )<= NOW()");
-		
+		if($venceDocs == true){
+			$xQL->setRawQuery("UPDATE `personas_documentacion`,`personas_documentacion_tipos`
+				SET `personas_documentacion`.`estatus`=0,`personas_documentacion`.`estado_en_sistema`=0 , `personas_documentacion`.`vencimiento`= NOW()
+				WHERE `personas_documentacion`.`estatus`=1 AND `personas_documentacion`.`tipo_de_documento`=`personas_documentacion_tipos`.`clave_de_control`
+				AND getFechaByInt((`personas_documentacion`.`fecha_de_carga`+(`personas_documentacion_tipos`.`vigencia_dias`*84600)) )<= NOW()");
+		}
 		//checar documentos de todos los socios
 		/*$OSoc		= new cSocios_general();
 		$rs			= $OSoc->query()->select()->exec();
@@ -107,6 +111,7 @@ if($EsCerrado == true AND $forzar == false){
 			//checar perfil transaccional mensual
 		}*/
 		//verificar operaciones de 6 meses excedidas de maximo permitido
+		
 		/*$sql2 = "SELECT
 		`operaciones_recibos`.`fecha_operacion`              AS `fecha`,
 		`operaciones_recibos`.`numero_socio`                 AS `persona`,
@@ -123,7 +128,7 @@ if($EsCerrado == true AND $forzar == false){
 			$xAml			= new cAMLPersonas($rw1["persona"]);
 			$xF				= new cFecha();
 			$fecha_inicial	= $xF->setRestarMeses(6, $fechaop);
-			//$obj			= $xAml->getOAcumuladoDeOperaciones($fecha_inicial, $fechaop);
+			$obj			= $xAml->getOAcumuladoDeOperaciones($fecha_inicial, $fechaop);
 			
 		}*/
 		//Relaciones Recursivas

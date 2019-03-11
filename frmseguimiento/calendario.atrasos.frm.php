@@ -45,7 +45,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalendarioatrasos", "./");
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 

@@ -29,7 +29,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmperiodicidadflujocreds", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

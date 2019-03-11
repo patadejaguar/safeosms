@@ -56,7 +56,16 @@ if($tabla !== false ){
 			$xAc	= new cPersonaActividadEconomica(false, false);
 			$xAc->setID($id, true);
 			$xAc->setEstatusActivoI($activar);
-		
+		} if($tabla == "bancos_cuentas") {
+			$xBanc	= new cCuentaBancaria($clave);
+			if($xBanc->init() == true){
+				if($activar == true){
+					$xBanc->setInActivo();
+				} else {
+					$xBanc->setInActivo(true);
+				}
+			}
+			
 		} else if($tabla == "creditos_tipoconvenio"){
 			$xProd	= new cProductoDeCredito($clave);
 			if($xProd->init() == true){

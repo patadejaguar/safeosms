@@ -39,7 +39,8 @@ $rs				= array();
 $rs["error"]	= true;
 $rs["message"]	= "Sin datos validos ($command - $data)";
 $rs["persona"]	= 0;
-$ops	= 0;
+$ops			= 0;
+$idpersona		= 0;
 
 switch ($command){
 	case TPERSONAS_GENERALES:

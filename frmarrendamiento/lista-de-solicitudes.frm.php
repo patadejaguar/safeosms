@@ -20,16 +20,14 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 //$xDic		= new cHDicccionarioDeTablas();
-$xUser		= new cSystemUser(getUsuarioActual()); $xUser->init();
-$xRuls		= new cReglaDeNegocio();
+$xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
+$xRuls			= new cReglaDeNegocio();
+$originador		= 0;
+$suborigen		= 0;
+$EsAdmin		= false;
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$EsOriginador	= false;
 
-$originador	= 0;
-$suborigen	= 0;
-$EsAdmin	= false;
-
-$NoUsarUsers= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
-
-//$EsActivo	= false;
 if($xUser->getEsOriginador() == true){
 	$xOrg	= new cLeasingUsuarios();
 	if($xOrg->initByIDUsuario($xUser->getID()) == true){
@@ -42,6 +40,8 @@ if($xUser->getEsOriginador() == true){
 		}
 		if($xOrg->getEsActivo() == false){
 			$xHP->goToPageError(403);
+		} else {
+			$EsOriginador	= true;
 		}
 	}
 }

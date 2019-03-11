@@ -65,7 +65,7 @@ function jsaGetFiles($uLike){
 					$i++;
 				}
 			}
-			if ($i > 25){
+			if ($i > 50){
 				break;
 			}
 

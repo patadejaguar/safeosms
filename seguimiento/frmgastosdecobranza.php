@@ -39,7 +39,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./frmgastosdecobranza.php");
+$xFRM		= new cHForm("frmgtoscbza", "./frmgastosdecobranza.php");
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addJsBasico();
 if($credito <= DEFAULT_CREDITO){

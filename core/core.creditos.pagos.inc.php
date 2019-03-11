@@ -275,7 +275,13 @@ class cPlanDePagosGenerador {
 				$this->mDiaDeAbono1		= $xF->dia($xCred->getFechaPrimeraParc());
 			}
 		}
-		
+		if($xCred->getEsArrendamientoPuro()){
+			$xOrg			= new cCreditosLeasing();
+			if($xOrg->initByCredito($xCred->getClaveDeCredito()) == true){
+				$this->mMontoOtrosCargos 	= $xOrg->getCuotasNoCapitalizadas()*$xCred->getPagosAutorizados();
+				$this->mIDOtrosCargos		= OPERACION_CLAVE_PLAN_DESGLOSE;
+			}
+		}
 		if($this->mTipoEnSistema == SYS_PRODUCTO_NOMINA){
 			//cargar datos de la empresa
 			$idemp						= $xCred->getClaveDeEmpresa();
@@ -733,6 +739,15 @@ class cPlanDePagosGenerador {
 		$saldo_historico			= $this->mMontoAutorizado;
 		$bonificaciones				= 0;
 		$xMath						= new cMath();
+		$xCred						= new cCredito($this->mCredito);
+		
+		if($xCred->init() == true){
+			$xProd	= new cProductoDeCredito($xCred->getClaveDeProducto());
+			if($xProd->init() == true){
+				$ConPagEs	= ($xProd->getAplicaPagosEsp() == true) ? true : false;
+			}
+		}
+		
 		//==================================================== BONIFICACIONES ================================================================
 		$xB							= new cBases(7022); //base son bonificaciones
 		$xB->init();
@@ -821,6 +836,7 @@ class cPlanDePagosGenerador {
 					for ($i=1; $i <= $PAGOS_AUTORIZADOS; $i++){
 						$idxcap		= $this->mCredito ."-$i-" . OPERACION_CLAVE_PAGO_CAPITAL;
 						$pagoesp	= (isset($_SESSION[$idxcap])) ? $_SESSION[$idxcap] : 0;
+						
 						if($pagoesp>0){
 							$PAGO_REM++;
 							$MONTO_REM+=$pagoesp;
@@ -1112,31 +1128,44 @@ class cPlanDePagosGenerador {
 				$ctrl		= $xNSel->get(true);
 				break;
 			case CREDITO_TIPO_PERIOCIDAD_CATORCENAL:
+				
 				$xNSel		= $xSel->getListaDeDiasDeLaSemana("dia_primer_abono", $this->mDiaDeAbono1);
 				$xNSel->setDivClass("tx4 tx18 red");
 				$ctrl		= $xNSel->get(true);
 				break;
 			case CREDITO_TIPO_PERIOCIDAD_DECENAL:
 				$xTxt->setDivClass("tx13");
-				$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
-				$c			.= $xTxt->getDeMoneda("dia_segundo_abono", "TR.Dia Pago 2",  $this->mDiaDeAbono2);
-				$c			.= $xTxt->getDeMoneda("dia_tercer_abono", "TR.Dia Pago 3",  $this->mDiaDeAbono3);
-				$c			= "<div id='id' class='tx4'>$c</div>";
+				$c			= $xSel->getListaDeDiasDelMes("dia_primer_abono", $this->mDiaDeAbono1)->get("TR.Dia Pago 1", true);
+				$c			.= $xSel->getListaDeDiasDelMes("dia_segundo_abono", $this->mDiaDeAbono2)->get("TR.Dia Pago 2", true);
+				$c			.= $xSel->getListaDeDiasDelMes("dia_tercer_abono", $this->mDiaDeAbono3)->get("TR.Dia Pago 3", true);
+				//$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
+				//$c			.= $xTxt->getDeMoneda("dia_segundo_abono", "TR.Dia Pago 2",  $this->mDiaDeAbono2);
+				//$c			.= $xTxt->getDeMoneda("dia_tercer_abono", "TR.Dia Pago 3",  $this->mDiaDeAbono3);
+				//$c			= "<div id='id' class='tx4'>$c</div>";
 				$ctrl		= $c;
 				break;
 			case CREDITO_TIPO_PERIOCIDAD_QUINCENAL:
 				$xTxt->setDivClass("tx12");
-				$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
-				$c			.= $xTxt->getDeMoneda("dia_segundo_abono", "TR.Dia Pago 2",  $this->mDiaDeAbono2);
-				$c			= "<div id='id' class='tx4'>$c</div>";
+				$c			= $xSel->getListaDeDiasDelMes("dia_primer_abono", $this->mDiaDeAbono1)->get("TR.Dia Pago 1", true);
+				$c			.= $xSel->getListaDeDiasDelMes("dia_segundo_abono", $this->mDiaDeAbono2)->get("TR.Dia Pago 2", true);
+				//$c			= $xTxt->getDeMoneda("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1);
+				//$c			.= $xTxt->getDeMoneda("dia_segundo_abono", "TR.Dia Pago 2",  $this->mDiaDeAbono2);
+				//$c			= "<div id='id' class='tx4'>$c</div>";
 				$ctrl		= $c;
 				break;
 			case CREDITO_TIPO_PERIOCIDAD_MENSUAL:
 				//$xTxt->setDiv13();
 				
 				$xTxt->setDivClass("tx4 tx18 red");
-				$c			= $xTxt->getDeConteo("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1, 30);
+				//$c			= $xTxt->getDeConteo("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1, 30);
+				$c			= $xSel->getListaDeDiasDelMes("dia_primer_abono", $this->mDiaDeAbono1)->get("TR.Dia Pago 1", true);
 				$ctrl		= $c;
+				break;
+			case CREDITO_TIPO_PERIOCIDAD_ANUAL:
+				//$xTxt->setDiv13();
+				//$c			= $xTxt->getDeConteo("dia_primer_abono", "TR.Dia Pago 1",  $this->mDiaDeAbono1, 30);
+				//$c			= $xSel->getListaDeDiasDelMes("dia_primer_abono", $this->mDiaDeAbono1)->get("TR.Dia Pago 1", true);
+				$ctrl		= $xTxt->getHidden("dia_primer_abono", $this->mDiaDeAbono1);
 				break;
 			default:
 				$xTxt->setDivClass("tx4 tx18 green");
@@ -1157,6 +1186,8 @@ class cPlanDePagosGenerador {
 		$ConTasa0	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PUEDEN_TASA_CERO);	//regla de negocio
 		$this->mMaximoCAT	= $this->getPeriodosAnnio($this->mPeriocidadDePago);				//Obtiene el numero de periodos por cada annio
 		$xLog				= new cCoreLog();
+		$xPagEsp			= new cCreditosPlanPagoEsp();
+		
 		$tipo				= setNoMenorQueCero($TipoCuota);
 		$tipo				= ($tipo <= 0 ) ? $this->mTipoDeCuota : $tipo;
 		$this->mTipoDeCuota	= $tipo;
@@ -1178,6 +1209,13 @@ class cPlanDePagosGenerador {
 		$capital_fijo		= ($this->mMontoAutorizado / $PAGOS_AUTORIZADOS);
 		$this->mArrSinIVA	= array();
 		$this->mCapitalCAT	= 0;
+		
+		if($xCred !== null){
+			$xProd	= new cProductoDeCredito($xCred->getClaveDeProducto());
+			if($xProd->init() == true){
+				$ConPagEs	= ($xProd->getAplicaPagosEsp() == true) ? true : false;
+			}
+		}
 		
 		if($this->mMontoOtrosCargos > 0 AND $this->mIDOtrosCargos >0){
 			if($this->mAplicar1erPago == false){
@@ -1294,7 +1332,7 @@ class cPlanDePagosGenerador {
 				
 				$saldo_inicial									= $saldo_final;
 			}
-			//=============================== PAGOS NIVELADOS
+//=============================== PAGOS NIVELADOS
 		} else {
 			$xLog->add("==\tPAGO NIVELADO : Parcialidad = $parcialidad\r\n", $xLog->DEVELOPER);
 			
@@ -1359,10 +1397,18 @@ class cPlanDePagosGenerador {
 				$iva											= setNoMenorQueCero( (($interes_normal * $this->mTasaDeIVA) + ($monto_extra * $this->mTasaDeIVAOtros)), 2);
 				$this->mPagosCalculados[$letra][SYS_IMPUESTOS]	= setNoMenorQueCero($iva,2);
 				$fecha_anterior									= $fecha;
+				$pagoesp										= 0;
 				//======================= Determinar el Capital
-				
-				$idxcap		= $this->mCredito ."-$letra-" . OPERACION_CLAVE_PAGO_CAPITAL;
-				$pagoesp	= (isset($_SESSION[$idxcap])) ? $_SESSION[$idxcap] : 0;
+				if($ConPagEs == true){
+					$idxcap		= $this->mCredito ."-$letra-" . OPERACION_CLAVE_PAGO_CAPITAL;
+
+					if($xPagEsp->initByCredPeriodo($this->mCredito, $letra) == true){
+						$pagoesp = $xPagEsp->getMonto();
+					}
+					if(isset($_SESSION[$idxcap])){
+						$pagoesp	= setNoMenorQueCero($_SESSION[$idxcap]);
+					}
+				}
 				if($ConPagEs == true AND $pagoesp > 0){
 					$capital									= $pagoesp;
 				} else {
@@ -1412,7 +1458,8 @@ class cPlanDePagosGenerador {
 				
 			}
 		}
-		//setLog( $xLog->getMessages());
+		//setLog($this->mPagosCalculados);
+		//setError( $xLog->getMessages());
 		return $xLog->getMessages();
 	}
 	function getVersionFinal($guardar = false , $formato = OUT_HTML, $origen = HP_FORM, $FechaDePlan = false){
@@ -1420,11 +1467,25 @@ class cPlanDePagosGenerador {
 		$SinOtros	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OTROS);	//regla de negocio
 		$SinAnual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_ANUAL);	//regla de negocio
 		$ConPagEs	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio
+		
 		$ConPago0	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_CEROS);	//regla de negocio
 		$SinAjustF	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_FINAL);	//regla de negocio
+		
+		if($this->OCredito() === null){
+			
+		} else {
+			
+			$xProd	= new cProductoDeCredito($this->OCredito()->getClaveDeProducto());
+			if($xProd->init() == true){
+				
+				$ConPagEs	= ($xProd->getAplicaPagosEsp() == true) ? true : false;
+				//$SinAnual	= ($xProd->getAplicaPagosEsp() == true) ? false : true;
+			}
+		}
+		
 		$xLog		= new cCoreLog();
 		$xLog2		= new cCoreLog();
-		
+		$xPagEsp	= new cCreditosPlanPagoEsp();
 		$xF			= new cFecha();
 		$xL			= new cLang();
 		$xT			= new cHText();
@@ -1490,8 +1551,11 @@ class cPlanDePagosGenerador {
 				$PPago_capital	= $datos["CAPITAL_PAGADO"];
 				$TotalPag		+= $PPago_capital;
 				$IntPag			+= $PPago_interes;
-				
-				$xLog2->add("$iidx\tInteres: $PPago_interes : Capital $PPago_capital\r\n", $xLog2->DEVELOPER);
+				if(($PPago_interes+$PPago_capital)<=0){
+					$xLog2->add("$iidx\t0\r\n", $xLog2->DEVELOPER);
+				} else {
+					$xLog2->add("$iidx\tInteres: $PPago_interes : Capital $PPago_capital\r\n", $xLog2->DEVELOPER);
+				}
 			} else {
 				//Si es solo interes
 				if($this->mPagosSinCapital == true AND $this->mEsCreditoAfectado == true){
@@ -1530,15 +1594,20 @@ class cPlanDePagosGenerador {
 				$idxanual		= $this->mCredito ."-$indice-" . OPERACION_CLAVE_ANUALIDAD_C;
 				$idxcap			= $this->mCredito ."-$indice-" . OPERACION_CLAVE_PAGO_CAPITAL;
 				$anualidad		= (isset($_SESSION[$idxanual])) ? $_SESSION[$idxanual] : 0;
-				$pagoesp		= 0;//(isset($_SESSION[$idxcap])) ? $_SESSION[$idxcap] : $capital;
 				
+				//$pagoesp		= (isset($_SESSION[$idxcap])) ? $_SESSION[$idxcap] : 0;
+				$pagoesp		= 0;//(isset($_SESSION[$idxcap])) ? $_SESSION[$idxcap] : $capital;
 				//=======================================Condicionador de Pagos Especiales
 				if($ConPagEs == true){
-					$xPagEsp	= new cCreditosPlanPagoEsp();
-					if($xPagEsp->initByCredPeriodo($this->mCredito, $indice) == true){
-						$pagoesp = $xPagEsp->getMonto();
+					if($formato == OUT_HTML){
+						//$xPagEsp	= new cCreditosPlanPagoEsp();
+						if($xPagEsp->initByCredPeriodo($this->mCredito, $indice) == true){
+							$pagoesp = $xPagEsp->getMonto();
+						}
+						if(isset($_SESSION[$idxcap])){
+							$pagoesp	= setNoMenorQueCero($_SESSION[$idxcap]);
+						}
 					}
-					
 					if($pagoesp > 0){
 						$capital = $pagoesp;
 					} else {
@@ -1571,13 +1640,17 @@ class cPlanDePagosGenerador {
 				} else {
 					//== Corregir capital
 					//setLog("$indice -- $TotalCalc -- $TotalPag ");
+					$capital			= round($capital,2);
+					$TotalPag			= round($TotalPag,2);
 					
 					if($TotalPag >= $capital){
 						//setLog("$indice -- Total $TotalPag Restar $capital ");
 						$TotalPag		= ($TotalPag - $capital);
 						$capital		= 0;
 					} else {
+						//setLog("$indice -- Total $TotalPag Capital $capital ");
 						if($TotalPag > 0){
+							//setLog("$indice -- Total $TotalPag Restar $capital ");
 							//corrige el abono de capitales, por diferencia tolerable
 							if(MODO_MIGRACION == true ){
 								$tolerable		= setNoMenorQueCero(($capital * $this->mTolerableIncl),2); //el tolerable es 70%
@@ -1800,7 +1873,7 @@ class cPlanDePagosGenerador {
 					}
 				}
 				
-				if($this->mEsCreditoAfectado == true){
+				if($this->mEsCreditoAfectado == true AND $this->mMostrarCompleto == false){
 					//Ajusta otros Si solo existe capital y otros
 					if($otros > 0){
 						if(($capital+$otros) == $total){
@@ -1925,6 +1998,7 @@ class cPlanDePagosGenerador {
 					$salida	.= "</tr>";
 				}
 				if($this->mClaveDePlan > 0 AND $guardar == true){
+
 					//============== Elimina en Migracion
 					if(MODO_MIGRACION == true){
 						if($xF->getInt($fecha) <= $xF->getInt(SYS_FECHA_DE_MIGRACION)){
@@ -1976,6 +2050,13 @@ class cPlanDePagosGenerador {
 					
 					$xLetra	= new cCreditosLetraDePago($this->mCredito, $indice);
 					$xLetra->add($fecha, $hcapital, $hinteres, $hiva, $hotros, $hidotros, $hfinal, $hahorro);
+					//Guardar Pagos especiales
+					if($pagoesp>0 AND $ConPagEs == true){
+						if($xPagEsp->add($this->mCredito, $indice, $pagoesp) > 0){
+							$xLog2->add("Agregado Pago Especial a la letra $indice por un monto $pagoesp", $xLog2->DEVELOPER);
+						}
+						$pagoesp	= 0;
+					}
 				}
 				$indice++;
 			} else {
@@ -2108,6 +2189,7 @@ class cPlanDePagosGenerador {
 				$xMontos	= new cCreditosMontos($this->mCredito);
 				if($xMontos->init() == true){
 					$xMontos->setTotales(false,$TotalPlan, $SumaInteres);
+					$xMontos->setMontoOtrosCargosEnPlan($this->mMontoOtrosCargos);
 				}
 				$xBtn		= new cHButton();
 				//<tr><th colspan='16'>" . $xBtn->getBasic("TR.Imprimir PLAN_DE_PAGOS " . $this->mClaveDePlan, "var xC=new CredGen();xC.getImprimirPlanPagos(" . $this->mClaveDePlan . ")", $xBtn->ic()->IMPRIMIR) . "</th></tr>
@@ -2208,6 +2290,13 @@ class cPlanDePagosGenerador {
 		}
 		return $fecha;
 	}
+	function setGuardarMontoOtros($monto_otros = false){
+		$monto_otros	= setNoMenorQueCero($monto_otros);
+		$xMontos = new cCreditosMontos($this->mCredito);
+		if($xMontos->init() == true){
+			$xMontos->setMontoOtrosCargosEnPlan($monto_otros);
+		}
+	}
 }
 
 class cCreditoValidador {
@@ -2248,6 +2337,8 @@ class cCreditosMontos {
 	private $mTotalPlanExige			= 0;	
 	private $mTotalIntCalc				= 0;
 	private $mTotalDispuesto			= 0;
+	private $mMontoOtrosEnPlan			= 0;
+	
 	function __construct($credito = false){
 		$this->mCredito	= setNoMenorQueCero($credito);
 		$this->setIDCache($credito);
@@ -2430,6 +2521,7 @@ class cCreditosMontos {
 				$this->mCredito						= $rw[$xMM->CLAVE_DE_CREDITO]; //$xMM->clave_de_credito()->v();
 				$this->mTotalIntCalc				= $rw[$xMM->INTS_TOT_CALC]; //$xMM->ints_tot_calc()->v();
 				$this->mPeriodosPends				= $rw[$xMM->PERIODO_PENDS];
+				$this->mMontoOtrosEnPlan			= $rw[$xMM->HIST_OTROS];	//Otros en Plan de Pagos
 				$this->mInit						= true;
 				
 				$this->setIDCache($this->mCredito);
@@ -2670,6 +2762,21 @@ class cCreditosMontos {
 			$this->setCuandoSeActualiza();
 		}
 	}	
+	function setMontoOtrosCargosEnPlan($monto_otros = false){
+		$monto_otros	= setNoMenorQueCero($monto_otros);
+		if($this->mObj == null){$this->init();}
+	
+		if($this->mInit == true){
+			$this->mObj->hist_otros($monto_otros);
+			$this->mObj->marca_acceso(time());
+			$this->mObj->usuario(getUsuarioActual());
+			$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
+			$this->setCuandoSeActualiza();
+		}
+	}
+	function getMontoOtrosCargosEnPlan(){
+		return $this->mMontoOtrosEnPlan;
+	}
 }
 
 class cCreditosPresupuesto {
@@ -3257,6 +3364,7 @@ class cCreditosLetraDePago {
 			$this->mMora		= $data["mora"];
 			
 			$this->mTotal		= $this->mCapital + $this->mInteres + $this->mImpuestos + $this->mOtros + $this->mAhorro + $this->mMora + $this->mPenas;
+
 		}
 		return $this->mInit;
 	}
@@ -4150,6 +4258,8 @@ class cCreditosPlanPagoEsp {
 	private $mTexto			= "";
 	private $mObservacion	= "";
 	private $mMonto			= 0;
+	private $mCredito		= 0;
+	private $mPeriodo		= 0;
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -4235,16 +4345,49 @@ class cCreditosPlanPagoEsp {
 		return $id;
 	}
 	function initByCredPeriodo($credito, $periodo){
-		$xQL	= new MQL();
-		$data	= $xQL->getDataRow("SELECT * FROM `creditos_pagos_esp` WHERE `credito`=$credito AND `periodo`=$periodo ORDER BY `monto_esp` DESC, `idcreditos_pagos_esp` DESC LIMIT 0,1");
-		$xQL	= null;
-		
-		return $this->init($data);
+		$credito	= setNoMenorQueCero($credito);
+		$periodo	= setNoMenorQueCero($periodo);
+		if($credito<=DEFAULT_CREDITO OR $periodo <= 0){
+			return false;
+		} else {
+			$xQL	= new MQL();
+			$data	= $xQL->getDataRow("SELECT * FROM `creditos_pagos_esp` WHERE `credito`=$credito AND `periodo`=$periodo ORDER BY `monto_esp` DESC, `idcreditos_pagos_esp` DESC LIMIT 0,1");
+			$xQL	= null;
+			
+			return $this->init($data);
+		}
+		return false;
 	}
-	function getCountByCredito($credito){
-		$xQL	= new MQL();
-		$items	= $xQL->getDataValue("SELECT COUNT(*) AS `items` FROM `creditos_pagos_esp` WHERE `credito`=$credito", "items");
-		$xQL	= null;
+	function getCountByCredito($credito, $enSession = false, $pagos = false){
+		$xQL		= new MQL();
+		$items		= $xQL->getDataValue("SELECT COUNT(*) AS `items` FROM `creditos_pagos_esp` WHERE `credito`=$credito", "items");
+		$xQL		= null;
+		
+		if($enSession == true){
+			$pagos	= setNoMenorQueCero($pagos);
+			for($ix = 1; $ix <= $pagos; $ix++){
+				if(isset($_SESSION["$credito-$ix-" . OPERACION_CLAVE_PAGO_CAPITAL . ""])){
+					if(setNoMenorQueCero($_SESSION["$credito-$ix-" . OPERACION_CLAVE_PAGO_CAPITAL . ""])>0){
+						$items++;
+					}
+				}
+			}
+		}
+		return $items;
+	}
+	function setLimpiarPorCredito($credito, $enSession = false, $pagos = false){
+		$xQL		= new MQL();
+		$items		= $xQL->setRawQuery("DELETE FROM `creditos_pagos_esp` WHERE `credito`=$credito");
+		$xQL		= null;
+		
+		if($enSession == true){
+			$pagos	= setNoMenorQueCero($pagos);
+			for($ix = 1; $ix <= $pagos; $ix++){
+				if(isset($_SESSION["$credito-$ix-" . OPERACION_CLAVE_PAGO_CAPITAL . ""])){
+					unset($_SESSION["$credito-$ix-" . OPERACION_CLAVE_PAGO_CAPITAL . ""]);
+				}
+			}
+		}
 		return $items;
 	}
 }

@@ -19,6 +19,12 @@ $xHP		= new cHPage("", HP_SERVICE);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
+$xRuls		= new cReglaDeNegocio();
+$SinOtros	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OTROS);	//regla de negocio
+$SinAnual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_ANUAL);	//regla de negocio
+$ConPagEs	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio
+$ConPago0	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_CEROS);	//regla de negocio
+$SinAjustF	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_FINAL);	//regla de negocio
 
 
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
@@ -34,15 +40,25 @@ $letra		= parametro("letra", false, MQL_INT);
 
 $rs				= array();
 $rs["error"]	= true;
-$rs["message"]	= "No ae agrega el pago";
+$rs["message"]	= "No se agrega el pago";
 if($monto >= 0){
-	$_SESSION["$credito-$letra-" . OPERACION_CLAVE_PAGO_CAPITAL . ""] = $monto;
-	$xPagEsp	= new cCreditosPlanPagoEsp();
-	if($xPagEsp->add($credito, $letra, $monto) > 0){
-		$rs["error"]	= false;
-		$rs["message"]	= "Agregado anualidad a la letra $letra del Credito $credito por un monto $monto";
+	$xCred	= new cCredito($credito);
+	if($xCred->init() == true){
+		$xProd		= new cProductoDeCredito($xCred->getClaveDeConvenio());
+		if($xProd->init() == true){
+			if($xProd->getAplicaPagosEsp() == true){
+				$_SESSION["$credito-$letra-" . OPERACION_CLAVE_PAGO_CAPITAL . ""] = $monto;
+				//$xPagEsp	= new cCreditosPlanPagoEsp();
+				//if($xPagEsp->add($credito, $letra, $monto) > 0){
+				$rs["error"]	= false;
+				$rs["message"]	= "Agregado Pago Especial a la Parcialidad $letra del Credito $credito por un monto $monto";
+				//}
+				//setLog($_SESSION["$credito-$letra-" . OPERACION_CLAVE_ANUALIDAD_C . ""]);
+			}
+		}
 	}
-	//setLog($_SESSION["$credito-$letra-" . OPERACION_CLAVE_ANUALIDAD_C . ""]);
+	
+
 }
 header('Content-type: application/json');
 echo json_encode($rs);

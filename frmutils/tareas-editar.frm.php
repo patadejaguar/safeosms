@@ -39,7 +39,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmeditartareas", "./");
 $xSel		= new cHSelect();
 
 //$xFRM->addJsBasico();

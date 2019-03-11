@@ -18,6 +18,7 @@ $xF			= new cFecha();
 $xLi		= new cSQLListas();
 $xQL		= new MQL();
 $xVis		= new cSQLVistas();
+$xUser		= new cSystemUser(); $xUser->init();
 $xRuls		= new cReglaDeNegocio();
 $useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 $NoMoraNom	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_NOMINA_NOMORA);
@@ -26,7 +27,10 @@ $xVals		= new cReglasDeValidacion();
 
 $desdeletra 	= parametro("desdeletra", 0, MQL_INT);
 $esliquidacion	= parametro("esliquidacion", false, MQL_BOOL);
+$inverso		= parametro("inverso", false, MQL_BOOL);
+$solocapital	= parametro("solocapital", false, MQL_BOOL);
 
+$puedeAdelantar = $xUser->getPuede($xUser->OReglas()->PUEDE_ABONO_INV);
 
 function jsaGetComisionPorApertura($idcredito){
 	$xCred		= new cCredito($idcredito);
@@ -89,22 +93,32 @@ if($action == MQL_ADD){
 			$periodo		= ($periodo <= 0) ? SYS_UNO : $periodo;
 			
 			$idrecibo		= $xRec->setNuevoRecibo($persona, $credito, $fecha, $periodo, RECIBOS_TIPO_PAGO_CREDITO , $detalles, $cheque, $comopago, $foliofiscal);
-			$rs				= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito));
+			$rs				= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito, $inverso));
 			$mCreditoIVA	= $xCred->getTasaIVA();
 			$empresa		= $xCred->getClaveDeEmpresa();
+			$arrPP			= array();
 			
 			//setLog($xVis->CreditosLetrasNoPagadas($credito));
 			foreach ($rs as $rw){
-				$ParcPer	= $rw["periodo_socio"];
+				$ParcPer		= $rw["periodo_socio"];
 //------------------------------------				
 				if($ParcPer >= $desdeletra){
 					//idcreditos_productos_costos, clave_de_producto, clave_de_operacion, unidades, unidad_de_medida,
 					$ParcTotal	= setNoMenorQueCero($rw["letra"],2);
 					$ParcCap	= $rw["capital"];
+					
 					$ParcInt	= $rw["interes"];
 					$ParcIVA	= $rw["iva"];
 					$ParcOtros	= $rw["otros"];
 					$ParcAho	= $rw["ahorro"];
+					if($solocapital == true){
+						$ParcInt	= 0;
+						$ParcIVA	= 0;
+						$ParcOtros	= 0;
+						$ParcAho	= 0;
+						$ParcTotal	= $ParcCap;
+					}
+					
 					$ParcFecha	= $rw["fecha_de_pago"];
 					$ParcIDOtros= $rw["clave_otros"];
 					$MoraBD		= isset($rw["interes_moratorio"]) ? $rw["interes_moratorio"] : 0; //Interes Moratorio segun BD
@@ -378,12 +392,20 @@ if($action == MQL_ADD){
 			$xFRM->OHidden("idsocio", $xCred->getClaveDePersona());
 			$xFRM->OHidden("idmontoautorizado", $xCred->getMontoAutorizado());
 			$xFRM->OHidden("idmonto", $monto);
-			
+			if($inverso == true){
+				$xFRM->OHidden("inverso", 1);
+			}
+			if($esliquidacion == true){
+				$xFRM->OHidden("esliquidacion", 1);
+			}
+			if($solocapital == true){
+				$xFRM->OHidden("solocapital", 1);
+			}
 			$xFRM->addHElem($xCred->getFichaMini());
 			$xFRM->addGuardar("", "", "", "MSG_CONFIRMA_ENVIO");
 			$mCreditoIVA	= $xCred->getTasaIVA();
 			
-			$rs		= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito));
+			$rs		= $xQL->getDataRecord($xVis->CreditosLetrasNoPagadas($credito, $inverso));
 			
 			$xT		= new cHTabla();
 			$cspan	= 8;
@@ -439,6 +461,14 @@ if($action == MQL_ADD){
 					$ParcAho	= $rw["ahorro"];
 					$ParcFecha	= $rw["fecha_de_pago"];
 					$MoraBD		= isset($rw["interes_moratorio"]) ? $rw["interes_moratorio"] : 0; //Interes Moratorio segun BD
+					
+					if($solocapital == true){
+						$ParcInt	= 0;
+						$ParcIVA	= 0;
+						$ParcOtros	= 0;
+						$ParcAho	= 0;
+						$ParcTotal	= $ParcCap;
+					}
 					
 					$penas		= 0;
 					$mora		= 0;
@@ -591,7 +621,7 @@ if($action == MQL_ADD){
 						$TCapital	+= $ParcCap;
 						$TInteres	+= $ParcInt;
 						$TIva		+= $ParcIVA;
-						$TOtros		+= $ParcAho;
+						$TOtros		+= $ParcAho + $ParcOtros;
 						$TPena		+= $penas;
 						$TMora		+= $mora;
 						$TIvaOtros	+= $IvaOtros;
@@ -647,6 +677,12 @@ if($action == MQL_ADD){
 		}
 	} else {
 		$xFRM->addCreditBasico();
+		if($puedeAdelantar == true){
+			$xFRM->OCheck_13("TR.PAGOADEL", "inverso");
+			$xFRM->OCheck_13("TR.SOLOCAP", "solocapital");
+		}
+		//$xFRM->OCheck_13("TR.ES LIQUIDACION", "esliquidacion");
+		
 		$xFRM->addMonto(0, true);
 		$xFRM->addEnviar();
 		$xFRM->OButton("TR.Estado de Cuenta", "getEdoCtaCredito()", $xFRM->ic()->ESTADO_CTA);

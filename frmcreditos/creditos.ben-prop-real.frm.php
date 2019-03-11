@@ -34,7 +34,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./"); $xSel	= new cHSelect(); $xTxt	= new cHText();
+$xFRM		= new cHForm("frmbenpropreal", "./"); $xSel	= new cHSelect(); $xTxt	= new cHText();
 $xFRM->setNoAcordion();
 $xFRM->setTitle($xHP->getTitle());
 

@@ -54,7 +54,7 @@ echo "<title>" . EACP_NAME . "</title>";
 ?>
 <link href="css/inicio.css" rel="stylesheet" type="text/css">
 </head>
-
+<script type="text/javascript" src="./js/jquery.js"></script>
 <script type="text/javascript" src="./js/md5.js"></script>
 <script type="text/javascript" src="./js/base64.js"></script>
 <script type="text/javascript" src="./js/jscrypt/aes.js"></script>
@@ -135,8 +135,7 @@ $msg		= ($msg == "") ? "" : "<div class='alert-box warning' id='idavisos'>$msg</
 echo "
 $analitycs
 <form id=\"login\" name=\"frm$funid\" method=\"post\" action=\"clslogin.php\">
-
-    
+	<input id='ugps' name='ugps' type='hidden' />    
     <fieldset id=\"inputs\">
     </h1><img src='images/logo.png' style='max-height:180px;' /></h1>
     <h3>" . EACP_NAME . "</h3>
@@ -172,6 +171,7 @@ function validar_nav() {
 	var mWin		= String(top.location).indexOf("index");
 
 	console.log("Inicio limpio!:" + top.location);
+	
 	if (mWin != -1) {
 		top.location		= "./inicio.php";
 	}
@@ -181,6 +181,13 @@ function validar_nav() {
 	if (navigator.product != "Gecko"){
 		isGecko		= false;
 	}
+
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(showLocation);
+    }else{ 
+        alert('Geolocation is not supported by this browser.');
+    }
+    
 }
 function nv(str){
 
@@ -188,6 +195,13 @@ function nv(str){
 	str	= base64.encode(str);
 	
 	return str;
+}
+function showLocation(position){
+    var latitude = position.coords.latitude;
+    var longitude = position.coords.longitude;
+    $("#ugps").val(latitude + "," + longitude);
+    //console.log($("#ugps").val());
+
 }
 </script>
 </html>

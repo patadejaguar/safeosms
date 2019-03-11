@@ -440,6 +440,7 @@ class cHPage {
 				$this->addCSS("$path/css/visualize.css");
 				$this->addCSS("$path/css/visualize-light.css");
 				$this->addCSS("$path/css/font-awesome.min.css");
+				//$this->addCSS("$path/css/LineIcons.min.css");
 				//$this->addCSS("$path/css/fontawesome-all.min.css");
 				//$this->addCSS("$path/css/iconFont.min.css");
 				
@@ -1000,34 +1001,19 @@ class cHForm {
 	function addToolbar($element = ""){
 		if ($element != ""){ $this->mTools[] 	= "<li>$element</li>";	}
 	}
-	function addDivSolo($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props =false){
-		$div		= "";
-		$props1		= "";
-		$props2		= "";
-		if(is_array($props)){
-			//1= > array ("id" => "" )
-			if(isset($props[1])){
-				$propsA		= $props[1];
-				if(isset($propsA["id"])){
-					$props1	.= " id=\"" . $propsA["id"] . "\"";
-				}
-			}
-			if(isset($props[2])){
-				$propsA		= $props[2];
-				if(isset($propsA["id"])){
-					$props2	.= " id=\"" . $propsA["id"] . "\"";
-				}
-			}			
-		}
-		if($content2 == ""){
-			$div	= "<div class='tx1' $props1>$content1</div>";
-		} else {
-			$div	= "<div class='tx1'><div class='$tipo1' $props1>$content1</div>
-			<div class='$tipo2' $props2>$content2</div></div>";
-		}
-		$this->addHElem($div);
+	function addDivSolo($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props=false){
+		$this->addDivX($content1, $content2, $tipo1, $tipo2, $props, "tx1");
 	}
 	function addDivMedio($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props =false){
+		$this->addDivX($content1, $content2, $tipo1, $tipo2, $props, "medio");
+	}
+	function addDiv13($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props =false){
+		$this->addDivX($content1, $content2, $tipo1, $tipo2, $props, "tx13");
+	}
+	function addDiv23($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props =false){
+		$this->addDivX($content1, $content2, $tipo1, $tipo2, $props, "tx23");
+	}
+	private function addDivX($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props =false, $cssclass=""){
 		$div		= "";
 		$props1		= "";
 		$props2		= "";
@@ -1047,9 +1033,9 @@ class cHForm {
 			}
 		}
 		if($content2 == ""){
-			$div	= "<div class='medio' $props1>$content1</div>";
+			$div	= "<div class='$cssclass' $props1>$content1</div>";
 		} else {
-			$div	= "<div class='medio'><div class='$tipo1' $props1>$content1</div>
+			$div	= "<div class='$cssclass'><div class='$tipo1' $props1>$content1</div>
 			<div class='$tipo2' $props2>$content2</div></div>";
 		}
 		$this->addHElem($div);
@@ -1349,7 +1335,7 @@ class cHForm {
 		}
 
 		
-		$aud			= "<audio id=\"error-snd\" src=\"../images/error.wav\"></audio>";
+		$aud			= "<audio id=\"error-snd\" src=\"../images/error.wav\"></audio><audio id=\"info-snd\" src=\"../images/info.wav\"></audio><audio id=\"warn-snd\" src=\"../images/warn.wav\"></audio>";
 		
 		
 		$xForm = $initTag . "$txtheader $wInit<div id=\"dlg\"></div>
@@ -1455,6 +1441,9 @@ class cHForm {
 		$xEvt			= new cPersonasProceso();
 		$xRuls			= new cReglaDeNegocio();
 		$useDatosColeg	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_DCOLEGIACION);
+		$useRSeguros	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_RPTSEGUROS);
+		
+		$xSoc			= new cSocio($clave_de_persona); $xSoc->init();
 		
 		if( getUsuarioActual(SYS_USER_NIVEL) != USUARIO_TIPO_OFICIAL_AML OR OPERACION_LIBERAR_ACCIONES == true OR MODO_DEBUG == true){
 			
@@ -1473,7 +1462,8 @@ class cHForm {
 			$this->OButton("TR.PERFIL_TRANSACCIONAL", "var xP= new PersGen();xP.setAgregarPerfilTransaccional($clave_de_persona)", "perfil", "cmdagregartransaccional", "white");
 		}
 		$this->OButton("TR.Checklist", "var xP=new PersGen();xP.setFormaCheck($clave_de_persona);", $this->ic()->OK, "cmdchecklist", "green");
-		if(MODULO_AML_ACTIVADO == true){
+		
+		if(MODULO_AML_ACTIVADO == true AND $xSoc->getEsOperacional() == true){
 			if( getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML) == true AND $evento !== $xEvt->REGISTRO){
 				$this->OButton("TR.Reporte de Alertas", "var xML = new AmlGen(); xML.getReporteDeAlertas($clave_de_persona)", $this->ic()->REPORTE, "idrptalertas");
 				$this->OButton("TR.Reporte de Perfil transaccional", "var xML = new AmlGen(); xML.getReporteDePerfilTransaccional($clave_de_persona)", $this->ic()->REPORTE, "idrptperfil");
@@ -1492,33 +1482,40 @@ class cHForm {
 			$this->OButton("TR.Expediente", "var xP= new PersGen();xP.getExpediente($clave_de_persona)", $this->ic()->IMPRIMIR, "id-expediente");
 		}
 		if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true AND $evento !== $xEvt->REGISTRO){
-			$this->OButton("TR.Expediente de Cobranza", "var xSeg=new SegGen(); xSeg.getExpediente({persona:$clave_de_persona});", $this->ic()->REPORTE);
+			
 			$this->OButton("TR.FORMS_Y_DOCS", "var xP=new PersGen(); xP.getFormatos($clave_de_persona);", $this->ic()->ARCHIVOS, "", "white");
-		}		
-		if(CREDITO_PRODUCTO_CON_PRESUPUESTO > 0 ){
-			$this->OButton("TR.Agregar Presupuesto", "var xP= new PersGen();xP.addPresupuesto($clave_de_persona)", $this->ic()->DINERO, "cmdnewpresupuesto");
-		}
-		if(PERSONAS_CONTROLAR_POR_APORTS == true ){
-			if($evento !== $xEvt->REGISTRO){
-				$this->OButton("TR.PERFIL APORTACIONES", "var xP= new PersGen();xP.getPerfilAportaciones($clave_de_persona)", $this->ic()->CALENDARIO1);
-				
-				$this->OButton("TR.ESTADO_DE_CUENTA APORTACIONES", "var xP= new PersGen();xP.getReporteAportaciones($clave_de_persona)", $this->ic()->ESTADO_CTA);
-				$this->OButton("TR.APORTACIONES DETALLE", "var xP= new PersGen();xP.getReporteAportacionesDet($clave_de_persona)", $this->ic()->ESTADO_CTA);
-				$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_A", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5103)", $this->ic()->ESTADO_CTA);
-				$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_B", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5104)", $this->ic()->ESTADO_CTA);
+			if( $xSoc->getEsOperacional() == true){
+				$this->OButton("TR.Expediente de Cobranza", "var xSeg=new SegGen(); xSeg.getExpediente({persona:$clave_de_persona});", $this->ic()->REPORTE);
 			}
-			//colegiacion Datos
-			$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->ESCUELA, "cmddatocolegio");
-		} else {
-			if($useDatosColeg == true){
+		}
+		if( $xSoc->getEsOperacional() == true){
+			if(CREDITO_PRODUCTO_CON_PRESUPUESTO > 0 ){
+				$this->OButton("TR.Agregar Presupuesto", "var xP= new PersGen();xP.addPresupuesto($clave_de_persona)", $this->ic()->DINERO, "cmdnewpresupuesto");
+			}
+			if(PERSONAS_CONTROLAR_POR_APORTS == true ){
+				if($evento !== $xEvt->REGISTRO){
+					$this->OButton("TR.PERFIL APORTACIONES", "var xP= new PersGen();xP.getPerfilAportaciones($clave_de_persona)", $this->ic()->CALENDARIO1);
+					
+					$this->OButton("TR.ESTADO_DE_CUENTA APORTACIONES", "var xP= new PersGen();xP.getReporteAportaciones($clave_de_persona)", $this->ic()->ESTADO_CTA);
+					$this->OButton("TR.APORTACIONES DETALLE", "var xP= new PersGen();xP.getReporteAportacionesDet($clave_de_persona)", $this->ic()->ESTADO_CTA);
+					if($useRSeguros == true){
+						$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_A", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5103)", $this->ic()->ESTADO_CTA);
+						$this->OButton("TR.ESTADO_DE_CUENTA SEGUROS_B", "var xP= new PersGen();xP.getReporteSeguro($clave_de_persona,5104)", $this->ic()->ESTADO_CTA);
+					}
+				}
+				//colegiacion Datos
 				$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->ESCUELA, "cmddatocolegio");
+			} else {
+				if($useDatosColeg == true){
+					$this->OButton("TR.DATOS DE COLEGIACION", "var xP= new PersGen();xP.getFormaColegiacion($clave_de_persona)", $this->ic()->ESCUELA, "cmddatocolegio");
+				}
 			}
-		}
-		if($evento !== $xEvt->REGISTRO){
-			if(MODULO_LEASING_ACTIVADO == true){
-				$this->OButton("TR.NUEVO ARRENDAMIENTO", "var xP= new PersGen();xP.addLeasing($clave_de_persona)", $this->ic()->VEHICULO, "cmdnewleasing");
+			if($evento !== $xEvt->REGISTRO){
+				if(MODULO_LEASING_ACTIVADO == true){
+					$this->OButton("TR.NUEVO ARRENDAMIENTO", "var xP= new PersGen();xP.addLeasing($clave_de_persona)", $this->ic()->VEHICULO, "cmdnewleasing");
+				}
+				$this->OButton("TR.NUEVO Credito", "var xP= new PersGen();xP.addCredito($clave_de_persona)", $this->ic()->CREDITO, "cmdnewcredito", "credito");
 			}
-			$this->OButton("TR.NUEVO Credito", "var xP= new PersGen();xP.addCredito($clave_de_persona)", $this->ic()->CREDITO, "cmdnewcredito", "credito");
 		}
 	}
 	function addCaptacionComandos($contrato, $urlcontrato = ""){
@@ -4923,7 +4920,7 @@ class cHSelect {
 		$xS->setEsSql();
 		$xS->setLabel("TR.DIA_DE_LA_SEMANA");
 		return $xS;
-	}	
+	}
 	function getListaDeEstadoDeLlamada($id = "", $selected = false){
 		$id			= ($id == "") ? "idestadodellamada" : $id; $this->mLIDs[]	= $id;
 		$xS 		= new cSelect($id, $id, "");
@@ -5029,7 +5026,9 @@ class cHSelect {
 		$xS->addEspOption( BANCOS_OPERACION_RETIRO,  $xL->getT("TR.Retiro") );
 		$xS->addEspOption( BANCOS_OPERACION_TRASPASO,  $xL->getT("TR.Traspaso") );
 	
-		if($selected != false){	$xS->setOptionSelect($selected);	}
+		if($selected !== false){
+			$xS->setOptionSelect($selected);
+		}
 		$xS->setEsSql();
 		$xS->setDivClass("tx4 tx18");
 		$xS->setLabel("TR.Tipo de Operacion");
@@ -5265,7 +5264,7 @@ class cHSelect {
 			$xS->addEspOption($i, "$tit $i");
 		}
 		if($selected != false){	$xS->setOptionSelect($selected);	}
-		$xS->setDivClass("tx4 tx18 green");
+		$xS->setDivClass("tx4 tx18");
 		$xS->setEsSql();
 		$xS->setLabel("TR.DIA_MES");
 		return $xS;
@@ -7368,9 +7367,13 @@ class cHCheckBox {
 		$divEnd = ($cls == "") ? "" : "</div>";
 		$t1		= "80"; $t2 = "20";
 		if($tiny == true){ $t1 = "70"; $t2 = "30"; }
-		$s		= "$divInit<table class='chk' style='border:none;'>
+		$td1	= "<td style='width:$t1%;border:none;'><label class=\"chk-lbl\">$label</label></td>";
+		if(trim($label) == ""){
+			$td1	= "";
+		}
+		$s		= "$divInit<table class='chk'>
 		<tr>
-		<td style='width:$t1%;border:none;'><label class=\"chk-lbl\">$label</label></td>
+		$td1
 		<td style='width:$t2%;border:none;'><input type=\"hidden\" id=\"$id\" name=\"$id\" value=\"$val\" />
 		<label class=\"switch switch-yes-no\" id=\"lbl-chk-$id\">
 			<input id=\"chk-$id\" class=\"switch-input\" type=\"checkbox\" onchange=\"if(this.checked == true){ $('#$id').val(1); } else { $('#$id').val(0); }\" $check/>
@@ -11263,6 +11266,8 @@ class cFIcons {
 	public $SMS			= "fa-commenting-o";
 	public $DOMICILIO	= "fa-home";
 	public $SYNC		= "fa-refresh";
+	public $MAP_MARCA	= "fa-map-pin";
+	public $MAPA		= "fa-map";
 	//public $CALCULAR	= "fa-superscript";
 	/*	private $mIcons	= array("editar" => "fa-edit",
 						"referencias" => "fa-group",

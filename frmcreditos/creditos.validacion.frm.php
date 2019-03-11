@@ -53,7 +53,7 @@ $pasocredito	= parametro("pasocredito", 0, MQL_INT);
 
 $xHP->init();
 
-$xFRM			= new cHForm("frm", "./");
+$xFRM			= new cHForm("frmcredsvalidacion", "./");
 $xSel			= new cHSelect();
 $xT				= new cHTabla();
 $xFRM->setTitle($xHP->getTitle());

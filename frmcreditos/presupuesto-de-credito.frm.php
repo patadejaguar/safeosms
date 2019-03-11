@@ -89,7 +89,7 @@ $jxc ->process();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./", "idfrm");
+$xFRM		= new cHForm("frmpresupuestogtias", "./", "idfrm");
 $xSel		= new cHSelect();
 $msg		= "";
 $idPres		= "";

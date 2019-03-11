@@ -42,7 +42,7 @@ $xHP->init();
 /* ===========		FORMULARIO EDICION 		============*/
 $xTabla		= new cCreditos_productos_etapas();
 $xTabla->setData( $xTabla->query()->initByID($clave));
-$xFRM		= new cHForm("frm", "creditos_productos_etapas.frm.php?action=$action");
+$xFRM		= new cHForm("frmprodsetapas", "creditos_productos_etapas.frm.php?action=$action");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

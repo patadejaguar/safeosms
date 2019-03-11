@@ -1355,6 +1355,14 @@ class cSAFEData{
 		$this->setContratoDisEn(800, $enable);
 		$this->setTipoDoctoDisEn(502, $enable);
 		
+		$this->setBaseSisDisEn(40501, $enable);
+		$this->setBaseSisDisEn(40500, $enable);
+		$this->setBaseSisDisEn(30210, $enable);
+		$this->setBaseSisDisEn(30200, $enable);
+		$this->setBaseSisDisEn(30110, $enable);
+		$this->setBaseSisDisEn(30100, $enable);
+		//$this->setBaseSisDisEn(, $enable);
+		//$this->setBaseSisDisEn(, $enable);
 	}
 	function setModContableDA($enable = false){
 		$this->setContratoDisEn(501, $enable);
@@ -1394,6 +1402,8 @@ class cSAFEData{
 		
 		$this->setTipoDoctoDisEn(510, $enable);
 		$this->setTipoDoctoDisEn(520, $enable);
+		
+		$this->setBaseSisDisEn(3100, $enable);
 	}
 	private function setContratoDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "alta" : "baja";
@@ -1406,6 +1416,10 @@ class cSAFEData{
 	private function setTipoDoctoDisEn($id, $enable = false){
 		$estatus	= ($enable == true) ? "1" : "0";
 		$this->execQuery("UPDATE `personas_documentacion_tipos` SET `estatus` = '$estatus' WHERE `clave_de_control` = '$id'");
+	}
+	private function setBaseSisDisEn($id, $enable = false){
+		$estatus	= ($enable == true) ? "1" : "0";
+		$this->execQuery("UPDATE `eacp_config_bases_de_integracion` SET `estatus` = '$estatus' WHERE `codigo_de_base` = '$id'");
 	}
 	function setModGruposDisEn($enable = false){
 		//$this->setContratoDisEn(3002, $enable);
@@ -1433,7 +1447,7 @@ class cSAFEData{
 		$this->setOperacionDisEn(711, $enable);
 		$this->setOperacionDisEn(712, $enable);
 		$this->setOperacionDisEn(902, $enable);
-		
+		$this->setBaseSisDisEn(101, $enable);
 	}
 	function setModNominasDisEn($enable = false){
 		$this->setOperacionDisEn(2101, $enable);
@@ -2544,6 +2558,10 @@ class cBases{
 	
 	public $BASE_ESTADO_APORTACIONES	= 101;
 	public $BASE_IVA_OTROS				= 7013;
+	
+	public $TIPO_OPERACIONES			= "de_operaciones";
+	public $TIPO_AML					= "aml";
+	public $TIPO_RELACIONES				= "de_partes_relacionadas";
 	
 	function __construct($codigo = false){ $this->setClave($codigo); }
 	function getIDCache(){ return $this->mIDCache; }

@@ -28,6 +28,7 @@ class cPersonasEstadisticas {
 	private $mCreditoPrioritario	= 0;
 	private $mTCuentasCaptacion		= 0;
 	private $mTotalCompromisos		= 0;
+	private $mInit					= false;
 	function __construct($clave_de_persona){
 		$this->mPersona	= $clave_de_persona;
 	}
@@ -60,6 +61,7 @@ class cPersonasEstadisticas {
 			}
 			$this->mTotalCompromisos		+= $this->mTCredsNum;
 			$this->mTotalCompromisos		+= $this->mTCuentasCaptacion;
+			$this->mInit					= true;
 		} else {
 			$sql	= "SELECT `creditos_solicitud`.* FROM `creditos_solicitud` WHERE (`creditos_solicitud`.`numero_socio` =" . $this->mPersona . ") ORDER BY `creditos_solicitud`.`saldo_actual` DESC,`creditos_solicitud`.`fecha_ministracion` DESC";
 			$xCred	= new cCreditos_solicitud();
@@ -92,9 +94,14 @@ class cPersonasEstadisticas {
 				if($inCache == false){
 					$xCache->set($idxc, $data, $xCache->EXPIRA_5MIN);
 				}
+				$this->mInit	= true;
 			}
 		}
 		return  $this->mAListaDeCreds;//temporal
+	}
+	function init(){
+		$this->initDatosDeCredito(true);
+		return $this->mInit;
 	}
 	function getDatosDeCreditos(){ return $this->mAListaDeCreds; }
 	function getTotalCreditosSaldo(){ return $this->mTCredsSaldo;}

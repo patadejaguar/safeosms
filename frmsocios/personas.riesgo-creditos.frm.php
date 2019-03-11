@@ -37,7 +37,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmriesgocreds", "./");
 $xFRM->setTitle($xHP->getTitle());
 $xSoc			= new cSocio($persona);
 if($xSoc->init() == true){

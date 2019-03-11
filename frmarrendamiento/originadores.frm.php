@@ -20,6 +20,31 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
+$xRuls			= new cReglaDeNegocio();
+$originador		= 0;
+$suborigen		= 0;
+$EsAdmin		= false;
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$EsOriginador	= false;
+
+if($xUser->getEsOriginador() == true){
+	$xOrg	= new cLeasingUsuarios();
+	if($xOrg->initByIDUsuario($xUser->getID()) == true){
+		$originador	= $xOrg->getOriginador();
+		$suborigen	= $xOrg->getSubOriginador();
+		//$EsActivo	= $xOrg->getEsActivo();
+		$EsAdmin	= $xOrg->getEsAdmin();
+		if($xOrg->getEsAdmin() == true){
+			$suborigen			= 0;
+		}
+		if($xOrg->getEsActivo() == false){
+			$xHP->goToPageError(403);
+		} else {
+			$EsOriginador	= true;
+		}
+	}
+}
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -39,7 +64,7 @@ $observaciones= parametro("idobservaciones");
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmoriginadores", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
@@ -65,12 +90,13 @@ $xHG->col("comision", "TR.COMISION", "10%");
 
 $xHG->col("meta", "TR.META", "15%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-$xHG->setSizeIcon("6%");
-
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
-$xHG->OButton("TR.AGREGAR USUARIO", "jsAddNewUser('+ data.record.clave +')", "create-group-button.png");
+if($EsOriginador == false){
+	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+	$xHG->setSizeIcon("6%");
+	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+	$xHG->OButton("TR.AGREGAR USUARIO", "jsAddNewUser('+ data.record.clave +')", "create-group-button.png");
+}
 
 $xFRM->addHElem("<div id='idlistaoriginadores'></div>");
 

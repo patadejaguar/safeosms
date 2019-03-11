@@ -59,7 +59,7 @@ if($persona<= DEFAULT_SOCIO AND $credito> DEFAULT_CREDITO){
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmpersonasdoct", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
@@ -87,7 +87,7 @@ $xHG->setOrdenar();
 $xHG->addKey("clave_de_control");
 
 $xHG->col("nombre_del_documento", "TR.NOMBRE DEL DOCUMENTO", "25%");
-$xHG->OColSiNo("entregado", "TR.EN ARCHIVO", "10%");
+$xHG->OColSiNo("entregado", "TR.ARCHIVO", "10%");
 
 
 if($credito <= DEFAULT_CREDITO AND ($cuenta <= 0 OR $cuenta== DEFAULT_CUENTA_CORRIENTE)){
@@ -100,9 +100,9 @@ if($credito <= DEFAULT_CREDITO AND ($cuenta <= 0 OR $cuenta== DEFAULT_CUENTA_COR
 		$xHG->OButton("TR.CARGAR", "jsUploadCont($persona,$credito,' + data.record.clave_de_control + ',' + data.record.entregado + ')", "upload.png");
 		$xHG->OButton("TR.VER", "jsVerCont($persona,$credito,' + data.record.clave_de_control + ',' + data.record.entregado + ')", "view.png");
 	}
-
 }
 
+//$xHG->OButton("TR.MAPA", "jsGetMapa($persona, ' + data.record.clave_de_control + ',' + data.record.entregado + ')", "placeholder.png");
 
 
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave_de_control +')", "edit.png");
@@ -172,6 +172,9 @@ function jsVerCont(idp, idcont, tipodocto, entregado){
 	} else {
 		var xP=new PersGen();xP.getDocumento({persona:idp, tipo: tipodocto, contrato:idcont});
 	}
+}
+function jsGetMapa(lt, lg){
+	xG.getMap({ latitud : lt, longitud : lg });
 }
 </script>
 <?php

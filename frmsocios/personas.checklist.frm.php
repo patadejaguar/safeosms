@@ -40,7 +40,7 @@ $checklist_din	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_CHECKLIST_D
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "personas.checklist.frm.php");
+$xFRM		= new cHForm("frmpersonasvivcheck", "personas.checklist.frm.php");
 $xChk		= new cHCheckBox();
 
 $xFRM->setTitle($xHP->getTitle());

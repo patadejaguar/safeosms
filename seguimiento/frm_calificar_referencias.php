@@ -42,7 +42,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalificarefs", "./");
 $xSel		= new cHSelect();
 $xSel2		= new cHSelect();
 

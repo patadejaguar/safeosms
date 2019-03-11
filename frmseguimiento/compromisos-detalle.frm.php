@@ -30,7 +30,7 @@ $xHP->addJsFile("../js/jquery-hover-dropdown-box.js");
 $xHP->addCSS("../css/jquery-hover-dropdown-box.css");
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcompromisosdetalles", "./");
 $xFRM->addCerrar();
 $xFRM->addJsInit("init();");
 $xComp		= new cSeguimientoCompromisos($clave);

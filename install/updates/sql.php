@@ -4557,20 +4557,27 @@ $sql["20190101"][]	= "SELECT setNuevoPermisoX('RecibosPorUsuarioEliminados.rpt.p
 $sql["20190101"][]	= "CREATE TABLE IF NOT EXISTS `usuarios_coordenadas` (  `idusuarios_coordenadas` INT NOT NULL AUTO_INCREMENT,  `idusuario` INT(8) NULL,  `tiempo` INT(10) NULL,  `latitud` VARCHAR(20) NULL,  `longitud` VARCHAR(20) NULL,  PRIMARY KEY (`idusuarios_coordenadas`)) ENGINE = INNODB";
 $sql["20190101"][]	= "ALTER TABLE `usuarios_coordenadas` ADD COLUMN `idenfuente` VARCHAR(50) NULL COMMENT 'clave en fuente original' AFTER `longitud`";
 $sql["20190101"][]	= "ALTER TABLE `usuarios_coordenadas` ADD INDEX `idbusq1` (`idusuario` ASC, `idenfuente` ASC, `idusuarios_coordenadas` ASC)";
+
 $sql["20190201"][]	= "ALTER TABLE `general_sucursales` ADD COLUMN `iddomicilio` INT(8) NULL AFTER `centro_de_costo`,CHANGE COLUMN `clave_numerica` `clave_numerica` INT(6) NULL DEFAULT '0' COMMENT 'clave de sucursal segun la cnbv'";
 $sql["20190201"][]	= "SELECT setNuevoPermisoX('sucursales.edit.frm.php')";
 $sql["20190201"][]	= "SELECT setNuevoPermisoX('sucursales.new.frm.php')";
+$sql["20190201"][]	= "ALTER TABLE `creditos_montos` ADD COLUMN `hist_otros` DOUBLE(16,2) NULL DEFAULT '0.00' AFTER `periodo_pends`";
+$sql["20190201"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `nombre_utilerias`, `descripcion_utileria`) VALUES ('21104', 'Creditos.- Cuadrar Planes', 'Cuadra Planes de Pagos con errores')";
+$sql["20190201"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('627', 'FORM', 'PERSONAS.USAR_RPT_SEGUROS', '', '', '', '') ";
+$sql["20190201"][]	= "SELECT setNuevoPermisoX('aportaciones-tipos-por-base.frm.php')";
+$sql["20190201"][]	= "INSERT INTO `entidad_reglas` (`identidad_reglas`, `contexto`, `nombre`, `evento`, `sujetos`, `reglas`, `metadata`) VALUES ('628', 'FORM', 'PERSONAS.VENCEN_DOCTOS', '', '', '', '') ";
+$sql["20190201"][]	= "UPDATE `general_menu` SET `menu_parent` = '11400' WHERE `idgeneral_menu` = '11017'";
+$sql["20190201"][]	= "ALTER TABLE `creditos_montos` ADD COLUMN `cbanc_1` VARCHAR(20) NULL DEFAULT '' COMMENT 'Clave Bancaria 1' AFTER `hist_otros`,ADD COLUMN `cbanc_2` VARCHAR(20) NULL DEFAULT '' AFTER `cbanc_1`";
+$sql["20190201"][]	= "DELETE FROM general_menu WHERE idgeneral_menu=9004";
+$sql["20190201"][]	= "SELECT setNuevoPermisoX('movimientos_bancarios.frm.php')";
+$sql["20190201"][]	= "DELETE FROM `sistema_permisos` WHERE `nombre_objeto` = 'id-frm'";
+$sql["20190201"][]	= "SELECT setNuevoPermisoX('map.frm.php')";
+$sql["20190201"][]	= "ALTER TABLE `personas_documentacion` ADD COLUMN `longitud` VARCHAR(8) NULL DEFAULT '0' AFTER `estatus`, ADD COLUMN `latitud` VARCHAR(8) NULL DEFAULT '0' AFTER `longitud`";
+$sql["20190201"][]	= "ALTER TABLE `general_log` ADD COLUMN `coords` VARCHAR(30) NULL DEFAULT '' AFTER `idrecibo`";
+$sql["20190201"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `nombre_utilerias`, `descripcion_utileria`) VALUES ('21105', 'Leasing.- BugFix Valor residual a 0', 'Cuadrar Arrendamiento Monto Residual en residuales 0')";
 //$sql["20190201"][]	= "";
 //$sql["20190201"][]	= "";
 //$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
 //$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
 //$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
 //$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";

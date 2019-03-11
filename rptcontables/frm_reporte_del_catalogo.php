@@ -39,7 +39,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./", false, "", "formoid-default panel");
+$xFRM		= new cHForm("frmrptcatalogo", "./", false, "", "formoid-default panel");
 $xSel		= new cHSelect();
 $xRPT		= new cPanelDeReportesContables(false, false);
 $xRPT->OFRM()->setTitle($xHP->getTitle());

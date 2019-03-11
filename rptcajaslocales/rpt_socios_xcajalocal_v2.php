@@ -53,7 +53,7 @@ $soloclientes	= true;	//parametro("soloclientes", false, MQL_BOOL);
 $ByActivos		= "";
 if($soloclientes == true){
 	if(MODULO_CAPTACION_ACTIVADO == true){
-		$ByActivos	= " AND (`tmp_personas_estadisticas`.`creditos`>0 OR (`tmp_personas_estadisticas`.`cuentas`>0) ";
+		$ByActivos	= " AND ((`tmp_personas_estadisticas`.`creditos`>0) OR (`tmp_personas_estadisticas`.`cuentas`>0)) ";
 	} else {
 		//$ByActivos	= "  AND (`tmp_personas_estadisticas`.`creditos`>0) ";
 		$ByActivos	= "  AND (`tmp_personas_estadisticas`.`creditos_con_saldo`>0) ";
@@ -69,6 +69,7 @@ $BySucursal		= $xFil->PersonasPorSucursal($sucursal);
 
 $FEmpresa		= (PERSONAS_CONTROLAR_POR_EMPRESA == true) ? "`socios_aeconomica_dependencias`.`nombre_corto` AS `empresa`," : "";
 $FGrupo			= (PERSONAS_CONTROLAR_POR_GRUPO == true) ? "`socios_grupossolidarios`.`nombre_gruposolidario`          AS `grupo_solidario`," : "";
+
 $sql			= "SELECT SQL_CACHE
 					`socios_general`.`codigo`,
 					`socios_general`.`apellidopaterno`                         AS `apellido_paterno`,

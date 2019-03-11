@@ -46,7 +46,7 @@ $cuadre			= parametro("cuadre", false, MQL_BOOL);
 
 
 $xHP->init();
-$xFRM		= new cHForm("frm", "operaciones.mvtos.add.frm.php?action=" . MQL_ADD);
+$xFRM		= new cHForm("frmopsmvtosadd", "operaciones.mvtos.add.frm.php?action=" . MQL_ADD);
 $xOP		= new cOperaciones_mvtos();
 $xFRM->setTitle($xHP->getTitle() );
 //$xFRM->addJsBasico();

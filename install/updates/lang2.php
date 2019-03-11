@@ -662,7 +662,15 @@ $lang["20190101"][]	= array("PERIODO", "Periodo", "Period");
 $lang["20190101"][]	= array("MESA_DE_CREDITO", "Mesa de Cred.", "Credit Committee");
 $lang["20190101"][]	= array("FALSOPOS", "Falso/Positivo", "False-Positive");
 $lang["20190101"][]	= array("BUSQUEDA", "Busqueda", "Search");
-//$lang["20190101"][]	= array("", "", "");
+
+$lang["20190201"][]	= array("MONTOOTROS", "Otros Montos", "Other Charges");
+$lang["20190201"][]	= array("PAGOSESP", "Pagos Especiales", "special payments");
+$lang["20190201"][]	= array("IDINTERNO", "Cod. Interno", "Internal Id");
+$lang["20190201"][]	= array("SOLOCAP", "Solo Cap.", "Only principal");
+$lang["20190201"][]	= array("PAGOADEL", "Pag. Adelantado", "Prepayment");
+$lang["20190201"][]	= array("SHARE", "Compartir", "Share");
+$lang["20190201"][]	= array("MAPA", "Mapa", "Map");
+//$lang["20190201"][]	= array("", "", "");
 
 
 

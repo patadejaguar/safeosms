@@ -20,6 +20,31 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xUser			= new cSystemUser(getUsuarioActual()); $xUser->init();
+$xRuls			= new cReglaDeNegocio();
+$originador		= 0;
+$suborigen		= 0;
+$EsAdmin		= false;
+$NoUsarUsers	= $xRuls->getArrayPorRegla($xRuls->reglas()->CREDITOS_ARREND_NOUSERS);
+$EsOriginador	= false;
+
+if($xUser->getEsOriginador() == true){
+	$xOrg	= new cLeasingUsuarios();
+	if($xOrg->initByIDUsuario($xUser->getID()) == true){
+		$originador	= $xOrg->getOriginador();
+		$suborigen	= $xOrg->getSubOriginador();
+		//$EsActivo	= $xOrg->getEsActivo();
+		$EsAdmin	= $xOrg->getEsAdmin();
+		if($xOrg->getEsAdmin() == true){
+			$suborigen			= 0;
+		}
+		if($xOrg->getEsActivo() == false){
+			$xHP->goToPageError(403);
+		} else {
+			$EsOriginador	= true;
+		}
+	}
+}
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -57,9 +82,11 @@ $xHG->addList();
 $xHG->addKey("idvehiculos_marcas");
 $xHG->col("nombre_marca", "TR.MARCA", "10%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idvehiculos_marcas +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idvehiculos_marcas +')", "delete.png");
+if($EsOriginador == false){
+	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idvehiculos_marcas +')", "edit.png");
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idvehiculos_marcas +')", "delete.png");
+}
 $xFRM->addHElem("<div id='iddivvehiculosmarcas'></div>");
 $xFRM->addJsCode( $xHG->getJs(true) );
 echo $xFRM->get();

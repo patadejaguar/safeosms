@@ -44,7 +44,7 @@ $xHP->addCSS("../css/fullcalendar.min.css");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcalendarioseg", "./");
 $xFRM->addJsInit("init();");
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();

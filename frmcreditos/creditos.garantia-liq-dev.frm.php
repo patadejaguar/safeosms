@@ -45,7 +45,7 @@ $observaciones= parametro("idobservaciones");
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./creditos.garantia-liquida.frm.php");
+$xFRM		= new cHForm("frmcredsgtisliq", "./creditos.garantia-liquida.frm.php");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

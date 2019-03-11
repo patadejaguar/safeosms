@@ -206,7 +206,7 @@ $xHP->init();
 							}							
 						}
 						
-						setLog($sql_cap);
+						//setLog($sql_cap);
 					
 					}
 				}	
@@ -1620,6 +1620,10 @@ $xHP->init();
 				$xUtils		= new cUtileriasParaCreditos();
 				$msg		.= $xUtils->setCuadrarCreditosByMvtos();
 				break;
+			case 21104:
+				$xUtils		= new cUtileriasParaCreditos();
+				$msg		.= $xUtils->setCreditosCuadrarPlanes();
+				break;
 			case 8201:
 				$xUAml		= new cUtileriasParaAML();
 				$msg		.= $xUAml->setGenerarPerfilesPorActividadEconomica();
@@ -1724,6 +1728,34 @@ $xHP->init();
 					}
 					//$xCred->setDelete();
 					$msg		.= $xCred->getMessages();
+				}
+				break;
+			case 21105:
+				$sql		= "SELECT `idoriginacion_leasing`, `monto_residual`,`plazo`,`residuales` FROM `originacion_leasing` WHERE `residuales` LIKE CONCAT('%', `plazo` , '-0%') AND `monto_residual`>0 ORDER BY `plazo` ";
+				$xQL		= new MQL();
+				$rs			= $xQL->getRecordset($sql);
+				$xEmul		= new cLeasingEmulaciones(0, 0 ,0);
+				$cnt		= 0;
+				while( $rw = $rs->fetch_assoc() ){
+					$idleasing	= $rw["idoriginacion_leasing"];
+					
+					$xLeas	= new cCreditosLeasing($idleasing);
+					if($xLeas->init() ==  true){
+						$admin		= true;
+						$aliado		= $xLeas->getMontoAliado();
+						$pagos		= $xLeas->getNumeroPagos();
+						$anticipo	= $xLeas->getAnticipo();
+						$precio		= $xLeas->getMontoVehiculo();
+						$tasa		= $xLeas->getTasaResidualPzo($pagos);
+						$res 		= $xEmul->getValorResidual($precio, $aliado, $pagos, $tasa, $anticipo, $admin);
+						$msg		.= "OK\t$idleasing\tIDX:$cnt\tEl Monto Residual es $res\r\n";
+						$sqlU		= "UPDATE `originacion_leasing`  SET `monto_residual`=$res WHERE `idoriginacion_leasing`=$idleasing";
+						//$msg		.= "$sqlU;\r\n";
+						
+						$xQL->setRawQuery($sqlU);
+						$cnt++;
+						
+					}
 				}
 				break;
 		}

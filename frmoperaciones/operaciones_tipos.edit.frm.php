@@ -54,7 +54,7 @@ $xTabla->setData( $xTabla->query()->initByID($clave));
 $xTabla->tipo_operacion()->v($xTabla->idoperaciones_tipos()->v());
 
 
-$xFRM	= new cHForm("frm", "");
+$xFRM	= new cHForm("frmoperacionesmvtosedit", "");
 $xFRM->setNoAcordion();
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();

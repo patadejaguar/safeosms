@@ -6602,6 +6602,7 @@ class cProductoDeCredito {
 	private $mTasaGtiaLiq			= 0;
 	private $mOficialSeg			= 0; 
 	private $mAplicaGtosNots		= false;
+	private $mAplicaPagosEsp		= false;
 	private $mMontoFondoDef			= 0;
 	private $mEstatus				= "";
 	private $mIDCache				= "";
@@ -6734,6 +6735,7 @@ class cProductoDeCredito {
 	}
 	function getAplicaMoraPorGastos(){ return $this->mAplicaGastosPorMora;	}
 	function getAplicaPenas(){ return $this->mAplicaPenas;	}
+	function getAplicaPagosEsp(){ return $this->mAplicaPagosEsp;	}
 	function getDiasTolerados(){
 		$DIAS_TOLERADOS = $this->mDiasTolerados;
 		//TODO: Considerar Formula.- Productos de credito.- dias tolerados
@@ -6833,6 +6835,7 @@ class cProductoDeCredito {
 				$this->mTasaComPorApertura	= setNoMenorQueCero($this->getOOtrosParametros()->get($this->getOOtrosParametros()->TASA_DE_COMISION_AP));
 			}
 			$this->mAplicaPenas			= $xTi->cBool($this->getOOtrosParametros()->get($this->getOOtrosParametros()->APLICA_PENAS));
+			$this->mAplicaPagosEsp		= $xTi->cBool($this->getOOtrosParametros()->get($this->getOOtrosParametros()->APLICA_PAGOS_ESP));
 		}
 		if($this->mTasaComPorApertura > 1){ $this->mTasaComPorApertura = $this->mTasaComPorApertura / 100; }
 		return $this->getOOtrosParametros(); 
@@ -7165,6 +7168,7 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 	
 	public $ESTADOCUENTA_EMUL			= "ESTADO_CUENTA_EMULADO";
 	public $PAGOS_EN_DOMINGO			= "ACEPTAR_PAGOS_EN_DOMINGO";
+	public $APLICA_PAGOS_ESP			= "APLICA_PAGOS_ESPECIALES";
 
 	private $mDatos						= array();
 	private $mProducto					= false;
@@ -7239,9 +7243,15 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 		$arr[$this->TASA_FIJA] 						= $this->TASA_FIJA;
 		$arr[$this->ESTADOCUENTA_EMUL] 				= $this->ESTADOCUENTA_EMUL;
 		$arr[$this->PAGOS_EN_DOMINGO] 				= $this->PAGOS_EN_DOMINGO;
+		$arr[$this->APLICA_PAGOS_ESP] 				= $this->APLICA_PAGOS_ESP;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
+		//$arr[$this->] = $this->;
 		
-		//$arr[$this->] = $this->;
-		//$arr[$this->] = $this->;
 		return $arr;
 	}
 }

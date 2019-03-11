@@ -46,7 +46,7 @@ $xHP->init();
 $xLLam		= new cLlamadas($clave);
 $xLLam->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmllamadascambiarestado", "./");
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();
 

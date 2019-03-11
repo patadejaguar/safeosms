@@ -96,13 +96,13 @@ $idpin			= parametro("idpin", 0, MQL_INT);
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM			= new cHForm("frm", "./");
+$xFRM			= new cHForm("frmpersonasusuarios", "./");
 $xSel			= new cHSelect();
 $xTxt			= new cHText();
 $xChk			= new cHCheckBox();
 $xFRM->setNoAcordion();
-$xChk->setDivClass("tx18");
-
+//$xChk->setDivClass("tx18");
+//$xChk->setDivClass("");
 
 $xFRM->setTitle($xHP->getTitle());
 $xUser2			= new cSystemUser(); $xUser2->init();
@@ -227,7 +227,7 @@ if($xSoc->init() == true){
 				$vv		= ($idv == "false") ? 0 : 1;
 				
 				$xTbl->initRow($ss);
-				$xTbl->addTD($idx);
+				$xTbl->addTD("Nivel .- $idx");
 				
 				
 				
@@ -252,7 +252,7 @@ if($xSoc->init() == true){
 				
 				
 				$xTbl->initRow($ss);
-				$xTbl->addTD($idx);
+				$xTbl->addTD("Usuario .- $idx");
 				
 				if($xUser2->getPuedeEditarUsuarios() == false OR ($xUser2->getTipoEnSistema() < $xUser->getTipoEnSistema() )){
 					$xTbl->addTD($xImg->get16($img));
@@ -277,11 +277,12 @@ if($xSoc->init() == true){
 					
 					
 					$xTbl->initRow($ss);
-					$xTbl->addTD($idx);
+					$xTbl->addTD("SU .- $idx");
 					
 					if($xUser2->getPuedeEditarUsuarios() == false OR ($xUser2->getTipoEnSistema() < $xUser->getTipoEnSistema() )){
 						$xTbl->addTD($xImg->get16($img));
 					} else {
+						
 						$xTbl->addTD($xChk->getSiNo("", "idchk3-$idx", $vv, true));
 						$xFRM->addControEvt("chk-idchk3-$idx", "jsEditPermiso('idchk3-$idx','$idx')", "change");
 					}
@@ -439,7 +440,7 @@ function jsDeact(id){
     xG.recordInActive({tabla:"usuarios_web_notas", id:id, callback:jsLGiddivusernotes, preguntar:true });
 }
 function jsGetMapa(lg, lt){
-	xG.w({url:"https://www.google.com/maps/@" + lt +"," + lg  + ",17z", tab:true});
+	xG.getMap({ latitud : lt, longitud : lg });
 }
 </script>
 <?php

@@ -41,7 +41,7 @@ $xHP->init();
 
 
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmlistadecuentasbancs", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
@@ -58,13 +58,15 @@ $xHG->addKey("clave");
 $xHG->col("clave", "TR.CLAVE", "10%"); //$xHG->col("", "TR.", "10%");
 $xHG->col("nombre", "TR.NOMBRE", "35%");
 $xHG->col("tipo", "TR.TIPO", "10%");
-$xHG->col("sucursal", "TR.SUCURSAL", "15%");
+//$xHG->col("sucursal", "TR.SUCURSAL", "15%");
 $xHG->col("banco", "TR.BANCO", "20%");
-$xHG->col("consecutivo", "TR.CONSECUTIVO", "10%");
+//$xHG->col("consecutivo", "TR.CONSECUTIVO", "10%");
 
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.idbancos_cuentas +')", "undone.png");
+//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+
 $xFRM->addHElem("<div id='iddivbancos'></div>");
 
 $xFRM->addJsCode( $xHG->getJs(true) );
@@ -82,6 +84,9 @@ function jsAdd(){
 }
 function jsDel(id){
 	xG.rmRecord({tabla:"bancos_cuentas", id:id, callback:jsLGiddivbancos});
+}
+function jsDeact(id){
+    xG.recordInActive({tabla:"bancos_cuentas", id:id, callback:jsLGiddivbancos, preguntar:true });
 }
 </script>
 <?php

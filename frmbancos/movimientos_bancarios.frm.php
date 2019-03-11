@@ -73,8 +73,9 @@ if($recibo > 1 AND $recibo!= DEFAULT_RECIBO  ){
 
 $xHP->init();
 
-$xFRM			= new cHForm("frm", "movimientos_bancarios.frm.php?action=" . MQL_ADD);
+$xFRM			= new cHForm("frmmvtosbancsfrm", "movimientos_bancarios.frm.php?action=" . MQL_ADD);
 $xSel			= new cHSelect();
+
 
 
 if($action == MQL_ADD){

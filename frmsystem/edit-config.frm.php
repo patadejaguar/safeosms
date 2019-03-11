@@ -39,7 +39,7 @@ if(MODO_DEBUG == false OR isset($arrNoEdits[$URL]) === true OR SAFE_ON_DEV == fa
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmeditconfig", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

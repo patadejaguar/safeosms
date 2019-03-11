@@ -62,6 +62,7 @@ class cError {
 	public $ERR_MODULO		= 97;
 	private $mIDDocto		= 0;
 	private $mIDRecibo		= 0;
+	private $mCoords		= "";
 	
 	function __construct($codigo = false){
 		$codigo			= ( $codigo == false ) ? DEFAULT_CODIGO_DE_ERROR : $codigo;
@@ -83,8 +84,13 @@ class cError {
 		$hora 	= date("H:i:s");
 		$llen	= strlen($txt);
 		$xlim	= 4096;
+		$coords	= $this->mCoords;
+		
 		if(MODO_DEBUG){
 			$xlim	= 6144;
+			if(SAFE_ON_DEV == true OR MODO_CORRECION == true){
+				$xlim	= 26144;
+			}
 		}
 		if($llen>$xlim){
 			$txt	= substr($txt, 0, $xlim);
@@ -103,8 +109,8 @@ class cError {
 			$v2	= ",'"  . $this->mIDRecibo . "'";
 		}
 		if($txt !== ""){
-			$sqlIE 	= "INSERT INTO general_log( fecha_log, hour_log, type_error, usr_log, text_log, ip_private, ip_proxy, ip_public, `idpersona` $f1 $f2) 
-		    			VALUES('$fecha', '$hora', '$tipo', '$usr', '$txt', '$ip1', '$ip2', '$ip3', '$persona' $v1 $v2 )";
+			$sqlIE 	= "INSERT INTO general_log( fecha_log, hour_log, type_error, usr_log, text_log, ip_private, ip_proxy, ip_public, `idpersona`, `coords` $f1 $f2) 
+		    			VALUES('$fecha', '$hora', '$tipo', '$usr', '$txt', '$ip1', '$ip2', '$ip3', '$persona', '$coords' $v1 $v2 )";
 			$xMQL->setRawQuery($sqlIE);
 		}
 		$txt	= null;
@@ -162,6 +168,10 @@ class cError {
 		}
 		return $cnt;
 	}
+	function setCoords($coords = ""){
+		$this->mCoords	= $coords;
+		
+	}
 }
 class cCoreLog{
 	private $SalidaDestino	= "sys";
@@ -172,6 +182,7 @@ class cCoreLog{
 	private $mMessages		= "";
 	private $mOCat			= null;
 	private $mForceNoLog	= false;
+	private $mCoords		= "";
 	
 	function __construct($iderror = false){
 		$this->mIDError	= $iderror;
@@ -185,10 +196,13 @@ class cCoreLog{
 		$id		= ($id == false) ? $this->mIDError : $id;
 	}
 	function getDescription(){	}
-	function guardar($codigo, $persona = 0, $contrato=0, $recibo=0){ 
-		$xErr	= new cError();
+	function guardar($codigo, $persona = 0, $contrato=0, $recibo=0){
+		
+		$xErr		= new cError();
 		$xErr->setIDDocto($contrato);
 		$xErr->setIDRecibo($recibo);
+		$xErr->setCoords($this->mCoords);
+		
 		$xErr->setNewError($codigo, false, $this->mMessages, false, $persona);	
 	}
 	function add($msg, $level = "common"){
@@ -205,6 +219,9 @@ class cCoreLog{
 		$xL			= new cSQLListas();
 		$sql		= $xL->getListadoDeEventos("", "", "", "", "", $buscar, $persona, $documento, $recibo);
 		return $sql;
+	}
+	function setCoords($coords = ""){
+		$this->mCoords	= $coords;
 	}
 }
 

@@ -253,9 +253,20 @@ function jsaGetResidual($precio, $aliado, $plazo, $residuales, $anticipo, $clave
 					}
 				}
 			}
+			if($clave>0 AND $nuevo == false){
+				$xLeas	= new cCreditosLeasing($clave);
+				if($xLeas->init()){
+					$tr			= $xLeas->getTasaResidualPzo($idx);
+					//$tasavec	= $xLeas->getTasaVec($idx);
+					$res		= $xLeas->getValorResidual();
+				} else {
+					$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, $tr, $anticipo, $admin);
+				}
+			} else {
+				$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, $tr, $anticipo, $admin);
+			}
 			
 			
-			$res 	= $xEmul->getValorResidual($precio, $aliado, $idx, $tr, $anticipo);
 			$tr		= $xEmul->getFmtTasa($tr);
 			//setError("pzo $idx tasa $tr (Clave $clave)");
 			$tab->add(TabSetValue::getBehavior("tasaresidual_$idx", $tr ));

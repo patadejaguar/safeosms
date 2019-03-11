@@ -44,7 +44,7 @@ $observaciones= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsproyeccion", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 

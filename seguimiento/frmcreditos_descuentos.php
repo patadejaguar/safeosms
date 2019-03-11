@@ -39,7 +39,7 @@ $observaciones	= parametro("idobservaciones");
 $tipo			= parametro("idtipodebonificacion", 0, MQL_INT);
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./frmcreditos_descuentos.php");
+$xFRM		= new cHForm("frmdescuentoscreds", "./frmcreditos_descuentos.php");
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->addJsBasico();
 if($credito <= DEFAULT_CREDITO){

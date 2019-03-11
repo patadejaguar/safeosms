@@ -36,7 +36,7 @@ $xHP->init();
 
 
 $xSel		= new cHSelect();
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsprodadd", "./");
 $xProd		= new cCreditos_tipoconvenio();
 $lastid		= $xProd->query()->getLastID();
 $xProd->setData( $xProd->query()->initByID($producto) );

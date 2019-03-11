@@ -22,8 +22,10 @@ $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
 $jxc 		= new TinyAjax();
 
+
 function jsaDenegarNivel($clave, $nivel){
 	$nivel	= setNoMenorQueCero($nivel);
+	$clave	= setNoMenorQueCero($clave);
 	$sql	= "SELECT * FROM `general_niveles` WHERE `tipo_sistema`=$nivel AND `estatus`=1 ";
 	$xQL	= new MQL();
 	$xT		= new cGeneral_niveles();
@@ -40,8 +42,15 @@ function jsaDenegarNivel($clave, $nivel){
 	}
 	return "Listo Nivel $nivel en la clave $clave";
 }
-
+function jsaDenegarTodos($clave){
+	$xPerm		= new cSystemPermissions();
+	$clave		= setNoMenorQueCero($clave);
+	$xQL		= new MQL();
+	$xQL->setRawQuery("UPDATE `sistema_permisos` SET `denegado`='" . $xPerm->DEF_PERMISOS . "' WHERE `idsistema_permisos`=$clave");
+	return "Todos..";
+}
 $jxc ->exportFunction('jsaDenegarNivel', array('idclave', 'idnegado'), "#idxaviso");
+$jxc ->exportFunction('jsaDenegarTodos', array('idclave'), "#idxaviso");
 $jxc ->process();
 $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
@@ -88,10 +97,10 @@ $xHG->addKey("idsistema_permisos");
 if($form == ""){
 	$xHG->col("nombre_objeto", "TR.SUJETO", "10%");
 }
-$xHG->col("descripcion", "TR.DESCRIPCION", "10%");
+$xHG->col("descripcion", "TR.DESCRIPCION", "20%");
 //$xHG->col("tipo_objeto", "TR.TIPO OBJETO", "10%");
 
-$xHG->col("denegado", "TR.DENEGADO", "10%");
+$xHG->col("denegado", "TR.DENEGADO", "15%");
 
 $rs	= $xQL->getDataRecord("SELECT `tipo_sistema` AS `clave`, MAX(`descripcion_del_nivel`) AS `tipo` FROM `general_niveles` WHERE `estatus`=1 GROUP BY `tipo_sistema` ");
 foreach ($rs as $rw){
@@ -102,9 +111,12 @@ foreach ($rs as $rw){
 		$xHG->OButton("$nn", "jsAddNegados('+ data.record.idsistema_permisos +',$idx)", "$idx.png");
 	}
 }
+$xHG->OButton("TR.TODOS", "jsAddNegadosTodos('+ data.record.idsistema_permisos +')", "done-all.png");
 //$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 $xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idsistema_permisos +')", "edit.png");
-$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_permisos +')", "delete.png");
+if(SAFE_ON_DEV == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idsistema_permisos +')", "delete.png");
+}
 
 
 
@@ -119,7 +131,8 @@ $xFRM->OHidden("idxaviso", "");
 echo $xFRM->get();
 ?>
 <script>
-var xG	= new Gen();
+var xG			= new Gen();
+
 function jsEdit(id){
 	xG.w({url:"../frmsecurity/sistema-permisos.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivpermisos});
 }
@@ -134,7 +147,13 @@ function jsAddNegados(id, idnivel){
 	//var idclave = $("#idclave").val();
 	$("#idclave").val(id);
 	$("#idnegado").val(idnivel);
+	//xG.confirmar({msg: "MSG_CONFIRMA_GUARDAR", callback : jsaDenegarNivel});
 	jsaDenegarNivel();
+}
+function jsAddNegadosTodos(id){
+	$("#idclave").val(id);
+	
+	xG.confirmar({msg: "MSG_CONFIRMA_GUARDAR", callback : jsaDenegarTodos});
 }
 function jsMsg(){
 	$("#idclave").val(0);

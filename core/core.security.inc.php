@@ -55,6 +55,7 @@ class cSystemUser{
 	private $mOptions			= "";
 	private $mOListaRules		= null;
 	private $PASS_LARGO_MIN		= 4;
+	private $mCoords			= "";
 	//private $mIDCacheReglaN		= "";
 	//private $mClaveUser			= "";//
 	/**
@@ -108,6 +109,13 @@ class cSystemUser{
 			return true;
 		}
 		return $res;
+	}
+	function OReglas(){
+		//if($this->mOListaRules == null){  }
+		return $this->mOListaRules;
+	}
+	function getPuede($regla){
+		return $this->getReglaDeUsuario($regla);
 	}
 	private function getReglaDeUsuario($regla = ""){
 		//$this->mOListaRules
@@ -344,7 +352,7 @@ class cSystemUser{
 		
 		$arr[$option]	= $value;
 		$str			= "";
-		setLog($arr);
+		//setLog($arr);
 		foreach ($arr as $idx => $vv){
 			//$str		.= ($str == "") ? "" : "";
 			$str		.= "$idx=$vv;";
@@ -645,6 +653,7 @@ class cSystemUser{
 		$xQL	= new MQL();
 		$xF		= new cFecha();
 		$xLog	= new cCoreLog();
+		$xLog->setCoords($this->mCoords);
 		
 		$xSVC->setKey($mKey);
 		$pwd	= $xSVC->getDecryptData($password);
@@ -878,12 +887,14 @@ class cSystemUser{
 		return $res;
 	}
 	function setCorreoElectronico($email = ""){
-		
 		if(filter_var($email, FILTER_VALIDATE_EMAIL)){
 			$xQL	= new MQL();
 			$xQL->setRawQuery("UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `uuid_mail`='$email' WHERE `idusuarios`=" . $this->mID);
 			$this->mCorreoElectronico = $email;
 		}
+	}
+	function setCoords($coords = ""){
+		$this->mCoords	= $coords;
 	}
 }
 class cSystemUserRulesList {
@@ -892,6 +903,7 @@ class cSystemUserRulesList {
 	public $PUEDE_ELIMINAR_RECS 	= "PUEDE_ELIMINAR_RECIBOS";
 	public $PUEDE_EDITAR_RECS 		= "PUEDE_EDITAR_RECIBOS";
 	public $PUEDE_CERRAR_CAJAS 		= "PUEDE_CERRAR_CAJAS";
+	public $PUEDE_ABONO_INV			= "PUEDE_ABONO_INVERSO";
 	
 	public $ACTIVE_PRINTER_POS 		= "IMPRESORA_POS_ACTIVA";
 	
@@ -903,6 +915,8 @@ class cSystemUserRulesList {
 		//$arr[$this->]		= $this-> ;
 		//$arr[$this->]		= $this-> ;
 		//$arr[$this->]		= $this-> ;
+		//$arr[$this->]		= $this-> ;
+		$arr[$this->PUEDE_ABONO_INV]			= $this->PUEDE_ABONO_INV;
 		$arr[$this->PUEDE_EDITAR_USUARIOS]		= $this->PUEDE_EDITAR_USUARIOS;
 		$arr[$this->PUEDE_AGREGAR_USUARIOS]		= $this->PUEDE_AGREGAR_USUARIOS;
 		$arr[$this->PUEDE_ELIMINAR_RECS]		= $this->PUEDE_ELIMINAR_RECS;

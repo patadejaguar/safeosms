@@ -50,7 +50,7 @@ if($credito > DEFAULT_CREDITO){
 } else { 
 
 $xHP->init();
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsformatos", "./");
 $xFRM->addCreditBasico();
 $xFRM->addSubmit();
 echo $xFRM->get();

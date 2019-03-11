@@ -1338,6 +1338,7 @@ class cNotificaciones {
 	private $mMailSrvTLS	= false;
 	private $mMailSrvPort	= "";
 	private $mMailSrvUsr	= "";
+	private $mMailSrvSender	= "";
 	private $mMailSrvPwd	= "";
 	private $mMailToName	= "SAFE-OSMS";
 	private $mIsSend		= false;
@@ -1354,12 +1355,13 @@ class cNotificaciones {
 		$this->mSMS_pwd		= SMS_PWD;
 		$this->mSMS_usr		= SMS_USR;
 		
-		$this->mMailSrv		= ADMIN_MAIL_SMTP_SERVER;
-		$this->mMailSrvTLS	= ADMIN_MAIL_SMTP_TLS;
-		$this->mMailSrvPort	= ADMIN_MAIL_SMTP_PORT;
-		$this->mMailSrvUsr	= ADMIN_MAIL;
-		$this->mMailSrvPwd	= ADMIN_MAIL_PWD;
-		$this->mTitleFrom	= EACP_NAME . "";
+		$this->mMailSrv			= ADMIN_MAIL_SMTP_SERVER;
+		$this->mMailSrvTLS		= ADMIN_MAIL_SMTP_TLS;
+		$this->mMailSrvPort		= ADMIN_MAIL_SMTP_PORT;
+		$this->mMailSrvSender	= ADMIN_MAIL;
+		$this->mMailSrvUsr		= ADMIN_MAIL_SMTP_USR;
+		$this->mMailSrvPwd		= ADMIN_MAIL_PWD;
+		$this->mTitleFrom		= EACP_NAME . "";
 		
 		
 		
@@ -1535,7 +1537,7 @@ class cNotificaciones {
 			//Password to use for SMTP authentication
 			$mail->Password   		= $this->mMailSrvPwd;
 			//Set who the message is to be sent from
-			$mail->SetFrom($this->mMailSrvUsr, $this->mTitleFrom);
+			$mail->SetFrom($this->mMailSrvSender, $this->mTitleFrom);
 			//Set an alternative reply-to address
 			//$mail->AddReplyTo('replyto@example.com','First Last');
 			//Set who the message is to be sent to

@@ -118,7 +118,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcargarbatchdoctos", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();

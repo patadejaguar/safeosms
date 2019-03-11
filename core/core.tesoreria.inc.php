@@ -738,6 +738,11 @@ class cCuentaBancaria{
 	private $mOBanco		= null;
 	private	$mObj			= null;
 	private	$mConsecutivo	= 0;
+	
+	private $mIDCache		= "";
+	private $mTabla			= "bancos_cuentas";
+	private $mTipo			= 0;
+	
 	public	$DEPOSITO		= "deposito";
 	public $CHEQUE			= "cheque";
 	
@@ -873,29 +878,34 @@ class cCuentaBancaria{
 		$xQL->setRawQuery($sqlD);
 	}
 	function init($arr = false){
-		
+		$xT						= new cBancos_cuentas();
+		$inCache				= true;
 		if(is_array($arr)){
-			$D					= $arr;
+			$Data				= $arr;
 		} else {
-			$ql					= new MQL();
-			$D					= $ql->getDataRow("SELECT * FROM `bancos_cuentas` WHERE `idbancos_cuentas` = " . $this->mCuenta . " LIMIT 0,1");
+			$xCache				= new cCache();
+			$Data				= $xCache->get($this->getIDCache());
+			if(is_array($arr)){
+				$inCache		= false;
+				$xQL			= new MQL();
+				$Data			= $xQL->getDataRow("SELECT * FROM `bancos_cuentas` WHERE `idbancos_cuentas` = " . $this->mCuenta . " LIMIT 0,1");
+			}
 		}
-		if(isset($D["idbancos_cuentas"])){
-			$xB						= new cBancos_cuentas();
-			$xB->setData($D);
-			$this->mClaveBanco		= $xB->entidad_bancaria()->v();
+		if( isset($Data[$xT->IDBANCOS_CUENTAS]) ){
+			$xT->setData($Data);
+			$this->mCuenta			= $Data[$xT->IDBANCOS_CUENTAS];//$xB->idbancos_cuentas()->v();
+			$this->mClaveBanco		= $Data[$xT->ENTIDAD_BANCARIA];//$xB->entidad_bancaria()->v();
+			$this->mCuentaContable	= $Data[$xT->CODIGO_CONTABLE];//$xB->codigo_contable()->v(OUT_TXT);
+			$this->mConsecutivo		= setNoMenorQueCero($Data[$xT->CONSECUTIVO_ACTUAL]);
+			
+			$this->mObj				= $xT;
 			//Clave de Pais del banco
-			$xBE					= new cBancos_entidades();
-			$xBE->setData( $xBE->query()->initByID($this->mClaveBanco) );
-			$this->mNombreBanco		= $xBE->nombre_de_la_entidad()->v();
-			$this->mPaisDeOrigen	= $xBE->pais_de_origen()->v(OUT_TXT);
-			$this->mCuentaContable	= $xB->codigo_contable()->v(OUT_TXT);
-			$this->mConsecutivo		= setNoMenorQueCero($xB->consecutivo_actual()->v());
-			$this->mObj				= $xB;
-			$this->mOBanco			= $xBE;
-			$this->mCuenta			= $xB->idbancos_cuentas()->v();
+			$this->getOBanco();
+			if($inCache == false){
+				$this->setIDCache($this->mCuenta);
+				$xCache->set($this->getIDCache(), $Data);
+			}
 			$this->mInit			= true;
-			$xB	= null; $xBE = null;
 		}
 		return $this->mInit;
 	}
@@ -903,7 +913,17 @@ class cCuentaBancaria{
 	function getNumeroDeCuenta(){ return $this->mCuenta; }
 	function getPaisDeOrigen(){ return $this->mPaisDeOrigen; }
 	function getNombreDelBanco(){ return $this->mNombreBanco; }
-	
+	function getOBanco(){
+		if($this->mOBanco == null){
+			$this->mOBanco	= new cBancos($this->mClaveBanco);
+			if($this->mOBanco->init() == true){
+				$this->mNombreBanco		= $this->mOBanco->getNombre();
+				$this->mPaisDeOrigen	= $this->mOBanco->getClave();
+			}
+		}
+		
+		return $this->mOBanco;
+	}
 	function set($cuenta = false ){		if( setNoMenorQueCero($cuenta) > 0 ){ $this->mCuenta = $cuenta; $this->init(); }	}
 	function getUltimoCheque($CuentaBancaria = false){ $this->set($CuentaBancaria); return $this->mConsecutivo+1; 	}
 	function getDatosDeChequeInArray(){	}
@@ -948,6 +968,25 @@ class cCuentaBancaria{
 	}
 	function getCuentaContable(){ return $this->mCuentaContable; }
 	function getMessages($put = OUT_HTML){ $xH = new cHObject();	return $xH->Out($this->mMessages, $put); }
+	function setInActivo($inactivo = false){
+		$xQL	= new MQL();
+		if($inactivo == true){
+			$xQL->setRawQuery("UPDATE `bancos_cuentas` SET `estatus_actual`='baja' WHERE `idbancos_cuentas`=" . $this->mClaveBanco .  "");
+		} else {
+			$xQL->setRawQuery("UPDATE `bancos_cuentas` SET `estatus_actual`='activo' WHERE `idbancos_cuentas`=" . $this->mClaveBanco .  "");
+		}
+		$xQL	= null;
+		$this->setCuandoSeActualiza();
+	}
+	
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 }
 class cOperacionBancaria {
 	private $mCodigo			= null;
@@ -1355,6 +1394,7 @@ class cBancos {
 	private $mTiempo		= 0;
 	private $mTexto			= "";
 	private $mObservacion	= "";
+	private $mPaisOrigen	= "";
 	
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
@@ -1385,6 +1425,7 @@ class cBancos {
 			$this->mClave		= $data[$xT->IDBANCOS_ENTIDADES];
 			$this->mNombre		= $data[$xT->NOMBRE_DE_LA_ENTIDAD];
 			$this->mNombreCorto	= $data[$xT->NOMBRE_CORTO];
+			$this->mPaisOrigen	= $data[$xT->PAIS_DE_ORIGEN];
 			$this->mObj			= $xT;
 			$this->setIDCache($this->mClave);
 			
@@ -1406,5 +1447,6 @@ class cBancos {
 	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
+	function getPaisOrigen(){ return $this->mPaisOrigen; }  
 }
 ?>

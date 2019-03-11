@@ -33,7 +33,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./personas.consulta-peps.frm.php?action=". MQL_ADD);
+$xFRM		= new cHForm("frmconsultapeps", "./personas.consulta-peps.frm.php?action=". MQL_ADD);
 $xFRM->setTitle($xHP->getTitle());
 //$xSoc		= new cSocio($persona);
 //if( $xSoc->init()== true){

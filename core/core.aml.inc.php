@@ -1349,6 +1349,7 @@ class cAMLOperaciones{
 		$OMens				= $xAMLP->getOAcumuladoDeOperaciones($fecha, $fecha, $moneda, $tipo_de_pago);
 		$monto_original		= $OMens->getMonto() + $monto_operado;
 		$xLog->add("WARN\tOperaciones acumuladas por " . $OMens->getMonto() . " en la Moneda $moneda\r\n", $xLog->DEVELOPER);
+		
 		if($perfil === false){
 			$xLog->add("ERROR\tNo existe el perfil tipo de pago $tipo_de_pago en Moneda $moneda \r\n", $xLog->DEVELOPER);
 			//agregar perfil a cero

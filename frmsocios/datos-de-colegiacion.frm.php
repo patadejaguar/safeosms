@@ -47,7 +47,7 @@ $idmembresia		= parametro("idcolegiacion");
 
 $xHP->init();
 $xSel		= new cHSelect();
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmdatoscolegiacion", "./");
 $xFRM->setTitle($xHP->getTitle());
 if($persona <= DEFAULT_SOCIO){
 	$xFRM->addPersonaBasico();

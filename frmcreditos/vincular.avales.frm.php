@@ -54,7 +54,7 @@ if( setNoMenorQueCero($persona) <= DEFAULT_SOCIO ){
 }
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmvincularavales", "./");
 $xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText();
 
 $xFRM->addPersonaBasico();

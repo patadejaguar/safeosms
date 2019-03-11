@@ -28,7 +28,7 @@ $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = par
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $empresa	= parametro("empresa", 0, MQL_INT); $empresa = parametro("idempresa", $empresa, MQL_INT); $empresa	= parametro("iddependencia", $empresa, MQL_INT);
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmempresascaptacion", "./");
 $xCB		= new cHCobros();
 $xHSel		= new cHSelect();
 $xEmp		= new cEmpresas($empresa);

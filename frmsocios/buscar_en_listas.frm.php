@@ -178,7 +178,7 @@ $jxc ->process();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmbuscarenlistas", "./");
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->addCerrar();
 

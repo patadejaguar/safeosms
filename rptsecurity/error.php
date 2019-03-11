@@ -28,7 +28,7 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $error		= parametro("e", DEFAULT_CODIGO_DE_ERROR, MQL_INT);
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmerror", "./");
 $xBtn		= new cHButton();		
 $xTxt		= new cHText();
 $xDate		= new cHDate();

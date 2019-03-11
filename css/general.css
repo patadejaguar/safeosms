@@ -29,6 +29,8 @@
 {
 	padding: 0;
 	margin: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .tx4 { margin: 0; margin-left: 0px;}
 
@@ -56,7 +58,10 @@ input, select, textarea { border-radius: 5px 0 5px 0; }
 
 input:required:valid { background-color: #CAED9E; }
 .fieldform{
-	max-width:1108px; text-align: center;	margin: 0 auto;
+	max-width:1108px; /*text-align: center;*/	margin: 0 auto;
+}
+.fieldform h1, .fieldform h2, .fieldform h3, .fieldform h4, .fieldform h5, .fieldform label{
+	text-align: center;
 }
 input[type="text"], input[type="number"], input[type="email"], input[type="tel"] {
 	border: 1px solid #ccc;
@@ -207,7 +212,7 @@ caption, legend, .ui-tooltip h3, .ui-tooltip-title {
     text-align: center;
     border-radius: 4px;
 }
-label { font-family: monospace; font-weight: normal; }
+label { /*font-family: monospace;*/ font-weight: normal;text-overflow: clip; }
 devnull {
 	height: 0px;
 	visibility: hidden;
@@ -215,7 +220,7 @@ devnull {
 
 /* ------------------------------------------------------------------------------ */
 td {
-	color: #000000;
+	/*color: #000000;*/
 	font-size: .9em !important;
 	height: 2em;
 }
@@ -660,7 +665,7 @@ ol.rounded-list a:before{
 .coolCheck input[type=checkbox] {
 	display: none !important;
 }
-.medio { width:48%; display:inline-flex; }
+.medio { width:48%; display:inline-flex; vertical-align: top !important; }
 .medio label.button {width:100%}
 .tx1.medmed { width:48% !important; }
 
@@ -1104,14 +1109,14 @@ output{ width:18%;
 .formoid-default h3 .noticon:hover { background: #fff;color:#800080;}
 .ct-series-a .ct-barlabel,.ct-barlabel {	fill: rgba(0,0,0,.4);color: rgba(0,0,0,.4);font-size: .75rem; line-height: 1;}
 /*The Common CSS*/
-.switch {
+.switch, .chk label.switch {
 	position: relative;
 	display: block;
 	vertical-align: top;
-	width: 100px;
-	height: 30px;
-	padding: 3px;
-	margin: 0 10px 10px 0;
+	max-width: 6em;
+	height: 2.1em;
+	/*padding: 1px;*/
+	/*margin: 0 1px 1px 0;*/
 	background: linear-gradient(to bottom, #eeeeee, #FFFFFF 25px);
 	background-image: -webkit-linear-gradient(top, #eeeeee, #FFFFFF 25px);
 	border-radius: 18px;
@@ -1209,7 +1214,7 @@ output{ width:18%;
 
 .switch-yes-no {
 	padding: 0;
-	margin: 1px 0 0;
+	/*margin: 1px 0 0;*/
 	background: #FFF;
 	border-radius: 6px;
 	background-image: none;
@@ -1220,11 +1225,11 @@ output{ width:18%;
 }
 .switch-yes-no .switch-label:after, .switch-yes-no .switch-label:before {
 	width: 100%;
-	height: 80%;
-	top: 6px;
+	height: 90%;
+	top: 7px;
 	left: 0;
 	text-align: center;
-	padding-top: 14%;
+	padding-top: 18%;
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 0 3px rgba(0, 0, 0, 0.1);
 	border-radius: 6px;
 }
@@ -1358,8 +1363,11 @@ input[type=file]{
 }
 @media only screen
 and (max-width : 480px) {
+	.medio, .solo { width: 98%; display: inline-flex; }
+	
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
 	.tx4 { width: 98%; display: inline-block; }
+	
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 70%; width: 98%; display: block; }
 	fieldset, legend,
 	td, th{ overflow: hidden; }
@@ -1375,6 +1383,7 @@ and (max-width : 480px) {
 @media only screen
 and (min-width : 481px)
 and (max-width : 767px) {
+	.medio, .solo { width: 98%; display: inline-flex; }
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
 	.tx4 {	width: 48%;	display: inline-block; }
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 40%; width: 45%; max-width: 95%; }
@@ -1390,6 +1399,7 @@ and (max-width : 767px) {
 @media only screen
 and (min-width : 768px)
 and (max-width : 1024px) {
+	.medio { width: 64%; display: inline-flex; }
 	.formoid-default .element-text, .formoid-default .element-select, .formoid-default .element-input, .formoid-default .tx4,
 	.tx4 { width: 32%; display: inline-block; }
 	input[type=button], input[type=submit], .button, .boton, button { min-width: 24%; width: 24%;}
@@ -1556,4 +1566,16 @@ nav label.chk-lbl, nav div.coolCheck:after, nav div.coolCheck:before {
 	background-color: inherit;
 	color: rgb(255,255,255);
 	text-shadow: rgb(32, 32, 32) 0px -1px 3px;
+}
+.dash {
+	text-align: center;
+}
+table.chk {
+	border:1px solid #e7e7e7;
+	padding:0;
+}
+table .chk {
+	border:none;
+	padding:0;
+	height: auto;
 }

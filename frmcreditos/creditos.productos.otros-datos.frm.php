@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.OTROS PARAMETROS", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -40,14 +40,16 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 $observaciones= parametro("idobservaciones");
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredsprododatos", "./");
 $xSel		= new cHSelect();
 $xTabla		= new cCreditos_productos_otros_parametros();
+$xFRM->setTitle($xHP->getTitle());
 
 $id			= $xTabla->query()->getLastID();
 
 $xFRM->OHidden("idcreditos_productos_otros_parametros", $id, "TR.IDCREDITOS PRODUCTOS OTROS PARAMETROS");
-$xFRM->ODate("fecha_de_alta", false, "TR.FECHA_DE REGISTRO");
+$xFRM->OHidden("fecha_de_alta", $xF->getFechaISO());
+
 $xFRM->ODate("fecha_de_expiracion", $xF->getFechaMaximaOperativa(), "TR.FECHA_DE VENCIMIENTO");
 $xFRM->addHElem($xSel->getListaDeOtrosDatosEnProdDeCred("clave_del_parametro")->get(true));
 $xFRM->OText("valor_del_parametro", "", "TR.VALOR DEL PARAMETRO");

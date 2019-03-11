@@ -40,7 +40,7 @@ $observaciones= parametro("idobservaciones");
 $xHP->addChartSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmscorecard", "./");
 //$xFRM->addJsBasico();
 //================================= Cer30
 $CerRow		= $xQL->getDataRow("SELECT	SUM(`saldo`) AS `suma_cer`,	AVG(`dias_morosos`) AS `dias_en_mora`

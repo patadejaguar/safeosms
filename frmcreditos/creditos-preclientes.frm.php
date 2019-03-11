@@ -44,7 +44,7 @@ $forcesync		= parametro("sync", false, MQL_BOOL);
 $xHP->addJTableSupport();
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmcredspreclientes", "./");
 $xSel		= new cHSelect();
 
 

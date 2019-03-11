@@ -88,7 +88,7 @@ $jxc ->process();
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmopciones", "./");
 $xSel		= new cHSelect();
 $xChk		= new cHCheckBox();
 
@@ -441,18 +441,6 @@ if(MODULO_CONTABILIDAD_ACTIVADO == true){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 $xFRM->addHElem( $xHT->get() );
 
 $xFRM->OHidden("idclave", "");
@@ -484,6 +472,9 @@ if(MODULO_AML_ACTIVADO == true){
 
 if(CREDITO_CONTROLAR_POR_PERIODOS == false){
 	$xFRM->OButton("TR.CREDITOS_PERIODOS", "jsGoPeriodosDeCredito()", $xFRM->ic()->CREDITO, "cmdperiodoscreditos", "blue");
+}
+if(PERSONAS_CONTROLAR_POR_APORTS == true){
+	$xFRM->OButton("TR.PAGOS POR MEMBRESIA", "var xG=new Gen();xG.w({url:'/frmsocios/lista_pagos_por_membresia.frm.php', principal:true})", $xFRM->ic()->ESTADO_CTA, "cmdeditaports", "yellow");
 }
 $xFRM->OButton("TR.BIZRULES", "jsGoReglasDeNegocio()", $xFRM->ic()->EJECUTAR, "cmd_exec_rules", "yellow");
 echo $xFRM->get();

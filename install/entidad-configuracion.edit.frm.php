@@ -42,7 +42,7 @@ $observaciones	= parametro("idobservaciones");
 
 $xHP->init();
 
-$xFRM		= new cHForm("frm", "./");
+$xFRM		= new cHForm("frmentidadconfigedit", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
@@ -51,7 +51,7 @@ $xFRM->setTitle($xHP->getTitle());
 /* ===========		FORMULARIO EDICION 		============*/
 $xTabla		= new cEntidad_configuracion();
 $xTabla->setData( $xTabla->query()->initByID($clave));
-$xFRM	= new cHForm("frm", "entidad_configuracion.frm.php?action=$action");
+$xFRM	= new cHForm("frmentidadconfigedit", "entidad_configuracion.frm.php?action=$action");
 
 $xFRM->setTitle($xHP->getTitle());
 $xSel		= new cHSelect();

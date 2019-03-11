@@ -935,6 +935,7 @@ class cDocumentos {
 	private $mIdxFileL		= "ftp-list-files-";
 	private $mPrePath		= "";
 	private $mRutaLocal		= "";
+	private $mCompletePath	= "";
 	function __construct($nombre = ""){ $this->mNombreArchivo = $nombre; $this->getTipo();	}
 	function getTipo($documento = false){
 		$documento	= ($documento == false) ? $this->mNombreArchivo : $documento;
@@ -1247,7 +1248,8 @@ class cDocumentos {
 			//Limpiar Cache
 			$this->setCleanCache();
 		}
-		$this->mMessages			.= $xLog->getMessages();
+		$this->mCompletePath	= $completePath;
+		$this->mMessages		.= $xLog->getMessages();
 		//setError($this->mMessages);
 		return $sucess;
 	}
@@ -1255,7 +1257,7 @@ class cDocumentos {
 		$xFS	= new cFileSystem();
 		return $xFS->cleanNombreArchivo($f, $cleanExt);
 	}
-	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $fichero = "", $fecha = false, $Vencimiento = false){
+	function add($tipo, $pagina, $observaciones, $contrato = false, $persona = false, $fichero = "", $fecha = false, $Vencimiento = false, $latitud=0, $longitud=0){
 		$persona	= setNoMenorQueCero($persona);
 		$contrato	= setNoMenorQueCero($contrato);
 		$xF			= new cFecha();
@@ -1292,9 +1294,9 @@ class cDocumentos {
 		$sql 		= "INSERT INTO personas_documentacion(
 			clave_de_persona, tipo_de_documento, fecha_de_carga, observaciones, archivo_de_documento, valor_de_comprobacion, 
 			estado_en_sistema, fecha_de_verificacion, oficial_que_verifico, 
-			resultado_de_la_verificacion, notas, version_de_documento, numero_de_pagina, usuario, sucursal, entidad, documento_relacionado, vencimiento)
+			resultado_de_la_verificacion, notas, version_de_documento, numero_de_pagina, usuario, sucursal, entidad, documento_relacionado, vencimiento,`longitud`,`latitud`)
 		VALUES($persona, $tipo, $fecha, '$observaciones', '$fichero', '',
-		 1, 0, 0, 0, '', '', '$pagina', $user, '$suc', '$ent', $contrato, '$Vencimiento')";
+		 1, 0, 0, 0, '', '', '$pagina', $user, '$suc', '$ent', $contrato, '$Vencimiento', '$longitud', '$latitud')";
 		$xQL		= new MQL();
 			$rs		= $xQL->setRawQuery($sql);
 		if($rs === false){
@@ -1367,6 +1369,31 @@ class cDocumentos {
 		
 		return $prepath;
 	}
+	function getGps($exifCoord, $hemi) {
+		
+		$degrees = count($exifCoord) > 0 ? $this->gps2Num($exifCoord[0]) : 0;
+		$minutes = count($exifCoord) > 1 ? $this->gps2Num($exifCoord[1]) : 0;
+		$seconds = count($exifCoord) > 2 ? $this->gps2Num($exifCoord[2]) : 0;
+		
+		$flip = ($hemi == 'W' or $hemi == 'S') ? -1 : 1;
+		
+		return $flip * ($degrees + $minutes / 60 + $seconds / 3600);
+		
+	}
+	
+	function gps2Num($coordPart) {
+		
+		$parts = explode('/', $coordPart);
+		
+		if (count($parts) <= 0)
+			return 0;
+			
+			if (count($parts) == 1)
+				return $parts[0];
+				
+				return floatval($parts[0]) / floatval($parts[1]);
+	}
+	function getCompletePath(){ return $this->mCompletePath; }
 }
 
 
@@ -1910,6 +1937,9 @@ class cCouchDB {
 				$pagina					= $doc->pagina;
 				$observaciones			= $doc->observaciones;
 				$fecha					= $xF->getFechaByInt($time);
+				$exif 					= exif_read_data($xpath);
+				$lon 					= 0;
+				$lat					= 0;
 				//$documento['tmp_name']
 				
 				$xSoc	= new cSocio($persona);
@@ -1927,7 +1957,13 @@ class cCouchDB {
 					if($ready == true){
 						$ready			= $xDoc->FTPMove($nid, $persona);
 						if($ready == true){
-							$ready		= $xDoc->add($tipo, $pagina, $observaciones, $docto, $persona, $nid, $fecha, false);
+							if(is_array($exif)){
+								if(isset($exif["GPSLongitude"])){
+									$lon 		= $xDoc->getGps($exif["GPSLongitude"], $exif['GPSLongitudeRef']);
+									$lat		= $xDoc->getGps($exif["GPSLatitude"], $exif['GPSLatitudeRef']);
+								}
+							}
+							$ready		= $xDoc->add($tipo, $pagina, $observaciones, $docto, $persona, $nid, $fecha, false, $lat, $lon);
 							//Actualizar ID
 							//$this->delDoc($id);
 							//Actualizar ID de Entidad Registro
@@ -2056,6 +2092,8 @@ class cCouchDB {
 		//setLog("curl -H 'Accept: application/json' -H '$cnt' -X PUT '$server" . $db . "/_design/$nombre' -d '$contenido'");
 		$xSys->runcmd("curl -H 'Accept: application/json' -H '$cnt' -X PUT $server" . $db . "/_design/$nombre -d '$contenido'");
 	}
+
+	
 } 
 
 //================================================================ JSON

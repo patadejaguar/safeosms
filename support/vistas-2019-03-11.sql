@@ -330,7 +330,8 @@ CONCAT(`creditos_solicitud`.`numero_solicitud`,'-',
          `creditos_estatus`.`descripcion_estatus`,'-',
          IF(`creditos_solicitud`.`saldo_actual`>0,`creditos_solicitud`.`saldo_actual`, '')) AS `descripcion`,
 
-IF((`creditos_solicitud`.`monto_autorizado`>0 AND `creditos_solicitud`.`estatus_actual`!=99 AND `creditos_solicitud`.`estatus_actual`!=98 AND `creditos_solicitud`.`estatus_actual`!=50),1,0) 		AS `estatusactivo`
+IF((`creditos_solicitud`.`monto_autorizado`>0 AND `creditos_solicitud`.`estatus_actual`!=99 AND `creditos_solicitud`.`estatus_actual`!=98 AND `creditos_solicitud`.`estatus_actual`!=50),1,0) 		AS `estatusactivo`,
+`creditos_solicitud`.`monto_parcialidad`							AS `parcialidad`
 
 FROM     `creditos_solicitud` 
 INNER JOIN `creditos_modalidades`  ON `creditos_solicitud`.`tipo_credito` = `creditos_modalidades`.`idcreditos_modalidades` 
@@ -1021,6 +1022,7 @@ SUM((`operaciones_mvtos`.`afectacion_real` * `eacp_config_bases_de_integracion_m
 SUM(IF((`operaciones_mvtos`.`tipo_operacion` < 410 OR `operaciones_mvtos`.`tipo_operacion` > 413),0, `operaciones_mvtos`.`afectacion_real`)) AS `total_sin_otros`,
 
 MAX(IF((`operaciones_mvtos`.`tipo_operacion` < 410 OR `operaciones_mvtos`.`tipo_operacion` > 413),`operaciones_mvtos`.`tipo_operacion`,0)) AS `clave_otros`
+
 
 FROM
 	`operaciones_mvtos` `operaciones_mvtos` 

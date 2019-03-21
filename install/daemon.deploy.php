@@ -25,9 +25,6 @@ if(isset($_REQUEST["key"])){
 	curl_setopt($ch, CURLOPT_FILE, $fp);
 	curl_setopt($ch, CURLOPT_USERAGENT,'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0');
 	
-	$out	= $mpath . "/core/core.config.os." . $OS . ".inc.php";
-	$fp 	= fopen ($out, 'w+');
-	
 	//curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	//curl_setopt($ch, CURLOPT_USERPWD, "user:pass");
 	

@@ -57,6 +57,8 @@ $xHP->init();
 $xFRM		= new cHForm("frmvincularavales", "./");
 $xHSel		= new cHSelect(); $xChk	= new cHCheckBox(); $xText	= new cHText();
 
+$xFRM->setTitle($xHP->getTitle());
+
 $xFRM->addPersonaBasico();
 $xFRM->addGuardar("jsVincularAval()");
 

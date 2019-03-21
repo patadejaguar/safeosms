@@ -12,8 +12,8 @@ if(isset($safe_sesion_en_segundos)){
 
 @session_start();
 //======================================= INFORMACION DEL PROGRAMA
-$codename 								= "DevLeo"; //Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
-$version 								= "201901";
+$codename 								= "RaphRich"; //DevLeo Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
+$version 								= "201903";
 $revision 								= "01";
 
 define("SAFE_VERSION",                  $version);
@@ -226,8 +226,9 @@ define("AML_RMS_DB_PWD",				$xC->get("password_db_del_rms", "simplerisk", MMOD_A
 define("AML_RMS_DB_SRV",				$xC->get("servidor_db_del_rms", "localhost", MMOD_AML) );
 define("AML_RMS_URL",					$xC->get("url_servidor_rms", "http://localhost/tools/simplerisk/", MMOD_AML) );
 
-define("AML_PERSONA_DIAS_VENCPF",		$xC->get("aml_dias_vence_perfil_transaccional", "180", MMOD_AML) );
+//======================================= SETENV
 
+define("AML_PERSONA_DIAS_VENCPF",		$xC->get("aml_dias_vence_perfil_transaccional", "180", MMOD_AML) );
 define("AML_MIGRACION_SRV",				$xC->get("aml_migracion_server", "localhost", MMOD_AML) );
 define("AML_MIGRACION_DB",				$xC->get("aml_migracion_database", "gpd1601_preprod", MMOD_AML) );
 define("AML_MIGRACION_USR",				$xC->get("aml_migracion_user", "", MMOD_AML) );
@@ -1647,6 +1648,36 @@ class cCache {
 		return $this->mErrors;
 	}
 }
+function url_exists($url) {
+	$url	= $url . "/inicio.php";
+	
+	//check if URL is valid
+	if(!filter_var($url, FILTER_VALIDATE_URL)){
+		return false;
+	}
+	
+	$agent = "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)";
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch,CURLOPT_VERBOSE, FALSE);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+	
+	curl_setopt($ch,CURLOPT_SSL_VERIFYPEER, FALSE);
+	//curl_setopt($ch,CURLOPT_SSLVERSION, 3);
+	curl_setopt($ch,CURLOPT_SSL_VERIFYHOST, FALSE);
+	//curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, 'SSLv3');
+	
+	$page=curl_exec($ch);
+	//echo curl_error($ch);
+	$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+	if ($httpcode >= 200 && $httpcode < 300)
+		return true;
+		else
+			return false;
+}
 
 function get_real_ip()
 {
@@ -1675,5 +1706,16 @@ function get_real_ip()
 	{
 		return $_SERVER["REMOTE_ADDR"];
 	}
+}
+function getSafeHost(){
+	$host		= SAFE_HOST_URL;
+	if(url_exists($host) == false){
+		$subh		= (strpos($host, "https") === false) ? substr($host, 0, 7) : substr($host, 0, 8);
+		$host		= $subh . $_SERVER["SERVER_ADDR"] . "/";
+		if(url_exists($host) == false){
+			$host	= $subh . "127.0.0.1/";
+		}
+	}
+	return $host;
 }
 ?>

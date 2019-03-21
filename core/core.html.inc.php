@@ -8415,12 +8415,13 @@ class cFormato {
 		$monto_garantia_liquida				= $monto_ministrado * $tasa_garantia_liquida;
 		$tasa_interes_mensual_moratorio		= round( (($cCred->getTasaDeMora() / 12) * 100), 2);
 		$dias_del_credito					= $cCred->getDiasAutorizados();
-		$meses_del_credito					= ($cCred->getPeriocidadDePago() >= CREDITO_TIPO_PERIOCIDAD_MENSUAL) ?   round(($dias_del_credito / 30.416666666666666666666),0) :  round(($dias_del_credito / 30.416666666666666666666),1);
+		$meses_del_credito					= $cCred->getPlazoEnMeses();
 		
 		$periocidad							= $cCred->getPeriocidadDePago();
+		$xModCred							= new cCreditosTipos($cCred->getTipoLegalEstandar()); $xModCred->init();
 		//Tipo de Credito por SQL
-		$SQLTCred 							= "SELECT * FROM creditos_modalidades WHERE idcreditos_modalidades=" . $DCred["tipo_credito"];
-		$tipo_de_credito 					= mifila($SQLTCred, "descripcion_modalidades");
+		$tipo_de_credito 					= $xModCred->getNombre();
+		
 		$OProducto							= $cCred->getOProductoDeCredito();
 
 		$nombre_rep_social					= "";

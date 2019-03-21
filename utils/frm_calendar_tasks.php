@@ -13,7 +13,6 @@
 	$iduser = $_SESSION["log_id"];
 //=====================================================================================================
 $xHP				= new cHPage("TR.Calendario de Tareas", HP_FORM);
-$oficial 			= elusuario($iduser);
 $jxc 				= new TinyAjax();
 $xF					= new cFecha();
 $xBtn				= new cHButton("");
@@ -127,7 +126,7 @@ function jsaGetLetrasAVencer($fecha, $producto){
 function jsaGetLetrasVencidas($fecha, $producto){
 	$xD		= new cFecha();
 	$xL		= new cSQLListas();
-	$xVis	= new cSQLVistas();
+	//$xVis	= new cSQLVistas();
 	$xFil	= new cSQLFiltros();
 	
 	$fecha 	= $xD->getFechaISO($fecha);
@@ -295,78 +294,14 @@ function jsaListaPeriodosDeEmpresaEmitidos($fecha){
 }
 
 function jsaSetToLocalHost($fecha, $version){
-	$xQL		= new MQL();
-	$xCache		= new cCache();
-	$version	= setNoMenorQueCero($version);
 	$xSys		= new cSystemPatch();
-	if($version>0){
-		$xSys->setForceVersion($version);
-	}
 	
-	// Get HTTP/HTTPS (the possible values for this vary from server to server)
-	$lurl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && !in_array(strtolower($_SERVER['HTTPS']),array('off','no'))) ? 'https' : 'http';
-	// Get domain portion
-	$lurl .= '://'.$_SERVER['HTTP_HOST'] . "/";
-	// Get path to script
-	//$myUrl .= $_SERVER['REQUEST_URI'];
-	$mailpass		= "Pruebas2019";
-	$mailid			= "pruebas@opencorebanking.com";
-	
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
-	$xQL->setRawQuery("UPDATE `sistema_programacion_de_avisos` SET `destinatarios` = 'CORREO:$mailid|'");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '127.0.0.1' WHERE `nombre_del_parametro` = 'url_del_servidor_ftp'");
-	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '1901850'");
-	$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '10000'");
-	
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_administrador' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_archivo' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_la_entidad' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_mercadeo' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_nominas' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'facturacion.email_de_almacenamiento' ");
-	
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailpass' WHERE `nombre_del_parametro` = 'password_del_email_del_administrador'");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'mail.opencorebanking.com' WHERE `nombre_del_parametro` = 'servidor_smtp_para_notificaciones'");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'system_pay_email_register' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '587' WHERE `nombre_del_parametro` = 'puerto_smtp_para_notificaciones' ");
-	//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
-	//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
-	
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'");
-	$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'http://pruebas:pruebas@localhost:5984/' WHERE `nombre_del_parametro` = 'svc_url_couchdb'");
-	
-	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`");
-	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`");
-	$xQL->setRawQuery("CALL `proc_creditos_letras_pendientes`");
-	$xQL->setRawQuery("CALL `proc_historial_de_pagos`");
-	$xQL->setRawQuery("CALL `proc_listado_de_ingresos`");
-	$xQL->setRawQuery("CALL `proc_perfil_egresos_por_persona`");
-	$xQL->setRawQuery("CALL `proc_personas_operaciones_recursivas`");
-	$xQL->setRawQuery("CALL `sp_clonar_actividades`");
-	$xQL->setRawQuery("CALL `proc_colonias_activas`");
-	$xQL->setRawQuery("CALL `sp_correcciones`");
-	//$xQL->setRawQuery("");
-	
-	
-	$xCache->clean(false);
-	
-
-	
-	$xSys->patch(true, false);
-	$xCache->clean();
-	
-	if(SAFE_ON_DEV == true){
-		$xQL->setRawQuery("DELETE FROM general_log");
-	}
-	return $xSys->getMessages(OUT_HTML);
+	return $xSys->setActualizarToLocalhost($fecha, $version);
 }
 function jsaSetActualizarSys($version){
 	$version	= setNoMenorQueCero($version);
 	
-	$xQL		= new MQL();
+	//$xQL		= new MQL();
 	$xCache		= new cCache();
 	$xSys		= new cSystemPatch();
 	$xTask		= new cSystemTask();

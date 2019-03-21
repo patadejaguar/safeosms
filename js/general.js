@@ -139,7 +139,9 @@ Gen.prototype.EscKey		= function(){
 Gen.prototype.winOrigen		= function(){
 	dsrc	= null;
 	if (window.parent){ dsrc = window.parent.document; }
-	if (opener){ dsrc = opener.document; }
+	if (opener){
+		dsrc 	= opener.document;
+	}
 	return dsrc;
 }
 Gen.prototype.isTextKey	= function(opts){

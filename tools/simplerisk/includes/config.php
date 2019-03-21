@@ -13,7 +13,8 @@ define('DB_PORT', '3306');
 define('DB_USERNAME', 'simplerisk');
 
 // MySQL Database Password
-define('DB_PASSWORD', 'Simpleriskgrupopadio_123');
+define('DB_PASSWORD', 'simplerisk');
+
 
 // MySQL Database Name
 define('DB_DATABASE', 'simplerisk');

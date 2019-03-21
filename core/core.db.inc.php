@@ -1684,7 +1684,8 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		SUM(`capital`+`interes`+`iva`+`ahorro`+`otros`+`mora`+`iva_moratorio`) AS `total`,
 		`creditos_causa_de_vencimientos`.`descripcion_de_la_causa` AS `causamora`,
 		getLastActByIDCred(`letras`.`credito`) AS `seguimiento`,
-		`personas`.`telefono`, `personas`.`correo_electronico`
+		`personas`.`telefono`, `personas`.`correo_electronico`,
+		getDatosDeAvales(`letras`.`credito`) AS `avales` 
 		
 FROM     `letras` 
 INNER JOIN `creditos_solicitud`  ON `letras`.`credito` = `creditos_solicitud`.`numero_solicitud` 
@@ -5789,6 +5790,8 @@ class cSystemPatch {
 		$xCache->clean(false);
 		
 		$ql			= new MQL();
+		$ql->setDebug(false);
+		
 		$xConf		= new cConfiguration();
 		$localver	= $xConf->get("safe_osms_database_version");
 		if($this->mForcedVersion > 0){
@@ -5952,8 +5955,8 @@ class cSystemPatch {
 		CURLOPT_BINARYTRANSFER => 1,
 		CURLOPT_RETURNTRANSFER => 1,
 		CURLOPT_FILE           => $fp,
-		CURLOPT_TIMEOUT        => 50,
-		CURLOPT_USERAGENT      => 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)'
+		CURLOPT_TIMEOUT        => 60,
+		CURLOPT_USERAGENT      => 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0'
 				));
 		
 		$results = curl_exec($ch);
@@ -5982,6 +5985,75 @@ class cSystemPatch {
 		return $res;
 	}
 	function getMessages($put = OUT_TXT){ $xH	 = new cHObject(); return $xH->Out($this->mMessages, $put);	}
+	function setActualizarToLocalhost($fecha, $version=0){
+		$xQL		= new MQL();
+		$xCache		= new cCache();
+		$version	= setNoMenorQueCero($version);
+
+		if($version>0){
+			$this->setForceVersion($version);
+		}
+		
+		// Get HTTP/HTTPS (the possible values for this vary from server to server)
+		$lurl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && !in_array(strtolower($_SERVER['HTTPS']),array('off','no'))) ? 'https' : 'http';
+		// Get domain portion
+		$lurl .= '://'.$_SERVER['HTTP_HOST'] . "/";
+		// Get path to script
+		//$myUrl .= $_SERVER['REQUEST_URI'];
+		$mailpass		= "Pruebas2019";
+		$mailid			= "pruebas@opencorebanking.com";
+		
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$lurl' WHERE `nombre_del_parametro` = 'url_de_actualizaciones_automaticas'");
+		$xQL->setRawQuery("UPDATE `sistema_programacion_de_avisos` SET `destinatarios` = 'CORREO:$mailid|'");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '127.0.0.1' WHERE `nombre_del_parametro` = 'url_del_servidor_ftp'");
+		$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '1901850'");
+		$xQL->setRawQuery("UPDATE `socios_general` SET `correo_electronico` = '$mailid' WHERE `codigo` = '10000'");
+		
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_administrador' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_del_archivo' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_la_entidad' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_mercadeo' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'email_de_nominas' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'facturacion.email_de_almacenamiento' ");
+		
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailpass' WHERE `nombre_del_parametro` = 'password_del_email_del_administrador'");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'mail.opencorebanking.com' WHERE `nombre_del_parametro` = 'servidor_smtp_para_notificaciones'");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '$mailid' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'system_pay_email_register' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = 'smtp_seguro_para_notificaciones' ");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '587' WHERE `nombre_del_parametro` = 'puerto_smtp_para_notificaciones' ");
+		//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
+		//$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = '' WHERE `nombre_del_parametro` = '' ");
+		
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'nombre_de_usuario_ftp'");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'documentos' WHERE `nombre_del_parametro` = 'password_de_usuario_ftp'");
+		$xQL->setRawQuery("UPDATE `entidad_configuracion` SET `valor_del_parametro` = 'http://pruebas:pruebas@localhost:5984/' WHERE `nombre_del_parametro` = 'svc_url_couchdb'");
+		
+		$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`");
+		$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`");
+		$xQL->setRawQuery("CALL `proc_creditos_letras_pendientes`");
+		$xQL->setRawQuery("CALL `proc_historial_de_pagos`");
+		$xQL->setRawQuery("CALL `proc_listado_de_ingresos`");
+		$xQL->setRawQuery("CALL `proc_perfil_egresos_por_persona`");
+		$xQL->setRawQuery("CALL `proc_personas_operaciones_recursivas`");
+		$xQL->setRawQuery("CALL `sp_clonar_actividades`");
+		$xQL->setRawQuery("CALL `proc_colonias_activas`");
+		$xQL->setRawQuery("CALL `sp_correcciones`");
+		//$xQL->setRawQuery("");
+		
+		
+		$xCache->clean(false);
+		
+		
+		
+		$this->patch(true, false);
+		$xCache->clean();
+		
+		if(SAFE_ON_DEV == true){
+			$xQL->setRawQuery("DELETE FROM general_log");
+		}
+		return $this->getMessages(OUT_HTML);
+	}
 }
 
 
@@ -6135,7 +6207,7 @@ class MQL {
 	private $mConTitulos= false;
 	private $mTitulos	= array(); 
 	private $mUseCache	= false;
-
+	private $mErrorReporURL = "https://env-1468750.cloudjiffy.net/message?token=AgcC86tq6jBMEHv";
 
 	private $mEquivalencias	= array(
 			"INT" 		=> "int",
@@ -6507,12 +6579,40 @@ class MQL {
 	function getDebug(){
 		if($this->mDebug == true){
 			//if(function_exists("setLog")){ setLog($this->mMessages); }
-			error_log($this->mMessages, E_WARNING);
+			if(function_exists("curl_init")){
+				$title = urlencode( SAFE_FIRM . "-" . CURRENT_EACP . "-" . getSafeHost() . "-" . get_real_ip());
+				$serverInfo = "Host: " . getSafeHost() . "\r\n";
+				$serverInfo .= "Client: " . get_real_ip() . "\r\n";
+				$serverInfo .= "Database: " . MY_DB_IN . "\r\n";
+				$serverInfo .= "User: " . USR_DB. "\r\n";
+				$serverInfo .= "Sucursal: " . DEFAULT_SUCURSAL . "\r\n";
+				
+			//set_time_limit(0);// to infinity for example
+				$ch 			= curl_init();
+				curl_setopt($ch, CURLOPT_URL,$this->mErrorReporURL);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
+				curl_setopt($ch, CURLOPT_TIMEOUT,100);
+				curl_setopt($ch, CURLOPT_POST,1);
+				//"title=my title" -F "message=my message" -F "priority=5"
+				curl_setopt($ch, CURLOPT_POSTFIELDS, "title=$title&message=" . urlencode($serverInfo) . urlencode($this->mMessages) . "&priority=5");
+				$rs 			= curl_exec($ch);
+				unset($rs);
+				curl_close ($ch);
+			} else {
+				if(function_exists("error_log")){
+					error_log($this->mMessages, E_WARNING);
+				}
+			}
+			
+			
 			$this->mMessages = "";
 		}
 	}
 	function getLastInsertID(){ return $this->mInsertID; }
 	function onDebug(){ return $this->mDebug; }
+	function setDebug($xdebug){ $this->mDebug = $xdebug; }
 	function setUseCache(){ $this->mUseCache = true; }
 	function getContarDe($tabla, $w = ""){
 		$items		= 0;

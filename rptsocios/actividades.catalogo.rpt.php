@@ -50,10 +50,14 @@ $senders		= getEmails($_REQUEST);
 
 $sql			= "SELECT
 	`personas_actividad_economica_tipos`.`clave_interna`,
-	`personas_actividad_economica_tipos`.`clave_de_actividad`,
+	`personas_actividad_economica_tipos`.`clave_de_actividad` AS `clave_uif`,
+	`personas_actividad_economica_tipos`.`scian` AS `clave_scian`,
 	`personas_actividad_economica_tipos`.`nombre_de_la_actividad`,
+	
+
 	`personas_actividad_economica_tipos`.`clasificacion`,
-	`aml_risk_levels`.`nombre_del_nivel` AS `riesgo` 
+	`aml_risk_levels`.`nombre_del_nivel` AS `riesgo`,
+	getBooleanMX(`personas_actividad_economica_tipos`.`califica_para_pep`) AS `genera_pep`
 FROM
 	`aml_risk_levels` `aml_risk_levels` 
 		INNER JOIN `personas_actividad_economica_tipos` 
@@ -69,6 +73,9 @@ $xRPT			= new cReportes($titulo);
 $xRPT->setFile($archivo);
 $xRPT->setOut($out);
 $xRPT->setSQL($sql);
+
+$xRPT->setOmitir("clasificacion");
+
 $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
 $xT		= new cTabla($sql, 2);

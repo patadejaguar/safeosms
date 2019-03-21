@@ -64,7 +64,13 @@ if($EsCerrado == true AND $forzar == false){
 	$xQL		= new MQL();
 	$xRec		= new cReciboDeOperacion(12);
 	$xRuls		= new cReglaDeNegocio();
+	$xCUtils	= new cUtileriasParaCreditos();
+	$xPers		= new cPeriodoDeCredito();
+	$xF2		= new cFecha();
+	//$xPersUtils	= new cPersonasUtilerias();
+	
 	$PurgarSDPM	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAG_PURGE_DSPM);
+	
 	
 	
 	$xRec->setGenerarPoliza();
@@ -105,7 +111,7 @@ if($EsCerrado == true AND $forzar == false){
 		$xQL->setRawQuery("CALL `proc_purge_sdpm` ");
 	}
 	
-	$xCUtils		= new cUtileriasParaCreditos();
+	
 	
 	$messages		.=  $xCUtils->setCreditosCuadrarPlanes();
 	
@@ -141,10 +147,10 @@ if($EsCerrado == true AND $forzar == false){
 	//Cierre Anual
 	if($xF->getInt($fechaop) == $xF->getInt($xF->getFechaFinAnnio() )){
 		//Agregar Periodo general Anual
-		$xF2			= new cFecha();
+		
 		$ejercicio		= $xF->anno() + 1;
 		$xF2->set("$ejercicio-06-01" );
-		$xPers			= new cPeriodoDeCredito();
+		
 		$xPers->add("$ejercicio-01-01", $xF2->getFechaFinAnnio());
 		$messages		.= $xPers->getMessages();
 	}	

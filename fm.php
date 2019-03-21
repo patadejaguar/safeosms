@@ -7,17 +7,21 @@ Copyright John Campbell (jcampbell1)
 Liscense: MIT
 ********************************/
 //Luis Balam
-if(!defined('MODO_DEBUG')){
-	// Something
-	echo '<html><body>DISABLED</body></html>';
-	exit;
-} else {
-	if(MODO_DEBUG == false){
-		echo '<html><body>NO MODE_DEBUG</body></html>';
+$mpath	= realpath(dirname("../"));
+if ( !file_exists($mpath . "/core/core.config.os." . strtolower(substr(PHP_OS, 0, 3)) .  ".inc.php") ){
+	 
+} else { 
+	if(!defined('MODO_DEBUG')){
+		// Something
+		echo '<html><body>DISABLED</body></html>';
 		exit;
+	} else {
+		if(MODO_DEBUG == false){
+			echo '<html><body>NO MODE_DEBUG</body></html>';
+			exit;
+		}
 	}
 }
-
 //Disable error report for undefined superglobals
 error_reporting( error_reporting() & ~E_NOTICE );
 

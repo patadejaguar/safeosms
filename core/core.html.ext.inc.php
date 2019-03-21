@@ -1083,6 +1083,9 @@ class cReportes {
 	private $mArrColtitles	= array();
 	private $mTotalRegs		= 0;
 	
+	private $mSubSQLs		= array();
+	private $mSubsEnable	= false;
+	private $mMicroformato	= "";
 	
 	function __construct($titulo = ""){
 		$xL				= new cLang();
@@ -1540,6 +1543,35 @@ class cReportes {
 				$txtFin			= ($txtFin == "") ? "" : "</tr><tr>$txtFin";
 			}
 			$body .= "<tr>$txtInit$txt$txtFin</tr>";
+			/*if($this->mSubsEnable == true){
+				foreach ($this->mSubSQLs as $sidx => $ssqls){
+					$xQL->setConTitulos();
+					$txtsq		= "";
+					$subquery	= $xQL->getDataRecord($ssqls);
+					$STit		= $xQL->getTitulos();
+					foreach($subquery as $srw){
+						$subkey			= $srw[$sidx];
+						$sshtml			= $this->mMicroformato;
+						foreach ($STit as $sskey => $ssprops){
+							//[^)]+
+							$txtsq		.= trim(preg_replace("/\{\{$sskey\}\}/",$srw[$sskey],$sshtml));
+						}
+						//setLog("$subkey $sshtml");
+						//$subHTML[$subkey]	= (isset($subHTML[$subkey])) ? $subHTML[$subkey] . $sshtml : $sshtml;
+						//setLog($subHTML[$subkey]);
+						
+					}
+					if($txtsq !== ""){
+						if(strpos($txtsq, "<tr>") === false){
+							$txtsq	= "<tr>$txtsq</tr>";
+						}
+						$body		.= $txtsq;
+					}
+					$txtsq			= "";
+					$subquery		= null;
+					
+				}
+			}*/
 			$idx++;
 		}
 		$mLstF	= ($mLstF == "") ? "" : "<tr>$mLstF</tr>";
@@ -1561,6 +1593,11 @@ class cReportes {
 	function setSumarRegistros($recs){
 		$recs	= setNoMenorQueCero($recs);
 		$this->mTotalRegs	+= $recs;
+	}
+	function addSubQuery($sql, $field = 0, $mcroformato =""){
+		$this->mSubSQLs[$field] = $sql;
+		$this->mSubsEnable		= true;
+		$this->mMicroformato	= $mcroformato;
 	}
 }
 

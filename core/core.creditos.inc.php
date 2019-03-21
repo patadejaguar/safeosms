@@ -201,6 +201,7 @@ class cCredito {
 	private $mMontoSeguroCred		= 0;
 	private $mMontoSeguroVid		= 0;
 	private $mMontoSeguroDes		= 0;
+	private $mTipoEstandar			= 0;
 	                                   // protected $mOtrosParams = array();
 	                                   // protected $mSaldoAtrasado = 0;
 	function __construct($numero_de_credito = false, $numero_de_socio = false) {
@@ -340,6 +341,7 @@ class cCredito {
 			$this->mMontoBonificado				= $DCredito["bonificaciones"];
 			$this->mRazonAutorizacion			= $DCredito[$xT->DOCTO_AUTORIZACION];
 			$this->mDescribeDestino				= $DCredito[$xT->DESCRIPCION_APLICACION];
+			$this->mTipoEstandar				= $DCredito[$xT->TIPO_CREDITO];//Tipo de Credito Legal
 		
 			$xMontos							= new cCreditosMontos($this->mNumeroCredito);
 			if($xMontos->init() == true){
@@ -1557,19 +1559,19 @@ class cCredito {
 		}
 		$tdSaldo = "<th class='izq'>" . $xL->getT ( "TR.Saldo Principal" ) . "</th><td class='mny'>$saldo</td>";
 		$tdMonto = "<th class='izq'>" . $xL->getT ( "TR.Monto Original" ) . "</th><td class='mny'>$montoautorizado</td>";
-		$tdFecha = "<th class='izq'>" . $xL->getT ( "TR.fecha de desembolso" ) . "</th><td>" . $xD->getFechaCorta ( $fministracion ) . "</td>";
+		$tdFecha = "<th class='izq'>" . $xL->getT ( "TR.CREDFECHADESEMB" ) . " / " . $xL->getT ( "TR.CREDFECHAVENCCONT" ) . "</th><td>" . $xD->getFechaCorta ( $fministracion ) .  " - " . $xD->getFechaCorta ( $this->getFechaDeVencimiento() )  . "</td>";
 		$tdPagos = ($this->getPeriocidadDePago () != CREDITO_TIPO_PERIOCIDAD_FINAL_DE_PLAZO) ? "<td class='mny'>$ultimopago de $pagos POR " . OPERACION_MONEDA_SIMBOLO . " $montoParc</td>" : "<td class='izq'>UNICO</td>";
 		$tdVencimiento = "";
 		// Si el Estatus es AUTORIZADO
 		if ($this->getEstadoActual () == CREDITO_ESTADO_AUTORIZADO) {
 			$tdSaldo 	= "";
-			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha de Autorizacion" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeAutorizacion() ) . "</td>";
+			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha_de Autorizacion" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeAutorizacion() ) . "</td>";
 			$activo 	= false;
 			$tdPagos 	= "<td class='mny'>$pagos</td>";
 		} else if ($this->getEstadoActual () == CREDITO_ESTADO_SOLICITADO) {
 			$tdSaldo 	= "";
 			$tdMonto 	= "<th class='izq'>" . $xL->getT ( "TR.Monto Solicitado" ) . "</th><td class='mny'>" . getFMoney ( $this->getMontoSolicitado() ) . "</td>";
-			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha de Solicitud" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeMinistracion() ) . "</td>";
+			$tdFecha 	= "<th class='izq'>" . $xL->getT ( "TR.Fecha_de Solicitud" ) . "</th><td>" . $xD->getFechaCorta ( $this->getFechaDeSolicitud() ) . "</td>";
 			$activo 	= false;
 			$tdPagos 	= "<td class='mny'>" . $this->getPagosSolicitados () . "</td>";
 		} else if($this->getEsRechazado() == true){
@@ -5275,9 +5277,10 @@ class cCredito {
 		$this->setUpdate($aParam);
 	}
 	function getPlazoEnMeses(){
+		//$meses_del_credito					= ($cCred->getPeriocidadDePago() >= CREDITO_TIPO_PERIOCIDAD_MENSUAL) ?   round(($dias_del_credito / 30.416666666666666666666),0) :  round(($dias_del_credito / 30.416666666666666666666),1);
 		$nums	= 0;
 		$d1 	= new DateTime($this->getFechaDeMinistracion());
-		$d2 	= new DateTime($this->getFechaDevencimientoLegal());
+		$d2 	= new DateTime($this->getFechaDeVencimiento());
 		//setLog($this->getFechaDeMinistracion()  . "----" . $this->getFechaDevencimientoLegal());
 		$diff	= $d1->diff($d2);
 		$m		= $diff->m;
@@ -5316,6 +5319,7 @@ class cCredito {
 		
 		return $tiene;
 	}
+	function getTipoLegalEstandar(){ return $this->mTipoEstandar; }
 } // END CLASS
 
 

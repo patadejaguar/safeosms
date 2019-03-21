@@ -56,9 +56,11 @@ function jsaEmularPagos($idcredito, $fechaMinistracion, $TipoDePago, $redondeo,
 		$xEm->setDiasDeAbonoFijo($dia1, $dia2, $dia3);
 		$primer_pago= $xT->cBool($primer_pago);
 		$xEm->setFechaArbitraria($PrimeraFecha);
+		
 		$xEm->setMontoParcialidad($promovido);
 		$xEm->setValorResidual($residual);
 		$xEm->setAjustarCapital($ajustecap);
+		
 		if($xCred->getEsAutorizado() == true OR $xCred->getEsSolicitado() == true){
 			$xEm->setTipoDeCuota($TipoDePago);
 		} else {
@@ -139,6 +141,8 @@ $cuenta		= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = par
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 $auto		= parametro("auto", false, MQL_BOOL);
 $emular		= parametro("emular", false, MQL_BOOL);
+
+$ConPagosEsp= parametro("optmontopromovido", $ConPagosEsp, MQL_BOOL);
 
 
 $xHP->addJExcelSupport();

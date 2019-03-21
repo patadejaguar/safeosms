@@ -1,6 +1,6 @@
 <?php
 $sucursal 			    	= "matriz";					//nombre de la Sucursal, re recomienda la misma que la base de datos
-$db_de_trabajo				= "matriz";					//Nombre de la Base de datos MySQL, se recomienda la misma que la sucursal
+$db_de_trabajo				= "example";					//Nombre de la Base de datos MySQL, se recomienda la misma que la sucursal
 $V_0a744893951e0d1706ff74	= "demo";					//Nombre de usuario MySQL
 $V_9003d1df22eb4d38200150	= "demo";						//Password del usuario MySQL
 //$SAFEPathRoot				= "C:\\server2go\\htdocs";	//Ruta PHP donde se ubica el DOCUMENT_ROOT
@@ -39,4 +39,7 @@ $os_path_bks				= "C:\\server2go\\tmp\\";
  **/
 $os_path_tmp				= "C:\\server2go\\tmp\\";
 $os_en_memcache				= false;
+
+$EnDesarrollo							= true;
+
 ?>

@@ -109,6 +109,7 @@ class cPlanDePagosGenerador {
 	private $mTasaDeInteres		= null;
 	private $mTasaDeAhorro		= null;
 	private $mParcialidadPres	= 0;
+	private $mParcialidadPresX	= 0;
 	private $mLimiteSimulaciones= 12;
 	private $mFormulaInteres	= "";
 	private $mCapitalInicial	= 0;
@@ -175,6 +176,7 @@ class cPlanDePagosGenerador {
 	private $mSinDatosE			= false;
 	private $mConDiasInhabiles	= false;
 	private $mSoloOriginal		= false;
+	private $mEsLeasing			= false;
 	
 	//private $mParcialidadPres	= 0;
 	//private $mTipoEnSistema		= false;
@@ -281,6 +283,7 @@ class cPlanDePagosGenerador {
 				$this->mMontoOtrosCargos 	= $xOrg->getCuotasNoCapitalizadas()*$xCred->getPagosAutorizados();
 				$this->mIDOtrosCargos		= OPERACION_CLAVE_PLAN_DESGLOSE;
 			}
+			$this->mEsLeasing	= true;
 		}
 		if($this->mTipoEnSistema == SYS_PRODUCTO_NOMINA){
 			//cargar datos de la empresa
@@ -374,8 +377,9 @@ class cPlanDePagosGenerador {
 				$monto 	= $monto;
 			}
 			
-			$this->mParcialidadPres	= $monto;
-			$this->mForceMonto 		= true;
+			$this->mParcialidadPres		= $monto;
+			$this->mParcialidadPresX	= $monto;
+			$this->mForceMonto 			= true;
 		}
 	}
 	function setMontoActual($monto){$this->mMontoActual = $monto; }
@@ -970,15 +974,16 @@ class cPlanDePagosGenerador {
 					}
 					//Tasa de Interes Integradas
 					$TI								= $this->mTasaDeInteres+($this->mTasaDeInteres*$this->mTasaDeIVA);
+					
 					if($this->mValorResidual >= 1){
 						$this->mParcialidadPres		= $xMath->getPagoLease($TI, $this->mPagosAutorizados, $monto_autorizado, $this->mPeriocidadDePago, $this->mValorResidual);
 						$parcialidad_presumida		= $this->mParcialidadPres ;
 						$this->mForceMonto			= true;
 					}
+					
 					if($this->mForceMonto == true AND $this->mParcialidadPres >0){
 						$parcialidad_presumida		= $this->mParcialidadPres;
 						$numero_sim					= 1;
-						
 					} else {
 						if($xF->getInt($this->mFechaMinistracion) > $xF->getInt($this->FECHA_v11)){
 							$parcialidad_presumida	= $xMath->getPagoLease($TI, $this->mPagosAutorizados, $monto_autorizado, $this->mPeriocidadDePago);

@@ -44,6 +44,15 @@ $EsCerrado		= $xCierre->checkCierre($fechaop);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
 $next			= "./cierre_de_sistema.frm.php?s=true&k=" . $key . "&f=$fechaop";
+
+
+$xCx	    	= new cConfiguration();
+$xUtil			= new cUtileriasParaOperaciones();
+$xProy			= new cCreditosProyecciones();
+$xSys			= new cSystemTask();
+$xDB			= new cSAFEData();
+$xPUtils		= new cPersonasUtilerias();
+
 if($EsCerrado == true AND $forzar == false){
 	setAgregarEvento_("Cierre De Sistema Existente", 5);
 } else {
@@ -126,8 +135,7 @@ if($EsCerrado == true AND $forzar == false){
 	$xIdNRec	= $xNRec->setNuevoRecibo(DEFAULT_SOCIO,DEFAULT_CREDITO, $diaSig, 1, RECIBOS_TIPO_ESTADISTICO, "MOVIMIENTOS_ESTADISTICOS_DEL_DIA", "NA", "ninguno", "NA", DEFAULT_GRUPO);
 	//actualiza la configuracion del sistema
 	
-	$xCx	    = new cConfiguration();
-	$xUtil		= new cUtileriasParaOperaciones();
+
 	$xCx->set("numero_de_recibo_por_defecto", $xIdNRec);
 	$messages		.= date("Y-m-d") . "\tSe Agrego el Recibo $xIdNRec  para ESTADISTICOS del proximo dia( $diaSig )\n";
 	//=================================
@@ -146,7 +154,7 @@ if($EsCerrado == true AND $forzar == false){
 		$messages	.= CongelarSaldos($idrecibo);
 		$ql->setRawQuery("CALL `proc_colonias_activas`()");
 		//========== Genera Proyecciones del Sistema
-		$xProy		= new cCreditosProyecciones();
+		
 		$xProy->addProyeccionMensual($FechaDiaSig, $xProy->PROY_SISTEMA, SYS_TODAS);
 		
 	} else {
@@ -181,17 +189,15 @@ if($EsCerrado == true AND $forzar == false){
 	//$ql->setRawQuery("CALL `proc_perfil_egresos_por_persona` ");
 	$ql->setRawQuery("CALL `proc_creditos_letras_pendientes` ");
 	$ql->setRawQuery("CALL `proc_creditos_letras_del_dia` ");
-	$ql->setRawQuery("CALL `sp_tabla_cal_aports`() ");
+	$ql->setRawQuery("CALL `sp_tabla_cal_aports`()");
 	//$ql->setRawQuery("CALL `tmp_personas_aport_cal`() ");
 	
-	//$ql->setRawQuery("CALL `sp_personas_estadisticas`() ");
+	
 	$ql->setRawQuery("UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `uuid_mail`=getMailByPersona(`codigo_de_persona`)");
 	
-	$xSys		= new cSystemTask();
-	$xDB		= new cSAFEData();
-	$xPUtils	= new cPersonasUtilerias();
-	
 
+	
+	//$ql->setRawQuery("CALL `sp_personas_estadisticas`()");
 	$xPUtils->setConstruirEstadisticas();
 	
 	//crear backup //

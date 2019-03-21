@@ -663,7 +663,7 @@ class cPersonasUtilerias {
 				$descripcion	= $rw["descripcion"];
 				$idpersona		= $rw["numero_socio"];
 				
-				$xQL->setRawQuery("UPDATE `tmp_personas_estadisticas` SET `inf_creditos` = SUBSTR( CONCAT(`inf_creditos`,';$descripcion'),1,250) WHERE `persona`= $idpersona ");
+				$xQL->setRawQuery("UPDATE `tmp_personas_estadisticas` SET `inf_creditos` = SUBSTR( CONCAT(`inf_creditos`, IF(`inf_creditos` = '', '$descripcion', ',$descripcion')),1,250) WHERE `persona`= $idpersona ");
 				
 			}
 			$rs->free();

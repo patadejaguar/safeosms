@@ -24,7 +24,7 @@ $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
 $xFil		= new cSQLFiltros();
-
+$xUtils		= new cPersonasUtilerias();
 
 $estatus 		= parametro("estado", SYS_TODAS, MQL_INT);
 $frecuencia 	= parametro("periocidad", SYS_TODAS, MQL_INT);
@@ -48,7 +48,7 @@ $FechaInicial	= parametro("on", false, MQL_DATE); $FechaInicial	= parametro("fec
 $FechaFinal		= parametro("off", false, MQL_DATE); $FechaFinal	= parametro("fechafinal", $FechaFinal, MQL_DATE); $FechaFinal	= parametro("fecha-1", $FechaFinal, MQL_DATE); $FechaFinal = ($FechaFinal == false) ? fechasys() : $xF->getFechaISO($FechaFinal);
 $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
-$soloclientes	= true;	//parametro("soloclientes", false, MQL_BOOL);
+$soloclientes	= parametro("soloclientes", false, MQL_BOOL);
 
 $ByActivos		= "";
 if($soloclientes == true){
@@ -76,13 +76,13 @@ $sql			= "SELECT SQL_CACHE
 					`socios_general`.`apellidomaterno`                         AS `apellido_materno`,
 					`socios_general`.`nombrecompleto`                          AS `nombre`,
 					`socios_general`.`sucursal`                       		   AS `sucursal`,
-
+					`socios_general`.`correo_electronico`,`socios_general`.`telefono_principal`,
+					`tmp_personas_domicilios`.`domicilio`						AS `domicilio`,
 					`tmp_colonias_activas`.`nombre_estado` AS `estado`,
 					`tmp_colonias_activas`.`nombre_municipio` AS `municipio`,
 					`socios_genero`.`descripcion_genero`                     	AS `genero`,
 					getFechaMX(`socios_general`.`fechanacimiento`) 						AS `fecha_de_nacimiento`,
-					`socios_general`.`dependientes_economicos`,
-									
+
 					$FEmpresa
 					$FGrupo
 											
@@ -92,8 +92,10 @@ $sql			= "SELECT SQL_CACHE
 					`socios_estatus`.`nombre_estatus`                         	AS `estatusactivo`,
 					`socios_estadocivil`.`descripcion_estadocivil`            	AS `ESTATUS_CIVIL`,
 					`tmp_personas_estadisticas`.`ingreso_mensual`				AS `ingreso_mensual`,
-					`tmp_personas_estadisticas`.`num_refpersonales`				AS `REFPERS`,
-					`tmp_personas_estadisticas`.`inf_creditos`					AS `cartera`
+					
+					`tmp_personas_estadisticas`.`inf_creditos`					AS `cartera`,
+					`socios_general`.`dependientes_economicos`,
+					`tmp_personas_estadisticas`.`num_refpersonales`				AS `REFPERS`
 		
 FROM     `socios_general` 
 INNER JOIN `socios_tipoingreso`  ON `socios_general`.`tipoingreso` = `socios_tipoingreso`.`idsocios_tipoingreso` 
@@ -113,17 +115,22 @@ LEFT OUTER JOIN `tmp_colonias_activas`  ON `tmp_personas_domicilios`.`idcodigopo
 										(`socios_general`.`codigo` != " . DEFAULT_SOCIO . " )
 										$ByCL $ByEstatus $ByEmpresa $BySucursal $ByActivos
 									ORDER BY
-										`socios_general`.`cajalocal`,
+										`socios_general`.`sucursal`,
 										`socios_general`.`codigo`";
 //setLog($sql);
 
 $titulo			= "";
 $archivo		= "";
 
+$xUtils->setConstruirEstadisticas();
+
 $xRPT			= new cReportes($titulo);
 $xRPT->setFile($archivo);
 $xRPT->setOut($out);
 $xRPT->setSQL($sql);
+
+$xRPT->setPreSQL("CALL `proc_personas_domicilios`()");
+
 $xRPT->setTitle($xHP->getTitle());
 //============ Reporte
 
@@ -137,7 +144,7 @@ $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 $xRPT->addContent($body);
 
-
+//$xRPT->setPreSQL("CALL `sp_personas_estadisticas`();");
 
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
@@ -147,6 +154,17 @@ $xRPT->addContent($body);
 //$xRPT->addContent( $xHP->end() );
 
 $xRPT->setColTitle("dependientes_economicos", "DEPENDIENTES_ECONOMICOS");
+$xRPT->setColTitle("correo_electronico", "CORREO_ELECTRONICO");
+
+$xRPT->addCampoContar("codigo");
+
+//$xRPT->addCampoSuma("codigo");
+$xRPT->addCampoSuma("dependientes_economicos");
+$xRPT->addCampoSuma("REFPERS");
+
+
+
+$xRPT->setFormato("ingreso_mensual", $xRPT->FMT_MONEDA);
 
 $xRPT->setProcessSQL();
 

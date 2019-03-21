@@ -114,7 +114,7 @@ function jsDeact(id){
 }
 function jsBuscar(){
 	var txt	= $("#idbuscar").val();
-	var mstr		= " AND (`personas`.`nombre` LIKE '%" + txt + "%' OR `socios`.`nombre` LIKE '%" + txt + "%')";
+	var mstr		= " AND (`personas`.`nombre` LIKE '%" + txt + "%' OR `socios`.`nombre` LIKE '%" + txt + "%' OR `socios_relacionestipos`.`descripcion_relacionestipos` LIKE '%" + txt + "%')";
 	mstr		= "&w="  + base64.encode(mstr);
 	$('#iddivlistaavales').jtable('destroy');
 	jsLGiddivlistaavales(mstr);

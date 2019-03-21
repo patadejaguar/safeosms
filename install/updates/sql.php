@@ -4575,12 +4575,17 @@ $sql["20190201"][]	= "SELECT setNuevoPermisoX('map.frm.php')";
 $sql["20190201"][]	= "ALTER TABLE `personas_documentacion` ADD COLUMN `longitud` VARCHAR(8) NULL DEFAULT '0' AFTER `estatus`, ADD COLUMN `latitud` VARCHAR(8) NULL DEFAULT '0' AFTER `longitud`";
 $sql["20190201"][]	= "ALTER TABLE `general_log` ADD COLUMN `coords` VARCHAR(30) NULL DEFAULT '' AFTER `idrecibo`";
 $sql["20190201"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `nombre_utilerias`, `descripcion_utileria`) VALUES ('21105', 'Leasing.- BugFix Valor residual a 0', 'Cuadrar Arrendamiento Monto Residual en residuales 0')";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "";
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
-//$sql["20190201"][]	= "SELECT setNuevoPermisoX('')";
+
+
+$sql["20190301"][]	= "ALTER TABLE `socios_relaciones` ADD INDEX `fk_socios_rels_tipos_idx` (`tipo_relacion` ASC)";
+$sql["20190301"][]	= "ALTER TABLE `socios_relaciones` ADD CONSTRAINT `fk_socios_rels_tipos`  FOREIGN KEY (`tipo_relacion`)  REFERENCES `socios_relacionestipos` (`idsocios_relacionestipos`)  ON DELETE NO ACTION   ON UPDATE NO ACTION";
+$sql["20190301"][]	= "ALTER TABLE `socios_relacionestipos`   CHANGE `subclasificacion` `subclasificacion` INT(4) UNSIGNED DEFAULT 0 NOT NULL COMMENT '5 avales 2 referencias'";
+//$sql["20190301"][]	= "";
+//$sql["20190301"][]	= "";
+//$sql["20190301"][]	= "";
+//$sql["20190301"][]	= "SELECT setNuevoPermisoX('')";
+//$sql["20190301"][]	= "SELECT setNuevoPermisoX('')";
+//$sql["20190301"][]	= "SELECT setNuevoPermisoX('')";
 
 //Fixes : UPDATE `tesoreria_cajas_movimientos` SET `banco` = (SELECT `entidad_bancaria` FROM `bancos_cuentas` WHERE `idbancos_cuentas`=`tesoreria_cajas_movimientos`.`cuenta_bancaria` LIMIT 0,1) WHERE `cuenta_bancaria`>0
 

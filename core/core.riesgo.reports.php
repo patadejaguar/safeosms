@@ -306,6 +306,9 @@ class cReporteCirculoDeCredito_tipo {
 		$domicilio		= str_replace("CALLE", "", $domicilio);
 		$domicilio		= str_replace("C.", "", $domicilio);
 		$domicilio		= str_replace("#", " ", $domicilio);
+		$domicilio		= str_replace("\"", "", $domicilio);
+		$domicilio		= str_replace("\\\\", "", $domicilio);
+		$domicilio		= str_replace("\\", "", $domicilio);
 		$domicilio		= trim($domicilio);
 		return $domicilio;
 	}

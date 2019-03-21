@@ -39,6 +39,7 @@ $itemsNoVer		= "cmdImprimirPropuesta,comision_originador,tasa_compra";
 $OlvidarTodo	= parametro("olvidar", false, MQL_BOOL);
 $Nuevo			= parametro("nuevo", false, MQL_BOOL);
 
+$CuotaVehiculoOriginal	= 0;
 
 if($OlvidarTodo == true){
 	$AunMasSimple	= ($AunMasSimple == true) ? false : true;
@@ -496,6 +497,7 @@ $xFRM->OHidden("tasa_iva", $xTabla->tasa_iva()->v());
 $xFRM->OHidden("monto_directo", $xTabla->monto_directo()->v());
 $xFRM->OHidden("monto_residual", $xTabla->monto_residual()->v());
 //
+$CuotaVehiculoOriginal				= $xTabla->cuota_vehiculo()->v();
 $xFRM->OHidden("cuota_vehiculo", $xTabla->cuota_vehiculo()->v());
 $xFRM->OHidden("cuota_aliado", $xTabla->cuota_aliado()->v());
 
@@ -1293,6 +1295,7 @@ var mEsRecalc			= <?php echo ($EsRecalc == true) ? "true" : "false"; ?>;
 var vEscenarios			= [12,24,36,48,60];
 var vNoAppAnticipo		= <?php echo ($NoAppAnticipo == true) ? "true" : "false"; ?>;
 var vSumComisiones		= <?php echo ($SumComisPrinc == true) ? "true" : "false"; ?>;
+var vCuotaVehiculoOrg	= <?php echo $CuotaVehiculoOriginal; ?>;
 
 <?php
 
@@ -1731,6 +1734,15 @@ function jsCalcular(idx){
 	$("#total-cuota-" + idx).html(getFMoney(cc1+cc2+cc3+cc4+cc5+cc6+cc7+cc8));
 	
 	if(idx == idplazo){
+		if( redondear(vCuotaVehiculoOrg,0) !== redondear(cc1,0)){
+			if(mEsRecalc == false && (mOlvidar == true)){
+				xG.confirmar({msg: "Es posible que deba recalcular esta cotizacion ( " + vCuotaVehiculoOrg + " | " + cc1 + " ). ¿Desea habilitar la edicion?", callback: function(){
+					mEsRecalc = true;
+					}
+				});
+			}
+		}
+		
 		$("#cuota_vehiculo").val(cc1);
 		$("#cuota_tenencia").val(cc2);
 		$("#cuota_seguro").val(cc3);

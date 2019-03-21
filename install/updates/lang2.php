@@ -670,7 +670,18 @@ $lang["20190201"][]	= array("SOLOCAP", "Solo Cap.", "Only principal");
 $lang["20190201"][]	= array("PAGOADEL", "Pag. Adelantado", "Prepayment");
 $lang["20190201"][]	= array("SHARE", "Compartir", "Share");
 $lang["20190201"][]	= array("MAPA", "Mapa", "Map");
-//$lang["20190201"][]	= array("", "", "");
+$lang["20190201"][]	= array("CREDFECHADESEMB", "Fecha de Desembolso", "Payment Date");
+$lang["20190201"][]	= array("CREDFECHAVENC", "Fecha de Venc.", "Due Date");
+$lang["20190201"][]	= array("CREDFECHAVENCCONT", "Fecha Venc. Contrato", "Expiry Contract");
+$lang["20190201"][]	= array("CREDFECHAVENCPAG", "Fecha Venc. Pago", "Due Date");
+
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
+//$lang["20190301"][]	= array("", "", "");
 
 
 

@@ -7173,6 +7173,7 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 	public $ESTADOCUENTA_EMUL			= "ESTADO_CUENTA_EMULADO";
 	public $PAGOS_EN_DOMINGO			= "ACEPTAR_PAGOS_EN_DOMINGO";
 	public $APLICA_PAGOS_ESP			= "APLICA_PAGOS_ESPECIALES";
+	public $APLICA_SUCURSALES			= "APLICA_SUCURSALES";
 
 	private $mDatos						= array();
 	private $mProducto					= false;
@@ -7248,7 +7249,7 @@ class cProductoDeCreditoOtrosDatosCatalogo {
 		$arr[$this->ESTADOCUENTA_EMUL] 				= $this->ESTADOCUENTA_EMUL;
 		$arr[$this->PAGOS_EN_DOMINGO] 				= $this->PAGOS_EN_DOMINGO;
 		$arr[$this->APLICA_PAGOS_ESP] 				= $this->APLICA_PAGOS_ESP;
-		//$arr[$this->] = $this->;
+		$arr[$this->APLICA_SUCURSALES] 				= $this->APLICA_SUCURSALES;
 		//$arr[$this->] = $this->;
 		//$arr[$this->] = $this->;
 		//$arr[$this->] = $this->;

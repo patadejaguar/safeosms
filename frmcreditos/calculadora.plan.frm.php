@@ -20,6 +20,8 @@ $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
 $xDic		= new cHDicccionarioDeTablas();
+$xSvc		= new MQLService("", "");
+
 //$jxc = new TinyAjax();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
@@ -41,8 +43,26 @@ $tasa		= parametro("tasa", 0, MQL_FLOAT);
 $residual	= parametro("residual", true, MQL_BOOL);
 $opcioniva	= parametro("optiva", true, MQL_BOOL);
 $opcionint	= parametro("optint", true, MQL_BOOL);
+$opcionRend	= parametro("optredondeo", true, MQL_BOOL);
 
-$solonomina	= parametro("solonomina", false, MQL_BOOL);
+$solonomina		= parametro("solonomina", false, MQL_BOOL);
+
+$useSliceMto	= parametro("slicemonto", false, MQL_BOOL);
+$useSlicePagos	= parametro("slicepagos", false, MQL_BOOL);
+
+$inicioMonto	= parametro("iniciomonto",0, MQL_FLOAT);
+$finMonto		= parametro("finmonto",0, MQL_FLOAT);
+$finNumero		= parametro("finnumero",96, MQL_INT);
+
+$montoInicial	= parametro("montoinicial",10000, MQL_FLOAT);
+$pagosInicial	= parametro("pagosinicial", 24, MQL_INT);
+
+$jsReglasInit	= parametro("reglasinit", "", MQL_RAW);
+$jsReglasFin	= parametro("reglasfin", "", MQL_RAW);
+$jsReglasCalc	= parametro("reglascalc", "", MQL_RAW);
+
+$useMeses		= parametro("usemeses", false, MQL_BOOL);
+
 
 $xHP->init("jsInitComponents()");
 
@@ -52,6 +72,8 @@ $xFRM		= new cHForm("frmcalplan", "./");
 $xSel		= new cHSelect();
 $xHNotif	= new cHNotif();
 $xTxt		= new cHText();
+
+$xFRM->addRangeSupport();
 $xTxt->setDivClass("");
 $nn			= $xTxt->getLabel("TR.NOMBRE");
 $xTxt->setLabelSize("");
@@ -59,14 +81,46 @@ $xTxt->setLabelSize("");
 $xFRM->setTitle($xHP->getTitle());
 $xFRM->setFieldsetClass("fieldform frmpanel");
 $xFRM->addDivSolo($nn, $xTxt->get("idconatencion", false, " "), "tx14", "tx34");
+$xFRM->setValidacion("idconatencion", "validacion.novacio", "", true);
+
 if($solonomina == false){
 	$xFRM->addHElem($xSel->getListaDePeriocidadDePago("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
 } else {
 	$xFRM->addHElem($xSel->getListaDePeriocidadDePagoNomina("idfrecuencia", CREDITO_TIPO_PERIOCIDAD_QUINCENAL)->get(true));
 }
 
-$xFRM->OMoneda("idmonto", 10000, "TR.MONTO CREDITO");
-$xFRM->OMoneda("idpagos", 24, "TR.NUMERO DE PAGOS");
+
+if($useSlicePagos == true){
+	if($useMeses == true){
+		$xFRM->setValidacion("idfrecuencia", "jsCalcularPorMeses");
+		$hrange2	= "<div class=\"range-slider-int solo\">Meses
+<input name=\"idmeses\" id=\"idmeses\" step=\"1\" onchange=\"jsCalcularPorMeses()\" class=\"range-slider-int__range\" type=\"range\" value=\"1\" min=\"1\" max=\"$finNumero\">
+<span class=\"range-slider-int__value\">2</span></div>";
+		$xFRM->addHElem($hrange2);
+		$xFRM->OHidden("idpagos", $pagosInicial);
+	} else {
+		$hrange2	= "<div class=\"range-slider-int solo\">Pagos
+	<input name=\"idmonto\" id=\"idpagos\" step=\"1\" class=\"range-slider-int__range\" type=\"range\" value=\"$pagosInicial\" min=\"1\" max=\"$finNumero\">
+	<span class=\"range-slider-int__value\">$pagosInicial</span></div>";
+		$xFRM->addHElem($hrange2);
+	}
+} else {
+	$xFRM->OEntero("idpagos", $pagosInicial, "TR.NUMERO DE PAGOS", $finNumero);
+}
+
+if($useSliceMto == true){
+	$hrange	= "<div class=\"range-slider solo\">Monto Credito
+<input name=\"idmonto\" id=\"idmonto\" step=\"100\" class=\"range-slider__range\" type=\"range\" value=\"$montoInicial\" min=\"$inicioMonto\" max=\"$finMonto\">
+<span class=\"range-slider__value\">$montoInicial</span></div>";
+	$xFRM->addHElem($hrange);
+	
+} else {
+	$xFRM->OMoneda("idmonto", $montoInicial, "TR.MONTO CREDITO", false, false, $finMonto, $inicioMonto);
+}
+
+
+
+
 if($tasa>0){
 	$xFRM->OHidden("idtasa", $tasa);
 } else {
@@ -82,8 +136,12 @@ if($opcioniva == true){
 } else {
 	$xFRM->OHidden("idsiniva", 0);
 }
+if($opcionRend == true){
+	$xFRM->OCheck("TR.REDONDEO", "idconredondeo", true);
+} else {
+	$xFRM->OHidden("idconredondeo", 1);
+}
 
-$xFRM->OCheck("TR.REDONDEO", "idconredondeo", true);
 if($opcionint == true){
 	$xFRM->OCheck("TR.SOLO INTERES", "idsolointeres");
 } else {
@@ -99,7 +157,7 @@ if($tasa>0){
 }
 
 //$xFRM->addAviso("Monto a Pagar", "idletra");
-$xFRM->addHElem($xHNotif->get("Cuota de Pago : $ 0.00", "idletra"));
+$xFRM->addHElem($xHNotif->get("-", "idletra"));
 $xFRM->addSeccion("idcalendario", "TR.CALENDARIO");
 $xFRM->addHElem("<div id='idcalendar'></div>");
 $xFRM->endSeccion();
@@ -107,8 +165,26 @@ echo $xFRM->get();
 ?>
 <script>
 var xG					= new Gen();
+var mMeses				= 0;
 function jsInitComponents(){
 	xG.desactiva("#idimprimir");
+
+	<?php 
+	if(strlen($jsReglasInit) > 10){
+		echo base64_decode($jsReglasInit);
+	}
+	?>
+}
+function jsCalcularPorMeses(){
+	//var idpagos			= $("#idpagos").val();
+	var idmeses			= $("#idmeses").val();
+	var idfrecuencia	= $("#idfrecuencia").val();
+	var idpagos			= entero( Math.round((idmeses * 30.4166666666666666666666666666666)/idfrecuencia ),0 ); 
+
+	console.log("Pagos : " + idpagos);
+	$("#idpagos").val(idpagos);
+
+	return true;
 }
 function jsCalcular(){
 	var idsiniva		= <?php echo ($opcioniva == true) ? "$('#idsiniva').prop('checked')" : "false" ?>;;
@@ -120,26 +196,49 @@ function jsCalcular(){
 	var idfrecuencia	= $("#idfrecuencia").val();
 	var idsolo			= $('#idsolointeres').prop('checked');
 	var idresidual		= $("#idresidual").val();
-	var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&siniva=" + idsiniva + "&redondeo=" + idconredondeo + "&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&solointeres=" + idsolo + "&residual=" + idresidual;
-   $.ajax(urlm, {
-      success: function(data) {
-	//alert(data.monto);
-         //$('#main').html($(data).find('#main *'));
-         //$('#notification-bar').text('The page has been successfully loaded');
-		$("#idletra").html("Cuota de Pago : $ " + getFMoney(data.monto));
-		$("#idcalendar").html( base64.decode(data.html) );
-		session("data.plan", data.html);
-		xG.activa("#idimprimir");
-      },
-      error: function() {
-         //$('#notification-bar').text('An error occurred');
-      }
-   });
+	mMeses				= entero( Math.round((idfrecuencia * idpagos) / 30.4166666666666666666666666666666666),0);
+	var run				= true;
+	/*
+	Hasta $5,000 son 6 meses
+De 5,001 a 10,000 son 9 meses
+De 10,001 a $100,000 a 12 meses (Puede tener excepción)
+De $101,000 en adelante a 18 meses (Puede tener excepción)
+	*/
+	<?php 
+	if(strlen($jsReglasCalc) > 10){
+		//echo "/*$jsReglasCalc*/\n";
+		/*$hs = $xSvc->setBase64("if(idmonto >= 0.01 && idmonto <= 5000){ if(mMeses > 6){ run = false; xG.alerta({msg:'El Pazo no debe ser mayor a 6 meses', tipo:'warn'}); } }
+	if(idmonto >= 5000.01 && idmonto < 100000){ if(mMeses > 12){ run = false; xG.alerta({msg:'El Pazo no debe ser mayor a 12 meses', tipo:'warn'}); } }
+	if(idmonto >= 100000){ if(mMeses > 18){ run = false; xG.alerta({msg:'El Pazo no debe ser mayor a 18 meses', tipo:'warn'}); } }");*/
+		//echo $xSvc->getBase64($hs);
+		echo $xSvc->getBase64($jsReglasCalc);
+	}
+	?>
+	if(run == true){
+		var urlm			= "../svc/cotizador.plan.svc.php?monto=" + idmonto + "&pagos=" + idpagos + "&siniva=" + idsiniva + "&redondeo=" + idconredondeo + "&frecuencia=" +  idfrecuencia + "&tasa=" + idtasa + "&solointeres=" + idsolo + "&residual=" + idresidual;
+		$.ajax(urlm, {
+	      success: function(data) {
+		//alert(data.monto);
+	         //$('#main').html($(data).find('#main *'));
+	         //$('#notification-bar').text('The page has been successfully loaded');
+			$("#idletra").html("Cuota de Pago : $ " + getFMoney(data.monto) + "; Meses: " + mMeses);
+			$("#idcalendar").html( base64.decode(data.html) );
+			session("data.plan", data.html);
+			xG.activa("#idimprimir");
+	      },
+	      error: function() {
+	         //$('#notification-bar').text('An error occurred');
+	      }
+	   });
+	}
 }
 function jsVerCotizacion(){
-	var idnn			= $("#idconatencion").val();
+	var idnn		= $("#idconatencion").val();
 	var urlm		= "../rpt_formatos/cotizador.plan.rpt.php?nombre=" + idnn ;
-	xG.w({url:urlm});
+	
+	if(xG.happy() == true){
+		xG.w({url:urlm});
+	}
 }
 </script>
 <?php

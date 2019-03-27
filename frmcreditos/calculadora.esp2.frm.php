@@ -51,7 +51,7 @@ $xFRM->setValidacion("idenganche_mny", "jsCalcular");
 $nn			= $xTxt->getLabel("TR.NOMBRE");
 $nn2		= $xTxt->getLabel("TR.PRECIO");
 
-
+$xFRM->addCerrar();
 $xFRM->setTitle($xHP->getTitle());
 //$xFRM->setFieldsetClass("fieldform frmpanel");
 $xFRM->addDivSolo($nn, $xTxt->get("idconatencion", false, " "), "tx14", "tx34");

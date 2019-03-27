@@ -1781,11 +1781,11 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 		
 		return $xTxt;
 	}
-	function OMoneda($id, $valor, $titulo, $letras = false, $add = true){
+	function OMoneda($id, $valor, $titulo, $letras = false, $add = true, $max = 0, $min = 0){
 		$xTxt	= new cHText();
 		$xTxt->setDivClass("tx4 tx18");
 		
-		$this->addHElem( $xTxt->getDeMoneda($id, $titulo, $valor, $letras) );
+		$this->addHElem( $xTxt->getDeMoneda($id, $titulo, $valor, $letras, $max, $min) );
 		
 		return $xTxt;		
 	}
@@ -2096,9 +2096,14 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
   var slider = $('.range-slider'), range = $('.range-slider__range'), value = $('.range-slider__value');
   slider.each(function(){
     value.each(function(){var value = $(this).prev().attr('value');$(this).html(value); });
-    range.on('input', function(){ $(this).next(value).html(this.value); });
+    range.on('input', function(){ $(this).next(value).html( getFMoney(this.value) ); });
   }); }; rangeSlider();");
-		
+		$this->addJsInit("var rangeSlider2 = function(){
+  var slider2 = $('.range-slider-int'), range = $('.range-slider-int__range'), value = $('.range-slider-int__value');
+  slider2.each(function(){
+    value.each(function(){var value = $(this).prev().attr('value');$(this).html(value); });
+    range.on('input', function(){ $(this).next(value).html( this.value ); });
+  }); }; rangeSlider2();");
 	}
 	function setNoFormTags(){ $this->mNoFormTag = true; }
 	function OTextContable($id, $valor, $titulo = "", $d = true, $html = "", $css =""){
@@ -3632,9 +3637,15 @@ class cHSelect {
 		return $xS;
 	}
 	function getListaDeProductosDeCredito($id = "", $selected = false, $SoloActivos = false){
-		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
+		$id			= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
+		$xUsr		= new cSystemUser(); $xUsr->init();
+		
 		$ByActivos	= ($SoloActivos == false) ? "": " AND (`estatus` != 'baja') ";
+		if($xUsr->getEsCorporativo() == false){
+			$suc	= getSucursal();
+			$ByActivos .= " AND `getAplicaCredPdtoPorSuc`(`idcreditos_tipoconvenio`, '$suc') = 1 ";
+		}
 		$sqlSc		= "SELECT `idcreditos_tipoconvenio`, CONCAT(`descripcion_tipoconvenio`,' .- ',`idcreditos_tipoconvenio`, '') AS `descripcion` 
 					FROM `creditos_tipoconvenio` WHERE	(`idcreditos_tipoconvenio` !=99) $ByActivos ORDER BY `descripcion_tipoconvenio` ";
 		$xS 		= new cSelect($id, $id, $sqlSc);
@@ -3643,11 +3654,18 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
-	function getListaDeProductosDeCreditoNomina($id = "", $selected = false){
-		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
+	function getListaDeProductosDeCreditoNomina($id = "", $selected = false, $SoloActivos = true){
+		$id			= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
+		$xUsr		= new cSystemUser(); $xUsr->init();
+		
+		$ByActivos	= ($SoloActivos == false) ? "": " AND (`estatus` != 'baja') ";
+		if($xUsr->getEsCorporativo() == false){
+			$suc	= getSucursal();
+			$ByActivos .= " AND `getAplicaCredPdtoPorSuc`(`idcreditos_tipoconvenio`, '$suc') = 1 ";
+		}
 		$sqlSc		= "SELECT `idcreditos_tipoconvenio`, CONCAT(`descripcion_tipoconvenio`,' .- ',`idcreditos_tipoconvenio`, '') AS `descripcion`
-					FROM `creditos_tipoconvenio` WHERE	(`idcreditos_tipoconvenio` !=99) AND `tipo_en_sistema`=" . SYS_PRODUCTO_NOMINA . " AND (`estatus` != 'baja') ORDER BY `descripcion_tipoconvenio` ";
+					FROM `creditos_tipoconvenio` WHERE	(`idcreditos_tipoconvenio` !=99) AND `tipo_en_sistema`=" . SYS_PRODUCTO_NOMINA . " $ByActivos ORDER BY `descripcion_tipoconvenio` ";
 		$xS 		= new cSelect($id, $id, $sqlSc);
 		$xS->setLabel("TR.Producto de Credito");
 		if($selected > 0){ $xS->setOptionSelect($selected); }

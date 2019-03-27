@@ -4555,7 +4555,23 @@ class cEntidad_autorizaciones {
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 
 }
-
+/*    ORM: Tabla:    entidad_html_actions    -    Generado:    [22/3/2019 18:02]    */
+class cEntidad_html_actions {
+	private $mCampos    = array("identidad_html_actions" => array("N"=>"identidad_html_actions","T"=>"INT","V"=>"","L"=>11),"general_niveles_id" => array("N"=>"general_niveles_id","T"=>"INT","V"=>"","L"=>4),"nombre" => array("N"=>"nombre","T"=>"VARCHAR","V"=>"","L"=>20),"html_act" => array("N"=>"html_act","T"=>"TINYTEXT","V"=>"","L"=>0),"html_icon" => array("N"=>"html_icon","T"=>"VARCHAR","V"=>"","L"=>15),"html_css" => array("N"=>"html_css","T"=>"VARCHAR","V"=>"","L"=>15));
+	public $IDENTIDAD_HTML_ACTIONS = "identidad_html_actions"; public $GENERAL_NIVELES_ID = "general_niveles_id"; public $NOMBRE = "nombre"; public $HTML_ACT = "html_act"; public $HTML_ICON = "html_icon"; public $HTML_CSS = "html_css";
+	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
+	function get(){ return "entidad_html_actions";}
+	function getKey(){ return "identidad_html_actions";}
+	function identidad_html_actions($v = false){ if($v !== false){$this->mCampos["identidad_html_actions"]["V"] =  $v; } return new MQLCampo($this->mCampos["identidad_html_actions"]);}
+	function general_niveles_id($v = false){ if($v !== false){$this->mCampos["general_niveles_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["general_niveles_id"]);}
+	function nombre($v = false){ if($v !== false){$this->mCampos["nombre"]["V"] =  $v; } return new MQLCampo($this->mCampos["nombre"]);}
+	function html_act($v = false){ if($v !== false){$this->mCampos["html_act"]["V"] =  $v; } return new MQLCampo($this->mCampos["html_act"]);}
+	function html_icon($v = false){ if($v !== false){$this->mCampos["html_icon"]["V"] =  $v; } return new MQLCampo($this->mCampos["html_icon"]);}
+	function html_css($v = false){ if($v !== false){$this->mCampos["html_css"]["V"] =  $v; } return new MQLCampo($this->mCampos["html_css"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
+}
 /*	ORM: Tabla:	entidad_reglas	-	Generado:	[08/5/2014 15:40]	*/
 /*	ORM: Tabla:	entidad_reglas	-	Generado:	[01/11/2016 11:16]	*/
 /*	ORM: Tabla:	entidad_reglas	-	Generado:	[03/1/2017 17:56]	*/

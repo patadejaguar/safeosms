@@ -1476,15 +1476,16 @@ background-color: #38495A;
 }
 
 /**------------- Range ------------------------ */
-.range-slider {
+.range-slider,.range-slider-int {
   margin: 60px 0 0 0%;
 }
 
-.range-slider {
+.range-slider,.range-slider-int {
   width: 100%;
+  text-align: right;
 }
 
-.range-slider__range {
+.range-slider__range, .range-slider-int__range {
   -webkit-appearance: none;
   width: calc(100% - (3px));
   height: 10px;
@@ -1494,7 +1495,7 @@ background-color: #38495A;
   padding: 0;
   margin: 0;
 }
-.range-slider__range::-webkit-slider-thumb {
+.range-slider__range::-webkit-slider-thumb, .range-slider-int__range::-webkit-slider-thumb {
   -webkit-appearance: none;
           appearance: none;
   width: 20px;
@@ -1504,13 +1505,13 @@ background-color: #38495A;
   cursor: pointer;
   transition: background 0.15s ease-in-out;
 }
-.range-slider__range::-webkit-slider-thumb:hover {
+.range-slider__range::-webkit-slider-thumb:hover,.range-slider-int__range::-webkit-slider-thumb:hover {
   background: #1abc9c;
 }
-.range-slider__range:active::-webkit-slider-thumb {
+.range-slider__range:active::-webkit-slider-thumb,.range-slider-int__range:active::-webkit-slider-thumb {
   background: #1abc9c;
 }
-.range-slider__range::-moz-range-thumb {
+.range-slider__range::-moz-range-thumb,.range-slider-int__range::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border: 0;
@@ -1519,29 +1520,30 @@ background-color: #38495A;
   cursor: pointer;
   transition: background 0.15s ease-in-out;
 }
-.range-slider__range::-moz-range-thumb:hover {
+.range-slider__range::-moz-range-thumb:hover,.range-slider-int__range::-moz-range-thumb:hover {
   background: #1abc9c;
 }
-.range-slider__range:active::-moz-range-thumb {
+.range-slider__range:active::-moz-range-thumb,.range-slider-int__range:active::-moz-range-thumb {
   background: #1abc9c;
 }
-.range-slider__range:focus::-webkit-slider-thumb {
+.range-slider__range:focus::-webkit-slider-thumb,.range-slider-int__range:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px #fff, 0 0 0 6px #1abc9c;
 }
 
-.range-slider__value {
+.range-slider__value,.range-slider-int__value {
   display: inline-block;
   position: relative;
-  width: 60px;
+  width: 80px;
   color: #fff;
-  line-height: 20px;
+  line-height: 25px;
   text-align: center;
   border-radius: 3px;
   background: #2c3e50;
   padding: 5px 10px;
   margin-left: 8px;
+  font-weight: 600;
 }
-.range-slider__value:after {
+.range-slider__value:after,.range-slider-int__value:after {
   position: absolute;
   top: 8px;
   left: -7px;

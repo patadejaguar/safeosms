@@ -4213,3 +4213,39 @@ END$$
 
 DELIMITER ;
 
+
+-- --------------------------------
+-- - Funcion devuelve si aplica el producto a la sucursal
+-- - 11/Enero/2019
+-- - --------------------------------
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS `getAplicaCredPdtoPorSuc`$$
+
+CREATE FUNCTION `getAplicaCredPdtoPorSuc`(IDPdto INT(8), mSuc VARCHAR(40)) RETURNS BOOLEAN
+BEGIN
+	DECLARE mIncluir BOOLEAN DEFAULT FALSE;
+	DECLARE IdHay INT(4) DEFAULT 0;
+	
+	SET IdHay = ( SELECT COUNT(`clave_del_parametro`) FROM `creditos_productos_otros_parametros` WHERE    (( `clave_del_parametro` = 'APLICA_SUCURSALES' ) AND ( `clave_del_producto` = IDPdto )) AND (INSTR (`valor_del_parametro`, mSuc)>0 OR INSTR (`valor_del_parametro`, 'todas')>0) AND (INSTR (`valor_del_parametro`, CONCAT('-',mSuc))<=0) );
+	 
+	IF ISNULL(IdHay) THEN
+		SET IdHay = 0;
+		SET mIncluir = FALSE;
+	END IF;
+	
+	IF IdHay > 0 THEN
+		SET mIncluir = TRUE;
+	END IF;
+	
+	
+	RETURN mIncluir;
+	
+    END$$
+
+DELIMITER ;
+
+
+
+

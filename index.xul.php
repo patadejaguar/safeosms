@@ -22,7 +22,7 @@ $xRuls						= new cReglaDeNegocio();
 $xMenu						= new cHMenu();
 $xCache						= new cCache();
 $xUser						= new cSystemUser(getUsuarioActual());
-
+$xPatch						= new cSystemPatch();
 
 $fecha_de_sesion			= parametro("f", fechasys());
 $MenuParent					= parametro("m", 0, MQL_INT);
@@ -36,6 +36,7 @@ $_SESSION[SYS_CLIENT_MOB]	= $isMobile;
 $xUser->init();
 $xUser->getUserRules();
 $TasksPage					= $xUser->getTasksPage();
+
 
 
 /**
@@ -66,10 +67,10 @@ function jsaGetMenu($subitems){
 	return  $menu;
 
 }
-$jxc ->exportFunction('jsaGetMenu', array('id-KeyEditable'), "#jMenu");
-$jxc ->exportFunction('jsaGetMoneyChanges', array("idMoneyExist"), "#idMoneyExist");
+$jxc->exportFunction('jsaGetMenu', array('id-KeyEditable'), "#jMenu");
+$jxc->exportFunction('jsaGetMoneyChanges', array("idMoneyExist"), "#idMoneyExist");
 
-$jxc ->process();
+$jxc->process();
 
 
 
@@ -224,6 +225,9 @@ $jxc ->drawJavaScript(false, true);
 var xG 		= new Gen();
 var smenu	= 42;
 var mmob	= <?php echo ($isMobile == false) ? 'false': 'true'; ?>;
+var reqUpt	= <?php echo ($xPatch->isRequiredPatch() == true) ? "true" : "false"; ?>;
+var dbLv	= <?php echo $xPatch->getDBLocalVersion(); ?>;
+var dbCv	= <?php echo $xPatch->getDBCodeVersion(); ?>;
 
 $(document).ready(function(){
 
@@ -252,6 +256,9 @@ $(document).ready(function(){
 		smenu	= 8;
 		session(Configuracion.variables.sistema.isMobile, "1");
 	}
+	if(reqUpt === true){
+		xG.aviso({msg:"El Sistema requiere actualizacion, si no actualiza puede general un mal funcionamiento.<br />La ID local es : " + dbLv + ".<br />La ID en codigo es : " + dbCv + ".", tipo : "warn"});
+	} 
 });
 
 function setInFrame(sURI, evt){

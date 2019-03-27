@@ -28,9 +28,8 @@ if(isset($_REQUEST["key"])){
 	//curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	//curl_setopt($ch, CURLOPT_USERPWD, "user:pass");
 	
+	$results 		= curl_exec($ch);
 	
-	
-	$results = curl_exec($ch);
 	if(curl_exec($ch) === false)
 	{
 		unlink($out);

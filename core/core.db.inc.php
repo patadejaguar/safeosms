@@ -5767,7 +5767,11 @@ class SystemDB {
 class cSystemPatch {
 	private $mMessages		= "";
 	private $mForcedVersion	= 0;
-	function __construct(){  }
+	private $mConfig		= null;// new cConfiguration();
+	
+	function __construct(){
+		$this->mConfig		= new cConfiguration();
+	}
 	function setForceVersion($id){ 
 		$this->mForcedVersion = $id; 
 	}
@@ -5792,8 +5796,8 @@ class cSystemPatch {
 		$ql			= new MQL();
 		$ql->setDebug(false);
 		
-		$xConf		= new cConfiguration();
-		$localver	= $xConf->get("safe_osms_database_version");
+		//$xConf		= new cConfiguration();
+		$localver		= $this->getDBLocalVersion();//$this->mConfig->get("safe_osms_database_version");
 		if($this->mForcedVersion > 0){
 			$localver	= $this->mForcedVersion;
 		}		
@@ -5803,11 +5807,11 @@ class cSystemPatch {
 			//Ejecutar Vistas y Functions
 			if($soloIdioma == false){	$this->setAplicarScripts(); }
 			
-			$current	= ($version_inicial === false) ? intval(SAFE_DB_VERSION) : $version_inicial; //201406.01
+			$current	= ($version_inicial === false) ? $this->getDBLocalVersion()  : $version_inicial; //201406.01 --20190328 intval(SAFE_DB_VERSION)
 			if($this->mForcedVersion > 0){
 				$current	= $this->mForcedVersion;
 			}
-			$dbversion	= intval(SAFE_VERSION . SAFE_REVISION);
+			$dbversion	= $this->getDBCodeVersion();// intval(SAFE_VERSION . SAFE_REVISION);
 			$sqlMenu	= "INSERT INTO `general_menu` (`idgeneral_menu`, `menu_parent`, `menu_title`, `menu_file`, `menu_type`, `menu_order`) VALUES ";
 	
 			$lang		= array();
@@ -5897,7 +5901,7 @@ class cSystemPatch {
 			$xLog->add($ql->getMessages(OUT_TXT));		
 		
 			if($upt == true){		/*Actualiza la configuracion*/			
-				$xConf->set("safe_osms_database_version", $dbversion);		
+				$this->mConfig->set("safe_osms_database_version", $dbversion);		
 			}
 		} else {
 			$xLog->add("WARN\tSistema no Actualizado\r\n");
@@ -6053,6 +6057,18 @@ class cSystemPatch {
 			$xQL->setRawQuery("DELETE FROM general_log");
 		}
 		return $this->getMessages(OUT_HTML);
+	}
+	
+	function getDBLocalVersion(){
+		//$xConf		= new cConfiguration();
+		$localver	= $this->mConfig->get("safe_osms_database_version");
+		return intval($localver);
+	}
+	function getDBCodeVersion(){
+		return intval(SAFE_VERSION . SAFE_REVISION);
+	}
+	function isRequiredPatch(){
+		return ($this->getDBCodeVersion()> $this->getDBLocalVersion()) ? true : false;
 	}
 }
 
@@ -7146,6 +7162,24 @@ $jTableResult['Records'] = $rows;
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
 		$return = curl_exec($ch); curl_close ($ch);
 		return $return;
+	}
+	function setBase64($str){
+		$str	= base64_encode($str);
+		//$str	= str_replace(" ", "+", $str);
+		//$str	= str_replace("=", "_", $str);
+		//$str	= urlencode($str);
+		return $str;
+	}
+	function getBase64($str){
+		//$str	= urldecode($str);
+		$str	= str_replace(" ", "+", $str);
+		//$str	= str_replace("_", "=", $str);
+		//$str	= str_replace("+", " ", $str);
+		
+		
+		$str	= base64_decode($str);
+		
+		return $str;
 	}
 }
 

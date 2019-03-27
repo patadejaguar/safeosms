@@ -76,6 +76,10 @@ $xFRM->addHElem($xHNotif->get("Cuota de pago: $ 0.00", "idletra"));
 $xFRM->addSeccion("idcalendario", "TR.CALENDARIO");
 $xFRM->addHElem("<div id='idcalendar'></div>");
 $xFRM->endSeccion();
+
+
+$xFRM->addCerrar();
+
 echo $xFRM->get();
 ?>
 <script>

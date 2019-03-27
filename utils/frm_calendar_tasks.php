@@ -749,6 +749,24 @@ if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
 	$ctx	= $xUsr->getCTX();
 	$xFRM->OButton("TR.ABRIR ASOCIADA", "var xG = new Gen(); xG.w({new:true,full:true, url:'" . SVC_ASOCIADA_HOST . "index.xul.php?ctx=$ctx'});", $xFRM->ic()->VINCULAR, "cmcompartirasoc", "yellow");
 }
+//============================================================================= Botones por Nivel
+
+$xNivs	= new cSystemPerfiles($xUsr->getNivel());
+if($xNivs->init() == true){
+	$xTU = new cEntidad_html_actions();
+	$rsHO	= $xQL->getDataRecord("SELECT * FROM `entidad_html_actions` WHERE `general_niveles_id`=" . $xUsr->getNivel());
+	foreach ($rsHO as $rw){
+		$xTU->setData($rw);
+		$act	= htmlspecialchars($rw[$xTU->HTML_ACT]);
+		
+		$xFRM->OButton($rw[$xTU->NOMBRE], $act, $rw[$xTU->HTML_ICON], "", $rw[$xTU->HTML_CSS]);
+	}
+	
+}
+
+
+
+
 
 $idpersona	= $xUsr->getClaveDePersona();
 $xFRM->OButton("TR.VER MI USUARIO", "jsVerMiPassword($iduser)", $xFRM->ic()->PASSWORD, "", "white");

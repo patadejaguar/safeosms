@@ -4580,6 +4580,18 @@ $sql["20190201"][]	= "INSERT INTO `general_utilerias` (`idgeneral_utilerias`, `n
 $sql["20190301"][]	= "ALTER TABLE `socios_relaciones` ADD INDEX `fk_socios_rels_tipos_idx` (`tipo_relacion` ASC)";
 $sql["20190301"][]	= "ALTER TABLE `socios_relaciones` ADD CONSTRAINT `fk_socios_rels_tipos`  FOREIGN KEY (`tipo_relacion`)  REFERENCES `socios_relacionestipos` (`idsocios_relacionestipos`)  ON DELETE NO ACTION   ON UPDATE NO ACTION";
 $sql["20190301"][]	= "ALTER TABLE `socios_relacionestipos`   CHANGE `subclasificacion` `subclasificacion` INT(4) UNSIGNED DEFAULT 0 NOT NULL COMMENT '5 avales 2 referencias'";
+$sql["20190301"][]	= "ALTER TABLE `creditos_productos_otros_parametros` CHANGE `clave_del_producto` `clave_del_producto` INT(4) UNSIGNED NOT NULL";
+$sql["20190301"][]	= "ALTER TABLE `creditos_productos_otros_parametros` CHANGE COLUMN `idcreditos_productos_otros_parametros` `idcreditos_productos_otros_parametros` INT(8) NOT NULL";
+$sql["20190301"][]	= "ALTER TABLE `creditos_productos_otros_parametros` ADD INDEX `fk_creditos_p_otros_par_pdto_cred_idx` (`clave_del_producto` ASC)";
+$sql["20190301"][]	= "ALTER TABLE `creditos_productos_otros_parametros` ADD CONSTRAINT `fk_creditos_pop_cred_prods`  FOREIGN KEY (`clave_del_producto`)  REFERENCES `creditos_tipoconvenio` (`idcreditos_tipoconvenio`) ON DELETE NO ACTION  ON UPDATE NO ACTION";
+$sql["20190301"][]	= "ALTER TABLE `creditos_productos_otros_parametros` CHANGE `idcreditos_productos_otros_parametros` `idcreditos_productos_otros_parametros` INT(8) NOT NULL AUTO_INCREMENT";
+$sql["20190301"][]	= "INSERT INTO `creditos_productos_otros_parametros` (`clave_del_producto`,`clave_del_parametro`,`valor_del_parametro`,`fecha_de_alta`,`fecha_de_expiracion`) SELECT `creditos_tipoconvenio`.`idcreditos_tipoconvenio`,'APLICA_SUCURSALES','todas',SYSDATE(),'2030-12-31' FROM `creditos_tipoconvenio` WHERE (SELECT COUNT(`creditos_productos_otros_parametros`.`clave_del_parametro`) FROM `creditos_productos_otros_parametros` WHERE    (( `creditos_productos_otros_parametros`.`clave_del_parametro` = 'APLICA_SUCURSALES' ) AND ( `creditos_productos_otros_parametros`.`clave_del_producto` = `creditos_tipoconvenio`.`idcreditos_tipoconvenio` ) AND INSTR (`creditos_productos_otros_parametros`.`valor_del_parametro`, 'todas')>0))<=0 AND (`creditos_tipoconvenio`.`idcreditos_tipoconvenio` != 99)";
+$sql["20190301"][]	= "ALTER TABLE `general_sucursales` ADD COLUMN `estatus` INT(2) NULL DEFAULT '1' AFTER `iddomicilio`";
+$sql["20190301"][]	= "CREATE TABLE IF NOT EXISTS `entidad_html_actions` ( `identidad_html_actions` INT NOT NULL AUTO_INCREMENT,  `general_niveles_id` INT(4) UNSIGNED NULL,  `nombre` VARCHAR(20) NULL,  `html_act` TEXT NULL,  `html_icon` VARCHAR(15) NULL,  `html_css` VARCHAR(15) NULL,  PRIMARY KEY (`identidad_html_actions`)) ENGINE = INNODB";
+$sql["20190301"][]	= "ALTER TABLE `entidad_html_actions` ADD INDEX `fk_entidad_html_actions_1_idx` (`general_niveles_id` ASC)";
+$sql["20190301"][]	= "ALTER TABLE `entidad_html_actions` ADD CONSTRAINT `fk_entidad_html_actions_1`  FOREIGN KEY (`general_niveles_id`)  REFERENCES `general_niveles` (`idgeneral_niveles`)  ON DELETE NO ACTION  ON UPDATE NO ACTION";
+//$sql["20190301"][]	= "";
+//$sql["20190301"][]	= "";
 //$sql["20190301"][]	= "";
 //$sql["20190301"][]	= "";
 //$sql["20190301"][]	= "";

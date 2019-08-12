@@ -45,7 +45,7 @@ $xFRM		= new cHForm("frmrazonesvencs", "./");
 $xSel		= new cHSelect();
 $xFRM->setTitle($xHP->getTitle());
 
-
+$xFRM->addCerrar();
 
 $xHG	= new cHGrid("iddivcausamora",$xHP->getTitle());
 

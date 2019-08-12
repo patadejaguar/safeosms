@@ -16,25 +16,23 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
 
 // Include the language file
 require_once(language_file());
-
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
 
 // Check for session timeout or renegotiation
 session_check();
@@ -53,34 +51,10 @@ if (!isset($_SESSION["asset"]) || $_SESSION["asset"] != 1)
     header("Location: ../index.php");
     exit(0);
 }
-else $manage_assets = true;
 
-// Check if an asset update was submitted
-if ((isset($_POST['update_asset'])) && $manage_assets)
-{
-  // Get the ids and values
-  $ids = $_POST['ids'];
-  $values = $_POST['values'];
-  $locations = $_POST['locations'];
-  $teams = $_POST['teams'];
-  $details = $_POST['details'];
-
-  // For each asset
-  for ($i=0; $i<count($ids); $i++)
-  {
-    // If the value is between 1 and 10
-    if ($values[$i] >= 1 && $values[$i] <= 10)
-    {
-      // If the location is empty set it to zero
-      if ($locations[$i] == "") $locations[$i] = 0;
-
-      // If the team is empty set it to zero
-      if ($teams[$i] == "") $teams[$i] = 0;
-
-      edit_asset($ids[$i], $values[$i], $locations[$i], $teams[$i], $details[$i]);
-    }
-  }
-}
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
 
 ?>
 <!doctype html>
@@ -88,7 +62,11 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
 
 <head>
   <script src="../js/jquery.min.js"></script>
+  <script src="../js/jquery-ui.min.js"></script>
   <script src="../js/bootstrap.min.js"></script>
+  <script src="../js/pages/asset.js"></script>
+  <script src="../js/bootstrap-multiselect.js"></script>
+
   <title>SimpleRisk: Enterprise Risk Management Simplified</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
@@ -100,7 +78,11 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
   <link rel="stylesheet" href="../css/display.css">
   <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="../css/theme.css">
-
+  <link rel="stylesheet" href="../css/selectize.bootstrap3.css">
+  <script src="../js/selectize.min.js"></script>
+  <?php
+      setup_alert_requirements("..");
+  ?>
 
 </head>
 
@@ -112,6 +94,21 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
   // Get any alert messages
   get_alert();
   ?>
+  <script>
+    $(document).ready(function() {
+        $('#edit-assets-table select').change(updateAsset);
+        var oldValue = "";
+        $('#edit-assets-table textarea').bind('focusin', function(){
+            oldValue = $(this).val();
+        })
+        $('#edit-assets-table textarea').bind('focusout', function(){
+            var newValue = $(this).val();
+            if(oldValue !== newValue){
+                updateAsset(null, $(this));
+            }
+        })
+    });
+  </script>
   <div id="load" style="display:none;">Scanning IPs... Please wait.</div>
   <div class="container-fluid">
     <div class="row-fluid">
@@ -122,19 +119,25 @@ if ((isset($_POST['update_asset'])) && $manage_assets)
         <div class="row-fluid">
           <div class="span12">
             <div class="hero-unit">
-              <form name="edit_asset" method="post" action="">
-                  <h4><?php echo $escaper->escapeHtml($lang['EditAssets']); ?><button type="submit" name="update_asset" class="pull-right btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button></h4><br>
-                  <?php display_edit_asset_table(); ?>
-                  <div class="row-fluid">
-                      <button type="submit" name="update_asset" class="pull-right btn btn-primary"><?php echo $escaper->escapeHtml($lang['Update']); ?></button>
-                  </div>
-              </form>
+              <h4><?php echo $escaper->escapeHtml($lang['EditAssets']); ?></h4><br>
+                <?php display_edit_asset_table(); ?>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <script>
+    $(document).ready(function() {
+      $('.multiselect').multiselect();
+      $('.datepicker').datepicker({
+         onSelect: function(date, datepciker){
+             updateAsset(null, $("#"+datepciker.id));
+         }
+      });
+    });
+  </script>
+  <?php display_set_default_date_format_script(); ?>
 </body>
 
 </html>

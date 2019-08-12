@@ -239,16 +239,17 @@ GROUP BY
 			`socios_patrimonio`.`socio_patrimonio`,
 			COUNT(`socios_patrimonio`.`idsocios_patrimonio`) AS `articulos`,
 			MAX(`socios_patrimonio`.`fecha_expiracion`) AS `fecha`,
-			SUM(`socios_patrimonio`.`monto_patrimonio`) AS `monto`,
-			SUM(IF(`socios_patrimonio`.`monto_patrimonio` < 0,0, `socios_patrimonio`.`monto_patrimonio`)) AS  `activo`,
-			SUM(IF(`socios_patrimonio`.`monto_patrimonio` < 0,(`socios_patrimonio`.`monto_patrimonio` * `socios_patrimonio`.`afectacion_patrimonio`),0)) AS  `pasivo`,
-			`socios_patrimonio`.`estatus_actual`
+			SUM((`socios_patrimonio`.`afectacion_patrimonio` * `socios_patrimonio`.`monto_patrimonio`)) AS `monto`,
+			SUM((`socios_patrimonio`.`afectacion_patrimonio` * `socios_patrimonio`.`monto_patrimonio`)) AS `capital`,
+			SUM(IF(`socios_patrimonio`.`afectacion_patrimonio` <= 0,0, `socios_patrimonio`.`monto_patrimonio`)) AS  `activo`,
+			SUM(IF(`socios_patrimonio`.`afectacion_patrimonio` <= 0,`socios_patrimonio`.`monto_patrimonio`,0)) AS  `pasivo`,
+			MAX(`socios_patrimonio`.`estatus_actual`) AS `estatus_actual`
 			 
 		FROM
 			`socios_patrimonio` `socios_patrimonio` 
 		WHERE
 			(`socios_patrimonio`.`socio_patrimonio` =" .  $this->mPersona . ") AND
-			(`socios_patrimonio`.`fecha_expiracion` >NOW()) 
+			(`socios_patrimonio`.`estatus` =1) 
 		GROUP BY
 			`socios_patrimonio`.`socio_patrimonio`";
 		$datos 						= obten_filas($sql);
@@ -259,6 +260,8 @@ GROUP BY
 			$datos["fecha"]			= fechasys();
 			$datos["articulos"]		= 0;
 			$datos[SYS_MONTO]		= 0;
+		} else {
+			$datos["capital"]		= setNoMenorQueCero(($datos["activo"] - $datos["pasivo"])); //$datos[SYS_MONTO];
 		}
 		return $datos;
 	}
@@ -268,6 +271,28 @@ GROUP BY
 		$numero	= setNoMenorQueCero($xQL->getDataValue("SELECT COUNT(*) AS `numero` FROM `socios_vivienda` WHERE `socio_numero`=" . $this->mPersona, "numero"));
 		$xQL	= null;
 		return $numero;
+	}
+	function getDatosDeScoringCredito1(){
+		$sql		= "SELECT ((SUM(recuperacion)/ COUNT(numero_de_parcialidad))*100) AS recuperacion, ((SUM(puntualidad) / COUNT(numero_de_parcialidad))*100) AS puntualidad, (AVG((dias_de_atraso/dias_autorizados))*100) AS atraso FROM vw_scoring1 WHERE persona=" . $this->mPersona . " GROUP BY persona";
+		$datos 		= obten_filas($sql);
+		
+		if(!isset($datos["recuperacion"])){
+			/*$datos[SYS_NUMERO]		= 0;
+			$datos[SYS_MONTO]		= 0;
+			$datos[SYS_SALDO]		= 0;*/
+			$datos["recuperacion"]		= 0;
+			$datos["pagado"]			= 0;
+			$datos["atraso"]			= 0;
+			$datos["puntualidad"]		= 0;
+			$datos[SYS_ESTADO]			= false;
+		} else {
+			$datos[SYS_ESTADO]			= true;
+			/*$datos["recuperacion"]	= 0;
+			$datos["pagado"]		= 0;
+			$datos["atraso"]		= 0;*/
+		}
+		
+		return $datos;	
 	}
 }
 
@@ -872,7 +897,7 @@ class cPersonasShare {
 		return $this->init($data);
 	}
 	function initByPersona($idpersona){
-		$sql	= "SELECT * FROM `personas_share` WHERE `persona_id`=$idpersona ORDER BY `tiempo` DESC LIMIT 0,1";
+		$sql	= "SELECT * FROM `personas_share` WHERE `persona_id`=$idpersona AND `url_share`='" . SVC_ASOCIADA_HOST . "' ORDER BY `tiempo` DESC LIMIT 0,1";
 		$xQL	= new MQL();
 		$data	= $xQL->getDataRow($sql);
 		return $this->init($data);

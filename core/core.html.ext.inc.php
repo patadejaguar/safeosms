@@ -332,6 +332,8 @@ class cHDicccionarioDeTablas {
          `creditos_plan_de_pagos`.`clave_de_credito` AS `credito`,
          `creditos_plan_de_pagos`.`numero_de_parcialidad` AS `parcialidad`,
          `creditos_plan_de_pagos`.`fecha_de_pago`,
+         `creditos_plan_de_pagos`.`pag_fecha` AS `fecha_real`,
+
          `creditos_plan_de_pagos`.`capital`,
          `creditos_plan_de_pagos`.`interes`,
          `creditos_plan_de_pagos`.`impuesto`,
@@ -623,7 +625,10 @@ class cPanelDeReportes {
 		$cSRpt			= new cSelect("idreporte", "idreporte", $SqlRpt );
 		$cSRpt->setEsSql();
 		$cSRpt->setNoMayus();
-		$cSRpt->addEvent("onblur", "if(typeof jsBlurListaDeReportes !='undefined'){ jsBlurListaDeReportes(); }");
+		$cSRpt->addEvent("onblur", "if(typeof jsBlurListaDeReportes !='undefined'){ jsBlurListaDeReportes(); };var xRpt=new RepGen();xRpt.getHiddens({clave:this.value,filtro:'" . $this->mFiltro . "'});");
+		$cSRpt->addEvent("onchange", "if(typeof jsChangeListaDeReportes !='undefined'){ jsChangeListaDeReportes(); };var xRpt=new RepGen();xRpt.getHiddens({clave:this.value,filtro:'" . $this->mFiltro . "'});");
+		
+		
 		$this->mJsVars	.= "var idreporte	= $('#idreporte').val();\r\n";
 		$lbl			= $this->mOFRM->l()->getT("TR.Nombre del Reporte");
 		$this->mLblR	= "<label for='idreports'>$lbl</label>";
@@ -1086,6 +1091,7 @@ class cReportes {
 	private $mSubSQLs		= array();
 	private $mSubsEnable	= false;
 	private $mMicroformato	= "";
+	private $mFileBase		= "";
 	
 	function __construct($titulo = ""){
 		$xL				= new cLang();
@@ -1417,7 +1423,7 @@ class cReportes {
 		$idx	= 1;
 		$cnt	= sizeof($tit);
 		$format	= ($this->mOut == OUT_TXT) ? false : true;
-		$tdcss	= " class='mny'";
+		$tdcss	= ($this->mOut == OUT_EXCEL) ? " class=\"xl25\" " : " class='mny'";
 		$xCant	= new cCantidad();
 		$mLstF	= "";
 		$OPTS	= array();
@@ -1602,11 +1608,13 @@ class cReportes {
 }
 
 class cHExcelNew {
-	private $mObj		= null;
-	private $mTitle		= "";
-	private $mCols		= array();
-	private $mFile		= "";
-	private $mHoja		= array();
+	private $mObj			= null;
+	private $mTitle			= "";
+	private $mCols			= array();
+	private $mFile			= "";
+	private $mHoja			= array();
+	private $mRutaArchivo	= "";
+	
 	function __construct($title = ""){
 		$this->mTitle	= $title;
 		
@@ -1684,10 +1692,15 @@ class cHExcelNew {
 		
 	}
 	function setExportar($nombre = ""){
-		$archivo		= PATH_TMP . $nombre . ".xlsx";
-		$this->mFile	= $nombre;
-		$objWriter 		= PHPExcel_IOFactory::createWriter($this->mObj, 'Excel2007');
+		
+		$xFS				= new cFileSystem();
+		$nombre				= $xFS->cleanNombreArchivo($nombre);
+		$archivo			= PATH_TMP . $nombre . ".xlsx";
+		$this->mFile		= $nombre;
+		$this->mRutaArchivo	= $archivo;
+		$objWriter 			= PHPExcel_IOFactory::createWriter($this->mObj, 'Excel2007');
 		$objWriter->save($archivo);		
+		
 	}
 	function getLinkDownload($label, $class = "button"){
 		
@@ -1699,7 +1712,7 @@ class cHExcelNew {
 		$str = "<a href=\"../utils/download.php?type=xlsx&download=" . $this->mFile . "&file=" . $this->mFile . "\" target=\"_blank\" $class>$ic $label</a>";
 		return $str;
 	}
-
+	function getRutaArchivo(){ return $this->mRutaArchivo; }
 }
 class cChart {
 	private $mCNT	= array();
@@ -1723,6 +1736,7 @@ class cChart {
 	private $mItems		= 0;
 	private $mDistance	= 1;
 	private $mTamanioTitulo	= 100;
+	private $mInProcess		= false;
 	
 	function __construct($id = ""){$this->mId	= $id;	}
 	private function TR($txt){if($this->OLang == null){ $this->OLang = new cLang(); } return $this->OLang->getT($txt); }
@@ -1734,6 +1748,9 @@ class cChart {
 	function setAlto($v){$this->mAlto = $v; }
 	function setTamanioTitulo($v){ $this->mTamanioTitulo = $v; }
 	function getJs(){
+		if($this->mInProcess == false){
+			$this->setProcess($this->mTipo);
+		}
 		$js		= "";
 		$opFc	= ($this->mFuncCvt == "") ? "" : "convert:".$this->mFuncCvt;
 		$opF2	= ($this->mFuncCvt == "") ? "" : "labelInterpolationFnc:function(value){return ".$this->mFuncCvt . "(value)}";
@@ -1760,11 +1777,13 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 			    scaleMinSpace: 15
 			  }
 			});";
-		break;
+		$this->mInProcess	= false;
+			break;
 			default:
 				$js = "new Chartist.Pie('#" . $this->mId . "', { series: [" .$this->mSs ."],labels: [" . $this->mLbl . "]}, {
-  				donut: true,  donutWidth: 60,  startAngle: 270,  total: " . $this->mTotal . ",  showLabel: true});";
-				break;
+  				donut: true,  donutWidth: 50,  startAngle: 270,  total: " . $this->mTotal . ",  showLabel: true});";
+				$this->mInProcess	= false;
+			break;
 		}
 		return $js;
 	}
@@ -1824,6 +1843,7 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 				
 				$cseries++;
 			}
+			$this->mInProcess	= true;
 		}
 		
 	}
@@ -1897,11 +1917,15 @@ new Chartist.Bar('#" . $this->mId . "', data, options).on('draw', function(data)
 	}
 	function setDistanciaCol($col){ $this->mDistance = $col; }
 	function setAutoWith(){
-		$alto		= setNoMenorQueCero($this->mAlto);
-		$distancias	= $this->mDistance * $this->mItems;
-		$remanente	= $alto - $distancias;
-		$this->mColumnW	= floor(($remanente / $this->mItems ));
-		
+		if($this->mItems > 0){
+			$alto		= setNoMenorQueCero($this->mAlto);
+			$distancias	= $this->mDistance * $this->mItems;
+			$remanente	= $alto - $distancias;
+			$this->mColumnW	= floor(($remanente / $this->mItems ));
+		}
+	}
+	function setTipo($tipo){
+		$this->mTipo	= $tipo;
 	}
 }
 
@@ -1940,63 +1964,36 @@ class cHPersona {
 		return $html;
 	}
 	function getFotografia(){
-		$img		= "tmp/foto_" . $this->mClavePersona;
-		$fname		= PATH_HTDOCS . "/". $img;
+		$xPersDoc	= new cPersonasDocumentacion();
+		$xDoc		= new cDocumentos();
+		$xFS		= new cFileSystem();
 		$src		= "";
-		$st			= "max-width:400px; max-height:400px;";
-		if(file_exists("$fname.jpg")){
-			$src	= "<img src=\"../$img.jpg\" style=\"$st\" />";
-		} else if(file_exists("$fname.png")){
-			$src	= "<img src=\"../$img.png\" style=\"$st\" />";
-		} else {
-			$xPersDoc	= new cPersonasDocumentacion();
-			if($xPersDoc->initByTipo($xPersDoc->TIPO_FOTO, $this->mClavePersona) == true){
-				$ofile	= $xPersDoc->getNombre();
-				$xFS	= new cFileSystem();
-				$xDoc	= new cDocumentos();
-				$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
-				if($cnt){
-					$xDoc->getTipo($ofile);
-					$ext	= $xDoc->getExt();
-					
-					if(file_put_contents($fname . "." . $ext, $cnt)){
-						$src	= "<img src=\"../$fname.$ext\" style=\"$st\" />";
-					}
-				}
-				$cnt	= null;
+		if($xPersDoc->initByTipo($xPersDoc->TIPO_FOTO, $this->mClavePersona) == true){
+			$ofile	= $xPersDoc->getNombre();
+			$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
+			if($cnt){
+				$src	= $xDoc->getEmbed($ofile, $this->mClavePersona,0, "style=\"width:95%;max-width;25em;min-heigth:20em;\"");
 			}
+		
+			$cnt	= null;
 		}
 		
 		return $src;
 	}
 	function getFirma(){
-		$img		= "tmp/firma_" . $this->mClavePersona;
-		$fname		= PATH_HTDOCS . "/". $img;
+		$xPersDoc	= new cPersonasDocumentacion();
+		$xDoc		= new cDocumentos();
+		$xFS		= new cFileSystem();
 		$src		= "";
-		$st			= "max-width:400px; max-height:400px;";
-		if(file_exists("$fname.jpg")){
-			$src	= "<img src=\"../$img.jpg\" style=\"$st\" />";
-		} else if(file_exists("$fname.png")){
-			$src	= "<img src=\"../$img.png\" style=\"$st\" />";
-		} else {
-			$xPersDoc	= new cPersonasDocumentacion();
-			if($xPersDoc->initByTipo($xPersDoc->TIPO_FIRMA, $this->mClavePersona) == true){
-				$ofile	= $xPersDoc->getNombre();
-				$xFS	= new cFileSystem();
-				$xDoc	= new cDocumentos();
-				$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
-				if($cnt){
-					$xDoc->getTipo($ofile);
-					$ext	= $xDoc->getExt();
-					
-					if(file_put_contents($fname . "." . $ext, $cnt)){
-						$src	= "<img src=\"../$fname.$ext\" style=\"$st\" />";
-					}
-				}
-				$cnt	= null;
+		if($xPersDoc->initByTipo($xPersDoc->TIPO_FIRMA, $this->mClavePersona) == true){
+			$ofile	= $xPersDoc->getNombre();
+			$cnt	= $xDoc->FTPGetFile($ofile, $this->mClavePersona);
+			if($cnt){
+				$src	= $xDoc->getEmbed($ofile, $this->mClavePersona,0, "style=\"width:95%;max-width;25em;min-heigth:20em;\"");
 			}
+			
+			$cnt	= null;
 		}
-		
 		return $src;
 	}
 	
@@ -2047,7 +2044,7 @@ class cHTabs{
 			if(isset($this->mArrID[$clave])){
 				$keyTab	= $this->mArrID[$clave];
 			} else {
-				$keyTab	= $mid-$keyTab;
+				$keyTab	= $mid . "-" . $keyTab;
 			}
 			$strLi		.= "<li><a href=\"#$keyTab\">$tabtit</a></li>";
 			$strCont	.= "<div id=\"$keyTab\">$valor</div>\r\n";
@@ -2182,6 +2179,7 @@ class cHGrid {
 		//setLog($this->mSQL);
 		return base64_encode($this->mSQL);
 	}
+	function getSQL(){ return $this->mSQL; }
 	private function OLang(){
 		if($this->mOLang == null){
 			$this->mOLang	= new cLang();
@@ -2266,7 +2264,7 @@ class cHGrid {
 		);
 	}
 
-	function OButton($titulo, $evento, $icono, $id = "", $dataRAW = false){
+	function OButton($titulo, $evento, $icono, $id = "", $dataRAW = false, $precondicion = ""){
 		$size 	= $this->mSizeIcon;
 		//$xFRM->OButton("TR.CODIGO", "jsGetTable()", $xFRM->ic()->EJECUTAR);
 		/*tipo_de_relacion:{ title: 'Relacion', width: '20%'}*/
@@ -2296,6 +2294,9 @@ class cHGrid {
 				"create" => "false");
 		if($dataRAW == true){
 			$this->mCampos[$titulo]["dataRaw"] = true;
+		}
+		if($precondicion !== ""){
+			$this->mCampos[$titulo]["precondicion"] = $precondicion;
 		}
 		//setLog($this->mCampos[$titulo]);
 		/*if(isset($this->mCampos[$nombre])){
@@ -2330,20 +2331,27 @@ class cHGrid {
 		$sorting	= ($this->mOrden == true) ? " sorting : true, " : "";
 		
 		foreach ($this->mCampos as $campos => $items){
-			$flds		.= ($flds == "") ? "$campos : {" : ",$campos : {";
-			$isRaw		= false;
+			$flds				.= ($flds == "") ? "$campos : {" : ",$campos : {";
+			$isRaw				= false;
+			$precondicion		= "";
+			$precondicionEnd	= "";
+			//setLog($items);
 			if(isset($items["dataRaw"])){
 				$isRaw	= $items["dataRaw"];
 				unset($items["dataRaw"]);
 				//setLog($items);
 			}
+			if(isset($items["precondicion"])){
+				$precondicion		= $items["precondicion"];
+				$precondicionEnd	= "}";
+			}
 			foreach ($items as $props => $vals){
 				switch($props){
 					case "button":
 						if($isRaw == true){
-							$flds .= "display : function(data){ var dataRaw = base64.encode(JSON.stringify(data.record)); return '$vals'; },";
+							$flds .= "display : function(data){ var dataRaw = base64.encode(JSON.stringify(data.record));$precondicion return '$vals';$precondicionEnd },";
 						} else {
-							$flds .= "display : function(data){ return '$vals'; },";
+							$flds .= "display : function(data){ $precondicion return '$vals';$precondicionEnd },";
 						}
 						break;
 					case "format":
@@ -2659,6 +2667,7 @@ class cFormatosDelSistema {
 	private $mEsTodas		= false;
 	private $mEsPersonaM	= false;
 	private $mEsPersonaF	= false;
+	private $mRuta			= "";
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -2689,6 +2698,7 @@ class cFormatosDelSistema {
 			$this->mNombre	= $data[$xT->TITULO_DEL_CONTRATO];
 			$this->mTipo	= $data[$xT->TIPO_CONTRATO];
 			$this->mTags	= $data[$xT->TAGS];
+			$this->mRuta	= $data[$xT->RUTA];
 			if(strpos($this->mTags, $xTC->ORIGEN_ARRENDAMIENTO) !== false){
 				$this->mEsArrend	= true;
 			}
@@ -2734,6 +2744,7 @@ class cFormatosDelSistema {
 		//setLog($sql);
 		return $sql;
 	}
+	function getRuta(){ return $this->mRuta; }
 }
 
 class cHCreditosProductos {

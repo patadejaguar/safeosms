@@ -80,6 +80,9 @@ $xT		= new cTabla($xLi->getListaDePatrimonioPorPersona($persona));
 $xT->addEliminar();
 $xFRM->addHTML( $xT->Show() );
 
+
+$xFRM->addJsReloadForm("frmsociospanel");
+
 echo $xFRM->get();
 
 //$jxc ->drawJavaScript(false, true);

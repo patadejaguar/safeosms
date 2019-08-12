@@ -29,7 +29,7 @@ $Fecha				= parametro("fecha", $Fecha, MQL_DATE); $Fecha = parametro("idfechaact
 $Fecha				= $xF->getFechaISO($Fecha);
 
 $AplicarGarantia	= parametro("aplicagarantia", false, MQL_BOOL);
-$defaultPago		= parametro("tipodepago");
+$defaultPago		= parametro("tipodepago"); $defaultPago		= parametro("tipopago", $defaultPago);
 
 $vendedor			= parametro("vendedor", getUsuarioActual(), MQL_INT);
 
@@ -42,7 +42,7 @@ if($defaultPago	== ""){
 }
 $defaultPago		= strtolower($defaultPago);
 
-echo $xHP->getHeader( true );
+$xHP->init();
 
 
 $jsNoValido			= "<script>	jsRegresarConTemporizador({
@@ -54,15 +54,22 @@ if( setNoMenorQueCero($credito) <= DEFAULT_CREDITO){
 if(PERMITIR_EXTEMPORANEO == true){
 		$_SESSION[FECHA_OPERATIVA]	= $Fecha;//$Fecha				= $_SESSION[FECHA_OPERATIVA];
 }
-if(isset($_REQUEST["fecha"])){
-	$_SESSION[FECHA_OPERATIVA]	= $_REQUEST["fecha"];
-	$Fecha						= $_SESSION[FECHA_OPERATIVA];
-}
+
+//$_SESSION[FECHA_OPERATIVA]		= $Fecha;
+//if(isset($_REQUEST["fecha"])){
+//	$_SESSION[FECHA_OPERATIVA]	= $_REQUEST["fecha"];
+//	$Fecha						= $_SESSION[FECHA_OPERATIVA];
+//}
+
+
 $xCred = new cCredito($credito);
 $xCred->init();
 $xCred->setRevisarSaldo();
 $persona			= $xCred->getClaveDePersona();
 $FechaInicial		= $xCred->getFechaDeMinistracion();
+if($parcialidad <=0){
+	$parcialidad	= $xCred->getProximaParcialidad();
+}
 
 if(CREDITO_GENERAR_DEVENGADOS_ONFLY == true OR $xCred->isAFinalDePlazo() == true){
 	if($xF->getInt($xCred->getFechaUltimoDePago()) <= $xF->getInt($Fecha)){
@@ -73,9 +80,8 @@ if(CREDITO_GENERAR_DEVENGADOS_ONFLY == true OR $xCred->isAFinalDePlazo() == true
 $periocidad 		= $xCred->getPeriocidadDePago();
 $xJsBasic			= new jsBasicForm("frmProcesarPago");
 
-$xHP->addHSnip($xJsBasic->setIncludeJQuery() );
-
-echo $xHP->setBodyinit();
+//$xHP->addHSnip($xJsBasic->setIncludeJQuery() );
+//echo $xHP->setBodyinit();
 
 if( $xCred->isPagable() == false ){ 
 	exit( $jsNoValido );
@@ -93,7 +99,7 @@ $montoapagar		= 0;
 
 $xFRM->addRefrescar("jsCargarFrame()");
 
-
+$xFRM->OHidden("fecha", $Fecha);
 
 
 switch($periocidad){
@@ -151,7 +157,7 @@ $xFRM->addObservaciones();
 $xFRM->setValidacion("idobservaciones", "jsActualizarObservacion");
 
 $xFRM->OHidden("vendedor", $vendedor);
-
+$xFRM->OHidden("parcialidad", $parcialidad);
 //$xFRM->addTag("-", "warning");
 
 //$xFRM->addTag("<strong>". $xFRM->getT("TR.TOTAL") . "</strong> : <span id='spantotal' style='font-size:1.5em'></span>", "notice");
@@ -167,8 +173,8 @@ echo $xFRM->get();
 
 ?>
 <script>
-var iSRC 		= "./frmprocesarpago.php?vendedor=<?php echo $vendedor; ?>&<?php echo "p=$persona|$credito|$parcialidad|$periocidad|" ?>";
-var ixsrc		= "./frmcobrosdecreditos2.php?vendedor=<?php echo $vendedor; ?>&<?php echo "idsocio=$persona&idsolicitud=$credito&idparcialidad=" ?>";
+var iSRC 		= "./frmprocesarpago.php?<?php echo "vendedor=$vendedor&fecha=$Fecha&p=$persona|$credito|$parcialidad|$periocidad|" ?>";
+var ixsrc		= "./frmcobrosdecreditos2.php?<?php echo "vendedor=$vendedor&fecha=$Fecha&idsocio=$persona&idsolicitud=$credito&idparcialidad=" ?>";
 var parcial		= <?php echo $parcialidad; ?>;
 var mTipoPago	= "<?php echo $defaultPago; ?>";
 var oTipoPago	= $("#idtipo_pago");

@@ -73,7 +73,7 @@
 
 .wizard > .steps .number
 {
-    font-size: 1.429em;
+    font-size: .9em;
     background-color: inherit;
     color: inherit !important;
 }

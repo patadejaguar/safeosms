@@ -13,4 +13,4 @@ pipelines:
           - apt-get update && apt-get install -y unzip phpunit
           - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
           - composer install
-          - phpunit core/
+#          - phpunit core/

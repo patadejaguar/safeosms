@@ -81,7 +81,9 @@ $xHG	= new cHGrid("iddivactivos",$xHP->getTitle());
 $xHG->setSQL("SELECT * FROM `leasing_activos` WHERE `leasing_activos`.`clave_leasing` >0 $ById $ByStatus LIMIT 0,100");
 $xHG->addList();
 $xHG->addKey("idleasing_activos");
-$xHG->col("clave_leasing", "TR.IDLEASING", "10%");
+
+$xHG->col("idleasing_activos", "TR.ID", "5%");
+$xHG->col("clave_leasing", "TR.IDLEASING", "5%");
 //$xHG->col("persona", "TR.PERSONA", "10%");
 $xHG->col("credito", "TR.CREDITO", "10%");
 $xHG->col("placas", "TR.PLACAS", "15%");

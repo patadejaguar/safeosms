@@ -16,6 +16,7 @@ $txt		= "";
 $ql			= new MQL();
 $lis		= new cSQLListas();
 $xF			= new cFecha();
+$xTS		= new cSysTablas();
 
 $tabla		= parametro("tabla", false, MQL_RAW);
 $clave		= parametro("clave", false, MQL_RAW); $clave		= parametro("id", $clave, MQL_RAW);
@@ -52,11 +53,20 @@ if($tabla !== false ){
 				$campo	= "mostrar";
 				break;
 		}
-		if($tabla == "socios_aeconomica"){
+		if($tabla == $xTS->GENERAL_SUCURSALES){
+			$xSuc	= new cSucursal($clave);
+			if($xSuc->init() == true){
+				if($activar == true){
+					$xSuc->setInActivo();
+				} else {
+					$xSuc->setInActivo(true);
+				}
+			}
+		} else if($tabla == "socios_aeconomica"){
 			$xAc	= new cPersonaActividadEconomica(false, false);
 			$xAc->setID($id, true);
 			$xAc->setEstatusActivoI($activar);
-		} if($tabla == "bancos_cuentas") {
+		} else if($tabla == "bancos_cuentas") {
 			$xBanc	= new cCuentaBancaria($clave);
 			if($xBanc->init() == true){
 				if($activar == true){

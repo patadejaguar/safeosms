@@ -612,91 +612,94 @@ overflow: hidden;
 	cursor: pointer;
 	border-radius: 3px;
 	color:#ffffff;
-	text-shadow: 0 -1px 3px #202020;
+	text-shadow: 0 -1px 2px #202020;
     background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #2f2f2f), color-stop(0.5, #3e3e3e), color-stop(0.51, #403f3f), color-stop(1, #585858));
     background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #454545 50%, #424242 51%, #7e7e7e 100%);
 
 
 }
 /*Temas de Botones*/
-.toolnav li a.blue,.diag-blue .ui-widget-header, .alert-blue {
+.toolnav li a.blue,.diag-blue .ui-widget-header, .alert-blue,.dl-menu li a.blue {
 	text-shadow: 0 -1px 3px #0066cc;
 	background: #2191c0 url(../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png) 50% 50% repeat-x
 }
-.toolnav li a.orange,.diag-orange .ui-widget-header, .alert-orange {
+.toolnav li a.orange,.diag-orange .ui-widget-header, .alert-orange,.dl-menu li a.orange {
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_45_e14f1c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.orange2, .alert-orange2 {
+.toolnav li a.orange2, .alert-orange2, .dl-menu li a.orange2 {
 	text-shadow: 0 -1px 3px #cc0000;
 	background: #D16713;
 }
-.toolnav li a.gorange, .alert-gorange {
+.toolnav li a.gorange, .alert-gorange,.dl-menu li a.gorange {
 	/*text-shadow: none;*/
 	text-shadow: 0 0 0 #A8122B;
 	color: #D16713;
 	font-weight: 500;
 	background: #F9FAF6;
 }
-.toolnav li a.ggreen {
+.toolnav li a.ggreen, .dl-menu li a.ggreen, .button.ggreen {
 	text-shadow: 0 0 0 #354F00;
 	color: #1e8e3e;
 	font-weight: 500;
 	background: #F9FAF6;
 }
 
-.toolnav li a.gblue, .alert-gblue {
+.toolnav li a.gblue, .alert-gblue, .dl-menu li a.gblue {
 	text-shadow: 0 0 0 #2C4770;
 	color: #1a73e8;
 	font-weight: 500;
 	background: #F9FAF6;
 }
-.toolnav li a.gred, .alert-gred {
+.toolnav li a.gred, .alert-gred,.dl-menu li a.gred {
 	text-shadow: 0 0 0 #A8122B;
 	color: #d93025;
 	font-weight: 500;
 	background: #F9FAF6;
 }
-.toolnav li a.chocolate {
+.toolnav li a.chocolate,.dl-menu li a.chocolate,.dl-menu li a.chocolate {
 	text-shadow: none;
 	background: #001121 url(../../images/ui/ui-bg_gloss-wave_30_44372c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.green,.diag-green .ui-widget-header {
+.toolnav li a.green,.diag-green .ui-widget-header,.dl-menu li a.green, .button.green {
 	text-shadow: 0 -1px 3px #468847;
+	color:#ffffff;text-shadow: 0 -1px 2px #202020;
 	background: #6eac2c url(../../images/start/ui-bg_gloss-wave_50_6eac2c_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.white, .alert-gwhite{
+.toolnav li a.white, .alert-gwhite, .dl-menu li a.white{
 text-shadow: none; color: #901429;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 }
-.toolnav li a.red, .diag-red .ui-widget-header {
+.toolnav li a.red, .diag-red .ui-widget-header,.dl-menu li a.red {
 color: #ffffff; text-shadow: 0 -1px 3px #510814;
 background: linear-gradient(to bottom, #901429 0%,#B5122D 100%);
 }
-.toolnav li a.dark {
+.toolnav li a.dark, .dl-menu li a.dark {
 background: #001121;
 }
-.toolnav li a.yellow, h3.yellow,.diag-yellow .ui-widget-header  {
+.toolnav li a.yellow, h3.yellow,.diag-yellow .ui-widget-header,.dl-menu li a.yellow  {
 text-shadow: 0 -1px 3px #FBFF0D; color: #381f00;
 background: linear-gradient(to bottom, #f1e767 0%,#feb645 100%);
 }
-.toolnav li a.whiteblue, .alert-whiteblue {
+.toolnav li a.whiteblue, .alert-whiteblue, .dl-menu li a.whiteblue {
 text-shadow: 0 -1px 2px #AAAAAA; color: #000066;
 background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
 
 }
-.toolnav li a.gris,.toolnav li a.gray, .alert-gray {
+.toolnav li a.gris,.toolnav li a.gray, .alert-gray,.dl-menu li a.gris,.dl-menu li a.gray {
 	text-shadow: 0 -1px 3px #381f00;
 	background: #001121 url(../../images/ui/ui-bg_gloss-wave_45_817865_500x100.png) 50% 50% repeat-x;
 }
-.toolnav li a.gray2, .toolnav li a.grey2, .alert-gray2 {
+.toolnav li a.gray2, .toolnav li a.grey2, .alert-gray2,.dl-menu li a.gray2, .dl-menu li a.grey2 {
 	text-shadow: none; color: #252B29;
 	background: #B9CCD2;
 }
-.toolnav li a.gray3, .alert-gray3 {
+.toolnav li a.gray3, .alert-gray3, .dl-menu li a.gray3 {
 	text-shadow:none; color: #704F5D;
 	background: #E5E9E9;
 }
+
+
 
 /*.toolnav li a.blue2 {
 text-shadow: 0 -1px 3px #0066cc; color: #FFF;
@@ -706,59 +709,63 @@ background: linear-gradient(top,#4387fd,#4683ea)
 
 
 
-.main-dialog-class .ui-widget-header{background: url("/Images/your-background.png") repeat-x scroll 34px 42px #a4cf50;font-size:16px;border:0;text-transform:uppercase}
-.main-dialog-class .ui-widget-content{background-image:none;background-color:#fff}
 
-
-.toolnav li a.blue2 {
+.toolnav li a.blue2, .dl-menu li a.blue2 {
 text-shadow:  0 -1px 3px #0080E3; color: #FFFFFF;
 background: #56C4FF;
 }
 
-.toolnav li a.blue3, h3.blue3 {
+.toolnav li a.blue3, h3.blue3, .dl-menu li a.blue3 {
 text-shadow: none;
 color: #FFFFFF; background: #4877B6;
 }
-.toolnav li a.blue4, .toolnav li a.editar, h3.blue4 {
+.toolnav li a.blue4, .toolnav li a.editar, h3.blue4, .dl-menu li a.blue4 {
 text-shadow: none;
 color: #FFFFFF; background: #00B6E3;
 }
 
 
-.toolnav li a.persona {
+.toolnav li a.persona, .dl-menu li a.persona {
 text-shadow:  0 -1px 3px #0080E3;
 color: #FFFFFF;
 /*background: #4464AF;*/
 background: #2C4770;
 }
-.toolnav li a.credito {
+.toolnav li a.credito, .dl-menu li a.credito {
 	/*text-shadow: 0 -1px 3px #468847;*/
 	/*background: #257433;*/
 	text-shadow: 0 -1px 3px #324F00;
 	background: #26A95E;
 	/*color: #C7E99B;*/
 }
-.toolnav li a.green2 {
+.toolnav li a.green2, .dl-menu li a.green2 {
 	text-shadow: 0 1px 0 rgba(0,0,0,0.2); color: #fff;
 	background: #1b926c;
 	border-color: #198764;
 }
-.toolnav li  div.noticon {
+.toolnav li  div.noticon, .dl-menu li  div.noticon {
 	clear: both;
 	display: inline-block;
 	margin-left: 8px;
 	top: 4px;
 }
-.toolnav li  div.noticon i {
+.toolnav li  div.noticon i, .dl-menu li  div.noticon i {
 	color: white;
 	text-shadow: 0 -1px 3px #202020;
 }
-.toolnav li a.purple, .credito-estado-rechazado, .alert-purple {
+.toolnav li a.purple, .credito-estado-rechazado, .alert-purple, .dl-menu li a.purple {
 	text-shadow:none;
 	color: #320032;
 	background: #E0D5F9;
 	border-color: #5229A3;
 }
+
+/*END.- Temas de Botones*/
+.dl-menu li a i {
+	padding-right: 0.7em;
+}
+
+
 /* Rounded corner for the first in last item. Shorthand: Top left, Top right, Bottom right, Bottom left.
 We also remove the borders, since they don't need them. */
 .toolnav li:first-child {
@@ -797,3 +804,8 @@ border-right:1px solid #5d5d5d;
     min-width: 50%;
 
 }
+
+
+.main-dialog-class .ui-widget-header{background: url("../../images/start/ui-bg_gloss-wave_75_2191c0_500x100.png") repeat-x scroll 34px 42px #a4cf50;font-size:16px;border:0;text-transform:uppercase}
+.main-dialog-class .ui-widget-content{background-image:none;background-color:#fff}
+

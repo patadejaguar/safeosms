@@ -74,7 +74,7 @@ $xHG->OButton("TR.EDITAR", "jsEdit(\''+ data.record.clave +'\')", "edit.png");
 
 //$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
 
-$xHG->OButton("TR.BAJA", "jsDeact('+ data.record.clave +')", "undone.png");
+$xHG->OButton("TR.BAJA", "jsDeact(\''+ data.record.clave +'\')", "undone.png");
 
 $xSoc	= new cSocio(EACP_ID_DE_PERSONA);
 if($xSoc->init() == true){
@@ -106,7 +106,7 @@ function jsDel(id){
     //xG.rmRecord({tabla:"tmp_1274089405", id:id, callback:jsLGiddivsucursales });
 }
 function jsDeact(id){
-   //xG.recordInActive({tabla:"tmp_1274089405", id:id, callback:jsLGiddivsucursales, preguntar:true });
+   xG.recordInActive({tabla:"general_sucursales", id:id, callback:jsLGiddivsucursales, preguntar:true });
 }
 </script>
 <?php

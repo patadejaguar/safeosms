@@ -45,12 +45,13 @@ $xLog	= new cCoreLog();
 $xSel	= new cHSelect();
 $xBase	= new cBases(BASE_IVA_OTROS);
 $xBase->init();
-
 $xFRM->setTitle($xHP->getTitle());
+
+
 $msg	= "";
 if($action == SYS_NINGUNO){
 	$xFRM->OHidden("MAX_FILE_SIZE", "1024000");
-	$xFRM->OFile("idarchivo","",  "TR.Archivo");
+	$xFRM->OFileText("idarchivo","",  "TR.Archivo");
 	
 	$xFRM->addHElem($xSel->getListaDeTiposDeOperacion()->get(true));
 	$xFRM->addHElem($xSel->getListaDeTiposDeRecibos()->get(true));
@@ -284,9 +285,17 @@ if($action == SYS_NINGUNO){
 						}
 					} else {
 						//=================================================================== OTRAS OPERACIONES
-						$xRec->setNuevoMvto($fecha, $monto, $TipoDef, $parcialidad, "");
-						
+						$fecha_operacion= $fecha;
+						if($tipoderecibo == RECIBOS_TIPO_PAGO_CREDITO){
+							$xCred		= new cCredito($credito);
+							if($xCred->init() == true){
+								$xCred->setAbonoCapital($monto, $parcialidad, 0, $tipodepago, DEFAULT_RECIBO_FISCAL, $observaciones, false, $fecha_operacion, $idrecibo);
+							}
+						} else {
+							$xRec->setNuevoMvto($fecha, $monto, $TipoDef, $parcialidad, "");
+						}
 					}
+					
 					$xRec->setForceUpdateSaldos(true);
 					$xRec->setFinalizarRecibo(true, true);
 					$xLog->add($xCred->getMessages(), $xLog->DEVELOPER);
@@ -304,7 +313,7 @@ if($action == SYS_NINGUNO){
 	$xLog->add($xFil->getMessages(), $xLog->DEVELOPER);
 	$xLog->add("============\t\tCargado: $sumaNeta \t\t==================\r\n", $xLog->DEVELOPER);
 	$xFRM->addLog($xLog->getMessages());
-
+	$xFRM->addCerrar();
 	
 }
 echo $xFRM->get();

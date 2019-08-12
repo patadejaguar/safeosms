@@ -267,9 +267,14 @@ if($xSoc->init() == true){
 	$xFRM->OTasaInt("tasapena", $xTabla->tasapena()->v(), "TR.TASA DE PENAS");
 	
 	$xFRM->OText("observaciones", $xTabla->observaciones()->v(), "TR.OBSERVACIONES");
+	
+
+	$xFRM->addJsReloadForm("frmsociospanel");
 }
+
 echo $xFRM->get();
 
 //$jxc ->drawJavaScript(false, true);
+
 $xHP->fin();
 ?>

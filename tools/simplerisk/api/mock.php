@@ -12,20 +12,20 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
+    if (!isset($_SESSION))
     {
-        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
-        if (!isset($_SESSION))
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
         {
-            session_name('SimpleRisk');
-            session_start();
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
         }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+        session_name('SimpleRisk');
+        session_start();
+    }
 
     // Check for session timeout or renegotiation
     session_check();
@@ -75,9 +75,10 @@
           "reference_id": "",
           "regulation": "3",
           "control_number": "",
-          "assets": "credit card data, google-public-dns-a.google.com, ",
+          "affected_assets": "Asset Name 1,Asset Name 2,[Asset Group Name 1],Asset Name 3,[Asset Group Name 2]",
           "technology": "8",
-          "team": "3",
+          "team": [3],
+          "additional_stakeholders": [1,17,16,15],
           "owner": "16",
           "manager": "15",
           "source": "4",
@@ -122,9 +123,15 @@
           "Custom": "",
           "assessment": "Assessment",
           "notes": "Additional notes",
+          "tags": [Tag1,Tag2,Tag3],
           "custom_field": {
               "21":"Custom first",
               "41":"Custom value"
+          },
+          "ContributingLikelihood": "2",
+          "ContributingImpacts": {
+              "5": "2",
+              "7": "3"
           }
         }';
         $results['response'] = '{
@@ -150,7 +157,7 @@
           "mitigation_effort": "2",
           "mitigation_cost": "2",
           "mitigation_owner": "17",
-          "mitigation_team": "2",
+          "mitigation_team": "2,3",
           "current_solution": "Current solution",
           "security_requirements": "Requirements",
           "security_recommendations": "Recommends",
@@ -275,7 +282,24 @@
                     "manager": "",
                     "assessment": "",
                     "notes": "",
-                    "assets": "",
+                    "affected_assets": [
+                        {
+                            "name": "Asset Group 1",
+                            "type": "group"
+                        },
+                        {
+                            "name": "Asset Group 2",
+                            "type": "group"
+                        },
+                        {
+                            "name": "Asset 1",
+                            "type": "asset"
+                        },
+                        {
+                            "name": "Asset 2",
+                            "type": "asset"
+                        }
+                    ],
                     "submission_date": "2018-06-06 11:01:20",
                     "mitigation_id": "0",
                     "mgmt_review": "0",
@@ -320,7 +344,13 @@
                     "OWASP_ReputationDamage": "10",
                     "OWASP_NonCompliance": "10",
                     "OWASP_PrivacyViolation": "10",
+                    "tags": "Tag1,Tag2,Tag3",
                     "Custom": "10",
+                    "ContributingLikelihood": "2",
+                    "ContributingImpacts": {
+                        "5": "2",
+                        "7": "3"
+                    },
                     "closure_date": "2015-09-15 06:26:47",
                     "custom_values": [
                         {
@@ -359,8 +389,8 @@
             "mitigation_max_cost": "200000",
             "mitigation_owner": "17",
             "mitigation_owner_name": "Demo Director",
-            "mitigation_team": "6",
-            "mitigation_team_name": "IT Systems Management",
+            "mitigation_team": "2,3",
+            "mitigation_team_name": "IT Systems Management, Collaboration",
             "current_solution": "Current solution",
             "security_requirements": "System requirements",
             "security_recommendations": "Security recommendations",
@@ -476,7 +506,7 @@
           "reference_id": "",
           "regulation": "3",
           "control_number": "",
-          "assets": "credit card data, google-public-dns-a.google.com, ",
+          "affected_assets": "Asset Name 1,Asset Name 2,[Asset Group Name 1],Asset Name 3,[Asset Group Name 2]",
           "technology": "8",
           "team": "3",
           "additional_stakeholders": "1,17,16,15",
@@ -524,9 +554,15 @@
           "Custom": "",
           "assessment": "Assessment",
           "notes": "Additional notes",
+          "tags": [Tag1, Tag2, Tag3],
           "custom_field": {
               "21":"Custom first",
               "41":"Custom value"
+          },
+          "ContributingLikelihood": "2",
+          "ContributingImpacts": {
+              "5": "2",
+              "7": "3"
           }
         }';
 
@@ -538,12 +574,39 @@
         
         return;
     }
+
+    function mock_get_audit_logs(&$results){
+        $results = array();
+        $results['url'] = "/api/audit_logs?key={key}&days=7&log_type=risk, contact";
+        $results['method'] = "GET";
+        $results['params'] = '';
+
+        $results['response'] = '{
+          "status": 200,
+          "status_message": "Success",
+          "data":  [
+            {
+              "timestamp": "29/03/2019 2:26 AM CET",
+              "username": "Admin",
+              "message": "A management review was submitted for risk ID \"1088\" by username \"admin\"."
+            },
+            {
+              "timestamp": "29/03/2019 2:26 AM CET",
+              "username": "Admin",
+              "message": "Risk(ID:1088) was assigned to project \"test project\" by user \"admin\"."
+            }
+          ]
+        }';
+        
+        return;
+    }
 ?>
 
 <!doctype html>
 <html>
 
 <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
   <script src="../js/bootstrap.min.js"></script>
   <title>SimpleRisk: Enterprise Risk Management Simplified</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -35,6 +35,7 @@ $xRPT->addListReports();
 //$xRPT->addFechaInicial();
 //$xRPT->addFechaFinal();
 $xRPT->addCheckBox("TR.SOLO CLIENTES", "soloclientes", true);
+$xRPT->addCheckBox("TR.INCLUIR PAGADOS", "conpagados", false);
 
 $xRPT->setConOperacion(false);
 $xRPT->setConCajero(false);

@@ -47,7 +47,16 @@ $xText		= new cHText();
 $xFRM->setTitle($xHP->getTitle());
 $xTabla		= new cLeasing_usuarios();
 $xTabla->setData($xTabla->query()->initByID($clave));
-$OnError	= false;
+$ready		= false;
+
+$xUsOrg	= new cLeasingUsuarios($clave);
+if($xUsOrg->init() == true){
+	$xFRM->addSeccion("idinfo0", "TR.INFORMACION");
+	$xFRM->addHElem( $xUsOrg->getFicha() );
+	$xFRM->endSeccion();
+}
+
+$xFRM->addSeccion("idinfo1", "TR.DATOS");
 
 if($action == SYS_NINGUNO){
 	$xFRM->OHidden("clave", $clave);
@@ -59,20 +68,17 @@ if($action == SYS_NINGUNO){
 	if($clave > 0){
 		
 		$xUsOrg	= new cLeasingUsuarios($clave);
+		
 		if($xUsOrg->init() == true){
-			$xUsOrg->setPin($pin);
-			$xFRM->addAvisoRegistroOK($xUsOrg->getMessages());
+			if($xUsOrg->setPin($pin) == true){
+				$ready	= true;
+			}
 		}
 	}
-	if($OnError == true){
-		$xFRM->addAvisoRegistroError();
-		$xFRM->addAtras();
-	} else {
-		$xFRM->addCerrar("", 3);
-	}
+	$xFRM->setResultado($ready, $xUsOrg->getMessages(), "", true);
 }
 
-
+$xFRM->endSeccion();
 
 echo $xFRM->get();
 

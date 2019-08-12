@@ -16,7 +16,9 @@ include_once("core.config.inc.php");
 include_once("core.creditos.inc.php");
 include_once("core.captacion.inc.php");
 include_once("core.fechas.inc.php");
+
 @include_once("../libs/sql.inc.php");
+@include_once("../vendor/autoload.php");
 
 //=====================================================================================================
 class cUtileriasParaOperaciones{
@@ -246,6 +248,82 @@ class cOperacionesTipoOrigenCbza {
 	function getTipo(){ return $this->mTipo; }
 	function setCuandoSeActualiza(){ $this->setCleanCache(); }
 	function add(){}
+}
+
+
+class cConekta {
+	private $mObjConekta	= null;
+	private $mMessages 		= "";
+	
+	function __construct(){
+		
+		//$this->mObjConekta = new \Conekta\Conekta();
+		\Conekta\Conekta::setApiKey(CONEKTA_API_KEY);
+		\Conekta\Conekta::setApiVersion("2.0.0");
+		\Conekta\Conekta::setLocale('es');
+
+		
+	}
+	
+	function sendOrder($order){
+		//setApiKey();
+		$orden = null;
+		/*$valid_order =
+		array(
+				'line_items'=> array(
+						array(
+								'name'        => 'Box of Cohiba S1s',
+								'description' => 'Imported From Mex.',
+								'unit_price'  => 20000,
+								'quantity'    => 1,
+								'sku'         => 'cohb_s1',
+								'category'    => 'food',
+								'tags'        => array('food', 'mexican food')
+						)
+				),
+				'currency'    => 'mxn',
+				'metadata'    => array('test' => 'extra info'),
+				'charges'     => array(
+						array(
+								'payment_method' => array(
+										'type'       => 'oxxo_cash',
+										'expires_at' => strtotime(date("Y-m-d H:i:s")) + "36000"
+								),
+								'amount' => 20000
+						)
+				),
+				'currency'      => 'mxn',
+				'customer_info' => array(
+						'name'  => 'John Constantine',
+						'phone' => '+5213353319758',
+						'email' => 'hola@hola.com'
+				)
+		);*/
+
+		
+		try {
+			
+			$orden = \Conekta\Order::create($order);
+			
+			//if($orden){
+				//json_decode($orden)
+			//}
+			
+		} catch (\Conekta\ProcessingError $e){
+			$this->mMessages	.= $e->getMessage();
+		} catch (\Conekta\ParameterValidationError $e){
+			$this->mMessages	.= $e->getMessage();
+		} finally {
+			if(isset($e)){
+				$this->mMessages	.= $e->getMessage();
+			}
+			
+		/*} finally(\Conekta\Handler $e){
+			$this->mMessages	.= $e->getMessage();*/
+		}
+		return $orden;
+	}
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put);	}
 }
 
 

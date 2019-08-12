@@ -26,8 +26,13 @@ class cPersonasRiesgosDeCredito {
 	private $mDeudasPorFamilia	= 0;
 	private $mDeudasPorAval		= 0;
 	private $mCapacidadDePago	= 0;
+	private $mOLang				= null;
+	private $mExplain			= "";
+	private $mArrayData			= array();
+	
 	function __construct($persona){
-		$this->mPersona	= setNoMenorQueCero($persona);
+		$this->mPersona		= setNoMenorQueCero($persona);
+		$this->mOLang		= new cLang();
 	}
 
 	function getEndeudamientoPorPatrimonio($explain = false){
@@ -36,13 +41,13 @@ class cPersonasRiesgosDeCredito {
 		$cnt	= $monto;
 		if ( $explain == true ){
 			$xT		= new cHTabla();
-			$xL		= new cLang();
-			$xT->setTitle($xL->getT("TR.Riesgo como Aval"));
+			//$xL		= new cLang();
+			$xT->setTitle($this->mOLang->getT("TR.Riesgo como Aval"));
 			$xT->initRow();
-			$xT->addTH($xL->getT("TR.Numero de Personas"));
-			$xT->addTH($xL->getT("TR.Numero de Creditos"));
-			$xT->addTH($xL->getT("TR.Monto Avalado"));
-			$xT->addTH($xL->getT("TR.Monto Diario"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Personas"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Creditos"));
+			$xT->addTH($this->mOLang->getT("TR.Monto Avalado"));
+			$xT->addTH($this->mOLang->getT("TR.Monto Diario"));
 			$xT->endRow();
 				
 			$xT->initRow();
@@ -66,13 +71,13 @@ class cPersonasRiesgosDeCredito {
 		$cnt	= $monto;
 		if ( $explain == true ){
 			$xT		= new cHTabla();
-			$xL		= new cLang();
-			$xT->setTitle($xL->getT("TR.Riesgo como Aval"));
+			//$xL		= new cLang();
+			$xT->setTitle($this->mOLang->getT("TR.Riesgo como Aval"));
 			$xT->initRow();
-			$xT->addTH($xL->getT("TR.Numero de Personas"));
-			$xT->addTH($xL->getT("TR.Numero de Creditos"));
-			$xT->addTH($xL->getT("TR.Monto Avalado"));
-			$xT->addTH($xL->getT("TR.Monto Diario"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Personas"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Creditos"));
+			$xT->addTH($this->mOLang->getT("TR.Monto Avalado"));
+			$xT->addTH($this->mOLang->getT("TR.Monto Diario"));
 			$xT->endRow();
 			
 			$xT->initRow();
@@ -88,6 +93,7 @@ class cPersonasRiesgosDeCredito {
 			$xT->endRow();
 			$cnt	= $xT->get();
 		}
+		$this->mArrayData	= $D;
 		return $cnt;					
 	}
 	function getEndeudamientoPorFamilia($explain = false){
@@ -96,13 +102,13 @@ class cPersonasRiesgosDeCredito {
 		$cnt	= $monto;
 		if ( $explain == true ){
 			$xT		= new cHTabla();
-			$xL		= new cLang();
-			$xT->setTitle($xL->getT("TR.Riesgo Por Familia"));
+			//$xL		= new cLang();
+			$xT->setTitle($this->mOLang->getT("TR.Riesgo Por Familia"));
 			$xT->initRow();
-			$xT->addTH($xL->getT("TR.Numero de Personas"));
-			$xT->addTH($xL->getT("TR.Numero de Creditos"));
-			$xT->addTH($xL->getT("TR.Monto por NUCLEO_DE_RIESGO"));
-			$xT->addTH($xL->getT("TR.Monto Diario"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Personas"));
+			$xT->addTH($this->mOLang->getT("TR.Numero de Creditos"));
+			$xT->addTH($this->mOLang->getT("TR.Monto por NUCLEO_DE_RIESGO"));
+			$xT->addTH($this->mOLang->getT("TR.Monto Diario"));
 			$xT->endRow();
 				
 			$xT->initRow();
@@ -126,12 +132,12 @@ class cPersonasRiesgosDeCredito {
 		$cnt	= $monto;
 		if ( $explain == true ){
 			$xT		= new cHTabla();
-			$xL		= new cLang();
-			$xT->setTitle($xL->getT("TR.Patrimonio"));
+			//$xL		= new cLang();
+			$xT->setTitle($this->mOLang->getT("TR.Patrimonio"));
 			$xT->initRow();
-			$xT->addTH($xL->getT("TR.Activo"));
-			$xT->addTH($xL->getT("TR.Pasivo"));
-			$xT->addTH($xL->getT("TR.Capital"));
+			$xT->addTH($this->mOLang->getT("TR.Activo"));
+			$xT->addTH($this->mOLang->getT("TR.Pasivo"));
+			$xT->addTH($this->mOLang->getT("TR.Capital"));
 
 			$xT->endRow();
 		
@@ -143,6 +149,9 @@ class cPersonasRiesgosDeCredito {
 			$xT->endRow();
 			$cnt	= $xT->get();
 		}
+		
+		$this->mArrayData	= $D;
+		
 		return $cnt;		
 	}
 	function getIngresosEgresos($explain = false){
@@ -179,6 +188,14 @@ class cPersonasRiesgosDeCredito {
 		}
 		return $this->mOEstats;
 	}
+	function getDatosDeScoringCredito1($explain = false){
+		$D		= $this->getOEstats()->getDatosDeScoringCredito1();
+		return $D;
+	}
+	function getExplain(){
+		return $this->mExplain;
+	}
+	function getDataInArray(){ return $this->mArrayData; }
 }
 
 class cPersonasFlujoDeEfectivo {

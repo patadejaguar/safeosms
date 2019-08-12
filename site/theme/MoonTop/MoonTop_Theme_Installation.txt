@@ -1,0 +1,65 @@
+
+	Moon Top theme set up instructions 
+	==================================
+
+	In an attempt to make the site theme as editable as possible I have incorporated the
+	use of several components within the templates.
+
+
+	Once the basic installation of GS has been completed , please do the following.
+
+	1. Add the MoonTop theme folder to the themes folder in the root of GS (Get Simple).
+	
+	2. Select the 'Theme' tab and choose 'MoonTop' from the theme selection, then save.
+	
+	3. Go to 'Pages' and select the home page. Select 'page options', then 'Page Template' then choose 'template_home.php'. Don't forget to save! 
+	
+	4. Change the name of the home page to your desired title.
+	
+	5. Upload all the images from image folder in the MoonTop theme via the 'Files' tab in GS.
+
+	6. Select the 'Theme' tab and then select 'edit components' in GS, Create the following components 
+
+	
+
+      * Name:   home_header_img       
+      
+      * Name:   home_subtitle
+   
+      * Name:   mid_img_1
+      
+      * Name:   mid_img_2
+      
+      * Name:   mid_img_3
+
+
+
+	7. Now add the corresponding data to each respective component:
+
+      * Name:   home_header_img       
+        Data:    <img src="<?php get_site_url(); ?>/data/uploads/moontopimg.png" alt="wotw" />
+      
+      * Name:   home_subtitle
+        Data: 	 Moon Top theme by Code Cobber
+   
+      * Name:   mid_img_1
+        Data:   <img src="<?php get_site_url(); ?>/data/uploads/certificate.png" alt="certificate logo" />
+      
+      * Name:   mid_img_2
+                <img src="<?php get_site_url(); ?>/data/uploads/faq.png" alt="faq logo" />
+      
+      * Name:   mid_img_3
+        Data:   <img src="<?php get_site_url(); ?>/data/uploads/fees.png" alt="fees logo" />
+        
+        
+        
+	5. Now add three new pages and call them anything you want. They should all be using template.php as the main template.
+	   Remember to select the add to menu option and their respective position within the menu.
+	
+	
+      
+      
+	Thanks for downloading the Moon Top theme    
+      
+      
+      

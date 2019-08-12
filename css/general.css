@@ -978,12 +978,12 @@ td.key, ._key {
 .tags li:after {content:'';z-index:3;position:absolute;top:10px;right:-2px;width:5px;height:6px;opacity:.95;background:#eb6b22;border-radius:3px 0 0 3px; -webkit-box-shadow:inset 1px 0 #99400e; box-shadow:inset 1px 0 #99400e;}
 .tags a, .tags span{display: block; -webkit-box-sizing: border-box;  -moz-box-sizing: border-box;  box-sizing: border-box;}
 .tags a {
-height: 28px;
-line-height: 25px;
+height: 32px;
+line-height: 28px;
 padding: 0px 6px 0 6px;
-font-size: 12px;
+font-size: 14px;
 color: #232B2B;
-width: 26px;
+width: 32px;
 margin-left: 2px;
 text-decoration: none;
 text-shadow: 0 1px white;
@@ -1014,8 +1014,8 @@ box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.
   z-index: 4;
   overflow: hidden;
   max-width: 0;
-  height: 26px;
-  line-height: 23px;
+  height: 30px;
+  line-height: 28px;
   padding: 0 0 0 2px;
   color: white;
   text-shadow: 0 -1px rgba(0, 0, 0, 0.3);
@@ -1066,7 +1066,10 @@ input:disabled { color: #B84DB8 !important; }
 	left: 0% !important;
 	text-align: right;
 	border-radius: 0;
-	text-transform: none; background-color: transparent;
+	text-transform: none;
+	background-color: transparent;
+	font-size: 1em;
+	line-height: 2.2em;
 }
 
 .dash {
@@ -1077,29 +1080,45 @@ input:disabled { color: #B84DB8 !important; }
 	font-weight: lighter;
 }
 .dash-error{
-    background: #901429;
-	background-color: #901429;
-    border:1px solid #f5aca6;
-	color:#8a1f11;
+    background: var(--danger);
+	background-color:var(--danger);
+    
+	color: #fff;
 }
 .dash-success {
     background: #468847;
 	background-color: #468847;
-    border:1px solid #a6ca8a;
+    
 }
 .dash-warning {
-    background:#F7B21D;
+    background: #F7B21D;
 	background-color:#F7B21D;
-    border:1px solid #f2c779;
+    
 }
 .dash-notice {
     background:#6FB8CF;
 	background-color:#6FB8CF;
-	border:1px solid #8ed9f6;
+	
 }
-.dash-title{ font-size: 1.3em; background-color: transparent; font-stretch: condensed; padding-top: 1em; }
+.dash-info {
+    background: var(--info);
+	background-color: var(--info);
+	
+}
+.dash-default {
+    color: #fff;
+    background-color: #999999;
+    border-color: #999999;
+    -webkit-box-shadow: 0 2px 2px 0 rgba(153, 153, 153, 0.14), 0 3px 1px -2px rgba(153, 153, 153, 0.2), 0 1px 5px 0 rgba(153, 153, 153, 0.12);
+            box-shadow: 0 2px 2px 0 rgba(153, 153, 153, 0.14), 0 3px 1px -2px rgba(153, 153, 153, 0.2), 0 1px 5px 0 rgba(153, 153, 153, 0.12);
+}
+.dash i{ padding-top: .33em; height: 100%; }			
+.dash-title{ font-size: 1.3em; background-color: transparent; font-stretch: condensed; padding-top: .33em; }
 .dash-info { font-size: 1.8em; background-color: transparent; padding-top: .2em; }
-.dash i{ padding-top: 1em; height: 100%;}
+.dash .ct-label {
+	color:white;
+	fill:white;
+}
 output{ width:18%;
 
 }
@@ -1581,3 +1600,45 @@ table .chk {
 	padding:0;
 	height: auto;
 }
+.ribbon {
+  background-color: #a00;
+  box-shadow: 0 0 10px #888;
+  left: -3.5em;
+  moz-box-shadow: 0 0 10px #888;
+  moz-transform: rotate(-45deg);
+  ms-transform: rotate(-45deg);
+  o-transform: rotate(-45deg);
+  overflow: hidden;
+  position: absolute;
+  top: 30px;
+  transform: rotate(-45deg);
+  webkit-box-shadow: 0 0 10px #888;
+  webkit-transform: rotate(-45deg);
+  white-space: nowrap;
+  width: 15em;
+  z-index: 9999;
+  pointer-events: none; }
+  .ribbon a {
+    border: 1px solid #faa;
+    color: #fff;
+    display: block;
+    font: bold 81.25% 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 1px 0;
+    padding: 10px 50px;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 0 5px #444;
+    pointer-events: none;
+}
+.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
+    stroke: var(--gray-dark) !important;
+}
+.ct-series-b .ct-bar, .ct-series-b .ct-line, .ct-series-b .ct-point, .ct-series-b .ct-slice-donut {
+    stroke: var(--primary) !important;
+}
+.menu-trigger {
+	float: left; position: relative; color: #FFF; top: 0.25em; left: 0.25em;
+}
+td.toolbar-24 div.coolCheck {
+	margin-left: .5em !important;
+}    

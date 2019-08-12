@@ -38,11 +38,14 @@ $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
 
 $xCierre		= new cCierreDelDia($fechaop);
-$EsCerrado		= $xCierre->checkCierre($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop, $xCierre->MARCA_COLOCACION);
 $forzar			= parametro("forzar", false, MQL_BOOL);	
 
 
 $next			= "./cierre_de_captacion.frm.php?s=true&k=" . $key . "&f=$fechaop";
+
+
+
 
 if($EsCerrado == true AND $forzar == false){
 	setAgregarEvento_("Cierre De Colocacion Existente", 5);
@@ -58,7 +61,7 @@ if($EsCerrado == true AND $forzar == false){
 	 *
 	 */
 
-	$aliasFil	= getSucursal() . "-eventos-al-cierre-de-colocacion-del-dia-$fechaop";
+	$aliasFil	= $xCierre->getNombreUnico();
 
 	$xLog		= new cFileLog($aliasFil);
 	$xQL		= new MQL();
@@ -69,13 +72,13 @@ if($EsCerrado == true AND $forzar == false){
 	$xF2		= new cFecha();
 	//$xPersUtils	= new cPersonasUtilerias();
 	
-	$PurgarSDPM	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAG_PURGE_DSPM);
-	
+	$PurgarSDPM		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PAG_PURGE_DSPM);
+	$PersonasPorSuc	= $xRuls->getValorPorRegla($xRuls->reglas()->PER);
 	
 	
 	$xRec->setGenerarPoliza();
 	$xRec->setForceUpdateSaldos();
-	$idrecibo	= $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO,$fechaop, 1, 12, "CIERRE_DE_COLOCACION_$fechaop", DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA, 
+	$idrecibo	= $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CREDITO,$fechaop, 1, 12, $xCierre->getTextoUnico(), DEFAULT_CHEQUE, FALLBACK_TIPO_PAGO_CAJA, 
 										DEFAULT_RECIBO_FISCAL, DEFAULT_GRUPO);
 
 	$xRec->setNumeroDeRecibo($idrecibo);
@@ -97,13 +100,14 @@ if($EsCerrado == true AND $forzar == false){
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
 		$xQL->setRawQuery("CALL `proc_crear_id_opempresas` ");			//Crea ID unico de operacion con empresas
 	}
-	$xQL->setRawQuery("CALL `proc_historial_de_pagos` ");
-	$xQL->setRawQuery("CALL `proc_creditos_a_final_de_plazo`()");
-	$xQL->setRawQuery("CALL `proc_creditos_abonos_por_mes`()");		//una vez por mes
-	$xQL->setRawQuery("CALL `proc_personas_extranjeras`()");		//personas extranjeras
-	$xQL->setRawQuery("CALL `proc_creditos_abonos_totales`()");		//Abonos totales en tmp
-	$xQL->setRawQuery("CALL `proc_creditos_abonos_parciales`()");	//Abonos mes y tipo columna
-	$xQL->setRawQuery("CALL `proc_creds_prox_letras`()");			//Abonos mes y tipo columna
+	$xQL->setCall("proc_historial_de_pagos");
+	$xQL->setCall("proc_creditos_a_final_de_plazo");
+	$xQL->setCall("proc_creditos_abonos_por_mes");
+	$xQL->setCall("proc_personas_extranjeras"); //personas extranjeras
+	$xQL->setCall("proc_creditos_abonos_totales"); //Abonos totales en tmp
+	$xQL->setCall("proc_creditos_abonos_parciales"); //Abonos mes y tipo columna
+	$xQL->setCall("proc_creds_prox_letras"); //Abonos mes y tipo columna
+	
 	
 	$xQL->setRawQuery("UPDATE operaciones_mvtos SET afectacion_real=0 AND afectacion_estadistica=0 WHERE (tipo_operacion=410 OR tipo_operacion=411 OR tipo_operacion=412 OR tipo_operacion=413) AND (afectacion_real>0) AND getEsCreditoPagado(docto_afectado) = TRUE");
 	
@@ -153,11 +157,22 @@ if($EsCerrado == true AND $forzar == false){
 		
 		$xPers->add("$ejercicio-01-01", $xF2->getFechaFinAnnio());
 		$messages		.= $xPers->getMessages();
-	}	
+	}
+	if(OPERACION_LIBERAR_SUCURSALES == false){
+		$xQL->setRawQuery("UPDATE creditos_solicitud INNER JOIN (SELECT codigo, sucursal AS sucursal_1 FROM socios_general) sc ON sc.codigo=creditos_solicitud.numero_socio SET sucursal = sc.sucursal_1");
+	}
+	
 	if(MODULO_LEASING_ACTIVADO == true){
 		$limDate		= $xF->setRestarDias(CREDITO_LEASING_DIAS_VIG_COT, $fechaop);
 		$xQL->setRawQuery("UPDATE `originacion_leasing` SET `estatus`=0 WHERE `fecha_origen`<='$limDate' AND `paso_proceso`=1");
 	}
+	//Actualizar pagos de los planes de pago
+	$xQL->setRawQuery("UPDATE `creditos_plan_de_pagos` a
+INNER JOIN `tmp_creditos_abonos_parciales` b ON a.`clave_de_credito` = b.`docto_afectado`
+SET a.`pag_cap`= b.`capital`,a.`pag_nums`= b.`numero_pagos`, a.`pag_fecha`=b.`fecha_de_pago`
+WHERE a.`estatusactivo`=1 AND a.`numero_de_parcialidad` = b.`periodo_socio`");
+	
+	$xQL->setRawQuery("UPDATE `creditos_plan_de_pagos` a SET a.`pag_fecha`=a.`fecha_de_pago` WHERE ISNULL(a.`pag_fecha`) OR a.`pag_fecha`='0000-00-00'");
 	
 	$xRec->setFinalizarRecibo(true);
 

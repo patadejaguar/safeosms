@@ -26,7 +26,7 @@ $xDic		= new cHDicccionarioDeTablas();
 //return $tab -> getString();
 //$jxc ->exportFunction('datos_del_pago', array('idsolicitud', 'idparcialidad'), "#iddatos_pago");
 //$jxc ->process();
-$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
+$clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);   $clave		= parametro("idcontrato", $clave, MQL_INT);
 $fecha		= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);  $fecha = parametro("idfecha", $fecha, MQL_DATE);
 $persona	= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito	= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -40,6 +40,10 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 
 $observaciones= parametro("idobservaciones");
 
+
+$tags		= parametro("tags", "", MQL_RAW);
+$tipo		= parametro("tipo", 0, MQL_INT);
+
 $xHP->init();
 
 $xFRM	= new cHForm("frmcontratos", "contratos-editor.new.frm.php.frm.php?action=$action");
@@ -49,14 +53,53 @@ $xFRM->setTitle($xHP->getTitle());
 /* ===========		FORMULARIO EDICION 		============*/
 $xTabla		= new cGeneral_contratos();
 //$xTabla->setData( $xTabla->query()->initByID($clave));
-$xTabla->texto_del_contrato("<!-- comentario --><h1>Titulo</h1><p>parrafo></p>");
-$xTabla->idgeneral_contratos($xTabla->query()->getLastID());
-$xFRM->OText_13("idgeneral_contratos", $xTabla->idgeneral_contratos()->v(), "TR.CLAVE");
-$xFRM->addHElem( $xSel->getListaDeTiposObjetoSistema("tipo_contrato", $xTabla->tipo_contrato()->v())->get("TR.TIPO", true));
 
-$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.ESTATUS", array("alta"=>"ALTA", "baja"=>"BAJA"));
-$xFRM->OText("titulo_del_contrato", $xTabla->titulo_del_contrato()->v(), "TR.TITULO");
-$xFRM->OHidden("texto_del_contrato", $xTabla->texto_del_contrato()->v());
+if($clave<=0){
+	$xTabla->idgeneral_contratos($xTabla->query()->getLastID());
+	$xTabla->estatus(SYS_UNO);
+	$xTabla->estatus("alta");
+	$xTabla->tags($tags);
+	$xTabla->tipo_contrato($tipo);
+	$xTabla->texto_del_contrato("<!-- comentario --><h1>Titulo</h1><p>parrafo></p>");
+	
+
+} else {
+	$xTabla->setData($xTabla->query()->initByID($clave) );
+}
+
+
+
+
+
+
+
+
+if($clave<=0){
+	$xFRM->OEntero("idgeneral_contratos", $xTabla->idgeneral_contratos()->v(), "TR.CLAVE");
+} else {
+	$xFRM->OHidden("idgeneral_contratos", $xTabla->idgeneral_contratos()->v(), "TR.CLAVE");
+}
+
+if($tipo > 0){
+	$xFRM->OHidden("tipo_contrato", $tipo);
+} else {
+	$xFRM->addHElem( $xSel->getListaDeTiposObjetoSistema("tipo_contrato", $xTabla->tipo_contrato()->v())->get("TR.TIPO", true));
+}
+
+
+//$xFRM->OSelect("estatus", $xTabla->estatus()->v() , "TR.ESTATUS", array("alta"=>"ALTA", "baja"=>"BAJA"));
+$xFRM->OText("titulo_del_contrato", $xTabla->titulo_del_contrato()->v(), "TR.NOMBRE");
+$xFRM->OText("ruta", $xTabla->ruta()->v(), "TR.RUTA");
+
+if($clave<=0){
+	$xFRM->OHidden("texto_del_contrato", $xTabla->texto_del_contrato()->v());
+	$xFRM->OHidden("tags", $xTabla->tags()->v());
+	$xFRM->OHidden("estatus", $xTabla->estatus()->v());
+} else {
+	$xFRM->OText("tags", $xTabla->tags()->v(), "TR.TAGS");
+	$xFRM->OSiNo("TR.ESTATUSACTIVO", "estatus", $xTabla->estatus()->v(), true);
+	
+}
 
 $xFRM->addCRUD($xTabla->get(), true);
 

@@ -38,7 +38,11 @@ var SegGen		= function(){};
 var FechaGen	= function(){};
 var LeasGen		= function(){};
 var AppGen		= function(){};
-
+var CadenaUtils = function(){};
+var CssGen		= function(){};
+var RepGen		= function(){};
+var UserGen		= function(){};
+var TableW 		= function(){};
 //---------------------------- Funciones generales
 /*function parseFechaMX(str) {
 	// this example parses dates like "month/date/year"
@@ -290,12 +294,15 @@ FrmGen.prototype.isDis	= function(id){
 	
 }
 FrmGen.prototype.tagAdd = function(mTag, id){
+	var xCad	= new CadenaUtils();
 	var div1	= ",";
 	var str		= this.tagRem(mTag, id);
-	str			+= (str == "") ? mTag : div1 + mTag;
+	str			= xCad.pegar(str, mTag, div1);
+	str			= xCad.cleanTag(str);
 	return str;
 }
 FrmGen.prototype.tagRem = function(mTag, id){
+	var xCad	= new CadenaUtils();
 	var div1	= ",";
 	var div2	= "=";
 	var txt		= $("#" + id).val();
@@ -310,8 +317,8 @@ FrmGen.prototype.tagRem = function(mTag, id){
 			var vv	= arrT[x];
 			var va	= String( $.trim(vv) ).split(div2);
 			
-			console.log(va[0]);
-			console.log(vaT[0]);
+			//console.log(va[0]);
+			//console.log(vaT[0]);
 			
 			if(va[0] == vaT[0]){
 				
@@ -345,20 +352,51 @@ Gen.prototype.aMonedaForm = function(){
 		}
 	});
 }
+
+
+function getFnName(fn) {
+  var f = typeof fn == 'function';
+  var s = f && ((fn.name && ['', fn.name]) || fn.toString().match(/function ([^\(]+)/));
+  return (!f && 'not a function') || (s && s[1] || 'anonymous');
+}
+
 Gen.prototype.aMoneda	= function(opts){
 	var charCode 	= 0;
 	opts			= (typeof opts == "undefined") ? {} : opts;
 	var id0			= (typeof opts.idDesde == "undefined") ? "" : "#" + opts.idDesde;
 	var id1			= (typeof opts.idPara == "undefined") ? "" : "#" + opts.idPara;
+	var addFunc		= true;
 
 	if (typeof opts.evt != "undefined" ) {
 		charCode = ( opts.evt.charCode) ? opts.evt.charCode : ((opts.evt.which) ? opts.evt.which : opts.evt.keyCode);
 	}
-	$(id0).blur(function(){
+	var xLocFunc = function(){
 		var vv		=  flotante($(id0).val() );
 		$(id1).val( vv );
 		$(id0).val( getFMoney(vv));
-	});
+	};
+	/*$(id0).off('blur', xFunc
+		
+	).on ('blur', xLocFunc  );*/
+	var mObj		= $._data( $(id0)[0], 'events' ).blur;
+	for( xF in mObj){
+		var mFnc 	= mObj[xF];
+		if(typeof mFnc.handler != "undefined"){
+			var fx		= getFnName( mFnc.handler );
+			if(fx== "xLocFunc"){
+				addFunc		= false;
+			}
+			//var str		= JSON.stringify(mFnc.handler);
+			//console.log( fx );			
+		}
+
+			
+	}
+	if(addFunc == true){
+		$(id0).on ('blur', xLocFunc );
+	}
+	
+	
 	if ( (charCode >= 48 && charCode <= 57)||(charCode >= 96 && charCode <= 105)||charCode==188||charCode==190||charCode==110||charCode==46||charCode==8 ){
 
 	} else {
@@ -373,7 +411,11 @@ function session(v1,v2){
 	if(typeof v2 == "undefined"){
 		return window.localStorage.getItem(v1);
 	} else {
-		window.localStorage.setItem(v1, v2);
+		if(v2 === null){
+			window.localStorage.removeItem(v1);	
+		} else {
+			window.localStorage.setItem(v1, v2);
+		}
 		return 0;
 	}
 }
@@ -769,7 +811,7 @@ Gen.prototype.moneda 		= function(vF, decimals){
 Gen.prototype.addDocuments	= function(t,v){
 	var self		= this;
 	//t=Configuracion.credito.origen.arrendamiento
-	self.w({url: "../frmutils/subir-archivo.frm.php?tipo=" + t + "&clave=" + v, tab:true})
+	self.w({url: "../frmutils/subir-archivo.frm.php?tipo=" + t + "&clave=" + v, tiny:true,ajustarAlto:true})
 }
 Gen.prototype.notify	= function(opts){
 	opts 		= (typeof opts == "undefined" ) ? {} : opts;
@@ -870,7 +912,19 @@ Gen.prototype.onlyreadInput	= function(id){
 		$("#" + idm).attr("readonly", "readonly");
 	}
 }
-
+Gen.prototype.findInGrid 	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var src		= (typeof opts.src == "undefined") ? "" : opts.src;
+	var str		= (typeof opts.where == "undefined") ? "" : opts.where;
+	
+	if(str !== ""){
+		str			= "&w="  + base64.encode(str);
+		$('#' + src).jtable('destroy');
+		setTimeout("jsLG" + src + "('" + str + "')", 10);
+	}
+	
+	return true;
+}
 function tipList(id, msg, title){ alert("deprecated"); }
 function tipMsg(id, msg){ alert("deprecated"); }
 
@@ -1075,7 +1129,6 @@ if (typeof jQuery != "undefined") {
 					}).html(message);
 				}
 		});
-		
 }
 function tip(id, msg, delay, cont, callback){
 		delay 			= (typeof delay == "undefined") ? 1000 : delay;
@@ -1856,6 +1909,33 @@ Gen.prototype.onLoad	= function(fnc){
 		session(Configuracion.session.reloadform, "1");
 	}
 }
+Gen.prototype.setOrderReload	= function(opts){
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var idfrm	= (typeof opts.frm == "undefined") ? "" : opts.frm;
+	
+	if(idfrm !== ""){
+		session(idfrm, idfrm);
+		setLog("Se agenda : " + idfrm);
+	}
+}
+Gen.prototype.getOrderReload	= function(opts){
+	
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var callB	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var idfrm	= (typeof opts.frm == "undefined") ? "" : opts.frm;
+	
+	if(idfrm !== ""){
+		if(session(idfrm) === null){
+			setLog("No se recarga : " + idfrm);
+		} else {
+			session(idfrm, null);
+			setLog("Recargando : " + idfrm);
+			return true;
+		}
+	}
+	return false;
+}
+
 Gen.prototype.crudAdd	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
@@ -1940,8 +2020,12 @@ Gen.prototype.editar	= function(opts){
 	var tbl		= (typeof opts.tabla == "undefined") ? "" : opts.tabla;
 	var id		= (typeof opts.id == "undefined") ? "" : opts.id;
 	var callB	= (typeof opts.callback == "undefined") ? "" : opts.callback;
-	//$.cookie.json 	= true;
 	var mURL	= "../utils/frm8db7028bdcdf054882ab54f644a9d36b.php?tabla=" + tbl + "&clave=" +  id;
+	if(tbl == "socios_vivienda"){
+		mURL	= "../frmsocios/personas-vivienda.edit.frm.php?clave=" + id;
+	}
+	//$.cookie.json 	= true;
+	
 	this.w({ url : mURL, tiny : true});
 }
 Gen.prototype.LoadFromCache	= function(opts){
@@ -1987,7 +2071,7 @@ Gen.prototype.dec	= function(str){
 		}
 	return str;
 }
-var TableW 		= function(){}
+
 TableW.prototype.add	= function(opts){
 	opts		= (typeof opts == "undefined") ? {} : opts;
 	var mID		= (typeof opts.id == "undefined") ? "" : opts.id;
@@ -2052,6 +2136,18 @@ TableW.prototype.addRow	= function(opts){
 }
 TableW.prototype.addCol	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
+}
+TableW.prototype.exportTables = function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	jQuery("table").each(function() {
+		var n 		= new Date().getTime()
+		var nFile	= (typeof $(this).id == "undefined") ? "" : $(this).id;
+		var ctitle	= $(this).find("caption");
+		nFile		+= (typeof ctitle == "undefined") ? "" :"-" + ctitle.text();
+		nFile		+= "-" + n;
+		
+		$(this).tableExport({bootstrap: false,position:'bottom',fileName:nFile, formats: ["xls"]  });
+	});
 }
 //---------------------- INIT CREDITOS
 CredGen.prototype.getImprimirSolicitud	= function(idcredito){
@@ -2570,6 +2666,13 @@ CredGen.prototype.getCuotaDePago	= function(opts){
 		case 30:
 			vTasaFactor	= 12;
 		break;
+		case 60:
+			vTasaFactor	= 6;
+		break;
+	
+		case 365:
+			vTasaFactor	= 1;
+			break;
 		default:
 			vTasaFactor	= 12;
 			break;
@@ -2578,9 +2681,6 @@ CredGen.prototype.getCuotaDePago	= function(opts){
 	//console.log(Tasa);
 	var P		= (-vCapital * Math.pow(1+Tasa,vPagos) + vResidual) / ((1 + Tasa * vTipo)*((Math.pow((1 + Tasa),vPagos) - 1) / Tasa));
 	return redondear((P* (-1)),2);
-		/*
-		    double P = (- NPV * pow(1+IntRate,NumPay) + FV) /               ((1 + IntRate * bStart)*((pow((1 + IntRate),NumPay) - 1) /              IntRate));
-		*/
 }
 //Leasing
 CredGen.prototype.getLeasingPropuesta	= function(id){
@@ -2745,15 +2845,22 @@ PersGen.prototype.getFormaBusqueda	= function(opts){
 	var oargs	= (typeof opts.args == "undefined") ? "" : opts.args;
 	var postevt	= (typeof opts.onclose == "undefined") ? "" : "&callback=" + opts.onclose;
 	var vSoloF	= (typeof opts.solofisicas == "undefined") ? "" : "&solofisicas=" + opts.solofisicas;
+	var xG		= new Gen();
 	
 	var vTipoI	= "";
+	session(ID_PERSONA, 0);
 	//define el tipo de persona
 	if (typeof $('#' + control).closest('form').attr('data-tipodepersona') != "undefined") {
 		vTipoI	= $('#' + control).closest('form').attr('data-tipodepersona');
 		vTipoI	= "&tipodeingreso=" + vTipoI;
 	}
 	session("idpersona.control.dx", control);
-	var xG		= new Gen(); xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + vSoloF + oargs, tiny : true, h: 600, w : 800, callback:jcallb});
+	if(nxt !== ""){
+		xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + vSoloF + oargs, principal:true, callback:jcallb});	
+	} else {
+		xG.w({ url : "../utils/frmbuscarsocio.php?control="  + control + vTipoI + nxt + vSoloF + oargs, tiny : true, h: 600, w : 800, callback:jcallb});	
+	}
+	
 }
 
 PersGen.prototype.getBuscarCreditos	= function(){
@@ -2930,7 +3037,7 @@ PersGen.prototype.setBuscarEnListas	= function(opts){
 }
 PersGen.prototype.getRiesgoDeCredito	= function(idpersona){
 	//opts		= (typeof opts == "undefined") ? {} : opts;
-	var xG		= new Gen(); xG.w({ url : "../frmsocios/personas.riesgo-creditos.frm.php?persona=" + idpersona, tiny : true, h: 600, w : 800});
+	var xG		= new Gen(); xG.w({ url : "../frmsocios/personas.riesgo-creditos.frm.php?persona=" + idpersona, tiny : true, ajustarAlto:true, w : 800});
 }
 PersGen.prototype.setAddReferenciaBancaria	= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -3224,6 +3331,20 @@ PersGen.prototype.getReporteSIC	= function(id){
 		xG.w({ url: xrl, tab : true });
 	}
 }
+PersGen.prototype.getPersonaEnSession	= function(src){
+	var idpersona	= entero(session(ID_PERSONA));
+	
+	if(idpersona > DEFAULT_SOCIO){
+		if(src){
+			$(src).val(idpersona);
+		}
+	} else {
+		idpersona = 0;
+	}
+	
+	return idpersona;
+}
+
 //--------------------------- INIT CAPTACION
 CaptGen.prototype.goToPanel	= function(idcuenta){
 	var gURL = "../frmcaptacion/cuentas.panel.frm.php?cuenta=" + idcuenta;
@@ -3506,6 +3627,16 @@ RecGen.prototype.setCuadrar			= function(opts){
 	var xG			= new Gen();
 
 	xG.svc({url: "recibos.svc.php?cmd=cuadrar" + idrec + idmonto, callback: callB});
+}
+RecGen.prototype.setCambiarFecha			= function(opts){
+	opts			= (typeof opts == "undefined") ? {} : opts;
+	var idfecha		= (typeof opts.fecha == "undefined" ) ? "" : "&idfecha=" + opts.fecha;
+	var idrec		= (typeof opts.recibo == "undefined" ) ? "" : "&recibo=" + opts.recibo;
+	var callB		= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+
+	var xG			= new Gen();
+
+	xG.svc({url: "recibos.svc.php?cmd=fecha" + idrec + idfecha, callback: callB});
 }
 RecGen.prototype.getDescripcion			= function(opts){
 	opts			= (typeof opts == "undefined") ? {} : opts;
@@ -3822,25 +3953,28 @@ DomGen.prototype.setColoniasXCP = function (obj){
 			});
 }
 DomGen.prototype.getColoniasXCP = function (obj){
-
-	var idKey		= "codigo";
-	var dlSRC		= "dl" + obj.id;
-	var nGen		=  new Gen();
-	var ByEstado	= "";
-	//if ($("#identidadfederativa").length > 0) { ByEstado	= "&e=" + $("#identidadfederativa").val() ;	}
-	var xUrl	= "../svc/colonias.svc.php?action=LIST&lim=55&cp=" + obj.value + ByEstado;
-
-	if ( String(obj.value).length >= 3 ) {
-		$("#" + dlSRC).empty();
-
-		nGen.DataList({
-			url : xUrl,
-			id : dlSRC,
-			key : idKey,
-			label : "nombre",
-			presaved : "cp-"
-			});
-			//console.log($("#" + dlSRC).html());
+	if(typeof obj == "undefined"||obj == null){
+		
+	} else {
+		var idKey		= "codigo";
+		var dlSRC		= "dl" + obj.id;
+		var nGen		=  new Gen();
+		var ByEstado	= "";
+		//if ($("#identidadfederativa").length > 0) { ByEstado	= "&e=" + $("#identidadfederativa").val() ;	}
+		var xUrl	= "../svc/colonias.svc.php?action=LIST&lim=55&cp=" + obj.value + ByEstado;
+	
+		if ( String(obj.value).length >= 3 ) {
+			$("#" + dlSRC).empty();
+	
+			nGen.DataList({
+				url : xUrl,
+				id : dlSRC,
+				key : idKey,
+				label : "nombre",
+				presaved : "cp-"
+				});
+				//console.log($("#" + dlSRC).html());
+		}
 	}
 }
 
@@ -4386,7 +4520,10 @@ var validacion = {
 			return ok;
 		},
 		novacio : function(v){
-				return (String(v).length <=0) ? false : true;
+			if(v === null){
+				return false;
+			}
+			return (String(v).length <=0) ? false : true;
 		},
 		persona : function(v){
 			var ok		= true;
@@ -4507,10 +4644,12 @@ FechaGen.prototype.getDiffEnDias	= function(FechaMayor, FechaMenor){
 	FechaComp	= self.get(FechaMayor);
 	FechaRef	= self.get(FechaMenor);
 	
-	var xF		= new XDate(FechaComp);
+	var xF		= new XDate(FechaRef);
 	
-	var res		= xF.diffDays(FechaRef);
-	//console.log("fecha " + res + "---FechaComp:" + FechaComp + "---FechaRef:" + FechaRef);
+	var res		= xF.diffDays(FechaComp);
+	
+	setLog("Resultado en dias: " + res + " --- FechaMayor:" + FechaComp + " --- FechaMenor:" + FechaRef);
+	
 	return res;
 }
 FechaGen.prototype.setSumarDias	= function(vFecha, days){
@@ -4561,7 +4700,7 @@ BanGen.prototype.setNuevoDeposito = function (opts){
 		}
 	});
 }
-var CssGen	= function(){}
+
 
 CssGen.prototype.get 	= function(stat){
 		var obj = {background : "#ffecec", border : "#f5aca6"};
@@ -4620,4 +4759,125 @@ AppGen.prototype.sync = function(opts){
 		}
 	});
 	
+}
+CadenaUtils.prototype.pegar	= function(str, addStr, glue){
+	glue = (typeof glue == "undefined") ? "," : glue;
+	if(str == ""){
+		str = addStr;
+	} else {
+		str = String(str).concat(glue, addStr);
+	}
+	return str;
+}
+CadenaUtils.prototype.cleanTag	= function(str){
+	return String(str).replace(/[^-A-Za-z0-9-=\,]+/g, "");
+}
+
+LeasGen.prototype.cotizadorEditable = function(opts){
+		var xG		= new Gen();
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var paso	= (typeof opts.paso == "undefined") ? 0 : opts.paso;
+	
+	paso		= entero(paso);
+	//console.log("Paso " + paso);
+	if(paso <= 0){
+		return false;
+	} else {
+		if(paso != 10 && paso != 20 && paso != 30 && paso != 50 && paso != 501 && paso != 98){
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+RepGen.prototype.getHiddens	= function(opts){
+	var xG		= new Gen();
+	var xCad	= new CadenaUtils();
+	var self	= this;
+
+	opts		= (typeof opts == "undefined") ? {} : opts;
+	var jscall	= (typeof opts.callback == "undefined") ? function(){} : opts.callback;
+	var clave	= (typeof opts.clave == "undefined") ? 0 : opts.clave;
+	var filtro	= (typeof opts.filtro == "undefined") ? "" : opts.filtro;
+	
+	var str		= base64.encode("SELECT * FROM general_reports WHERE (MD5(CONCAT(`idgeneral_reports`,`aplica`)) = MD5('" + clave + filtro + "'))");
+	var vURL	= "../svc/datos.svc.php?q=" + str;
+	var tthidden= "";
+	self.resetHiddens();
+	//setLog(vURL);
+	//if(clave > 0){
+		$.cookie.json 	= true;
+		$.getJSON( vURL, function( data ) {
+			
+			try { data = JSON.parse(data); } catch (e){}
+			
+			if (typeof data == "undefined") {
+				xG.alerta({msg : "Error al procesar el registro"});
+			} else {
+				if (typeof data.message != "undefined") {
+					if ($.trim(data.message) !== "") {
+						xG.alerta({ msg : data.message });
+					}
+				}
+				
+				for (var mItem in data) {
+					var mRec		= data[mItem];
+					var hiddens		= String(mRec.hinactivos).split(",");
+					tthidden 		= xCad.pegar(tthidden, mRec.hinactivos, ",");
+					
+					for( hh in hiddens){
+						var strHidden	= hiddens[hh];
+						xG.verControl(strHidden, false);
+					}
+				}
+				
+				session("v.session.reports.hidden", tthidden);
+				
+				jscall(data);
+				data=null;
+			}
+		});
+	
+	
+	//}
+}
+RepGen.prototype.resetHiddens	= function(){
+	
+	var xHidd			= session("v.session.reports.hidden");
+	
+	if(validacion.novacio(xHidd)){
+		var xG			= new Gen();
+		var hiddens		= String( xHidd ).split(",");
+		
+		for( hh in hiddens){
+			var strHidden	= hiddens[hh];
+			xG.verControl(strHidden, true);
+		}
+	} else {
+		setLog("No hay Hiddens");
+	}
+
+}
+UserGen.prototype.resetPassword = function(email){
+	
+	if(!validacion.email(email)){
+		xG.alerta({msg: "Capture un Correo Electronico Valido", raw:true, tipo:"error"});
+	} else {
+		xG.spinInit();
+		xG.svc({
+			url: "pc.svc.php?cmd=RECOVER-PASS&email=" + email,
+			callback: function(data){
+				xG.spinEnd();
+				if(typeof data.message != "undefined"){
+					
+					if(data.error == true){
+						xG.aviso({msg: data.message, raw:true, tipo:"error"});
+					} else {
+						xG.aviso({msg: data.message, raw:true, tipo:"info"});
+					}
+				}
+			}
+		});
+	}
 }

@@ -39,7 +39,7 @@ $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
 
 $xCierre		= new cCierreDelDia($fechaop);
-$EsCerrado		= $xCierre->checkCierre($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop, $xCierre->MARCA_SEGUIMIENTO);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
 $next			= "./cierre_de_contabilidad.frm.php?s=true&k=" . $key . "&f=$fechaop";
@@ -59,7 +59,7 @@ getEnCierre(true);
 	 *
 	 */
 	if(MODULO_SEGUIMIENTO_ACTIVADO == true){
-		$aliasFil		= getSucursal() . "-eventos-al-cierre-de-seguimiento-del-dia-$fechaop";
+		$aliasFil		= $xCierre->getNombreUnico();
 	
 		$xLog			= new cFileLog($aliasFil);
 	

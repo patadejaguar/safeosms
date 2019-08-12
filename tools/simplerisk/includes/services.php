@@ -17,20 +17,20 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
  *************************************/
 function simplerisk_service_call($data)
 {
-        // Call the URL
-        $url = "https://services.simplerisk.com/index.php";
-        $options = array(
-                'http' => array(
-                'header' => "Content-type: application/x-www-form-urlencoded\r\r",
-                'method' => 'POST',
-                'content' => http_build_query($data),
-                )
-        );
-        $context = stream_context_create($options);
-        $result = file($url, NULL, $context);
+    // Call the URL
+    $url = "https://services.simplerisk.com/index.php";
+    $options = array(
+        'http' => array(
+            'header' => "Content-type: application/x-www-form-urlencoded\r\r",
+            'method' => 'POST',
+            'content' => http_build_query($data),
+        )
+    );
+    $context = stream_context_create($options);
+    $result = file($url, NULL, $context);
 
-        // Return the result
-        return $result;
+    // Return the result
+    return $result;
 }
 
 /****************************
@@ -38,7 +38,7 @@ function simplerisk_service_call($data)
  ****************************/
 function download_extra($name)
 {
-	global $escaper;
+	global $escaper, $lang;
 
 	// SimpleRisk directory
 	$simplerisk_dir = realpath(__DIR__ . '/../');
@@ -78,107 +78,160 @@ function download_extra($name)
 	// Get the services API key
 	$services_api_key = get_setting("services_api_key");
 
-        // Create the data to send
-        $data = array(
-                'action' => 'download_extra',
-		'extra_name' => $name,
-                'instance_id' => $instance_id,
-		'api_key' => $services_api_key,
-        );
+    // Create the data to send
+    $data = array(
+        'action' => 'download_extra',
+        'extra_name' => $name,
+        'instance_id' => $instance_id,
+        'api_key' => $services_api_key,
+    );
 
 	$result = simplerisk_service_call($data);
-	
-	// If the service returned an unmatched IP address
-	if ($result[0] == "<result>Unmatched IP Address</result>")
-	{
+
+    if (!$result || !is_array($result)) {
+        set_alert(true, "bad", $lang['FailedToDownloadExtra']);
+
+        // Return a failure
+        return 0;
+    }
+
+    if (preg_match("/<result>(.*)<\/result>/", $result[0], $matches)) {
+        switch($matches[1]) {
+            case "Not Purchased":
                 // Display an alert
-                set_alert(true, "bad", "Your SimpleRisk instance was registered with a different IP address. Please contact support@simplerisk.com for assistance.");
+                set_alert(true, "bad", $lang['RequestedExtraIsNotPurchased']);
 
                 // Return a failure
                 return 0;
-	}
-	// Otherwise
-	else
-	{
-		// Write the extra to a file in the temporary directory
-		$extra_file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
-		$result = file_put_contents($extra_file, $result);
 
-        	// Decompress the extra file
-        	$buffer_size = 4096;
-        	$out_file_name = str_replace('.gz', '', $extra_file);
-        	$file = gzopen($extra_file, 'rb');
-        	$out_file = fopen($out_file_name, 'wb');
-        	while (!gzeof($file))
-        	{
-        	        fwrite($out_file, gzread($file, $buffer_size));
-        	}
-        	fclose($out_file);
-        	gzclose($file);
+            case "Invalid Extra Name":
+                // Display an alert
+                set_alert(true, "bad", $lang['RequestedExtraDoesNotExist']);
 
-        	// Extract the tar to the tmp directory
-        	$phar = new PharData(sys_get_temp_dir() . '/' . $name . ".tar");
-        	$phar->extractTo(sys_get_temp_dir(), null, true);
+                // Return a failure
+                return 0;
 
-		// Copy to the extras directory
-		$source = sys_get_temp_dir() . '/' . $name;
-		$destination = $extras_dir . '/' . $name;
-		recurse_copy($source, $destination);
+            case "Unmatched IP Address":
+                // Display an alert
+                set_alert(true, "bad", $lang['InstanceWasRegisteredWithDifferentIp']);
 
-		// Clean up files
-		$file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
-		delete_file($file);
-		$file = sys_get_temp_dir() . '/' . $name . '.tar';
-		delete_file($file);
-        	delete_dir($source);
+                // Return a failure
+                return 0;
 
-		// Display an alert
-		set_alert(true, "good", "Extra installed successfully.");
+            case "Instance Disabled":
+                // Display an alert
+                set_alert(true, "bad", $lang['InstanceIsDisabled']);
 
-		// Return a success
-		return 1;
-	}
+                // Return a failure
+                return 0;
+
+            case "Invalid Instance or Key":
+                // Display an alert
+                set_alert(true, "bad", $lang['InvalidInstanceIdOrKey']);
+
+                // Return a failure
+                return 0;
+
+            default:
+                // Display an alert
+                set_alert(true, "bad", $lang['FailedToDownloadExtra']);
+
+                // Return a failure
+                return 0;
+        }
+    } else {
+        // Write the extra to a file in the temporary directory
+        $extra_file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
+
+        // Try to remove the file to make sure we can create the new one
+        delete_file($extra_file);
+
+        //Check if we succeeded
+        if (file_exists($extra_file)) {
+            // Display an alert
+            set_alert(true, "bad", $lang['FailedToCleanupExtraFiles']);
+
+            // Return a failure
+            return 0;
+        }
+
+        $result = file_put_contents($extra_file, $result);
+
+        // Decompress the extra file
+        $buffer_size = 4096;
+        $out_file_name = str_replace('.gz', '', $extra_file);
+        $file = gzopen($extra_file, 'rb');
+        $out_file = fopen($out_file_name, 'wb');
+        while (!gzeof($file))
+        {
+            fwrite($out_file, gzread($file, $buffer_size));
+        }
+        fclose($out_file);
+        gzclose($file);
+
+        // Extract the tar to the tmp directory
+        $phar = new PharData(sys_get_temp_dir() . '/' . $name . ".tar");
+        $phar->extractTo(sys_get_temp_dir(), null, true);
+
+        // Copy to the extras directory
+        $source = sys_get_temp_dir() . '/' . $name;
+        $destination = $extras_dir . '/' . $name;
+        recurse_copy($source, $destination);
+
+        // Clean up files
+        $file = sys_get_temp_dir() . '/' . $name . '.tar.gz';
+        delete_file($file);
+        $file = sys_get_temp_dir() . '/' . $name . '.tar';
+        delete_file($file);
+        delete_dir($source);
+
+        // Display an alert
+        set_alert(true, "good", $lang['ExtraInstalledSuccessfully']);
+
+        // Return a success
+        return 1;
+    }
 }
 
 /**************************
  * FUNCTION: RECURSE COPY *
  **************************/
 function recurse_copy($src, $dst) {
-        // Get the source directory
-        $dir = opendir($src);
-        $result = ($dir === false ? false : true);
+    // Get the source directory
+    $dir = opendir($src);
+    $result = ($dir === false ? false : true);
 
-        // If the source exists
-        if ($result !== false){
-                // If the destination does not exist
-                if (!is_dir($dst))
-                {
-                        // Create the destination
-                        $result = @mkdir($dst);
-                }
-
-                // If the destination exists
-                if ($result === true){
-                        // Iterate through the source directory
-                        while(false !== ( $file = readdir($dir)) ) {
-                                if (( $file != '.' ) && ( $file != '..' ) && $result) {
-                                        // If it is a directory
-                                        if ( is_dir($src . '/' . $file) ) {
-                                                // Recursive copy the files in it
-                                                $result = recurse_copy($src . '/' . $file,$dst . '/' . $file);
-                                        }
-                                        // Otherwise, just copy the files
-                                        else {
-                                                $result = copy($src . '/' . $file,$dst . '/' . $file);
-                                        }
-                                }
-                        }
-                        // Close the directory
-                        closedir($dir);
-                }
+    // If the source exists
+    if ($result !== false){
+        // If the destination does not exist
+        if (!is_dir($dst))
+        {
+            // Create the destination
+            $result = @mkdir($dst);
         }
-        // Return a success or failure
-        return $result;
+
+        // If the destination exists
+        if ($result === true){
+            // Iterate through the source directory
+            while(false !== ( $file = readdir($dir)) ) {
+                if (( $file != '.' ) && ( $file != '..' ) && $result) {
+                    // If it is a directory
+                    if ( is_dir($src . '/' . $file) ) {
+                        // Recursive copy the files in it
+                        $result = recurse_copy($src . '/' . $file,$dst . '/' . $file);
+                    }
+                    // Otherwise, just copy the files
+                    else {
+                        $result = copy($src . '/' . $file,$dst . '/' . $file);
+                    }
+                }
+            }
+            // Close the directory
+            closedir($dir);
+        }
+    }
+    // Return a success or failure
+    return $result;
 }
 
 /***************************

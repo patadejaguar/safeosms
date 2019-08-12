@@ -23,11 +23,16 @@ if (!defined('GSIMAGEWIDTH')) {
 if ($_POST['sessionHash'] === $SESSIONHASH) {
 	if (!empty($_FILES)){
 		
-		$tempFile = $_FILES['Filedata']['tmp_name'];
-		$name = clean_img_name(to7bit($_FILES['Filedata']['name']));
-		$targetPath = (isset($_POST['path'])) ? GSDATAUPLOADPATH.$_POST['path']."/" : GSDATAUPLOADPATH;
+		$tempFile  = $_FILES['Filedata']['tmp_name'];
+		
+		$file      = $_FILES['Filedata']['name'];
+		$extension = pathinfo($file,PATHINFO_EXTENSION);
+		if(getDef('GSUPLOADSLC',true)) $extension = lowercase($extension);
+  		$name      = pathinfo($file,PATHINFO_FILENAME);
+		$name      = clean_img_name(to7bit($name));
 
-		$targetFile =  str_replace('//','/',$targetPath) . $name;
+		$targetPath = (isset($_POST['path'])) ? GSDATAUPLOADPATH.$_POST['path']."/" : GSDATAUPLOADPATH;
+		$targetFile =  str_replace('//','/',$targetPath) . $name . '.'.$extension;
 		
 		//validate file
 		if (validate_safe_file($tempFile, $_FILES["Filedata"]["name"])) {
@@ -43,11 +48,9 @@ if ($_POST['sessionHash'] === $SESSIONHASH) {
 			// invalid file
 		}
 		 
-		$path = (isset($_POST['path'])) ? $_POST['path']."/" : "";
-		$thumbsPath = GSTHUMBNAILPATH.$path;
-			
+		$path = (isset($_POST['path'])) ? $_POST['path']."/" : "";			
 		require('inc/imagemanipulation.php');	
-		genStdThumb(isset($_POST['path']) ? $_POST['path']."/" : '',$name);	
+		genStdThumb(isset($_POST['path']) ? $_POST['path']."/" : '',$name.'.'.$extension);	
 
 		die('1');
 		// success

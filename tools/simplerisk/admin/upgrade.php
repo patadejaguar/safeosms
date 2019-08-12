@@ -16,10 +16,11 @@
     // Add various security headers
     add_security_headers();
 
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
     if (!isset($_SESSION))
     {
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRiskDBUpgrade');
         session_start();
     }
@@ -47,7 +48,7 @@
         if (is_valid_user($user, $pass, true))
         {
             // Set the user permissions
-            set_user_permissions($user, $pass, true);
+            set_user_permissions($user, true);
             
             // Check if the user is an admin
             if (isset($_SESSION["admin"]) && $_SESSION["admin"] == "1")
@@ -85,7 +86,10 @@
 
 <html ng-app="SimpleRisk">
   <head>
-    <title>SimpleRisk: Enterprise Risk Management Simplified</title>
+      <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
+      <title>SimpleRisk: Enterprise Risk Management Simplified</title>
+      <script src="../js/jquery.min.js"></script>
+
       <!-- build:css vendor/vendor.min.css -->
       <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" media="screen" />
       <!-- endbuild -->
@@ -98,6 +102,9 @@
 
       <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
       <link rel="stylesheet" href="../css/theme.css">
+      <?php
+          setup_alert_requirements("..");
+      ?>      
   </head>
 
   <body ng-controller="MainCtrl" class="login--page">
@@ -155,12 +162,19 @@
             echo "<div class=\"span9\">\n";
             echo "<div class=\"well\">\n";
 
-                        // Upgrade the database
-                        upgrade_database();
+            // Upgrade the database
+            upgrade_database();
+
             // Convert tables to InnoDB
             convert_tables_to_innodb();
+
             // Convert tables to utf8_general_ci
             convert_tables_to_utf8();
+
+            // Display the clear cache warning
+            display_cache_clear_warning();
+
+            echo "<br /><br />!-- " . $escaper->escapeHtml($lang['UPGRADECOMPLETED']) . " --!\n";
 
             echo "</div>\n";
             echo "</div>\n";

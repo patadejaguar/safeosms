@@ -81,6 +81,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				
 	} else {
 		$xCred->setRevisarSaldo();
+		
 		//Define si forza la carga de estado
 		if($xF->getInt($xCred->getFechaUltimoDePago()) >= $xF->getInt(fechasys()) ) {
 			$CargarEstado	= true;
@@ -351,8 +352,14 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 				if($cMovs->getRowCount()>0){ $xHTabs->addTab("TR.Historial", $HSDPM); }				
 			//}
 			if(MODO_DEBUG == true){
-			
-				$xHTabs->addTab("TR.Sistema", $xCred->getMessages(OUT_HTML));
+				
+				
+				$OMontos	= $xCred->getOMontos();
+				$infoSys	= $OMontos->setExplain();
+				$infoSys	.= $xCred->getMessages(OUT_HTML);
+				//$OMontos->setActualizarPorLetras();
+				
+				$xHTabs->addTab("TR.Sistema", $infoSys);
 				$oFrm->addLog($xCred->getMessages());
 			}
 			$xLog	= new cCoreLog();
@@ -387,6 +394,9 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 		$oFrm->OButton("TR.VER FLOTA", "jsGetFlota(" . $xCred->getClaveDeOrigen() . ")", $oFrm->ic()->TRUCK);
 	}
 	
+	
+	$oFrm->addJsReload();
+	
 	$oFrm->addCerrar();
 	
 	echo $oFrm->get();
@@ -407,7 +417,7 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	
 	
 	function printplan(elplan) { ogen.w({ url: "../rpt_formatos/rptplandepagos.php?idrecibo=" + elplan + "&p=" + siAvales, tab:true }); }
-	function jsActualizarCredito(){ ogen.w({ url: "../frmcreditos/credito.actualizar.frm.php?credito=" + idCredito, tab : true }); }
+	function jsActualizarCredito(){ ogen.w({ url: "../frmcreditos/credito.actualizar.frm.php?credito=" + idCredito, tiny : true }); }
 	
 	function jsRenegociar(){ ogen.w({ url: "../frmcreditos/renegociar.frm.php?credito=" + idCredito, w:800, h:650, tiny : true }); }
 	function jsRenovar(){ ogen.w({ url: "../frmcreditos/renovar.frm.php?credito=" + idCredito, w:800, h:650, tiny : true }); }
@@ -462,13 +472,8 @@ if ( setNoMenorQueCero($idsolicitud) <= DEFAULT_CREDITO) {
 	function jsGetCirculoDeCredito(id){ xC.getReporteSIC(id); }
 </script>	
 <?php
-	if($idsolicitud> DEFAULT_CREDITO){
-		$xHP->addReload();	
-	}
 }
-?>
-</body>
-<?php
+$xHP->fin();
 //memprof_dump_callgrind(fopen("/tmp/cachegrind.out." . rand(0, 500), "w"));
 //echo $xJs->get();
 ?>

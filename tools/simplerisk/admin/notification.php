@@ -16,17 +16,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -129,6 +129,7 @@ function display($display = "")
 <html>
 
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
     <title>SimpleRisk: Enterprise Risk Management Simplified</title>
@@ -143,6 +144,9 @@ function display($display = "")
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    <?php
+        setup_alert_requirements("..");
+    ?>    
   </head>
 
   <body>
@@ -174,13 +178,24 @@ function display($display = "")
             $("#cron_period").change(function(){
                 var period = $(this).val();
                 
-                $(".specified_time_holder").hide();
-                $("input, select", ".specified_time_holder").prop('disabled', true);
+                $(".specified_time_holder", "#past-due-container").hide();
+                $("input, select", "#past-due-container .specified_time_holder").prop('disabled', true);
                 
-                $("#specified_" + period).show();
-                $("input, select", "#specified_" + period).prop('disabled', false);
+                $("#specified_" + period, "#past-due-container").show();
+                $("input, select", "#past-due-container #specified_" + period).prop('disabled', false);
             })
-        })
+            $("#cron_non_mitigation_period").change(function(){
+                var period = $(this).val();
+                
+                $(".specified_time_holder", "#non-mitigation-container").hide();
+                $("input, select", "#non-mitigation-container .specified_time_holder").prop('disabled', true);
+                
+                $("#specified_" + period, "#non-mitigation-container").show();
+                $("input, select", "#non-mitigation-container #specified_" + period).prop('disabled', false);
+            })
+        });
+
+        <?php prevent_form_double_submit_script(); ?>
     </script>
   </body>
 

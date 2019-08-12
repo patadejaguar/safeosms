@@ -57,198 +57,242 @@ if($credito <= DEFAULT_CREDITO){
 } else {
 	$xCred	= new cCredito($credito);
 	if($xCred->init() == true){
-		$persona	= $xCred->getClaveDePersona();
+		$persona		= $xCred->getClaveDePersona();
 		$xFRM->addCerrar();
 		$xFRM->OButton("TR.AGREGAR DOCUMENTO", "var xC=new CredGen();xC.setAgregarDocumentos($credito);", $xFRM->ic()->ARCHIVOS, "idaddnewdoctocred", "white");
 		//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-		
-
-		$xorigen			= $xCred->getTipoDeOrigen();
-		$xT					= new cTipos();
-		$xorigen			= $xT->cSerial(3, $xorigen);
-		//Agregar Documentos segun tags
-		$sql				= "SELECT `idgeneral_contratos`,`titulo_del_contrato`,`ruta` FROM `general_contratos` WHERE (`tags` LIKE '%$xorigen%' OR `tags` LIKE '%" . SYS_TODAS .  "%') AND `estatus`='alta' AND `tipo_contrato`=" . iDE_CREDITO;
-		$rs					= $xQL->getDataRecord($sql);
-		$xFRM->addSeccion("iddoctobyprint", "TR.DOCUMENTOS / IMPRIMIR");
-		$xTt				= new cHTabla();
-		
-		$xTt->addTH("TR.NOMBRE");
-		$xTt->addTH("TR.HERRAMIENTAS");
-		$it		= 0;
-
-		$ArrGenericos	= array();
-		
-		$ArrGenericos[]	= array(
-				"ruta" => "", "titulo" => $xFRM->l()->getT("TR.SOLICITUD"),
-				"imprimir" => "var xP= new CredGen();xP.getImprimirSolicitud($credito)","doc" => "","pdf" => ""
-		);
-		
-		if($xCred->getEsArrendamientoPuro() == false){
+		$xProdF			= new cCreditosProductosFormatos();
+		$rsLista		= $xProdF->getListByProductoCreditoId($xCred->getClaveDeProducto());
+		if($xProdF->getConteoByProductoCredito()>0){
 			
-			if($xCred->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO){
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.PAGARE"),
-						"imprimir" => "printpagare()","doc" => "","pdf" => ""
-				);
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CONTRATO"),
-						"imprimir" => "contratocredito()","doc" => "","pdf" => ""
-				);
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CARATULA"),
-						"imprimir" => "var xC=new CredGen();xC.getImprimirCaratula($credito)","doc" => "","pdf" => ""
-				);
+			
+			$xTt		= new cHTabla();
+			$it			= 0;
+			$xTt->addTH("TR.NOMBRE");
+			$xTt->addTH("TR.HERRAMIENTAS");
+			foreach ($rsLista as $rw){
 				
-				//$xFRM->OButton("TR.IMPRIMIR PAGARE", "printpagare()", "dinero", "view-pagare");
-				//$xFRM->OButton("TR.CONTRATO", "contratocredito()", "imprimir", "print-contrato");
-				//$xFRM->OButton("TR.CARATULA", "var xC=new CredGen();xC.getImprimirCaratula($credito)", $xFRM->ic()->FORMATO);
+				$xProdF->init($rw);
 				
+				$cssTag	= ($it == 0) ? "tags blue" : "tags green";
+				$cssTr	= ($it == 0) ? "" : "trOdd";
+				if($it ==1 ){
+					$it = 0;
+				} else {
+					$it++;
+				}
+				$xBtn			= new cHButton();
+				$xHl			= new cHUl("", "ul", $cssTag);
+				$xTt->initRow($cssTr);
+				
+				
+				$url			= $xProdF->getRutaCredito($credito);
+				$url2			= $xProdF->getRutaCreditoPDF($credito);
+				$url3			= $xProdF->getRutaCreditoDOC($credito);
+				$idint			= $xProdF->getFormatoId();
+				
+				$xHl->setTags("");
+				$xHl->li($xBtn->getBasic("TR.IMPRIMIR", "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->IMPRIMIR, "", false, true));
+				$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
+				$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
+				if(MODO_DEBUG == true){
+					$xHl->li($xBtn->getBasic("TR.EDITAR", "var xG=new Gen();xG.editForm({id:$idint})", $xFRM->ic()->EDITAR, "", false, true));
+				}
+				$xTt->addTD($xProdF->getNombre());
+				$xTt->addTD($xHl->get(), " class='toolbar-24' ");
+				
+				//$xHl->li($xBtn->getBasic("TR.WORD", $rwx["doc"], $xFRM->ic()->REPORTE5, "", false, true));
 			}
-			if($xCred->getEstadoActual() === CREDITO_ESTADO_SOLICITADO OR $xCred->getEstadoActual() === CREDITO_ESTADO_AUTORIZADO){
-
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.Formato SIC"),
-						"imprimir" => "var xC=new CredGen(); xC.getFormatoSIC($credito)","doc" => "","pdf" => ""
-				);
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.MANDATO"),
-						"imprimir" => "printMandato()","doc" => "","pdf" => ""
-				);
-				$ArrGenericos[]	= array(
-						"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR formato NOTARIAL"),
-						"imprimir" => "cedulanotario($credito)","doc" => "","pdf" => ""
-				);
-			}
-			switch($xCred->getEstadoActual()){
-				case CREDITO_ESTADO_AUTORIZADO:
-					//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-					//$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
-					//$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
-					//$xFRM->OButton("TR.ORDEN_DE_DESEMBOLSO", "printodes()", "imprimir", "print-order");
-					//$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
-					//$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
-					
+			$xFRM->addSeccion("iddoctobyprint", "TR.DOCUMENTOS / IMPRIMIR");
+			$xFRM->addHElem($xTt->get() );
+			$xFRM->endSeccion();
+		} else {
+			$xorigen			= $xCred->getTipoDeOrigen();
+			$xT					= new cTipos();
+			$xorigen			= $xT->cSerial(3, $xorigen);
+			//Agregar Documentos segun tags
+			$sql				= "SELECT `idgeneral_contratos`,`titulo_del_contrato`,`ruta` FROM `general_contratos` WHERE (`tags` LIKE '%$xorigen%' OR `tags` LIKE '%" . SYS_TODAS .  "%') AND `estatus`='alta' AND `tipo_contrato`=" . iDE_CREDITO;
+			$rs					= $xQL->getDataRecord($sql);
+			$xFRM->addSeccion("iddoctobyprint", "TR.DOCUMENTOS / IMPRIMIR");
+			$xTt				= new cHTabla();
+			
+			$xTt->addTH("TR.NOMBRE");
+			$xTt->addTH("TR.HERRAMIENTAS");
+			$it		= 0;
+	
+			$ArrGenericos	= array();
+			
+			$ArrGenericos[]	= array(
+					"ruta" => "", "titulo" => $xFRM->l()->getT("TR.SOLICITUD"),
+					"imprimir" => "var xP= new CredGen();xP.getImprimirSolicitud($credito)","doc" => "","pdf" => ""
+			);
+			
+			if($xCred->getEsArrendamientoPuro() == false){
+				
+				if($xCred->getEstadoActual() !== CREDITO_ESTADO_SOLICITADO){
 					$ArrGenericos[]	= array(
-							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.ORDEN_DE_DESEMBOLSO"),
-							"imprimir" => "printodes()","doc" => "","pdf" => ""
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.PAGARE"),
+							"imprimir" => "printpagare()","doc" => "","pdf" => ""
 					);
 					$ArrGenericos[]	= array(
-							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR RECIBO DE credito"),
-							"imprimir" => "printrec()","doc" => "","pdf" => ""
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CONTRATO"),
+							"imprimir" => "contratocredito()","doc" => "","pdf" => ""
 					);
-					break;
-				case CREDITO_ESTADO_SOLICITADO:
-					//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
-					//$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
-					//$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
-					//$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
-					break;
-				default :
+					$ArrGenericos[]	= array(
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CARATULA"),
+							"imprimir" => "var xC=new CredGen();xC.getImprimirCaratula($credito)","doc" => "","pdf" => ""
+					);
 					
+					//$xFRM->OButton("TR.IMPRIMIR PAGARE", "printpagare()", "dinero", "view-pagare");
+					//$xFRM->OButton("TR.CONTRATO", "contratocredito()", "imprimir", "print-contrato");
+					//$xFRM->OButton("TR.CARATULA", "var xC=new CredGen();xC.getImprimirCaratula($credito)", $xFRM->ic()->FORMATO);
 					
-					if($xCred->getEsPagado() == true){
+				}
+				if($xCred->getEstadoActual() === CREDITO_ESTADO_SOLICITADO OR $xCred->getEstadoActual() === CREDITO_ESTADO_AUTORIZADO){
+	
+					$ArrGenericos[]	= array(
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.Formato SIC"),
+							"imprimir" => "var xC=new CredGen(); xC.getFormatoSIC($credito)","doc" => "","pdf" => ""
+					);
+					$ArrGenericos[]	= array(
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.MANDATO"),
+							"imprimir" => "printMandato()","doc" => "","pdf" => ""
+					);
+					$ArrGenericos[]	= array(
+							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR formato NOTARIAL"),
+							"imprimir" => "cedulanotario($credito)","doc" => "","pdf" => ""
+					);
+				}
+				switch($xCred->getEstadoActual()){
+					case CREDITO_ESTADO_AUTORIZADO:
+						//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
+						//$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
+						//$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
+						//$xFRM->OButton("TR.ORDEN_DE_DESEMBOLSO", "printodes()", "imprimir", "print-order");
+						//$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
+						//$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
+						
 						$ArrGenericos[]	= array(
-								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CARTA_FINIQUITO"),
-								"imprimir" => "var xC=new CredGen(); xC.getFormatoFiniquito($credito)","doc" => "","pdf" => ""
+								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.ORDEN_DE_DESEMBOLSO"),
+								"imprimir" => "printodes()","doc" => "","pdf" => ""
 						);
-						//$xFRM->OButton("TR.CARTA_FINIQUITO", "var xC=new CredGen(); xC.getFormatoFiniquito($credito)", $xFRM->ic()->LEGAL);
-					}
-					$ArrGenericos[]	= array(
-							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.ESTADO_DE_CUENTA Intereses"),
-							"imprimir" => "getEstadoDeCuentaIntereses($credito)","doc" => "","pdf" => ""
-					);
-					//$xFRM->OButton("TR.ESTADO_DE_CUENTA Intereses", "getEstadoDeCuentaIntereses($credito)", $xFRM->ic()->COBROS, "estado-cta2");
-					//$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
-					$recibo		= $xCred->getNumeroReciboDeMinistracion();
-					$ArrGenericos[]	= array(
-							"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR RECIBO DE credito"),
-							"imprimir" => "printrec()","doc" => "","pdf" => ""
-					);
-					
-					break;
+						$ArrGenericos[]	= array(
+								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR RECIBO DE credito"),
+								"imprimir" => "printrec()","doc" => "","pdf" => ""
+						);
+						break;
+					case CREDITO_ESTADO_SOLICITADO:
+						//$xFRM->OButton("TR.imprimir solicitud", "var xP= new CredGen();xP.getImprimirSolicitud($credito)", $xFRM->ic()->REPORTE);
+						//$xFRM->OButton("TR.Formato SIC", "var xC=new CredGen(); xC.getFormatoSIC($credito)", $xFRM->ic()->LEGAL);
+						//$xFRM->OButton("TR.IMPRIMIR formato NOTARIAL", "cedulanotario($credito)", "reporte", "view-cedula");
+						//$xFRM->OButton("TR.IMPRIMIR MANDATO", "printMandato()", "imprimir", "print-mandato");
+						break;
+					default :
+						
+						
+						if($xCred->getEsPagado() == true){
+							$ArrGenericos[]	= array(
+									"ruta" => "", "titulo" => $xFRM->l()->getT("TR.CARTA_FINIQUITO"),
+									"imprimir" => "var xC=new CredGen(); xC.getFormatoFiniquito($credito)","doc" => "","pdf" => ""
+							);
+							//$xFRM->OButton("TR.CARTA_FINIQUITO", "var xC=new CredGen(); xC.getFormatoFiniquito($credito)", $xFRM->ic()->LEGAL);
+						}
+						$ArrGenericos[]	= array(
+								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.ESTADO_DE_CUENTA Intereses"),
+								"imprimir" => "getEstadoDeCuentaIntereses($credito)","doc" => "","pdf" => ""
+						);
+						//$xFRM->OButton("TR.ESTADO_DE_CUENTA Intereses", "getEstadoDeCuentaIntereses($credito)", $xFRM->ic()->COBROS, "estado-cta2");
+						//$xFRM->OButton("TR.IMPRIMIR RECIBO DE credito", "printrec()", "imprimir", "print-recP");
+						$recibo		= $xCred->getNumeroReciboDeMinistracion();
+						$ArrGenericos[]	= array(
+								"ruta" => "", "titulo" => $xFRM->l()->getT("TR.IMPRIMIR RECIBO DE credito"),
+								"imprimir" => "printrec()","doc" => "","pdf" => ""
+						);
+						
+						break;
+				}
 			}
-		}
-		foreach ($ArrGenericos as $rwx){
-			$cssTag	= ($it == 0) ? "tags blue" : "tags green";
-			$cssTr	= ($it == 0) ? "" : "trOdd";
+			foreach ($ArrGenericos as $rwx){
+				$cssTag	= ($it == 0) ? "tags blue" : "tags green";
+				$cssTr	= ($it == 0) ? "" : "trOdd";
+				
+				if($it ==1 ){
+					$it = 0;
+				} else {
+					$it++;
+				}
+				
+				$xTt->initRow($cssTr);
+				
+				//$url			= $rwx["ruta"] . "&credito=" . $credito;
+				//$url2			= $rwx["ruta"] . "&credito=" . $credito . "&out=" . OUT_PDF;
+				//$url3			= $rwx["ruta"] . "&credito=" . $credito . "&out=" . OUT_DOC;
+				
+				$xTt->addTD($rwx["titulo"]);
+				
+				$xBtn			= new cHButton();
+				$xHl			= new cHUl("", "ul", $cssTag);
+				
+				$xHl->setTags("");
+				if(isset($rwx["imprimir"]) AND $rwx["imprimir"] !== "" ){
+					$xHl->li($xBtn->getBasic("TR.IMPRIMIR", $rwx["imprimir"], $xFRM->ic()->IMPRIMIR, "", false, true));
+				}
+				//
+				if(isset($rwx["pdf"]) AND $rwx["pdf"] !== "" ){
+					$xHl->li($xBtn->getBasic("TR.PDF", $rwx["pdf"], $xFRM->ic()->PDF, "", false, true));
+				}
+				if(isset($rwx["doc"]) AND $rwx["doc"] !== "" ){
+					$xHl->li($xBtn->getBasic("TR.WORD", $rwx["doc"], $xFRM->ic()->REPORTE5, "", false, true));
+				}
+	
+				//$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
+				//$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
+				
+				$xTt->addTD($xHl->get(), " class='toolbar-24' ");
 			
-			if($it ==1 ){
-				$it = 0;
-			} else {
-				$it++;
+				//$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", "white");
+				$xTt->endRow();
 			}
 			
-			$xTt->initRow($cssTr);
-			
-			//$url			= $rwx["ruta"] . "&credito=" . $credito;
-			//$url2			= $rwx["ruta"] . "&credito=" . $credito . "&out=" . OUT_PDF;
-			//$url3			= $rwx["ruta"] . "&credito=" . $credito . "&out=" . OUT_DOC;
-			
-			$xTt->addTD($rwx["titulo"]);
-			
-			$xBtn			= new cHButton();
-			$xHl			= new cHUl("", "ul", $cssTag);
-			
-			$xHl->setTags("");
-			if(isset($rwx["imprimir"]) AND $rwx["imprimir"] !== "" ){
-				$xHl->li($xBtn->getBasic("TR.IMPRIMIR", $rwx["imprimir"], $xFRM->ic()->IMPRIMIR, "", false, true));
+			//Formatos Nuevos
+			foreach ($rs as $rw){
+				$cssTag	= ($it == 0) ? "tags blue" : "tags green";
+				$cssTr	= ($it == 0) ? "" : "trOdd";
+				
+				if($it ==1 ){
+					$it = 0;
+				} else {
+					$it++;
+				}
+				
+				$xTt->initRow($cssTr);
+				
+				$url			= $rw["ruta"] . "&credito=" . $credito;
+				$url2			= $rw["ruta"] . "&credito=" . $credito . "&out=" . OUT_PDF;
+				$url3			= $rw["ruta"] . "&credito=" . $credito . "&out=" . OUT_DOC;
+				
+				$xTt->addTD($rw["titulo_del_contrato"]);
+				$idint			= $rw["idgeneral_contratos"];
+				$xBtn			= new cHButton();
+				$xHl			= new cHUl("", "ul", $cssTag);
+				
+				$xHl->setTags("");
+				$xHl->li($xBtn->getBasic("TR.IMPRIMIR", "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->IMPRIMIR, "", false, true));
+				$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
+				$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
+				if(MODO_DEBUG == true){
+					$xHl->li($xBtn->getBasic("TR.EDITAR", "var xG=new Gen();xG.editForm({id:$idint})", $xFRM->ic()->EDITAR, "", false, true));
+				}
+				$xTt->addTD($xHl->get(), " class='toolbar-24' ");
+				
+				
+				//$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", "white");
+				$xTt->endRow();
 			}
-			//
-			if(isset($rwx["pdf"]) AND $rwx["pdf"] !== "" ){
-				$xHl->li($xBtn->getBasic("TR.PDF", $rwx["pdf"], $xFRM->ic()->PDF, "", false, true));
-			}
-			if(isset($rwx["doc"]) AND $rwx["doc"] !== "" ){
-				$xHl->li($xBtn->getBasic("TR.WORD", $rwx["doc"], $xFRM->ic()->REPORTE5, "", false, true));
-			}
-
-			//$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
-			//$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
-			
-			$xTt->addTD($xHl->get(), " class='toolbar-24' ");
+			$xFRM->addHElem($xTt->get() );
+			$xFRM->endSeccion();
 		
-			//$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", "white");
-			$xTt->endRow();
-		}
-		
-		//Formatos Nuevos
-		foreach ($rs as $rw){
-			$cssTag	= ($it == 0) ? "tags blue" : "tags green";
-			$cssTr	= ($it == 0) ? "" : "trOdd";
-			
-			if($it ==1 ){
-				$it = 0;
-			} else {
-				$it++;
-			}
-			
-			$xTt->initRow($cssTr);
-			
-			$url			= $rw["ruta"] . "&credito=" . $credito;
-			$url2			= $rw["ruta"] . "&credito=" . $credito . "&out=" . OUT_PDF;
-			$url3			= $rw["ruta"] . "&credito=" . $credito . "&out=" . OUT_DOC;
-			
-			$xTt->addTD($rw["titulo_del_contrato"]);
-			$idint			= $rw["idgeneral_contratos"];
-			$xBtn			= new cHButton();
-			$xHl			= new cHUl("", "ul", $cssTag);
-			
-			$xHl->setTags("");
-			$xHl->li($xBtn->getBasic("TR.IMPRIMIR", "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->IMPRIMIR, "", false, true));
-			$xHl->li($xBtn->getBasic("TR.PDF", "var xG=new Gen();xG.w({url:'$url2',blank:true, precall:getOArgs})", $xFRM->ic()->PDF, "", false, true));
-			$xHl->li($xBtn->getBasic("TR.WORD", "var xG=new Gen();xG.w({url:'$url3',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", false, true));
-			if(MODO_DEBUG == true){
-				$xHl->li($xBtn->getBasic("TR.EDITAR", "var xG=new Gen();xG.editForm({id:$idint})", $xFRM->ic()->EDITAR, "", false, true));
-			}
-			$xTt->addTD($xHl->get(), " class='toolbar-24' ");
-			
-			
-			//$xFRM->OButton($rw["titulo_del_contrato"], "var xG=new Gen();xG.w({url:'$url',blank:true, precall:getOArgs})", $xFRM->ic()->REPORTE5, "", "white");
-			$xTt->endRow();
-		}
-		$xFRM->addHElem($xTt->get() );
-		$xFRM->endSeccion();
-		
-		
+		} //End condicion conteo
 		//================== Documentos Existentes
 		//$xLi->getListadoDePersonasDoctos($persona)
 		
@@ -304,8 +348,13 @@ function printpagare(){ xGen.w({ url: "<?php echo $pathPagare; ?>" }); }
 function contratocredito(){ xGen.w({ url: "<?php echo $pathContrato; ?>", full: true }); }
 function printodes(){ xGen.w({ url: "../rpt_formatos/rptordendesembolso.php?solicitud=" + idCredito }); }
 function getOArgs(){
-	str	= "&tramite=" + $("#idtramite").val();
-	str	= str + "&idvehiculo=" + $("#idvehiculo").val();
+	str = "";
+	if(document.getElementById("idtramite")){
+		str	= "&tramite=" + $("#idtramite").val();
+	}
+	if(document.getElementById("idvehiculo")){
+		str	= str + "&idvehiculo=" + $("#idvehiculo").val();
+	}
 	return str;
 }
 </script>

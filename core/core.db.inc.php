@@ -2506,7 +2506,7 @@ HAVING total > " . TOLERANCIA_SALDOS . "
 		ON `general_error_codigos`.`idgeneral_error_codigos` =
 		`general_log`.`type_error`
 		WHERE (`idgeneral_log` > 0 $ByFecha $ByNivel $ByCodigo $ByUsuario $ByDocto $ByPers $ByRec ) $ByLike
-		ORDER BY `general_log`.`fecha_log` DESC,	`general_log`.`hour_log`,`general_log`.`type_error` LIMIT 0,1000 ";
+		ORDER BY `general_log`.`fecha_log` DESC,`general_log`.`hour_log` DESC,`general_log`.`type_error` LIMIT 0,1000 ";
 		return $setSql;	
 	}
 	function getListadoDeEventosResumen($fechaInicial = "", $fechaFinal = "", $nivel = "", $clave = "", $usuario = ""){
@@ -4035,6 +4035,15 @@ FROM
 	
 		return $sql;
 	}
+	function getListadoDePersonasCompartidas($persona){
+		$persona	= setNoMenorQueCero($persona);
+		$ByPersona	= ($persona > DEFAULT_SOCIO) ? " AND (`personas_share`.`persona_id`=$persona) " : "";
+		$sql 	= "SELECT   `personas_share`.`idpersonas_share` AS `clave`,`personas_share`.`persona_id` AS `persona`,`personas_share`.`personas_share_id` AS `compartida`,
+					getFechaMXByInt(`personas_share`.`tiempo`) AS `fecha`, `personas_share`.`url_share` AS `origen` FROM `personas_share`
+					WHERE  `personas_share`.`idpersonas_share` >0 $ByPersona ORDER BY `personas_share`.`tiempo` DESC";
+		
+		return $sql;
+	}
 	function getListadoDeMatrizRiesgoV($valor = "", $clasificacion = ""){
 		$ByClass	= ($clasificacion == SYS_TODAS OR $clasificacion == "") ? "": " AND (`aml_riesgo_matrices`.`clasificacion`='$clasificacion') ";
 		$ByValor	= ($valor == SYS_TODAS OR $valor == "") ? "" : " AND (`aml_riesgo_matrices`.`nombre`='$valor') ";
@@ -4095,6 +4104,7 @@ FROM
          `leasing_tipo_rac`.`nombre_tipo_rac` 			AS `tipo_de_rac`,
          `leasing_usuarios`.`originador` 				AS `originador`,
          `leasing_originadores`.`tipo_de_originador` 	AS `suboriginador`,
+         CONCAT(`originacion_leasing`.`nombre_cliente`, ': ', `originacion_leasing`.`modelo`) 		AS `informacion`,
          `originacion_leasing`.`modelo`,
          `originacion_leasing`.`annio`,
          `originacion_leasing`.`precio_vehiculo`,
@@ -4148,11 +4158,15 @@ FROM
 		$BySub			= $this->OFiltro()->LeasignUsuariosPorClave($idusuario);
 	
 		$sql 	= "SELECT   `leasing_usuarios`.`idleasing_usuarios` AS `clave`,
-		`leasing_usuarios`.`nombre`, `leasing_usuarios`.`correo_electronico`,
+		`leasing_usuarios`.`nombre`,
+		`leasing_originadores`.`nombre_originador` AS `grupo`, 
+		`leasing_usuarios`.`correo_electronico`,
 		getBooleanMX( `leasing_usuarios`.`estatus`) AS `activo`,
 		getBooleanMX( `leasing_usuarios`.`administrador`) AS `administrador`,
 		`leasing_usuarios`.`tasa_com` AS `comision`
-		FROM   `leasing_usuarios` WHERE `leasing_usuarios`.`idleasing_usuarios` >0 $ByOriginador $BySub";
+		FROM   `leasing_usuarios` INNER JOIN `leasing_originadores`
+		ON `leasing_originadores`.`idleasing_originadores` = `leasing_usuarios`.`originador`
+		WHERE `leasing_usuarios`.`idleasing_usuarios` >0 $ByOriginador $BySub";
 		
 		return $sql;
 	}
@@ -4280,7 +4294,7 @@ class cSQLVistas  {
 		$having		= ($having == "") ? "" : " HAVING $having ";
 		$ByCredito 	= ($credito <= DEFAULT_CREDITO) ?  "" : "AND `operaciones_mvtos`.`docto_afectado` = $credito";
 		$ByPeriodo	= ($periodo <=0) ? "" : " AND `operaciones_mvtos`.`periodo_socio`= $periodo "; 
-		$fechaC		= "getFechaDeCorte()";
+		$fechaC		= "PRM.`fecha_corte`";
 		if($fecha !== false){
 			$xF		= new cFecha();
 			$fecha	= $xF->getFechaISO($fecha);
@@ -4315,18 +4329,18 @@ class cSQLVistas  {
 		
 		ROUND(SUM(
 		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
-		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / PRM.`divisor_interes`)
 		, 0 )),2) AS `interes_moratorio`,
 		
 		ROUND(SUM(
 		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
-		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / PRM.`divisor_interes`)
 		, 0 )),2) AS `mora`,
 		
 		ROUND((SUM(
 		IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
-		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres())
-		, 0 ))*getTasaIVAGeneral()),2) AS `iva_moratorio`,
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / PRM.`divisor_interes`)
+		, 0 ))* PRM.`tasa_iva`),2) AS `iva_moratorio`,
 		
 		SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
 		(DATEDIFF($fechaC, `fecha_afectacion`))
@@ -4337,9 +4351,23 @@ class cSQLVistas  {
 		ROUND(SUM((`afectacion_real` * `eacp_config_bases_de_integracion_miembros`.`afectacion`)),2) AS `letra`,
 		SUM(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),0, `afectacion_real`)) AS `total_sin_otros`,
 		MAX(IF((`tipo_operacion` < 410 OR `tipo_operacion` > 413),`tipo_operacion`,0)) AS `clave_otros`,
-		ROUND( (SUM((`afectacion_real` * `afectacion`)) + SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / getDivisorDeInteres()), 0 ))*(1+getTasaIVAGeneral()) ),2) AS `neto`
+		ROUND( (SUM((`afectacion_real` * `afectacion`)) + SUM(IF((`tipo_operacion` = 410  AND `fecha_afectacion` < $fechaC),
+		((`afectacion_real` * DATEDIFF($fechaC, `fecha_afectacion`) * (`tasa_moratorio`) ) / PRM.`divisor_interes`), 0 ))*(1+PRM.`tasa_iva`) ),2) AS `neto`
+
+,ROUND(
+(SUM(
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $fechaC AND `creditos_solicitud`.`pagos_autorizados`=`operaciones_mvtos`.`periodo_socio`),
+((`creditos_solicitud`.`saldo_actual` * DATEDIFF($fechaC, `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_interes`) ) / PRM.`divisor_interes`)
+, 0 )) ),2) AS `int_corriente`,
+
+ROUND(SUM(
+IF((`operaciones_mvtos`.`tipo_operacion` = 410  AND `operaciones_mvtos`.`fecha_afectacion` < $fechaC),
+((`operaciones_mvtos`.`afectacion_real` * DATEDIFF($fechaC, `operaciones_mvtos`.`fecha_afectacion`) * (`creditos_solicitud`.`tasa_interes`) ) / PRM.`divisor_interes`)
+, 0 )),2) AS `int_corriente_letra`
 
 		FROM `operaciones_mvtos` `operaciones_mvtos` INNER JOIN `creditos_solicitud` `creditos_solicitud` ON `operaciones_mvtos`.`docto_afectado` = `creditos_solicitud`.`numero_solicitud` INNER JOIN `eacp_config_bases_de_integracion_miembros` `eacp_config_bases_de_integracion_miembros` ON `operaciones_mvtos`.`tipo_operacion` = `eacp_config_bases_de_integracion_miembros`.`miembro`
+		INNER JOIN ( SELECT getTasaIVAGeneral() AS `tasa_iva`, getDivisorDeInteres() AS `divisor_interes`,getFechaDeCorte() AS  `fecha_corte`) PRM
+
 		WHERE (`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` = 2601)
 		AND `operaciones_mvtos`.`tipo_operacion` != 420 AND `operaciones_mvtos`.`tipo_operacion` != 431 AND `operaciones_mvtos`.`tipo_operacion` != 146 $ByCredito $ByPeriodo $where0
 		$where1
@@ -4601,7 +4629,6 @@ class cSQLTabla {
 	}
 	function getQueryInicial($tabla = false ){
 		$this->init($tabla);
-		$ql		= "";
 		$xli	= new cSQLListas();
 		switch( $this->mTabla ){
 			case TCAPTACION_CUENTAS:
@@ -5029,6 +5056,18 @@ class cSQLTabla {
 			case "personas_aports_tipos":
 				$mObj				= new cPersonas_aports_tipos();
 				break;
+			case "creditos_productos_etapas":
+				$mObj				= new cCreditos_productos_etapas();
+				$this->mCampoDesc 	= $mObj->NOMBRE;
+				break;
+			case "creditos_prods_doctos":
+				$mObj				= new cCreditos_prods_doctos();
+				//$this->mCampoDesc 	= $mObj->;
+				break;
+			case "creditos_prods_formatos":
+				$mObj				= new cCreditos_prods_formatos();
+				//$this->mCampoDesc 	= $mObj->;
+				break;
 			/*case "socios_genero":
 				$mObj				= new cSocios_genero();
 				$this->mCampoDesc 	= $mObj->DESCRIPCION_GENERO;
@@ -5363,6 +5402,10 @@ class cSQLTabla {
 				$mObj	= new cGeneral_estados();
 				$this->mCampoDesc	= $mObj->NOMBRE;
 				break;
+			case "general_sucursales":
+				$mObj	= new cGeneral_sucursales();
+				$this->mCampoDesc	= $mObj->NOMBRE_SUCURSAL;
+				break;				
 			case "general_contratos":
 				$mObj	= new cGeneral_contratos();
 				$this->mCampoDesc	= $mObj->titulo_del_contrato()->get();
@@ -5992,6 +6035,7 @@ class cSystemPatch {
 	function setActualizarToLocalhost($fecha, $version=0){
 		$xQL		= new MQL();
 		$xCache		= new cCache();
+		$xConf		= new cConfiguration();
 		$version	= setNoMenorQueCero($version);
 
 		if($version>0){
@@ -6048,9 +6092,10 @@ class cSystemPatch {
 		
 		$xCache->clean(false);
 		
-		
+		$xConf->set("sistema_en_modo_demo", "true");
 		
 		$this->patch(true, false);
+		
 		$xCache->clean();
 		
 		if(SAFE_ON_DEV == true){
@@ -6079,12 +6124,13 @@ class cSystemPatch {
 
 
 class MQLCampo {
-	private $mDatos			= array();
+	public $mDatos			= array();
 	private $mTabla			= "";
 	private $mEquivalencias	= array();
 	private $mTipoPHP		= null;
 	private $mTipoSQL		= null;
 	private $mNombre		= null;
+	//public $D				= array();
 	function __construct($datos){
 		$this->mDatos			= $datos;
 		$mql					= new MQL();
@@ -6093,6 +6139,7 @@ class MQLCampo {
 			$this->mTipoSQL		= $this->mDatos["T"];
 			$this->mTipoPHP 	= $this->mEquivalencias[ $this->mTipoSQL ] ;//(isset($this->mEquivalencias[ $this->mTipoSQL ])) ? $this->mEquivalencias[ $this->mTipoSQL ] : null;
 			$this->mNombre		= $this->mDatos["N"];
+			//$this->D			= $this->mDatos;
 			//if(!isset($this->mEquivalencias[ $this->mTipoSQL ])){ setLog($this->mDatos); }
 		}
 		unset($mql);
@@ -6127,6 +6174,7 @@ class MQLCampo {
 		}
 		return $dato;
 	}
+	 
 	function get(){ return $this->mNombre; }
 	function isEqual($value){
 		return ( $this->getTipo() == MQL_STRING ) ? $this->get() . "=\"$value\" " : $this->get() . "=$value ";
@@ -6189,7 +6237,9 @@ class MQLCampo {
 		$val2	= $this->cleanNumber($this->v(),2);
 		return ($val2 == $value) ? true : false;
 	}
-	
+	function isEqualS($value){
+		return ($this->v() == $value) ? true : false;
+	}
 	public function cleanup() {
 		//cleanup everything from attributes
 		foreach (get_class_vars(__CLASS__) as $clsVar => $_) {
@@ -6223,7 +6273,7 @@ class MQL {
 	private $mConTitulos= false;
 	private $mTitulos	= array(); 
 	private $mUseCache	= false;
-	private $mErrorReporURL = "https://env-1468750.cloudjiffy.net/message?token=AgcC86tq6jBMEHv";
+	private $mErrorReporURL = "https://messages.opensourcemicrofinance.org/message?token=ApnBfQBC5oN3ed3";
 
 	private $mEquivalencias	= array(
 			"INT" 		=> "int",
@@ -6383,8 +6433,8 @@ class MQL {
 			$data				= array();
 			if(!$rs){
 				if($this->mDebug == true){
-					//$this->mMessages .= "ERROR[" . $cnn->error . "] " . $this->mSql . "\r\n";
-					//$this->getDebug();
+					$this->setError( "ERROR[" . $cnn->error . "] " . $this->mSql . "");
+					
 				}
 			} else {
 				if($this->mConTitulos == true){
@@ -6592,40 +6642,47 @@ class MQL {
 	}
 	function setCampos($campos){		$this->mDatos	= $campos;	}
 	function getMessages($out = OUT_TXT ){ return $this->mMessages; }
-	function getDebug(){
+	function setError($msg){
+		
 		if($this->mDebug == true){
 			//if(function_exists("setLog")){ setLog($this->mMessages); }
-			if(function_exists("curl_init")){
-				$title = urlencode( SAFE_FIRM . "-" . CURRENT_EACP . "-" . getSafeHost() . "-" . get_real_ip());
+			if(function_exists("curl_init") AND SAFE_ON_DEV == true){
+				$title 		= urlencode( SAFE_FIRM . "-" . CURRENT_EACP . "-" . getSafeHost() . "-" . get_real_ip());
 				$serverInfo = "Host: " . getSafeHost() . "\r\n";
 				$serverInfo .= "Client: " . get_real_ip() . "\r\n";
 				$serverInfo .= "Database: " . MY_DB_IN . "\r\n";
 				$serverInfo .= "User: " . USR_DB. "\r\n";
 				$serverInfo .= "Sucursal: " . DEFAULT_SUCURSAL . "\r\n";
-				
-			//set_time_limit(0);// to infinity for example
+				//set_time_limit(0);// to infinity for example
 				$ch 			= curl_init();
 				curl_setopt($ch, CURLOPT_URL,$this->mErrorReporURL);
-				curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER,false);
 				curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
 				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
-				curl_setopt($ch, CURLOPT_TIMEOUT,100);
-				curl_setopt($ch, CURLOPT_POST,1);
-				//"title=my title" -F "message=my message" -F "priority=5"
-				curl_setopt($ch, CURLOPT_POSTFIELDS, "title=$title&message=" . urlencode($serverInfo) . urlencode($this->mMessages) . "&priority=5");
-				$rs 			= curl_exec($ch);
-				unset($rs);
+				curl_setopt($ch, CURLOPT_TIMEOUT,10);
+				curl_setopt($ch, CURLOPT_POST,true);
+				$cnt			= "title=$title&message=" . urlencode($serverInfo) . urlencode($msg) . "&priority=5";
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $cnt);
+				//$rs 			=
+				curl_exec($ch);
 				curl_close ($ch);
+				
+				/*if(function_exists("error_log") AND $rs === false){
+				 error_log($cnt, E_WARNING);
+				 error_log($this->mMessages, E_WARNING);
+				 }*/
+				//unset($rs);
 			} else {
 				if(function_exists("error_log")){
-					error_log($this->mMessages, E_WARNING);
+					error_log($msg, E_WARNING);
 				}
 			}
-			
-			
+			$msg			= null;
 			$this->mMessages = "";
+			
 		}
 	}
+	function getDebug(){ return $this->setError($this->mMessages);  }
 	function getLastInsertID(){ return $this->mInsertID; }
 	function onDebug(){ return $this->mDebug; }
 	function setDebug($xdebug){ $this->mDebug = $xdebug; }
@@ -6668,12 +6725,13 @@ class MQLInsert {
 	private $mIns				= array();
 	private $mMessages			= "";
 	private $mDebug				= false;
+	private $mQL				= null;
 	function __construct($tabla, $datos){
 		$this->mDatos	= $datos;
 		$this->mTabla	= $tabla;
-		$mql					= new MQL($tabla, $datos);
-		$this->mEquivalencias	= $mql->getTipos();
-		$this->mDebug			= $mql->onDebug();
+		$this->mQL				= new MQL($tabla, $datos);
+		$this->mEquivalencias	= $this->mQL->getTipos();
+		$this->mDebug			= $this->mQL->onDebug();
 	}
 
 	function save(){
@@ -6690,7 +6748,6 @@ class MQLInsert {
 		return $id;
 	}
 	function get(){
-		$sql 	= "";
 		$vals	= "";
 		$camp	= "";
 		$icnt	= 0;
@@ -6715,10 +6772,8 @@ class MQLInsert {
 	}
 	function getMessages($out = OUT_TXT ){ return $this->mMessages; }
 	function getDebug(){
-		if($this->mDebug == true){
-			if(function_exists("setLog")){ setLog($this->mMessages); }
-			$this->mMessages = "";
-		}
+		$this->mQL->setError($this->mMessages);
+		$this->mMessages = "";
 	}
 }
 class MQLSelect	 {
@@ -6918,12 +6973,11 @@ class MQLUpdate {
 		}
 		$this->get($where);
 		$cnn	= $mql->connect();
-
 		$rs		= $cnn->query($this->mSql);
 		if($rs === false AND $this->mDebug == true){
 			$this->mMessages	.= "ERROR(". $cnn->error . ") EN EL QUERY : " . $this->mSql . "  \n"; $this->getDebug();
 		}
-
+		//setLog($this->mSql);
 		return ($rs == false) ? false : true; //$cnn->insert_id;
 	}
 	function get($where = ""){

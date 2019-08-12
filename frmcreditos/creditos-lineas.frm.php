@@ -93,7 +93,7 @@ function jsEdit(id){
 //	xG.w({url:"../frmcreditos/creditos-lineas.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddivlineas});
 }
 function jsAdd(){
-	xG.w({url:"../frmcreditos/frmcreditoslineas.php?", tiny:true, callback: jsLGiddivlineas});
+	xG.w({url:"../frmcreditos/frmcreditoslineas.php?", blank : true, tab:true, callback: jsLGiddivlineas});
 }
 function jsPanelLineas(id){
 	xG.w({url:"../frmcreditos/creditos-lineas.panel.frm.php?clave=" + id, principal:true, callback: jsLGiddivlineas});

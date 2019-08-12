@@ -21,11 +21,13 @@ $xF			= new cFecha();
 $xRuls		= new cReglaDeNegocio();
 $xODT		= new cHDicccionarioDeTablas();
 $xLog		= new cCoreLog();
+$xTiles		= new cHNotif();
 $xCurrUsr	= new cSystemUser(); $xCurrUsr->init();
 
 $UsarRedir	= $xRuls->getValorPorRegla($xRuls->reglas()->RN_USAR_REDIRECTS);		//regla de negocio
 $UsarFotos	= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_USAR_FOTOS);		//regla de negocio
 $SePuedenDel= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_SE_ELIMINAN);		//regla de negocio
+$RiesgoEnPanel= $xRuls->getValorPorRegla($xRuls->reglas()->PERSONAS_RIESGO_PANEL);		//regla de negocio
 
 $jsTabs		= "";
 $idempresa	= 0;
@@ -260,7 +262,7 @@ $jxc ->exportFunction('jsaActualizarUsuario', array('idusuario'), "#idavisos");
 $jxc ->process();
 
 //$xHP->addJsFile("../jsrsClient.js");
-
+$xHP->addChartSupport();
 echo $xHP->getHeader();
 
 //echo $xJsB->setIncludeJQuery(); 
@@ -392,7 +394,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$xHTabs->addTab("TR.LISTASINTERNAS", $ttl );
 	}
 		
-	$xFRM->OButton("TR.Riesgo de Credito", "var xP= new PersGen();xP.getRiesgoDeCredito($idsocio)", $xFRM->ic()->RIESGO);
+	$xFRM->OButton("TR.Riesgo de Credito", "var xP= new PersGen();xP.getRiesgoDeCredito($idsocio)", $xFRM->ic()->RIESGO, "idcmdriesgocredito", "orange2");
 	
 	
 //================= Empresa con Convenio
@@ -682,20 +684,88 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 		$mny	= getFMoney($GMonto);
 		$xFRM->addTag("Garantia Liquida: <strong>$ $mny</strong>", "success");
 	}
-	//===================================== Agregar Fotos
-	if($UsarFotos == true AND $xSoc->getEsPersonaFisica() == true){
-		$xTT	= new cHTabla("idimagenes", "listado");
-
-		$xFRM->OButton("TR.AGREGAR FOTOGRAFIA", "jsAddNewPhoto()", "fa-camera", "addnewphoto");
-		$xHPers	= new cHPersona($xSoc->getClaveDePersona());
-		$xTT->addTH("TR.FOTOGRAFIA");
-		$xTT->addTH("TR.FIRMA");
-		$xTT->initRow();
-		$xTT->addTD($xHPers->getFotografia(), " style='max-width:33%;with:300px' ");
-		$xTT->addTD($xHPers->getFirma(), " style='max-width:50%;width:300px;' ");
-		$xTT->endRow();
+	
+	//===================================== Agregar Riesgo
+	if($RiesgoEnPanel == true){
+		$xFRM->addSeccion("iddivriesgo", "TR.RIESGO DE CREDITO");
+		$strRisk	= "";
+		$xRiesgo	= new cPersonasRiesgosDeCredito($idsocio);
+		$D1			= $xRiesgo->getDatosDeScoringCredito1();
 		
-		$xFRM->addHElem( $xTT->get() );
+		$remRec		= setNoMenorQueCero((100 - $D1["recuperacion"]));
+		$remPunt	= setNoMenorQueCero((100 - $D1["puntualidad"]));
+		$remAtra	= setNoMenorQueCero((100 - $D1["atraso"]));
+		
+		$xGr1		= new cChart("idrecuperachart");
+		$xGr1->setTipo($xGr1->PIE);
+		$xGr1->addData($D1["recuperacion"], "TR.Pagado");
+		$xGr1->addData($remRec, "TR.Pendiente");
+		$xGr1->setAutoWith(); $xGr1->setOnPercent();
+		$strRisk	.= $xTiles->getDash("TR.RECUPERACION", $xGr1->getDiv(), "fa-info", "error" );
+		$xFRM->addJsInit( $xGr1->getJs() );
+		
+		
+		$xGr1		= new cChart("idpuntualidadchart");
+		$xGr1->setTipo($xGr1->PIE);
+		$xGr1->addData($D1["puntualidad"], "TR.Puntual");
+		$xGr1->addData($remPunt, "TR.Inpuntual");
+		$xGr1->setAutoWith(); $xGr1->setOnPercent();
+		$strRisk	.= $xTiles->getDash("TR.PUNTUALIDAD", $xGr1->getDiv(), "fa-info", "warning" );
+		$xFRM->addJsInit( $xGr1->getJs() );
+		
+		
+		$xGr1		= new cChart("idatrasochart");
+		$xGr1->setTipo($xGr1->PIE);
+		$xGr1->addData($D1["atraso"], "TR.Retraso");
+		$xGr1->addData($remAtra, "TR.Remanente");
+		$xGr1->setAutoWith(); $xGr1->setOnPercent();
+		$strRisk	.= $xTiles->getDash("TR.Retrasos en Pago", $xGr1->getDiv() );
+		$xFRM->addJsInit( $xGr1->getJs() );
+		
+		$xRiesgo->getBalancePatrimonial();
+		$D2		= $xRiesgo->getDataInArray();
+		
+		$xGr1		= new cChart("idbpatrimchart");
+		$xGr1->setTipo($xGr1->PIE);
+		$sum	= $D2["activo"] + $D2["pasivo"] + $D2["capital"];
+		$dx1	= ($D2["activo"]/$sum) * 100;
+		$dx2	= ($D2["pasivo"]/$sum) * 100;
+		$dx3	= ($D2["capital"]/$sum) * 100;
+		
+		$xGr1->addData($dx1, "TR.Activo");
+		$xGr1->addData($dx2, "TR.Pasivo");
+		$xGr1->addData($dx3, "TR.Capital");
+		if($sum >0){
+			$xGr1->setAutoWith(); $xGr1->setOnPercent();
+			$strRisk	.= $xTiles->getDash("TR.Patrimonio", $xGr1->getDiv() );
+			$xFRM->addJsInit( $xGr1->getJs() );
+		}
+		$xFRM->addHElem($strRisk);
+		$xFRM->endSeccion();
+	}
+	//===================================== Agregar Fotos	
+	if($UsarFotos == true AND $xSoc->getEsPersonaFisica() == true){
+		
+		//$xFRM->OButton("TR.AGREGAR FOTOGRAFIA", "jsAddNewPhoto()", "fa-camera", "addnewphoto");
+		
+		$xTT	= new cHTabla("idimagenes", "listado");
+		$xHPers	= new cHPersona($xSoc->getClaveDePersona());
+		
+		$hfoto	= $xHPers->getFotografia();
+		$hfirma	= $xHPers->getFirma();
+		if($hfoto == "" AND $hfirma == ""){
+			
+		} else {
+			$xFRM->addSeccion("iddivfoto", "TR.IDENTIFICACION");
+			if($hfoto !== ""){
+				$xFRM->addHElem( $xTiles->getDash("TR.fotografia", $hfoto, "fa-camera-retro" ) );
+			}
+			if($hfirma !== ""){
+				$xFRM->addHElem( $xTiles->getDash("TR.FIRMA", $hfirma, "fa-hand-paper-o" ) );
+			}
+			$xFRM->endSeccion();
+		}
+		
 	}
 	$xTTE	= new cTabla($xLog->getListadoDeEventosSQL($idsocio), 0, "idtbllistaeventossysps");
 	if(MODO_DEBUG == false){
@@ -708,8 +778,14 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	//==================================== Personas COmpartidas
 	if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
 		$xTS	= new cTabla("", 0, "idtbllistashareps");
-		$xTS->setSQL("SELECT   `personas_share`.`idpersonas_share` AS `clave`,`personas_share`.`persona_id` AS `persona`,`personas_share`.`personas_share_id` AS `compartida`,getFechaMXByInt(`personas_share`.`tiempo`) AS `fecha`, `personas_share`.`url_share` AS `origen` FROM     `personas_share`");
+		
+		$xTS->setSQL($xLi->getListadoDePersonasCompartidas($idsocio));
 		$xTS->setOmitidos("persona");
+		if(MODO_DEBUG== true){
+			$xTS->addEliminar();
+		}
+		$xTS->addBaja();
+		
 		$xTS->setWithMetaData();
 		$xTS->OButton("TR.ABRIR SHARE", "jsOpenShare(" .  HP_REPLACE_ID. ")", $xFRM->ic()->AUTOMAGIC, "idtopensharecmd");
 		$hhe	= $xTS->Show("", true, "idsharelst");
@@ -722,6 +798,7 @@ if ( setNoMenorQueCero($idsocio) <= DEFAULT_SOCIO){
 	$xFRM->addHTML($xHTabs->get());
 	$xFRM->addHTML($xDiv2->get());
 	
+	$xFRM->addJsReload();
 	
 	$xFRM->OHidden("idsocio", $idsocio); $xFRM->OHidden("idmodificado", ""); $xFRM->OHidden("idcantidad", "0");
 
@@ -789,7 +866,7 @@ function addPatrim(){
 }
 function updateDat(){
 	var srUp = "../frmsocios/frmupdatesocios.php?persona=<?php echo $idsocio; ?>";
-	xG.w({ url: srUp, tab: true });
+	xG.w({ url: srUp, tiny: true, ajustarAlto:true });
 }
 function addHistorial(){
 	var sDiv	= "<?php echo STD_LITERAL_DIVISOR; ?>";
@@ -914,8 +991,5 @@ function jsOpenShare(id){
 <?php
 //echo $xJsB->get();
 $jxc->drawJavaScript(false, true);
-if($idsocio>DEFAULT_SOCIO){
-	$xHP->addReload();
-}
 ?>
 </html>

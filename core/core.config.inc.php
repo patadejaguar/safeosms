@@ -14,7 +14,7 @@ if(isset($safe_sesion_en_segundos)){
 //======================================= INFORMACION DEL PROGRAMA
 $codename 								= "RaphRich"; //DevLeo Devian AzusaF-GTO Shuurei VernaF4 Enju Naru nanami IrinaJelavic MioIsurugi MillhioreF LouiseTheZero MioFurinji NagiSanzenin KanadeTachibana D.M.C. 
 $version 								= "201903";
-$revision 								= "01";
+$revision 								= "04";
 
 define("SAFE_VERSION",                  $version);
 define("SAFE_REVISION",                 $revision);
@@ -38,7 +38,7 @@ if(defined("SAFE_USE_MCACHE")){
 	define("SAFE_USE_MCACHE",           $usecc);
 }
 //======================================= INCLUDE RUNTIME
-ini_set("include_path", $os_path_includes_str);
+@ini_set("include_path", $os_path_includes_str);
 //======================================= HOST DE TRABAJO
 define ("CURRENT_EACP", 1);
 //define ("DEFAULT_SUCURSAL", $sucursal);
@@ -180,6 +180,9 @@ define("ADMIN_MAIL_SMTP_TLS",       	$xC->get("smtp_seguro_para_notificaciones",
 define("ADMIN_MAIL_SMTP_USR",       	$xC->get("user_smtp_para_notificaciones", ADMIN_MAIL, MMOD_SISTEMA) );
 define("ADMIN_MAIL_STORAGE",       		(bool) $xC->get("email_almacenar_en_db", "false", MMOD_SISTEMA) );
 
+define("SAFE_PUSH_APP_TOKEN",       	$xC->get("push_token_de_aplicacion", "ApnBfQBC5oN3ed3", MMOD_SISTEMA) );
+define("SAFE_PUSH_APP_SRV",       		$xC->get("push_servidor_de_aplicacion", "https://messages.opensourcemicrofinance.org", MMOD_SISTEMA) );
+
 define("NOMINA_MAIL",                  	$xC->get("email_de_nominas", "software@grupopadio.com.mx", MMOD_SISTEMA) );
 define("EACP_MAIL",                    	$xC->get("email_de_la_entidad", "", MMOD_SISTEMA) );
 define("ARCHIVO_MAIL",                  $xC->get("email_del_archivo", ADMIN_MAIL, MMOD_SISTEMA) );
@@ -200,6 +203,7 @@ define("SERVER_PROXY_SMS",              $xC->get("servidor_proxy_sms", "", MMOD_
 
 define("SAFE_DB_VERSION",              	$xC->get("safe_osms_database_version", "1", MMOD_SISTEMA) );
 define("SYSTEM_ON_HOSTING",            	(bool) $xC->get("sistema_en_hosting", "false", MMOD_SISTEMA) );
+define("SYSTEM_ON_DEMO",            	(bool) $xC->get("sistema_en_modo_demo", "false", MMOD_SISTEMA) );
 define("SYSTEM_ON_LINE",               	(bool) $xC->get("el_sistema_esta_en_linea", "true", MMOD_SISTEMA) );
 
 define("SVC_REMOTE_HOST",				$xC->get("url_de_servicios_remotos", "https://sdn.sipakal.com/", MMOD_SISTEMA) );
@@ -594,6 +598,9 @@ define("OPERACION_MONEDA_TERMINO",			$xC->get("terminacion_de_numeros_en_letras"
 define("OPERACION_CUADRAR_CON_COBRANZA",	(bool) $xC->get("cuadrar_cobranza_en_pagos", "true", MMOD_OPERACIONES));
 define("OPERACION_IGNORAR_IVA",				(bool) $xC->get("ignorar_impuesto_al_consumo", "false", MMOD_OPERACIONES));
 
+
+define("CONEKTA_API_KEY",			$xC->get("conekta_api_key", "key_Mc1Cs4WcPvKQrMg772YcyA", MMOD_OPERACIONES));
+
 /* Operaciones: Bases Operativas */
 define("BASE_IVA_INTERESES",					7012);
 define("BASE_IVA_OTROS",						7013);
@@ -862,6 +869,7 @@ define("DEFAULT_PERSONAS_TIPO_VIV",      $xC->get("persona_tipo_de_vivienda_por_
 define("DEFAULT_PERSONAS_RFC_GENERICO",      $xC->get("persona_id_fiscal_generico", "XAXX010101000", MMOD_PERSONAS ));
 define("PERSONAS_CLAVE_ID_POBLACIONAL",      $xC->get("personas_clave_de_idpoblacional", "110", MMOD_PERSONAS ));
 define("PERSONAS_BUSCAR_POR",     			 $xC->get("personas_buscar_por", "n", MMOD_PERSONAS ));
+define("PERSONAS_HEREDAR_SUCURSAL",     	(bool) $xC->get("personas_heredar_sucursal", "true", MMOD_PERSONAS ));
 //define("DEFAULT_PERSONAS_RFC_GENERICO",      $xC->get("persona_id_fiscal_generico", "XAXX010101000", MMOD_PERSONAS ));
 
 define("EXPIRE_PASSWORDS_IN_DAYS",      $xC->get("numero_de_dias_en_que_expira_una_contrasenna", 10,  MMOD_SISTEMA));//Define el Numero de dias en que expira una Contrasenna
@@ -1245,7 +1253,7 @@ define("CTRL_GORECIBOS", 		"<img class='buscador' title=\"Buscar un Recibo de Pa
 //============================================ MANEJO DE SESIONES ==========================================================
 if(!isset($safe_sesion_en_segundos)){
 	$safe_sesion_en_segundos		= $xC->get("tiempo_expira_sesiones", "3600", MMOD_SISTEMA);
-	ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
+	@ini_set('session.gc_maxlifetime', $safe_sesion_en_segundos);
 }
 
 
@@ -1391,6 +1399,19 @@ function getSucursal($sucursal = false){
 	$_SESSION["sucursal"]		= $sucursal;
 	return $sucursal;
 }
+function getSucursalPorPersona($persona = false){
+	$persona	= setNoMenorQueCero($persona);
+	if(PERSONAS_HEREDAR_SUCURSAL == true AND $persona>DEFAULT_SOCIO){
+		$xSoc	= new cSocio($persona);
+		if($xSoc->init() == true){
+			return $xSoc->getSucursal();
+		} else {
+			return getSucursal();
+		}
+	} else {
+		return getSucursal();
+	}
+}
 
 function getCurrentLang($lang	= false){
 	if($lang == false){
@@ -1499,6 +1520,82 @@ define("TUSUARIOS_REGISTRO", "t_03f996214fba4a1d05a68b18fece8e71");
 //		}
 //	}
 //}
+class cUsar {
+	function getUsarCache(){
+		$CACHE_ERRS		= 0;
+		$cnx			= null;
+		$idx			= "cache.error.count";
+		if(isset($_SESSION)){
+			$CACHE_ERRS	= ( isset($_SESSION[$idx]) ) ? $_SESSION[$idx] : 0;
+			if (!class_exists('Memcache')) {
+				$CACHE_ERRS++;
+			}
+		}
+		
+		if($CACHE_ERRS <= 0){
+			if(isset($GLOBALS["cnx.memcache"])){
+				$cnx		= $GLOBALS["cnx.memcache"];
+			} else {
+				$cnx		= new Memcache();
+				if(!$cnx->pconnect('127.0.0.1', 11211)){
+					$cnx	= null;
+					$CACHE_ERRS++;
+					if(isset($_SESSION)){
+						$_SESSION[$idx]	= $CACHE_ERRS;
+					}
+				} else {
+					$CACHE_ERRS	= 0;
+					//syslog(E_ERROR, "Cache Activo!");
+					if(isset($_SESSION)){
+						$_SESSION[$idx]	= 0;
+					}
+					$GLOBALS["cnx.memcache"]	= $cnx;
+				}
+				
+			}
+		}
+		return $cnx;
+	}
+	function getUsarFTP(){
+		$CACHE_ERRS		= 0;
+		$idx			= "ftp.use.server";
+		if(isset($_SESSION)){
+			if(isset($_SESSION[$idx])){
+				if( (int) $_SESSION[$idx] == 1 ){
+					return true;
+				} else {
+					return false;
+				}
+			}
+			if (!function_exists("ftp_connect")){
+				$CACHE_ERRS++;
+			} else {
+				if(SYS_FTP_PWD == "" AND SYS_FTP_USER == ""){
+					$CACHE_ERRS++;
+				} else {
+					if(!ftp_connect(SYS_FTP_SERVER)){
+						$CACHE_ERRS++;
+					} else {
+						$conn_id 		= ftp_connect(SYS_FTP_SERVER);
+						if(@ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD)){
+							
+						} else {
+							$CACHE_ERRS++;
+						}
+					}
+				}
+			}
+			if($CACHE_ERRS >0){
+				$_SESSION[$idx] = "0";
+				return false;
+			} else {
+				$_SESSION[$idx] = "1";
+			}
+		}
+		return true;
+	}
+}
+
 function getClaveCifradoTemporal(){
 	$clave = null;
 	$ip1 	= ( isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "";

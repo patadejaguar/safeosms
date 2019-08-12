@@ -447,7 +447,7 @@ function get_site_credits($text ='Powered by ') {
  * @return array|string Type 'string' in this case will be XML 
  */
 function menu_data($id = null,$xml=false) {
-    $menu_extract = '';
+    $menu_extract = array();
 
     global $pagesArray; 
     $pagesSorted = subval_sort($pagesArray,'menuOrder');
@@ -474,7 +474,7 @@ function menu_data($id = null,$xml=false) {
           } else {
               $menu_extract[] = $specific;
           }
-        } 
+        }
         return $menu_extract;
       } else {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><channel>';    
@@ -565,11 +565,12 @@ function get_component($id) {
  * @param string $classPrefix Prefix that gets added to the parent and slug classnames
  * @return string 
  */	
-function get_navigation($currentpage,$classPrefix = "") {
+function get_navigation($currentpage = "",$classPrefix = "") {
 
 	$menu = '';
 
-	global $pagesArray;
+	global $pagesArray,$id;
+	if(empty($currentpage)) $currentpage = $id;
 	
 	$pagesSorted = subval_sort($pagesArray,'menuOrder');
 	if (count($pagesSorted) != 0) { 
@@ -580,7 +581,7 @@ function get_navigation($currentpage,$classPrefix = "") {
 			if ($page['menuStatus'] == 'Y') { 
 				$parentClass = !empty($page['parent']) ? $classPrefix.$page['parent'] . " " : "";
 				$classes = trim( $parentClass.$classPrefix.$url_nav);
-				if ("$currentpage" == "$url_nav") $classes .= " current active";
+				if ($currentpage == $url_nav) $classes .= " current active";
 				if ($page['menu'] == '') { $page['menu'] = $page['title']; }
 				if ($page['title'] == '') { $page['title'] = $page['menu']; }
 				$menu .= '<li class="'. $classes .'"><a href="'. find_url($page['url'],$page['parent']) . '" title="'. encode_quotes(cl($page['title'])) .'">'.strip_decode($page['menu']).'</a></li>'."\n";

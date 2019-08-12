@@ -27,7 +27,7 @@ $clave		= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_
 $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);
 
 
-
+$xHP->addJExcelSupport();
 $xHP->addJTableSupport();
 $xHP->init();
 

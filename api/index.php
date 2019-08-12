@@ -1,83 +1,86 @@
 <?php
+/**
+ * Modulo de API
+ * @author Balam Gonzalez Luis Humberto
+ * @version 0.0.01
+ * @package api
+ */
+//=====================================================================================================
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
+include_once("../core/core.db.inc.php");
+include_once("../core/core.reportes.inc.php");
+require_once('../vendor/autoload.php');
 
-// Kickstart the framework
-$f3=require('../libs/fatfree/lib/base.php');
-
-$f3->set("RAW", true);
-
-$f3->route("POST /risk/new/*", function ($f3, $args){
-	
-	
-	
-	//echo $f3->get("PARAMS.iduser");
-	//echo "ruta 24";
-	/*
-	 INSERT INTO `risks` (
-	 `id`, `status`, `subject`, `reference_id`, `regulation`, `control_number`, `location`, `source`,
-	 `category`, `team`, `technology`, `owner`, `manager`, `assessment`, `notes`,
-	 `submission_date`, `last_update`, `review_date`, `mitigation_id`, `mgmt_review`, `project_id`, `close_id`, `submitted_by`) VALUES
-	 
-	 (2,	'New',	'Riesgo de Prueba',	'999',	2,	'1451',	1,	1,	5,	5,	1,	1,	1,	'Prueba',	'Nada que ver',	'2017-04-01 03:59:48',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00',	0,	0,	0,	NULL,	1);
-	 
-	 
-	 
-	 ;
-	 
-	 */
-	$db		= new DB\SQL(
-			'mysql:host=localhost;port=3306;dbname=simplerisk',
-			'simplerisk',
-			'simplerisk'
-			);
-	$sqlL1	= "INSERT INTO `risks` (`id`, `status`, `subject`, `reference_id`, `regulation`, `control_number`, `location`, `source`, `category`, `team`, `technology`, `owner`, `manager`, `assessment`, `notes`, `submission_date`, `last_update`, `review_date`, `mitigation_id`, `mgmt_review`, `project_id`, `close_id`, `submitted_by`) VALUES ";
-	$sqlL2	= "INSERT INTO `risk_scoring_history` (`id`, `risk_id`, `calculated_risk`, `last_update`) VALUES ";
-	//print_r($params);
-	
-	$estatus	= "New";
-	$describe	= "";
-	
-	//header('Content-type: application/json');
-	
-	
-	
-	//syslog(E_WARNING, print_r($f3->get("BODY"), true));
-	//$db->exec("$sqlL1 (2,	'$estatus',	'$describe',	'999',	2,	'1451',	1,	1,	5,	5,	1,	1,	1,	'Prueba',	'Nada que ver',	'2017-04-01 03:59:48',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00',	0,	0,	0,	NULL,	1)");
-	//$db->exec("$sqlL2 (2,	2,	3.6,	'2017-03-31 21:59:48')");
-});
+$theFile			= __FILE__;
+$permiso			= getSIPAKALPermissions($theFile);
+if($permiso === false){	header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//=====================================================================================================
+$xHP		= new cHPage("", HP_SERVICE);
+//$xQL		= new MQL();
+//$xLi		= new cSQLListas();
+$xF			= new cFecha();
 
 
-//
+$clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE);
+$persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
+$credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
+$cuenta			= parametro("cuenta", DEFAULT_CUENTA_CORRIENTE, MQL_INT); $cuenta = parametro("idcuenta", $cuenta, MQL_INT);
+$jscallback		= parametro("callback"); $tiny = parametro("tiny"); $form = parametro("form"); $action = parametro("action", SYS_NINGUNO);$action = parametro("cmd", $action);
+$monto			= parametro("monto",0, MQL_FLOAT); $monto	= parametro("idmonto",$monto, MQL_FLOAT);
+$recibo			= parametro("recibo", 0, MQL_INT); $recibo	= parametro("idrecibo", $recibo, MQL_INT);
+$observaciones	= parametro("idobservaciones");
+$letra			= parametro("letra", false, MQL_INT); $letra = parametro("periodo", $letra, MQL_INT); $letra = parametro("parcialidad", $letra, MQL_INT);
 
-$f3->route("GET /hola/test/@iduser", function ($f3){
-	echo $f3->get("PARAMS.iduser");
-	//echo "ruta 24";
-});
 
-	
-	
-	
-$f3->route("GET /", function ($f3){
-	
-	// MySql settings
-	/*$f3->set('DB', new DB\SQL(
-			'mysql:host=localhost;port=3306;dbname=simplerisk',
-			'simplerisk',
-			'simplerisk'
-			));*/
-	
-	$db		= new DB\SQL(
-			'mysql:host=localhost;port=3306;dbname=simplerisk',
-			'simplerisk',
-			'simplerisk'
-			);
-	
-	$table = new DB\SQL\Mapper($db, 'assets');
-	$table->load(array('id=?', '1'));
-	$result = $table->created;
-	
-	echo $result;
-	
-});
+
+//$xSVC			= new MQLService($action, "");
+
+
+$f3 = \Base::instance();
+
+$f3->route('GET /',
+		function() {
+			echo 'Hello, world!';
+		});
+
+$f3->route('GET /reporte/cartera',
+		function($f3) {
+			
+			$arg1	= $f3->get("GET.desde");
+			$arg2	= $f3->get("GET.hasta");
+			
+			echo "Hello $arg1, world! $arg2";
+			
+			
+			
+		});
+
+$f3->route('PUT /reporte/cartera',
+		function($f3) {
+			
+			$arg1	= $f3->get("GET.desde");
+			$arg2	= $f3->get("GET.hasta");
+			
+			echo "Hello ----------- $arg1, world! $arg2";
+			
+			
+			
+		});
+
+$f3->set('ONERROR',
+		function($f3) {
+			// recursively clear existing output buffers:
+			while (ob_get_level())
+				ob_end_clean();
+				// your fresh page here:
+				echo $f3->get('ERROR.text');
+		}
+		);
 
 $f3->run();
 

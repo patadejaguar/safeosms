@@ -55,6 +55,7 @@ $senders		= getEmails($_REQUEST);
 
 $BySaldo		= ($omitirceros == true) ? $xFil->CreditosPorSaldos(TOLERANCIA_SALDOS, ">=") : "";
 $ByFecha		= ($UseRecFechaR == true) ? $xFil->RecibosPorFechaDeRegistro($FechaInicial, $FechaFinal) : $xFil->CreditosPorFechaDeMinistracion($FechaInicial, $FechaFinal);
+
 $ByConvenio		= $xFil->CreditosPorProducto($producto);
 $ByEmpresa		= $xFil->CreditosPorEmpresa($empresa);
 $ByPeriocidad	= $xFil->CreditosPorFrecuencia($frecuencia);

@@ -21,23 +21,23 @@
     if (csp_enabled())
     {
             // Add the Content-Security-Policy header
-    header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
+    header("Content-Security-Policy: default-src 'self' 'unsafe-inline' *.highcharts.com *.googleapis.com *.gstatic.com *.jquery.com;");
     }
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
+    if (!isset($_SESSION))
     {
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
-        if (!isset($_SESSION))
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
         {
-        	session_name('SimpleRisk');
-        	session_start();
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
         }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+        session_name('SimpleRisk');
+        session_start();
+    }
 
     // Include the language file
     require_once(language_file());
@@ -123,7 +123,7 @@
         $status = get_name_by_value("status", $status_id);
 
         // Display an alert
-                set_alert(true, "good", "Your risk status has been successfully changed.");
+        set_alert(true, "good", "Your risk status has been successfully changed.");
 
         // Check that the id is a numeric value
         if (is_numeric($id))
@@ -146,7 +146,20 @@
         <?php
             echo $escaper->escapeHtml($lang['SetRiskStatusTo']);
             echo "&nbsp;&nbsp;";
-            create_dropdown("status");
+
+            $options = get_options_from_table('status');
+            array_unshift($options, ['value'=>'', 'name'=>'--']);
+
+            echo "<select id='status' name='status' class='form-field' style='width:auto;'>\n";
+            foreach ($options as $key => $option)
+            {
+                if (!(isset($_SESSION["close_risks"]) && $_SESSION["close_risks"] == 1) && $option['name'] === "Closed")
+                    continue;
+
+                echo "<option value='" . $escaper->escapeHtml($option['value']) . "'>" . $escaper->escapeHtml($option['name']) . "</option>\n";
+            }
+            echo "</select>";
+
             echo "<input type=\"submit\" value=\"" . $escaper->escapeHtml($lang['Update']) . "\" name=\"update_status\" />\n";
         ?>
       </form>

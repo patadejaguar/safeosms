@@ -92,7 +92,7 @@
 
 
 .user--info{
-	margin: 29px 20px 20px 20px;
+	margin: 29px 0px 20px 5px;
 
 	a{
 		@extend .reset;
@@ -118,39 +118,47 @@
     margin-top: 10px;
 /*    margin-right: 50px;*/
 	max-width: 150px;
-  position: relative; 
-		form{
-			margin: 0px;
-		}
+    position: relative;
 
-		input[type="text"], 
-		textarea, textarea.form-control{
-			background-color: transparent !important;
-			width: 130px;
-			border: none;
-			box-shadow: none;
-			color: #000;
-			border-bottom: 2px solid $color-3;
-			border-radius: 0px;
-			padding-right: 33px
-		}
+    form{
+        margin: 0px;
+    }
 
-		.search--wrapper{
-			display: block;
-			position: relative;
+    input[type="text"], textarea, textarea.form-control {
+        background-color: transparent !important;
+        width: 130px;
+        border: none;
+        box-shadow: none;
+        color: #000;
+        border-bottom: 2px solid $color-3;
+        border-radius: 0px;
+        padding-right: 33px
+    }
 
-			a{
-				display: block;
-				position: absolute;
-				top: 0px;
-				right: 0px;
-				width: 33px;
-				height: 33px;
-				text-align:center;
-				color: #fff;
-				line-height: 33px;
-			}
-		}
+    .search--wrapper {
+        display: block;
+        position: relative;
+
+        a {
+            display: block;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 33px;
+            height: 33px;
+            text-align:center;
+            color: #fff;
+            line-height: 33px;
+        }
+        
+        input[name='q'] {
+            float: right;
+        }
+    }
+    
+    #advanced-search-no-results-message {
+        color: $text-color;
+    }
 }
 .search-risks .search-popup {
     display: none;
@@ -159,7 +167,8 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: auto;
+    width: max-content;
+    max-width: 800px;
     background: #6F6F6F;
     border-radius: 6px;
     vertical-align: middle;
@@ -177,7 +186,6 @@
    .search-risks textarea,
     .search-risks textarea.form-control{
       width: 214px;
-      hesight: 40px;
       padding: 10px;
       background-color: white !important;
       border: none;
@@ -186,9 +194,72 @@
     }
 
     a#show-search-pop i.fa.fa-search{
-      margin-top: 22px;
+      margin-top: 24px;
       color: white;
       padding-right: 2px;
       cursor: pointer;
     }
+
+.help {
+    margin: 29px 5px 20px 20px;
+
+    .dropdown-toggle img {
+        width: 1.2em;
+        padding-right: 2px;
+        cursor: pointer;
+    }
+
+    a {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .caret {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        vertical-align: top;
+        border-top: 4px solid #fff;
+        margin-top: 12px;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+}
+
+#advanced-search-results-table-wrapper {
+
+    width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 5px;
+    float: right;
+    
+    &::-webkit-scrollbar {
+        background: yellow;
+        width: 10px;
+    }
+    &::-webkit-scrollbar-track {
+        background: $scrollbar-track-color;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: $scrollbar-thumb-color;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: $scrollbar-thumb-hover-color;
+    }
+    
+    #advanced-search-results-table {
+
+        color: $text-color;
+
+        span.highlighted {
+            background-color: yellow;
+        }
+        
+        td {
+            padding: 1px 0px;
+        }
+        
+    }
+}
 

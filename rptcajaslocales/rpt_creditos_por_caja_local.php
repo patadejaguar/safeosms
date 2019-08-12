@@ -49,7 +49,10 @@ $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
 
 $cajalocal		= parametro("cajalocal", SYS_TODAS, MQL_INT);
+$conpagados		= parametro("conpagados", false, MQL_BOOL);
+
 $ByCL			= $xL->OFiltro()->VSociosPorCajaLocal($cajalocal);
+$ByActivos		= ($conpagados == false) ? " AND (creditos.saldo_actual>=" . TOLERANCIA_SALDOS . ") " : "";
 
 $sql			= "	SELECT socios_cajalocal.idsocios_cajalocal AS 'id',
 		socios_cajalocal.descripcion_cajalocal AS 'caja_local',
@@ -72,7 +75,8 @@ $sql			= "	SELECT socios_cajalocal.idsocios_cajalocal AS 'id',
 			INNER JOIN `creditos` `creditos` 
 			ON `socios`.`codigo` = `creditos`.`numero_socio`
 			
-			WHERE creditos.saldo_actual>=" . TOLERANCIA_SALDOS . "
+			WHERE socios_cajalocal.idsocios_cajalocal>0
+			$ByActivos
 			$ByCL
 			ORDER BY
 				`socios_cajalocal`.`idsocios_cajalocal`";
@@ -93,6 +97,9 @@ $body		= $xRPT->getEncabezado($xHP->getTitle(), $FechaInicial, $FechaFinal);
 $xRPT->setBodyMail($body);
 
 $xRPT->addContent($body);
+
+$xT->setColSum("saldo_actual");
+$xT->setColSum("monto_original");
 
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");

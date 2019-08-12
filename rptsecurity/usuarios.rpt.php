@@ -58,7 +58,7 @@ $sql			= "SELECT
 		FROM
 		`usuarios` `usuarios`
 		ORDER BY
-		`usuarios`.`idusuarios`";
+		`usuarios`.`estatus` DESC, `usuarios`.`nombreusuario`";
 $titulo			= "";
 $archivo		= "";
 

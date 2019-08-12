@@ -18,7 +18,7 @@ $permiso			= getSIPAKALPermissions($theFile);
 if($permiso === false){	header ("location:../404.php?i=999");	}
 $_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("TR.REPORTE DE ", HP_REPORT);
+$xHP		= new cHPage("TR.Reporte de Ingresos", HP_REPORT);
 $xL			= new cSQLListas();
 $xF			= new cFecha();
 $query		= new MQL();
@@ -48,10 +48,16 @@ $jsEvent		= ($out != OUT_EXCEL) ? "initComponents()" : "";
 $senders		= getEmails($_REQUEST);
 $ByFechas		= $xFil->OperacionesPorFecha($FechaInicial, $FechaFinal);
 $BySucursal		= $xFil->OperacionesPorSucursal($sucursal);
+
+$xBase			= new cBases();
+$base			= 10001; //$xBase->BASE_RPT_INGRESOS;
+
 $sql			= "SELECT
-	/* `eacp_config_bases_de_integracion_miembros`.`codigo_de_base`, */
 	`operaciones_mvtos`.`sucursal`,
-	/* COUNT(`operaciones_mvtos`.`idoperaciones_mvtos`) AS `operaciones`, */
+	SUM(IF(`eacp_config_bases_de_integracion_miembros`.`subclasificacion` != 2110,0,`eacp_config_bases_de_integracion_miembros`.`afectacion` * `operaciones_mvtos`.`afectacion_real`))       AS `interes`,
+	SUM(IF(`eacp_config_bases_de_integracion_miembros`.`subclasificacion` != 2210,0,`eacp_config_bases_de_integracion_miembros`.`afectacion` * `operaciones_mvtos`.`afectacion_real`))       AS `mora`,
+	SUM(IF(`eacp_config_bases_de_integracion_miembros`.`subclasificacion` != 10001,0,`eacp_config_bases_de_integracion_miembros`.`afectacion` * `operaciones_mvtos`.`afectacion_real`))       AS `otros`,
+
 	SUM(`eacp_config_bases_de_integracion_miembros`.`afectacion` * `operaciones_mvtos`.`afectacion_real`)       AS `monto`
 
 FROM
@@ -61,7 +67,8 @@ FROM
 		ON `operaciones_mvtos`.`tipo_operacion` =
 		`eacp_config_bases_de_integracion_miembros`.`miembro`
 WHERE
-	(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =2002)
+	(`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` =$base)
+	AND (`eacp_config_bases_de_integracion_miembros`.`subclasificacion` IN (2110,2210,10001) )
 	$ByFechas
 	$BySucursal
 GROUP BY
@@ -70,6 +77,7 @@ GROUP BY
 ORDER BY
 	`eacp_config_bases_de_integracion_miembros`.`codigo_de_base`,
 	monto DESC";
+
 $titulo			= "";
 $archivo		= "";
 
@@ -92,6 +100,12 @@ $xCh	= new cChart("idivchart");
 $xCh->addDataset($sql, "monto", "sucursal");
 $xCh->setProcess();
 $xRPT->addJsCode($xCh->getJs());
+//$xRPT->addCampoSuma("monto");
+$xT->setColSum("interes");
+$xT->setColSum("mora");
+$xT->setColSum("otros");
+$xT->setColSum("monto");
+
 //$xT->setEventKey("jsGoPanel");
 //$xT->setKeyField("creditos_solicitud");
 $xRPT->addContent( $xT->Show("", true, "idtbl"  ) );

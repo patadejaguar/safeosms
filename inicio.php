@@ -70,7 +70,7 @@ if(isset($_SESSION)){
 }
 
 $sc				= new cGeneral_sucursales();
-$data			= $sc->query()->select()->exec();
+$data			= $sc->query()->select()->exec("`estatus`=1");
 $analitycs		= "<script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -94,7 +94,10 @@ foreach($data as $datos){
 	$nombre	= $sc->nombre_sucursal()->v();
 	$sel	= "";
 	if($valor == "matriz"){ $sel = " selected='true' "; }
+	
 	$txt	.= "<option value=\"$valor\"$sel>$nombre</option>";
+	
+	
 	
 }
 $demohtml	= "";

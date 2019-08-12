@@ -169,19 +169,25 @@ var xG	= new Gen();
 
 function jsRecoverPass(){
 	var idmail	= $("#idemail").val();
-	xG.svc({
-		url: "pc.svc.php?cmd=RECOVER-PASS&email=" +idmail,
-		callback: function(data){
-			if(typeof data.message != "undefined"){
-				
-				if(data.error == true){
-					xG.aviso({msg: data.message, raw:true, tipo:"error"});
-				} else {
-					xG.aviso({msg: data.message, raw:true, tipo:"info"});
+	if(!validacion.email(idmail)){
+		xG.alerta({msg: "Capture un Correo Electronico Valido", raw:true, tipo:"error"});
+	} else {
+		xG.spinInit();
+		xG.svc({
+			url: "pc.svc.php?cmd=RECOVER-PASS&email=" +idmail,
+			callback: function(data){
+				xG.spinEnd();
+				if(typeof data.message != "undefined"){
+					
+					if(data.error == true){
+						xG.aviso({msg: data.message, raw:true, tipo:"error"});
+					} else {
+						xG.aviso({msg: data.message, raw:true, tipo:"info"});
+					}
 				}
 			}
-		}
-	});
+		});
+	}
 }   
 </script>  
   

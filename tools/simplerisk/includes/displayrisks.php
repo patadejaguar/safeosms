@@ -90,7 +90,7 @@ function display_control_regulation_view($regulation)
     echo $escaper->escapeHtml($lang['ControlRegulation']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    echo "<input style=\"cursor: default;\" type=\"text\" name=\"regulation\" id=\"regulation\" size=\"50\" value=\"" . $escaper->escapeHtml(get_name_by_value("regulation", $regulation)) . "\" title=\"" . $escaper->escapeHtml(get_name_by_value("regulation", $regulation)) . "\" disabled=\"disabled\" />\n";
+    echo "<input style=\"cursor: default;\" type=\"text\" name=\"regulation\" id=\"regulation\" size=\"50\" value=\"" . $escaper->escapeHtml(get_name_by_value("frameworks", $regulation)) . "\" title=\"" . $escaper->escapeHtml(get_name_by_value("frameworks", $regulation)) . "\" disabled=\"disabled\" />\n";
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -124,7 +124,17 @@ function display_affected_assets_view($risk_id)
     echo $escaper->escapeHtml($lang['AffectedAssets']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    echo "<textarea style=\"cursor: default;\" type=\"text\" name=\"assets\" class=\"assets\" id=\"assets\" size=\"50\" cols=\"50\" rows=\"3\" title=\"" . $escaper->escapeHtml(get_list_of_assets($risk_id, false)) . "\" disabled=\"disabled\">". $escaper->escapeHtml(get_list_of_assets($risk_id, false)) ."</textarea>\n";
+    $data = get_assets_and_asset_groups_of_type($risk_id, 'risk');
+    
+    if ($data) {
+        echo "<select class='assets-asset-groups-select-disabled' multiple >\n";
+
+        foreach($data as $item) {
+            echo "<option data-data='" . json_encode(array('class' => $item['class'])) . "' selected>" . $escaper->escapeHtml($item['name']) . "</option>";
+        }
+
+        echo "</select>\n";
+    }
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -339,9 +349,8 @@ function display_supporting_documentation_view($risk_id, $view_type)
 /*********************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN DETAILS VIEW *
 **********************************************************/
-function display_main_detail_feilds_by_panel_view($panel_name, $fields, $risk_id, $submission_date, $submitted_by, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $assessment, $notes, $scoring_method, $CLASSIC_likelihood, $CLASSIC_impact)
+function display_main_detail_fields_by_panel_view($panel_name, $fields, $risk_id, $submission_date, $submitted_by, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $assessment, $notes, $scoring_method, $CLASSIC_likelihood, $CLASSIC_impact, $tags)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id);
 
     foreach($fields as $field)
     {
@@ -427,7 +436,10 @@ function display_main_detail_feilds_by_panel_view($panel_name, $fields, $risk_id
                     case 'SupportingDocumentation':
                         display_supporting_documentation_view($risk_id, 1);
                     break;
-                    
+
+                    case 'Tags':
+                        display_risk_tags_view($tags);
+                    break;
                 }
 
                 if($field['active'] == 0){
@@ -437,7 +449,15 @@ function display_main_detail_feilds_by_panel_view($panel_name, $fields, $risk_id
             // If custom field
             else
             {
-                display_custom_field_view($field, $custom_values);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+                    
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id);
+                    display_custom_field_risk_view($field, $custom_values);
+                }
             }
         }
     }
@@ -446,7 +466,7 @@ function display_main_detail_feilds_by_panel_view($panel_name, $fields, $risk_id
 /*****************************************
 * FUNCTION: DISPLAY SUBMISSION DATE EDIT *
 ******************************************/
-function display_sumission_date_edit($submission_date)
+function display_submission_date_edit($submission_date)
 {
     global $lang, $escaper;
 
@@ -523,7 +543,7 @@ function display_control_regulation_edit($regulation)
     echo $escaper->escapeHtml($lang['ControlRegulation']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    create_dropdown("regulation", $regulation);
+    create_dropdown("frameworks", $regulation, "regulation");
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -551,13 +571,16 @@ function display_control_number_edit($control_number)
 function display_affected_assets_edit($risk_id)
 {
     global $lang, $escaper;
+    $selected_ids = [];
     
     echo "<div class=\"row-fluid\">\n";
     echo "<div class=\"span5 text-right\" id=\"AffectedAssetsTitle\">\n";
     echo $escaper->escapeHtml($lang['AffectedAssets']) .": \n";
     echo "</div>\n";
-    echo "<div class=\"span7\">\n";
-        echo "<textarea name=\"assets\" class=\"active-textfield assets\" cols=\"50\" rows=\"3\" id=\"assets\">".$escaper->escapeHtml(get_list_of_assets($risk_id)) . "</textarea>\n";
+    echo "<div class=\"span7 affected-assets\">\n";
+    echo "<select class='assets-asset-groups-select' name='assets_asset_groups[]' multiple placeholder='" . $escaper->escapeHtml($lang['AffectedAssetsWidgetPlaceholder']) . "'>";
+    echo "</select>\n";
+    echo "<span class='affected-assets-instructions'>" . $escaper->escapeHtml($lang['AffectedAssetsWidgetInstructions']) . "</span>";
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -611,7 +634,7 @@ function display_additional_stakeholders_edit($additional_stakeholders)
     echo $escaper->escapeHtml($lang['AdditionalStakeholders']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7 multiselect-holder\">\n";
-    create_stakeholder_dropdown($additional_stakeholders);
+    create_multiusers_dropdown("additional_stakeholders", $additional_stakeholders);
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -628,7 +651,7 @@ function display_owner_edit($owner)
     echo $escaper->escapeHtml($lang['Owner']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    create_dropdown("user", $owner, "owner");
+    create_dropdown("enabled_users", $owner, "owner");
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -645,7 +668,7 @@ function display_owners_manager_edit($manager)
     echo $escaper->escapeHtml($lang['OwnersManager']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    create_dropdown("user", $manager, "manager");
+    create_dropdown("enabled_users", $manager, "manager");
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -718,58 +741,11 @@ function display_supporting_documentation_edit($risk_id, $view_type)
     echo "</div>\n";
 }
 
-/**************************************
-* FUNCTION: DISPLAY CUSTOM FIELD EDIT *
-***************************************/
-function display_custom_field_edit($field, $custom_values)
-{
-    global $lang, $escaper;
-
-    $value = "";
-    
-    // Get value of custom filed
-    foreach($custom_values as $custom_value)
-    {
-        if($custom_value['field_id'] == $field['id']){
-            $value = $custom_value['value'];
-            break;
-        }
-    }
-    
-    echo "<div class=\"row-fluid\">\n";
-        echo "<div class=\"span5 text-right\" >\n";
-            echo $escaper->escapeHtml($field['name']) .": \n";
-        echo "</div>\n";
-        echo "<div class=\"span7\">\n";
-            if($field['type'] == "dropdown")
-            {
-                create_dropdown("custom_field_".$field['id'], $value, "custom_field[{$field['id']}]");
-            }
-            elseif($field['type'] == "multidropdown")
-            {
-                $values = explode(",", $value);
-                $values = ":".implode(":", $values).":";
-                create_multiple_dropdown("custom_field_".$field['id'], $values, "custom_field[{$field['id']}]", NULL, false, "--", "", true, "class='multiselect'");
-            }
-            elseif($field['type'] == "shorttext")
-            {
-                echo "<input type=\"text\" name=\"custom_field[{$field['id']}]\" value=\"".$escaper->escapeHtml($value)."\" >" ;
-            }
-            elseif($field['type'] == "longtext")
-            {
-                echo "<textarea class=\"active-textfield custom-longtext\" name=\"custom_field[{$field['id']}]\" cols=\"50\" rows=\"3\" >" . $escaper->escapeHtml($value) . "</textarea>";
-            }
-        echo "</div>\n";
-    echo "</div>\n";
-}
-
 /*********************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN DETAILS EDIT *
 **********************************************************/
-function display_main_detail_feilds_by_panel_edit($panel_name, $fields, $risk_id, $submission_date,$submitted_by, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $assessment, $notes, $scoring_method, $CLASSIC_likelihood, $CLASSIC_impact, $AccessVector, $AccessComplexity, $Authentication, $ConfImpact, $IntegImpact, $AvailImpact, $Exploitability, $RemediationLevel, $ReportConfidence, $CollateralDamagePotential, $TargetDistribution, $ConfidentialityRequirement, $IntegrityRequirement, $AvailabilityRequirement, $DREADDamagePotential, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom)
+function display_main_detail_fields_by_panel_edit($panel_name, $fields, $risk_id, $submission_date,$submitted_by, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $assessment, $notes, $scoring_method, $CLASSIC_likelihood, $CLASSIC_impact, $AccessVector, $AccessComplexity, $Authentication, $ConfImpact, $IntegImpact, $AvailImpact, $Exploitability, $RemediationLevel, $ReportConfidence, $CollateralDamagePotential, $TargetDistribution, $ConfidentialityRequirement, $IntegrityRequirement, $AvailabilityRequirement, $DREADDamagePotential, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom, $ContributingLikelihood, $ContributingImpacts, $tags)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id);
-
     foreach($fields as $field)
     {
         // Check if this field is main field and details in left panel
@@ -784,7 +760,7 @@ function display_main_detail_feilds_by_panel_edit($panel_name, $fields, $risk_id
                 
                 switch($field['name']){
                     case 'SubmissionDate':
-                        display_sumission_date_edit($submission_date);
+                        display_submission_date_edit($submission_date);
                     break;
             
                     case 'Category':
@@ -836,7 +812,7 @@ function display_main_detail_feilds_by_panel_edit($panel_name, $fields, $risk_id
                     break;
                 
                     case 'RiskScoringMethod':
-                        risk_score_method_html($scoring_method, $CLASSIC_likelihood, $CLASSIC_impact, $AccessVector, $AccessComplexity, $Authentication, $ConfImpact, $IntegImpact, $AvailImpact, $Exploitability, $RemediationLevel, $ReportConfidence, $CollateralDamagePotential, $TargetDistribution, $ConfidentialityRequirement, $IntegrityRequirement, $AvailabilityRequirement, $DREADDamagePotential, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom);
+                        risk_score_method_html($scoring_method, $CLASSIC_likelihood, $CLASSIC_impact, $AccessVector, $AccessComplexity, $Authentication, $ConfImpact, $IntegImpact, $AvailImpact, $Exploitability, $RemediationLevel, $ReportConfidence, $CollateralDamagePotential, $TargetDistribution, $ConfidentialityRequirement, $IntegrityRequirement, $AvailabilityRequirement, $DREADDamagePotential, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom, $ContributingLikelihood, $ContributingImpacts);
                     break;
 
                     case 'RiskAssessment':
@@ -850,7 +826,10 @@ function display_main_detail_feilds_by_panel_edit($panel_name, $fields, $risk_id
                     case 'SupportingDocumentation':
                         display_supporting_documentation_edit($risk_id, 1);  
                     break;
-                        
+
+                    case 'Tags':
+                        display_risk_tags_edit($tags);
+                    break;
                 }
 
                 if($field['active'] == 0){
@@ -859,7 +838,15 @@ function display_main_detail_feilds_by_panel_edit($panel_name, $fields, $risk_id
             }
             else
             {
-                display_custom_field_edit($field, $custom_values);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id);
+                    display_custom_field_edit($field, $custom_values);
+                }
             }
           
         }
@@ -963,7 +950,7 @@ function display_mitigation_owner_view($mitigation_owner)
     echo $escaper->escapeHtml($lang['MitigationOwner']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    echo "<input style=\"cursor: default;\" type=\"text\" name=\"mitigation_owner\" id=\"mitigation_owner\" size=\"50\" value=\"" . $escaper->escapeHtml(get_name_by_value("user", $mitigation_owner)) . "\" disabled=\"disabled\" />\n";
+    echo "<span>". $escaper->escapeHtml(get_name_by_value("user", $mitigation_owner)) ."</span>\n";
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -980,7 +967,7 @@ function display_mitigation_team_view($mitigation_team)
     echo $escaper->escapeHtml($lang['MitigationTeam']) .": \n";
     echo "</div>\n";
     echo "<div class=\"span7\">\n";
-    echo "<input style=\"cursor: default;\" type=\"text\" name=\"mitigation_team\" id=\"mitigation_team\" size=\"50\" value=\"" . $escaper->escapeHtml(get_name_by_value("team", $mitigation_team)) . "\" disabled=\"disabled\" />\n";
+    echo "<span>".$escaper->escapeHtml(get_names_by_multi_values("team", $mitigation_team))."</span>\n";
     echo "</div>\n";
     echo "</div>\n";
 }
@@ -1075,7 +1062,7 @@ function display_accept_mitigation_view($risk_id)
                             if(!retryCSRF(xhr, this))
                             {
                                 if(xhr.responseJSON && xhr.responseJSON.status_message){
-                                    $('#show-alert').html(xhr.responseJSON.status_message);
+                                    showAlertsFromArray(xhr.responseJSON.status_message);
                                 }
                                 self.prop(\"disabled\", false);
                                 self.html($(\"#_lang_accept_mitigation\").val());
@@ -1116,7 +1103,7 @@ function display_accept_mitigation_view($risk_id)
                             if(!retryCSRF(xhr, this))
                             {
                                 if(xhr.responseJSON && xhr.responseJSON.status_message){
-                                    $('#show-alert').html(xhr.responseJSON.status_message);
+                                    showAlertsFromArray(xhr.responseJSON.status_message);
                                 }
                                 self.prop(\"disabled\", false);
                                 self.html($(\"#_lang_reject_mitigation\").val());
@@ -1185,9 +1172,8 @@ function display_security_recommendations_view($security_recommendations)
 /************************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN MITIGATION VIEW *
 *************************************************************/
-function display_main_mitigation_feilds_by_panel_view($panel_name, $fields, $risk_id, $mitigation_date, $planning_strategy, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $current_solution, $security_requirements, $security_recommendations, $planning_date, $mitigation_percent, $mitigation_controls)
+function display_main_mitigation_fields_by_panel_view($panel_name, $fields, $risk_id, $mitigation_date, $planning_strategy, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $current_solution, $security_requirements, $security_recommendations, $planning_date, $mitigation_percent, $mitigation_controls)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id);
 
     foreach($fields as $field)
     {
@@ -1267,17 +1253,25 @@ function display_main_mitigation_feilds_by_panel_view($panel_name, $fields, $ris
             // If custom field
             else
             {
-                display_custom_field_view($field, $custom_values);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id);
+                    display_custom_field_risk_view($field, $custom_values);
+                }
             }
             
         }
     }
 }
 
-/**************************************
-* FUNCTION: DISPLAY CUSTOM FIELD VIEW *
-***************************************/
-function display_custom_field_view($field, $custom_values, $review_id=0)
+/***************************************
+* FUNCTION: DISPLAY CUSTOM FIELD PRINT *
+****************************************/
+function display_custom_field_print($field, $custom_values, $review_id=0)
 {
     global $lang, $escaper;
 
@@ -1292,25 +1286,14 @@ function display_custom_field_view($field, $custom_values, $review_id=0)
         }
     }
     
-    echo "<div class=\"row-fluid\">\n";
-        echo "<div class=\"span5 text-right\" >\n";
-            echo $escaper->escapeHtml($field['name']) .": \n";
-        echo "</div>\n";
-        echo "<div class=\"span7\" style=\"margin-bottom: 15px; padding-top: 4px;\">\n";
-            if($field['type'] == "dropdown")
-            {
-                echo $escaper->escapeHtml(get_name_by_value("custom_field_".$field['id'], $value));
-            }
-            elseif($field['type'] == "multidropdown")
-            {
-                echo $escaper->escapeHtml(get_names_by_multi_values("custom_field_".$field['id'], $value));
-            }
-            elseif($field['type'] == "shorttext" || $field['type'] == "longtext")
-            {
-                echo nl2br($escaper->escapeHtml($value));
-            }
-        echo "</div>\n";
-    echo "</div>\n";
+    echo "<tr>\n";
+        echo "<td >\n";
+            echo "<b>". $escaper->escapeHtml($field['name']) .":</td>\n";
+        echo "<td>\n";
+            echo get_custom_field_name_by_value($field['id'], $field['type'], $value);
+        echo "</td>\n";
+    echo "</tr>";
+    
 }
 
 /****************************************************
@@ -1421,7 +1404,7 @@ function display_mitigation_owner_edit($mitigation_owner)
                 .$escaper->escapeHtml($lang['MitigationOwner']) .": 
             </div>
             <div class=\"span7\">";
-                create_dropdown("user", $mitigation_owner, "mitigation_owner", true);
+                create_dropdown("enabled_users", $mitigation_owner, "mitigation_owner", true);
         echo "</div>
         </div>
     ";
@@ -1440,7 +1423,9 @@ function display_mitigation_team_edit($mitigation_team)
                 .$escaper->escapeHtml($lang['MitigationTeam']) .": 
             </div>
             <div class=\"span7\">";
-                create_dropdown("team", $mitigation_team, "mitigation_team", true);
+                $mitigation_team_values = ":".implode(":", explode(",", $mitigation_team)).":";
+//                create_dropdown("team", $mitigation_team, "mitigation_team", true);
+                create_multiple_dropdown("team", $mitigation_team_values, "mitigation_team", NULL, false, "", "", true, " class='multiselect' ");
             echo "</div>
         </div>
     ";
@@ -1544,9 +1529,8 @@ function display_security_recommendations_edit($security_recommendations)
 /************************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN MITIGATION EDIT *
 *************************************************************/
-function display_main_mitigation_feilds_by_panel_edit($panel_name, $fields, $risk_id, $mitigation_date, $planning_strategy, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team,  $current_solution, $security_requirements, $security_recommendations, $planning_date, $mitigation_percent, $mitigation_controls)
+function display_main_mitigation_fields_by_panel_edit($panel_name, $fields, $risk_id, $mitigation_date, $planning_strategy, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team,  $current_solution, $security_requirements, $security_recommendations, $planning_date, $mitigation_percent, $mitigation_controls)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id);
 
     foreach($fields as $field)
     {
@@ -1628,7 +1612,15 @@ function display_main_mitigation_feilds_by_panel_edit($panel_name, $fields, $ris
             }
             else
             {
-                display_custom_field_edit($field, $custom_values);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id);
+                    display_custom_field_edit($field, $custom_values);
+                }
             }
 
 
@@ -1692,11 +1684,11 @@ function display_review_view($review)
 /***********************************
 * FUNCTION: DISPLAY NEXT STEP VIEW *
 ************************************/
-function display_next_step_view($next_step)
+function display_next_step_view($next_step_value, $risk_id)
 {
     global $lang, $escaper;
 
-    $next_step = get_name_by_value("next_step", $next_step);
+    $next_step = get_name_by_value("next_step", $next_step_value);
     echo "<div class=\"row-fluid\">\n";
     echo "<div class=\"span5 text-right\">\n";
     echo $escaper->escapeHtml($lang['NextStep']) .": \n";
@@ -1705,6 +1697,21 @@ function display_next_step_view($next_step)
     echo "<input style=\"cursor: default;\" type=\"text\" name=\"next_step\" id=\"next_step\" size=\"100\" value=\"" . $escaper->escapeHtml($next_step) . "\" title=\"" . $escaper->escapeHtml($next_step) . "\" disabled=\"disabled\" />\n";
     echo "</div>\n";
     echo "</div>\n";
+
+    if ($next_step_value == 2) {
+        $project = get_project_by_risk_id($risk_id);
+        $project_name = $project? $project['name'] : $lang['UnassignedRisks'];
+        if ($project_name) {
+            echo "<div class=\"row-fluid\">\n";
+            echo "<div class=\"span5 text-right\">\n";
+            echo $escaper->escapeHtml($lang['ProjectName']) .": \n";
+            echo "</div>\n";
+            echo "<div class=\"span7\">\n";
+            echo "<input style=\"cursor: default;\" type=\"text\" name=\"project_name\" id=\"project_name\" size=\"100\" value=\"" . $escaper->escapeHtml($project_name) . "\" title=\"" . $escaper->escapeHtml($project_name) . "\" disabled=\"disabled\" />\n";
+            echo "</div>\n";
+            echo "</div>\n";
+        }
+    }
 }
 
 /******************************************
@@ -1713,12 +1720,9 @@ function display_next_step_view($next_step)
 function display_next_review_date_view($next_review)
 {
     global $lang, $escaper;
-
-    // If next review date wasn't due, convert next review date to default date format
+    
     if(!$next_review){
         $next_review = "";
-    }elseif($next_review != $lang['PASTDUE']){
-        $next_review = date(get_default_date_format(), strtotime($next_review));
     }
     
     echo "<div class=\"row-fluid\">\n";
@@ -1751,9 +1755,8 @@ function display_comments_view($comment)
 /********************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN REVIEW VIEW *
 *********************************************************/
-function display_main_review_feilds_by_panel_view($panel_name, $fields, $risk_id, $review_id, $review_date, $reviewer, $review, $next_step, $next_review, $comment)
+function display_main_review_fields_by_panel_view($panel_name, $fields, $risk_id, $review_id, $review_date, $reviewer, $review, $next_step, $next_review, $comment)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id, false, $review_id);
 
     foreach($fields as $field)
     {
@@ -1782,7 +1785,7 @@ function display_main_review_feilds_by_panel_view($panel_name, $fields, $risk_id
                     break;
                         
                     case 'NextStep':
-                        display_next_step_view($next_step);
+                        display_next_step_view($next_step, $risk_id);
                     break;
                         
                     case 'NextReviewDate':
@@ -1802,7 +1805,15 @@ function display_main_review_feilds_by_panel_view($panel_name, $fields, $risk_id
             // If custom field
             else
             {
-                display_custom_field_view($field, $custom_values, $review_id);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id, false, $review_id);
+                    display_custom_field_risk_view($field, $custom_values, $review_id);
+                }
             }
         
         }
@@ -1867,6 +1878,56 @@ function display_next_step_edit($next_step)
     echo "<div class=\"span7\">\n";
     create_dropdown("next_step", $next_step, NULL, true);
     echo "</div></div>\n";
+
+    // Projects
+    $project = get_project_by_risk_id($_GET['id']);
+    $project_id = $project? $project['value'] : false;
+
+    // If Next Step is Consider for Project (value=2), show project list
+    if($next_step == 2)
+    {
+        echo "<div class=\"row-fluid project-holder\">\n";
+    }
+    else
+    {
+        echo "<div class=\"row-fluid project-holder\" style=\"display:none;\">\n";
+    }
+    echo "<div class=\"span5 text-right\">\n";
+    echo $escaper->escapeHtml($lang['ProjectName']) .":</div>";
+    echo "<div class=\"span7\">\n";
+    create_dropdown("projects", $project_id, "project", false);
+
+    echo "<span class='project-instructions'>{$escaper->escapeHtml($lang['ReviewProjectSelectionInstructions'])}</span></div>
+
+    </div>\n";
+    
+    echo "
+        <script>
+            $(document).ready(function(){
+                $('#project').selectize({
+                    create: true,
+                    //sortField: 'text',
+                    addPrecedence: true,
+                    placeholder: '{$escaper->escapeJS($lang['ReviewProjectSelectionPlaceholder'])}',
+                    sortField: 'value',
+                    create: function(input) {return { 'value': 'new-projval-prfx-' + input, 'text': input }; }
+                });";
+    if ($project_id === false) {
+        echo "
+                $('#project')[0].selectize.clear();";
+    }
+    echo "
+            })
+        </script>
+        <style>
+            .project-instructions {
+                font-size: 0.8em;
+                color: red;
+                position:relative;
+                top: -20px;
+            }
+        </style>
+    ";
 }
 
 /********************************
@@ -1901,8 +1962,8 @@ function display_set_next_review_date_edit($default_next_review)
             echo $escaper->escapeHtml($lang['WouldYouLikeToUseADifferentDate']).'</strong>';
 
             echo "<div class=\"clearfix radio-buttons-holder radio-padded-top-bottom\">";
-                echo "<div class=\"pull-left active-textfield\"><input type=\"radio\" name=\"custom_date\" value=\"no\" onclick=\"hideNextReview()\" id=\"no\" class=\"hidden-radio\" checked /> <label for=\"no\">".$escaper->escapeHtml($lang['No'])."</label></div>";
-                echo "<div class=\"pull-left radio-padded-right\"><input type=\"radio\" name=\"custom_date\" value=\"yes\" onclick=\"showNextReview()\" id=\"yes\" class=\"hidden-radio\" /><label for=\"yes\">".$escaper->escapeHtml($lang['Yes'])."</label></div>";
+                echo "<div class=\"pull-left active-textfield\"><input type=\"radio\" name=\"custom_date\" value=\"no\" id=\"no\" class=\"hidden-radio\" checked /> <label for=\"no\">".$escaper->escapeHtml($lang['No'])."</label></div>";
+                echo "<div class=\"pull-left radio-padded-right\"><input type=\"radio\" name=\"custom_date\" value=\"yes\" id=\"yes\" class=\"hidden-radio\" /><label for=\"yes\">".$escaper->escapeHtml($lang['Yes'])."</label></div>";
             echo "</div>";
         echo "</div>";
     echo "</div>";
@@ -1922,9 +1983,8 @@ function display_set_next_review_date_edit($default_next_review)
 /********************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN REVIEW EDIT *
 *********************************************************/
-function display_main_review_feilds_by_panel_edit($panel_name, $fields, $risk_id, $review_id, $review, $next_step, $next_review, $comment, $default_next_review)
+function display_main_review_fields_by_panel_edit($panel_name, $fields, $risk_id, $review_id, $review, $next_step, $next_review, $comment, $default_next_review)
 {
-    $custom_values = getCustomFieldValuesByRiskId($risk_id, false, $review_id);
 
     foreach($fields as $field)
     {
@@ -1973,7 +2033,15 @@ function display_main_review_feilds_by_panel_edit($panel_name, $fields, $risk_id
             }
             else
             {
-                display_custom_field_edit($field, $custom_values);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    $custom_values = getCustomFieldValuesByRiskId($risk_id, false, $review_id);
+                    display_custom_field_edit($field, $custom_values);
+                }
             }
         }
     }
@@ -2004,10 +2072,86 @@ function display_supporting_documentation_add()
     echo "</div>";
 }
 
+
+/************************************
+ * FUNCTION: DISPLAY RISK TAGS EDIT *
+ ************************************/
+function display_risk_tags_edit($tags = "")
+{
+    global $lang, $escaper;
+
+    echo "  <div class=\"row-fluid\">";
+    echo "      <div class=\"span10 hero-unit\">";
+    echo "          <div class=\"row-fluid\">";
+    echo "              <div class=\"wrap-text span1 text-left\"><strong>".$escaper->escapeHtml($lang['Tags'])."</strong></div>";
+    echo "          </div>";
+    echo "          <div class=\"row-fluid\">";
+    echo "              <div class=\"span12\">";
+    echo "                  <input type=\"text\" readonly id=\"tags\" name=\"tags\" value=\"" . $escaper->escapeHtml($tags) . "\">
+                            <script>
+                                $('#tags').selectize({
+                                    plugins: ['remove_button', 'restore_on_backspace'],
+                                    delimiter: ',',
+                                    create: true,
+                                    valueField: 'label',
+                                    labelField: 'label',
+                                    searchField: 'label',
+                                    preload: true,
+                                    load: function(query, callback) {
+                                        if (query.length) return callback();
+                                        $.ajax({
+                                            url: '/api/management/tag_options_of_type?type=risk',
+                                            type: 'GET',
+                                            dataType: 'json',
+                                            error: function() {
+                                                console.log('Error loading!');
+                                                callback();
+                                            },
+                                            success: function(res) {
+                                                callback(res.data);
+                                            }
+                                        });
+                                    }
+                                });
+                            </script>";
+    echo "              </div>";
+    echo "          </div>";
+    echo "      </div>";
+    echo "  </div>";
+}
+
+/************************************
+ * FUNCTION: DISPLAY RISK TAGS VEIW *
+ ************************************/
+function display_risk_tags_view($tags)
+{
+    global $lang, $escaper;
+
+    echo "  <div class=\"row-fluid\">";
+    echo "      <div class=\"span10 hero-unit\">";
+    echo "          <div class=\"row-fluid\">";
+    echo "              <div class=\"wrap-text span1 text-left\"><strong>".$escaper->escapeHtml($lang['Tags'])."</strong></div>";
+    echo "          </div>";
+    echo "          <div class=\"row-fluid\">";
+    echo "              <div class=\"span12\">";
+    if ($tags) {
+        foreach(explode(",", $tags) as $tag) {
+            echo "<button class=\"btn btn-secondary btn-sm\" style=\"pointer-events: none;margin-right:2px;padding: 4px 12px;\" role=\"button\" aria-disabled=\"true\">" . $escaper->escapeHtml($tag) . "</button>";
+        }
+    } else {
+        echo $escaper->escapeHtml($lang['NoTagAssigned']);
+    }
+    echo "              </div>";
+    echo "          </div>";
+    echo "      </div>";
+    echo "  </div>";
+}
+
+
 /********************************************************
 * FUNCTION: DISPLAY MAIN FIELDS BY PANEL IN DETAILS ADD *
 *********************************************************/
-function display_main_detail_feilds_by_panel_add($panel_name, $fields)
+function display_main_detail_fields_by_panel_add($panel_name, $fields)
 {
     foreach($fields as $field)
     {
@@ -2085,7 +2229,10 @@ function display_main_detail_feilds_by_panel_add($panel_name, $fields)
                     case 'SupportingDocumentation':
                         display_supporting_documentation_add();  
                     break;
-                        
+
+                    case 'Tags':
+                        display_risk_tags_edit();
+                    break;
                 }
 
                 if($field['active'] == 0){
@@ -2094,7 +2241,14 @@ function display_main_detail_feilds_by_panel_add($panel_name, $fields)
             }
             else
             {
-                display_custom_field_edit($field, []);
+                // If customization extra is enabled
+                if(customization_extra())
+                {
+                    // Include the extra
+                    require_once(realpath(__DIR__ . '/../extras/customization/index.php'));
+
+                    display_custom_field_edit($field, []);
+                }
             }
         }
     }

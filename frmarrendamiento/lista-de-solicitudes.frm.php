@@ -86,7 +86,9 @@ $xHG->setSQL($xLi->getListadoDeLeasingSolicitudes($originador, $suborigen));
 
 $xHG->addList();
 $xHG->addKey("clave");
-$xHG->col("clave", "TR.ID", "10%");
+
+$xHG->col("clave", "TR.ID", "5%");
+
 $xHG->ColFecha("fecha", "TR.FECHA", "10%");
 
 if($xUser->getEsOriginador() == true){
@@ -104,11 +106,11 @@ if($xUser->getEsOriginador() == true){
 }
 
 
-$xHG->col("cliente", "TR.CLIENTE", "25%");
+$xHG->col("informacion", "TR.Informacion", "25%");
 
-$xHG->ColMoneda("precio_vehiculo", "TR.PRECIO", "10%");
+$xHG->ColMoneda("precio_vehiculo", "TR.PRECIO", "8%");
 
-$xHG->ColMoneda("monto_anticipo", "TR.ANTICIPO", "10%");
+$xHG->ColMoneda("monto_anticipo", "TR.ANTICIPO", "8%");
 
 //$xHG->col("total_credito", "TR.CREDITO", "10%", true);
 //$xHG->col("monto_directo", "TR.PAGO DIRECTO", "10%", true);
@@ -123,12 +125,12 @@ $xHG->col("monto_mtto", "TR.MTTO", "10%", true);*/
 
 $xHG->OColFunction("proceso", "TR.ETAPA", "15%", "jsQuePaso");
 //Editar
-$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png","", false, "var xLeas=new LeasGen(); if(xLeas.cotizadorEditable( {paso:entero(data.record.proceso)})== true ){");
 
 
 
 if($xUser->getEsOriginador() == false){
-	$xHG->OButton("TR.ADMINISTRAR", "jsEdit2('+ data.record.clave +')", "unlocked.png");
+	$xHG->OButton("TR.ADMINISTRAR", "jsEdit2('+ data.record.clave +')", "key.png","", false, "var xLeas=new LeasGen(); if(xLeas.cotizadorEditable( {paso:entero(data.record.proceso)})== true ){");
 } else {
 	if($EsAdmin == true){
 		//Cancelar
@@ -146,14 +148,31 @@ $xHG->col("credito", "TR.CREDITO", "10%");*/
 $xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 //$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.clave +')", "edit.png");
 
-$xHG->OButton("TR.Archivo", "jsArchivo('+ data.record.clave +')", "archive.png");
+//$xHG->OButton("TR.Archivo", "jsArchivo('+ data.record.clave +')", "archive.png");
+
+
+$xHG->OButton("TR.COTIZACION", "var xC=new CredGen();xC.getLeasingCotizacion('+ data.record.clave +')", "print.png");
+
 if(MODO_DEBUG){
-	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+	//$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png","", false, "var xLeas=new LeasGen(); if(xLeas.cotizadorEditable( {paso:entero(data.record.proceso)})== true ){");
 }
+
+if($xUser->getEsOriginador() == false){
+	$xHG->OButton("TR.ARCHIVO", "jsArchivo('+ data.record.clave +')", "archive.png","", false, "var xLeas=new LeasGen(); if(xLeas.cotizadorEditable( {paso:entero(data.record.proceso)})== true ){");
+} else {
+	if($EsAdmin == true){
+		//Cancelar
+	} else {
+		
+	}
+}
+
 $xHG->setOrdenar();
 
 $xFRM->addHElem("<div id='iddivleasingcreditos'></div>");
+
 $xFRM->addJsCode( $xHG->getJs(true) );
+
 echo $xFRM->get();
 ?>
 

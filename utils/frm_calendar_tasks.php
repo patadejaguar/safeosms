@@ -21,6 +21,7 @@ $xLi				= new cSQLListas();
 $xSys				= new cSystemTask();
 $xQL				= new MQL();
 $xRuls				= new cReglaDeNegocio();
+$xPerCred			= new cPeriodoDeCredito();
 
 $noUsarChat			= $xRuls->getValorPorRegla($xRuls->reglas()->RN_NO_USAR_HCHAT);
 $SyncApp			= $xRuls->getValorPorRegla($xRuls->reglas()->SYNC_APP);		//regla de negocio
@@ -442,9 +443,10 @@ $xFRM->endSeccion();
 
 $xFRM->OButton("TR.Tareas", "jsGetInformes()", "tarea", "idtareas");
 
+
 if(MODULO_AML_ACTIVADO == true){
-	$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas");
-	$xFRM->OButton("TR.Reporte de CONDUCTA_INADECUADA", "var xG=new Gen();xG.w({url:'../frmpld/reportar_empleado.frm.php?',tiny:true})", $xFRM->ic()->COMENTARIO, "idhacerreporte");
+	$xFRM->OButton("TR.Buscar en Lista_Negra", "var xP= new PersGen(); xP.setBuscarEnListas()", $xFRM->ic()->BUSCAR, "idtareas", "", "TR.AML");
+	$xFRM->OButton("TR.Reporte de CONDUCTA_INADECUADA", "var xG=new Gen();xG.w({url:'../frmpld/reportar_empleado.frm.php?',tiny:true})", $xFRM->ic()->COMENTARIO, "idhacerreporte", "", "TR.AML");
 }
 
 
@@ -500,21 +502,30 @@ $xFRM->endSeccion();
 if(getEsModuloMostrado(USUARIO_TIPO_CAJERO) == true){
 	//==================== Cartera de Credito
 	if(GARANTIA_LIQUIDA_EN_CAPTACION== false){
-		$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3");
+		$xFRM->OButton("TR.CARTERA GTIALIQ", "jsGetCarteraGtiaLiquida()", $xFRM->ic()->REPORTE5, "carteragtialiq", "blue3","TR.TESORERIA");
 	}
 	
-	$xFRM->OButton("TR.Recibos Emitidos", "jsaGetRecibosEmitidos()", $xBtn->ic()->REPORTE);
-	$xFRM->OButton("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", $xFRM->ic()->REPORTE4, "idletrapagosvencs");
-	$xFRM->OButton("TR.LETRASVENC", "jsaGetLetrasVencidas()", $xFRM->ic()->REPORTE5, "idletravencs");
+	$xFRM->OButton("TR.Recibos de Operacion", "jsaGetRecibosEmitidos()", $xBtn->ic()->REPORTE, "", "","");
 }
+
+if($xUsr->getEsOriginador() == false){
+
+$xFRM->OButton("TR.Pagos DEL DIA", "jsaGetLetrasAVencer()", $xFRM->ic()->REPORTE4, "idletrapagosvencs", "");
+$xFRM->OButton("TR.LETRASVENC", "jsaGetLetrasVencidas()", $xFRM->ic()->REPORTE5, "idletravencs", "");
+
+}
+
+
+
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION)){
-	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", "lista", "idcredaut", false) );
-	$xFRM->addToolbar($xBtn->getBasic("TR.Creditos Por Ministrar", "jsaGetCreditosPorMinistrar()", "lista", "idcrednpoaut", false) );
+	$xFRM->OButton("TR.Creditos Por Autorizar", "jsaGetCreditosPorAutorizar()", "lista", "idcredaut", "");
+	$xFRM->OButton("TR.Creditos Por Ministrar", "jsaGetCreditosPorMinistrar()", "lista", "idcrednpoaut", "");
 	$xFRM->OButton("TR.CARTERA CREDITO", "jsGetCarteraCredito()", $xFRM->ic()->REPORTE5, "carteracred", "blue3");
 }
 if(getEsModuloMostrado(USUARIO_TIPO_GERENTE, MMOD_COLOCACION) == true){
-	$xFRM->OButton("TR.Actualizar Proyeccion", "jsActualizarProyeccionMensual()", $xFRM->ic()->RECARGAR, "idcmdactualizar", "yellow");
-	$xFRM->OButton("TR.Actualizar Estadisticas", "jsActualizarEstPers()", $xFRM->ic()->RECARGAR, "idcmdactualizarespers", "yellow");
+	$xFRM->OButton("TR.Actualizar Proyeccion", "jsActualizarProyeccionMensual()", $xFRM->ic()->RECARGAR, "idcmdactualizar", "yellow", "TR.PROCESOS");
+	$xFRM->OButton("TR.Actualizar Estadisticas", "jsActualizarEstPers()", $xFRM->ic()->RECARGAR, "idcmdactualizarespers", "yellow", "TR.PROCESOS");
+	$xFRM->OButton("TR.Actualizar Ingresos", "jsActualizarIngresos()", $xFRM->ic()->REPORTE4, "", "","TR.PROCESOS");
 }
 
 
@@ -582,8 +593,8 @@ if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 	if($xCaja->initByFechaUsuario(fechasys(), getUsuarioActual()) == true){
 		if($xCaja->getEstatus() == TESORERIA_CAJA_ABIERTA){
 			//cerrar Caja
-			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',principal:true});", $xFRM->ic()->CERRAR, "idcmdcerrarcaja", "yellow");
-			$xFRM->OButton("TR.REPORTE CAJA", "jsaGetResumenDeCaja()", $xFRM->ic()->DINERO, "idcmfgetrptcaja", "white");
+			$xFRM->OButton("TR.CERRAR CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/cerrar_caja.frm.php?',principal:true});", $xFRM->ic()->CERRAR, "idcmdcerrarcaja", "yellow", "TR.TESORERIA");
+			$xFRM->OButton("TR.REPORTE CAJA", "jsaGetResumenDeCaja()", $xFRM->ic()->DINERO, "idcmfgetrptcaja", "white", "TR.TESORERIA");
 			$OnCaja	= true;
 			//Reporte de Caja
 		}
@@ -592,12 +603,12 @@ if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 
 if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true){
 	if(PERSONAS_CONTROLAR_POR_EMPRESA == true){
-		$xFRM->OButton("TR.NOMINAS POR COBRAR", "jsaListaPeriodosDeEmpresa", $xFRM->ic()->REPORTE2);
-		$xFRM->OButton("TR.NOMINAS ENVIADAS", "jsaListaPeriodosDeEmpresaEmitidos", $xFRM->ic()->REPORTE3);
+		$xFRM->OButton("TR.NOMINAS POR COBRAR", "jsaListaPeriodosDeEmpresa", $xFRM->ic()->REPORTE2, "", "", "TR.TESORERIA");
+		$xFRM->OButton("TR.NOMINAS ENVIADAS", "jsaListaPeriodosDeEmpresaEmitidos", $xFRM->ic()->REPORTE3, "", "", "TR.TESORERIA");
 	}
 }
 if(getEsModuloMostrado(USUARIO_TIPO_CAJERO, MMOD_TESORERIA) == true AND $OnCaja == false){
-	$xFRM->OButton("TR.ABRIR_SESSION DE CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/abrir_caja.frm.php?',tiny:true})", $xFRM->ic()->COBROS);
+	$xFRM->OButton("TR.ABRIR_SESSION DE CAJA", "var xG=new Gen();xG.w({url:'../frmcaja/abrir_caja.frm.php?',tiny:true})", $xFRM->ic()->COBROS, "", "", "TR.TESORERIA");
 	//Agregar Lista de Nominas Enviadas
 }
 
@@ -662,79 +673,84 @@ FROM     `originacion_leasing` INNER JOIN `creditos_etapas`  ON `originacion_lea
 
 $xFRM->setNoAcordion();
 //$xF->dia() < 10 AND
-if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE, MMOD_CONTABILIDAD) == true){
-	$xFRM->OButton("TR.Actualizar Ingresos", "jsActualizarIngresos()", $xFRM->ic()->REPORTE4);
-}
+//if( getEsModuloMostrado(USUARIO_TIPO_CONTABLE, MMOD_CONTABILIDAD) == true){}
 
 
 $xChart			= new cChart("idivchart");
 
 
 
-$xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO, "cmdcalcplan", "ggreen");
+$xFRM->OButton("TR.CALCULAR PLAN_DE_PAGOS", "jsCalcularPlanPagos()", $xFRM->ic()->CALENDARIO, "cmdcalcplan", "ggreen", "");
 
 if(getEsModuloMostrado(false, MMOD_CRED_LEASING) == true){
-	$xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange");
+	$xFRM->OButton("TR.AGREGAR ARRENDAMIENTO", "jsAgregarLeasing()", $xFRM->ic()->LEASING, "cmdaddleasing", "gorange", "");
 }
 if(getEsModuloMostrado(USUARIO_TIPO_GERENTE) == true){
 	if($SyncApp == true){
-		$xFRM->OButton("TR.Sync App Catalogos", "var xApp=new AppGen();xApp.sync({catalogos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappcat", "yellow");
-		$xFRM->OButton("TR.Sync App Avisos", "var xApp=new AppGen();xApp.sync({avisos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappmsg", "yellow");
+		$xFRM->OButton("TR.Sync App Catalogos", "var xApp=new AppGen();xApp.sync({catalogos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappcat", "yellow", "TR.SISTEMA");
+		$xFRM->OButton("TR.Sync App Avisos", "var xApp=new AppGen();xApp.sync({avisos:true});", $xFRM->ic()->EJECUTAR, "cmdexecappmsg", "yellow", "TR.SISTEMA");
 	}
 }
 
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED, MMOD_COLOCACION) == true){
-	$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange");
-	$xFRM->OButton("TR.AGREGAR CREDITOS_LINEAS", "jsAgregarLineaCredito()", $xFRM->ic()->CREDITO, "cmdaddlineacredito", "gorange");
+	$xFRM->OButton("TR.AGREGAR PRECLIENTE", "jsAgregarPrecliente()", $xFRM->ic()->CREDITO, "cmdaddprecredito", "gorange", "");
+	$xFRM->OButton("TR.AGREGAR CREDITOS_LINEAS", "jsAgregarLineaCredito()", $xFRM->ic()->CREDITO, "cmdaddlineacredito", "gorange", "");
 }
 
-$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
-$xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
-$xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO, "cmdpanelcred", "credito");
-$xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
+//$xFRM->OButton("TR.Buscar PERSONA", "jsGoBuscarPersona()", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
 
+if($xUsr->getEsOriginador() == false){
+	
+	$xFRM->OButton("TR.Buscar PERSONA", "var xP=new PersGen();xP.getFormaBusqueda({next:CFG.rutas.panel});", $xFRM->ic()->PERSONA, "cmdfindpersona", "blue");
+	$xFRM->OButton("TR.IR PANEL PERSONA", "jsGoPanelPersona()", $xFRM->ic()->PERSONA, "cmdpanelpers", "persona");
+	$xFRM->OButton("TR.IR PANEL CREDITO", "jsGoPanelCredito()", $xFRM->ic()->CREDITO, "cmdpanelcred", "credito");
+	$xFRM->OButton("TR.IR PANEL RECIBO", "jsGoPanelRecibo()", $xFRM->ic()->RECIBO);
+
+}
 
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_CRED) == true){
-	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR);
+	$xFRM->OButton("TR.Actualizar Letras pendientes", "jsActualizarProcLetras()", $xFRM->ic()->EJECUTAR, "", "", "TR.PROCESOS");
 }
 if(getEsModuloMostrado(USUARIO_TIPO_OFICIAL_AML, MMOD_AML)){
-	$xFRM->OButton("TR.Acceso al RMS", "var xg=new Gen();xG.w({url:'"  . AML_RMS_URL . "', tab:true});", $xFRM->ic()->ADELANTE, "cmdbtnaccrms", "green2");
+	$xFRM->OButton("TR.Acceso al RMS", "var xg=new Gen();xG.w({url:'"  . AML_RMS_URL . "', tab:true});", $xFRM->ic()->ADELANTE, "cmdbtnaccrms", "green2", "TR.AML");
 	if($SyncAML == true){
-		$xFRM->OButton("TR.SYNC AML", "jsSyncAMLImport()", $xFRM->ic()->SYNC, "cmdbtnsyncaml", "green");
-		$xFRM->OButton("TR.SYNC AML Personas", "jsSyncAMLImportPersonas()", $xFRM->ic()->SYNC, "cmdbtnsyncaml2", "green");
-		$xFRM->OButton("TR.SYNC AML Creditos", "jsSyncAMLImportCreditos()", $xFRM->ic()->SYNC, "cmdbtnsyncaml3", "green");
+		$xFRM->OButton("TR.SYNC AML", "jsSyncAMLImport()", $xFRM->ic()->SYNC, "cmdbtnsyncaml", "green", "TR.AML");
+		$xFRM->OButton("TR.SYNC AML Personas", "jsSyncAMLImportPersonas()", $xFRM->ic()->SYNC, "cmdbtnsyncaml2", "green", "TR.AML");
+		$xFRM->OButton("TR.SYNC AML Creditos", "jsSyncAMLImportCreditos()", $xFRM->ic()->SYNC, "cmdbtnsyncaml3", "green", "TR.AML");
 	}
 }
 if(MODO_DEBUG == true){
 	$srv	= $xHP->getServerName();
 	if(strpos($srv, "localhost") === false AND strpos($srv, "test") === false){
 		if(SAFE_ON_DEV == true){
-			$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
+			$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red", "TR.PROCESOS");
 		}
 	} else {
-		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red");
-		$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red");
+		$xFRM->OButton("ELiminar LOG", "jsEliminarLog()", "grafico", "idlog", "red", "TR.SISTEMA");
+		$xFRM->OButton("Actualizar a Localhost", "jsSetLocalhost()", "grafico", "idsetloc", "red", "TR.PROCESOS");
 		
 	}
-	$xFRM->OButton("Buscar en LOG", "jsGoBuscarLog()", $xFRM->ic()->AVISO, "idbuslog", "yellow");
-	$xFRM->OButton("Obtener LOG", "jsaGetLog()", $xFRM->ic()->GRAFICO1, "idglog", "blue3");
-	$xFRM->OButton("TR.Respaldo", "jsaRespaldarDB()", $xFRM->ic()->EJECUTAR, "idrespdb", "green");
+	$xFRM->OButton("Buscar en LOG", "jsGoBuscarLog()", $xFRM->ic()->AVISO, "idbuslog", "yellow", "TR.SISTEMA");
+	$xFRM->OButton("Obtener LOG", "jsaGetLog()", $xFRM->ic()->GRAFICO1, "idglog", "blue3", "TR.SISTEMA");
+	$xFRM->OButton("TR.Respaldo", "jsaRespaldarDB()", $xFRM->ic()->EJECUTAR, "idrespdb", "green", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR, "cmdupdate", "green2");
-	$xFRM->OButton("TR.ACTUALIZAR EL SISTEMA", "jsSetActualizarSys()", $xFRM->ic()->EJECUTAR, "cmdusys", "yellow");
-	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php', principal:true});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow");
+	$xFRM->OButton("TR.Actualizar Idioma", "jsaActualizarIdioma()", $xFRM->ic()->EJECUTAR, "cmdupdate", "green2", "TR.PROCESOS");
+	$xFRM->OButton("TR.ACTUALIZAR EL SISTEMA", "jsSetActualizarSys()", $xFRM->ic()->EJECUTAR, "cmdusys", "yellow", "TR.PROCESOS");
+	$xFRM->OButton("TR.CONFIGURACION DEL SISTEMA", "var xg=new Gen();xG.w({url:'../frmsystem/opciones.frm.php', principal:true});", $xFRM->ic()->CONTROL, "cmdoptions", "yellow", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.PRODUCTO CREDITO", "var xG=new Gen();xG.w({url:'../frmcreditos/frmdatos_de_convenios_de_creditos.xul.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
-	$xFRM->OButton("TR.OPERACIONES", "var xG=new Gen();xG.w({url:'../frmtipos/operaciones_tipos.lista.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
+	$xFRM->OButton("TR.PRODUCTO CREDITO", "var xG=new Gen();xG.w({url:'../frmcreditos/frmdatos_de_convenios_de_creditos.xul.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2", "TR.SISTEMA");
+	$xFRM->OButton("TR.OPERACIONES", "var xG=new Gen();xG.w({url:'../frmtipos/operaciones_tipos.lista.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.USUARIOS", "var xG=new Gen();xG.w({url:'../frmsecurity/usuarios-edicion.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn102", "green2");
+	$xFRM->OButton("TR.USUARIOS", "var xG=new Gen();xG.w({url:'../frmsecurity/usuarios-edicion.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn102", "green2", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.SUCURSALES", "var xG=new Gen();xG.w({url:'../frmtipos/sucursales.frm.php', principal:true});", $xFRM->ic()->HOME, "cmdbtn102", "green2");
+	$xFRM->OButton("TR.SUCURSALES", "var xG=new Gen();xG.w({url:'../frmtipos/sucursales.frm.php', principal:true});", $xFRM->ic()->HOME, "cmdbtn102", "green2", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.PERMISOS", "var xG=new Gen();xG.w({url:'../frmsecurity/permisos.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2");
+	$xFRM->OButton("TR.PERMISOS", "var xG=new Gen();xG.w({url:'../frmsecurity/permisos.frm.php', principal:true});", $xFRM->ic()->EJECUTAR, "cmdbtn103", "green2", "TR.SISTEMA");
 	
-	$xFRM->OButton("TR.CONTRATOS", "var xG=new Gen();xG.w({url:'../frmutils/contratos-editor.frm.php', principal:true});", $xFRM->ic()->CONTRATO, "cmdbtn103", "green2");
+	$xFRM->OButton("TR.CONTRATOS", "var xG=new Gen();xG.w({url:'../frmutils/contratos-editor.frm.php', principal:true});", $xFRM->ic()->CONTRATO, "cmdbtn105", "green2", "TR.SISTEMA");
 	
+	$xFRM->OButton("TR.PALABRAS", "var xG=new Gen();xG.w({url:'../frmsystem/idioma-catalogo.frm.php', principal:true});", "fa-language", "cmdbtn104", "green2", "TR.SISTEMA");
+
 	
 }
 if($noUsarChat == false){
@@ -743,7 +759,7 @@ if($noUsarChat == false){
 
 if($xFRM->getEnDesarrollo() == true){
 	//$xFRM->OButton("TR.", "var xG=new Gen();xG.w({url:''});", $xFRM->ic()->EJECUTAR, "cmdbtn101", "green2");
-	$xFRM->OButton("TR.LIMPIAR CONTABILIDAD", "var xG=new Gen();xG.confirmar({msg:'¿ Confirma limpiar contabilidad ?', callback: jsaSetRunContabilidad});", $xFRM->ic()->CONTABLE, "cmdbtncont01", "green2");
+	$xFRM->OButton("TR.LIMPIAR CONTABILIDAD", "var xG=new Gen();xG.confirmar({msg:'¿ Confirma limpiar contabilidad ?', callback: jsaSetRunContabilidad});", $xFRM->ic()->CONTABLE, "cmdbtncont01", "green2", "TR.SISTEMA");
 }
 if(PERSONAS_COMPARTIR_CON_ASOCIADA == true){
 	$ctx	= $xUsr->getCTX();
@@ -780,6 +796,8 @@ $horasql		= $xQL->getDataValue("SELECT NOW() AS 'tiempo' ", "tiempo");
 
 $sysinfo		= "";
 
+$xPerCred->getExistePeriodoPorFecha(fechasys());
+
 if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	$xUL			= new cHUl(); $xUL2		= new cHUl();
 	$sysinfo		=  $xUL->li("Base de Datos:" . MY_DB_IN)->li("Servidor: " . WORK_HOST)
@@ -813,6 +831,7 @@ if (MODO_DEBUG == true AND (SYSTEM_ON_HOSTING == false)){
 	->li("Clave Estado : " . $xLoc->DomicilioEstadoClaveABC() )
 	->li("C.P. : " . $xLoc->DomicilioCodigoPostal())
 	->li("Clave de Oficial AML : " . getOficialAML())
+	->li("Periodo de Credito por Fecha : " . $xPerCred->getNombre())
 	->end();
 	
 	$xFRM->addSeccion("idmaslogs", "TR.Configuracion del Sistema");

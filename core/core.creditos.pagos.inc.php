@@ -75,21 +75,6 @@ class cCreditosEventos {
 	}
 }
 
-class cCreditosEtapas {
-	public $SOLICITUD		= "solicitud";
-	public $AUTORIZACION	= "autorizacion";
-	public $MINISTRACION	= "ministracion";
-	public $ORIGINACION		= "originacion";
-	public $FORMALIZACION	= "formalizacion";
-	public $DESEMBOLSO		= "desembolso";
-	public $ADMINISTRACION	= "administracion";
-	
-	
-	function __construct(){
-		
-	}
-}
-
 class cPlanDePagosGenerador {
 	private $mPersona			= 0;
 	private $mCredito			= 0;
@@ -177,6 +162,7 @@ class cPlanDePagosGenerador {
 	private $mConDiasInhabiles	= false;
 	private $mSoloOriginal		= false;
 	private $mEsLeasing			= false;
+	private $mPlanPagosNuevo	= false;
 	
 	//private $mParcialidadPres	= 0;
 	//private $mTipoEnSistema		= false;
@@ -279,12 +265,32 @@ class cPlanDePagosGenerador {
 		}
 		if($xCred->getEsArrendamientoPuro()){
 			$xOrg			= new cCreditosLeasing();
+			$xLog->add("WARN\tEl Credito es de Arrendamiento\r\n", $xLog->DEVELOPER);
 			if($xOrg->initByCredito($xCred->getClaveDeCredito()) == true){
 				$this->mMontoOtrosCargos 	= $xOrg->getCuotasNoCapitalizadas()*$xCred->getPagosAutorizados();
 				$this->mIDOtrosCargos		= OPERACION_CLAVE_PLAN_DESGLOSE;
+				$xLog->add("WARN\tOtros cargos de Arrendamiento por " . $this->mMontoOtrosCargos . "\r\n", $xLog->DEVELOPER);
+				$this->setValorResidual($xOrg->getValorResidual());
+				$xLog->add("WARN\tEl Valor Residual es " . $xOrg->getValorResidual() . "\r\n", $xLog->DEVELOPER);
 			}
 			$this->mEsLeasing	= true;
+			
+		} else {
+			$DProd		= $xCred->getOProductoDeCredito();
+			if($xCred->getEsCreditoYaAfectado() == true){
+				$DProd->initOtrosCargos($xCred->getFechaDeMinistracion(), $xCred->getMontoAutorizado());
+			} else {
+				$DProd->initOtrosCargos();
+			}
+			
+			$SumOtr			= $DProd->getSumaOtrosCargosEnParcs();
+
+			if($SumOtr > 0){
+				$this->mMontoOtrosCargos 	= setNoMenorQueCero( ($xCred->getMontoAutorizado()*$SumOtr),2 );
+				$this->mIDOtrosCargos		= OPERACION_CLAVE_PLAN_DESGLOSE;
+			}
 		}
+
 		if($this->mTipoEnSistema == SYS_PRODUCTO_NOMINA){
 			//cargar datos de la empresa
 			$idemp						= $xCred->getClaveDeEmpresa();
@@ -339,7 +345,9 @@ class cPlanDePagosGenerador {
 		if($xCred->getPeriocidadDePago() == CREDITO_TIPO_PERIOCIDAD_ANUAL OR $xCred->getPeriocidadDePago() == CREDITO_TIPO_PERIOCIDAD_MENSUAL){
 			$this->mDiaDeAbono1	= $xF->dia($this->mFechaPrimerPago);
 		}
+		
 		//setLog($xLog->getMessages());
+		
 		$this->mMessages	.= $xLog->getMessages();
 		return $res;
 	}
@@ -737,7 +745,15 @@ class cPlanDePagosGenerador {
 		$tipo_de_calculo			= $this->mTipoBaseInteres;
 		$tasa_interes				= $this->mTasaDeInteres;
 		$this->mFactorRedondeo		= $redondeo;
-		$this->mIDOtrosCargos		= setNoMenorQueCero($tipo_extra);
+		//2017-07-16
+		$tipo_extra					= setNoMenorQueCero($tipo_extra);
+		if($tipo_extra <= 0 AND $this->mIDOtrosCargos>0){
+			$tipo_extra				= $this->mIDOtrosCargos;
+		}
+		if($monto_extra <= 0 AND $this->mMontoOtrosCargos>0){
+			$monto_extra			= $this->mMontoOtrosCargos;
+		}
+		$this->mIDOtrosCargos		= $tipo_extra;
 		$this->mMontoOtrosCargos	= $monto_extra;
 		$this->mAplicar1erPago		= $AplicarEnPrimerPago;
 		$saldo_historico			= $this->mMontoAutorizado;
@@ -1468,14 +1484,14 @@ class cPlanDePagosGenerador {
 		return $xLog->getMessages();
 	}
 	function getVersionFinal($guardar = false , $formato = OUT_HTML, $origen = HP_FORM, $FechaDePlan = false){
-		$xRuls		= new cReglaDeNegocio();
-		$SinOtros	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OTROS);	//regla de negocio
-		$SinAnual	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_ANUAL);	//regla de negocio
-		$ConPagEs	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio
+		$xRuls			= new cReglaDeNegocio();
+		$SinOtros		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_OTROS);	//regla de negocio
+		$SinAnual		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_ANUAL);	//regla de negocio
+		$ConPagEs		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_PAGESP);	//regla de negocio
 		
-		$ConPago0	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_CEROS);	//regla de negocio
-		$SinAjustF	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_FINAL);	//regla de negocio
-		
+		$ConPago0		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_CON_CEROS);	//regla de negocio
+		$SinAjustF		= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_PLAN_SIN_FINAL);	//regla de negocio
+		$planPagoFinal	= 0;
 		if($this->OCredito() === null){
 			
 		} else {
@@ -2040,6 +2056,7 @@ class cPlanDePagosGenerador {
 							$xPlan->addMvtoOtros($anualidad, $fecha, $indice, OPERACION_CLAVE_ANUALIDAD_C);
 						}
 					}
+					$planPagoFinal	= $xPlan->getCodigoDePlanDePagos();
 					//Guardar Letra
 					$hotros			= $DHistorico["SYS_OTROS"];
 					$hahorro		= $DHistorico[SYS_AHORRO];
@@ -2203,7 +2220,7 @@ class cPlanDePagosGenerador {
 		}
 		$salida		= ($formato == OUT_TXT) ? "============\t\tPLAN ID" . $this->mClaveDePlan : $tfoot;
 		$xLog->add($salida);
-		
+		$this->mPlanPagosNuevo							= $planPagoFinal;
 		//setLog($xLog2->getMessages());
 		
 		return ($formato == OUT_TXT) ? $xLog->getMessages() : "<table class='sqltable'>" . $xLog->getMessages() . "</table>";
@@ -2302,6 +2319,11 @@ class cPlanDePagosGenerador {
 			$xMontos->setMontoOtrosCargosEnPlan($monto_otros);
 		}
 	}
+	function getPlanDePagosNuevo(){
+		$this->mPlanPagosNuevo	= setNoMenorQueCero($this->mPlanPagosNuevo);
+		
+		return $this->mPlanPagosNuevo;
+	}
 }
 
 class cCreditoValidador {
@@ -2329,6 +2351,8 @@ class cCreditosMontos {
 	private $mPeriodoDeTrabajo			= 0;
 	private $mPeriodosPends				= 0;
 	private $mIDCache					= "";
+	private $mPlazoMeses				= 0;
+	
 	
 	private $mFechaDePrimerAtraso		= false;
 	private $mFechaDeUltimoAtraso		= false;
@@ -2343,6 +2367,7 @@ class cCreditosMontos {
 	private $mTotalIntCalc				= 0;
 	private $mTotalDispuesto			= 0;
 	private $mMontoOtrosEnPlan			= 0;
+	private $mTable						= "creditos_montos";
 	
 	function __construct($credito = false){
 		$this->mCredito	= setNoMenorQueCero($credito);
@@ -2370,7 +2395,7 @@ class cCreditosMontos {
 	/**
 	 * Actualiza Las cifras de montos según las Letras del Dia
 	 */
-	function setActualizarPorLetras(){
+	function setActualizarPorLetras($guardar = true){
 		$xQL	= new MQL();
 		$sql	= "SELECT
 			`creditos_letras_del_dia`.`credito`,
@@ -2398,8 +2423,10 @@ class cCreditosMontos {
 			(`creditos_letras_del_dia`.`credito` =" . $this->mCredito .") 
 		GROUP BY
 			`creditos_letras_del_dia`.`credito`";
+		//setLog($sql);
 		$data	= $xQL->getDataRow($sql);
 		if(isset($data["credito"])){
+			
 			if($this->init() == true){
 				$this->mObj->interes_m_corr($data["moratorio"]);
 				$this->mObj->interes_n_dev($data["interes"]);
@@ -2415,9 +2442,9 @@ class cCreditosMontos {
 				
 				$this->mObj->usuario(getUsuarioActual());
 				
-				
-				$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
-				
+				if($guardar == true){
+					$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
+				}
 			}			
 			$this->mInteresNormalDevengado		= $data["interes"];
 			$this->mInteresMoratorioCorriente	= $data["moratorio"];
@@ -2482,6 +2509,7 @@ class cCreditosMontos {
 	function getPeriodoMaximo(){ return $this->mPeriodoMax; }
 	function getTotalPlanPend(){ return $this->mTotalPlanPend; }
 	function getBonificaciones(){return $this->mBonificaciones; }
+	function getPlazoMeses(){ return $this->mPlazoMeses; }
 	function getTotalPlanExigible(){ return $this->mTotalPlanExige; }	
 	function getOtros(){ return $this->mOtros; }
 	function setPeriodoDeTrabajo($periodo = 0){ $this->mPeriodoDeTrabajo = $periodo; }
@@ -2491,7 +2519,7 @@ class cCreditosMontos {
 		$xCache		= new cCache();
 		if($this->mCredito >0){
 			$xQL	= new MQL();
-			$sql	= "SELECT * FROM `creditos_montos` WHERE `clave_de_credito`=" . $this->mCredito . " LIMIT 0,1";
+			$sql	= "SELECT * FROM `" . $this->mTable . "` WHERE `clave_de_credito`=" . $this->mCredito . " LIMIT 0,1";
 			$rw		= $data;
 			if(!is_array($rw)){
 				$rw	= $xCache->get($this->mIDCache);
@@ -2503,30 +2531,31 @@ class cCreditosMontos {
 			if(isset($rw[$xMM->CLAVE_DE_CREDITO])){
 				$xMM->setData($rw);
 				//$rw[$xMM->]; //
-				$this->mInteresNormalDevengado		= $rw[$xMM->INTERES_N_DEV];// $xMM->interes_n_dev()->v();
-				$this->mInteresMoratorioCorriente	= $rw[$xMM->INTERES_M_CORR]; //$xMM->interes_m_corr()->v();
-				$this->mFechaDePrimerAtraso			= $rw[$xMM->F_PRIMER_ATRASO]; //$xMM->f_primer_atraso()->v();
-				$this->mFechaDeUltimoAtraso			= $rw[$xMM->F_ULTIMO_ATRASO]; //$xMM->f_ultimo_atraso()->v();
-				$this->mCapitalPendiente			= $rw[$xMM->CAPITAL_EXIGIBLE]; //$xMM->capital_exigible()->v();
-				$this->mIvaInteresNormal			= $rw[$xMM->IMPTOS_INT_N]; //$xMM->imptos_int_n()->v();
-				$this->mIvaOtros					= $rw[$xMM->IMPTOS_OTROS]; //$xMM->imptos_otros()->v();
-				$this->mOtros						= $rw[$xMM->OTROS_NC]; //$xMM->otros_nc()->v();
-				$this->mPenasPorPagar				= $rw[$xMM->PENAS]; //$xMM->penas()->v();
-				$this->mCargosCbzaPorPag			= $rw[$xMM->CARGOS_CBZA]; //$xMM->cargos_cbza()->v();
+				$this->mInteresNormalDevengado		= $rw[$xMM->INTERES_N_DEV];
+				$this->mInteresMoratorioCorriente	= $rw[$xMM->INTERES_M_CORR];
+				$this->mFechaDePrimerAtraso			= $rw[$xMM->F_PRIMER_ATRASO];
+				$this->mFechaDeUltimoAtraso			= $rw[$xMM->F_ULTIMO_ATRASO];
+				$this->mCapitalPendiente			= $rw[$xMM->CAPITAL_EXIGIBLE];
+				$this->mIvaInteresNormal			= $rw[$xMM->IMPTOS_INT_N];
+				$this->mIvaOtros					= $rw[$xMM->IMPTOS_OTROS];
+				$this->mOtros						= $rw[$xMM->OTROS_NC];
+				$this->mPenasPorPagar				= $rw[$xMM->PENAS];
+				$this->mCargosCbzaPorPag			= $rw[$xMM->CARGOS_CBZA];
 				
-				$this->mInteresNormalCorriente		= $rw[$xMM->INTERES_N_CORR]; //$xMM->interes_n_corr()->v();
-				$this->mInteresNormalPagado			= $rw[$xMM->INTERES_N_PAG]; //$xMM->interes_n_pag()->v();
-				$this->mTotalDispuesto				= $rw[$xMM->DISPOCISION]; //$xMM->dispocision()->v();
-				$this->mPeriodoMax					= $rw[$xMM->PERIODO_MAX]; //$xMM->periodo_max()->v();
-				$this->mPeriodoMin					= $rw[$xMM->PERIODO_MIN]; //$xMM->periodo_min()->v();
-				$this->mTotalPlanPend				= $rw[$xMM->SDO_EXIG_FUT]; //$xMM->sdo_exig_fut()->v();
-				$this->mTotalPlanExige				= $rw[$xMM->SDO_EXIG_ACT]; //$xMM->sdo_exig_act()->v();
+				$this->mInteresNormalCorriente		= $rw[$xMM->INTERES_N_CORR];
+				$this->mInteresNormalPagado			= $rw[$xMM->INTERES_N_PAG];
+				$this->mTotalDispuesto				= $rw[$xMM->DISPOCISION];
+				$this->mPeriodoMax					= $rw[$xMM->PERIODO_MAX];
+				$this->mPeriodoMin					= $rw[$xMM->PERIODO_MIN]; 
+				$this->mTotalPlanPend				= $rw[$xMM->SDO_EXIG_FUT];
+				$this->mTotalPlanExige				= $rw[$xMM->SDO_EXIG_ACT];
 				
-				$this->mBonificaciones				= $rw[$xMM->BONIFICACIONES]; //$xMM->bonificaciones()->v();
-				$this->mCredito						= $rw[$xMM->CLAVE_DE_CREDITO]; //$xMM->clave_de_credito()->v();
-				$this->mTotalIntCalc				= $rw[$xMM->INTS_TOT_CALC]; //$xMM->ints_tot_calc()->v();
+				$this->mBonificaciones				= $rw[$xMM->BONIFICACIONES];
+				$this->mCredito						= $rw[$xMM->CLAVE_DE_CREDITO];
+				$this->mTotalIntCalc				= $rw[$xMM->INTS_TOT_CALC];
 				$this->mPeriodosPends				= $rw[$xMM->PERIODO_PENDS];
 				$this->mMontoOtrosEnPlan			= $rw[$xMM->HIST_OTROS];	//Otros en Plan de Pagos
+				$this->mPlazoMeses					= $rw[$xMM->NUM_MESES];
 				$this->mInit						= true;
 				
 				$this->setIDCache($this->mCredito);
@@ -2583,23 +2612,32 @@ class cCreditosMontos {
 	function setPeriodos($max = false, $min = false, $actual = false){
 		if($this->mObj == null){$this->init();}
 		if($this->mInit == true){
+			$arrUpdate	= array();
 			if($max !== false){
 				$max	= setNoMenorQueCero($max);
-				$this->mObj->periodo_max($max);
+				$arrUpdate[]	= $this->mObj->periodo_max($max)->mDatos;
 			}
 			if($min !== false){
 				$min	= setNoMenorQueCero($min);
-				$this->mObj->periodo_min($min);
+				$arrUpdate[]	= $this->mObj->periodo_min($min)->mDatos;
 			}
 			if($actual !== false){
 				$actual	= setNoMenorQueCero($actual);
-				$this->mObj->periodo_last($actual);
+				$arrUpdate[]	= $this->mObj->periodo_last($actual)->mDatos;
 			}
-			$this->mObj->marca_tiempo(time());
-			$this->mObj->marca_acceso(time());
-			$this->mObj->usuario(getUsuarioActual());
-			$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
-			$this->setCuandoSeActualiza();
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+				$arrUpdate[] 	= $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
+			if(count($arrUpdate)>=1){
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
+				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
+			}
 		}
 	}
 	function setBonificaciones($BonInts = false, $BonMora = false, $BonOtros = false){
@@ -2638,14 +2676,17 @@ class cCreditosMontos {
 			}
 		}
 	}
+	
 	function setTotales($TotalExigibleAct = false, $TotalExigibleFut = false, $TotalIntsFut = false){
 		$actualizar		= false;
 		if($this->mObj == null){ $this->init(); }
 		if($this->mInit == true){
+			$arrUpdate	= array();
+			
 			if($TotalExigibleAct !== false){
 				if($this->mObj->sdo_exig_act()->isEqualF($TotalExigibleAct) == false){
 					$TotalExigibleAct	= setNoMenorQueCero($TotalExigibleAct);
-					$this->mObj->sdo_exig_act($TotalExigibleAct);
+					$arrUpdate[]		= $this->mObj->sdo_exig_act($TotalExigibleAct)->mDatos;
 					$actualizar			= true;
 					
 				}
@@ -2653,23 +2694,29 @@ class cCreditosMontos {
 			if($TotalExigibleFut !== false){
 				if($this->mObj->sdo_exig_fut()->isEqualF($TotalExigibleFut) == false){
 					$TotalExigibleFut	= setNoMenorQueCero($TotalExigibleFut);
-					$this->mObj->sdo_exig_fut($TotalExigibleFut);
+					$arrUpdate[]		= $this->mObj->sdo_exig_fut($TotalExigibleFut)->mDatos;
 					$actualizar			= true;
 				}
 			}
 			if($TotalIntsFut !== false){
 				if($this->mObj->ints_tot_calc()->isEqualF($TotalIntsFut) == false){
 					$TotalIntsFut		= setNoMenorQueCero($TotalIntsFut);
-					$this->mObj->ints_tot_calc($TotalIntsFut);
+					$arrUpdate[]		= $this->mObj->ints_tot_calc($TotalIntsFut)->mDatos;
 					$actualizar			= true;
 				}
 			}
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+				$arrUpdate[] = $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
 			if($actualizar == true){
-				$this->mObj->marca_tiempo(time());
-				$this->mObj->marca_acceso(time());
-				$this->mObj->usuario(getUsuarioActual());
-				$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
 				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
 			}
 		}
 	}
@@ -2678,18 +2725,18 @@ class cCreditosMontos {
 		$actualizar		= false;
 		if($this->mObj == null){$this->init();}
 		if($this->mInit == true){
-				
+			$arrUpdate	= array();
 			if($CargosCbza !== false){
 				if($this->mObj->cargos_cbza()->isEqualF($CargosCbza) == false){
 					$CargosCbza		= setNoMenorQueCero($CargosCbza);
-					$this->mObj->cargos_cbza($CargosCbza);
+					$arrUpdate[]	= $this->mObj->cargos_cbza($CargosCbza)->mDatos;
 					$actualizar		= true;
 				}
 			}
 			if($Penas !== false){
 				if($this->mObj->penas()->isEqualF($Penas) == false){
 					$Penas			= setNoMenorQueCero($Penas);
-					$this->mObj->penas($Penas);
+					$arrUpdate[]	= $this->mObj->penas($Penas)->mDatos;
 					$actualizar		= true;
 					if($this->mPeriodoDeTrabajo > 0){
 						$xParc	= new cCreditosLetraDePago($this->mCredito, $this->mPeriodoDeTrabajo);
@@ -2699,52 +2746,101 @@ class cCreditosMontos {
 					}
 				}
 			}
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+				$arrUpdate[] = $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
 			if($actualizar == true){
-				$this->mObj->marca_tiempo(time());
-				$this->mObj->marca_acceso(time());
-				$this->mObj->usuario(getUsuarioActual());
-				$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
 				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
 			}
 		}
 	}
 	function setInteresesPagados($IntPNormal = 0, $IntPMora = 0){
 		if($this->mObj == null){ $this->init(); }
 		if($this->mInit == true){
-			$this->mObj->interes_n_pag($IntPNormal);
-			$this->mObj->interes_m_pag($IntPMora);
-			$this->mObj->marca_tiempo(time());
-			$this->mObj->marca_acceso(time());
-			$this->mObj->usuario(getUsuarioActual());
-			$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
-			$this->setCuandoSeActualiza();
+			
+			$arrUpdate	= array();
+			
+			if($this->mObj->interes_n_pag()->isEqualF($IntPNormal) == false){
+				$arrUpdate[]	= $this->mObj->interes_n_pag($IntPNormal)->mDatos;
+			}
+			if($this->mObj->interes_m_pag()->isEqualF($IntPMora) == false){
+				$arrUpdate[]	= $this->mObj->interes_m_pag($IntPMora)->mDatos;
+			}
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+				$arrUpdate[] 	= $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
+			if(count($arrUpdate)>=1){
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
+				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
+			}
+			
 		}
 	}
 	function setInteresesCorrientes($IntNormal	= 0, $IntMora = 0){
-		$actualizar		= false;
+
 		if($this->mObj == null){$this->init();}
 		if($this->mInit == true){
-			$this->mObj->interes_n_corr($IntNormal);
-			$this->mObj->interes_m_corr($IntMora);
-			$this->mObj->marca_tiempo(time());
-			$this->mObj->marca_acceso(time());
-			$this->mObj->usuario(getUsuarioActual());
-			$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
-			$this->setCuandoSeActualiza();
+			$arrUpdate	= array();
+
+			if($this->mObj->interes_n_corr()->isEqualF($IntNormal) == false){
+				$arrUpdate[]	= $this->mObj->interes_n_corr($IntNormal)->mDatos;
+			}
+			if($this->mObj->interes_m_corr()->isEqualF($IntMora) == false){
+				$arrUpdate[]	= $this->mObj->interes_m_corr($IntMora)->mDatos;
+			}
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+					$arrUpdate[] = $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
+			if(count($arrUpdate)>=1){
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
+				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
+			}
+					
 		}
 	}
 	function setInteresesDevengados($IntDNormal = 0, $IntDMora = 0){
-		$actualizar		= false;
-		if($this->mObj == null){$this->init();}
+		//$actualizar		= false;
+		if($this->mObj == null){ $this->init(); }
 		if($this->mInit == true){
-			if($this->mObj->interes_n_dev()->isEqualF($IntDNormal) == false AND $this->mObj->interes_m_dev()->isEqualF($IntDMora) == false){
-				$this->mObj->interes_n_dev($IntDNormal);
-				$this->mObj->interes_m_dev($IntDMora);
-				$this->mObj->marca_tiempo(time());
-				$this->mObj->marca_acceso(time());
-				$this->mObj->usuario(getUsuarioActual());
-				$this->mObj->query()->update()->save($this->mObj->idcreditos_montos()->v());
+			$arrUpdate	= array();
+			
+			if($this->mObj->interes_n_dev()->isEqualF($IntDNormal) == false){
+				$arrUpdate[]	= $this->mObj->interes_n_dev($IntDNormal)->mDatos;
+			}
+			if($this->mObj->interes_m_dev()->isEqualF($IntDMora) == false){
+				$arrUpdate[]	= $this->mObj->interes_m_dev($IntDMora)->mDatos;
+			}
+			if($this->mObj->usuario()->isEqualF(getUsuarioActual()) == false){
+				$arrUpdate[] = $this->mObj->usuario(getUsuarioActual())->mDatos;
+			}
+			if(count($arrUpdate)>=1){
+				$arrUpdate[]	= $this->mObj->marca_tiempo(time())->mDatos;
+				$arrUpdate[]	= $this->mObj->marca_acceso(time())->mDatos;
+				
+				$xQU	= new MQLUpdate($this->mObj->get(), $arrUpdate, $this->mObj->getKey());
+				$xQU->save($this->mObj->idcreditos_montos()->v());
 				$this->setCuandoSeActualiza();
+				$xQU			= null;
+				$arrUpdate		= null;
 			}
 		}
 	}	
@@ -2782,6 +2878,43 @@ class cCreditosMontos {
 	function getMontoOtrosCargosEnPlan(){
 		return $this->mMontoOtrosEnPlan;
 	}
+	function setExplain(){
+		$xT		= new cHTabla();
+		$xTE	= new cTableStructure($this->mTable);
+		$xTT	= new cCreditos_montos();
+		$xF		= new cFecha();
+		$xTE->setStructureTableByDemand($xTE->AGREGAR, array($xTE->OPT_CMT_TITULO => true));
+		
+		$titulos= $xTE->getTitulosInArray();
+		
+		foreach ($this->mObj->query()->getCampos() as $data){
+			$xCamp	= new MQLCampo($data);
+			$xT->initRow();
+			$xT->addTD( $titulos[$xCamp->get()] );
+			$xT->addTD( $xCamp->get() );
+			
+			if($xCamp->get() == $xTT->MARCA_TIEMPO || $xCamp->get() == $xTT->MARCA_ACCESO){
+				
+				$xT->addTD( $xF->getFechaByInt($xCamp->getValor())  );
+			} else {
+				if($xCamp->isNumber()){
+					$xT->addTD( getFMoney($xCamp->getValor()) );
+				} else {
+					$xT->addTD( $xCamp->getValor() );
+				}
+			}
+			$xT->endRow();
+		}
+		return $xT->get();
+	}
+	function setPlazoMeses($meses = false){
+		$meses	= setNoMenorQueCero($meses);
+		$xQL	= new MQL();
+		$sql	= "UPDATE `creditos_montos` SET `num_meses`=$meses WHERE `clave_de_credito`=" . $this->mCredito;
+		$xQL->setRawQuery($sql);
+		$this->setCuandoSeActualiza();
+	}
+	
 }
 
 class cCreditosPresupuesto {
@@ -3414,6 +3547,7 @@ class cCreditosOperaciones {
 	private $mTotalBonOtros		= 0;
 	private $mTotalPlanPend		= 0;
 	private $mTotalPlanExige	= 0;
+	private $mTotalPlanFuturo	= 0;
 	private $mNumeroAbonos		= 0;
 	private $mInitMvtosHoy		= false;
 	
@@ -3468,13 +3602,14 @@ class cCreditosOperaciones {
 				SUM(IF(`operaciones_mvtos`.`tipo_operacion`  = 803,`operaciones_mvtos`.`afectacion_real`,0)) AS 'bon_otros',
 				
 				
-				MIN(IF(`operaciones_mvtos`.`tipo_operacion`  = 410 AND `operaciones_mvtos`.`afectacion_real` >0,`operaciones_mvtos`.`periodo_socio`,99999)) AS 'letra_capital',
-				MIN(IF(`operaciones_mvtos`.`tipo_operacion`  = 411 AND `operaciones_mvtos`.`afectacion_real` >0,`operaciones_mvtos`.`periodo_socio`,99999)) AS 'letra_interes',
+				MIN(IF(`operaciones_mvtos`.`tipo_operacion`  = 410 AND `operaciones_mvtos`.`afectacion_real` >0,`operaciones_mvtos`.`periodo_socio`,`creditos_solicitud`.`pagos_autorizados`)) AS 'letra_capital',
+				MIN(IF(`operaciones_mvtos`.`tipo_operacion`  = 411 AND `operaciones_mvtos`.`afectacion_real` >0,`operaciones_mvtos`.`periodo_socio`,`creditos_solicitud`.`pagos_autorizados`)) AS 'letra_interes',
 				SUM(IF(`operaciones_mvtos`.`tipo_operacion`  = 120,1,0)) AS 'num_abonos',
 				MAX(IF(`operaciones_mvtos`.`tipo_operacion`  = 410,`operaciones_mvtos`.`periodo_socio`,0)) AS 'letra_capital_u',
 				MAX(IF(`operaciones_mvtos`.`tipo_operacion`  = 411,`operaciones_mvtos`.`periodo_socio`,0)) AS 'letra_interes_u'				
 			FROM
-				`operaciones_mvtos` `operaciones_mvtos` 
+				`operaciones_mvtos`
+				INNER JOIN `creditos_solicitud` ON `creditos_solicitud`.`numero_solicitud` = `operaciones_mvtos`.`docto_afectado` 
 			WHERE
 				`docto_afectado`=" . $this->mNumeroCredito . "	
 			GROUP BY
@@ -3498,6 +3633,7 @@ class cCreditosOperaciones {
 			$this->mTotalBonMora	= setNoMenorQueCero($DD["bon_mora"]);
 			$this->mTotalBonOtros	= setNoMenorQueCero($DD["bon_otros"]);
 			$this->mNumeroAbonos	= setNoMenorQueCero($DD["num_abonos"]);
+			
 			$init					= true;
 		}
 		return $init;
@@ -3516,19 +3652,22 @@ class cCreditosOperaciones {
 	function getTotalBonOtros(){ return $this->mTotalBonOtros; }
 	function getTotalPlanPend(){ return $this->mTotalPlanPend; }
 	function getTotalPlanExigible(){ return $this->mTotalPlanExige; }
+	function getTotalPlanFuturo(){ return $this->mTotalPlanFuturo; }
 	function getNumeroAbonos(){ return $this->mNumeroAbonos; }
 	function initAcumOpsPlan($fecha = false){
 		$xF		= new cFecha();
 		$xQL	= new MQL();
 		$fecha	= $xF->getFechaISO($fecha);
 		$init	= false;
-		$sql	= "SELECT SUM(`monto`) AS `acumulado`, SUM(IF(`fecha_de_pago` <= '$fecha',0, `monto`)) AS `exigible` FROM `creditos_parcialidades` WHERE `credito`=" . $this->mNumeroCredito . " ";
+		$sql	= "SELECT SUM(`monto`) AS `acumulado`, SUM(IF(`fecha_de_pago` > '$fecha',0, `monto`)) AS `exigible` FROM `creditos_parcialidades` WHERE `credito`=" . $this->mNumeroCredito . " ";
 		//setLog($sql);
 		$DD	= $xQL->getDataRow($sql);
 		
 		if(isset($DD["acumulado"])){
 			$this->mTotalPlanPend	= setNoMenorQueCero($DD["acumulado"]);
 			$this->mTotalPlanExige	= setNoMenorQueCero($DD["exigible"]);
+			
+			$this->mTotalPlanFuturo	= setNoMenorQueCero(($this->mTotalPlanPend - $this->mTotalPlanExige));
 			
 			$init					= true;
 		}

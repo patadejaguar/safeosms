@@ -129,41 +129,48 @@ switch ($opcion){
 		break;		
 	case "tasas":
 		$xFRM->addGuardar();
-		$xFRM->OTasa("interes_moratorio", $xTabla->interes_moratorio()->v(), "TR.Tasa anualizada de interes moratorio");
-		$xFRM->OTasa("interes_normal", $xTabla->interes_normal()->v(), "TR.Tasa anualizada del interes normal");
+		$xFRM->OTasa("interes_moratorio", $xTabla->interes_moratorio()->v(), "TR.Tasa anual interes moratorio");
+		$xFRM->OTasa("interes_normal", $xTabla->interes_normal()->v(), "TR.Tasa anual interes normal");
 		$d34 	= $ql->getArrayRecord("SELECT * FROM `creditos_tipo_de_calculo_de_interes`");
-		$xFRM->OSelect("base_de_calculo_de_interes", $xTabla->base_de_calculo_de_interes()->v(), "TR.base de calculo de interes", $d34);
+		$xFRM->OSelect("base_de_calculo_de_interes", $xTabla->base_de_calculo_de_interes()->v(), "TR.base de interes", $d34);
 
 		//$xFRM->OTasa("porcentaje_ica", $xTabla->porcentaje_ica()->v(), "TR.TASA Cobrado por Anticipado");
 		$xFRM->OHidden("porcentaje_ica", $xTabla->porcentaje_ica()->v());
 		
-		$xFRM->OTasa("porcentaje_otro_credito", $xTabla->porcentaje_otro_credito()->v(), "TR.Tasa para obtener otro credito");
-		$xFRM->OTasa("porciento_garantia_liquida", $xTabla->porciento_garantia_liquida()->v(), "TR.Tasa garantia liquida");		
+		$xFRM->OTasa("porcentaje_otro_credito", $xTabla->porcentaje_otro_credito()->v(), "TR.Tasa para otro credito");
+		$xFRM->OTasa("porciento_garantia_liquida", $xTabla->porciento_garantia_liquida()->v(), "TR.Tasa GTIALIQ");		
 		if(MODULO_CAPTACION_ACTIVADO == true){
 			$xFRM->OTasa("tasa_ahorro", $xTabla->tasa_ahorro()->v(), "TR.TASA de Ahorro");
 		} else {
 			$xFRM->OHidden("tasa_ahorro", $xTabla->tasa_ahorro()->v());
 		}
 		$xFRM->OTasa("tasa_iva", $xTabla->tasa_iva()->v(), "TR.Tasa de Impuesto_al_Consumo");
-		$xFRM->OSelect("iva_incluido", $xTabla->iva_incluido()->v() , "TR.impuesto_al_consumo en la Tasa de Interes", $dSN);
+		$xFRM->OSelect("iva_incluido", $xTabla->iva_incluido()->v() , "TR.impuesto_al_consumo en la Tasa Interes", $dSN);
 		break;
 	case "dias":
 		$xFRM->addGuardar();
-		$xFRM->OMoneda("dias_maximo", $xTabla->dias_maximo()->v(), "TR.Numero de Dias Maximo de Plazo");
-		$xFRM->OMoneda("tolerancia_dias_no_pago", $xTabla->tolerancia_dias_no_pago()->v(), "TR.tolerancia de espera en dias por falta de pago");
-		$xFRM->OMoneda("tolerancia_dias_primer_abono", $xTabla->tolerancia_dias_primer_abono()->v(), "TR.tolerancia dias para el primer abono");				
+		$xTxt->setDivClass("");
+		
+		$xFRM->addDivMedio($xFRM->getT("TR.Numero de Dias Maximo de Plazo"), $xTxt->getDeConteo("dias_maximo", "", $xTabla->dias_maximo()->v(),1000));
+		$xFRM->addDivMedio($xFRM->getT("TR.tolerancia de espera en dias por falta de pago"), $xTxt->getDeConteo("tolerancia_dias_no_pago", "", $xTabla->tolerancia_dias_no_pago()->v(), 90));
+		$xFRM->addDivMedio($xFRM->getT("TR.tolerancia dias para el primer abono"), $xTxt->getDeConteo("tolerancia_dias_primer_abono","", $xTabla->tolerancia_dias_primer_abono()->v(),45));
+		//$xFRM->addDivMedio($xFRM->getT(""), $xTxt->getDeMoneda2());
+		//$xFRM->addDivMedio($xFRM->getT(""), $xTxt->getDeMoneda2());
+		//$xFRM->OMoneda("dias_maximo", $xTabla->dias_maximo()->v(), "TR.Numero de Dias Maximo de Plazo");
+		//$xFRM->OMoneda("tolerancia_dias_no_pago", $xTabla->tolerancia_dias_no_pago()->v(), "TR.tolerancia de espera en dias por falta de pago");
+		//$xFRM->OMoneda("tolerancia_dias_primer_abono", $xTabla->tolerancia_dias_primer_abono()->v(), "TR.tolerancia dias para el primer abono");				
 		break;
 	case "cantidades":
 		$xFRM->addGuardar();
-			$xFRM->OMoneda("minimo_otorgable", $xTabla->minimo_otorgable()->v(), "TR.monto minimo", true);
-			$xFRM->OMoneda("maximo_otorgable", $xTabla->maximo_otorgable()->v(), "TR.monto maximo", true);
+		$xFRM->OMoneda("minimo_otorgable", $xTabla->minimo_otorgable()->v(), "TR.monto minimo", true);
+		$xFRM->OMoneda("maximo_otorgable", $xTabla->maximo_otorgable()->v(), "TR.monto maximo", true);
 						
-			$xFRM->OMoneda("numero_creditos_maximo", $xTabla->numero_creditos_maximo()->v(), "TR.numero creditos maximo por persona");
-			$xFRM->OMoneda("pagos_maximo", $xTabla->pagos_maximo()->v(), "TR.Numero de pagos maximo");
-			$xFRM->OMoneda("numero_de_pagos_preferente", $xTabla->numero_de_pagos_preferente()->v(), "TR.numero de pagos preferente");
+		$xFRM->OEntero("numero_creditos_maximo", $xTabla->numero_creditos_maximo()->v(), "TR.numero creditos maximo por persona");
+		$xFRM->OEntero("pagos_maximo", $xTabla->pagos_maximo()->v(), "TR.Numero de pagos maximo");
+		$xFRM->OEntero("numero_de_pagos_preferente", $xTabla->numero_de_pagos_preferente()->v(), "TR.numero de pagos preferente");
 				
-			$xFRM->OMoneda("fuente_de_fondeo_predeterminado", $xTabla->fuente_de_fondeo_predeterminado()->v(), "TR.Fuente de fondeo predeterminado");
-			break;		
+		$xFRM->OEntero("fuente_de_fondeo_predeterminado", $xTabla->fuente_de_fondeo_predeterminado()->v(), "TR.Fuente de fondeo predeterminado");
+		break;		
 	case "garantias":
 		$xFRM->addGuardar();
 		$xFRM->OMoneda("numero_avales", $xTabla->numero_avales()->v(), "TR.numero avales");

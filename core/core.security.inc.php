@@ -273,11 +273,13 @@ class cSystemUser{
 	function add($NombreUsuario = "", $ClaveAcceso = "", $nivel = 2,
 				$nombre = "", $ApPaterno = "", $ApMaterno = "", $Puesto="", $FechaDeExpiracion = false,
 				$estatus 	= "", $Opciones = "", $sucursal = false, $CodigoUsuario = false, $codigo_de_persona = false){
+		$xF					= new cFecha();
+		$xValid				= new cReglasDeValidacion();
 		$sucursal			= ($sucursal == false) ? getSucursal() : $sucursal;
 		$sucursal			= strtolower($sucursal);
 		//Trabajar la Fecha de Expiracion
 		//$dias				= VEN
-		$FechaDeExpiracion	= ($FechaDeExpiracion == false) ? fechasys() : $FechaDeExpiracion;
+		$FechaDeExpiracion	= ($FechaDeExpiracion == false) ? $xF->getFechaMaximaOperativa() : $xF->getFechaISO($FechaDeExpiracion);
 		//Trabajar con la clave de acceso
 		$ClaveAcceso		= ( $ClaveAcceso == "" ) ? md5( (ROTTER_KEY . rand(0,999) ) ) : $ClaveAcceso ;
 		//validar el cifrado y comparar si esta cifrado.
@@ -293,29 +295,33 @@ class cSystemUser{
 			$FIdUsr			= "idusuarios, ";
 			$VIdUsr			= " $CodigoUsuario, ";
 		} //
-		
+		$email				= "";
+		if($xValid->email($NombreUsuario)){
+			$email			= $NombreUsuario;
+		}
 		
 		$sql = "INSERT INTO t_03f996214fba4a1d05a68b18fece8e71(
 					$FIdUsr f_28fb96d57b21090705cfdf8bc3445d2a, f_34023acbff254d34664f94c3e08d836e,
 				nombres, apellidopaterno, apellidomaterno, puesto,
 				f_f2cd801e90b78ef4dc673a4659c1482d, periodo_responsable,
-				estatus, sucursal, usr_options, date_expire, cuenta_contable_de_caja, codigo_de_persona)
+				estatus, sucursal, usr_options, date_expire, cuenta_contable_de_caja, codigo_de_persona, `uuid_mail`)
     			VALUES($VIdUsr '$NombreUsuario', '$ClaveAcceso',
 					'$nombre', '$ApPaterno', '$ApMaterno', '$Puesto',
-					 $nivel, 99, '$estatus', '$sucursal', '$Opciones', '$FechaDeExpiracion', 'CUENTA_DE_CUADRE', $codigo_de_persona) ";
+					 $nivel, 99, '$estatus', '$sucursal', '$Opciones', '$FechaDeExpiracion', 'CUENTA_DE_CUADRE', $codigo_de_persona, '$email') ";
 		$xQL	= new MQL();
 		$inStat = $xQL->setRawQuery($sql);
-					if($inStat === false) {
-						$msg	.= "ERROR\tERROR EN EL ALTA DEL USUARIO\r\n";
-					} else {
-						//Agregar Nuevo Mail
-						$xLog	= new cCoreLog();
-						$xLog->add("OK\tNuevo Usuario: $NombreUsuario");
-						$xLog->guardar($xLog->OCat()->USUARIO_NUEVO, $codigo_de_persona);
-						
-						$msg	.= "SUCESS\tEL ALTA DEL USUARIO SE HA EFECTUADO SATISFACTORIAMENTE\r\n";
-					}
-				$this->mMessages	.= $msg;
+		if($inStat === false) {
+			$msg	.= "ERROR\tERROR EN EL ALTA DEL USUARIO\r\n";
+		} else {
+			//Agregar Nuevo Mail
+			$xLog	= new cCoreLog();
+			$xLog->add("OK\tNuevo Usuario: $NombreUsuario");
+			$xLog->guardar($xLog->OCat()->USUARIO_NUEVO, $codigo_de_persona);
+			$msg	.= "SUCESS\tEL ALTA DEL USUARIO SE HA EFECTUADO SATISFACTORIAMENTE\r\n";
+			$this->setID($xQL->getLastInsertID());
+			$this->setCuandoSeActualiza();
+		}
+		$this->mMessages	.= $msg;
 		return $msg;
 	}
 	function addPorPersona($codigo_de_persona, $nivel, $contrasennia){
@@ -454,6 +460,7 @@ class cSystemUser{
 				
 				if(isset($_SESSION)){
 					$_SESSION[SYS_USER_ID] = $this->mCodeUser;
+					getSucursal($this->mSucursal);
 				}
 				
 				if($this->init() === true){
@@ -516,6 +523,7 @@ class cSystemUser{
 						//$pass				= $xSVC->getEncryptData($pass);
 						if(isset($_SESSION)){
 							$_SESSION[SYS_USER_ID] = $this->mCodeUser;
+							getSucursal($this->mSucursal);
 						}
 						$this->initSession($usr, "", $pass, $saveLog);
 						$xCache->set($cid, $DCTX, $xCache->EXPIRA_5MIN);
@@ -576,11 +584,30 @@ class cSystemUser{
 			$this->mMessages	.= "ERROR\tEL Largo Minimo es : " . $this->PASS_LARGO_MIN . "\r\n";
 			return false;
 		}
-		
 		$xLog->add("Cambio de password del usuario " . $this->mCodeUser . " por "  . getUsuarioActual()  . "\r\n");
 		$xLog->guardar($xLog->OCat()->PASSWORD_MODIFICADO);
-		$rawpass 		= $this->getHash($rawpass);
-		return $this->setUpdate($this->FPASSWORD, $rawpass);
+		
+		$rawpass 	= $this->getHash($rawpass);
+		$res		= $this->setUpdate($this->FPASSWORD, $rawpass);
+		
+		//if($res !== false){
+			$xMsg	= new cNotificacionEmailTemplate();
+			$xMsg->setDirijidoA($this->getNombreCompleto());
+			
+			$xMsg->setTextoDespedida("");
+			$xMsg->setTextoFin("Si no reconoce el cambio, contacte a su administrador.");
+			$xMsg->setTextoInicio("Sus Credenciales de acceso han cambiado.");
+			$xMsg->setURLAction("");
+			$xMsg->setURLActionTitle("");
+			$xMsg->setEncabezado("Cambio de Credenciales");
+			
+			$this->setNotificar($xMsg->get(), "Cambio de Credenciales");
+			
+			$this->setCuandoSeActualiza();
+		//}
+		
+		
+		return $res;
 	}
 	function setNombreUsuario($rawnombre){
 		$rawnombre	= trim(substr($rawnombre, 0,20));
@@ -834,7 +861,7 @@ class cSystemUser{
 		if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
 			$xT		= new cT_03f996214fba4a1d05a68b18fece8e71();
 			$xQL	= new MQL();
-			$data	= $xQL->getDataRow("SELECT * FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE `uuid_mail`='$email' LIMIT 0,1");
+			$data	= $xQL->getDataRow("SELECT * FROM `t_03f996214fba4a1d05a68b18fece8e71` WHERE `uuid_mail`='$email' AND `estatus`='" . $this->USR_ACTIVO . "' LIMIT 0,1");
 			if(isset($data[$xT->CODIGO_DE_PERSONA])){
 				$this->mCodeUser	= $data[$xT->IDUSUARIOS];
 				$this->mTypeById	= true;
@@ -842,11 +869,11 @@ class cSystemUser{
 				if($this->init() == true){
 					$res			= true;
 				} else {
-					$this->mMessages	.= "ERROR\tEl Usuario no existe : $email\r\n";
+					$this->mMessages	.= "ERROR\tEl Usuario no existe o no es Activo : $email\r\n";
 					$res				= false;
 				}
 			} else {
-				$this->mMessages	.= "ERROR\tNo existe el usuario con Correo Electronico $email\r\n";
+				$this->mMessages	.= "ERROR\tNo existe el usuario con Correo Electronico $email o no es activo\r\n";
 				$res				= false;
 			}
 		} else {
@@ -879,7 +906,7 @@ class cSystemUser{
 			$xFMT->setProcesarVars($arrV);
 			
 			$xNot	= new cNotificaciones();
-			$xNot->sendMailTemplate("", $this->getCorreoElectronico(), $arrV);
+			$xNot->sendMailTemplate("Cambio de Credenciales", $this->getCorreoElectronico(), $arrV);
 			$this->mMessages	.= "OK\tSe ha enviado la Liga de recuperacion a " . $this->getCorreoElectronico() . "\r\n";
 			$res				= true;
 		}
@@ -891,10 +918,42 @@ class cSystemUser{
 			$xQL	= new MQL();
 			$xQL->setRawQuery("UPDATE `t_03f996214fba4a1d05a68b18fece8e71` SET `uuid_mail`='$email' WHERE `idusuarios`=" . $this->mID);
 			$this->mCorreoElectronico = $email;
+			$this->setCuandoSeActualiza();
 		}
 	}
 	function setCoords($coords = ""){
 		$this->mCoords	= $coords;
+	}
+	function setNotificarNuevoUsuario($rawPass = ""){
+		$xMsg	= new cNotificacionEmailTemplate();
+		$xMsg->setDirijidoA($this->getNombreCompleto());
+		
+		
+		$xMsg->setTextoDespedida("Gracias");
+		$xMsg->setTextoFin("Credenciales de Acceso: <br />Usuario: " . $this->getNombreDeUsuario() . "<br />Contrase&ntilde;a: $rawPass");
+		$xMsg->setTextoInicio("Se le notifica que ha sido dado de Alta en el Sistema de " . EACP_NAME . "<br />Como usuario Nuevo.");
+		$xMsg->setURLAction(SAFE_HOST_URL . "index.xul.php?ctx=" . $this->getCTX());
+		$xMsg->setURLActionTitle("Ingresar al Sistema");
+		$xMsg->setEncabezado("Nuevo Usuario");
+		
+		return $this->setNotificar($xMsg->get(), "Nuevo Usuario");
+	}
+	function setNotificar($arrValues, $titulo = "", $fmt = 901){
+		$xValid	= new cReglasDeValidacion();
+		$res	= false;
+		if($xValid->email($this->getCorreoElectronico())){
+			$xFMT	= new cFormato($fmt);
+			$xFMT->setProcesarVars($arrValues);
+			
+			$xNot	= new cNotificaciones();
+			$xNot->sendMailTemplate($titulo, $this->getCorreoElectronico(), $arrValues);
+			$this->mMessages	.= "OK\tSe ha enviado la Liga de recuperacion a " . $this->getCorreoElectronico() . "\r\n";
+			$res				= true;
+			
+			//setAgregarEvento_($this->mMessages, 10);
+		}
+
+		return $res;
 	}
 }
 class cSystemUserRulesList {
@@ -1332,7 +1391,7 @@ class cSystemPermissions{
 		$PSVC		= array("personas.actividades.economicas.php" => true,
 				"listanegra.svc.php" => true, "equivalente.moneda.svc.php" => true,
 				"cantidad_en_letras.php" => true, "peps.svc.php" => true, "cotizador.plan.svc.php" => true, "pc.svc.php" => true, 
-				"importar.svc.php" => true, "exportar.svc.php" => true, "tareas.cron.php" => true, "recover-pass.frm.php" => true
+				"importar.svc.php" => true, "exportar.svc.php" => true, "tareas.cron.php" => true, "recover-pass.frm.php" => true, "contrato.css.php" => true, "recibo.css.php" => "true"
 		);			//servicios publicos
 		return $PSVC;
 	}
@@ -1352,14 +1411,14 @@ class cSystemPermissions{
 				$PSVC	= $this->getPublicFiles();
 				
 				if($nivel >= 1){
-					$DRules	= $xQL->getDataRow("SELECT COUNT(`idgeneral_menu`) AS `items`, `menu_rules` FROM `general_menu` WHERE `menu_file` LIKE '%$PFile' AND FIND_IN_SET('$nivel@rw',`menu_rules`) >0");
+					$DRules	= $xQL->getDataRow("SELECT COUNT(`idgeneral_menu`) AS `items`, `menu_rules` FROM `general_menu` WHERE `menu_file` LIKE '%$PFile' AND FIND_IN_SET('$nivel@rw',`menu_rules`) >0 GROUP BY `idgeneral_menu`");
 					$items	= (isset($DRules["items"])) ? setNoMenorQueCero($DRules["items"]) : 0; 
 					if($items <= 0){
 						$this->mMessages	.= "ERROR\tSin permisos para el Archivo $PFile\r\n";
 					}
 					if( $items <= 0 AND $nivel >2 AND (MODO_DEBUG == true OR MODO_CORRECION == true OR MODO_MIGRACION == true)){
 						$this->mMessages	.= "WARN\tPermisos Automaticos para el Archivo $PFile\r\n";
-						setLog("WARN\tPermisos Automaticos para el Archivo $PFile $nivel\r\n");
+						setNuevoEvento_("WARN\tPermisos Automaticos para el Archivo $PFile $nivel\r\n", 91);
 						$ins	= $xQL->setRawQuery("INSERT INTO `general_menu` (`menu_title`, `menu_file`) VALUES ('$PFile', '$PFile')");
 						$items	= ($ins === false) ? 0 : 1;
 					}

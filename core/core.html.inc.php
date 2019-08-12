@@ -32,7 +32,7 @@
 	@include_once("../libs/gantti/gantti.php");
 	//@include_once("../libs/guzzle/Client.php");
 	@include_once("../reports/PHPReportMaker.php");
-	
+	//ini_set("display_errors", "1");
 	//HTML Page.- Tipo de Objeto HTML
 	define("HP_FORM", 1);
 	define("HP_REPORT", 2);
@@ -400,6 +400,7 @@ class cHPage {
 				
 			case HP_FORM:
 				//$this->addCSS("$path/css/grid960.css");
+				$this->addCSS("//fonts.googleapis.com/css?family=Roboto&display=swap");
 				$this->addCSS($path . $this->mGeneralCSS);
 				$this->addCSS("$path/css/local.css.php");
 				
@@ -457,7 +458,13 @@ class cHPage {
 				//amaran
 				$this->addJsFile("$path/js/jquery/jquery.amaran.min.js");
 				$this->addCSS("$path/css/amaran.min.css");
+				
+				//$this->addCSS("$path/css/menu/component.css");
 				//$this->addCSS("$path/css/animate.min.css");
+				
+				$this->addCSS("$path/css/jquery.mmenu.all.css");
+				$this->addJsFile("$path/js/jquery.mmenu.all.js");
+				
 				//agregar panel
 				//$this->addJsFile("$path/js/jquery/jquery.jpanelmenu.min.js");
 				//$this->addCSS("$path/css/font-awesome.min.css");
@@ -466,6 +473,10 @@ class cHPage {
 				$this->addJsFile("$path/js/moment.min.js");
 				$this->addJsFile("$path/js/notify.min.js");
 				$this->addJsFile("$path/js/magic-grid.min.js");
+				
+				//$this->addJsFile("$path/js/modernizr.custom.js");
+				//$this->addJsFile("$path/js/jquery/jquery.dlmenu.js");
+				
 
 				if(defined("SAFE_LANG")){
 					$jslang		= strtolower( SAFE_LANG );
@@ -633,8 +644,9 @@ class cHPage {
 	function addCSS($strCSSFile = ""){ $this->mCSS[$strCSSFile] = $strCSSFile; return "<link href=\"$strCSSFile\" rel=\"stylesheet\">";	}
 	function addScript(){	}
 	function addReload(){
+		//$this->mEndScript	.= "<script> console.log(window.location.href); </script>";
 		//TODO: Invalidado en produccion
-		//echo "<script>var blurred = false; window.onblur = function() { blurred = true; };window.onfocus = function() { blurred && (location.reload()); };</script>";
+		//echo "<script>var blurred = false; window.onblur = function() { blurred = true; };window.onfocus = function() { blurred && (windows.location.reload()); };</script>";
 	}
 	function addJsFile($file){ $this->mJSFiles[$file]	= $file;	}
 	function addObject($strObject	= ""){	}
@@ -699,7 +711,7 @@ class cHPage {
 						<html lang=\"es-mx\">
 						    <head>
 						        <meta charset=\"utf-8\" />
-								<meta name=\"viewport\" content=\"initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">
+								<meta name=\"viewport\" content=\"initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />
 								<meta name=\"format-detection\" content=\"telephone=no\" />
 						<title>" . $this->mTitle . "</title>
 										$metas
@@ -722,7 +734,7 @@ class cHPage {
 						<html lang=\"es-mx\">
 						    <head>
 						        <meta charset=\"utf-8\" />
-								<meta name=\"viewport\" content=\"initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">
+								<meta name=\"viewport\" content=\"initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />
 						        <title>" . $this->mTitle . "</title>
 										        $metas
 										        $Css
@@ -761,8 +773,10 @@ class cHPage {
 		$xHO	= new cHObject();
 		return $xHO->Out($msgs, OUT_HTML);
 	}
-	function goToPageError($iderror = DEFAULT_CODIGO_DE_ERROR, $out = OUT_HTML){
+	function goToPageError($iderror = DEFAULT_CODIGO_DE_ERROR, $out = OUT_HTML, $msg = ""){
 		$xErr			= new cError($iderror);
+		$out			= ($out == "") ? OUT_HTML : $out;
+		
 		$xErr->init();
 		//caja cerrada
 		if($iderror == 200){
@@ -770,7 +784,7 @@ class cHPage {
 			$xErr->setNewError($iderror, false, $xErr->getDescription() . " - " . $ff);
 		}
 		if($out == OUT_HTML){
-			$xErr->setGoErrorPage($iderror);
+			$xErr->setGoErrorPage($iderror, $msg);
 			exit();
 		} else {
 			$arrResponse	= array( "codigo" => $iderror, "message" => $xErr->getDescription());
@@ -967,6 +981,8 @@ class cHForm {
 	private $mHappyBtn		= "";
 	private $mNoKeyForm		= false; //Invalida la funcion de Key Form
 	private $mArrReglaVis	= array();
+	private $mMenuAnidados	= false;
+	private $mArrReloads	= array();
 	
 	function __construct($name, $action = "", $id = false, $method = "", $class="formoid-default" ){
 		$id				= ($id == false) ? "id-$name" : $id;
@@ -998,8 +1014,17 @@ class cHForm {
 		}
 		$this->mAction = $action;
 	}
-	function addToolbar($element = ""){
-		if ($element != ""){ $this->mTools[] 	= "<li>$element</li>";	}
+	function addToolbar($element = "", $grupo = ""){
+		if ($element != ""){
+			if($grupo !== ""){
+				$this->mTools[$grupo][] 	= "<li>$element</li>";
+				$this->mMenuAnidados		= true;
+			} else {
+				$this->mTools[] 	= "<li>$element</li>";
+			}
+			
+			
+		}
 	}
 	function addDivSolo($content1, $content2 = "", $tipo1 = "tx34", $tipo2 = "tx14", $props=false){
 		$this->addDivX($content1, $content2, $tipo1, $tipo2, $props, "tx1");
@@ -1251,27 +1276,42 @@ class cHForm {
 		$nProps		= "";
 		$nJQDates	= "";
 		$nTools		= "";
+		$strReloads	= "";
+		$js_3		= "";
+		$js			= "";
+
 		foreach ($this->mArrProp as $key => $value) {
 			$nProps	.= " $key=\"$value\" ";
 		}
 		foreach ($this->mJQDate as $key => $value){
 			$nJQDates	.= "\$( \"#$value\" ).datepicker( { dateFormat: 'yy-mm-dd' } );\r\n";
 		}
+		foreach ($this->mArrReloads as $formRID => $formId ){
+			$strReloads	.= "xG.setOrderReload({frm:\"$formId\"});";
+		}
+		if($strReloads !== ""){
+			//$js_3	.= "window.addEventListener('beforeunload', jsOnUnloadForm, false);";
+			$js_3	= "jsOnUnloadForm();";
+			$js		.= "var jsOnUnloadForm = function(){var xG=new Gen();$strReloads };\n";
+		}
 		$this->addKey();
 		$nTools		= "";
-		$limTool	= 6;
+		//$limTool	= 6;
 		$cnt		= 1;
-		$st			= "";
-		$js			= "";
+		//$st			= "";
+		
 		$valids		= "";
 		$jsMes		= "";
 		$wInit		= "";
 		$wEnd		= "";
 		$wJs		= "";
+		$preLegend	= "";	//Pre-legend
 		$HBtn		= ($this->mHappyBtn == "") ? "" : ",submitButton:'#" . $this->mHappyBtn . "'";
 		$js_1		= "\r\nhotkeys('esc', function(event, handler){ event.preventDefault(); xG.EscKey(); });\r\n";
 		$js_2		= "";
-		$jsKeyPress	= "$('form input').on('keypress', function(e) { var xG=new Gen(); xG.formF9key(e); if(xG.isKeyEdit({evt:e}) == true){ $(\"#" . $this->mID .  "\").attr(\"data-mod\", \"true\"); }; return e.which !== 13; });\n";
+		$menuHead	= "";
+		
+		$jsKeyPress	= "$('form input:not([type=hidden])').on('keypress', function(e) { var xG=new Gen(); xG.formF9key(e); if(xG.isKeyEdit({evt:e}) == true){ $(\"#" . $this->mID .  "\").attr(\"data-mod\", \"true\"); }; return e.which !== 13; });\n";
 		$jsKeyPress	.= "$('form select').on('keypress', function(e) { var xG=new Gen(); xG.formF9key(e); if(xG.isKeyEdit({evt:e}) == true){ $(\"#" . $this->mID .  "\").attr(\"data-mod\", \"true\"); }; return e.which !== 13; });\n";
 		if($this->mNoKeyForm == true){ $jsKeyPress	= ""; }
 		
@@ -1303,29 +1343,59 @@ class cHForm {
 			if(count($this->mTools)>0){
 				$this->OButton("Serializar", "serializeForm('#" . $this->mID ."');", $this->ic()->RANDOM,"cmdserialize", "ggreen");
 				$this->OButton("Rellenar", "var xFk=new LocalFaker();xFk.run('" . $this->mID ."');", $this->ic()->AUTOMAGIC,"cmdrellenar", "gred"); 
-				
+				$this->OButton("Exportar Tablas", "var xTw=new TableW();xTw.exportTables();", $this->ic()->AUTOMAGIC,"cmdexpalltables", "gred");
 			} 
 		}
 
 		foreach($this->mTools as $clave => $valor){
-			$nTools	.= $valor;
-			$cnt++;
+			if(is_array($valor)){
+				/*foreach($valor as $claveL2 => $valorL2){
+					$menuHead	.= $valorL2;			
+				}*/
+				$L2		= "<a>" . $this->getT($clave) . "</a>";
+				$L2		.= "<ul>";
+				foreach($valor as $claveL2 => $valorL2){
+					$L2	.= $valorL2;
+				}
+				$L2		.= "</ul>";
+				$menuHead	.= "<li>$L2</li>";
+				$cnt++;
+			} else {
+				$nTools	.= $valor;
+				$cnt++;
+			}
+
 		}
+		
+		
 		if($this->mConAcc == true AND $this->mAccLock == false){
 			$this->mContentForm	= "<div id=\"acc" . $this->mName . "\">" . $this->mContentForm . "</div>";
-			$js		= "$(\"#acc"  . $this->mName .  "\").accordion({'header': 'h3','fillSpace': false,	'active': 0});";
+			$js		.= "$(\"#acc"  . $this->mName .  "\").accordion({'header': 'h3','fillSpace': false,	'active': 0});";
 		}
 		$js			.= $this->mJSCode;
-		$cid		= ceil($cnt/$limTool);
+		//$cid		= ceil($cnt/$limTool);
+		if($this->mMenuAnidados == true){
+			if($menuHead == ""){
+				
+			} else {
+			$menuHead		= "<nav id='nav-" . $this->mID . "'><ul id=\"jMenu\">$menuHead</ul></nav>\r\n";
+			$js_1		.= "$('nav#nav-" . $this->mID . "').mmenu({ dropdown : true, navbar : { title : '" . $this->mTitle . "' }, navbars	: [{position	: 'top',content		: [ 'breadcrumbs', 'close' ] }], onClick : { close : true } });";
+			$preLegend		= "<a href=\"#nav-" . $this->mID . "\" class=\"menu-trigger\" id=\"menugo\"><i class=\"fa fa-reorder fa-2x\"></i></a>";
+			}
+		}
 		
 		$nTools		= ($nTools == "") ? "" : "<nav class='nv' id='menu-nav'><ul class=\"toolnav\" id='ultool'>$nTools</ul></nav>\r\n";
+		
+		
 		if($this->mEnc !== ""){
 			$nProps	.= " enctype=\"" . $this->mEnc .  "\" ";
 		}
-		$title		= ($this->mTitle == "") ? "" : "<legend class='title title-frm'>&vltri;&nbsp;&nbsp;" . $this->mTitle . "&nbsp;&nbsp;&vrtri;</legend>";
+		$title		= ($this->mTitle == "") ? "" : "<legend class='title title-frm'>$preLegend&vltri;&nbsp;&nbsp;" . $this->mTitle . "&nbsp;&nbsp;&vrtri;</legend>";
 		
 		$footer		= (trim($this->mContentFoot) == "") ? "" : "<footer>" . $this->mContentFoot . "</footer>";
 		$txtheader	= ($nTools == "") ? "" : "<header>$nTools</header>";
+		
+		$txtheader	.= $menuHead;
 		
 		$initTag	= "<form name=\"" . $this->mName  . "\" id=\"" . $this->mID .  "\" action=\"" . $this->mAction . "\" data-mod=\"false\" $nProps>";
 		$endTag		= "</form>";
@@ -1347,7 +1417,7 @@ class cHForm {
 		var xG			= new Gen();
 		var wOrigen		= xG.winOrigen();
 		var CurrentData	= {};
-		$(document).ready(function(){ $js_1 $js_2
+		$(document).ready(function(){ $js_1 $js_2 $js_3
 			$jsKeyPress" . $wJs . "\n" . $valids . "\n" . $nJQDates . "\n$jsMes\n" . $this->mJSInit . "\n" . $this->mJSOtros . "\n});
 		$js</script>
 		";
@@ -1672,7 +1742,7 @@ class cHForm {
 		return "";	
 		//$this->ODate("idfechaactual", $fecha, "TR.Fecha");
 	}
-	function addAviso($txt, $id = "", $mostrarTip = false, $class = "notice", $titulo =""){
+	function addAviso($txt = "", $id = "", $mostrarTip = false, $class = "notice", $titulo =""){
 		$xHO	= new cHObject();
 		if($mostrarTip == true){
 			$ntxt	= preg_replace( "/\r|\n/", "", $txt);
@@ -1713,13 +1783,13 @@ class cHForm {
 		}
 		return $xTxt;
 	}
-	function OBuscar($id, $valor, $titulo = "", $funcion = "", $html = ""){
+	function OBuscar($id, $valor, $titulo = "", $funcion = "", $html = "", $min = 2){
 		$xTxt	= new cHText();
 		$xTxt->setDivClass("tx4 blue");
 		$titulo	= ($titulo == "") ? "TR.BUSCAR" : $titulo;
 		$id		= ($id == "") ? "idbuscar" : $id;		
 		if($funcion !== ""){
-			$xTxt->addEvent("var xG=new Gen();xG.isKey({evt:event,ambos:true,min:2, callback:$funcion });", "onkeyup");
+			$xTxt->addEvent("var xG=new Gen();xG.isKey({evt:event,ambos:true,min:" . $min . ",callback:$funcion });", "onkeyup");
 		}
 		$this->addHElem( $xTxt->getNormal($id, $valor, $titulo, $html) );
 		
@@ -1847,17 +1917,17 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 		$xTxt	= null;
 		return $xTxt;
 	}
-	function OButton($titulo, $event, $icon = "", $id = "", $class=""){
+	function OButton($titulo, $event, $icon = "", $id = "", $class="", $grupo =""){
 		$xBtn	= new cHButton();
 		if(OPERACION_LIBERAR_ACCIONES == false){
 			//Verificar permisos
 			$xUser	= new cSystemUser();
 			if( $xUser->puede($this->mID, $titulo) == true){
 				
-				$this->addToolbar( $xBtn->getNav($titulo, $event, $icon, $id, $class ) );
+				$this->addToolbar( $xBtn->getNav($titulo, $event, $icon, $id, $class ), $grupo );
 			}
 		} else {
-			$this->addToolbar( $xBtn->getNav($titulo, $event, $icon, $id, $class ) );
+			$this->addToolbar( $xBtn->getNav($titulo, $event, $icon, $id, $class ), $grupo );
 		}
 		return $xBtn;
 	}
@@ -1875,7 +1945,7 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 		$xTxt	= new cHTextArea();
 		if($add == true){
 			$titulo	= $this->getT($titulo);
-			$tit	= "<label for='$id'>$titulo<label>";
+			$tit	= "<label for='$id'>$titulo</label>";
 			$txt	= $xTxt->get($id, $valor, "");
 			$this->addDivSolo($tit, $txt, "tx14", "tx34");
 			//$this->addHElem( $xTxt->get($id, $valor, $titulo) );
@@ -2116,9 +2186,15 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 	function setMultisel($id){
 		$this->addJsInit(" $('#$id').multiSelect();");
 	}
-	function addJsReload(){
+	function addJsReloadForm($form = ""){
+		$this->mArrReloads[$form]	= $form;
 		//$evt	= "var blurred = false; window.onblur = function() { blurred = true; };window.onfocus = function() { blurred && (location.reload()); };";
+		//$evt	= "window.onfocus = function() { var xG=new Gen(); if(xG.getOrderReload({frm:'" . $this->mID . "'}) == true){ location.reload(); } };";
 		//$this->addJsInit($evt);
+	}
+	function addJsReload($form = ""){
+		$evt	= "window.onfocus = function() { var xG=new Gen(); if(xG.getOrderReload({frm:'" . $this->mID . "'}) == true){ xG.spinInit(); location.reload(); } };";
+		$this->addJsInit($evt);
 	}
 	function setInitVerPorRegla($regla){
 		$xRuls			= new cReglaDeNegocio();
@@ -2144,6 +2220,10 @@ afterTagRemoved: function(event, ui){ var xF=new FrmGen();var mtag = ui.tag[0].i
 		$xUsr	= new cSystemUser(); $xUsr->init();
 		return $xUsr->getEnDesarrollo();
 	}
+	//TODO: Terminar funcion que devuleve un array por string de tags validos para el control OTag 
+	function getResolveTags($str, $div1=",", $div2 = "="){
+		
+	}
 }
 class cHTextArea {
 	protected $mId				= "";
@@ -2159,7 +2239,8 @@ class cHTextArea {
 	protected $mIncLabel		= false;
 	protected $mHTMLExtra		= "";
 	protected $mLegend			= "";
-	protected $mTitle			= "";	protected $mArrEventsVals	= array();
+	protected $mTitle			= "";
+	protected $mArrEventsVals	= array();
 	//protected $mDivClass		= "";
 	
 	protected $mLabelSize		= 0;
@@ -2340,7 +2421,7 @@ class cHFile extends cHInput {
 		$css						= ($css == "") ? $this->mDivClass : $css;
 		$this->setDivClass($css);
 		//, "<span id=\"na-$id\"><i class=\"fa fa-file\"></i></span>"
-		$html	= ($this->mUseProgress == false) ? "" : "<div class='progress'><span class='orange' style='width:1%' id='pgr-$id'></span></div>";
+		$html	= ($this->mUseProgress == false) ? "" : "<div class='progress' style='min-width:50%'><span class='orange' style='width:1%' id='pgr-$id'></span></div>";
 		return $this->get($id, $valor, $titulo,"", false, $html);
 	}
 	function setUseProgressBar(){ $this->mUseProgress = true; }
@@ -2384,7 +2465,8 @@ class cHText extends cHInput {
 		}
 		$titulo2						= ($titulo == "")  ? $xLn->getT("TR.NOMBRE_COMPLETO") : $xLn->getT($titulo);
 		$tit1							= $xLn->getT("TR.CLAVE_DE_PERSONA");
-		$this->addEvent("var xPG = new PersGen();xPG.getNombre(this.value, 'nombresocio$id');$blurEvents", "onblur");
+		$this->addEvent("var xPG=new PersGen();xPG.getNombre(this.value, 'nombresocio$id');$blurEvents", "onblur");
+		$this->addEvent("var xP=new PersGen();xP.getPersonaEnSession(this);", "onfocus");
 		$this->mIncLabel				= true;
 		if($SinBoton == false){
 			$xBtn		= new cHImg();
@@ -2699,7 +2781,7 @@ class cHText extends cHInput {
 	
 	function getDeTasa($id = "", $Titulo = "", $value = 0, $addLetras = false, $max=0, $min=0){
 		$this->setClearProperties();
-		$this->setDivClass("tx4 tx13");
+		$this->setDivClass("tx4 tx18");
 		$ctrl							= "";
 		$id								= ( $id == "" ) ? $this->mId : $id;
 		$this->mArrProp["type"]			= "number";
@@ -2847,23 +2929,21 @@ class cHText extends cHInput {
 	}	
 	function getDeCodigoPostal($id = "", $valor = "", $titulo = ""){
 		$this->setClearProperties();
-		$titulo 			= "TR.Codigo_postal";
-		$id					= ( $id == "" ) ? "idcodigopostal" : $id;
-		$this->mLIDs[]		= $id;
-		$this->mArrProp["name"]			= $id;
-		$this->addEvent("var xg$id = new DomGen(); xg$id.getColoniasXCP(this);", "onblur");
+		$titulo 					= "TR.Codigo_postal";
+		$id							= ($id == "") ? "idcodigopostal" : $id;
+		$this->mLIDs[]				= $id;
+		$this->mArrProp["name"]		= $id;
+		$this->addEvent("var xG$id = new DomGen();xG$id.getColoniasXCP(this);", "onblur");
 		if(PERSONAS_VIVIENDA_MANUAL == true){
-			$snipt				= "<div id='div$id' class='tx23'>
-									<label for='dl$id'>" . $this->lang("Colonia") . "</label>
-									<input type='text' id='idnombrecolonia' name='idnombrecolonia' list='dl$id' onblur='var xg$id=new DomGen();xg$id.setColoniasXCP(this);'>
-									<datalist id='dl$id'><option /></datalist>
-									</div>";
+			$snipt			= "<div id='div$id' class='tx23'><label for='dl$id'>" . $this->lang("Colonia") . "</label>
+							<input type='text' id='idnombrecolonia' name='idnombrecolonia' list='dl$id' onblur='var xG$id=new DomGen();xG$id.setColoniasXCP(this);' />
+							<datalist id='dl$id'><option /></datalist></div>";
 		} else {
-			$snipt				= "<div id='div$id' class='tx23'><input type='hidden' id='idnombrecolonia' name='idnombrecolonia' /><label for='dl$id'>" . $this->lang("Colonia") . "</label>
-								<select id='dl$id' onblur='var xg$id = new DomGen(); xg$id.setColoniasXCP(this);' ><option /></select></div>";
+			$snipt			= "<div id='div$id' class='tx23'><input type='hidden' id='idnombrecolonia' name='idnombrecolonia' /><label for='dl$id'>" . $this->lang("Colonia") . "</label>
+								<select id='dl$id' onblur='var xG$id=new DomGen();xG$id.setColoniasXCP(this);' ><option /></select></div>";
 		}
 		$this->setDivClass("tx13");
-		$ctrl				= "<div class='medio'> ". $this->get($id, $valor, $titulo ) . $snipt . "</div><input type='hidden' id='idcp_$id' />";
+		$ctrl				= "<div class='medio'>". $this->get($id, $valor, $titulo ) . $snipt . "</div><input type='hidden' id='idcp_$id' />";
 		
 		return $ctrl;
 	}
@@ -3704,7 +3784,7 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;
 	}
-	
+
 	function getListaDeProductosDeCreditoConSeguimiento($id = "", $selected = false){
 		$id		= ($id == "") ? "idproducto" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
@@ -4235,7 +4315,7 @@ class cHSelect {
 		$id			= ($id == "") ? "idniveldeusuario" : $id; $this->mLIDs[]	= $id;
 		$selected	= setNoMenorQueCero($selected);
 		$limit		= setNoMenorQueCero($limit);
-		$ByLim		= ($limit>0) ? " AND (`general_niveles`.`tipo_sistema`<$limit) " : "";
+		$ByLim		= ($limit>0) ? " AND (`general_niveles`.`tipo_sistema`<=$limit) " : "";
 		$nodev		= (SAFE_ON_DEV == false) ? "" : " AND idgeneral_niveles != 99 ";
 		$tag		= (SAFE_ON_DEV == false) ? " `general_niveles`.`descripcion_del_nivel` " : "CONCAT(`descripcion_del_nivel`, '[', `tipo_sistema`,'-',`idgeneral_niveles`, ']') AS `descripcion`";
 		$sqlSc		= "SELECT `general_niveles`.`idgeneral_niveles`,$tag FROM `general_niveles` `general_niveles` WHERE `estatus`=1 $nodev $ByLim ORDER BY `tipo_sistema`,`idgeneral_niveles`";
@@ -4268,10 +4348,14 @@ class cHSelect {
 		$xS->setEsSql();
 		return $xS;		
 	}
-	function getListaDeTiempo($id = ""){
-		$id		= ($id == "") ? "idtiempo" : $id; $this->mLIDs[]	= $id;
-		$sqlSc	= "SELECT idsocios_tiempo, descripcion_tiempo FROM socios_tiempo ORDER BY idsocios_tiempo ";
-		$xS 	= new cSelect($id, $id, $sqlSc);
+	function getListaDeTiempo($id = "", $selected = false){
+		$id			= ($id == "") ? "idtiempo" : $id; $this->mLIDs[]	= $id;
+		$sqlSc		= "SELECT idsocios_tiempo, descripcion_tiempo FROM socios_tiempo ORDER BY idsocios_tiempo ";
+		$xS 		= new cSelect($id, $id, $sqlSc);
+		$selected	= setNoMenorQueCero($selected);
+		if($selected>0){
+			$xS->setOptionSelect($selected);
+		}
 		$xS->setLabel("TR.Tiempo");
 		if($this->mDivClass !== ""){ $xS->setDivClass("tx4 tx18 blue"); }
 		$xS->setEsSql();
@@ -5502,7 +5586,7 @@ GROUP BY `operaciones_mvtos`.`recibo_afectado`";
 		$id			= ($id == "") ? "idtipoescenario" : $id; $this->mLIDs[]	= $id;
 		//$w			= ($tipo == "") ? "" : "WHERE aplica='$tipo'";
 		//$SqlRpt			= "SELECT `idleasing_escenarios`,`descripcion_escenario` FROM `leasing_escenarios` ";
-		$SqlRpt			= "SELECT `plazo`,`descripcion_escenario` FROM `leasing_escenarios` ";
+		$SqlRpt			= "SELECT `plazo`,`descripcion_escenario` FROM `leasing_escenarios` ORDER BY `plazo`";
 		$xS 		= new cSelect($id, $id, $SqlRpt);
 		$xS->setEsSql();
 		$xS->setDivClass("tx4 tx18 orange");
@@ -5681,6 +5765,17 @@ GROUP BY `operaciones_mvtos`.`recibo_afectado`";
 		$selected	= setNoMenorQueCero($selected);
 		$xS->setOptionSelect($selected);
 		$xS->setLabel("TR.BASE");
+		return $xS;
+	}
+	function getListaDeEtapasDeCred($id = "", $selected = 0){
+		$id			= ($id == "") ? "idcreditoetapa" : $id; $this->mLIDs[]	= $id;
+		$SqlRpt		= "SELECT `idcreditos_etapas`,`descripcion` FROM `creditos_etapas`";
+		$xS 		= new cSelect($id, $id, $SqlRpt);
+		$xS->setEsSql();
+		$xS->setDivClass("tx4");
+		$selected	= setNoMenorQueCero($selected);
+		$xS->setOptionSelect($selected);
+		$xS->setLabel("TR.ETAPA DE CREDITO");
 		return $xS;
 	}
 } //END
@@ -6076,18 +6171,24 @@ class cHNotif {
 		if($this->OIC == null){ $this->OIC = new cFIcons();}
 		return $this->OIC;
 	}
-	function getDash($titulo = "", $info = "", $icon = "fa-info", $tipo = "notice"){
+	function getDash($titulo = "", $info = "", $icon = "fa-info", $tipo = "default"){
 		$xBtn	= new cHButton();
 		$titulo	= $this->getL()->getT($titulo);
-		$ic		= $xBtn->setIcon($icon, "fa-3x");
-				
-		return "<span class='tx4 dash dash-$tipo'>
-			
-			<div class='tx13'>$ic</div>
-			
-			<div class='tx23'><p class='dash-title'>$titulo</p><p class='dash-info'>$info</p></div>
-			
+		$ic		= $xBtn->setIcon($icon, "fa-2x");
+		$html	= "";
+		if($icon == ""){
+			$html	= "<span class='tx4 dash dash-$tipo'>
+			<div class='solo dash-title'>$titulo</div>
+			<div class='solo dash-info'>$info</div>
 			</span>";
+		} else {
+			$html	= "<span class='tx4 dash dash-$tipo'>
+			<div class='solo'><div class='tx13'>$ic</div>
+			<div class='tx23 dash-title'>$titulo</div></div>
+			<div class='solo dash-info'>$info</div>
+			</span>";
+		}
+		return $html;
 	}
 	function getL(){
 		if($this->mLang == null){
@@ -6173,7 +6274,7 @@ class cTabla {
 	 * @param string	$vSql	SQL que genera la Tabla
 	 * @param integer	$vKey	Numero de Campo Clave
 	 */
-	function __construct($vSql ="", $vKey = 0, $id = "sqltable") {
+	function __construct($vSql ="", $vKey = 0, $id = "") {
 		$this->mSql 			= $vSql;
 		$this->mKey 			= $vKey;
 		$this->mTitles 			= "";
@@ -6198,7 +6299,10 @@ class cTabla {
 		$this->mFieldSum		= array();
 		$this->mRndK			= rand(0, 100);
 		
-		
+		//=========================================
+		if($id === ""){
+			$id		= "tbl_" . $vKey . "_" . crc32($this->mSql);
+		}
 		//TIPO DE COMPARACION
 		$this->arrWithTilde = array("varchar","date","text","tinytext","enum","blob","string","longtext","datetime", "time");
 
@@ -6255,7 +6359,9 @@ class cTabla {
 	function setColSum($nombre){
 		$this->mArrColSums[$nombre]	= $nombre;
 	}
-	function setSQL($vSql){ $this->mSql = $vSql; }
+	function setSQL($vSql){
+		$this->mSql = $vSql;
+	}
 	/**
 	 * Convierte una Tabla en una consulta SQL
 	 * @param string $Table
@@ -6523,7 +6629,7 @@ LONGTEXT: 252
 			$itmEspTool				= count($this->mEspTool)*2;
 			$itmTot					= $il + $itmCmd + $itmEspTool;
 			if($itmTot > 0 AND $this->mPrepareChart == false ){
-				$wd					= ( setNoMenorQueCero($this->mWidthTool) <=0 ) ? ($itmTot * 31) . "px" : $this->mWidthTool;
+				$wd					= ( setNoMenorQueCero($this->mWidthTool) <=0 ) ? ($itmTot * 35.5) . "px" : $this->mWidthTool;
 				$tht 				= "<th style='min-width:". $wd  . ";width:". $wd .";'>Acciones</th>";
 			}
 			// --------------------------------------------------------------
@@ -6838,7 +6944,13 @@ LONGTEXT: 252
 						//============================== Valores reducidos
 						if($isCtrl == true){
 							$ctrl		= $this->mArrCtrl[$name];
-							$ctrl		= str_replace(HP_REPLACE_DATA, $currVal, $ctrl);
+							//Corrige Numero de formato
+							if(strpos($ctrl, "number") === false){
+								$ctrl		= str_replace(HP_REPLACE_DATA, $currVal, $ctrl);
+							} else {
+								$ctrl		= str_replace(HP_REPLACE_DATA, setNoMenorQueCero($currVal), $ctrl);
+							}
+							
 							$ctrl		= str_replace(HP_REPLACE_ID, $rw[$this->mKey], $ctrl);
 							$currVal	= $ctrl;
 							
@@ -7046,7 +7158,7 @@ LONGTEXT: 252
 	function setPagination($limits){$this->mLimits = $limits;}
 	function setNoFilas($OptionalTitle = ""){ $this->mNoFilas = true; $this->mOpTitleFoot = $OptionalTitle; }
 	function setTinySize($size){ $this->mMaxRed = $size; }
-
+	
 	/*			0 => $xLng->getT("TR.Ejecutar"),
 				1 => $xLng->getT("TR.Editar"),
 				2 => $xLng->getT("TR.Eliminar"),
@@ -7078,6 +7190,8 @@ class cSelect{
 	private $mIDKeys				= array();
 	private $mEliminados			= array();
 	private $mMultiple				= false;
+	private $mIsLista				= false;
+	private $mIsOptions				= false;
 	
 	
 	function __construct($name, $id = "", $sql = ""){
@@ -7145,6 +7259,8 @@ class cSelect{
 		return ($cerrar == false ) ? "" . $lbl . $this->show(true) . "" : "<div class='" . $this->mDivClass . "'$iddiv>" . $lbl . $this->show(true) . "</div>";
 	}
 	function setNoMayus(){ $this->mNoMayus = true; }
+	function setEsOpciones(){ $this->mIsOptions = true; }
+	function setEsLista(){ $this->mIsLista = true; }
 	function show( $return = true){
 		$pSql 		= "";
 		$ctrl 		= "";
@@ -7183,11 +7299,15 @@ class cSelect{
 					$icap	= ucwords($icap);
 				}*/
 				
-				if($this->mOptionSelect==$ival){ $slt = " selected = \"selected\" ";}
+				if($this->mOptionSelect==$ival){
+					$slt = " selected=\"selected\" ";
+				}
 				if(isset($this->mEliminados[$ival])){
 					//eliminar
 				} else {
 					$ops	= $ops . "<option value=\"$ival\"$slt>$icap</option>";
+					
+					
 					$this->mIDKeys[$ival]		= $ival;
 					$this->mCount++;
 				}
@@ -7220,7 +7340,9 @@ class cSelect{
 		if($iEspOpts>0){
 			foreach ($this->mEspOption as $tmpOp => $tmpCap) {
 				$sltt 			= "";
-				if($this->mOptionSelect == $tmpOp ){ $sltt = " selected=\"selected\" "; }
+				if($this->mOptionSelect == $tmpOp ){
+					$sltt = " selected=\"selected\" ";
+				}
 				$pOpts 			= $pOpts . "<option value=\"$tmpOp\"$sltt>$tmpCap</option>";
 				$this->mIDKeys[$tmpOp]		= $tmpOp;
 				$this->mCount++;
@@ -7512,8 +7634,14 @@ class cFileLog{
 		return $str;
 	}
 
-	function __destruct(){
-
+	function getExiste($nombre){
+		$existe = false;
+		//$this->mCompleteName	= $this->mRootPath . $this->mName . "." . $this->mType;
+		$archivo = $this->mRootPath . $nombre . "." . $this->mType;
+		if(file_exists($archivo)){
+			$existe		= true;
+		}
+		return $existe;
 	}
 }
 class cHTMLObject{
@@ -7998,6 +8126,7 @@ class cFormato {
 				$this->mArr["variable_persona_depositario"]			= $cSoc->getNombreCompleto(OUT_HTML);
 			}  else {
 				$this->mArr["var_firmante_principal"]				= $cSoc->getNombreDelRepresentanteLegal();
+				$this->mArr["variable_persona_depositario"]			= $cSoc->getNombreDelRepresentanteLegal();
 				$this->mArr["var_firmante_rol"]						= "Representante Legal";
 			}
 			
@@ -8006,87 +8135,19 @@ class cFormato {
 			$this->mArr["var_firmantes_ficha_3"]					= "";
 			$this->mArr["var_firmantes_ficha_4"]					= "";
 			$this->mArr["var_firmantes_ficha_5"]					= "";
+			$this->mArr["var_replegal_ficha1"]						= "";
+			$this->mArr["var_replegal2_ficha1"]						= "";
 			
+			$this->setRepresentanteLegal($cSoc->getClaveDePersonalRepLegal(), "");
 			
-			if($cSoc->getClaveDePersonalRepLegal()>DEFAULT_SOCIO){
-				
-				//setLog($cSoc->getClaveDePersonalRepLegal());
-				$xRepLegal	= new cSocio($cSoc->getClaveDePersonalRepLegal());
-				if($xRepLegal->init() == true){
-					$this->mArr["variable_persona_rep_legal"]			= $xRepLegal->getNombreCompleto();
-					$this->mArr["var_replegal_nombre_completo"] 		= $xRepLegal->getNombreCompleto();
-					$this->mArr["var_replegal_email"]					= $xRepLegal->getCorreoElectronico();
-					$this->mArr["var_replegal_domicilio_convencional"]	= $xRepLegal->getDomicilio();
-					$this->mArr["var_replegal_id_tipo"]					= "";
-					$this->mArr["var_replegal_id_clave"]				= $xRepLegal->getClaveDeIdentificacion();
-					$this->mArr["var_replegal_id_ife"]					= $xRepLegal->getClaveDeIFE();
-					$this->mArr["variable_persona_depositario"]			= $xRepLegal->getNombreCompleto(); //depositario
-					
-					if($xRepLegal->getODomicilio() == null){
-						$this->mArr["var_replegal_domicilio_localidad"] 	= "";
-						$this->mArr["var_replegal_direccion_calle_y_numero"]= "";
-						$this->mArr["var_replegal_direccion_estado"] 		= "";
-						$this->mArr["var_replegal_direccion_completa"]	 	= "";
-						$this->mArr["var_replegal_direccion_colonia"]		= "";
-						$this->mArr["var_replegal_direccion_municipio"]		= "";
-					} else {
-						$xRPDom	= $xRepLegal->getODomicilio();
-						$this->mArr["var_replegal_domicilio_localidad"] 	= $xRPDom->getLocalidad();
-						$this->mArr["var_replegal_direccion_calle_y_numero"]= $xRPDom->getCalleConNumero();
-						$this->mArr["var_replegal_direccion_estado"] 		= $xRPDom->getEstado();
-						$this->mArr["var_replegal_direccion_completa"]	 	= $xRPDom->getDireccionBasica();
-						$this->mArr["var_replegal_direccion_colonia"]		= $xRPDom->getColonia();
-						$this->mArr["var_replegal_direccion_municipio"]		= $xRPDom->getMunicipio();
-					}
-					$this->mArr["var_replegal_ocupacion"] 				= $xRepLegal->getTituloPersonal();
-					$this->mArr["var_replegal_telefono_principal"]		= $xRepLegal->getTelefonoPrincipal();
-					$this->mArr["var_replegal_fecha_de_nacimiento"] 	= $xFecha->getFechaMediana($xRepLegal->getFechaDeNacimiento());
-					$this->mArr["var_replegal_id_fiscal"] 				= $xRepLegal->getRFC();
-					$this->mArr["var_replegal_id_poblacional"] 			= $xRepLegal->getCURP();
-					$this->mArr["var_replegal_lugar_de_nacimiento"] 	= $xRepLegal->getLugarDeNacimiento();
-					
-					$xEstadoCiv											= new cPersonasEstadoCivil($xRepLegal->getEstadoCivil());
-					if($xEstadoCiv->init() == true){
-						$this->mArr["var_replegal_estado_civil"] 		= $xEstadoCiv->getNombre();
-					} else {
-						$this->mArr["var_replegal_estado_civil"] 		= "";
-					}
-					$this->mArr["var_replegal_nombres"]					= $xRepLegal->getNombre();
-					$this->mArr["var_replegal_primer_apellido"]			= $xRepLegal->getApellidoPaterno();
-					$this->mArr["var_replegal_segundo_apellido"]		= $xRepLegal->getApellidoMaterno();
-				}
-				
-			} else {
-				$this->mArr["var_replegal_nombre_completo"] 		= "";
-				$this->mArr["var_replegal_domicilio_convencional"]	= "";
-				$this->mArr["var_replegal_email"]					= "";
-				$this->mArr["var_replegal_domicilio_localidad"] 	= "";
-				$this->mArr["var_replegal_direccion_calle_y_numero"]= "";
-				$this->mArr["var_replegal_direccion_estado"] 		= "";
-				$this->mArr["var_replegal_direccion_completa"]	 	= "";
-				$this->mArr["var_replegal_ocupacion"] 				= "";
-				$this->mArr["var_replegal_telefono_principal"]		= "";
-				$this->mArr["var_replegal_fecha_de_nacimiento"] 	= "";
-				$this->mArr["var_replegal_id_fiscal"] 				= "";
-				$this->mArr["var_replegal_id_poblacional"] 			= "";
-				$this->mArr["var_replegal_lugar_de_nacimiento"] 	= "";
-				$this->mArr["var_replegal_empresa_de_trabajo"] 		= "";
-				$this->mArr["var_replegal_estado_civil"] 			= "";
-				$this->mArr["var_replegal_nombres"]					= "";
-				$this->mArr["var_replegal_primer_apellido"]			= "";
-				$this->mArr["var_replegal_segundo_apellido"]		= "";
-				
-				$this->mArr["var_replegal_id_tipo"]					= "";
-				$this->mArr["var_replegal_id_clave"]				= "";
-				$this->mArr["var_replegal_id_ife"]					= "";
-				$this->mArr["var_replegal_direccion_colonia"]		= "";
-				$this->mArr["var_replegal_direccion_municipio"]		= "";
-			}
+
 			$this->mArr["var_pers_rep_legals"]						= $this->mArr["variable_persona_rep_legal"];
 			//Nombre de Representante Mancomunado
 			$xORepLegalM	= $cSoc->getORepresentanteLegalManc();
 			if($xORepLegalM !== null){
 				$this->mArr["var_pers_rep_legals"]					.= ", " . $xORepLegalM->getNombreDelRelacionado();
+				$this->setRepresentanteLegal($xORepLegalM->getCodigoDePersona(), "2");
+				
 			}
 			
 			
@@ -8433,7 +8494,7 @@ class cFormato {
 		$monto_garantia_liquida				= $monto_ministrado * $tasa_garantia_liquida;
 		$tasa_interes_mensual_moratorio		= round( (($cCred->getTasaDeMora() / 12) * 100), 2);
 		$dias_del_credito					= $cCred->getDiasAutorizados();
-		$meses_del_credito					= $cCred->getPlazoEnMeses();
+		$meses_del_credito					= $cCred->getPlazoEnMeses(true);
 		
 		$periocidad							= $cCred->getPeriocidadDePago();
 		$xModCred							= new cCreditosTipos($cCred->getTipoLegalEstandar()); $xModCred->init();
@@ -9112,7 +9173,6 @@ class cFormato {
 					$vars["aval_domicilio_fiscal"]			= $xODomFiscl->getDireccionBasica(true);
 				}
 				//hacer merge con el Principal
-				//TODO: Verificar problemas y conflictos
 				if($existeAPrinc == false){
 					$this->mArr		= array_merge($vars, $this->mArr);
 				}
@@ -9166,6 +9226,106 @@ class cFormato {
 		$this->mFicha5Avales		= $cfirmas5;
 		$this->mFicha6Avales		= $cfirmas6;
 		
+	}
+	private function setProcessSubformato($forma, $vars){
+		/*if($existeAPrinc == false){
+			$this->mArr		= array_merge($vars, $this->mArr);
+		}*/
+		$texto_ficha 		= contrato($forma, "texto_del_contrato");
+		$vars				= array_merge($vars, $this->mBasicVars);
+		foreach ($vars as $key => $value) {
+			$texto_ficha	= str_replace($key, $value, $texto_ficha);
+		}
+		//setLog($texto_ficha);
+		return $texto_ficha;
+	}
+	function setRepresentanteLegal($clavePersona, $id = ""){
+		$clavePersona	= setNoMenorQueCero($clavePersona);
+		
+		
+		
+		if($clavePersona > DEFAULT_SOCIO){
+			$mArr		= array();
+			//setLog($cSoc->getClaveDePersonalRepLegal());
+			$xRepLegal	= new cSocio($clavePersona);
+			$xFecha		= new cFecha();
+			
+			if($xRepLegal->init() == true){
+				$mArr["variable_persona_rep_legal"]								= $xRepLegal->getNombreCompleto();
+				
+				$mArr["var_replegal" . $id . "_nombre_completo"] 				= $xRepLegal->getNombreCompleto();
+				$mArr["var_replegal" . $id . "_email"]							= $xRepLegal->getCorreoElectronico();
+				$mArr["var_replegal" . $id . "_domicilio_convencional"]			= $xRepLegal->getDomicilio();
+				$mArr["var_replegal" . $id . "_id_tipo"]						= "";
+				$mArr["var_replegal" . $id . "_id_clave"]						= $xRepLegal->getClaveDeIdentificacion();
+				$mArr["var_replegal" . $id . "_id_ife"]							= $xRepLegal->getClaveDeIFE();
+				$mArr["variable_persona_depositario"]							= $xRepLegal->getNombreCompleto(); //depositario
+				
+				if($xRepLegal->getODomicilio() == null){
+					$mArr["var_replegal" . $id . "_domicilio_localidad"] 		= "";
+					$mArr["var_replegal" . $id . "_direccion_calle_y_numero"]	= "";
+					$mArr["var_replegal" . $id . "_direccion_estado"] 			= "";
+					$mArr["var_replegal" . $id . "_direccion_completa"]	 		= "";
+					$mArr["var_replegal" . $id . "_direccion_colonia"]			= "";
+					$mArr["var_replegal" . $id . "_direccion_municipio"]		= "";
+				} else {
+					$xRPDom	= $xRepLegal->getODomicilio();
+					$mArr["var_replegal" . $id . "_domicilio_localidad"] 		= $xRPDom->getLocalidad();
+					$mArr["var_replegal" . $id . "_direccion_calle_y_numero"]	= $xRPDom->getCalleConNumero();
+					$mArr["var_replegal" . $id . "_direccion_estado"] 			= $xRPDom->getEstado();
+					$mArr["var_replegal" . $id . "_direccion_completa"]	 	= $xRPDom->getDireccionBasica();
+					$mArr["var_replegal" . $id . "_direccion_colonia"]		= $xRPDom->getColonia();
+					$mArr["var_replegal" . $id . "_direccion_municipio"]	= $xRPDom->getMunicipio();
+				}
+				$mArr["var_replegal" . $id . "_ocupacion"] 					= $xRepLegal->getTituloPersonal();
+				$mArr["var_replegal" . $id . "_telefono_principal"]			= $xRepLegal->getTelefonoPrincipal();
+				$mArr["var_replegal" . $id . "_fecha_de_nacimiento"] 		= $xFecha->getFechaMediana($xRepLegal->getFechaDeNacimiento());
+				$mArr["var_replegal" . $id . "_id_fiscal"] 					= $xRepLegal->getRFC();
+				$mArr["var_replegal" . $id . "_id_poblacional"] 			= $xRepLegal->getCURP();
+				$mArr["var_replegal" . $id . "_lugar_de_nacimiento"] 		= $xRepLegal->getLugarDeNacimiento();
+				
+				$xEstadoCiv													= new cPersonasEstadoCivil($xRepLegal->getEstadoCivil());
+				if($xEstadoCiv->init() == true){
+					$mArr["var_replegal" . $id . "_estado_civil"] 			= $xEstadoCiv->getNombre();
+				} else {
+					$mArr["var_replegal" . $id . "_estado_civil"] 			= "";
+				}
+				$mArr["var_replegal" . $id . "_nombres"]					= $xRepLegal->getNombre();
+				$mArr["var_replegal" . $id . "_primer_apellido"]			= $xRepLegal->getApellidoPaterno();
+				$mArr["var_replegal" . $id . "_segundo_apellido"]			= $xRepLegal->getApellidoMaterno();
+			}
+			
+		} else {
+			$mArr["var_replegal" . $id . "_nombre_completo"] 				= "";
+			$mArr["var_replegal" . $id . "_domicilio_convencional"]			= "";
+			$mArr["var_replegal" . $id . "_email"]							= "";
+			$mArr["var_replegal" . $id . "_domicilio_localidad"] 			= "";
+			$mArr["var_replegal" . $id . "_direccion_calle_y_numero"]		= "";
+			$mArr["var_replegal" . $id . "_direccion_estado"] 				= "";
+			$mArr["var_replegal" . $id . "_direccion_completa"]	 			= "";
+			$mArr["var_replegal" . $id . "_ocupacion"] 						= "";
+			$mArr["var_replegal" . $id . "_telefono_principal"]				= "";
+			$mArr["var_replegal" . $id . "_fecha_de_nacimiento"] 			= "";
+			$mArr["var_replegal" . $id . "_id_fiscal"] 						= "";
+			$mArr["var_replegal" . $id . "_id_poblacional"] 				= "";
+			$mArr["var_replegal" . $id . "_lugar_de_nacimiento"] 			= "";
+			$mArr["var_replegal" . $id . "_empresa_de_trabajo"] 			= "";
+			$mArr["var_replegal" . $id . "_estado_civil"] 					= "";
+			$mArr["var_replegal" . $id . "_nombres"]						= "";
+			$mArr["var_replegal" . $id . "_primer_apellido"]				= "";
+			$mArr["var_replegal" . $id . "_segundo_apellido"]				= "";
+			
+			$mArr["var_replegal" . $id . "_id_tipo"]						= "";
+			$mArr["var_replegal" . $id . "_id_clave"]						= "";
+			$mArr["var_replegal" . $id . "_id_ife"]							= "";
+			$mArr["var_replegal" . $id . "_direccion_colonia"]				= "";
+			$mArr["var_replegal" . $id . "_direccion_municipio"]			= "";
+		}
+		
+		$this->mArr["var_replegal" . $id . "_ficha1"]								= $this->setProcessSubformato(8014, $mArr);
+		
+		
+		$this->mArr				= array_merge($mArr, $this->mArr);
 	}
 	function getListadoDeReferencias($persona){
 		$mSQL		= new cSQLListas();
@@ -9533,6 +9693,7 @@ class cFormato {
 					"variable_estado_civil_del_socio" 				=> $xL->getT("TR.GENERAL .- Estado_Civil"),
 						
 					"variable_persona_rep_legal"					=> $xL->getT("TR.LEGAL .- REPRESENTANTE_LEGAL"),
+					"var_pers_rep_legals"							=> $xL->getT("TR.LEGAL .- REPRESENTANTE_LEGAL MULTIPLE"),
 						
 					"variable_pm_num_notaria"						=> $xL->getT("TR.LEGAL .- NUMERO NOTARIA"),
 					"variable_pm_nom_notario"						=> $xL->getT("TR.LEGAL .- NOMBRE NOTARIO"),
@@ -11160,7 +11321,24 @@ class cFormato {
 					$html	= str_replace("../css/", SAFE_HOST_URL . "css/", $html);
 					$html	= str_replace("../js/", SAFE_HOST_URL . "js/", $html);
 					$html	= str_replace("../images/", SAFE_HOST_URL . "images/", $html);
+					
+					
+					$html	= str_replace('<link href="' . SAFE_HOST_URL . 'css/reporte.css" rel="stylesheet">', '<link href="' . SAFE_HOST_URL . 'css/word.css" rel="stylesheet">', $html);
+					$html	= str_replace('<link href="' . SAFE_HOST_URL . 'css/tinybox.css" rel="stylesheet">', "", $html);
+					$html	= str_replace('<link href="' . SAFE_HOST_URL . 'css/contrato.css.php" rel="stylesheet">', "", $html);
+					$html	= str_replace('<link href="' . SAFE_HOST_URL . 'css/recibo.css.php" rel="stylesheet">', "", $html);
+					
+					$html	= str_replace('<meta charset="utf-8" />', "", $html);
+					$html	= str_replace('<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">', "", $html);
+					$html	= str_replace('<meta name="format-detection" content="telephone=no" />', "", $html);
+					
+					//$html	= str_replace("width:100%","", $html);
+					
+					$html 	= preg_replace('/<!--(.*)-->/Uis', '', $html);
+					
+					
 					$html 	= preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
+					//$html	= str_replace("</head>", "<style>*{font-family:Calibri !important;}</style></head>", $html);
 					
 					$nn		= $xFS->cleanNombreArchivo($this->getTitulo() . "_" . $this->mDocumento . "_" . $this->mID . "_" . time(), true);
 					$ff		= $xFS->setConvertToDocx($html, $nn);
@@ -11168,6 +11346,9 @@ class cFormato {
 						if(file_exists($ff)){
 							header("Content-type: application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 							header("Content-Disposition: attachment; filename=\"$nn.docx\"; ");
+							//header("Content-type: application/msword");
+							//header("Content-Disposition: attachment; filename=\"$nn.doc\"; ");
+							
 							readfile($ff);
 						}
 					}

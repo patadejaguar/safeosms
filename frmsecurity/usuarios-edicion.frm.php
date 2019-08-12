@@ -42,7 +42,7 @@ $ctabancaria = parametro("idcodigodecuenta", 0, MQL_INT); $ctabancaria = paramet
 $observaciones= parametro("idobservaciones");
 
 $xHP->addJTableSupport();
-$xHP->init();
+$xHP->init("jsLoadFiltro()");
 
 $xFRM		= new cHForm("frm", "./");
 $xSel		= new cHSelect();
@@ -64,10 +64,14 @@ $xSelLE		= $xSel->getListaDeCatalogoGenerico("usuarios_estatus", "idestatus", SY
 $xSelLE->setNoMayus();
 $xSelLE->addEvent("onchange", "jsLoadFiltro()");
 $xSelLE->setDivClass("tx4 tx18 red");
+$xSelLE->setOptionSelect("activo");
 
 $xFRM->addHElem( $xSelLE->get("TR.ESTATUS", true) );
 
 $xSelLN 	= $xSel->getListaDeNivelDeUsuario("idnivel", 0, $nivel);
+
+
+
 
 $xTxt->addEvent("jsLoadFiltro()", "onkeyup");
 $xFRM->addHElem( $xTxt->get("idbuscar", "", "TR.BUSCAR") );
@@ -112,10 +116,10 @@ $xHG->col("email", "TR.CORREO_ELECTRONICO", "10%");
 $xHG->col("estatus", "TR.ESTATUS", "10%");
 
 if( $xUser->getPuedeEditarUsuarios() == true ){
-	$xHG->OButton("TR.EDITAR", "jsEditarUsuario('+ data.record.clave +')", "edit.png");
-	$xHG->OButton("TR.PASSWORD", "jsVerMiPassword('+ data.record.clave +')", "unlocked.png");
+	$xHG->OButton("TR.EDITAR", "jsEditarUsuario('+ data.record.clave +')", "edit.png", "", false, "if(data.record.estatus == 'activo'){");
+	$xHG->OButton("TR.PASSWORD", "jsVerMiPassword('+ data.record.clave +')", "unlocked.png", "", false, "if(data.record.estatus == 'activo'){");
 	
-	$xHG->OButton("TR.BAJA", "jsActionBaja('+ data.record.clave +',\''+ data.record.estatus +'\')", "prohibition.png");
+	$xHG->OButton("TR.BAJA", "jsActionBaja('+ data.record.clave +',\''+ data.record.estatus +'\')", "prohibition.png", "", false, "if(data.record.estatus == 'activo'){");
 }
 
 if($xUser->getPuedeAgregarUsuarios()== true){
@@ -177,18 +181,22 @@ function jsActionBaja(id, estatus){
 function jsLoadFiltro(){
 	var ids	= $("#idestatus").val();
 	var ss	= $("#idbuscar").val();
-	
-	var str	= "";
-	if(ids !== "todas"){
-		str	+= " AND (estatus='" + ids + "') ";
-	}
-	if($.trim(ss) !== ""){
-		str += " AND (`puesto` LIKE '%" + ss + "%' OR `nombreusuario` LIKE '%" + ss + "%' OR `nombrecompleto` LIKE '%" + ss + "%' OR `niveldeacceso` LIKE '%" + ss + "%')";
-	}
-	if($.trim(str) !== ""){
-		str		= "&w=" + base64.encode(str);
+	if(ids == "todas"){
 		$("#iddiv").jtable("destroy");
-		jsLGiddiv(str);
+		jsLGiddiv();
+	} else {
+		var str	= "";
+		if(ids !== "todas"){
+			str	+= " AND (estatus='" + ids + "') ";
+		}
+		if($.trim(ss) !== ""){
+			str += " AND (`puesto` LIKE '%" + ss + "%' OR `nombreusuario` LIKE '%" + ss + "%' OR `nombrecompleto` LIKE '%" + ss + "%' OR `niveldeacceso` LIKE '%" + ss + "%')";
+		}
+		if($.trim(str) !== ""){
+			str		= "&w=" + base64.encode(str);
+			$("#iddiv").jtable("destroy");
+			jsLGiddiv(str);
+		}
 	}
 }
 function jsReloadGrid(){

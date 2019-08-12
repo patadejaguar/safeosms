@@ -16,19 +16,19 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
@@ -90,20 +90,24 @@ $pie_array = get_pie_array(null, $teams);
   <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="../css/theme.css">
   <script type="">
+    function submitForm() {
+        var brands = $('#teams option:selected');
+        var selected = [];
+        $(brands).each(function(index, brand){
+            selected.push($(this).val());
+        });
+        
+        $("#team_options").val(selected.join(","));
+        $("#risks_dashboard_form").submit();
+    }
+  
     $(function(){
         $("#teams").multiselect({
             allSelectedText: '<?php echo $escaper->escapeHtml($lang['AllTeams']); ?>',
             includeSelectAllOption: true,
-            onChange: function(element, checked){
-                var brands = $('#teams option:selected');
-                var selected = [];
-                $(brands).each(function(index, brand){
-                    selected.push($(this).val());
-                });
-                
-                $("#team_options").val(selected.join(","));
-                $("#risks_dashboard_form").submit();
-            }
+            onChange: submitForm,
+            onSelectAll: submitForm,
+            onDeselectAll: submitForm,
         });
     });
   
@@ -129,7 +133,7 @@ $pie_array = get_pie_array(null, $teams);
                 <u><?php echo $escaper->escapeHtml($lang['Teams']); ?></u>: &nbsp;
                 <?php create_multiple_dropdown("teams", ":".implode(":", explode(",", $teams)).":" , NULL, $teamOptions); ?>
                 <form id="risks_dashboard_form" method="GET">
-                    <input type="hidden" value="<?php echo $teams; ?>" name="teams" id="team_options">
+                    <input type="hidden" value="<?php echo $escaper->escapeHtml($teams); ?>" name="teams" id="team_options">
                 </form>
             </div>
         </div>

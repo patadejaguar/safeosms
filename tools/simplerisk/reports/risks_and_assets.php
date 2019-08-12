@@ -16,19 +16,20 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
 
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
@@ -75,6 +76,25 @@ else $report = 0;
 
   <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="../css/theme.css">
+
+    <style>
+        .group-name-row {
+            cursor: pointer;
+        }
+        td.group-name > i {
+            margin-right: 10px;
+            width: 10px;
+        }
+    </style>
+    <script>
+        $(document).ready(function() {
+            $('.group-name-row').click(function() {
+                var id = $(this).data('group-name-row-id');
+                $("[data-group-id='" + id + "']").toggle();
+                $(this).find('i').toggleClass('fa-caret-right fa-caret-down');
+            });
+        });
+    </script>
 </head>
 
 <body>

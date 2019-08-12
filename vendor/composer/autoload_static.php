@@ -4,12 +4,11 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d
+class ComposerStaticInit234068e13c32741fe60b216b17b2a67e
 {
     public static $files = array (
-        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
-        'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
-        '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '45e8c92354af155465588409ef796dbc' => __DIR__ . '/..' . '/bcosca/fatfree/lib/base.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -17,41 +16,17 @@ class ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d
         array (
             'pCloud\\' => 7,
         ),
-        'Z' => 
-        array (
-            'Zend\\Diactoros\\' => 15,
-        ),
         'S' => 
         array (
+            'Symfony\\Polyfill\\Ctype\\' => 23,
             'Statickidz\\' => 11,
             'Simplon\\Postgres\\' => 17,
         ),
         'P' => 
         array (
-            'Psr\\Http\\Message\\' => 17,
             'PHPOnCouch\\Exceptions\\' => 22,
             'PHPOnCouch\\Adapter\\' => 19,
             'PHPOnCouch\\' => 11,
-        ),
-        'N' => 
-        array (
-            'Nexmo\\' => 6,
-        ),
-        'L' => 
-        array (
-            'Lcobucci\\JWT\\' => 13,
-        ),
-        'H' => 
-        array (
-            'Http\\Promise\\' => 13,
-            'Http\\Client\\' => 12,
-            'Http\\Adapter\\Guzzle6\\' => 21,
-        ),
-        'G' => 
-        array (
-            'GuzzleHttp\\Psr7\\' => 16,
-            'GuzzleHttp\\Promise\\' => 19,
-            'GuzzleHttp\\' => 11,
         ),
         'D' => 
         array (
@@ -64,9 +39,9 @@ class ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d
         array (
             0 => __DIR__ . '/..' . '/pcloud/pcloud-php-sdk/lib',
         ),
-        'Zend\\Diactoros\\' => 
+        'Symfony\\Polyfill\\Ctype\\' => 
         array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-diactoros/src',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
         'Statickidz\\' => 
         array (
@@ -75,10 +50,6 @@ class ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d
         'Simplon\\Postgres\\' => 
         array (
             0 => __DIR__ . '/..' . '/simplon/postgres/src',
-        ),
-        'Psr\\Http\\Message\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'PHPOnCouch\\Exceptions\\' => 
         array (
@@ -92,49 +63,59 @@ class ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d
         array (
             0 => __DIR__ . '/..' . '/php-on-couch/php-on-couch/src',
         ),
-        'Nexmo\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/nexmo/client/src',
-        ),
-        'Lcobucci\\JWT\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/lcobucci/jwt/src',
-        ),
-        'Http\\Promise\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/php-http/promise/src',
-        ),
-        'Http\\Client\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/php-http/httplug/src',
-        ),
-        'Http\\Adapter\\Guzzle6\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/php-http/guzzle6-adapter/src',
-        ),
-        'GuzzleHttp\\Psr7\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
-        ),
-        'GuzzleHttp\\Promise\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
-        ),
-        'GuzzleHttp\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
-        ),
         'Dotenv\\' => 
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
     );
 
+    public static $classMap = array (
+        'Conekta\\Address' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Address.php',
+        'Conekta\\ApiError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/ApiError.php',
+        'Conekta\\AuthenticationError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/AuthenticationError.php',
+        'Conekta\\Card' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Card.php',
+        'Conekta\\Charge' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Charge.php',
+        'Conekta\\Conekta' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Conekta.php',
+        'Conekta\\ConektaList' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/ConektaList.php',
+        'Conekta\\ConektaObject' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/ConektaObject.php',
+        'Conekta\\ConektaResource' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/ConektaResource.php',
+        'Conekta\\Customer' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Customer.php',
+        'Conekta\\DiscountLine' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/DiscountLine.php',
+        'Conekta\\Event' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Event.php',
+        'Conekta\\Handler' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/Handler.php',
+        'Conekta\\Lang' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Lang.php',
+        'Conekta\\LineItem' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/LineItem.php',
+        'Conekta\\Log' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Log.php',
+        'Conekta\\MalformedRequestError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/MalformedRequestError.php',
+        'Conekta\\Method' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Method.php',
+        'Conekta\\NoConnectionError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/NoConnectionError.php',
+        'Conekta\\Order' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Order.php',
+        'Conekta\\ParameterValidationError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/ParameterValidationError.php',
+        'Conekta\\Payee' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Payee.php',
+        'Conekta\\PaymentMethod' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/PaymentMethod.php',
+        'Conekta\\PaymentSource' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/PaymentSource.php',
+        'Conekta\\Payout' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Payout.php',
+        'Conekta\\PayoutMethod' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/PayoutMethod.php',
+        'Conekta\\Plan' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Plan.php',
+        'Conekta\\ProcessingError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/ProcessingError.php',
+        'Conekta\\Requestor' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Requestor.php',
+        'Conekta\\ResourceNotFoundError' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Exceptions/ResourceNotFoundError.php',
+        'Conekta\\ShippingContact' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/ShippingContact.php',
+        'Conekta\\ShippingLine' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/ShippingLine.php',
+        'Conekta\\Subscription' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Subscription.php',
+        'Conekta\\TaxLine' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/TaxLine.php',
+        'Conekta\\Token' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Token.php',
+        'Conekta\\Util' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Util.php',
+        'Conekta\\Webhook' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/Webhook.php',
+        'Conekta\\WebhookLog' => __DIR__ . '/..' . '/conekta/conekta-php/lib/Conekta/WebhookLog.php',
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit83c2c02df46f9b9cd332878e01a12c4d::$prefixDirsPsr4;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit234068e13c32741fe60b216b17b2a67e::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit234068e13c32741fe60b216b17b2a67e::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit234068e13c32741fe60b216b17b2a67e::$classMap;
 
         }, null, ClassLoader::class);
     }

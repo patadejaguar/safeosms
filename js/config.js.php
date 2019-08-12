@@ -170,7 +170,9 @@ var Configuracion = {
 		credito : "credito",
 		panel : "panel",
 		persona : "persona",
-		addcredito : "addcredito"
+		addcredito : "addcredito",
+		addpago : "new.pago",
+		addlinea : "add.linea"
 	},
 	variables : {
 		tinyajax : {
@@ -222,4 +224,4 @@ var Configuracion = {
 }
 
 var CNF = Configuracion;
-
+var CFG = Configuracion;

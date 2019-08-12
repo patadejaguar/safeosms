@@ -73,8 +73,8 @@ $xHG->col("alias", "TR.ALIAS", "10%");
 //$xHG->col("dias_maximo", "TR.DIAS MAXIMO", "10%");
 //$xHG->col("pagos_maximo", "TR.PAGOS MAXIMO", "10%");
 
-$xHG->col("tasa_normal", "TR.INTERES NORMAL", "10%");
-$xHG->col("tasa_moratorio", "TR.INTERES MORATORIO", "10%");
+//$xHG->col("tasa_normal", "TR.INTERES NORMAL", "10%");
+//$xHG->col("tasa_moratorio", "TR.INTERES MORATORIO", "10%");
 
 
 
@@ -176,7 +176,7 @@ function jsAdd(){
 }
 
 function jsPanel(id){
-	xG.w({url:"../frmcreditos/creditos.productos.panel.frm.php?producto=" + id, tiny:true, callback: jsLGiddivprodc});
+	xG.w({url:"../frmcreditos/creditos.productos.panel.frm.php?producto=" + id, tab:true, callback: jsLGiddivprodc, ajustarAlto:true});
 }
 
 function jsDeact(id){

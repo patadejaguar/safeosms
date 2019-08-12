@@ -47,9 +47,14 @@ EOT;
      */
     private $aclient;
 
+    private $aUrl;
+    private $url;
+    private $couch_server;
+
     /**
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
+     * @throws Exception
      */
     protected function setUp()
     {
@@ -216,21 +221,39 @@ EOT;
     {
         $infos = $this->client->getDatabaseInfos();
         $this->assertInternalType("object", $infos);
-        $tsts = array(
+        $propsToCheckValues = [
             'db_name' => "couchclienttest",
             "doc_count" => 0,
             "doc_del_count" => 0,
-            "purge_seq" => 0,
             "compact_running" => false,
-            "disk_size" => false,
-            "instance_start_time" => false,
-            "disk_format_version" => false
+        ];
+
+        $seqProps = [
+            'purge_seq',
+            'update_seq',
+        ];
+
+        $otherProps = ['disk_size','instance_start_time', 'disk_format_version'];
+        $propsThatShouldBePresent = array_merge(
+            array_keys($propsToCheckValues),
+            $seqProps,
+            $otherProps
         );
-        foreach ($tsts as $attr => $value) {
+
+        // Check presence of properties
+        foreach ($propsThatShouldBePresent as $attr) {
             $this->assertObjectHasAttribute($attr, $infos);
-            if ($value !== false) {
-                $this->assertEquals($value, $infos->$attr);
-            }
+        }
+
+        // Check values that should be exact
+        foreach ($propsToCheckValues as $attr => $val) {
+            $this->assertEquals($val, $infos->$attr);
+        }
+
+        // Make sure the sequences start at 0
+        foreach ($seqProps as $attr) {
+            $val = strval($infos->$attr);
+            $this->assertStringStartsWith('0', $val);
         }
     }
 
@@ -239,7 +262,10 @@ EOT;
      */
     public function testGetDatabaseUri()
     {
-        $this->assertEquals($this->couch_server . "couchclienttest", $this->client->getDatabaseUri());
+        $this->assertEquals(
+            $this->couch_server . "couchclienttest",
+            $this->client->getDatabaseUri()
+        );
     }
 
     /**
@@ -522,6 +548,7 @@ EOT;
 
     /**
      * @covers PHPOnCouch\CouchClient::getChanges
+     * @throws Exception
      */
     public function testGetChanges()
     {
@@ -537,11 +564,12 @@ EOT;
         }
         $cookieClient->createDatabase();
 
-        $cntr = new stdClass();
-        $cntr->cnt = 0;
-        $callable = function ($row, $client) use ($cntr) {
-            $cntr->cnt++;
-            if ($cntr->cnt == 3)
+        $counter = new stdClass();
+        $counter->cnt = 0;
+        $callable = function ($row, $client) use ($counter) {
+            $this->assertInstanceOf(CouchClient::class, $client);
+            $counter->cnt++;
+            if ($counter->cnt == 3)
                 return false;
         };
 
@@ -551,7 +579,7 @@ EOT;
         $cookieClient->feed('continuous', $callable);
         touch($this->continuousQueryTriggerFile);
         $response = $cookieClient->getChanges();
-        $this->assertEquals($cntr->cnt, 3);
+        $this->assertEquals($counter->cnt, 3);
     }
 
     /**
@@ -1412,13 +1440,30 @@ EOT;
         $this->assertCount($initialIndexCnt, $this->aclient->getIndexes());
     }
 
+    public function testFindWithConflicts()
+    {
+        //Validate that their is not docs
+        $query = ['_conflicts' => ['$exists' => true]];
+        $firstResponse = $this->aclient->conflicts(true)->find($query);
+
+        $this->assertCount(0, $firstResponse);
+
+        $this->aclient->storeDoc((object)['_id' => 'doc', 'a' => 1]);
+        $this->aclient->storeDoc((object)['_id' => 'doc', 'a' => 2, '_rev' => "2-23202479633c2b380f79507a776743d5"], false);
+
+        //Validate that we have a conflict
+        $response = $this->aclient->conflicts(true)->find($query);
+        $this->assertCount(1, $response);
+
+    }
+
     /**
      * @covers PHPOnCouch\CouchClient::find
      */
     public function testFind()
     {
         $response = $this->aclient->createIndex(['age', 'firstName', 'lastName', 'gender'], 'person');
-        $this->aclient->createIndex(['age','firstName']);
+        $this->aclient->createIndex(['age', 'firstName']);
         $this->assertObjectHasAttribute('id', $response);
         $docs = [
             [
@@ -1473,6 +1518,34 @@ EOT;
         $response5 = $this->aclient->limit(1)->sort([['age' => 'desc']])->find(['firstName' => ['$gt' => null]]);
         $this->assertObjectHasAttribute('age', $response5[0]);
         $this->assertEquals(35, $response5[0]->age);
+    }
+
+
+    /**
+     * @covers PHPOnCouch\CouchClient::find
+     */
+    public function testFindAsArray()
+    {
+        $docs = [
+            [
+                'firstName' => 'John',
+                'lastName' => 'Smith',
+                'age' => 35,
+                'gender' => 'Male'
+            ],
+            [
+                'firstName' => 'Bob',
+                'lastName' => 'Jackson',
+                'age' => 38,
+                'gender' => 'Others'
+            ],
+        ];
+        $this->aclient->storeDocs($docs);
+
+        $response1 = $this->aclient->asArray()->find(['firstName' => 'John']);
+        $this->assertCount(1, $response1);
+        $this->assertEquals($response1[0]['age'], 35);
+        $this->assertTrue(isset($response1[0]['firstName']));
     }
 
     /**
@@ -1551,7 +1624,7 @@ EOT;
      */
     public function testExplain()
     {
-        $indexId = $this->aclient->createIndex(['firstName'],'firstName')->id;
+        $indexId = $this->aclient->createIndex(['firstName'], 'firstName')->id;
 
         $docs = [
             [
@@ -1586,6 +1659,34 @@ EOT;
         $this->assertObjectHasAttribute('name', $response->index);
         $this->assertEquals('firstName', $response->index->name);
         $this->assertEquals($this->aclient->getDatabaseName(), $response->dbname);
+    }
+
+    public function testStableAndUpdateOption()
+    {
+        $names = ['alexis', 'johnny'];
+
+        $indexedDocs = [];
+        $len = count($names);
+        for ($i = 0; $i < $len; $i++)
+            $indexedDocs[$names[$i]] = (object)['_id' => 'doc_' . ($i + 1), 'name' => $names[$i], 'stable' => true];
+
+        $designDoc = (object)['_id' => '_design/stable_test', 'type' => 'javascript', 'views' => (object)[]];
+        $view = (object)['map' => "function(doc){if(doc.stable)emit(doc.name);}"];
+        $designDoc->views->stable = $view;
+
+        $docs = [$designDoc];
+        $docs = array_merge($docs, array_values($indexedDocs));
+        $this->aclient->storeDocs($docs);
+
+        //Now if we query the view with lazy, it shouldnt return any results
+        $response = $this->aclient->update("lazy")->getView('stable_test', 'stable');
+        $this->assertObjectHasAttribute('total_rows', $response);
+        $this->assertEquals(0, $response->total_rows);
+
+        //It should now has computed the views
+        $updatedViewResponse = $this->aclient->getView('stable_test', 'stable');
+        $this->assertObjectHasAttribute('total_rows', $updatedViewResponse);
+        $this->assertEquals(2, $updatedViewResponse->total_rows);
     }
 
 }

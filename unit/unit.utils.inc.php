@@ -1,32 +1,38 @@
 <?php
 
-/*echo memory_get_peak_usage();
-echo "<br>";
-echo ini_get("memory_limit");
-$txt	= "";
-for($i =0; $i<=100000; $i++){
-	$txt	.= "1000 Bytesmmm\r\n";
-}
-echo "<br>";
-echo memory_get_usage();*/
+//=====================================================================================================
+//=====>	INICIO_H
+include_once("../core/go.login.inc.php");
+include_once("../core/core.error.inc.php");
+include_once("../core/core.html.inc.php");
+include_once("../core/core.init.inc.php");
 
-function unit_RestarFechas($el_restado, $por_restar){
-	$fecha1 = strtotime($el_restado);
-	$fecha2	= strtotime($por_restar);
-	$s = ($fecha1 - $fecha2);
-	//$d= intval($s/86400); // Dias
-	$d = ($s / 86400); // Dias
-	$d = round($d, 0);
+include_once("../libs/Banxico.php");
 
-	return $d;
+$theFile					= __FILE__;
+//$permiso					= getSIPAKALPermissions($theFile);
+//if($permiso === false){		header ("location:../404.php?i=999");	}
+$_SESSION["current_file"]	= addslashes( $theFile );
+//<=====	FIN_H
+//=====================================================================================================
 
-}
-// -------------------------------------------------------------------------
-function unit_SumarDias($fecha, $ndias) {
-    return date("Y-m-d", strtotime("$fecha+$ndias day"));
-}
-// Resta dias a una fecha dada y lo devuelve como una fecha Corta
-function unit_RestarDias($mfecha, $ndias) {
-    return date("Y-m-d", strtotime("$mfecha-$ndias day"));
-}
+$xHP		= new cHPage("Pruebas de Fechas", HP_FORM);
+$xHP->init();
+
+
+
+//Crear formularios
+$xFRM	= new cHForm("frmTest", "./test.php");
+
+$xHTxt	= new cHText("");
+$xHChk	= new cHCheckBox();
+
+$xBan	= new Banxico();
+
+$xFRM->OMoneda2("iddolar", $xBan->getExRate(), "TR.DOLAR");
+
+echo $xFRM->get();
+
+$xHP->fin();
+//=====================================================================================================
 ?>

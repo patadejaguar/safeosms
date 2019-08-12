@@ -24,7 +24,7 @@ $xUsr		= new cSystemUser();
 
 
 $clave			= parametro("id", 0, MQL_INT); $clave		= parametro("clave", $clave, MQL_INT);  
-$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE); 
+$fecha			= parametro("idfecha-0", false, MQL_DATE); $fecha = parametro("idfechaactual", $fecha, MQL_DATE); $fecha = parametro("idfecha", $fecha, MQL_DATE);
 
 $persona		= parametro("persona", DEFAULT_SOCIO, MQL_INT); $persona = parametro("socio", $persona, MQL_INT); $persona = parametro("idsocio", $persona, MQL_INT);
 $credito		= parametro("credito", DEFAULT_CREDITO, MQL_INT); $credito = parametro("idsolicitud", $credito, MQL_INT); $credito = parametro("solicitud", $credito, MQL_INT);
@@ -46,6 +46,17 @@ $rs["error"]	= true;
 $rs["message"]	= "Sin datos validos";
 
 switch ($action){
+	case "fecha":
+		$xRec	= new cReciboDeOperacion(false, false, $recibo);
+		if($xRec->init() == true){
+			
+			$xRec->setFecha($fecha, true, true);
+			//$xRec->setForceUpdateSaldos(true);
+			//$xRec->setFinalizarRecibo(true);
+			$rs["error"]	= false;
+			$rs["message"] 	= $xRec->getMessages();
+		}
+		break;
 	case "cuadrar":
 		$xRec	= new cReciboDeOperacion(false, false, $recibo);
 		if($xRec->init() == true){

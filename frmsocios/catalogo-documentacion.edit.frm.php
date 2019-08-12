@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.CATALOGO DOCUMENTACION", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -93,6 +93,8 @@ $xFRM->OSiNo("TR.ARCHIVO","almacen", $xTabla->almacen()->v());
 $xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
 $xFRM->OSiNo("TR.ES IDENTIFICACION_OFICIAL","es_ident", $xTabla->es_ident()->v());
 $xFRM->OSiNo("TR.ES DE CONTRATO","es_cont", $xTabla->es_cont()->v());
+
+$xFRM->OSiNo("TR.ES MULTIPLE","es_mult", $xTabla->es_mult()->v());
 
 $arrV	= array("todas" => "Para Cualquiera", "pf" => "Personas Fisicas", "pm" => "Personas Morales", "originacion" => "De Originacion", "analisis" => "De Analisis");
 

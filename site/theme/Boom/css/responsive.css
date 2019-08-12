@@ -1,0 +1,176 @@
+/*** Author: Oleg Svetlov http://getsimplecms.ru/ ***/
+body{
+	font-size : 13px;
+	line-height : 20px;
+}
+#navigation select {
+    display: none;
+    width: 100%;
+    border : none;
+}
+#gallery-cycle-slider.gallery-cycle .gallery-container {
+ height : 405px;
+}
+@media only screen and (min-width: 1600px) {
+
+body{
+	font-size:15px;
+	line-height : 25px;
+}
+}
+@media only screen and (min-width: 1280px) and (max-width: 1599px)  {
+
+body{
+	font-size:14px;
+	line-height : 22px;
+}
+}
+@media only screen and (max-width: 1279px) {
+
+body{
+	font-size:13px;
+	line-height : 20px;
+}
+#wrapper {
+	margin : 30px auto 30px;
+}
+.padding-right {
+	padding-right : 15px;
+}
+.right .padding-right {
+	padding-left : 15px;
+}
+}
+
+@media only screen and (max-width: 959px) {
+
+body{
+	font-size:12px;
+	line-height : 18px;
+}
+#wrapper {
+	margin : 20px auto 20px;
+}
+#logo span {
+	font-size : 12px;
+}
+.padding-right {
+	padding-right : 10px;
+}
+.right .padding-right {
+	padding-left : 10px;
+}
+}
+@media only screen and (max-width: 767px) {
+
+nav {
+	padding : 10px 0px;
+	background-color : #303030;
+}
+#navigation select {
+    display: block;
+    background-color: #ffffff;
+}
+#navigation select option {
+    background-color: #ffffff;
+}
+#navigation {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    width : 98%;
+	left : 1%;
+	background-color : transparent;
+}
+#navigation select {
+    font-size: 13px;
+    padding: .5em;
+    padding-right: 2.5em;	
+    border: 0;
+    margin: 0;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    text-indent: 0.01px;
+    text-overflow: '';
+    -webkit-appearance: button;
+    width : 100%;
+}
+#navigation::before,
+#navigation::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+}
+#navigation::after {
+    content: "\25BC";
+    height: 1em;
+    font-size: .625em;
+    line-height: 1;
+    right: 1.2em;
+    top: 50%;
+    margin-top: -.5em;
+}
+#navigation::before {
+    width: 2em;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 0 3px 3px 0;
+}
+#navigation::before {
+    background-color: #4C4C4C;
+}
+#navigation::after {
+    color: White;
+}
+#navigation ul {
+    display: none;
+}
+#wrapper {
+	margin-top : 15px;
+	margin-bottom : 15px;
+}
+.padding-right {
+	padding-right : 0px;
+}
+.right .padding-right {
+	padding-left : 0px;
+}
+#header {
+	padding : 20px 0px 0px;
+}
+#logo {
+	text-align : center;
+}
+#logo span {
+	display : block;
+	margin-top : 10px;
+	padding-left : 0px;
+	margin-left : 0px;
+	border-left : 0px none;
+	top : 0px;
+}
+.top-contact {
+	top : 0px;
+}
+.phone {
+	text-align : center;
+}
+}	
+
+@media only screen and (max-width: 479px) {
+
+#wrapper {
+	margin : 0px auto;
+}
+.article p img {
+	float : none;
+	margin : 5px auto 10px;
+	width : 100%!important;
+	display : block;
+}
+p {
+	margin-bottom : 10px;
+}
+}

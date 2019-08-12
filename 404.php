@@ -5,8 +5,8 @@
 */
 include_once("core/core.deprecated.inc.php");
 include_once("core/core.error.inc.php");
-$id = ( isset($_GET["i"]) ) ? $_GET["i"] : DEFAULT_CODIGO_DE_ERROR; 
-
+$id 	= ( isset($_GET["i"]) ) ? $_GET["i"] : DEFAULT_CODIGO_DE_ERROR; 
+$msg 	= ( isset($_GET["msg"]) ) ? $_GET["msg"] : "";
 $xErr	= new cError($id);
 $xErr->init();
 	
@@ -80,15 +80,19 @@ p {
     text-shadow: 0 1px 0 #cccccc, 0 2px 0 #cccccc, 0 3px 0 #cccccc, 0 4px 0 #cccccc, 0 5px 0 #cccccc, 0 6px 0 #cccccc, 0 7px 0 #cccccc, 0 8px 0 #cccccc, 0 9px 0 #cccccc, 0 50px 30px rgba(0, 0, 0, 0.3);
   }
 }
-
-
+#login, cuadro {
+	padding: 1em;
+}
+form {
+	margin-top:2em;
+}
 
 
 
 </style>
 <body>
 <form id="login">
-<?php echo $xErr->getFicha(); ?>
+<?php echo $xErr->getFicha($msg); ?>
 <!--  <span class="container">
 	
 	<svg class="loader" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340">

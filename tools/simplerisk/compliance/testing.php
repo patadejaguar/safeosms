@@ -19,23 +19,20 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
-
-// Load CSRF Magic
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
 
 // Include the language file
 require_once(language_file());
@@ -51,8 +48,25 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
     exit(0);
 }
 
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
+
 // Enforce that the user has access to compliance
 enforce_permission_compliance();
+
+// If team separation is enabled
+if (team_separation_extra()) {
+    //Include the team separation extra
+    require_once(realpath(__DIR__ . '/../extras/separation/index.php'));
+    
+    $test_audit_id  = (int)$_GET['id'];
+    
+    if (!is_user_allowed_to_access($_SESSION['uid'], $test_audit_id, 'audit')) {
+        set_alert(true, "bad", $escaper->escapeHtml($lang['NoPermissionForThisAudit']));
+        refresh($_SESSION['base_url']."/compliance/active_audits.php");
+    }
+}
 
 // Check if a framework was updated
 if (isset($_POST['submit_test_result']))
@@ -76,6 +90,7 @@ if (isset($_POST['submit_test_result']))
 <html>
 
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery.easyui.min.js"></script>
     <script src="../js/jquery-ui.min.js"></script>
@@ -94,6 +109,10 @@ if (isset($_POST['submit_test_result']))
     
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    <?php
+        setup_alert_requirements("..");
+    ?>    
+    
 </head>
 
 <body>
@@ -110,7 +129,6 @@ if (isset($_POST['submit_test_result']))
                 <?php view_compliance_menu("ActiveAudits"); ?>
             </div>
             <div class="span9 compliance-content-container content-margin-height">
-                <div id="show-alert"></div>
                 <div class="row-fluid">
                     <div class="span12">
                         <?php display_testing(); ?>

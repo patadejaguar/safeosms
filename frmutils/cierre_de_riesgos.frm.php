@@ -40,7 +40,7 @@ $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
 
 $xCierre		= new cCierreDelDia($fechaop);
-$EsCerrado		= $xCierre->checkCierre($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop, $xCierre->MARCA_RIESGOS);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
 $xRuls			= new cReglaDeNegocio();
@@ -60,7 +60,7 @@ if($EsCerrado == true AND $forzar == false){
 	 * eventos-del-cierre + fecha_de_cierre + .html
 	 *
 	 */
-	$aliasFil	= getSucursal() . "-eventos-al-cierre-de-riesgos-del-dia-$fechaop";
+	$aliasFil	= $xCierre->getNombreUnico();
 	$xLog		= new cFileLog($aliasFil);
 	$idrecibo	= DEFAULT_RECIBO;
 	$xL			= new cSQLListas();

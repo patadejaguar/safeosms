@@ -207,9 +207,10 @@ class Couch
     {
         if (!strlen($rawData))
             throw new InvalidArgumentException("no data to parse");
-        $httpHeader = "HTTP/1.1 100 Continue\r\n\r\n";
-        while (!substr_compare($rawData, $httpHeader, 0, 25)) {
-            $rawData = substr($rawData, 25);
+        $continueRegex = '@^HTTP/[0-9\\.]+\s+100\s+Continue@i';
+        while (preg_match($continueRegex, $rawData)) {
+            $tmp = explode("\r\n\r\n", $rawData, 2);
+            $rawData = $tmp[1];
         }
         $response = ['body' => null];
         list($headers, $body) = explode("\r\n\r\n", $rawData, 2);
@@ -239,6 +240,7 @@ class Couch
      *  (defaults to application/json)
      *
      * @return string|false server response on success, false on error
+     * @throws Exception
      */
     public function query($method, $url, $parameters = [], $data = null, $contentType = null)
     {
@@ -288,16 +290,18 @@ class Couch
      * @param callable $callable PHP function name / callable array ( see http://php.net/is_callable )
      * @param string $method HTTP method to use (GET, POST, ...)
      * @param string $url URL to fetch
-     * @param array $parameters additionnal parameters to send with the request
+     * @param array $parameters additional parameters to send with the request
      * @param string|array|object $data request body
      *
+     * @param null $caller The caller object that will be passed to the continuousQuery callback. By default, it's the Couch instance.
      * @return string|false server response on success, false on error
      *
-     * @throws Exception|InvalidArgumentException|CouchException|CouchNoResponseException
+     * @throws CouchException
      */
-    public function continuousQuery($callable, $method, $url, $parameters = [], $data = null)
+    public function continuousQuery($callable, $method, $url, $parameters = [], $data = null, $caller = null)
     {
-        return $this->getAdapter()->continuousQuery($callable, $method, $url, $parameters, $data);
+        $callerVal = empty($caller) ? $this : $caller;
+        return $this->getAdapter()->continuousQuery($callable, $method, $url, $parameters, $data, $callerVal);
     }
 
 }

@@ -29,6 +29,8 @@ $persona	= 0;
 $contrato	= 0;
 $recibo		= 0;
 $errCode	= $xLog->OCat()->EDICION_RAW;
+$xTT		= new cSysTablas();
+
 //rm = eliminar
 //save = actualizar
 //add = guardar
@@ -165,6 +167,13 @@ if($tabla != null AND $clave != null){
 						}
 					}
 					$xLog->add($xAE->getMessages());
+					break;
+				case $xTT->LEASING_USUARIOS:
+					$xT		= new cLeasing_usuarios();
+					if( isset($aDiffD[$xT->CORREO_ELECTRONICO]) ){
+						
+					}
+					
 					break;
 
 			}

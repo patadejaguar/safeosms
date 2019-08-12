@@ -176,7 +176,7 @@ for($ix=0; $ix <= $limParms; $ix++){
 		$xLetra						= new cParcialidadDeCredito($xCred->getClaveDePersona(), $xCred->getNumeroDeCredito(), $parcialidad);
 		if($xLetra->init() == true){
 			$fecha_de_pago			= $xLetra->getFechaDePago();
-			$xLog->add("OK\tFecha de Pago establecida a $fecha_de_pago\r\n", $xLog->DEVELOPER);
+			$xLog->add("OK\tFecha de Pago establecida a $fecha_de_pago de la Parcialidad $parcialidad\r\n", $xLog->DEVELOPER);
 			
 			if($monto_penas <= 0){
 				
@@ -186,13 +186,14 @@ for($ix=0; $ix <= $limParms; $ix++){
 				if($xLetra->getEsAdelantadoSegunFecha($fecha_operacion) == true){
 					$EsPagoAdelantado	= true;
 					$NoCaptAntI			= false;//Puede pagar solo Interes
-					$xLog->add("WARN\tPago Adelantado en $fecha_operacion por "  . $xLetra->getFechaDePago() .  "\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\tPago Adelantado en $fecha_operacion por "  . $xLetra->getFechaDePago() .  " de la Parcialidad $parcialidad\r\n", $xLog->DEVELOPER);
 				}
 				
 				
 				$DPena				= $xLetra->setCalcularPenas_Y_Mora($fecha_operacion, true);
 				$monto_penas		= $DPena[SYS_PENAS];
 				$xLog->add("WARN\tPenas de la Parcialidad $parcialidad A $monto_penas\r\n", $xLog->DEVELOPER);
+				$xLog->add($xLetra->getMessages(), $xLog->DEVELOPER);
 			}
 			
 		} else {

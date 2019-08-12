@@ -32,6 +32,8 @@ if($tabla !== false ){
 	$xObj	= new cSQLTabla($tabla);
 	if( $xObj->obj() == null){
 		$rs[MSG_NO_PARAM_VALID]		= "ERROR\tPara la Tabla $tabla y clave $clave\r\n";
+		echo  json_encode($rs);
+		exit;
 	} else {
 		$obj	= $xObj->obj();
 		

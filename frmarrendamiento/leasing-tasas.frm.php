@@ -94,7 +94,7 @@ FROM     `leasing_tasas`
 INNER JOIN `creditos_periocidadpagos`  ON `leasing_tasas`.`frecuencia` = `creditos_periocidadpagos`.`idcreditos_periocidadpagos` 
 INNER JOIN `leasing_tipo_rac`  ON `leasing_tasas`.`tipo_de_rac` = `leasing_tipo_rac`.`idleasing_tipo_rac`
 WHERE `leasing_tasas`.`idleasing_tasas`>0
-ORDER BY `leasing_tasas`.`tipo_de_rac`, `leasing_tasas`.`limite_superior`");
+ORDER BY `leasing_tasas`.`limite_inferior`,`leasing_tasas`.`tipo_de_rac`");
 $xHG->addList();
 $xHG->addKey("clave");
 

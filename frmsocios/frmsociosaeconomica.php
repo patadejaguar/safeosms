@@ -464,6 +464,9 @@ if($SinDomicilio == false){
 	$xFRM->addCerrar("", 3);
 	$xFRM->addAtras();
 }
+
+$xFRM->addJsReloadForm("frmsociospanel");
+
 echo $xFRM->get();
 
 $jxc ->drawJavaScript(false, true);

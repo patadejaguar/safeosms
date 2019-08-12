@@ -1331,6 +1331,11 @@ class cTesoreriaMonedas {
 	private $mIDCache	= "";
 	private $mTable		= "tesoreria_monedas";
 	private $mValor		= 0;
+	
+	public $TIPO_DOLAR		= "USD";
+	public $TIPO_PESOMXN	= "MXN";
+	
+	
 	function __construct($clave = ""){ 
 		$this->mClave	= $clave; 
 		if($clave !== ""){
@@ -1377,7 +1382,24 @@ class cTesoreriaMonedas {
 		$this->setCleanCache();
 	}
 	function add(){}
-
+	function addValoracion($moneda, $valor, $fecha = false){
+		$xT	= new cTesoreria_valoracion_diaria();
+		$xF	= new cFecha();
+		
+		$valor	= setNoMenorQueCero($valor,3);
+		$fecha	= $xF->getFechaISO($fecha);
+		
+		$xT->idcontrol("NULL");
+		$xT->denominacion($moneda);
+		$xT->fecha($fecha);
+		$xT->valor($valor);
+		$xT->tiempo(time());
+		$xT->usuario(getUsuarioActual());
+		
+		$res	= $xT->query()->insert()->save();
+		
+		return ($res === false) ? false : true;
+	}
 }
 class cBancos {
 	private $mClave			= false;

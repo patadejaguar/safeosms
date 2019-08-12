@@ -70,7 +70,10 @@ $xHG->setSQL("SELECT   `personas`.`codigo`,
          `creditos`.`estatus_credito`,
 		`creditos`.`parcialidad`
 FROM     `personas`
-INNER JOIN `creditos`  ON `personas`.`codigo` = `creditos`.`numero_socio` WHERE (`personas`.`codigo` != " . DEFAULT_SOCIO . ") ");
+INNER JOIN `creditos`  ON `personas`.`codigo` = `creditos`.`numero_socio` WHERE (`personas`.`codigo` != " . DEFAULT_SOCIO . ") 
+AND `estatusactivo`=1 AND `creditos`.`saldo_actual`>" . TOLERANCIA_SALDOS . "
+ORDER BY `creditos`.`fecha_ministracion` DESC
+");
 $xHG->addList();
 $xHG->setOrdenar();
 /*$xHG->col("codigo", "TR.CODIGO", "10%");*/
@@ -100,7 +103,7 @@ $xHG->ColMoneda("saldo_actual", "TR.SALDO CAPITAL", "10%");
 
 $xHG->ColMoneda("parcialidad", "TR.PARCIALIDAD", "10%");
 
-$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+//$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 
 $xHG->OButton("TR.PANEL", "var xC=new CredGen(); xC.goToPanelControl('+ data.record.solicitud +')", "web.png");
 

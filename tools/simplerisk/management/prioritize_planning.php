@@ -17,30 +17,23 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+      session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
 require_once(language_file());
-
-// Load CSRF Magic
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
-
-function csrf_startup() {
-    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
-}
 
 // Check for session timeout or renegotiation
 session_check();
@@ -52,6 +45,10 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
   header("Location: ../index.php");
   exit(0);
 }
+
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
 
 // Enforce that the user has access to risk management
 enforce_permission_riskmanagement();
@@ -199,7 +196,10 @@ if (isset($_POST['delete_project']))
 
   <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="../css/theme.css">
-
+    
+  <?php
+      setup_alert_requirements("..");
+  ?>
 
   <?php
   // Get the projects
@@ -359,7 +359,6 @@ if (isset($_POST['delete_project']))
         <?php view_risk_management_menu("PrioritizeForProjectPlanning"); ?>
       </div>
       <div class="span9">
-        <div id="show-alert"></div>
         <div class="row-fluid">
           <div class="span12">
             <!-- Container Begins  -->
@@ -435,7 +434,7 @@ if (isset($_POST['delete_project']))
 <div id="project--delete" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="project--add" aria-hidden="true">
   <div class="modal-body">
 
-    <form class="" id="project--delete" action="" method="post">
+    <form id="project--delete" action="" method="post">
       <div class="form-group text-center">
         <label for=""><?php echo $escaper->escapeHtml($lang['AreYouSureYouWantToDeleteThisProject']); ?></label>
         <input type="hidden" name="project_id" value="" />

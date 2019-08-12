@@ -636,9 +636,9 @@ class cCreditosLeasing {
 					$dd[$vv]	= $vv;
 				}
 			}
-			$arrD	= null;
-			$_SESSION[$idx]	= implode(STD_LITERAL_SEC_DIV, $arrD);
 			
+			$_SESSION[$idx]	= implode(STD_LITERAL_SEC_DIV, $arrD);
+			$arrD			= null;
 		} else {
 			$_SESSION[$idx] = "";
 		}
@@ -879,6 +879,7 @@ class cLeasingUsuarios {
 	private $mMail				= "";
 	private $mOOriginador		= null;
 	private $mTasaComision		= 0;
+	private $mTelefono			= "";
 	
 	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
 	function getIDCache(){ return $this->mIDCache; }
@@ -912,6 +913,7 @@ class cLeasingUsuarios {
 			$this->mMail			= $data[$xT->CORREO_ELECTRONICO];
 			$this->mNombre			= $data[$xT->NOMBRE];
 			$this->mTasaComision	= $data[$xT->TASA_COM];
+			$this->mTelefono		= $data[$xT->TELEFONO];
 
 			if($inCache == false){
 				$this->setIDCache($this->mClave);
@@ -948,23 +950,32 @@ class cLeasingUsuarios {
 	function getEsActivo(){ return $this->mEsActivo; }
 	function getEsAdmin(){ return $this->mEsAdmin; }
 	function getCorreoElectronico(){ return $this->mMail; }
+	function getTelefono(){ return $this->mTelefono; }
 	function setPin($pin = ""){
 		$xUser	= new cSystemUser($this->getUsuario());
 		$xQL	= new MQL();
 		$iduser	= $this->getUsuario();
+		$rawPin	= $pin;
 		
-		if($xUser->init() === false OR $iduser <= 0 ){
+		if($xUser->init() === false ){
 			
 			$xImport	= new cTiposLimpiadores();
 			$NC			= $xImport->cleanNombreComp($this->mNombre);
 			$xUser->add($this->getCorreoElectronico(), $pin, USUARIO_TIPO_ORIGINADOR, $NC[0], $NC[1], $NC[2] );
+			
 			$xUser		= new cSystemUser($this->getCorreoElectronico(), false);
-			$xUser->init();
-			$iduser		= $xUser->getID();
+			if($xUser->init() == true){
+				$xUser->setCorreoElectronico($this->getCorreoElectronico());
+				$iduser		= $xUser->getID();
+				$xUser->setNotificarNuevoUsuario($rawPin);
+			}	
 			
 		} else {
+			$iduser		= $xUser->getID();
 			$xUser->setPassword($pin);
 		}
+		$this->mClaveUsuario	= $iduser;
+		
 		$pin	= $xUser->getHash($pin);
 		$res	= $xQL->setRawQuery("UPDATE `leasing_usuarios` SET `pin`='$pin', `idusuario`=$iduser WHERE `idleasing_usuarios`=" . $this->mClave);
 		$this->setCuandoSeActualiza();
@@ -974,6 +985,7 @@ class cLeasingUsuarios {
 	function getFicha(){
 		$xHT			= new cHTabla("idfichausrorg_" . $this->getClave(), "ficha" );
 		$xLng			= new cLang();
+		
 		$xHT->initRow();
 		$nmoriginador	= $this->getOOriginador()->getNombre();
 		$xHT->addTD($xLng->getT("TR.NOMBRE"), " class='title cPanel' ");
@@ -981,6 +993,18 @@ class cLeasingUsuarios {
 		$xHT->addTD($xLng->getT("TR.ORIGINADOR"), " class='title cPanel' ");
 		$xHT->addTD($nmoriginador);
 		$xHT->endRow();
+		
+		
+		
+		$xHT->initRow();
+
+		$xHT->addTD($xLng->getT("TR.CORREO_ELECTRONICO"), " class='title cPanel' ");
+		$xHT->addTD($this->getCorreoElectronico());
+		$xHT->addTD($xLng->getT("TR.TELEFONO"), " class='title cPanel' ");
+		$xHT->addTD($this->getTelefono());
+		$xHT->endRow();
+		
+		
 		return $xHT->get();
 	}
 	function getOOriginador(){
@@ -2731,4 +2755,155 @@ class cCreditosMicroseguros {
 	}
 }
 
+
+class cCreditosEtapas {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_etapas";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	public $SOLICITUD		= "solicitud";
+	public $AUTORIZACION	= "autorizacion";
+	public $MINISTRACION	= "ministracion";
+	public $ORIGINACION		= "originacion";
+	public $FORMALIZACION	= "formalizacion";
+	public $DESEMBOLSO		= "desembolso";
+	public $ADMINISTRACION	= "administracion";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCreditos_etapas();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			//$data[$xT->];//
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add(){}
+}
+class cCreditosProductosEtapas {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_productos_etapas";
+	private $mTipo			= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCreditos_productos_etapas();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			//$data[$xT->];//
+			$this->mClave	= $data[$xT->getKey()];
+			
+			
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($producto, $idetapa, $nombre, $permisos = "", $orden=0, $tags=""){
+		$xT		= new cCreditos_productos_etapas();//Tabla
+		//$xPer	= new cSystemPermissions();
+		
+		$xT->etapa($idetapa);
+		$xT->idcreditos_productos_etapas("NULL");
+		$xT->nombre($nombre);
+		$xT->producto($producto);
+		$xT->permisos($permisos);
+		$xT->orden($orden);
+		$xT->tags($tags);
+		$res	= $xT->query()->insert()->save();
+		
+		$xT		= null;
+		return ($res === false) ? false : true;
+	}
+	function getTienePermisoUsuario(){
+		
+	}
+}
 ?>

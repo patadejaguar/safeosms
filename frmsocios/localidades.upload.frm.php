@@ -47,7 +47,7 @@ if ( $action == "x"){
 <form name="frmSendFiles" method="POST" action="localidades.upload.frm.php?o=u" enctype="multipart/form-data">
 <fieldset>
 	<legend>|&nbsp;&nbsp;&nbsp;&nbsp;Carga Automatizada de Localidades&nbsp;&nbsp;&nbsp;&nbsp;|</legend>
-	<table border='0' width='100%'  >
+	<table >
 		<tbody>
 		<tr>
 			<th colspan="2">ENVIAR ARCHIVO PARA CARGAR LOCALIDADES</th>

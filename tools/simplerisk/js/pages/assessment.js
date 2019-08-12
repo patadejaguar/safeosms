@@ -17,6 +17,7 @@ $(document).ready(function(){
                 if( !$(this).find('[name="answer[]"]').length ){
                     return;
                 }
+
                 answers.push({
                     answer: $(this).find('[name="answer[]"]').val(),
                     answer_id: $(this).find('[name="answer_id[]"]').val(),
@@ -24,8 +25,9 @@ $(document).ready(function(){
                     risk_subject: $(this).find('[name="risk_subject[]"]').val(),
 //                    risk_score: $(this).find('[name="risk_score[]"]').val(),
                     risk_owner: $(this).find('[name="risk_owner[]"]').val(),
-                    assets: $(this).find('[name="assets[]"]').val(),
-                    
+
+                    assets_asset_groups:$(this).find('select[name^="assets_asset_groups"]').val(),
+
                     assessment_scoring_id: $(this).find('[name="assessment_scoring_id[]"]').val(),
                     
                     scoring_method: $(this).find('[name="scoring_method[]"]').val(),
@@ -71,6 +73,9 @@ $(document).ready(function(){
                     OWASPPrivacyViolation: $(this).find('[name="OWASPPrivacyViolation[]"]').val(),
                     
                     Custom: $(this).find('[name="Custom[]"]').val(),
+                    
+                    ContributingLikelihood: $(this).find('[name="ContributingLikelihood[]"]').val(),
+//                    ContributingImpacts: $(this).find('[name="ContributingImpacts[]"]').val(),
                 });
             })
             
@@ -81,23 +86,12 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: BASE_URL + "/api/assessment/update?assessment_id=" + assessment_id,
-            data: JSON.stringify(assessments),
-            headers: {
-                'CSRF-TOKEN': csrfMagicToken
+            data: {
+                assessments: JSON.stringify(assessments)
             },
-            contentType: "application/json",
             success: function(data){
                 if(data.status_message){
-                    var messageHtml = '<div id="alert" class="container-fluid">'
-                     +      '<div class="row-fluid">'
-                     +          '<div class="span10 greenalert"><span><i class="fa fa-check"></i>' + data.status_message + '</span></div>'
-                     +      '</div>'
-                     + '</div>';
-                     
-                    $('#show-alert').html(messageHtml);
-                    setTimeout(function(){
-                        $("#alert").fadeOut('slow');
-                    }, 5000);
+                    toastr.success(data.status_message);
                 }
             },
             error: function(xhr,status,error){
@@ -143,6 +137,26 @@ $(document).ready(function(){
         popupowasp(form);
     })
 
+    /**
+    * events in clicking Score Using Contributing Risk button of edit details page, muti tabs case
+    */
+    $('body').on('click', '[name=contributingRiskSubmit]', function(e){
+        e.preventDefault();
+        var form = $(this).parents('.risk-scoring-container');
+        popupcontributingrisk(form);
+    });
+    
+    if($.blockUI !== undefined){
+        $.blockUI.defaults.css = {
+            padding: 0,
+            margin: 0,
+            width: '30%',
+            top: '40%',
+            left: '35%',
+            textAlign: 'center',
+            cursor: 'wait'
+        };
+    }
     
 })
 
@@ -151,7 +165,12 @@ $(document).ready(function(){
 * 
 */
 function addRow(tableID){
-    $("#" + tableID).append($("#adding_row").html());
+    var target = $("#" + tableID);
+    target.append($("#adding_row").html());
+    var select = target.find("select.assets_asset_groups_template");
+    select.toggleClass('assets_asset_groups_template assets-asset-groups-select ');
+    select.attr('name', 'assets_asset_groups[' + target.find("select[name^='assets_asset_groups']").length + '][]');
+    selectize_assessment_answer_affected_assets_widget(select, assets_and_asset_groups);
 }
 
 /**
@@ -172,5 +191,124 @@ function deleteRow(tableID){
     }catch(e) {
         alert(e);
     }
+}
+
+function selectize_assessment_answer_affected_assets_widget(select_tag, options) {
+    return select_tag.selectize({
+        options: options,
+        sortField: 'text',
+        plugins: ['optgroup_columns', 'remove_button', 'restore_on_backspace'],
+        delimiter: ',',
+        create: function (input){
+            return { id:'new_asset_' + input, name:input };
+        },
+        persist: false,
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        sortField: 'name',
+        optgroups: [
+            {class: 'asset', name: 'Standard Assets'},
+            {class: 'group', name: 'Asset Groups'}
+        ],
+        optgroupField: 'class',
+        optgroupLabelField: 'name',
+        optgroupValueField: 'class',
+        preload: true,
+        render: {
+            item: function(item, escape) {
+                return '<div class="' + item.class + '">' + escape(item.name) + '</div>';
+            }
+        }
+    });
+}
+
+function selectize_pending_risk_affected_assets_widget(select_tag, options) {
+    var select = select_tag.selectize({
+        options: options,
+        sortField: 'text',
+        plugins: ['optgroup_columns', 'remove_button', 'restore_on_backspace'],
+        delimiter: ',',
+        create: function (input){
+            return { id:input, name:input };
+        },
+        persist: false,
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        sortField: 'name',
+        optgroups: [
+            {class: 'asset', name: 'Standard Assets'},
+            {class: 'group', name: 'Asset Groups'}
+        ],
+        optgroupField: 'class',
+        optgroupLabelField: 'name',
+        optgroupValueField: 'class',
+        preload: true,
+        render: {
+            item: function(item, escape) {
+                return '<div class="' + item.class + '">' + escape(item.name) + '</div>';
+            }
+        }
+    });
+}
+
+function setupAssetsAssetGroupsWidget(select_tag) {
+   
+    if (!select_tag.length)
+        return;
     
+    var select = select_tag.selectize({
+        sortField: 'text',
+        plugins: ['optgroup_columns', 'remove_button', 'restore_on_backspace'],
+        delimiter: ',',
+        create: function (input){
+            return { id:input, name:input };
+        },
+        persist: false,
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        sortField: 'name',
+        optgroups: [
+            {class: 'asset', name: 'Standard Assets'},
+            {class: 'group', name: 'Asset Groups'}
+        ],
+        optgroupField: 'class',
+        optgroupLabelField: 'name',
+        optgroupValueField: 'class',
+        preload: true,
+        render: {
+            item: function(item, escape) {
+                return '<div class="' + item.class + '">' + escape(item.name) + '</div>';
+            }
+        },
+        load: function(query, callback) {
+            if (query.length) return callback();
+            $.ajax({
+                url: '/api/asset-group/options',
+                type: 'GET',
+                dataType: 'json',
+                error: function() {
+                    callback();
+                },
+                success: function(res) {
+                    var data = res.data;
+                    var control = select[0].selectize;
+                    // Have to do it this way, because addition with simple addOption() will
+                    // bug out when we deselect an option(it wouldn't be added back to the
+                    // list of selectable items)
+                    len = data.length;
+
+                    for (var i = 0; i < len; i++) {
+                        var item = data[i];
+                        if (item.class == 'asset')
+                            item.id = item.name;
+                        else item.id = '[' + item.name + ']';
+                        control.registerOption(item);
+                    }
+                },
+            });
+        }
+    });
 }

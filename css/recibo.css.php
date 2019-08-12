@@ -31,7 +31,7 @@ $useAltUser		= $xUsr->getPuedeUsarPrintPOS();
 
 ?>
 body, html {
-	font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;
+	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 	font-size: <?php echo CSS_TFUENTE_RECIBOS;?>pt;
 }
 

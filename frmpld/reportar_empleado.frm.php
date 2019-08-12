@@ -44,15 +44,34 @@ if($action == SYS_NINGUNO){
 	$xMot				= $xSel->getListaDeRiesgosAML("", AML_CLAVE_OPERACIONES_INTERNAS);
 	
 	$xFRM->setTitle($xHP->getTitle());
-	$xFRM->ODate("fecha_de_evento", false, "TR.Fecha de Suceso");
-	$xFRM->addHElem($xUsers->get($xHP->lang("usuario", "reportado"), true ) );
-	$xFRM->addHElem($xMot->get($xHP->lang("motivos"), true ) );
 	
+	$xFRM->addSeccion("idseccasqa", "TR.INFORMACION INICIAL");
+	$xFRM->addHElem($xMot->get("TR.MOTIVOS", true ) );
+	
+	$xFRM->OCheck("MS.MSG_AML_CONOCE_PERS", "idask1");
+	$xFRM->OCheck("MS.MSG_AML_CONOCE_USER", "idask2");
+	$xFRM->OCheck("MS.MSG_AML_CONOCE_DOCTO", "idask3");
+	
+	$xFRM->endSeccion();
+	
+	$xFRM->addSeccion("iddivpers", "TR.INVOLUCRADOS");
+	
+	$xFRM->addHElem($xUsers->get("TR.EMPLEADO", true ) );
 	$xFRM->addPersonaBasico("", false, false, "", "TR.Persona Relacionada");
-	$xFRM->addHElem($xTxt->get("iddocumento", DEFAULT_CREDITO, $xHP->lang("documento", "relacionado") ) );
+	
+	$xFRM->endSeccion();
+	
+	$xFRM->addSeccion("iddivdocto", "TR.DOCUMENTO");
 	$xFRM->addHElem( $xSel->getListaDeObjetosEnSistema()->get(true) );
+	$xFRM->OText("iddocumento", DEFAULT_CREDITO, "TR.CLAVE DOCUMENTO");
+	$xFRM->endSeccion();
 
-	$xFRM->addHElem($xTa->get("idmensaje", "",  $xHP->lang("mensaje")) );
+	$xFRM->addSeccion("iddivhechos", "TR.INFOHECHOS");
+	$xFRM->ODate("fecha_de_evento", false, "TR.Fecha de Suceso");
+	$xFRM->addHElem($xTa->get("idmensaje", "",  "TR.hechos") );
+	
+	$xFRM->endSeccion();
+	
 	//$xFRM->addCreditBasico();
 	$xFRM->addSubmit();
 	
@@ -91,6 +110,7 @@ echo $xFRM->get();
 ?>
 <!-- HTML content -->
 <script>
+
 </script>
 <?php
 $xHP->fin();

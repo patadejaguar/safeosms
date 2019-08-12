@@ -47,7 +47,9 @@ use PHPOnCouch\Exceptions\CouchNotFoundException;
  * @method CouchClient startkey_docid(string $val) Return records starting with the specified document ID. Requires startkey to be specified for this to have any effect.
  * @method CouchClient endkey_docid(string $val) Stop returning records when the specified document ID is reached. Requires endkey to be specified for this to have any effect.
  * @method CouchClient limit(int $val) Limit the number of the returned documents to the specified number.
- * @method CouchClient stale(string $val)  Allow the results from a stale view to be used. Supported values: ok and update_after.
+ * @method CouchClient stale(string $val)  Allow the results from a stale view to be used. Supported values: ok and update_after. Deprecated from CouchDB 2.1.1 Will be removed with CouchDB 3.0.0
+ * @method CouchClient stable(boolean $val) Whether or not the view results should be returned from a stable set of shards. Default is false. Optional
+ * @method CouchClient update (string $val) Whether or not the view in question should be updated prior to responding to the user. Supported values: true, false, lazy. Default is true. Optional
  * @method CouchClient skip(int $val)  Allow the results from a stale view to be used. Supported values: ok and update_after.
  * @method CouchClient group(boolean $val) Group the results using the reduce function to a group or single row.
  * @method CouchClient group_level(int $val) Specify the group level to be used.
@@ -55,7 +57,7 @@ use PHPOnCouch\Exceptions\CouchNotFoundException;
  * @method CouchClient include_docs(boolean $val) Include the associated document with each result. If there are conflicts, only the winning revision is returned.
  * @method CouchClient inclusive_end(boolean $val) Specifies wheter the specified end key should be included in the result.
  * @method CouchClient attachments(boolean $val)  Include the Base64-encoded content of attachments in the documents that are included if include_docs is true.
- * @method CouchClient sort(array|object $sortObj)  JSON array following sort syntax.
+ * @method CouchClient sort(array | object $sortObj)  JSON array following sort syntax.
  * @method CouchClient fields(array | string $fields) SON array specifying which fields of each object should be returned. If it is omitted, the entire object is returned. More information provided in the section on filtering fields.
  *
  */
@@ -95,6 +97,7 @@ class CouchClient extends Couch
         'startkey_docid' => ['name' => 'startkey_docid', 'filter' => 'string'],
         'endkey_docid' => ['name' => 'endkey_docid', 'filter' => 'string'],
         'limit' => ['name' => 'limit', 'filter' => 'int'],
+        //Deprecated in CouchDB 2.1.1 -> Removed in CouchDB 3.0.0
         'stale' => ['name' => 'stale', 'filter' => 'enum', 'enum' => ['ok', 'update_after']],
         'descending' => ['name' => 'descending', 'filter' => 'jsonEncodeBoolean'],
         'skip' => ['name' => 'skip', 'filter' => 'int'],
@@ -104,9 +107,16 @@ class CouchClient extends Couch
         'include_docs' => ['name' => 'include_docs', 'filter' => 'jsonEncodeBoolean'],
         'inclusive_end' => ['name' => 'inclusive_end', 'filter' => 'jsonEncodeBoolean'],
         'attachments' => ['name' => 'attachments', 'filter' => 'jsonEncodeBoolean'],
+
+        //CouchDB 2.0.0 parameters
+
         //Those parameter are only for MangoQuery (Could cause problems in the futur)
         'sort' => ['name' => 'sort', 'filter' => null],
         'fields' => ['name' => 'fields', 'filter' => 'ensureArray'],
+
+        //CouchDB 2.1.1 parameters
+        'stable' => ['name' => 'stable', 'filter' => 'jsonEncodeBoolean'],
+        'update' => ['name' => 'update', 'filter' => 'enum', 'enum' => ['true', 'false', 'lazy']],
     ];
 
     /**
@@ -205,7 +215,7 @@ class CouchClient extends Couch
      * @throws CouchException
      * @return object
      */
-    protected function queryAndTest($method, $url, $allowedStatusCodes, $parameters = [], $data = null, $contentType = null)
+    public function queryAndValid($method, $url, $allowedStatusCodes, $parameters = [], $data = null, $contentType = null)
     {
         $raw = $this->query($method, $url, $parameters, $data, $contentType);
         $response = $this->parseRawResponse($raw, $this->resultAsArray);
@@ -264,6 +274,7 @@ class CouchClient extends Couch
      * @link http://wiki.apache.org/couchdb/HTTP_view_API
      * @param array $options any json encodable thing
      * @return CouchClient $this
+     * @throws Exception
      */
     public function setQueryParameters(array $options)
     {
@@ -323,40 +334,44 @@ class CouchClient extends Couch
      * list all databases on the CouchDB server
      *
      * @return object databases list
+     * @throws CouchException
      */
     public function listDatabases()
     {
-        return $this->queryAndTest('GET', '/_all_dbs', [200]);
+        return $this->queryAndValid('GET', '/_all_dbs', [200]);
     }
 
     /**
      * create the database
      *
      * @return object creation infos
+     * @throws CouchException
      */
     public function createDatabase()
     {
-        return $this->queryAndTest('PUT', '/' . urlencode($this->dbname), [201]);
+        return $this->queryAndValid('PUT', '/' . urlencode($this->dbname), [201]);
     }
 
     /**
      * delete the database
      *
      * @return object creation infos
+     * @throws CouchException
      */
     public function deleteDatabase()
     {
-        return $this->queryAndTest('DELETE', '/' . urlencode($this->dbname), [200]);
+        return $this->queryAndValid('DELETE', '/' . urlencode($this->dbname), [200]);
     }
 
     /**
      * get database infos
      *
      * @return object database infos
+     * @throws CouchException
      */
     public function getDatabaseInfos()
     {
-        return $this->queryAndTest('GET', '/' . urlencode($this->dbname), [200]);
+        return $this->queryAndValid('GET', '/' . urlencode($this->dbname), [200]);
     }
 
     /**
@@ -418,19 +433,21 @@ class CouchClient extends Couch
      *
      *
      * @return object CouchDB's compact response ( usually {'ok':true} )
+     * @throws CouchException
      */
     public function compactDatabase()
     {
-        return $this->queryAndTest('POST', '/' . urlencode($this->dbname) . '/_compact', [202]);
+        return $this->queryAndValid('POST', '/' . urlencode($this->dbname) . '/_compact', [202]);
     }
 
     /**
      *    Get the nodes that are part of the cluster and all the nodes that this node know.
      * @return object {'all_nodes':[],'cluster_nodes':[]}
+     * @throws CouchException
      */
     public function getMemberShip()
     {
-        return $this->queryAndTest('GET', '/_membership', [200]);
+        return $this->queryAndValid('GET', '/_membership', [200]);
     }
 
     /**
@@ -444,8 +461,8 @@ class CouchClient extends Couch
      *  the section set earlier. Otherwise, it only returns the whole section.
      * @return object    Returns a response object
      * @throws InvalidArgumentException    Invalid parameters
-     * @throws CouchNotFoundException    Whenever the section/key/node are invalids
-     *  and the path to the value doesn't exist.
+     * @throws CouchNotFoundException    Whenever the section/key/node are invalids and the path to the value doesn't exist.
+     * @throws CouchException
      */
     public function getConfig($nodeName, $section = null, $key = null)
     {
@@ -461,7 +478,7 @@ class CouchClient extends Couch
             if (!empty($key) && is_string($key))
                 $url .= '/' . urlencode($key);
         }
-        return $this->queryAndTest('GET', $url . '/', [200]);
+        return $this->queryAndValid('GET', $url . '/', [200]);
     }
 
     /**
@@ -472,6 +489,7 @@ class CouchClient extends Couch
      * @param mixed $value The value to set to the key.
      * @throws InvalidArgumentException
      * @return object    Returns the old value  for example when you change the debug level : 'info'
+     * @throws CouchException
      */
     public function setConfig($nodeName, $section, $key, $value)
     {
@@ -483,7 +501,7 @@ class CouchClient extends Couch
         $nodeUrl = '/_node/' . urlencode($nodeName) . '/';
         $configUrl = urlencode($section) . '/' . urlencode($key);
         $encodedValue = json_encode($value);
-        return $this->queryAndTest('PUT', $nodeUrl . '_config/' . $configUrl, [200], [], $encodedValue);
+        return $this->queryAndValid('PUT', $nodeUrl . '_config/' . $configUrl, [200], [], $encodedValue);
     }
 
     /**
@@ -493,6 +511,7 @@ class CouchClient extends Couch
      * @param string $key The key of the section to update.
      * @throws InvalidArgumentException
      * @return object    Returns the old value  for example when you change the debug level : 'info'
+     * @throws CouchException
      */
     public function deleteConfig($nodeName, $section, $key)
     {
@@ -503,7 +522,7 @@ class CouchClient extends Couch
             throw new InvalidArgumentException('You must supply a section and key parameter.');
         $nodeUrl = '/_node/' . urlencode($nodeName) . '/';
         $configUrl = urlencode($section) . '/' . urlencode($key);
-        return $this->queryAndTest('DELETE', $nodeUrl . '_config/' . $configUrl, [200]);
+        return $this->queryAndValid('DELETE', $nodeUrl . '_config/' . $configUrl, [200]);
     }
 
     /**
@@ -511,10 +530,11 @@ class CouchClient extends Couch
      *
      *
      * @return object CouchDB's cleanup views response ( usually {'ok':true} )
+     * @throws CouchException
      */
     public function cleanupDatabaseViews()
     {
-        return $this->queryAndTest('POST', '/' . urlencode($this->dbname) . '/_view_cleanup', [202]);
+        return $this->queryAndValid('POST', '/' . urlencode($this->dbname) . '/_view_cleanup', [202]);
     }
 
     /**
@@ -565,6 +585,8 @@ class CouchClient extends Couch
      * fetch database changes
      *
      * @return object|string CouchDB changes response
+     * @throws CouchException
+     * @throws Exceptions\CouchNoResponseException
      */
     public function getChanges()
     {
@@ -574,12 +596,12 @@ class CouchClient extends Couch
             $this->queryParameters = [];
             $callable = $opts['continuous_feed'];
             unset($opts['continuous_feed']);
-            return $this->continuousQuery($callable, 'GET', $url, $opts);
+            return $this->continuousQuery($callable, 'GET', $url, $opts, null, $this);
         }
         $url = '/' . urlencode($this->dbname) . '/_changes';
         $opts = $this->queryParameters;
         $this->queryParameters = [];
-        return $this->queryAndTest('GET', $url, [200, 201], $opts);
+        return $this->queryAndValid('GET', $url, [200, 201], $opts);
     }
 
     /**
@@ -606,6 +628,7 @@ class CouchClient extends Couch
      * @param string $id document id
      * @return object|array CouchDB document
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getDoc($id)
     {
@@ -620,7 +643,7 @@ class CouchClient extends Couch
         $docQuery = $this->queryParameters;
         $this->queryParameters = [];
 
-        $back = $this->queryAndTest('GET', $url, [200], $docQuery);
+        $back = $this->queryAndValid('GET', $url, [200], $docQuery);
         if (!$this->resultsAsCouchDocs) {
             return $back;
         }
@@ -633,10 +656,11 @@ class CouchClient extends Couch
      * store a CouchDB document
      *
      * @param object $doc document to store
+     * @param bool $newEdits Default to true. Id prevents to update a document with a conflicting revision
      * @return object CouchDB document storage response
-     * @throws InvalidArgumentException
+     * @throws CouchException
      */
-    public function storeDoc($doc)
+    public function storeDoc($doc, $newEdits = true)
     {
         if (!is_object($doc))
             throw new InvalidArgumentException('Document should be an object');
@@ -652,7 +676,9 @@ class CouchClient extends Couch
             $method = 'PUT';
             $url .= '/' . urlencode($doc->_id);
         }
-        return $this->queryAndTest($method, $url, [200, 201, 202], [], $doc);
+
+        $params = ["new_edits" => $newEdits ? "true" : "false"];
+        return $this->queryAndValid($method, $url, [200, 201, 202], $params, $doc);
     }
 
     /**
@@ -662,6 +688,7 @@ class CouchClient extends Couch
      * @param array $docs array of documents to store
      * @param boolean $newEdits Default to true. If false, prevents the database from assigning them new revision IDs.
      * @return object CouchDB bulk document storage response
+     * @throws CouchException
      */
     public function storeDocs(array $docs, $newEdits = true)
     {
@@ -681,7 +708,7 @@ class CouchClient extends Couch
         }
 
         $url = '/' . urlencode($this->dbname) . '/_bulk_docs';
-        return $this->queryAndTest('POST', $url, [200, 201, 202], [], $request);
+        return $this->queryAndValid('POST', $url, [200, 201, 202], [], $request);
     }
 
     /**
@@ -691,6 +718,7 @@ class CouchClient extends Couch
      * @param array $docs array of documents to delete.
      * @param boolean $newEdits Default to true. If false, prevents the database from assigning them new revision IDs.
      * @return object CouchDB bulk document storage response
+     * @throws CouchException
      */
     public function deleteDocs(array $docs, $newEdits = true)
     {
@@ -716,7 +744,7 @@ class CouchClient extends Couch
         }
 
         $url = '/' . urlencode($this->dbname) . '/_bulk_docs';
-        return $this->queryAndTest('POST', $url, [200, 201, 202], [], $request);
+        return $this->queryAndValid('POST', $url, [200, 201, 202], [], $request);
     }
 
     /**
@@ -730,6 +758,7 @@ class CouchClient extends Couch
      * @param string $docIds id of the document to update (can be null)
      * @return array|bool @see updateDocFullAPI($ddoc_id, $handler_name, $options = array())
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function updateDoc($ddocId, $handlerName, $params, $docIds = null)
     {
@@ -762,6 +791,7 @@ class CouchClient extends Couch
      *        - 'Content-Type' : the http header 'Content-Type' to send to the couch server
      * @return bool|object
      * @see _queryAndTest
+     * @throws CouchException
      */
     public function updateDocFullAPI($ddocId, $handlerName, $options = [])
     {
@@ -791,7 +821,7 @@ class CouchClient extends Couch
             }
         }
 
-        return $this->queryAndTest($method, $url, [200, 201, 202], $params, $data, $contentType);
+        return $this->queryAndValid($method, $url, [200, 201, 202], $params, $data, $contentType);
     }
 
     /**
@@ -801,6 +831,7 @@ class CouchClient extends Couch
      * @param string $newId id of the new document
      * @return object CouchDB document storage response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function copyDoc($id, $newId)
     {
@@ -812,7 +843,7 @@ class CouchClient extends Couch
         $method = 'COPY';
         $url = '/' . urlencode($this->dbname);
         $url .= '/' . urlencode($id);
-        return $this->queryAndTest($method, $url, [200, 201, 202], [], $newId);
+        return $this->queryAndValid($method, $url, [200, 201, 202], [], $newId);
     }
 
     /**
@@ -848,6 +879,7 @@ class CouchClient extends Couch
      * @param string $attName The attachment name
      * @return string    Returns the raw content from the attachment.
      * @throws InvalidArgumentException if arguments are not valid.
+     * @throws CouchException
      */
     public function getAttachment($doc, $attName)
     {
@@ -858,7 +890,7 @@ class CouchClient extends Couch
         $url = '/' . urlencode($this->dbname) . '/' . urlencode($doc->_id) . '/' . $attName;
         if ($doc->_rev)
             $url .= '?rev=' . urlencode($doc->_rev);
-        return $this->queryAndTest('GET', $url, [200]);
+        return $this->queryAndValid('GET', $url, [200]);
     }
 
     /**
@@ -897,6 +929,7 @@ class CouchClient extends Couch
      * @param string $attachmentName name of the attachment to delete
      * @return object CouchDB attachment removal response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function deleteAttachment($doc, $attachmentName)
     {
@@ -909,7 +942,7 @@ class CouchClient extends Couch
         $url = '/' . urlencode($this->dbname) .
             '/' . urlencode($doc->_id) .
             '/' . urlencode($attachmentName);
-        return $this->queryAndTest('DELETE', $url, [200, 202], ['rev' => $doc->_rev]);
+        return $this->queryAndValid('DELETE', $url, [200, 202], ['rev' => $doc->_rev]);
     }
 
     /**
@@ -928,7 +961,7 @@ class CouchClient extends Couch
             throw new Exception('Document should contain _id and _rev');
         }
         $url = '/' . urlencode($this->dbname) . '/' . urlencode($doc->_id) . '?rev=' . urlencode($doc->_rev);
-        return $this->queryAndTest('DELETE', $url, [200, 202]);
+        return $this->queryAndValid('DELETE', $url, [200, 202]);
     }
 
     /**
@@ -993,6 +1026,7 @@ class CouchClient extends Couch
      * @param string $name view name
      * @return object|array|bool
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getView($id, $name)
     {
@@ -1007,10 +1041,10 @@ class CouchClient extends Couch
         list($method, $viewQuery, $data) = $this->prepareViewQuery();
 
         if (!$resultsAsCouchDocs)
-            return $this->queryAndTest($method, $url, [200], $viewQuery, $data);
+            return $this->queryAndValid($method, $url, [200], $viewQuery, $data);
 
         return $this->resultsToCouchDocuments(
-            $this->queryAndTest($method, $url, [200], $viewQuery, $data)
+            $this->queryAndValid($method, $url, [200], $viewQuery, $data)
         );
     }
 
@@ -1077,6 +1111,7 @@ class CouchClient extends Couch
      * @param array $additionalParameters some other parameters to send in the query
      * @return object CouchDB list query response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getList($id, $name, $viewName, $additionalParameters = [])
     {
@@ -1092,7 +1127,7 @@ class CouchClient extends Couch
         if (is_array($additionalParameters) && count($additionalParameters)) {
             $viewQuery = array_merge($additionalParameters, $viewQuery);
         }
-        return $this->queryAndTest($method, $url, [200], $viewQuery, $data);
+        return $this->queryAndValid($method, $url, [200], $viewQuery, $data);
     }
 
     /**
@@ -1115,6 +1150,7 @@ class CouchClient extends Couch
      * @param array $additionalParams some other parameters to send in the query
      * @return object CouchDB list query response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getForeignList($id, $name, $viewId, $viewName, $additionalParams = [])
     {
@@ -1131,7 +1167,7 @@ class CouchClient extends Couch
         if (is_array($additionalParams) && count($additionalParams)) {
             $viewQuery = array_merge($additionalParams, $viewQuery);
         }
-        return $this->queryAndTest($method, $url, [200], $viewQuery, $data);
+        return $this->queryAndValid($method, $url, [200], $viewQuery, $data);
     }
 
     /**
@@ -1144,6 +1180,7 @@ class CouchClient extends Couch
      * @param array $additionalParams some other parameters to send in the query
      * @return object CouchDB list query response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getShow($id, $name, $docId = null, $additionalParams = [])
     {
@@ -1152,7 +1189,7 @@ class CouchClient extends Couch
         $url = '/' . urlencode($this->dbname) . '/_design/' . urlencode($id) . '/_show/' . urlencode($name);
         if ($docId)
             $url .= '/' . urlencode($docId);
-        return $this->queryAndTest('GET', $url, [200], $additionalParams);
+        return $this->queryAndValid('GET', $url, [200], $additionalParams);
     }
 
     /**
@@ -1162,13 +1199,14 @@ class CouchClient extends Couch
      * @param string $id design document name (without _design)
      * @return object CouchDB view infos response
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getViewInfos($id)
     {
         if (!$id)
             throw new InvalidArgumentException('You should specify view id');
         $url = '/' . urlencode($this->dbname) . '/_design/' . urlencode($id) . '/_info';
-        return $this->queryAndTest('GET', $url, [200]);
+        return $this->queryAndValid('GET', $url, [200]);
     }
 
     /**
@@ -1178,12 +1216,13 @@ class CouchClient extends Couch
      *
      * @param string $id design document name (without _design)
      * @return object CouchDB's compact response ( usually {'ok':true} )
+     * @throws CouchException
      */
     public function compactViews($id)
     {
         $formattedId = preg_replace('@^_design/@', '', $id);
         $url = '/' . urlencode($this->dbname) . '/_compact/' . urlencode($formattedId);
-        return $this->queryAndTest('POST', $url, [202]);
+        return $this->queryAndValid('POST', $url, [202]);
     }
 
     /**
@@ -1192,6 +1231,7 @@ class CouchClient extends Couch
      * to compact views defined in _design/thedoc , use compactViews ('thedoc')
      *
      * @return void
+     * @throws CouchException
      */
     public function compactAllViews()
     {
@@ -1208,12 +1248,13 @@ class CouchClient extends Couch
      *
      *
      * @return object CouchDB _all_docs response
+     * @throws CouchException
      */
     public function getAllDocs()
     {
         $url = '/' . urlencode($this->dbname) . '/_all_docs';
         list($method, $viewQuery, $data) = $this->prepareViewQuery();
-        return $this->queryAndTest($method, $url, [200], $viewQuery, $data);
+        return $this->queryAndValid($method, $url, [200], $viewQuery, $data);
     }
 
     /**
@@ -1223,6 +1264,7 @@ class CouchClient extends Couch
      * @param integer $count the number of uuids to return
      * @return array|false an array of uuids on success, false on failure.
      * @throws InvalidArgumentException
+     * @throws CouchException
      */
     public function getUuids($count = 1)
     {
@@ -1232,7 +1274,7 @@ class CouchClient extends Couch
 
         $url = '/_uuids';
 
-        $back = $this->queryAndTest('GET', $url, [200], ['count' => $validCount]);
+        $back = $this->queryAndValid('GET', $url, [200], ['count' => $validCount]);
         if ($back && property_exists($back, 'uuids')) {
             return $back->uuids;
         }
@@ -1243,12 +1285,13 @@ class CouchClient extends Couch
      * Synchronize database to disc
      *
      * @return object CouchDB document storage response
+     * @throws CouchException
      */
     public function ensureFullCommit()
     {
         $method = 'POST';
         $url = '/' . urlencode($this->dbname) . '/_ensure_full_commit';
-        return $this->queryAndTest($method, $url, [200, 201]);
+        return $this->queryAndValid($method, $url, [200, 201]);
     }
 
     /**
@@ -1261,6 +1304,7 @@ class CouchClient extends Couch
      * @param string $type The type of index. In the future, json and text will be available. For the moment,
      *  the indexes are unavailable.
      * @return object Returns a response object. Usually, it contains the 'result', 'id' and 'name'.
+     * @throws CouchException
      */
     public function createIndex(array $fields, $name = null, $ddoc = null, $type = 'json')
     {
@@ -1281,7 +1325,7 @@ class CouchClient extends Couch
 
 
         $url = '/' . urlencode($this->dbname) . '/_index';
-        return $this->queryAndTest($method, $url, [200], [], $request);
+        return $this->queryAndValid($method, $url, [200], [], $request);
     }
 
     /**
@@ -1293,7 +1337,7 @@ class CouchClient extends Couch
     {
         $method = 'GET';
         $url = '/' . urlencode($this->dbname) . '/_index';
-        $result = $this->queryAndTest($method, $url, [200]);
+        $result = $this->queryAndValid($method, $url, [200]);
         return $result->indexes;
     }
 
@@ -1305,6 +1349,7 @@ class CouchClient extends Couch
      * @param string $name The name of the index.
      * @param string $type The type of the index (Not implemented yet).
      * @return object  CouchDB's delete response ( usually {'ok':true} )
+     * @throws CouchException
      */
     public function deleteIndex($ddoc, $name, $type = 'json')
     {
@@ -1313,12 +1358,13 @@ class CouchClient extends Couch
         $method = 'DELETE';
         $urlEnd = urlencode($ddoc) . '/json/' . urlencode($name);
         $url = '/' . urlencode($this->dbname) . '/_index/' . $urlEnd;
-        return $this->queryAndTest($method, $url, [200]);
+        return $this->queryAndValid($method, $url, [200]);
     }
 
     /**
      * Use the new Mango Query functionnalities to query your database.
      * @see http://docs.couchdb.org/en/2.0.0/api/database/find.html#db-find
+     * @return
      * @throws CouchException if an error occurs during the transaction.
      * @param array|object $selector An associative array or an object that follow Mango Query selector syntax.
      * everything.
@@ -1327,11 +1373,22 @@ class CouchClient extends Couch
      */
     public function find($selector, $index = null)
     {
-        return $this->_find('_find', $selector, $index)->docs;
+        /*  TODO: Next major version: Return the response object instead of the docs.
+            find() call can returns warnings or bookmarks.
+        */
+        $asArray = $this->resultAsArray;
+        $result = $this->_find('_find', $selector, $index);
+
+        if ($asArray) {
+            return $result['docs'];
+        } else {
+            return $result->docs;
+        }
     }
 
     /**
      * Protected function to call the _find and _explain endpoint
+     * @return object
      * @throws CouchException if an error occurs during the transaction.
      * @param array|object $selector An associative array or an object that follow Mango Query selector syntax.
      * everything.
@@ -1366,12 +1423,19 @@ class CouchClient extends Couch
 
         if (isset($index) && (is_array($index) || is_string($index)))
             $request['use_index'] = $index;
-        return $this->queryAndTest($method, $url, [200], [], $request);
+
+        if (isset($this->queryParameters['conflicts'])) {
+            $request['conflicts'] = boolval($this->queryParameters['conflicts']);
+            unset($this->queryParameters['conflicts']);
+        }
+
+        return $this->queryAndValid($method, $url, [200], [], $request);
     }
 
     /**
      * Execute a Mango Query on CouchDB and give details about the request.
      * @see http://docs.couchdb.org/en/2.0.0/api/database/find.html#db-explain
+     * @return object
      * @throws CouchException if an error occurs during the transaction.
      * @param array|object $selector An associative array or an object that follow Mango Query selector syntax.
      * everything.

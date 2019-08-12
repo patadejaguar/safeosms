@@ -134,12 +134,12 @@ function get_framework($framework_id){
 /***************************************************
  * FUNCTION: GET PARENT FRAMEWORKS BY FRAMEWORK ID *
  ***************************************************/
-function get_parent_frameworks($frameworks, $parent, &$news){
-    if($parent == 0){
+function get_parent_frameworks($frameworks, $framework_id, &$news){
+    if($framework_id == 0){
         return;
     }
     foreach($frameworks as $framework){
-        if($framework['value'] == $parent){
+        if($framework['value'] == $framework_id){
             array_unshift($news, $framework);
             get_parent_frameworks($frameworks, $framework['parent'], $news);
             break;
@@ -311,6 +311,7 @@ function get_framework_tabs($status)
                     ".
                     (($status==1) ? "$('#active-frameworks-count').html(totalCount);" : "$('#inactive-frameworks-count').html(totalCount);")
                     ."
+                    fixTreeGridCollapsableColumn();
                 },
                 onStopDrag: function(row){
                     var tag = document.elementFromPoint(mouseX - window.pageXOffset, mouseY - window.pageYOffset);
@@ -364,6 +365,36 @@ function get_framework_tabs($status)
         </style>
     ";
 } 
+
+/**************************************************
+ * FUNCTION: GET FRAMEWORK CONTROLS DROPDOWN DATA *
+ **************************************************/
+function get_framework_controls_dropdown_data()
+{
+    // Open the database connection
+    $db = db_open();
+    $sql = "
+        SELECT
+            `fc`.`id`, `fc`.`short_name`, `fc`.`long_name`
+        FROM
+            `framework_controls` fc
+            LEFT JOIN `frameworks` f ON FIND_IN_SET(`f`.`value`, `fc`.`framework_ids`)
+        WHERE
+            (`f`.`status` = 1 or `fc`.`framework_ids` is null or `fc`.`framework_ids` = '') AND `fc`.`deleted` = 0
+        GROUP BY `fc`.`id`;
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute();
+
+    // Get the list in the array
+    $controls = $stmt->fetchAll();
+
+    // Close the database connection
+    db_close($db);
+
+    return $controls;
+}
  
 /************************************
  * FUNCTION: GET FRAMEWORK CONTROLS *
@@ -380,13 +411,15 @@ function get_framework_controls($control_ids=false)
             LEFT JOIN `family` t4 on t1.family=t4.value
             LEFT JOIN `control_phase` t5 on t1.control_phase=t5.value
             LEFT JOIN `user` t6 on t1.control_owner=t6.value
+            LEFT JOIN `frameworks` t7 ON FIND_IN_SET(t7.value, t1.framework_ids)
         WHERE
-            t1.deleted=0
+            (t7.status=1 or t1.framework_ids is null or t1.framework_ids = '') AND t1.deleted=0
     ";
     if($control_ids !== false)
     {
         $sql .= " AND FIND_IN_SET(t1.id, '{$control_ids}') ";
     }
+    $sql .= " GROUP BY t1.id; ";
     $stmt = $db->prepare($sql);
     $stmt->execute();
     
@@ -750,15 +783,24 @@ function update_framework($framework_id, $name, $description=false, $parent=fals
 /***********************************************
  * FUNCTION: GET CHILD FRAMEWORKS BY PARENT ID *
  ***********************************************/
-function get_child_frameworks($parent_id)
+function get_child_frameworks($parent_id, $status="all")
 {
     // Open the database connection
     $db = db_open();
 
-    $sql = "SELECT t1.* FROM `frameworks` t1 WHERE t1.parent=:parent_id;";
+    $sql = "SELECT t1.* FROM `frameworks` t1 WHERE t1.parent=:parent_id ";
+    
+    if($status != "all"){
+        $sql .= " AND status=:status; ";
+    }else{
+        $sql .= ";";
+    }
     
     $stmt = $db->prepare($sql);
     $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
+    if($status != "all"){
+        $stmt->bindParam(":status", $status, PDO::PARAM_INT);
+    }
     $stmt->execute();
 
     $results = $stmt->fetchAll();
@@ -767,6 +809,18 @@ function get_child_frameworks($parent_id)
     db_close($db);
     
     return $results;
+}
+
+/***************************************************
+ * FUNCTION: GET ALL CHILD FRAMEWORKS BY PARENT ID *
+ ***************************************************/
+function get_all_child_frameworks($parent_id, $status=false)
+{
+    $frameworks = get_frameworks($status);
+    $child_frameworks = [];
+    get_all_childs($frameworks, $parent_id, $child_frameworks, "value");
+    
+    return $child_frameworks;
 }
 
 /********************************************
@@ -1027,7 +1081,7 @@ function getAvailableControlClassList(){
         SELECT t2.*
         FROM `framework_controls` t1 
             LEFT JOIN `control_class` t2 on t1.control_class=t2.value
-        WHERE t2.value is not null
+        WHERE t2.value is not null AND t1.deleted=0
         GROUP BY
             t2.value
     ";
@@ -1055,7 +1109,7 @@ function getAvailableControlPhaseList(){
         SELECT t2.*
         FROM `framework_controls` t1 
             LEFT JOIN `control_phase` t2 on t1.control_phase=t2.value
-        WHERE t2.value is not null
+        WHERE t2.value is not null AND t1.deleted=0
         GROUP BY
             t2.value
     ";
@@ -1083,7 +1137,7 @@ function getAvailableControlOwnerList(){
         SELECT t2.*
         FROM `framework_controls` t1 
             LEFT JOIN `user` t2 on t1.control_owner=t2.value
-        WHERE t2.value is not null
+        WHERE t2.value is not null AND t1.deleted=0
         GROUP BY
             t2.value
     ";
@@ -1111,7 +1165,7 @@ function getAvailableControlFamilyList(){
         SELECT t2.*
         FROM `framework_controls` t1 
             LEFT JOIN `family` t2 on t1.family=t2.value
-        WHERE t2.value is not null
+        WHERE t2.value is not null AND t1.deleted=0
         GROUP BY
             t2.value
     ";
@@ -1136,42 +1190,111 @@ function getAvailableControlFrameworkList(){
     $db = db_open();
     
     $sql = "
-        SELECT t1.framework_ids
-        FROM `framework_controls` t1 
+        SELECT t1.*
+        FROM `frameworks` t1
+            LEFT JOIN `framework_controls` t2 ON FIND_IN_SET(t1.value, t2.framework_ids) AND t2.deleted=0
+        WHERE t2.id IS NOT NULL AND t1.`status`=1 
+        GROUP BY t1.value
+        ;
     ";
-    
-    // Get available control framework id list
+
+    // Get available framework list
     $stmt = $db->prepare($sql);
     
     $stmt->execute();
 
-    $idStrings = $stmt->fetchAll();
+    $frameworks = $stmt->fetchAll();
     
-    $framework_ids = array();
-    foreach($idStrings as $idsString){
-        $ids = explode(",", $idsString['framework_ids']);
-        foreach($ids as $id){
-            if($id && !in_array($id, $framework_ids)){
-                $framework_ids[] = (int)$id;
-            }
+    // Try decrypt
+//    foreach($results as &$result){
+//        $result['name'] = try_decrypt($result['name']);
+//        $result['description'] = try_decrypt($result['description']);
+//    }
+    
+    // Close the database connection
+    db_close($db);
+    
+    $all_frameworks = get_frameworks(1);
+    $all_parent_frameworks = array();
+    foreach($frameworks as $framework)
+    {
+        $parent_frameworks = array();
+        get_parent_frameworks($all_frameworks, $framework['value'], $parent_frameworks);
+        $all_parent_frameworks = array_merge($all_parent_frameworks, $parent_frameworks);
+    }
+    
+    $results = array();
+    $ids = array();
+    // Get unique array
+    foreach($all_parent_frameworks as $result){
+        if(!in_array($result['value'], $ids))
+        {
+            $results[] = $result;
+            $ids[] = $result['value'];
         }
     }
-    if($framework_ids){
-        $sql = "
-            SELECT *
-            FROM `frameworks` 
-            WHERE value in (". implode(",", $framework_ids) .") AND `status`=1 ;
-        ";
 
-        // Get available framework list
-        $stmt = $db->prepare($sql);
-        
-        $stmt->execute();
+    return $results;
+}
 
-        $results = $stmt->fetchAll();
-    }else{
-        $results = [];
-    }
+/*******************************************************
+ * FUNCTION: GET HAS BEEN AUDIT FRAMEWORK CONTROL LIST *
+ *******************************************************/
+function getHasBeenAuditFrameworkControlList()
+{
+    // Open the database connection
+    $db = db_open();
+    
+    $sql = "
+        SELECT t1.id value, t1.short_name name
+        FROM 
+            `framework_controls` t1 
+            LEFT JOIN `framework_control_test_audits` t2 ON t1.id=t2.framework_control_id
+        WHERE
+             t2.id IS NOT NULL
+        GROUP BY 
+            t1.id
+        ;
+    ";
+
+    // Get available framework list
+    $stmt = $db->prepare($sql);
+    
+    $stmt->execute();
+
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Close the database connection
+    db_close($db);
+
+    return $results;
+}
+
+/***********************************************
+ * FUNCTION: GET HAS BEEN AUDIT FRAMEWORK LIST *
+ ***********************************************/
+function getHasBeenAuditFrameworkList(){
+    // Open the database connection
+    $db = db_open();
+    
+    $sql = "
+        SELECT t1.value, t1.name, t1.description
+        FROM `frameworks` t1
+            LEFT JOIN `framework_controls` t2 ON FIND_IN_SET(t1.value, t2.framework_ids)
+            LEFT JOIN `framework_control_test_audits` t3 ON t2.id=t3.framework_control_id
+        WHERE
+             t3.id IS NOT NULL
+        GROUP BY 
+            t1.value
+        ;
+    ";
+
+    // Get available framework list
+    $stmt = $db->prepare($sql);
+    
+    $stmt->execute();
+
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Try decrypt
     foreach($results as &$result){
@@ -1195,8 +1318,8 @@ function getAvailableControlPriorityList(){
     $sql = "
         SELECT t2.*
         FROM `framework_controls` t1 
-            LEFT JOIN `control_priority` t2 on t1.control_priority=t2.value
-        WHERE t2.value is not null
+            LEFT JOIN `control_priority` t2 on t1.control_priority=t2.value 
+        WHERE t2.value is not null AND t1.deleted=0
         GROUP BY
             t2.value
     ORDER BY
@@ -1333,7 +1456,7 @@ function make_tree_options_html($options, $parent, &$html, $indent="", $selected
 /******************************
  * FUNCTION: ADD NEW DOCUMENT *
  ******************************/
-function add_document($document_type, $document_name, $parent, $status, $creation_date){
+function add_document($document_type, $document_name, $control_ids, $framework_ids, $parent, $status, $creation_date, $review_date){
     global $lang, $escaper;
     
     // Open the database connection
@@ -1351,16 +1474,20 @@ function add_document($document_type, $document_name, $parent, $status, $creatio
     }
 
     // Create a document
-    $stmt = $db->prepare("INSERT INTO `documents` (`document_type`, `document_name`, `parent`, `status`, `file_id`, `creation_date`) VALUES (:document_type, :document_name, :parent, :status, :file_id, :creation_date)");
+    $stmt = $db->prepare("INSERT INTO `documents` (`document_type`, `document_name`, `control_ids`, `framework_ids`, `parent`, `status`, `file_id`, `creation_date`, `review_date`) VALUES (:document_type, :document_name, :control_ids, :framework_ids, :parent, :status, :file_id, :creation_date, :review_date)");
     $stmt->bindParam(":document_type", $document_type, PDO::PARAM_STR);
     $stmt->bindParam(":document_name", $document_name, PDO::PARAM_STR);
+    $stmt->bindParam(":control_ids", $control_ids, PDO::PARAM_STR);
+    $stmt->bindParam(":framework_ids", $framework_ids, PDO::PARAM_STR);
     $stmt->bindParam(":parent", $parent, PDO::PARAM_INT);
     $stmt->bindParam(":status", $status, PDO::PARAM_STR);
     $init_file_id = 0;
     $stmt->bindParam(":file_id", $init_file_id, PDO::PARAM_INT);
     $stmt->bindParam(":creation_date", $creation_date, PDO::PARAM_STR);
+    $stmt->bindParam(":review_date", $review_date, PDO::PARAM_STR);
+
     $stmt->execute();
-    
+
     $document_id = $db->lastInsertId();
 
     // Close the database connection
@@ -1381,13 +1508,15 @@ function add_document($document_type, $document_name, $parent, $status, $creatio
         // Delete added document if failed to upload a document file
         delete_document($document_id);
         $errors = array_unique($errors);
-        set_alert(true, "bad", implode(", ", $errors));
+        foreach ($errors as $error) {
+            set_alert(true, "bad", $error);
+        }
         return false;
     }elseif(empty($file_id))
     {
         // Delete added document if failed to upload a document file
         delete_document($document_id);
-        set_alert(true, "bad", $escaper->escapeHtml($lang['FailedToUploadFile']));
+        set_alert(true, "bad", $lang['FailedToUploadFile']);
         return false;
     }else
     {
@@ -1403,12 +1532,12 @@ function add_document($document_type, $document_name, $parent, $status, $creatio
 /*****************************
  * FUNCTION: UPDATE DOCUMENT *
  *****************************/
-function update_document($document_id, $document_type, $document_name, $parent, $status, $creation_date){
+function update_document($document_id, $document_type, $document_name, $control_ids, $framework_ids, $parent, $status, $creation_date, $review_date){
     global $lang, $escaper;
     
     // Open the database connection
     $db = db_open();
-    
+
     // Check if the framework exists
     $stmt = $db->prepare("SELECT * FROM `documents` where document_name=:document_name AND document_type=:document_type AND id<>:id; ");
     $stmt->bindParam(":document_name", $document_name, PDO::PARAM_STR);
@@ -1422,15 +1551,18 @@ function update_document($document_id, $document_type, $document_name, $parent, 
     }
 
     // Update a document
-    $stmt = $db->prepare("UPDATE `documents` SET `document_type`=:document_type, `document_name`=:document_name, `parent`=:parent, `status`=:status, `creation_date`=:creation_date WHERE id=:document_id; ");
+    $stmt = $db->prepare("UPDATE `documents` SET `document_type`=:document_type, `document_name`=:document_name, `control_ids`=:control_ids, `framework_ids`=:framework_ids, `parent`=:parent, `status`=:status, `creation_date`=:creation_date, `review_date`=:review_date WHERE id=:document_id; ");
     $stmt->bindParam(":document_id", $document_id, PDO::PARAM_INT);
     $stmt->bindParam(":document_type", $document_type, PDO::PARAM_STR);
     $stmt->bindParam(":document_name", $document_name, PDO::PARAM_STR);
+    $stmt->bindParam(":control_ids", $control_ids, PDO::PARAM_STR);
+    $stmt->bindParam(":framework_ids", $framework_ids, PDO::PARAM_STR);
     $stmt->bindParam(":parent", $parent, PDO::PARAM_INT);
     $stmt->bindParam(":status", $status, PDO::PARAM_STR);
     $stmt->bindParam(":creation_date", $creation_date, PDO::PARAM_STR);
+    $stmt->bindParam(":review_date", $review_date, PDO::PARAM_STR);
     $stmt->execute();
-    
+
     // Close the database connection
     db_close($db);
 
@@ -1438,7 +1570,7 @@ function update_document($document_id, $document_type, $document_name, $parent, 
     if(!empty($_FILES['file'])){
         $document = get_document_by_id($document_id);
         $version = $document['file_version'] + 1;
-        
+
         $files = $_FILES['file'];
         list($status, $file_ids, $errors) = upload_compliance_files($document_id, "documents", $files, $version);
         if($file_ids){
@@ -1525,7 +1657,8 @@ function get_document_hierarchy_tabs($type="")
     echo "<thead >";
     echo "<th data-options=\"field:'document_name'\" width='40%'>".$escaper->escapeHtml($lang['DocumentName'])."</th>";
     echo "<th data-options=\"field:'document_type'\" width='20%'>".$escaper->escapeHtml($lang['DocumentType'])."</th>";
-    echo "<th data-options=\"field:'creation_date'\" width='20%'>".$escaper->escapeHtml($lang['CreationDate'])."</th>";
+    echo "<th data-options=\"field:'creation_date'\" width='10%'>".$escaper->escapeHtml($lang['CreationDate'])."</th>";
+    echo "<th data-options=\"field:'review_date'\" width='10%'>".$escaper->escapeHtml($lang['ReviewDate'])."</th>";
     echo "<th data-options=\"field:'status'\" width='20%'>".$escaper->escapeHtml($lang['Status'])."</th>";
 //    echo "<th data-options=\"field:'actions'\" width='10%'>&nbsp;</th>";
     echo "</thead>\n";
@@ -1566,7 +1699,8 @@ function get_document_tabular_tabs($type, $document_id=0)
     echo "<thead >";
     echo "<th data-options=\"field:'document_name'\" width='40%'>".$escaper->escapeHtml($lang['DocumentName'])."</th>";
     echo "<th data-options=\"field:'document_type'\" width='20%'>".$escaper->escapeHtml($lang['DocumentType'])."</th>";
-    echo "<th data-options=\"field:'creation_date'\" width='20%'>".$escaper->escapeHtml($lang['CreationDate'])."</th>";
+    echo "<th data-options=\"field:'creation_date'\" width='10%'>".$escaper->escapeHtml($lang['CreationDate'])."</th>";
+    echo "<th data-options=\"field:'review_date'\" width='10%'>".$escaper->escapeHtml($lang['ReviewDate'])."</th>";
     echo "<th data-options=\"field:'status'\" width='10%'>".$escaper->escapeHtml($lang['Status'])."</th>";
     echo "<th data-options=\"field:'actions'\" width='10%'>&nbsp;</th>";
     echo "</thead>\n";
@@ -1594,7 +1728,8 @@ function get_documents_as_treegrid($type){
         $document['document_type'] = $escaper->escapeHtml($document['document_type']);
         $document['document_name'] = "<a href=\"".$_SESSION['base_url']."/governance/download.php?id=".$document['unique_name']."\" >".$escaper->escapeHtml($document['document_name'])."</a>";
         $document['status'] = $escaper->escapeHtml($document['status']);
-        $document['creation_date'] = ($document['creation_date'] != "0000-00-00" && $document['creation_date']) ? date(get_default_date_format(), strtotime($document['creation_date'])) : "";
+        $document['creation_date'] = format_date($document['creation_date']);
+        $document['review_date'] = format_date($document['review_date']);
         $document['actions'] = "<div class=\"text-center\"><a class=\"framework-block--edit\" data-id=\"".((int)$document['id'])."\"><i class=\"fa fa-pencil-square-o\"></i></a>&nbsp;&nbsp;&nbsp;<a class=\"framework-block--delete\" data-id=\"".((int)$document['id'])."\"><i class=\"fa fa-trash\"></i></a></div>";
     }
     $results = array();
@@ -1646,4 +1781,495 @@ function get_framework_controls_long_name($control_ids=false)
 
     return $long_name;
 }
+
+function display_expandable_framework_names($framework_names_in, $cutoff) {
+
+    global $lang, $escaper;
+
+    $framework_names = explode(",", $framework_names_in);
+    if (count($framework_names) <= $cutoff)
+        return $framework_names_in;
+
+    $html = "<span>";
+
+    foreach($framework_names as $idx => $name) {
+        $html .= "<span" .($idx > $cutoff - 1 ? " class='the_rest' style='display:none'" : "") . ">" . ($idx != 0 ? ", ":"") . $escaper->escapeHtml($name) . "</span>";
+    }
+
+    $html .= "<a href='#' onclick=\"$(this).parent().find('.the_rest').toggle();return false;\" class='btn btn-sm the_rest' style='margin-left: 5px;'>" . _lang('ShowXMore', array('x' => count($framework_names) - $cutoff)) . "</a>";
+    $html .= "<a href='#' onclick=\"$(this).parent().find('.the_rest').toggle();return false;\" class='btn btn-sm the_rest' style='margin-left: 5px;display:none'>" . $escaper->escapeHtml($lang['ShowLess']) . "</a>";
+
+    $html .= "</span>";
+
+    return $html;
+}
+
+/********************************
+ * FUNCTION: GET EXCEPTION DATA *
+ ********************************/
+function get_exception($id){
+
+    // Open the database connection
+    $db = db_open();
+
+    // Query the database
+    $stmt = $db->prepare("select * from document_exceptions where value=:id;");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $exception = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Close the database connection
+    db_close($db);
+
+    return $exception;
+}
+
+
+/********************************
+ * FUNCTION: GET EXCEPTION DATA *
+ ********************************/
+function get_exception_for_display($id, $type){
+
+    // Open the database connection
+    $db = db_open();
+
+    $type_based_sql_parts = [];
+    if ($type == 'policy') {
+        $type_based_sql_parts[] = 'p.document_name as parent_name';
+        $type_based_sql_parts[] = 'left join documents p on de.policy_document_id = p.id';
+        $type_based_sql_parts[] = 'p.document_type = \'policies\'';
+    } else {
+        $type_based_sql_parts[] = 'c.short_name as parent_name';
+        $type_based_sql_parts[] = 'left join framework_controls c on de.control_framework_id = c.id';
+        $type_based_sql_parts[] = 'c.id is not null';
+    }
+
+    $sql = "
+        select
+            {$type_based_sql_parts[0]},
+            de.name,
+            o.name as owner,
+            de.additional_stakeholders,
+            de.creation_date,
+            de.review_frequency,
+            de.next_review_date,
+            de.approval_date,
+            a.name as approver,
+            de.description,
+            de.justification
+        from
+            document_exceptions de
+            {$type_based_sql_parts[1]}
+            left join user o on o.value = de.owner
+            left join user a on a.value = de.approver
+        where
+            {$type_based_sql_parts[2]}
+            and de.value = :id;";
+
+    // Query the database
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $exception = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Close the database connection
+    db_close($db);
+
+    return $exception;
+}
+
+
+/***********************************************
+ * FUNCTION: GET EXCEPTION DATA IN TREE FORMAT *
+ ***********************************************/
+function get_exceptions_as_treegrid($type){
+
+    global $lang, $escaper;
+
+    // Open the database connection
+    $db = db_open();
+
+    $policy_sql_base = "select p.id as id, p.document_name as parent_name, 'policy' as type, de.* from document_exceptions de left join documents p on de.policy_document_id = p.id where p.document_type = 'policies'";
+    $control_sql_base = "select c.id as id, c.short_name as parent_name, 'control' as type, de.* from document_exceptions de left join framework_controls c on de.control_framework_id = c.id where c.id is not null";
+
+    if ($type == 'policy')
+        $sql = "{$policy_sql_base} and de.approved = 1 order by p.document_name, de.name;";
+    elseif ($type == 'control')
+        $sql = "{$control_sql_base} and de.approved = 1 order by c.short_name, de.name;";
+    else
+        $sql = "select * from ({$policy_sql_base} union all {$control_sql_base}) u where u.approved = 0 order by u.parent_name, u.name;";
+
+    // Query the database
+    $stmt = $db->prepare($sql);
+
+    $stmt->execute();
+
+    $exceptions = $stmt->fetchAll(PDO::FETCH_GROUP);
+
+    // Close the database connection
+    db_close($db);
+
+    $exception_tree = [];
+
+    $update = check_permission_exception('update');
+    $approve = check_permission_exception('approve');
+    $delete = check_permission_exception('delete');
+
+    foreach($exceptions as $id => $group){
+        $branch = [];
+
+        $all_approved = true;
+        $branch_type = false;
+        foreach($group as $row){
+            $parent_name = $row['parent_name'];
+            $row['children'] = [];
+
+            $row['name'] = "<span class='exception-name'><a href='#' data-id='".((int)$row['value'])."' data-type='{$row['type']}'>{$escaper->escapeHtml($row['name'])}</a></span>";
+            $row['description'] = $escaper->escapeHtml($row['description']);
+            $row['justification'] = $escaper->escapeHtml($row['justification']);
+
+            if ($type === "unapproved" && $approve)
+                $approve_action = "<a class='exception--approve' data-id='".((int)$row['value'])."' data-type='{$row['type']}'><i class='fa fa-check'></i></a>&nbsp;&nbsp;&nbsp;";
+            else $approve_action = "";
+
+            if ($update)
+                $updateAction = "<a class='exception--edit' data-id='".((int)$row['value'])."' data-type='{$row['type']}'><i class='fa fa-pencil-square-o'></i></a>&nbsp;&nbsp;&nbsp;";
+            else $updateAction = "";
+
+            if ($delete)
+                $deleteAction = "<a class='exception--delete' data-id='".((int)$row['value'])."' data-type='{$row['type']}' data-approved='" . ($row['approved'] ? 'true' : 'false') . "'><i class='fa fa-trash'></i></a>";
+            else $deleteAction = "";
+
+            $row['actions'] = "<div class='text-center'>{$approve_action}{$updateAction}{$deleteAction}</div>";
+
+            if (!$branch_type)
+                $branch_type = $row['type'];
+
+            $all_approved &= $row['approved'];
+            $branch[] = $row;
+        }
+        if ($delete)
+            $parentAction = "<div class='text-center'><a class='exception-batch--delete' data-id='".((int)$id)."' data-type='{$branch_type}' data-all-approved='" . ($all_approved ? 'true' : 'false') . "' data-approved='" . ($type !== "unapproved" ? 'true' : 'false') . "'><i class='fa fa-trash'></i></a></div>";
+        else $parentAction = "";
+
+        $exception_tree[] = array('value' => $type . "-" . $id, 'name' => $escaper->escapeHtml($parent_name) . " (" . count($branch) . ")", 'children' => $branch, 'actions' => $parentAction);
+    }
+
+    return $exception_tree;
+}
+
+/********************************
+ * FUNCTION: GET EXCEPTION TABS *
+ ********************************/
+function get_exception_tabs($type)
+{
+    global $lang, $escaper;
+
+    echo "<table id='exception-table-{$type}' class='easyui-treegrid exception-table'
+            data-options=\"
+                iconCls: 'icon-ok',
+                animate: false,
+                fitColumns: true,
+                nowrap: true,
+                url: '{$_SESSION['base_url']}/api/exceptions/tree?type={$type}',
+                method: 'get',
+                idField: 'value',
+                treeField: 'name',
+                scrollbarSize: 0,
+                onLoadSuccess: function(row, data){
+                    fixTreeGridCollapsableColumn();
+                    //It's there to be able to have it collapsed on load
+                    /*var tree = $('#exception-table-{$type}');
+                    tree.treegrid('collapseAll');
+                    tree.treegrid('options').animate = true;*/
+                    var totalCount = (data && data.length) ? data.length : 0;
+                    $('#{$type}-exceptions-count').text(totalCount);
+
+                    if (typeof wireActionButtons === 'function') {
+                        wireActionButtons('{$type}');
+                    }
+                }
+            \">";
+    echo "<thead>";
+
+    echo "<th data-options=\"field:'name'\" width='20%'>".$escaper->escapeHtml($lang[ucfirst ($type) . "ExceptionName"])."</th>";
+    echo "<th data-options=\"field:'description'\" width='30%'>".$escaper->escapeHtml($lang['Description'])."</th>";
+    echo "<th data-options=\"field:'justification'\" width='30%'>".$escaper->escapeHtml($lang['Justification'])."</th>";
+    echo "<th data-options=\"field:'next_review_date', align: 'center'\" width='10%'>".$escaper->escapeHtml($lang['NextReviewDate'])."</th>";
+    echo "<th data-options=\"field:'actions'\" width='10%'>&nbsp;</th>";
+    echo "</thead>\n";
+
+    echo "</table>";
+}
+
+function create_exception($name, $policy, $control, $owner, $additional_stakeholders, $creation_date, $review_frequency, $next_review_date, $approval_date, $approver, $approved, $description, $justification) {
+
+    $db = db_open();
+
+    // Create an exception
+    $stmt = $db->prepare("
+        INSERT INTO
+            `document_exceptions` (
+                `name`,
+                `policy_document_id`,
+                `control_framework_id`,
+                `owner`,
+                `additional_stakeholders`,
+                `creation_date`,
+                `review_frequency`,
+                `next_review_date`,
+                `approval_date`,
+                `approver`,
+                `approved`,
+                `description`,
+                `justification`
+            )
+        VALUES (
+            :name,
+            :policy_document_id,
+            :control_framework_id,
+            :owner,
+            :additional_stakeholders,
+            :creation_date,
+            :review_frequency,
+            :next_review_date,
+            :approval_date,
+            :approver,
+            :approved,
+            :description,
+            :justification
+        );"
+    );
+
+    $stmt->bindParam(":name", $name, PDO::PARAM_STR);
+    $stmt->bindParam(":policy_document_id", $policy, PDO::PARAM_INT);
+    $stmt->bindParam(":control_framework_id", $control, PDO::PARAM_INT);
+    $stmt->bindParam(":owner", $owner, PDO::PARAM_INT);
+    $stmt->bindParam(":additional_stakeholders", $additional_stakeholders, PDO::PARAM_STR);
+    $stmt->bindParam(":creation_date", $creation_date, PDO::PARAM_STR);
+    $stmt->bindParam(":review_frequency", $review_frequency, PDO::PARAM_INT);
+    $stmt->bindParam(":next_review_date", $next_review_date, PDO::PARAM_STR);
+    $stmt->bindParam(":approval_date", $approval_date, PDO::PARAM_STR);
+    $stmt->bindParam(":approver", $approver, PDO::PARAM_INT);
+    $stmt->bindParam(":approved", $approved, PDO::PARAM_INT);
+    $stmt->bindParam(":description", $description, PDO::PARAM_STR);
+    $stmt->bindParam(":justification", $justification, PDO::PARAM_STR);
+    $stmt->execute();
+
+    $id = $db->lastInsertId();
+
+    // Close the database connection
+    db_close($db);
+
+    write_log($id, $_SESSION['uid'], _lang('ExceptionAuditLogCreate', array('exception_name' => $name, 'user' => $_SESSION['user'])), 'exception');
+
+    return $id;
+}
+
+function update_exception($name, $policy, $control, $owner, $additional_stakeholders, $creation_date, $review_frequency, $next_review_date, $approval_date, $approver, $approved, $description, $justification, $id) {
+
+
+    $original = getExceptionForChangeChecking($id);
+
+    $db = db_open();
+
+    // Create an exception
+    $stmt = $db->prepare("
+        UPDATE
+            `document_exceptions` SET
+                `name` = :name,
+                `policy_document_id` = :policy_document_id,
+                `control_framework_id` = :control_framework_id,
+                `owner` = :owner,
+                `additional_stakeholders` = :additional_stakeholders,
+                `creation_date` = :creation_date,
+                `review_frequency` = :review_frequency,
+                `next_review_date` = :next_review_date,
+                `approval_date` = :approval_date,
+                `approver` = :approver,
+                `approved` = :approved,
+                `description` = :description,
+                `justification` = :justification
+        WHERE `value` = :id;"
+    );
+
+    $stmt->bindParam(":name", $name, PDO::PARAM_STR);
+    $stmt->bindParam(":policy_document_id", $policy, PDO::PARAM_INT);
+    $stmt->bindParam(":control_framework_id", $control, PDO::PARAM_INT);
+    $stmt->bindParam(":owner", $owner, PDO::PARAM_INT);
+    $stmt->bindParam(":additional_stakeholders", $additional_stakeholders, PDO::PARAM_STR);
+    $stmt->bindParam(":creation_date", $creation_date, PDO::PARAM_STR);
+    $stmt->bindParam(":review_frequency", $review_frequency, PDO::PARAM_INT);
+    $stmt->bindParam(":next_review_date", $next_review_date, PDO::PARAM_STR);
+    $stmt->bindParam(":approval_date", $approval_date, PDO::PARAM_STR);
+    $stmt->bindParam(":approver", $approver, PDO::PARAM_INT);
+    $stmt->bindParam(":approved", $approved, PDO::PARAM_INT);
+    $stmt->bindParam(":description", $description, PDO::PARAM_STR);
+    $stmt->bindParam(":justification", $justification, PDO::PARAM_STR);
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    $updated = getExceptionForChangeChecking($id);
+
+    $changes = getChangesInException($original, $updated);
+
+    if (!empty($changes)) {
+        write_log($id, $_SESSION['uid'], _lang('ExceptionAuditLogUpdate', array('exception_name' => $name, 'user' => $_SESSION['user'], 'changes' => implode(', ', $changes))), 'exception');
+    }
+}
+
+function getExceptionForChangeChecking($id) {
+    $db = db_open();
+
+    $sql = "
+        select
+            (CASE
+                WHEN de.policy_document_id > 0 THEN (select p.document_name from documents p where de.policy_document_id = p.id)
+                WHEN de.control_framework_id > 0 THEN (select c.short_name from framework_controls c where de.control_framework_id = c.id)
+            END)  as parent_name,
+            de.name,
+            o.name as owner,
+            de.additional_stakeholders,
+            de.creation_date,
+            de.review_frequency,
+            de.next_review_date,
+            de.approval_date,
+            a.name as approver,
+            de.description,
+            de.justification
+        from
+            document_exceptions de
+            left join user o on o.value = de.owner
+            left join user a on a.value = de.approver
+        where
+            de.value=:id;";
+
+    // Query the database
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $exception = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $exception['additional_stakeholders'] = get_stakeholder_names($exception['additional_stakeholders'], 999);
+    $exception['creation_date'] = format_date($exception['creation_date']);
+    $exception['next_review_date'] = format_date($exception['next_review_date']);
+    $exception['approval_date'] = format_date($exception['approval_date']);
+
+    foreach($exception as $key => $value) {
+        if (strlen($value) == 0)
+            $exception[$key] = "";
+    }
+
+    return $exception;
+
+    // Close the database connection
+    db_close($db);
+}
+
+function getChangesInException($original, $updated) {
+    $changes = [];
+    foreach($original as $key => $value) {
+        if ($value !== $updated[$key]) {
+            $changes[] = _lang('ExceptionAuditLogUpdateChange', array('key' => $key, 'value' => $value, 'new_value' => $updated[$key]), false);
+        }
+    }
+    return $changes;
+}
+
+function approve_exception($id) {
+
+    $db = db_open();
+
+    $stmt = $db->prepare("select name, value from `document_exceptions` where `value`=:id;");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $approved_exception = $stmt->fetch();
+
+    $approver = (int)$_SESSION['uid'];
+
+    // approve the exception
+    $stmt = $db->prepare("UPDATE `document_exceptions` SET `approved`=1, `approval_date`=CURDATE(), `approver`=:approver where `value`=:id;");
+    $stmt->bindParam(":approver", $approver, PDO::PARAM_INT);
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    write_log($approved_exception['value'], $_SESSION['uid'], _lang('ExceptionAuditLogApprove', array('exception_name' => $approved_exception['name'], 'user' => $_SESSION['user'])), 'exception');
+}
+
+function delete_exception($id) {
+
+    $db = db_open();
+
+    $stmt = $db->prepare("select name, value from `document_exceptions` where `value`=:id;");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $deleted_exception = $stmt->fetch();
+
+    // Delete the exception
+    $stmt = $db->prepare("DELETE from `document_exceptions` where `value`=:id;");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    write_log($deleted_exception['value'], $_SESSION['uid'], _lang('ExceptionAuditLogDelete', array('exception_name' => $deleted_exception['name'], 'user' => $_SESSION['user'])), 'exception');
+}
+
+function batch_delete_exception($id, $type, $approved) {
+
+    $db = db_open();
+
+    $where_clause = "`approved` = :approved and `" . ($type == 'policy' ? 'policy_document_id' : 'control_framework_id') . "`=:id";
+
+    // get the ids for audit logs
+    $stmt = $db->prepare("select name, value from `document_exceptions` where {$where_clause};");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->bindParam(":approved", $approved, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $deleted_exceptions = $stmt->fetchAll();
+
+    // Delete the exceptions
+    $stmt = $db->prepare("DELETE from `document_exceptions` where {$where_clause};");
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    $stmt->bindParam(":approved", $approved, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    $user = $_SESSION['user'];
+    foreach($deleted_exceptions as $deleted_exception) {
+        write_log($deleted_exception['value'], $_SESSION['uid'], _lang('ExceptionAuditLogDelete', array('exception_name' => $deleted_exception['name'], 'user' => $user)), 'exception');
+    }
+}
+
+function get_exceptions_audit_log($days){
+
+    $db = db_open();
+
+    $stmt = $db->prepare("SELECT timestamp, message FROM audit_log WHERE (`timestamp` > CURDATE()-INTERVAL :days DAY) AND log_type='exception' ORDER BY timestamp DESC");
+    $stmt->bindParam(":days", $days, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    $logs = $stmt->fetchAll();
+
+    db_close($db);
+
+    return $logs;
+}
+
 ?>

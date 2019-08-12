@@ -258,6 +258,7 @@ if(MODO_DEBUG == true OR (MODO_CORRECION == true OR MODO_MIGRACION == true)){
 
 
 $xFRM->addCerrar();
+$xFRM->addJsReloadForm("id-frmextrasol");
 
 $xFRM->addHElem("<p id='avisos'></p>");
 echo $xFRM->get();
@@ -418,6 +419,9 @@ echo $oFrm7->get();
 	$oTxt->setDivClass("");
 	$oFrm9->addHElem( $oTxt->getDeObservaciones("idobservacionesw", "",  $xFRM->lang("observaciones")) );
 	$oFrm9->addGuardar("jsaVincularEmpresa()", "jsCancelarAccion()");
+	
+	$oFrm9->addJsReloadForm("id-frmextrasol");
+	
 	echo $oFrm9->get(false);
     ?>	
 </div>
@@ -500,6 +504,7 @@ function jsDelNotaSic(id){
 function jsCancelarRechazo(id){
 	xG.confirmar({ msg: "CONFIRMA_BAJA", callback: jsaSetCancelarRechazo});
 }
+
 </script>
 <?php
 $xHP->fin();

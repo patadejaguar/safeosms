@@ -1,0 +1,30 @@
+/* for ie7, ie8 =============================================*/
+/**** Author: Oleg Svetlov http://getsimplecms.ru/ ******/
+.ie7 section {
+	border-top: 0px none;
+}
+.ie7 .container {
+	width : 915px;
+}
+.ie7 #wrapper, .ie8 #wrapper {
+	width : 960px;
+	margin-left : auto;
+	margin-right : auto;
+	background-color : White;
+}
+.ie7 #logo {
+	position : relative;
+	top : -10px;
+}
+.ie7 #logo a {
+	line-height : 40px;
+}
+.ie7 #cms {
+	display : block;
+	float : right;
+	right : 40px;
+	top : -10px;
+}
+.ie7 #gotoTop {
+	visibility : hidden;
+}

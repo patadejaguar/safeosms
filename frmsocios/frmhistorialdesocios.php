@@ -47,11 +47,13 @@ $msg		= "";
 if($persona > DEFAULT_SOCIO and $action == MQL_ADD){
 	$idgrupo 		= parametro("idgrupo", DEFAULT_GRUPO, MQL_INT);
 	$notificar		= parametro("idnotificar", false, MQL_BOOL);
+	$notificarpush	= parametro("idnotificarpush", false, MQL_BOOL);
+	
 	$fechamemo 		= fechasys();
 	if(trim($txtmemo) != ""){
 		$xSoc		= new cSocio($persona);
 		if($xSoc->init() == true){
-			$xSoc->addMemo($tipomemo, $txtmemo, $credito, $fechamemo, $notificar, $notificar);
+			$xSoc->addMemo($tipomemo, $txtmemo, $credito, $fechamemo, $notificar, $notificar, $notificarpush);
 			$xFRM->addAvisoRegistroOK( $xSoc->getMessages() );
 			//$xFRM->addLog($xSoc->getMessages());
 			if($notificar == true){
@@ -97,6 +99,9 @@ if($tipomemo > 0){
 } else {
 	$xFRM->addHElem( $xSel->getListaDeTiposDeMemoPersonas("", $tipomemo)->get(true) );
 	$xFRM->OCheck("TR.Notificar", "idnotificar");
+	if(SAFE_ON_DEV == true){
+		$xFRM->OCheck("TR.Notificar Push", "idnotificarpush");
+	}
 }
 
 
@@ -105,6 +110,7 @@ $xFRM->OTextArea("idmemo", $txtmemo, "TR.Texto del memo");
 //$xFRM->addHElem( $xChk->get("TR.Notificar", "idnotificar") );
 if($lista == true){
 	$xFRM->addSeccion("idnot", "TR.NOTAS ANTERIORES");
+	
 	$xLi	= new cSQLListas();
 	$sql	= $xLi->getListadoDeNotas(false, $credito, $xTipoM->NOTA_COBRANZA);
 	

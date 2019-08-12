@@ -16,19 +16,19 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-	session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
@@ -43,13 +43,18 @@ if(isset($_GET['token']) && $_GET['token']){
 // Check if a password reset email was requested
 if (isset($_POST['send_reset_email']))
 {
-	$username = $_POST['user'];
+    if (isset($_SERVER) && array_key_exists('SERVER_NAME', $_SERVER) && (get_setting('simplerisk_base_url') === preg_replace('/\/reset\.php.*/', '', get_current_url()))) {
 
-	// Try to generate a password reset token
-	password_reset_by_username($username);
+        $username = $_POST['user'];
 
-	// Display an alert
-	set_alert(true, "good", "If the user exists in the system, then a password reset e-mail should be on it's way.");
+        // Try to generate a password reset token
+        password_reset_by_username($username);
+
+        // Display an alert
+        set_alert(true, "good", $lang['PassworResetEmailSent']);
+    } else {
+        set_alert(true, "bad", $lang['PassworResetRequestFailed']);
+    }
 }
 
 // Check if a password reset was requested
@@ -64,7 +69,7 @@ if (isset($_POST['password_reset']))
 	if (password_reset_by_token($username, $token, $password, $repeat_password))
 	{
 		// Display an alert
-		set_alert(true, "good", "Your password has been reset successfully.  You will be redirected to the login page in 5 seconds.");
+		set_alert(true, "good", $lang['PassworResetSuccessfulRedirectIn5Secs']);
 
 		// Redirect back to the login page
 		$redirect_js = true;
@@ -74,7 +79,7 @@ if (isset($_POST['password_reset']))
         if (isset($_SESSION['alert']) && $_SESSION['alert'] == true){
         }else{
             // Display an alert
-            set_alert(true, "bad", "There was a problem with your password reset request.  Please try again.");
+            set_alert(true, "bad", $lang['PassworResetRequestFailed']);
         }
 	}
 }
@@ -85,6 +90,7 @@ if (isset($_POST['password_reset']))
 <html>
 
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
 	<?php
@@ -110,8 +116,11 @@ if (isset($_POST['password_reset']))
 	<link rel="stylesheet" href="css/divshot-canvas.css">
 	<link rel="stylesheet" href="css/display.css">
 
-  <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
-  <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <?php
+        setup_alert_requirements();
+    ?>  
 
 </head>
 

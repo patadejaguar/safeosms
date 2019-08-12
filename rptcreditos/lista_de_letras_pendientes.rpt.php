@@ -78,6 +78,8 @@ $xT->setTipoSalida($out);
 	$xT->setOmitidos("iva_exigible");
 	$xT->setOmitidos("total_sin_otros");
 	$xT->setOmitidos("clave_otros");
+	$xT->setOmitidos("int_corriente");
+	$xT->setOmitidos("int_corriente_letra");
 	//$xT->setOmitidos("letra");
 	
 	$xT->setForzarTipoSQL("dias", "int");

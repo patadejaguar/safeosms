@@ -17,30 +17,23 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
 
 // Include the language file
 require_once(language_file());
-
-// Load CSRF Magic
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
-
-function csrf_startup() {
-    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
-}
 
 // Check for session timeout or renegotiation
 session_check();
@@ -52,6 +45,10 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
   header("Location: ../index.php");
   exit(0);
 }
+
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
 
 // Enforce that the user has access to risk management
 enforce_permission_riskmanagement();
@@ -177,6 +174,11 @@ if (isset($_POST['delete_project']))
   }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+     // The request is using the POST method
+    json_response(200, get_alert(true), null);
+}
+
 ?>
 
 <!doctype html>
@@ -202,7 +204,9 @@ if (isset($_POST['delete_project']))
   <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="../css/theme.css">
 
-
+  <?php
+      setup_alert_requirements("..");
+  ?>
   <?php
   // Get the projects
   $projects = get_projects();
@@ -341,7 +345,6 @@ if (isset($_POST['delete_project']))
         <?php view_risk_management_menu("PrioritizeForProjectPlanning"); ?>
       </div>
       <div class="span9" id="project-container">
-        <div id="show-alert"></div>
         <div class="row-fluid">
           <div class="span12">
             <!-- Container Bigins  -->

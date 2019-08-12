@@ -17,17 +17,17 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
@@ -63,6 +63,8 @@ if (isset($_POST['add_user']))
     $email = $_POST['email'];
     $user = $_POST['new_user'];
     $pass = $_POST['password'];
+    $manager = $_POST['manager'];
+
     $repeat_pass = $_POST['repeat_password'];
     $teams = isset($_POST['team']) ? $_POST['team'] : array('none');
     $role_id = (int)$_POST['role'];
@@ -97,6 +99,12 @@ if (isset($_POST['add_user']))
     $comment_risk_management = (int)(isset($_POST['comment_risk_management']) ? 1 : 0);
     $comment_compliance = (int)(isset($_POST['comment_compliance']) ? 1 : 0);
     
+    $view_exception           = isset($_POST['view_exception']) ? 1 : 0;
+    $create_exception         = isset($_POST['create_exception']) ? 1 : 0;
+    $update_exception         = isset($_POST['update_exception']) ? 1 : 0;
+    $delete_exception         = isset($_POST['delete_exception']) ? 1 : 0;
+    $approve_exception        = isset($_POST['approve_exception']) ? 1 : 0;
+
     // If the type is 1
     if ($type == "1")
     {
@@ -189,21 +197,31 @@ if (isset($_POST['add_user']))
                     "delete_documentation" => $delete_documentation,
                     "comment_risk_management" => $comment_risk_management,
                     "comment_compliance" => $comment_compliance,
+                    "view_exception" => $view_exception,
+                    "create_exception" => $create_exception,
+                    "update_exception" => $update_exception,
+                    "delete_exception" => $delete_exception,
+                    "approve_exception" => $approve_exception,
+                    "manager" => $manager,
                 ];
 
                 // Insert a new user
                 add_user($type, $user, $email, $name, $salt, $hash, $team, $role_id, $governance, $riskmanagement, $compliance, $assessments, $asset, $admin, $review_veryhigh, $accept_mitigation, $review_high, $review_medium, $review_low, $review_insignificant, $submit_risks, $modify_risks, $plan_mitigations, $close_risks, $multi_factor, $change_password, $add_new_frameworks, $modify_frameworks, $delete_frameworks, $add_new_controls, $modify_controls, $delete_controls, $other_options);
 
-                // If the encryption extra is enabled
+		// If the encryption extra is enabled
                 if (encryption_extra())
                 {
                     // Load the extra
                     require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
 
-                    // Add the new encrypted user
-                    add_user_enc($pass, $salt, $user);
+                    // If the encryption method is mcrypt
+                    if (isset($_SESSION['encryption_method']) && $_SESSION['encryption_method'] == "mcrypt")
+                    {
+                        // Add the new encrypted user
+                        add_user_enc($pass, $salt, $user);
+                    }
                 }
-                
+
                 // Clear values
                 $name = "";
                 $email = "";
@@ -282,11 +300,15 @@ if (isset($_POST['delete_user']))
             // Load the extra
             require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
 
-            // Delete the value from the user_enc table
-            delete_user_enc($value);
+            // If the encryption method is mcrypt
+            if (isset($_SESSION['encryption_method']) && $_SESSION['encryption_method'] == "mcrypt")
+            {
+                // Delete the value from the user_enc table
+                delete_user_enc($value);
 
-            // Check to see if all users have now been activated
-            check_all_activated();
+                // Check to see if all users have now been activated
+                check_all_activated();
+            }
         }
 
         // Display an alert
@@ -339,6 +361,7 @@ if (isset($_POST['password_policy_update']))
 <html>
 
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery-ui.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
@@ -384,6 +407,10 @@ if (isset($_POST['password_policy_update']))
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    
+    <?php
+        setup_alert_requirements("..");
+    ?>    
 </head>
 
 <body>
@@ -435,7 +462,7 @@ if (isset($_POST['password_policy_update']))
                 },
                 error: function(xhr,status,error){
                     if(xhr.responseJSON && xhr.responseJSON.status_message){
-                        $('#show-alert').html(xhr.responseJSON.status_message);
+                        showAlertsFromArray(xhr.responseJSON.status_message);
                     }
                 }
             })
@@ -462,6 +489,11 @@ if (isset($_POST['password_policy_update']))
             document.getElementsByName("add_documentation")[0].checked = true;
             document.getElementsByName("modify_documentation")[0].checked = true;
             document.getElementsByName("delete_documentation")[0].checked = true;
+            document.getElementsByName("view_exception")[0].checked = true;
+            document.getElementsByName("create_exception")[0].checked = true;
+            document.getElementsByName("update_exception")[0].checked = true;
+            document.getElementsByName("delete_exception")[0].checked = true;
+            document.getElementsByName("approve_exception")[0].checked = true;
         }
         else {
             document.getElementsByName("governance")[0].checked = false;
@@ -474,6 +506,11 @@ if (isset($_POST['password_policy_update']))
             document.getElementsByName("add_documentation")[0].checked = false;
             document.getElementsByName("modify_documentation")[0].checked = false;
             document.getElementsByName("delete_documentation")[0].checked = false;
+            document.getElementsByName("view_exception")[0].checked = false;
+            document.getElementsByName("create_exception")[0].checked = false;
+            document.getElementsByName("update_exception")[0].checked = false;
+            document.getElementsByName("delete_exception")[0].checked = false;
+            document.getElementsByName("approve_exception")[0].checked = false;
         }
     }
 
@@ -594,6 +631,11 @@ if (isset($_POST['password_policy_update']))
                                 <input name="change_password" id="change_password" <?php if(isset($change_password) && $change_password == 1) echo "checked"; ?> class="hidden-checkbox" type="checkbox" value="1" />  <label for="change_password">  &nbsp;&nbsp;&nbsp; <?php echo $escaper->escapeHtml($lang['RequirePasswordChangeOnLogin']); ?> </label> 
                             </div>
 
+                            <h6>
+                                <u><?php echo $escaper->escapeHtml($lang['Manager']); ?></u>
+                            </h6>
+                            <?php create_dropdown("user", "", "manager"); ?>
+
                             <h6><u><?php echo $escaper->escapeHtml($lang['Teams']); ?></u></h6>
                             <?php create_multiple_dropdown("team"); ?>
 
@@ -622,6 +664,11 @@ if (isset($_POST['password_policy_update']))
                                                     <li><input class="hidden-checkbox" id="add_documentation" name="add_documentation" type="checkbox" /> <label for="add_documentation"><?php echo $escaper->escapeHtml($lang['AbleToAddDocumentation']); ?></label></li>
                                                     <li><input class="hidden-checkbox" id="modify_documentation" name="modify_documentation" type="checkbox" /> <label for="modify_documentation"><?php echo $escaper->escapeHtml($lang['AbleToModifyDocumentation']); ?></label></li>
                                                     <li><input class="hidden-checkbox" id="delete_documentation" name="delete_documentation" type="checkbox" /> <label for="delete_documentation"><?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentation']); ?></label></li>
+                                                    <li><input class="hidden-checkbox" id="view_exception" name="view_exception" type="checkbox" /> <label for="view_exception"><?php echo $escaper->escapeHtml($lang['AbleToViewDocumentException']); ?></label></li>
+                                                    <li><input class="hidden-checkbox" id="create_exception" name="create_exception" type="checkbox" /> <label for="create_exception"><?php echo $escaper->escapeHtml($lang['AbleToCreateDocumentException']); ?></label></li>
+                                                    <li><input class="hidden-checkbox" id="update_exception" name="update_exception" type="checkbox" /> <label for="update_exception"><?php echo $escaper->escapeHtml($lang['AbleToUpdateDocumentException']); ?></label></li>
+                                                    <li><input class="hidden-checkbox" id="delete_exception" name="delete_exception" type="checkbox" /> <label for="delete_exception"><?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentException']); ?></label></li>
+                                                    <li><input class="hidden-checkbox" id="approve_exception" name="approve_exception" type="checkbox" /> <label for="approve_exception"><?php echo $escaper->escapeHtml($lang['AbleToApproveDocumentException']); ?></label></li>
                                                 </ul>
                                             </li>
                                         </ul>
@@ -710,7 +757,7 @@ if (isset($_POST['password_policy_update']))
                         <form name="select_user" method="post" action="view_user_details.php">
                             <p>
                                 <h4><?php echo $escaper->escapeHtml($lang['ViewDetailsForUser']); ?>:</h4>
-                                <?php echo $escaper->escapeHtml($lang['DetailsForUser']); ?> <?php create_dropdown("user"); ?>&nbsp;&nbsp;<input type="submit" value="<?php echo $escaper->escapeHtml($lang['Select']); ?>" name="select_user" />
+                                <?php echo $escaper->escapeHtml($lang['DetailsForUser']); ?> <?php create_dropdown('enabled_users', null, 'user'); ?>&nbsp;&nbsp;<input type="submit" value="<?php echo $escaper->escapeHtml($lang['Select']); ?>" name="select_user" />
                             </p>
                         </form>
                     </div>

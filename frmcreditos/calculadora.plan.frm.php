@@ -73,6 +73,8 @@ $xSel		= new cHSelect();
 $xHNotif	= new cHNotif();
 $xTxt		= new cHText();
 
+$xFRM->addCerrar();
+
 $xFRM->addRangeSupport();
 $xTxt->setDivClass("");
 $nn			= $xTxt->getLabel("TR.NOMBRE");

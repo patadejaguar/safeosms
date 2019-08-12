@@ -148,16 +148,16 @@ function is_valid_user($user, $pass, $upgrade = false)
                 require_once(realpath(__DIR__ . '/../extras/authentication/index.php'));
 
                 // Set the type to LDAP
-                $type = 2;
+                $type = "ldap";
 
                 // Check for a valid Active Directory user
-                list($valid_ad, $dn) = is_valid_ad_user($user, $pass);
+                list($valid_ad, $dn, $attributes) = is_valid_ad_user($user, $pass);
 
                 // If the user is a valid AD user
                 if ($valid_ad)
                 {
                     // Add the new user
-                    $user_id = authentication_add_new_user($type, $user);
+                    $user_id = authentication_add_new_user($type, $user, $attributes);
 
                     // Add the new team by AD group
                     set_team_to_ldap_user($user_id, $dn, $pass);
@@ -186,7 +186,7 @@ function is_valid_user($user, $pass, $upgrade = false)
             require_once(realpath(__DIR__ . '/../extras/authentication/index.php'));
 
             // Check for a valid Active Directory user
-            list($valid_ad, $dn)= is_valid_ad_user($user, $pass);
+            list($valid_ad, $dn, $attributes)= is_valid_ad_user($user, $pass);
         }
     }
     // If the type is saml
@@ -204,11 +204,7 @@ function is_valid_user($user, $pass, $upgrade = false)
     }
 
     // If either the SAML, AD, or SimpleRisk user are valid
-    if ($valid_saml || $valid_ad || $valid_simplerisk)
-    {
-        // Set the user permissions
-//        set_user_permissions($user, $pass, $upgrade);
-
+    if ($valid_saml || $valid_ad || $valid_simplerisk) {
         return true;
     }
     else return false;
@@ -217,8 +213,43 @@ function is_valid_user($user, $pass, $upgrade = false)
 /**********************************
  * FUNCTION: SET USER PERMISSIONS *
  **********************************/
-function set_user_permissions($user, $pass, $upgrade = false)
+function set_user_permissions($user, $upgrade = false)
 {
+    $possible_permissions = [
+        'governance',
+        'riskmanagement',
+        'compliance',
+        'assessments',
+        'asset',
+        'admin',
+        'review_veryhigh',
+        'accept_mitigation',
+        'review_high',
+        'review_medium',
+        'review_low',
+        'review_insignificant',
+        'submit_risks',
+        'modify_risks',
+        'plan_mitigations',
+        'close_risks',
+        'add_new_frameworks',
+        'modify_frameworks',
+        'delete_frameworks',
+        'add_new_controls',
+        'modify_controls',
+        'delete_controls',
+        'add_documentation',
+        'modify_documentation',
+        'delete_documentation',
+        'comment_risk_management',
+        'comment_compliance',
+        'view_exception',
+        'create_exception',
+        'update_exception',
+        'delete_exception',
+        'approve_exception'
+    ];
+
     // Open the database connection
     $db = db_open();
     
@@ -229,12 +260,14 @@ function set_user_permissions($user, $pass, $upgrade = false)
         if (get_setting('strict_user_validation') == 0)
         {
             // Query the DB for the users complete information
-            $stmt = $db->prepare("SELECT value, type, name, lang, governance, riskmanagement, compliance, assessments, asset, admin, custom_display_settings, review_veryhigh, accept_mitigation, review_high, review_medium, review_low, review_insignificant, submit_risks, modify_risks, plan_mitigations, close_risks, add_new_frameworks, modify_frameworks, delete_frameworks, add_new_controls, modify_controls, delete_controls, add_documentation, modify_documentation, delete_documentation, comment_risk_management, comment_compliance FROM user WHERE LOWER(convert(`username` using utf8)) = LOWER(:user); ");
+            $stmt = $db->prepare("
+                SELECT value, type, name, lang, custom_display_settings, " . implode(',', $possible_permissions) . "
+                FROM user WHERE LOWER(convert(`username` using utf8)) = LOWER(:user); ");
         }
         else
         {
             // Query the DB for the users complete information
-            $stmt = $db->prepare("SELECT value, type, name, lang, governance, riskmanagement, compliance, assessments, asset, admin, custom_display_settings, review_veryhigh, accept_mitigation, review_high, review_medium, review_low, review_insignificant, submit_risks, modify_risks, plan_mitigations, close_risks, add_new_frameworks, modify_frameworks, delete_frameworks, add_new_controls, modify_controls, delete_controls, add_documentation, modify_documentation, delete_documentation, comment_risk_management, comment_compliance FROM user WHERE username = :user; ");
+            $stmt = $db->prepare("SELECT value, type, name, lang, custom_display_settings, " . implode(',', $possible_permissions) . " FROM user WHERE username = :user; ");
         }
     }
     // If we are doing an upgrade
@@ -272,35 +305,12 @@ function set_user_permissions($user, $pass, $upgrade = false)
     // If we are not doing an upgrade
     if (!$upgrade)
     {
-        // Set additional session values
-        $_SESSION['governance'] = $array[0]['governance'];
-        $_SESSION['riskmanagement'] = $array[0]['riskmanagement'];
-        $_SESSION['compliance'] = $array[0]['compliance'];
-        $_SESSION['assessments'] = $array[0]['assessments'];
-        $_SESSION['asset'] = $array[0]['asset'];
-        $_SESSION['review_veryhigh'] = $array[0]['review_veryhigh'];
-        $_SESSION['accept_mitigation'] = $array[0]['accept_mitigation'];
-        $_SESSION['review_high'] = $array[0]['review_high'];
-        $_SESSION['review_medium'] = $array[0]['review_medium'];
-        $_SESSION['review_low'] = $array[0]['review_low'];
-        $_SESSION['review_insignificant'] = $array[0]['review_insignificant'];
-        $_SESSION['submit_risks'] = $array[0]['submit_risks'];
-        $_SESSION['modify_risks'] = $array[0]['modify_risks'];
-        $_SESSION['close_risks'] = $array[0]['close_risks'];
-        $_SESSION['plan_mitigations'] = $array[0]['plan_mitigations'];
         $_SESSION['custom_display_settings'] = empty($array[0]['custom_display_settings']) ? array() : json_decode($array[0]['custom_display_settings'], true);
-        
-        $_SESSION['add_new_frameworks'] = $array[0]['add_new_frameworks'];
-        $_SESSION['modify_frameworks']  = $array[0]['modify_frameworks'];
-        $_SESSION['delete_frameworks']  = $array[0]['delete_frameworks'];
-        $_SESSION['add_new_controls']   = $array[0]['add_new_controls'];
-        $_SESSION['modify_controls']    = $array[0]['modify_controls'];
-        $_SESSION['delete_controls']    = $array[0]['delete_controls'];
-        $_SESSION['add_documentation']    = $array[0]['add_documentation'];
-        $_SESSION['modify_documentation'] = $array[0]['modify_documentation'];
-        $_SESSION['delete_documentation'] = $array[0]['delete_documentation'];
-        $_SESSION['comment_risk_management'] = $array[0]['comment_risk_management'];
-        $_SESSION['comment_compliance'] = $array[0]['comment_compliance'];
+
+        // Set permissions
+        foreach($possible_permissions as $permission) {
+            $_SESSION[$permission] = $array[0][$permission];
+        }
 
 //        // If the encryption extra is enabled
 //        if (encryption_extra())
@@ -394,7 +404,7 @@ function is_valid_simplerisk_user($user, $pass)
     db_close($db);
 
     // If the passwords are equal
-    if (($providedPassword == $storedPassword) || ($oldProvidedPassword == $storedPassword))
+    if (hash_equals($storedPassword, $providedPassword) || hash_equals($storedPassword, $oldProvidedPassword))
     {
         return true;
     }
@@ -446,10 +456,17 @@ function generate_token($size)
 {               
         $token = "";
         $values = array_merge(range(0, 9), range('a', 'z'), range('A', 'Z'));
+	$values_count = count($values);
         
         for ($i = 0; $i < $size; $i++)
         {
-                $token .= $values[array_rand($values)];
+                // If the random int function exists (PHP 7)
+                if (function_exists('random_int'))
+                {
+                        // Generate the token using the random_int function
+                        $token .= $values[random_int(0, $values_count-1)];
+                }
+                else $token .= $values[array_rand($values)];
         }
  
         return $token;
@@ -497,24 +514,6 @@ function password_reset_by_userid($userid)
     $username = $array[0]['username'];
     $name = $array[0]['name'];
     $email = $array[0]['email'];
-    
-    // Update user encryptied_pass if encryption_level is "user" and activated=1.
-    if (encryption_extra())
-    {
-        // Load the extra
-        require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-        if(activated_user($username)){
-
-            $tmp_pass = fetch_tmp_pass() . ":" . $array[0]['salt'];
-            $encrypted_pass = encrypt($tmp_pass, $_SESSION['encrypted_pass']);
-            
-            // Insert into the password reset table
-            $stmt = $db->prepare("UPDATE `user_enc` set `encrypted_pass` = '{$encrypted_pass}', activated=0 where value=:userid ");
-            $stmt->bindParam(':userid', $userid, PDO::PARAM_INT);
-            $stmt->execute();
-        }
-    }
-    
 
     // Insert into the password reset table
     $stmt = $db->prepare("INSERT INTO password_reset (`username`, `token`) VALUES (:username, :token)");
@@ -555,7 +554,7 @@ function password_reset_by_userid($userid)
 function send_reset_email($username, $name, $email, $token)
 {
     $to = $email;
-    $subject = "[SIMPLERISK] Password Reset Token";
+    $subject = "Password Reset Token";
 
     // To send HTML mail, the Content-type header must be set
     $headers = "MIME-Version: 1.0\r\n";
@@ -609,24 +608,6 @@ function password_reset_by_token($username, $token, $password, $repeat_password)
 {
     global $lang, $escaper;
     $userid = is_simplerisk_user($username);
-    
-    // If the encryption extra is enabled
-    if (encryption_extra())
-    {
-        // Load the extra
-        require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-        
-        // Check if can be encrypted from external
-        if(!check_encryption_from_external($username)){
-            
-            // Display an alert
-            set_alert(true, "bad", $escaper->escapeHtml($lang['ResetPasswordMessageInUserLevelEncryption']));
-
-            // Return false
-            return false;
-        }
-    }
-    
 
     // If the reset token is valid
     if (is_valid_reset_token($username, $token))
@@ -648,23 +629,13 @@ function password_reset_by_token($username, $token, $password, $repeat_password)
                 $hash = generateHash($salt, $password);
 
                 // Update the password
-                $stmt = $db->prepare("UPDATE user SET password=:hash WHERE username=:username");
+                $stmt = $db->prepare("UPDATE user SET password=:hash, last_password_change_date=NOW() WHERE username=:username");
                 $stmt->bindParam(":hash", $hash, PDO::PARAM_STR, 60);
                 $stmt->bindParam(":username", $username, PDO::PARAM_STR, 200);
                 $stmt->execute();
 
                 // Close the database connection
                 db_close($db);
-
-                // If the encryption extra is enabled
-                if (encryption_extra())
-                {
-                    // Load the extra
-                    require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-
-                    // Set the new encrypted password
-                    set_enc_pass($username, $password);
-                }
 
                 // Display an alert
                 set_alert(true, "good", "Your password has been reset successfully!");
@@ -694,7 +665,7 @@ function password_reset_by_token($username, $token, $password, $repeat_password)
     else
     {
         // Display an alert
-        set_alert(true, "bad", "There was an error with your password reset.");
+        set_alert(true, "bad", "Invalid user reset token.");
 
         // Return false
         return false;
@@ -1254,15 +1225,6 @@ function reset_password($user_id, $current_password, $new_password, $confirm_pas
 				// Update the password
 				update_password($username, $hash);
 
-				// If the encryption extra is enabled
-				if (encryption_extra())
-				{
-					// Load the extra
-					require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-
-					// Set the new encrypted password
-					set_enc_pass($username, $new_password, $_SESSION['encrypted_pass']);
-				}
             
 				// Display an alert
 				set_alert(true, "good", "Your password has been updated successfully!");
@@ -1274,7 +1236,7 @@ function reset_password($user_id, $current_password, $new_password, $confirm_pas
 				}
             
 				// Set the user permissions
-				set_user_permissions($username, $new_password);
+				set_user_permissions($username);
 
 				// Get base URL
 				$base_url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}{$_SERVER['SCRIPT_NAME']}";

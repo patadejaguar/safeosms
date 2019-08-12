@@ -26,6 +26,8 @@ include_once("../core/core.operaciones.inc.php");
 include_once("../core/core.db.inc.php");
 include_once("../core/core.lang.inc.php");
 include_once("../core/core.sys.inc.php");
+include_once("../libs/Banxico.php");
+
 
 ini_set("display_errors", "off");
 ini_set("max_execution_time", 900);
@@ -40,7 +42,8 @@ $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
 
 $xCierre		= new cCierreDelDia($fechaop);
-$EsCerrado		= $xCierre->checkCierre($fechaop);
+
+$EsCerrado		= $xCierre->checkCierre($fechaop, $xCierre->MARCA_SISTEMA);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
 $next			= "./cierre_de_sistema.frm.php?s=true&k=" . $key . "&f=$fechaop";
@@ -52,6 +55,7 @@ $xProy			= new cCreditosProyecciones();
 $xSys			= new cSystemTask();
 $xDB			= new cSAFEData();
 $xPUtils		= new cPersonasUtilerias();
+
 
 if($EsCerrado == true AND $forzar == false){
 	setAgregarEvento_("Cierre De Sistema Existente", 5);
@@ -69,7 +73,7 @@ if($EsCerrado == true AND $forzar == false){
 	$xSuc->init();
 	$FechaDiaSig	= $xF->setSumarDias(1, $fechaop);
 	
-	$aliasFil		= getSucursal() . "-eventos-al-cierre-de-sistema-del-dia-$fechaop";
+	$aliasFil		= $xCierre->getNombreUnico();
 
 	$xLog			= new cFileLog($aliasFil);
 
@@ -78,7 +82,7 @@ if($EsCerrado == true AND $forzar == false){
 	$xRec			= new cReciboDeOperacion(RECIBOS_TIPO_CIERRE);
 	$xRec->setGenerarPoliza();
 	$xRec->setForceUpdateSaldos();
-	$idrecibo		=  $xRec->setNuevoRecibo(DEFAULT_SOCIO,DEFAULT_CREDITO,$fechaop, 1, RECIBOS_TIPO_CIERRE, "CIERRE_DE_SISTEMA_$fechaop", "NA", "ninguno", "NA", DEFAULT_GRUPO);
+	$idrecibo		=  $xRec->setNuevoRecibo(DEFAULT_SOCIO,DEFAULT_CREDITO,$fechaop, 1, RECIBOS_TIPO_CIERRE, $xCierre->getTextoUnico(), "NA", "ninguno", "NA", DEFAULT_GRUPO);
 	$xRec->setNumeroDeRecibo($idrecibo);
 	//======================= cancelar todas las cajas a 0
 	$sqlCa			= $xLi->getListadoDeCajasConUsuario(TESORERIA_CAJA_ABIERTA);
@@ -213,7 +217,12 @@ if($EsCerrado == true AND $forzar == false){
 	} else {
 		$xSys->setBackupDB();
 	}
-
+	//========================  Actualizar Dolar
+	$xTes	= new cTesoreriaMonedas();
+	$xBan	= new Banxico();
+	
+	$xTes->addValoracion($xTes->TIPO_DOLAR,$xBan->getExRate(), $fechaop);
+	//
 	//cerrar el log
 	$xLog->setWrite($messages);
 	$xLog->setClose();

@@ -680,7 +680,11 @@ class cFileSystem {
 			
 			$xFU	= new cSystemTask();
 			if($xFU->getExistsUnoconv() == true){
-				$res	= $xFU->runcmd("export HOME=" . PATH_TMP .  " && /usr/bin/unoconv --format=docx --output='$ofile' '$nfile'");
+				//$tpl	= "t2.ott";
+				// cp " . PATH_HTDOCS . "/mfi/templates/$tpl " . PATH_TMP .  "/ &&
+				$cmd	= "export HOME=" . PATH_TMP .  " && /usr/bin/unoconv --doctype=document --format=docx --output='$ofile' '$nfile'";
+				
+				$res	= $xFU->runcmd($cmd);
 				if($res !== false){
 					$nn		= $ofile;
 				}
@@ -822,7 +826,7 @@ class cTiposLimpiadores {
 	}
 	function cleanCalle($valor = ""){
 		$valor		= strtoupper($valor);
-		$arr		= array("AVENIDA", "CALLE", "CALE ", "CALLLE", "AVE.", "AVE ", "C.", "C ", "NUM.", "NUM ", "NO ", "NOM.", "SIN NUMERO", "SN", "S/N", "SIN NIM", "LOTE ", "#", "NO.", "NUMERO");
+		$arr		= array("AVENIDA", "CALLE ", "CALE ", "CALLLE", "AVE.", "AVE ", "C.", "C ", "NUM.", "NUM ", "NO ", "NOM.", "SIN NUMERO", "SN", "S/N", "SIN NIM", "LOTE ", "#", "NO.", "NUMERO");
 		$valor		= str_replace($arr, " ", $valor);
 		return 		trim(preg_replace('!\s+!', ' ', $valor));
 	}
@@ -885,7 +889,12 @@ class cTiposLimpiadores {
 			$nom	= implode(" ", $nn);
 			$dev[2]	= str_replace("_", " ", $nom);
 			$dev[1]	= str_replace("_", " ", $dev[1]);
-			$dev[0]	= str_replace("_", " ", $dev[0]);
+			
+			if(isset($dev[0])){
+				$dev[0]	= str_replace("_", " ", $dev[0]);
+			} else {
+				$dev[0]	= "";
+			}
 		}
 		return $dev;
 	}
@@ -936,6 +945,8 @@ class cDocumentos {
 	private $mPrePath		= "";
 	private $mRutaLocal		= "";
 	private $mCompletePath	= "";
+	private $mStrOpts		= "width=\"90%\" height=\"500px\"";
+	
 	function __construct($nombre = ""){ $this->mNombreArchivo = $nombre; $this->getTipo();	}
 	function getTipo($documento = false){
 		$documento	= ($documento == false) ? $this->mNombreArchivo : $documento;
@@ -966,22 +977,24 @@ class cDocumentos {
 	
 	function getExt(){ return $this->mExt; }
 	
-	function getEmbed($archivo = false, $persona = false, $conteo = 0){
+	function getEmbed($archivo = false, $persona = false, $conteo = 0, $opts = ""){
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
 		$archivo		= ($archivo == false) ? $this->mNombreArchivo : $archivo;
 		$mfile			= $this->FTPGetFile($archivo, $persona);
 		$rs				= "";
 		$ext			= $this->getTipo($archivo);
+		$opts			= ($opts == "") ? $this->mStrOpts : $opts;
+		
 		if($conteo > 4){
 			$rs			= ($ext == $this->EXT_PDF) ? "<a class='button'><i class='fa fa-file-pdf-o fa-2x'></i>" . $archivo . "</a>"  : "<a class='button'><i class='fa fa-file-image-o fa-2x'></i>" . $archivo . "</a>";
 		} else {
 			$d64		= base64_encode($mfile);
 			if($ext == $this->EXT_PDF){
 				//$rs		= "<embed src=\"data:application/pdf;base64,$d64\" width=\"80%\" height=\"500\" alt=\"pdf\" type=\"application/pdf\" ></embed>";
-				$rs		= "<object type=\"application/pdf\" data=\"data:application/pdf;base64,$d64\" width=\"90%\" height=\"500px\"></object>";
+				$rs		= "<object type=\"application/pdf\" data=\"data:application/pdf;base64,$d64\" $opts></object>";
 			} else {
 				$ext	= strtolower($ext);
-				$rs		= "<img src=\"data:image/$ext;base64,$d64\" width=\"90%\" height=\"500px\" />";
+				$rs		= "<img src=\"data:image/$ext;base64,$d64\" $opts/>";
 			}
 		}
 		return $rs;
@@ -1025,7 +1038,9 @@ class cDocumentos {
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
 		$archivo			= ($archivo == "") ? $this->mNombreArchivo : $archivo;
 	
-		if($prePath !== ""){ ftp_chdir($this->mCnnFTP, $prePath);	}
+		if($prePath !== ""){ 
+			@ftp_chdir($this->mCnnFTP, $prePath);
+		}
 		$mark				= ($prePath == "") ? "" : "$prePath-";
 		$ruta_completa		= PATH_HTDOCS . "/tmp/$mark" . $archivo;
 		//TODO: 01/01/2015 Modificar 2014Nov19 mejorar en cache.- validar mejoras
@@ -1047,7 +1062,9 @@ class cDocumentos {
 		if($this->mCnnFTP == null){ $this->FTPConnect(); }
 		$archivo			= ($archivo == false) ? $this->mNombreArchivo : $archivo;
 		
-		if($persona != false){ ftp_chdir($this->mCnnFTP, $persona);	}
+		if($persona != false){ 
+			@ftp_chdir($this->mCnnFTP, $persona);
+		}
 		$mark				= ($persona == false) ? "" : "$persona-";
 		
 		$ruta_completa		= PATH_TMP . "/$mark" . $archivo;
@@ -1067,21 +1084,21 @@ class cDocumentos {
 		return $data;
 	}
 	function FTPConnect(){
-		if(!function_exists("ftp_connect")){
-			$conn_id 		= false;
-		} else {
+		$xUsar	= new cUsar();
+		if($xUsar->getUsarFTP() == true){
+			
 			$conn_id 		= ftp_connect(SYS_FTP_SERVER);
-		}
-		
-		// iniciar sesión con nombre de usuario y contraseña
-		if($conn_id){
-			if(SYS_FTP_PWD !== "" AND SYS_FTP_USER !== ""){
+			// iniciar sesión con nombre de usuario y contraseña
+			if($conn_id){
 				if(ftp_login($conn_id, SYS_FTP_USER, SYS_FTP_PWD)){
 					$this->mCnnFTP	= $conn_id;
 					$this->mReady	= true;
 				}
 			}
+		} else {
+			$this->mReady	= false;
 		}
+		
 		return $conn_id;		
 	}
 	/**
@@ -1138,9 +1155,9 @@ class cDocumentos {
 		if($persona<= DEFAULT_SOCIO){
 			$ready = false;
 		} else {
-			if(!ftp_chdir($this->mCnnFTP, $persona)){
+			if(!@ftp_chdir($this->mCnnFTP, $persona)){
 				$this->FTPMakeDir($persona);
-				ftp_chdir($this->mCnnFTP, $persona);
+				@ftp_chdir($this->mCnnFTP, $persona);
 			}
 			if(!ftp_rename($this->mCnnFTP, "../$documento", "./$documento")){
 				$ready			= false;
@@ -1167,15 +1184,15 @@ class cDocumentos {
 		if($persona > DEFAULT_SOCIO){
 			$odir			= "";
 			$ndir			= "$persona" . "/" . "$to";
-			if(!ftp_chdir($this->mCnnFTP, $persona)){
+			if(!@ftp_chdir($this->mCnnFTP, $persona)){
 				$this->FTPMakeDir($persona);
 				//ftp_chdir($this->mCnnFTP, $persona);
 			}
-			if(!ftp_chdir($this->mCnnFTP, $ndir)){
+			if(!@ftp_chdir($this->mCnnFTP, $ndir)){
 				$this->FTPMakeDir($ndir);
 			}
 			//Regresar al root
-			ftp_chdir($this->mCnnFTP, '~');
+			@ftp_chdir($this->mCnnFTP, '~');
 			
 			if(!ftp_rename($this->mCnnFTP, $from . $doc , $ndir . $doc )){
 				$ready			= false;
@@ -1350,9 +1367,9 @@ class cDocumentos {
 	}
 	private function FTPChangeDir($dir){
 		$res	= true;
-		if(!ftp_chdir($this->mCnnFTP, $dir)){
+		if(!@ftp_chdir($this->mCnnFTP, $dir)){
 			$this->FTPMakeDir($dir);
-			if(!ftp_chdir($this->mCnnFTP, $dir)){
+			if(!@ftp_chdir($this->mCnnFTP, $dir)){
 				$res = false;
 			}
 		}
@@ -1493,6 +1510,12 @@ class cReglasDeValidacion  {
 			$ok		= true;
 		}
 		return $ok;
+	}
+	function email($mail){
+		if (filter_var($mail, FILTER_VALIDATE_EMAIL)){ 
+			return true;
+		}
+		return false;
 	}
 }
 
@@ -1937,7 +1960,7 @@ class cCouchDB {
 				$pagina					= $doc->pagina;
 				$observaciones			= $doc->observaciones;
 				$fecha					= $xF->getFechaByInt($time);
-				$exif 					= exif_read_data($xpath);
+				$exif 					= @exif_read_data($xpath);
 				$lon 					= 0;
 				$lat					= 0;
 				//$documento['tmp_name']

@@ -67,3 +67,13 @@ _ReSharper*/
 .dropbox.attr
 .dropbox.cache
 
+tmp/
+templates/
+
+### .bin/
+
+### IDEA
+*.iml
+*.ipr
+*.iws
+

@@ -367,7 +367,21 @@ if  ( $action == SYS_DOS ){
 					$xPlan->setEliminar();
 					$msg	.= $xPlan->getMessages();
 				}
-				$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", $xFRM->ic()->CALCULAR);
+				
+				//$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", $xFRM->ic()->CALCULAR);
+				
+				$xPlan	=new cPlanDePagos();
+				$xPlan->initByCredito($xCred->getClaveDeCredito());
+				$xPlan->setClaveDeCredito($xCred->getClaveDeCredito());
+				
+				
+				if($xPlan->setRegenerar() == true){
+					$xFRM->addButtonPlanDePagos($xPlan->getCodigoDePlanDePagos());
+				} else {
+					$xFRM->OButton("TR.GENERAR PLAN_DE_PAGOS", "var CGen=new CredGen();CGen.getFormaPlanPagos($credito)", $xFRM->ic()->CALCULAR);
+				}
+				
+				
 				
 				//Actualizar Tasa de Mora
 				if($TasaDeMora>0){

@@ -1342,7 +1342,7 @@ class cReciboDeOperacion{
 	function setUnidadesOriginales($unidades){ $this->mUnidadesOriginales = $unidades; }
 	function getUnidadesOriginales(){ return $this->mUnidadesOriginales; }
 	function setFechaVencimiento($fecha = false){ 	if ($fecha == false ){ $fecha	= fechasys(); } $this->mFechaDeVcto	= $fecha;	}
-	function setFecha($fecha, $actualizacion = false){
+	function setFecha($fecha, $actualizacion = false, $updateMvtos = false){
 		$xQL				= new MQL();
 		$xF					= new cFecha();
 		$fecha				= $xF->getFechaISO($fecha);
@@ -1353,7 +1353,7 @@ class cReciboDeOperacion{
 		
 		if( $actualizacion == true ){
 			$xQL->setRawQuery("UPDATE operaciones_recibos SET fecha_operacion='$fecha' WHERE idoperaciones_recibos=$recibo");
-			if($this->mUnicoDocto == true){
+			if($this->mUnicoDocto == true OR $updateMvtos == true){
 				$xQL->setRawQuery("UPDATE operaciones_mvtos SET fecha_afectacion='$fecha', fecha_operacion='$fecha' WHERE recibo_afectado=$recibo");
 			}
 			//actualizar tesoreria

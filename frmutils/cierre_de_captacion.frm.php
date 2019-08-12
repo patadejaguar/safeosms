@@ -42,7 +42,7 @@ $xF				= new cFecha(0, $fechaop);
 $fechaop		= $xF->getFechaISO($fechaop);
 
 $xCierre		= new cCierreDelDia($fechaop);
-$EsCerrado		= $xCierre->checkCierre($fechaop);
+$EsCerrado		= $xCierre->checkCierre($fechaop, $xCierre->MARCA_CAPTACION);
 $forzar			= parametro("forzar", false, MQL_BOOL);
 
 $next			= "./cierre_de_seguimiento.frm.php?s=true&k=" . $key . "&f=$fechaop";
@@ -57,7 +57,7 @@ if($EsCerrado == true AND $forzar == false){
 	getEnCierre(true);
 	//INICIAR
 	if(MODULO_CAPTACION_ACTIVADO == true){
-		$aliasFil			= getSucursal() . "-eventos-al-cierre-de-captacion-del-dia-$fechaop";
+		$aliasFil			= $xCierre->getNombreUnico();
 	
 		$xLog				= new cFileLog($aliasFil, true);
 	
@@ -66,7 +66,7 @@ if($EsCerrado == true AND $forzar == false){
 		$xRec				= new cReciboDeOperacion(12, false);
 		//$xRec->setGenerarPoliza();
 		$xRec->setForceUpdateSaldos();
-		$idrecibo			=  $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CUENTA_CORRIENTE, $fechaop, 1, RECIBOS_TIPO_CIERRE, "CIERRE_DE_CAPTACION_$fechaop", "", TESORERIA_COBRO_NINGUNO, "", DEFAULT_GRUPO);
+		$idrecibo			=  $xRec->setNuevoRecibo(DEFAULT_SOCIO, DEFAULT_CUENTA_CORRIENTE, $fechaop, 1, RECIBOS_TIPO_CIERRE, $xCierre->getTextoUnico(), "", TESORERIA_COBRO_NINGUNO, "", DEFAULT_GRUPO);
 		$xRec->setNumeroDeRecibo($idrecibo);
 	
 		$messages 			.= "=======================================================================================\r\n";

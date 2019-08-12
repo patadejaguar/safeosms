@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.PARCIALIDADES PENDIENTES", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -48,6 +48,8 @@ function jsaGetLetras($idcredito, $idfecha){
 	$xT->setOmitidos("iva_exigible");
 	$xT->setOmitidos("total_sin_otros");
 	$xT->setOmitidos("clave_otros");
+	$xT->setOmitidos("int_corriente");
+	$xT->setOmitidos("int_corriente_letra");
 	//$xT->setOmitidos("letra");
 	
 	$xT->setForzarTipoSQL("dias", "int");
@@ -103,13 +105,20 @@ $jscallback	= parametro("callback"); $tiny = parametro("tiny"); $form = parametr
 $xHP->init();
 ?> <style> #idavisopago, #idimporte, #iMontoRecibido { font-size : 1.3em !important; } </style><?php
 
+
 $xFRM		= new cHForm("frmcredslistapends", "./");
 $msg		= "";
+
+$xFRM->setTitle($xHP->getTitle());
+
 $xFRM->OButton("TR.Obtener", "jsaGetLetras()", $xFRM->ic()->CARGAR);
 $xFRM->OButton("TR.Reporte", "var xg = new CredGen(); xg.getReporteLetrasEnMora($credito, document.getElementById('idfechadecalculo').value)", $xFRM->ic()->CARGAR);
 $xFRM->OHidden("idcredito", $credito);
 $xFRM->ODate("idfechadecalculo", false, "TR.Fecha de Calculo");
 $xFRM->addHElem("<div id='idlistado'></div>");
+
+$xFRM->addJsInit("jsaGetLetras();");
+
 //$xFRM->addSubmit();
 echo $xFRM->get();
 

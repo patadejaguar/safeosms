@@ -25,6 +25,7 @@ $xDic		= new cHDicccionarioDeTablas();
 $svc		= new MQLService("", "");
 $xErrCod	= new cErrorCodes();
 $jxc 		= new TinyAjax();
+$xValid		= new cReglasDeValidacion();
 
 $svc->setKey(getClaveCifradoTemporal());
 function jsaSavePin($pin, $idusuario){
@@ -167,12 +168,18 @@ if($xSoc->init() == true){
 			} else if ($xUser2->getPuedeEditarUsuarios() == true){
 				$idxuser	= $usuario;
 				$email 		= $xUser->getCorreoElectronico();
-				$xFRM->OButton("TR.REESTABLECER PASSWORD", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpass'});", $xFRM->ic()->PASSWORD, "cmdchangepass", "red");
+				//Enviar reestablecer contrasennia
+				if($xValid->email($email)){
+					$xFRM->OButton("TR.ENVIAR PASSWORD", "var xUsr=new UserGen();xUsr.resetPassword('$email');", $xFRM->ic()->EMAIL, "cmdchangepass", "yellow");
+				}
+				$xFRM->OButton("TR.NUEVO PASSWORD", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpass'});", $xFRM->ic()->PASSWORD, "cmdchangepass", "red");
 				//$xFRM->OButton("TR.CAMBIAR PIN", "var xG=new Gen();xG.go({url:'../frmsocios/socios.usuario.frm.php?usuario=$idxuser&action=editpin'});", $xFRM->ic()->PASSWORD, "cmdchangepin", "yellow");
 			}
 		} else {
-			
+			$enclose	= true;
 			if($action == "editpass" AND ( $xUser2->getID() == $xUser->getID() ) ){
+				$xFRM->setAction("../frmsocios/socios.usuario.frm.php?action=savepass");
+				
 				$xFRM->addSeccion("idsecccampass", "TR.Cambio de password");
 				$xTxt->addEvent("var xG=new Gen(); this.value=xG.enc(this.value)", "onchange");
 				
@@ -181,23 +188,44 @@ if($xSoc->init() == true){
 				
 				$xFRM->endSeccion();
 				$xFRM->addGuardar();
+				
+				$enclose	= false;
 			}
-			
+			if($action == "editpass" AND (MODO_DEBUG == true)){
+				if($enclose == true){
+					$xFRM->setAction("../frmsocios/socios.usuario.frm.php?action=savepass");
+					
+					$xFRM->addSeccion("idsecccampass", "TR.Cambio de password");
+					$xTxt->addEvent("var xG=new Gen(); this.value=xG.enc(this.value)", "onchange");
+					
+					$xFRM->addHElem($xTxt->getPassword("idpass1", "TR.PASSWORD"));
+					$xFRM->addHElem($xTxt->getPassword("idpass2", "TR.CONFIRME PASSWORD"));
+					
+					$xFRM->endSeccion();
+					$xFRM->addGuardar();
+					
+					$enclose	= false;
+				}
+			}
 			if($action == "editpin" AND ( $xUser2->getID() == $xUser->getID() ) ){
 				$xFRM->addSeccion("idnewpass", "TR.Cambio de Pin");
 				$xFRM->ONumero("idpin", "", "TR.PIN");
 				$xFRM->setValidacion("idpin", "jsSavePin");
 				$xFRM->endSeccion();
 				$xFRM->addGuardar();
+				$enclose	= false;
 			}
 			
 			if($action == "savepass"){
-				
+				//$enclose	= false;
 				if($xUser->setPassword($pass1) == true){
 					$xFRM->addAvisoRegistroOk("TR.El password ha cambiado\r\n");
 				} else {
 					$xFRM->addAvisoRegistroError($xUser->getMessages());
 				}
+			}
+			if($enclose == true){
+				$xFRM->addCerrar();
 			}
 		}
 		
@@ -309,7 +337,7 @@ if($xSoc->init() == true){
 			$xFRM->addHElem($xTbl->get());
 			$xFRM->endSeccion();
 			
-			$xFRM->addSeccion("idlistanotas", "TR.NOTAS");
+			$xFRM->addSeccion("idlistanotas", "TR.INFORMACION");
 			$xHG    = new cHGrid("iddivusernotes","TR.NOTAS");
 			
 			$xHG->setSQL($xLi->getListadoDeTareas($usuario));
@@ -344,7 +372,7 @@ if($xSoc->init() == true){
 			
 			/* ===========        GRID JS        ============*/
 			
-			$xHG2    = new cHGrid("iddivcoords",$xHP->getTitle());
+			$xHG2    = new cHGrid("iddivcoords","TR.UBICACION DEL USUARIO");
 			
 			$xHG2->setSQL("SELECT * FROM `usuarios_coordenadas` WHERE `idusuario`=$usuario ORDER BY `tiempo` DESC LIMIT 0,100");
 			$xHG2->addList();
@@ -379,7 +407,8 @@ if($xSoc->init() == true){
 		}
 		
 	} else {
-		$xFRM->addAvisoInicial($xSoc->getNombreCompleto() . " No Puede ser Usuario.<br />Debe existir una relacion Usuario-Persona", true);
+		$xHP->goToPageError($xErrCod->SIN_PERMISO_REGLA, OUT_HTML, $xSoc->getNombreCompleto() . " No Puede ser Usuario.<br />Debe existir una relacion Usuario-Persona");
+		
 	}
 } else {
 	

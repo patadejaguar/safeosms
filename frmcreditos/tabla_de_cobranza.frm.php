@@ -84,6 +84,7 @@ $xFRM->OHidden("idnomina", $idnomina);
 //exit($sql);
 $xT	= new cTabla($sql,2);
 $xT->setWithMetaData();
+
 $xTxt->setDivClass("tx4");
 
 $xFRM->OButton("TR.CEDULA DE COBRANZA", "var xE=new EmpGen();xE.getOrdenDeCobranza($idnomina)", $xFRM->ic()->REPORTE);
@@ -115,16 +116,24 @@ $xFRM->OHidden("idkey2", 0);
 //$xT->setWidthTool("200px");
 $xT->setResumidos("observaciones");
 
-$xFRM->OButton("TR.Eliminar Nomina", "jsEliminarNomina()", $xFRM->ic()->ELIMINAR, "idcmdeliminarnomina", "red");
 $xFRM->OButton("TR.Cancelar Nomina", "jsCancelarNomina()", $xFRM->ic()->PARAR, "idcmdcancelarnomina", "orange");
+$xFRM->OButton("TR.Eliminar Nomina", "jsEliminarNomina()", $xFRM->ic()->ELIMINAR, "idcmdeliminarnomina", "red", "TR.NOMINA");
+
 
 $xT->OInput("monto", "number", "mny", "style='max-width:6em;'");
 
+
 $xT->setOmitidos("saldo_inicial");
 
-$xT->OButton("TR.Editar", "jsEditOperacion("  . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
+
 $xT->OButton("TR.Imprimir Recibo", "jsImprimirRecibo("  . HP_REPLACE_ID . ")", $xFRM->ic()->IMPRIMIR);
-$xT->OButton("TR.ELIMINAR OPERACION", "jsEliminarOperacion(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
+
+
+if(MODO_DEBUG == true){
+	$xT->OButton("TR.Editar", "jsEditOperacion("  . HP_REPLACE_ID . ")", $xFRM->ic()->EDITAR);
+	$xT->OButton("TR.ELIMINAR OPERACION", "jsEliminarOperacion(" . HP_REPLACE_ID . ")", $xFRM->ic()->ELIMINAR);
+}
+
 $xT->OButton("TR.COBRO LIBRE", "jsSetCobroLibre(" .  HP_REPLACE_ID . ")", $xFRM->ic()->DINERO);
 
 if($xUser->getPuedeEditarRecibos() == true){
@@ -144,12 +153,11 @@ if($xPer->init() == true){
 }
 
 
-
-
 $xFRM->addHTML( $xT->Show() );
 
 if($xUser->getPuedeEliminarRecibos() == true){
-	$xFRM->OButton("TR.Eliminar Recibo", "jsEliminarRecibos()", $xFRM->ic()->REGISTROS, "idcmdeliminarrecs", "orange");
+	$xFRM->OButton("TR.Cambiar Fecha Recibos", "jsCambiarFechaRecibos()", $xFRM->ic()->CALENDARIO1, "idcmdchangefecharecs", "orange", "TR.RECIBOS");
+	$xFRM->OButton("TR.Eliminar Recibos", "jsEliminarRecibos()", $xFRM->ic()->REGISTROS, "idcmdeliminarrecs", "orange", "TR.RECIBOS");
 }
 
 $xFRM->addHTML("<div id='dgl2'><ol id='oldgl2'></ol></div>");
@@ -188,7 +196,11 @@ function jsAddCola(osrc, id){
 }
 function jsSetCobroLibre(idcred){
 	var xmonto	= $("#mny-" + idcred).val();
-	xCred.goToCobroMasivoDeCredito({credito:idcred, monto: xmonto});
+	if(xmonto > 0){
+		xCred.goToCobroMasivoDeCredito({credito:idcred, monto: xmonto});
+	} else {
+		xG.alerta({msg: "Monto Invalido", tipo: "error"});
+	}
 }
 function jsImprimirRecibo(id){
 	var obj			= processMetaData("#tr-creditos_solicitud-" + id);
@@ -208,6 +220,7 @@ function jsEliminarNomina(){
 function jsCancelarNomina(){
 	xG.confirmar({msg: "Confirma Cancelar la Nomina? Los pagos activos se cancelaran.", callback : jsaCancelarNomina} );
 }
+
 function jsEliminarRecibosConfirmado(){
 	var idnomina	= $("#idnomina").val();
 	var xRec		= new RecGen();
@@ -217,9 +230,28 @@ function jsEliminarRecibosConfirmado(){
 		xG.spinInit();
 		xRec.eliminar({ preguntar : false, recibo : obj.recibo, letra : obj.letra, nomina : idnomina, callback : markItem });
 	}
+	//cola	= {};
+}
+function jsCambiarFechaRecibos(){
+	xG.confirmar({msg: "Confirma Cambiar la Fecha de estos recibos?", callback : jsCambiarFechaRecibosConfirmado} );
+}
+function jsCambiarFechaRecibosConfirmado(){
+	var idnomina	= $("#idnomina").val();
+	var mFecha		= window.prompt("Ingrese la nueva Fecha.\nCapture el Formato: AAAA-MM-DD.");
+	if(mFecha){
+		xG.spinInit();
+		var xRec		= new RecGen();
+		for(xcred in cola){
+			var obj		= cola[xcred];
+			
+			xRec.setCambiarFecha({ preguntar : false, recibo : obj.recibo, fecha: mFecha, letra : obj.letra, nomina : idnomina, callback : markItem });
+		}
+		//cola	= {};
+	}
 }
 function markItem(id){
 	xG.spinEnd();
+	console.log(id);
 	$("#tr-" + id).removeClass(); 
 	$("#tr-" + id).addClass("tr-pagar");
 	

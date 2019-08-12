@@ -16,25 +16,23 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
 
 // Include the language file
 require_once(language_file());
-
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
 
 // Check for session timeout or renegotiation
 session_check();
@@ -47,15 +45,18 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
   exit(0);
 }
 
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
 
 // Get page info
 $currentpage = isset($_GET['currentpage']) ? $_GET['currentpage'] : "1";
 // Get teams submitted by user
-$teams = isset($_GET['teams']) ? $_GET['teams'] : "";
+$teams = isset($_GET['teams']) ? $_GET['teams'] : [];
 // Get owners submitted by user
-$owners = isset($_GET['owners']) ? $_GET['owners'] : "";
+$owners = isset($_GET['owners']) ? $_GET['owners'] : [];
 // Get owner's managers submitted by user
-$ownersmanagers = isset($_GET['ownersmanagers']) ? $_GET['ownersmanagers'] : "";
+$ownersmanagers = isset($_GET['ownersmanagers']) ? $_GET['ownersmanagers'] : [];
 
 $teamOptions = get_teams_by_login_user();
 array_unshift($teamOptions, array(
@@ -63,7 +64,7 @@ array_unshift($teamOptions, array(
     'name' => $lang['Unassigned'],
 ));
 
-$ownerOptions = $ownersManagerOptions = get_table_ordered_by_name("user");
+$ownerOptions = $ownersManagerOptions = get_options_from_table("enabled_users");
 array_unshift($ownerOptions, array(
     'value' => "0",
     'name' => $lang['NoOwner'],
@@ -73,7 +74,6 @@ array_unshift($ownersManagerOptions, array(
     'name' => $lang['NoOwnersManager'],
 ));
 
-// Set the columns
 // Names list of Risk columns
 $columns = array(
     'id',
@@ -110,32 +110,44 @@ $columns = array(
     'mitigation_owner',
     'mitigation_team',
     'mitigation_date',
+    'mitigation_controls',
     'risk_assessment',
     'additional_notes',
     'current_solution',
     'security_recommendations',
     'security_requirements',
+    'risk_tags'
 );
 
 $custom_values = [];
 
-foreach($columns as $column){
-    ${$column} = isset($_GET[$column]) ? true : false;
-}
-
-foreach($_GET as $key => $column){
-    if(stripos($key, "custom_field_") === 0){
-        $custom_values[$key] = 1;
+if(is_array($custom_display_settings = $_SESSION['custom_display_settings']) && !isset($_POST['status'])){
+    foreach($columns as $column){
+        ${$column} = in_array($column, $custom_display_settings) ? true : false;
     }
+    foreach($custom_display_settings as $custom_display_setting){
+        if(stripos($custom_display_setting, "custom_field_") === 0){
+            $custom_values[$custom_display_setting] = 1;
+        }
+    }
+}elseif(isset($_POST['status'])){
+    foreach($columns as $column){
+        ${$column} = isset($_POST[$column]) ? true : false;
+    }
+    foreach($_POST as $key=>$val){
+        if(stripos($key, "custom_field_") === 0){
+            $custom_values[$key] = 1;
+        }
+    }
+}else{
+    $id = true;
+    $subject = true;
+    $calculated_risk = true;
+    $residual_risk = true;
+    $submission_date = true;
+    $mitigation_planned = true;
+    $management_review = true;
 }
-
-    // Set the default fields to show
-//    $id = true;
-//    $subject = true;
-//    $calculated_risk = true;
-//    $submission_date = true;
-//    $mitigation_planned = true;
-//    $management_review = true;
 
 ?>
 
@@ -149,13 +161,17 @@ foreach($_GET as $key => $column){
     <script src="../js/bootstrap-multiselect.js"></script>
     <script src="../js/sorttable.js"></script>
     <script src="../js/obsolete.js"></script>
+    <script src="../js/jquery.dataTables.js"></script>
+    <script src="../js/dynamic.js"></script>
     <title>SimpleRisk: Enterprise Risk Management Simplified</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
     <link rel="stylesheet" href="../css/bootstrap.css">
     <link rel="stylesheet" href="../css/bootstrap-responsive.css">
     <link rel="stylesheet" href="../css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="../css/jquery.dataTables.css">
 
+    <link rel="stylesheet" href="../css/divshot-canvas.css">
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
     <script type="text/javascript">
@@ -168,72 +184,37 @@ foreach($_GET as $key => $column){
                 $("#risks_by_teams_form").submit();
             }
 
+            function throttledFormSubmit() {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(submit_form, doneInterval);
+            }            
+            
             // Team dropdown
             $("#teams").multiselect({
-                allSelectedText: '<?php echo $escaper->escapeHtml($lang['AllTeams']); ?>',
+                allSelectedText: '<?php echo $escaper->escapeJs($lang['AllTeams']); ?>',
                 includeSelectAllOption: true,
-                onChange: function(element, checked){
-                    var brands = $('#teams option:selected');
-                    var selected = [];
-                    $(brands).each(function(index, brand){
-                        selected.push($(this).val());
-                    });
-                    
-                    $("#team_options").val(selected.join(","));
-
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(submit_form, doneInterval);
-                }
+                onChange: throttledFormSubmit,
+                onSelectAll: throttledFormSubmit,
+                onDeselectAll: throttledFormSubmit
             });
             
             // Owner dropdown
             $("#owners").multiselect({
-                allSelectedText: '<?php echo $escaper->escapeHtml($lang['AllOwners']); ?>',
+                allSelectedText: '<?php echo $escaper->escapeJs($lang['AllOwners']); ?>',
                 includeSelectAllOption: true,
-                onChange: function(element, checked){
-                    var brands = $('#owners option:selected');
-                    var selected = [];
-                    $(brands).each(function(index, brand){
-                        selected.push($(this).val());
-                    });
-                    
-                    $("#owner_options").val(selected.join(","));
-
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(submit_form, doneInterval);
-                }
+                onChange: throttledFormSubmit,
+                onSelectAll: throttledFormSubmit,
+                onDeselectAll: throttledFormSubmit
             });
             
             // Owner's dropdown
             $("#ownersmanagers").multiselect({
-                allSelectedText: "<?php echo $lang['AllOwnersManagers']; ?>",
+                allSelectedText: "<?php echo $escaper->escapeJs($lang['AllOwnersManagers']); ?>",
                 includeSelectAllOption: true,
-                onChange: function(element, checked){
-                    var brands = $('#ownersmanagers option:selected');
-                    var selected = [];
-                    $(brands).each(function(index, brand){
-                        selected.push($(this).val());
-                    });
-                    
-                    $("#ownersmanager_options").val(selected.join(","));
-
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(submit_form, doneInterval);
-                }
+                onChange: throttledFormSubmit,
+                onSelectAll: throttledFormSubmit,
+                onDeselectAll: throttledFormSubmit
             });
-            
-            $(".pagination ul > li > a").click(function(e){
-                e.preventDefault();
-                $("#currentpage").val($(this).text().trim().toLowerCase());
-
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(submit_form, doneInterval);
-            })
-            
-            $(".colums-select-container input[type=checkbox]").click(function(){
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(submit_form, doneInterval);
-            })
         });
     </script>
 
@@ -249,42 +230,40 @@ foreach($_GET as $key => $column){
                 <?php view_reporting_menu("AllOpenRisksByTeam"); ?>
             </div>
             <div class="span9">
-                <div class="row-fluid">
-                    <div class="span4">
-                        <u><?php echo $escaper->escapeHtml($lang['Teams']); ?></u>: &nbsp;
-                        <?php create_multiple_dropdown("teams", ":".implode(":", explode(",", $teams)).":" , NULL, $teamOptions); ?>
+                <form id="risks_by_teams_form" name="get_risks_by" method="GET">
+                    <div class="row-fluid">
+                        <div class="span4">
+                            <u><?php echo $escaper->escapeHtml($lang['Teams']); ?></u>: &nbsp;
+                            <?php create_multiple_dropdown("teams", $teams, NULL, $teamOptions); ?>
+                        </div>
+                        <div class="span4">
+                            <u><?php echo $escaper->escapeHtml($lang['Owner']); ?></u>: &nbsp;
+                            <?php create_multiple_dropdown("owners", $owners , NULL, $ownerOptions); ?>
+                        </div>
+                        <div class="span4">
+                            <u><?php echo $escaper->escapeHtml($lang['OwnersManager']); ?></u>: &nbsp;
+                            <?php create_multiple_dropdown("ownersmanagers", $ownersmanagers, NULL, $ownersManagerOptions); ?>
+                        </div>
                     </div>
-                    <div class="span4">
-                        <u><?php echo $escaper->escapeHtml($lang['Owner']); ?></u>: &nbsp;
-                        <?php create_multiple_dropdown("owners", ":".implode(":", explode(",", $owners)).":" , NULL, $ownerOptions); ?>
-                    </div>
-                    <div class="span4">
-                        <u><?php echo $escaper->escapeHtml($lang['OwnersManager']); ?></u>: &nbsp;
-                        <?php create_multiple_dropdown("ownersmanagers", ":".implode(":", explode(",", $ownersmanagers)).":" , NULL, $ownersManagerOptions); ?>
-                    </div>
-                </div>
-                
-                <div class="row-fluid" style="margin-top: 14px;">
-                    <div class="well">
-                        <form id="risks_by_teams_form" method="GET">
-                            <input type="hidden" value="<?php echo (int)$currentpage; ?>" name="currentpage" id="currentpage" >
-                            <input type="hidden" value="<?php echo $escaper->escapeHtml($teams); ?>" name="teams" id="team_options">
-                            <input type="hidden" value="<?php echo $escaper->escapeHtml($owners); ?>" name="owners" id="owner_options">
-                            <input type="hidden" value="<?php echo $escaper->escapeHtml($ownersmanagers); ?>" name="ownersmanagers" id="ownersmanager_options">
-                            <div class="colums-select-container">
-                                <?php echo display_risk_columns($id, $risk_status, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $submitted_by, $scoring_method, $calculated_risk, $residual_risk, $submission_date, $review_date, $project, $mitigation_planned, $management_review, $days_open, $next_review_date, $next_step, $affected_assets, $planning_strategy, $planning_date, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $mitigation_date, $risk_assessment, $additional_notes, $current_solution, $security_recommendations, $security_requirements, $custom_values) ?>
-                            </div>
-                        </form>
+                    
+                    <div class="row-fluid" style="margin-top: 14px;">
+                        <div class="well">
+                            
+                                <input type="hidden" value="<?php echo (int)$currentpage; ?>" name="currentpage" id="currentpage" >
+                                <div class="colums-select-container">
+                                    <?php echo display_risk_columns($id, $risk_status, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $submitted_by, $scoring_method, $calculated_risk, $residual_risk, $submission_date, $review_date, $project, $mitigation_planned, $management_review, $days_open, $next_review_date, $next_step, $affected_assets, $planning_strategy, $planning_date, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $mitigation_date, $mitigation_controls, $risk_assessment, $additional_notes, $current_solution, $security_recommendations, $security_requirements, $risk_tags, $custom_values) ?>
+                                </div>
+                            
 
+                        </div>
                     </div>
-                </div>
-                
+                </form>
                 <!--<div class="row-fluid" id="risks-open-by-team-container">
                     <?php // get_risk_table(22); ?>
                 </div>-->
 
                 <div class="row-fluid" id="risks-open-by-team-container">
-                    <?php risk_table_open_by_team($teams, $owners, $ownersmanagers, $currentpage, $id, $risk_status, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $submitted_by, $scoring_method, $calculated_risk, $residual_risk, $submission_date, $review_date, $project, $mitigation_planned, $management_review, $days_open, $next_review_date, $next_step, $affected_assets, $planning_strategy, $planning_date, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $mitigation_date, $risk_assessment, $additional_notes, $current_solution, $security_recommendations, $security_requirements, $custom_values); ?>
+                    <?php risk_table_open_by_team($id, $risk_status, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $additional_stakeholders, $technology, $owner, $manager, $submitted_by, $scoring_method, $calculated_risk, $residual_risk, $submission_date, $review_date, $project, $mitigation_planned, $management_review, $days_open, $next_review_date, $next_step, $affected_assets, $planning_strategy, $planning_date, $mitigation_effort, $mitigation_cost, $mitigation_owner, $mitigation_team, $mitigation_date, $mitigation_controls, $risk_assessment, $additional_notes, $current_solution, $security_recommendations, $security_requirements, $risk_tags, $custom_values); ?>
                 </div>
             </div>
         </div>

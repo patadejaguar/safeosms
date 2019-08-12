@@ -7,8 +7,8 @@
     // Include required functions file
     require_once(realpath(__DIR__ . '/../includes/functions.php'));
     require_once(realpath(__DIR__ . '/../includes/authenticate.php'));
-	require_once(realpath(__DIR__ . '/../includes/display.php'));
-	require_once(realpath(__DIR__ . '/../includes/alerts.php'));
+    require_once(realpath(__DIR__ . '/../includes/display.php'));
+    require_once(realpath(__DIR__ . '/../includes/alerts.php'));
 
     // Include Zend Escaper for HTML Output Encoding
     require_once(realpath(__DIR__ . '/../includes/Component_ZendEscaper/Escaper.php'));
@@ -17,17 +17,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-	    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-	session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -59,6 +59,7 @@
     {
         // Include the API Extra
         require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
+
         // If the user wants to activate the extra
         if (isset($_POST['activate']))
         {
@@ -72,15 +73,30 @@
             // Disable the Encrypted Database Extra
             disable_encryption_extra();
         }
+
+        // If the user has requested to delete the backup file
+        if (isset($_POST['delete_backup_file']))
+        {
+            // Delete the backup file
+            delete_backup_file();
+        }
+
+        // If the user has requested to revert to unencrypted backup
+        if (isset($_POST['revert_to_unencrypted_backup']))
+        {
+            // Delete the backup file
+            revert_to_unencrypted_backup();
+        }
     }
 
-/*********************
- * FUNCTION: DISPLAY *
- *********************/
-function display()
-{
-	global $lang;
-	global $escaper;
+    /*********************
+    * FUNCTION: DISPLAY *
+    *********************/
+    function display()
+    {
+    global $lang;
+    global $escaper;
+
     // If the extra directory exists
     if (is_dir(realpath(__DIR__ . '/../extras/encryption')))
     {
@@ -91,10 +107,10 @@ function display()
             if (!restricted_extra("encryption"))
             {
                 echo "<form name=\"activate_extra\" method=\"post\" action=\"\">\n";
-                if(installed_mcrypt()){
+                if(installed_openssl()){
                     echo "<input type=\"submit\" value=\"" . $escaper->escapeHtml($lang['Activate']) . "\" name=\"activate\" /><br />\n";
                 }else{
-                    echo "<p>". $escaper->escapeHtml($lang['mCryptWarning']) ."</p>\n";
+                    echo "<p>". $escaper->escapeHtml($lang['OpensslWarning']) ."</p>\n";
                 }
                 echo "</form>\n";
             }
@@ -106,7 +122,7 @@ function display()
         {
             // Include the Encryption Extra
             require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-
+            
             display_encryption();
         }
     }
@@ -115,14 +131,15 @@ function display()
     {
         echo "<a href=\"https://www.simplerisk.com/extras\" target=\"_blank\">Purchase the Extra</a>\n";
     }
-}
+    }
 
-?>
+    ?>
 
-<!doctype html>
-<html>
+    <!doctype html>
+    <html>
 
-  <head>
+    <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
     <title>SimpleRisk: Enterprise Risk Management Simplified</title>
@@ -137,16 +154,20 @@ function display()
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
-  </head>
 
-  <body>
+    <?php
+        setup_alert_requirements("..");
+    ?>    
+    </head>
 
-<?php
-	view_top_menu("Configure");
+    <body>
 
-	// Get any alert messages
-	get_alert();
-?>
+    <?php
+    view_top_menu("Configure");
+
+    // Get any alert messages
+    get_alert();
+    ?>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span3">
@@ -164,6 +185,8 @@ function display()
         </div>
       </div>
     </div>
-  </body>
-
-</html>
+    <script>
+        <?php prevent_form_double_submit_script(); ?>
+    </script>    
+    </body>
+    </html>

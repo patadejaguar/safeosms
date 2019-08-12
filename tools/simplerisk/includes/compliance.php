@@ -23,9 +23,9 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 function display_framework_controls_in_compliance()
 {
     global $lang, $escaper;
-    
+
     $tableID = "framework-controls";
-    
+
     echo "
         <table width=\"100%\" id=\"{$tableID}\" >
             <thead class='hide'>
@@ -105,12 +105,14 @@ function display_framework_controls_in_compliance()
             
             $(\"body\").on(\"click\", \".add-test\", function(){
                 $(\"#test-new-form\")[0].reset();
-                $(\"[name=framework_control_id]\", $(\"#test-new-form\")).val($(this).data('control-id'))
+                $(\"[name=framework_control_id]\", $(\"#test-new-form\")).val($(this).data('control-id'));
+                \$(\"#test-new-form .datepicker\").datepicker({maxDate: new Date});
             })
             
             $(\"body\").on(\"click\", \".delete-row\", function(){
                 var testId = $(this).data('id');
                 $(\"#test--delete [name=test_id]\").val(testId);
+                $('#test--delete').modal();
             })
             
             $(\"body\").on(\"click\", \".edit-test\", function(){
@@ -121,22 +123,35 @@ function display_framework_controls_in_compliance()
                     success: function(result){
                         var data = result['data'];
                         var form = \$('#test-edit-form');
-                        \$('[name=test_id]', form).val(data['id']);
-                        \$('[name=tester]', form).val(data['tester']);
-                        \$('[name=test_frequency]', form).val(data['test_frequency']);
-                        \$('[name=last_date]', form).val(data['last_date']);
-                        \$('[name=next_date]', form).val(data['next_date']);
-                        \$('[name=name]', form).val(data['name']);
-                        \$('[name=objective]', form).val(data['objective']);
-                        \$('[name=test_steps]', form).val(data['test_steps']);
-                        \$('[name=approximate_time]', form).val(data['approximate_time']);
-                        \$('[name=expected_results]', form).val(data['expected_results']);
-                        \$(\".datepicker\" , form).datepicker();
+                        $('[name=test_id]', form).val(data['id']);
+                        $('[name=tester]', form).val(data['tester']);
+
+                        $('#additional_stakeholders_edit', form).multiselect('deselectAll', false);
+                        $('#additional_stakeholders_edit', form).multiselect('select', data['additional_stakeholders']);
+
+                        $('[name=\'team[]\']', form).multiselect('deselectAll', false);
+                        $('[name=\'team[]\']', form).multiselect('select', data['teams']);
+
+                        $('[name=test_frequency]', form).val(data['test_frequency']);
+                        $('[name=last_date]', form).val(data['last_date']);
+                        $('[name=next_date]', form).val(data['next_date']);
+                        $('[name=name]', form).val(data['name']);
+                        $('[name=objective]', form).val(data['objective']);
+                        $('[name=test_steps]', form).val(data['test_steps']);
+                        $('[name=approximate_time]', form).val(data['approximate_time']);
+                        $('[name=expected_results]', form).val(data['expected_results']);
+                        $('[name=last_date]', form).datepicker({maxDate: new Date});
+                        $('[name=next_date]', form).datepicker({minDate: new Date});
+
+                        $('#test--edit').modal();
+                    },
+                    error: function(xhr,status,error){
+                        if(xhr.responseJSON && xhr.responseJSON.status_message){
+                            showAlertsFromArray(xhr.responseJSON.status_message);
+                        }
                     }
                 })
-                
             })
-            
         </script>
     ";
 }
@@ -144,16 +159,27 @@ function display_framework_controls_in_compliance()
 /*****************************************
  * FUNCTION: ADD FRAMEWORK CONTROLS TEST *
  *****************************************/
-function add_framework_control_test($tester, $test_frequency, $name, $objective, $test_steps, $approximate_time, $expected_results, $framework_control_id, $last_date="0000-00-00", $next_date=false){
-    if($next_date === false) $next_date = date('Y-m-d');
-	
+function add_framework_control_test($tester, $test_frequency, $name, $objective, $test_steps, $approximate_time, $expected_results, $framework_control_id, $additional_stakeholders = "", $last_date="0000-00-00", $next_date=false, $teams=[]){
+    if($next_date === false) {
+        if (!$last_date || $last_date === "0000-00-00") {
+            $next_date = date("Y-m-d");
+        } else {
+            $calc_next_date = date("Y-m-d", strtotime($last_date) + $test_frequency*24*60*60);
+            if($calc_next_date < date("Y-m-d")){
+                $next_date = date("Y-m-d");
+            } else {
+                $next_date = $calc_next_date;
+            }
+        }
+    }
+
 	$created_at = date("Y-m-d");
 
     // Open the database connection
     $db = db_open();
 	
-    // Get the risk levels
-    $stmt = $db->prepare("INSERT INTO `framework_control_tests` (`tester`, `test_frequency`, `last_date`, `next_date`, `name`, `objective`, `test_steps`, `approximate_time`, `expected_results`, `framework_control_id`, `created_at`) VALUES (:tester, :test_frequency, :last_date, :next_date, :name, :objective, :test_steps, :approximate_time, :expected_results, :framework_control_id, :created_at)");
+    // Create test
+    $stmt = $db->prepare("INSERT INTO `framework_control_tests` (`tester`, `test_frequency`, `last_date`, `next_date`, `name`, `objective`, `test_steps`, `approximate_time`, `expected_results`, `framework_control_id`, `created_at`, `additional_stakeholders`) VALUES (:tester, :test_frequency, :last_date, :next_date, :name, :objective, :test_steps, :approximate_time, :expected_results, :framework_control_id, :created_at, :additional_stakeholders)");
     
     $stmt->bindParam(":tester", $tester, PDO::PARAM_INT);
     $stmt->bindParam(":test_frequency", $test_frequency, PDO::PARAM_INT);
@@ -165,26 +191,29 @@ function add_framework_control_test($tester, $test_frequency, $name, $objective,
     $stmt->bindParam(":approximate_time", $approximate_time, PDO::PARAM_INT);
     $stmt->bindParam(":expected_results", $expected_results, PDO::PARAM_STR, 1000);
     $stmt->bindParam(":framework_control_id", $framework_control_id, PDO::PARAM_INT);
-
     $stmt->bindParam(":created_at", $created_at);
+    $stmt->bindParam(":additional_stakeholders", $additional_stakeholders, PDO::PARAM_STR, 500);
+
     $stmt->execute();
 
     $test_id = $db->lastInsertId();
 
-    $message = "A new test named \"{$name}\" was created by username \"" . $_SESSION['user'] . "\".";
+    $message = _lang('TestCreatedAuditLogMessage', array('test_name' => $name, 'test_id' => $test_id, 'user' => $_SESSION['user']));
     write_log((int)$test_id + 1000, $_SESSION['uid'], $message, "test");
+
+    updateTeamsOfType($test_id, 'test', $teams);
 
     // Close the database connection
     db_close($db);
-    
+
     return $test_id;
 }
 
 /********************************************
  * FUNCTION: UPDATE FRAMEWORK CONTROLS TEST *
  ********************************************/
-function update_framework_control_test($test_id, $tester=false, $test_frequency=false, $name=false, $objective=false, $test_steps=false, $approximate_time=false, $expected_results=false, $last_date=false, $next_date=false, $framework_control_id=false){
-    
+function update_framework_control_test($test_id, $tester=false, $test_frequency=false, $name=false, $objective=false, $test_steps=false, $approximate_time=false, $expected_results=false, $last_date=false, $next_date=false, $framework_control_id=false, $additional_stakeholders=false, $teams=false){
+
     // Get test by test ID
     $test = get_framework_control_test_by_id($test_id);
     if($tester === false) $tester = $test['tester'];
@@ -197,13 +226,15 @@ function update_framework_control_test($test_id, $tester=false, $test_frequency=
     if($last_date === false) $last_date = $test['last_date'];
     if($next_date === false) $next_date = $test['next_date'];
     if($framework_control_id === false) $framework_control_id = $test['framework_control_id'];
+    if($additional_stakeholders === false) $additional_stakeholders = $test['additional_stakeholders'];
+    if($teams === false) $teams = $test['teams'];
 
     // Open the database connection
     $db = db_open();
 
     // Get the risk levels
-    $stmt = $db->prepare("UPDATE `framework_control_tests` SET `tester`=:tester, `test_frequency`=:test_frequency, `last_date`=:last_date, `next_date`=:next_date, `name`=:name, `objective`=:objective, `test_steps`=:test_steps, `approximate_time`=:approximate_time, `expected_results`=:expected_results, `framework_control_id`=:framework_control_id WHERE id=:test_id; ");
-    
+    $stmt = $db->prepare("UPDATE `framework_control_tests` SET `tester`=:tester, `test_frequency`=:test_frequency, `last_date`=:last_date, `next_date`=:next_date, `name`=:name, `objective`=:objective, `test_steps`=:test_steps, `approximate_time`=:approximate_time, `expected_results`=:expected_results, `framework_control_id`=:framework_control_id, `additional_stakeholders`=:additional_stakeholders WHERE id=:test_id; ");
+
     $stmt->bindParam(":test_id", $test_id, PDO::PARAM_INT);
     $stmt->bindParam(":tester", $tester, PDO::PARAM_INT);
     $stmt->bindParam(":test_frequency", $test_frequency, PDO::PARAM_INT);
@@ -215,37 +246,45 @@ function update_framework_control_test($test_id, $tester=false, $test_frequency=
     $stmt->bindParam(":approximate_time", $approximate_time, PDO::PARAM_INT);
     $stmt->bindParam(":expected_results", $expected_results, PDO::PARAM_STR, 1000);
     $stmt->bindParam(":framework_control_id", $framework_control_id, PDO::PARAM_INT);
+    $stmt->bindParam(":additional_stakeholders", $additional_stakeholders, PDO::PARAM_STR, 500);
     $stmt->execute();
 
     // Close the database connection
     db_close($db);
 
-    $message = "A test was updated for test ID \"{$test_id}\" by username \"" . $_SESSION['user'] . "\".";
+    $message = _lang('TestUpdatedAuditLogMessage', array('test_name' => $name, 'test_id' => $test_id, 'user' => $_SESSION['user']));
     write_log((int)$test_id + 1000, $_SESSION['uid'], $message, "test");
-    
+
+    updateTeamsOfType($test_id, 'test', $teams);
+
     return $test_id;
-    
 }
 
 /******************************************************
  * FUNCTION: DELETE FRAMEWORK CONTROL TEST BY TEST ID *
  ******************************************************/
 function delete_framework_control_test($test_id){
-    
+
+    $test = get_framework_control_test_by_id($test_id);
+
     // Open the database connection
     $db = db_open();
     
-    $stmt = $db->prepare("DELETE FROM `framework_control_tests` WHERE id=:id; ");
+    $stmt = $db->prepare("DELETE FROM `framework_control_tests` WHERE id=:id;");
     $stmt->bindParam(":id", $test_id, PDO::PARAM_INT);
     $stmt->execute();
 
+    $stmt = $db->prepare("DELETE FROM `items_to_teams` WHERE item_id=:id;");
+    $stmt->bindParam(":id", $test_id, PDO::PARAM_INT);
+    $stmt->execute();
+    
     // Close the database connection
     db_close($db);
 
-    $message = "A test was deleted for test ID \"{$test_id}\" by username \"" . $_SESSION['user'] . "\".";
+    $message = _lang('TestDeletedAuditLogMessage', array('test_name' => $test['name'], 'test_id' => $test_id, 'user' => $_SESSION['user']));
     write_log((int)$test_id + 1000, $_SESSION['uid'], $message, "test");
     
-    return $array;
+    return true;
 }
 
 /******************************************************
@@ -255,7 +294,7 @@ function get_framework_control_test_ids(){
     // Open the database connection
     $db = db_open();
 
-    $stmt = $db->prepare("SELECT `id` FROM `framework_control_tests`");
+    $stmt = $db->prepare("SELECT `id` FROM `framework_control_tests`; ");
     $stmt->execute();
 
     $array = $stmt->fetchAll();
@@ -295,10 +334,18 @@ function get_framework_control_test_by_id($test_id){
     // Open the database connection
     $db = db_open();
 
-    $stmt = $db->prepare("SELECT t1.*, t2.name tester_name
-        FROM `framework_control_tests` t1
+    $stmt = $db->prepare("
+        SELECT
+            `t1`.*,
+            `t2`.`name` tester_name,
+            GROUP_CONCAT(DISTINCT `itt`.`team_id`) teams
+        FROM
+            `framework_control_tests` t1
             LEFT JOIN `user` t2 ON t1.tester = t2.value
-        WHERE t1.id=:test_id");
+            LEFT JOIN `items_to_teams` itt ON `itt`.`item_id` = `t1`.`id` and `itt`.`type` = 'test'
+        WHERE
+            `t1`.`id`=:test_id;
+    ");
     $stmt->bindParam(":test_id", $test_id, PDO::PARAM_INT);
     $stmt->execute();
 
@@ -307,6 +354,14 @@ function get_framework_control_test_by_id($test_id){
 
     // Close the database connection
     db_close($db);
+
+    if($test['additional_stakeholders']){
+        $test['additional_stakeholders'] = explode(",", $test['additional_stakeholders']);
+    }
+    
+    if($test['teams']){
+        $test['teams'] = explode(",", $test['teams']);
+    }
 
     return $test;
 } 
@@ -319,12 +374,27 @@ function get_framework_control_test_audit_by_id($test_audit_id){
     $db = db_open();
 
     $stmt = $db->prepare("
-        SELECT t1.*, t2.name tester_name, t3.short_name control_name, GROUP_CONCAT(DISTINCT t4.name) framework_name, t5.id result_id, t5.test_result, t5.summary, t5.test_date, t5.submitted_by, t5.submission_date
+        SELECT 
+            t1.*,
+            t2.name tester_name,
+            t3.short_name control_name,
+            t3.control_owner,
+            GROUP_CONCAT(DISTINCT t4.name) framework_name,
+            t5.id result_id,
+            t5.test_result,
+            t5.summary,
+            t5.test_date,
+            t5.submitted_by,
+            t5.submission_date,
+            t6.additional_stakeholders,
+            GROUP_CONCAT(DISTINCT `itt`.`team_id`) teams
         FROM `framework_control_test_audits` t1
             LEFT JOIN `user` t2 ON t1.tester = t2.value
-            LEFT JOIN `framework_controls` t3 ON t1.framework_control_id = t3.id AND t3.deleted=0
+            LEFT JOIN `framework_controls` t3 ON t1.framework_control_id = t3.id 
             LEFT JOIN `frameworks` t4 ON t3.framework_ids=t4.value OR t3.framework_ids like concat('%,', t4.value) OR t3.framework_ids like concat(t4.value, ',%') OR t3.framework_ids like concat('%,', t4.value, ',%')
             LEFT JOIN `framework_control_test_results` t5 ON t1.id=t5.test_audit_id
+            LEFT JOIN `framework_control_tests` t6 ON t6.id=t1.test_id
+            LEFT JOIN `items_to_teams` itt ON `itt`.`item_id` = `t1`.`id` and `itt`.`type` = 'audit'
         WHERE t1.id=:test_audit_id
     ");
     $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
@@ -336,6 +406,10 @@ function get_framework_control_test_audit_by_id($test_audit_id){
     // Close the database connection
     db_close($db);
     
+    if($test['additional_stakeholders']){
+        $test['additional_stakeholders'] = explode(",", $test['additional_stakeholders']);
+    }
+
     if($test['framework_name']){
         $framework_names = explode(",", $test['framework_name']);
         foreach($framework_names as &$framework_name)
@@ -343,6 +417,10 @@ function get_framework_control_test_audit_by_id($test_audit_id){
             $framework_name = try_decrypt(trim($framework_name));
         }
         $test['framework_name'] = implode(", ", $framework_names);
+    }
+
+    if($test['teams']){
+        $test['teams'] = explode(",", $test['teams']);
     }
 
     return $test;
@@ -502,7 +580,7 @@ function display_active_audits(){
                     <div class='multiselect-content-container'>
                         <select id='filter_by_framework' multiple=''>
                             <option selected value='-1'>".$escaper->escapeHtml($lang['Unassigned'])."</option>\n";
-                            $options = getAvailableControlFrameworkList();
+                            $options = getHasBeenAuditFrameworkList();
                             is_array($options) || $options = array();
                             foreach($options as $option){
                                 echo "<option selected value=\"".$escaper->escapeHtml($option['value'])."\">".$escaper->escapeHtml($option['name'])."</option>\n";
@@ -525,6 +603,16 @@ function display_active_audits(){
                     <input type='text' id='filter_by_text' class='form-control'>
                 </div>
             </div>
+            <div class='row-fluid'>
+                <div class='span1' align='right'>
+                    <strong>".$escaper->escapeHtml($lang['Tester']).":&nbsp;&nbsp;&nbsp;</strong>
+                </div>
+                <div class='span3'>
+                    <div class='multiselect-content-container'>";
+                        create_multiple_dropdown("enabled_users", "all", "filter_by_tester");
+    echo "          </div>
+                </div>
+            </div>
         </div>
 
         <table id=\"{$tableID}\" width=\"100%\" class=\"risk-datatable table table-bordered table-striped table-condensed\">
@@ -533,12 +621,14 @@ function display_active_audits(){
                     <th valign=\"top\">".$escaper->escapeHtml($lang['TestName'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['TestFrequency'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['Tester'])."</th>
+                    <th valign=\"top\">".$escaper->escapeHtml($lang['AdditionalStakeholders'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['Objective'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['ControlName'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['FrameworkName'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['Status'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['LastAuditDate'])."</th>
                     <th valign=\"top\">".$escaper->escapeHtml($lang['NextAuditDate'])."</th>
+                    <th valign=\"top\"></th>
                 </tr>
             </thead>
             <tbody>
@@ -554,6 +644,13 @@ function display_active_audits(){
                 processing: true,
                 serverSide: true,
                 bSort: true,
+                columnDefs : [
+                    {
+                        'targets' : [-1],
+                        'orderable': false,
+                        'className' : 'vcenter'
+                    }
+                ],
                 pagingType: \"full_numbers\",
                 dom : \"flrtip\",
                 pageLength: pageLength,
@@ -568,6 +665,7 @@ function display_active_audits(){
                         d.filter_text = \$(\"#filter_by_text\").val();
                         d.filter_framework  = \$(\"#filter_by_framework\").val();
                         d.filter_status  = \$(\"#filter_by_status\").val();
+                        d.filter_tester  = \$(\"#filter_by_tester\").val();
                     },
                     complete: function(response){
                     }
@@ -606,6 +704,32 @@ function display_active_audits(){
                 }
             })
             
+            $('body').on('click', '.delete-btn', function(){
+                var id = $(this).data('id')
+
+                $.ajax({
+                    type: 'POST',
+                    url: BASE_URL + '/api/compliance/delete_audit',
+                    data : {
+                        id: id
+                    },
+                    success: function(data){
+                        if(data.status_message){
+                            showAlertsFromArray(data.status_message);
+                        }
+                        datatableInstance.ajax.reload(null, false);
+                    },
+                    error: function(xhr,status,error){
+                        if(xhr.responseJSON && xhr.responseJSON.status_message){
+                            showAlertsFromArray(xhr.responseJSON.status_message);
+                        }
+                        if(!retryCSRF(xhr, this))
+                        {
+                        }
+                    }
+                });
+            })
+
             // Redraw Past Audit table
             function redrawActiveAudits(){
                 $(\"#{$tableID}\").DataTable().draw();
@@ -626,6 +750,11 @@ function display_active_audits(){
                 includeSelectAllOption: true
             });
             
+            $('#filter_by_tester').multiselect({
+                allSelectedText: '".$escaper->escapeHtml($lang['ALL'])."',
+                includeSelectAllOption: true
+            });
+
             // Search filter event
             $('#filter_by_text').keyup(function(){
                 clearTimeout(typingTimer);
@@ -637,6 +766,10 @@ function display_active_audits(){
             });
             
             $('#filter_by_status').change(function(){
+                redrawActiveAudits();
+            });
+
+            $('#filter_by_tester').change(function(){
                 redrawActiveAudits();
             });
             
@@ -651,122 +784,150 @@ function display_active_audits(){
 function initiate_framework_control_tests($type, $id){
     $initiated_audit_status = get_setting("initiated_audit_status") ? get_setting("initiated_audit_status") : 0;
 
+     // If team separation is enabled
+    if (team_separation_extra()) {
+        //Include the team separation extra
+        require_once(realpath(__DIR__ . '/../extras/separation/index.php'));
+
+        // It means that either the user is an admin
+        // or everyone has access to the tests/audits.
+        // It means we can treat Team Separation like it is disabled
+        if (should_skip_test_and_audit_permission_check()) {
+            $separation_enabled = false;
+        } else {
+            $separation_enabled = true;
+            $compliance_separation_access_info = get_compliance_separation_access_info();
+        }
+    } else
+        $separation_enabled = false;
+
     // Open the database connection
     $db = db_open();
 
     switch($type){
         case "framework":
+            if ($separation_enabled && !in_array($id, $compliance_separation_access_info['frameworks']))
+                return false;
+            
             $framework = get_framework($id);
             $name = $framework['name'];
             
-            $framework_filter_pattern1 = $id;
-            $framework_filter_pattern2 = "%,".$id;
-            $framework_filter_pattern3 = $id.",%";
-            $framework_filter_pattern4 = "%,".$id.",%";
-            
+            $child_frameworks = get_all_child_frameworks($id, 1);
+            $framework_ids = array_merge(array($id), array_map(function($row){
+                return $row['value'];
+            }, $child_frameworks));
+
             $sql = "
-                INSERT INTO `framework_control_test_audits`(test_id, tester, test_frequency, last_date, next_date, name, objective, test_steps, approximate_time, expected_results, framework_control_id, desired_frequency, status, created_at)
-                SELECT 
-                    t1.id as test_id, t1.tester, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps, t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, {$initiated_audit_status} as status, '".date("Y-m-d H:i:s")."' as created_at
+                SELECT
+                    t1.id
                 FROM framework_control_tests t1
                     INNER JOIN framework_controls t2 ON t1.framework_control_id=t2.id AND t2.deleted=0
-                WHERE
-                    t2.framework_ids LIKE '{$framework_filter_pattern1}' OR t2.framewORk_ids LIKE '{$framework_filter_pattern2}' OR t2.framework_ids LIKE '{$framework_filter_pattern3}' OR t2.framework_ids LIKE '{$framework_filter_pattern4}';
             ";
-            // Create temp table from framework_control_test
+            $where = array();
+            foreach($framework_ids as $key => $framework_id){
+                $where[] = " FIND_IN_SET( {$framework_id} , t2.framework_ids) ";
+            }
+            $sql .= " WHERE ". implode(" OR ", $where) . "; ";
+
             $stmt = $db->prepare($sql);
+
             $stmt->execute();
 
-//            $message = "A framework was initiated for framework ID \"{$id}\" by username \"" . $_SESSION['user'] . "\".";
-//            write_log($id + 1000, $_SESSION['uid'], $message, "framework");
-            
-            // Get child test ID list of a framework
-            $sql = "
-                SELECT 
-                    t1.id as test_id, t1.name
-                FROM framework_control_tests t1
-                    INNER JOIN framework_controls t2 ON t1.framework_control_id=t2.id AND t2.deleted=0
-                WHERE
-                    t2.framework_ids LIKE '{$framework_filter_pattern1}' OR t2.framewORk_ids LIKE '{$framework_filter_pattern2}' OR t2.framework_ids LIKE '{$framework_filter_pattern3}' OR t2.framework_ids LIKE '{$framework_filter_pattern4}';
-            ";
-            // Create temp table from framework_control_test
-            $stmt = $db->prepare($sql);
-            $stmt->execute();
-            // Store tests in the array
-            $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach($tests as $test){
-                $message = "An active audit for \"{$test["name"]}\" was initiated by username \"" . $_SESSION['user'] . "\".";
-                write_log((int)$test['test_id'] + 1000, $_SESSION['uid'], $message, "test");
+            $test_ids = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            foreach($test_ids as $test_id){
+                if ($separation_enabled && !in_array($test_id, $compliance_separation_access_info['framework_control_tests']))
+                    continue;
+
+                initiate_test_audit($test_id, $initiated_audit_status);
             }
         break;
         case "control":
+            if ($separation_enabled && !in_array($id, $compliance_separation_access_info['framework_controls']))
+                return false;
+
             $control = get_framework_control($id);
             $name = $control['short_name'];
 
-            $sql = "
-                INSERT INTO `framework_control_test_audits`(test_id, tester, test_frequency, last_date, next_date, name, objective, test_steps, approximate_time, expected_results, framework_control_id, desired_frequency, status, created_at)
+            $stmt = $db->prepare("
                 SELECT 
-                    t1.id as test_id, t1.tester, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps, t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, {$initiated_audit_status} as status, '".date("Y-m-d H:i:s")."' as created_at
+                    t1.id
                 FROM framework_control_tests t1
                     INNER JOIN framework_controls t2 ON t1.framework_control_id=t2.id AND t2.deleted=0
                 WHERE
                     t2.id=:control_id;
-            ";
-            
-            // Create temp table from framework_control_test
-            $stmt = $db->prepare($sql);
+            ");
             $stmt->bindParam(":control_id", $id, PDO::PARAM_INT);
             $stmt->execute();
 
-//            $message = "A control was initiated for control ID \"{$id}\" by username \"" . $_SESSION['user'] . "\".";
-//            write_log($id + 1000, $_SESSION['uid'], $message, "control");
-
-            // Get child test ID list of a control
-            $sql = "
-                SELECT 
-                    t1.id as test_id, t1.name
-                FROM framework_control_tests t1
-                    INNER JOIN framework_controls t2 ON t1.framework_control_id=t2.id AND t2.deleted=0
-                WHERE
-                    t2.id=:control_id;
-            ";
-            // Create temp table from framework_control_test
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(":control_id", $id, PDO::PARAM_INT);
-            $stmt->execute();
-            // Store tests in the array
-            $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach($tests as $test){
-                $message = "An active audit for \"{$test["name"]}\" was initiated by username \"" . $_SESSION['user'] . "\".";
-                write_log((int)$test['test_id'] + 1000, $_SESSION['uid'], $message, "test");
+            $test_ids = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+            foreach($test_ids as $test_id){
+                if ($separation_enabled && !in_array($test_id, $compliance_separation_access_info['framework_control_tests']))
+                    continue;
+                
+                initiate_test_audit($test_id, $initiated_audit_status);
             }
         break;
         case "test":
-            $test = get_framework_control_test_by_id($id);
-            $name = $test['name'];
+            if ($separation_enabled && !in_array($id, $compliance_separation_access_info['framework_control_tests']))
+                return false;
 
-            $sql = "
-                INSERT INTO `framework_control_test_audits`(test_id, tester, test_frequency, last_date, next_date, name, objective, test_steps, approximate_time, expected_results, framework_control_id, desired_frequency, status, created_at)
-                SELECT 
-                    t1.id as test_id, t1.tester, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps, t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, {$initiated_audit_status} as status, '".date("Y-m-d H:i:s")."' as created_at
-                FROM framework_control_tests t1
-                WHERE
-                    t1.id=:test_id;
-            ";
-            
-            // Create temp table from framework_control_test
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(":test_id", $id, PDO::PARAM_INT);
-            
-            $stmt->execute();
-
-            $message = "An active audit for \"{$test["name"]}\" was initiated by username \"" . $_SESSION['user'] . "\".";
-            write_log((int)$id + 1000, $_SESSION['uid'], $message, "test");
+            $name = initiate_test_audit($id, $initiated_audit_status);
         break;
     }
 
     // Close the database connection
     db_close($db);
+    
+    return $name;
+}
+
+function initiate_test_audit($test_id, $initiated_audit_status) {
+
+    $test = get_framework_control_test_by_id($test_id);
+    $name = $test['name'];
+
+    // Open the database connection
+    $db = db_open();
+
+    $sql = "
+        INSERT INTO
+            `framework_control_test_audits`(test_id, tester, test_frequency, last_date, next_date, name, objective, test_steps, approximate_time, expected_results, framework_control_id, desired_frequency, status, created_at)
+        SELECT
+            t1.id as test_id, t1.tester, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps, t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, {$initiated_audit_status} as status, '".date("Y-m-d H:i:s")."' as created_at
+        FROM framework_control_tests t1
+        WHERE
+            t1.id=:test_id;
+    ";
+
+    // Create temp table from framework_control_test
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(":test_id", $test_id, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    $audit_id = $db->lastInsertId();
+
+    $sql = "
+        INSERT INTO
+            `items_to_teams`(item_id, team_id, type)
+        SELECT
+            {$audit_id}, `itt`.`team_id`, 'audit'
+        FROM `items_to_teams` itt
+        WHERE
+            `itt`.`item_id`=:test_id;
+    ";
+
+    // Create temp table from framework_control_test
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(":test_id", $test_id, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    $message = "An active audit for \"{$test["name"]}\" was initiated by username \"" . $_SESSION['user'] . "\".";
+    write_log((int)$test_id + 1000, $_SESSION['uid'], $message, "test");
     
     return $name;
 }
@@ -780,15 +941,21 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
     // Open the database connection
     $db = db_open();
 
+    $select_background_class = $active ? "" : ", t8.background_class ";
+
     $sql = "
-        SELECT t1.id, t1.test_id, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps, t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, t1.status, t1.created_at, 
-        t2.name tester_name, t3.short_name control_name, GROUP_CONCAT(DISTINCT t4.name) framework_name, t5.test_result, t5.summary, t5.submitted_by, t5.submission_date, ifnull(t6.name, '--') audit_status_name
+        SELECT t1.id, t1.test_id, t1.test_frequency, t1.last_date, t1.next_date, t1.name, t1.objective, t1.test_steps,
+            t1.approximate_time, t1.expected_results, t1.framework_control_id, t1.desired_frequency, t1.status, t1.created_at,
+            t2.name tester_name, t3.short_name control_name, GROUP_CONCAT(DISTINCT t4.name) framework_name, t5.test_result,
+            t5.summary, t5.submitted_by, t5.submission_date, ifnull(t6.name, '--') audit_status_name, t7.additional_stakeholders{$select_background_class}
         FROM `framework_control_test_audits` t1
             LEFT JOIN `user` t2 ON t1.tester = t2.value
-            LEFT JOIN `framework_controls` t3 ON t1.framework_control_id = t3.id AND t3.deleted=0
+            LEFT JOIN `framework_controls` t3 ON t1.framework_control_id = t3.id 
             LEFT JOIN `frameworks` t4 ON (t3.framework_ids=t4.value OR t3.framework_ids like concat('%,', t4.value) OR t3.framework_ids like concat(t4.value, ',%') OR t3.framework_ids like concat('%,', t4.value, ',%')) AND t4.status=1
             LEFT JOIN `framework_control_test_results` t5 ON t1.id=t5.test_audit_id
             LEFT JOIN `test_status` t6 ON t1.status=t6.value
+            LEFT JOIN `framework_control_tests` t7 ON t7.id=t1.test_id
+            LEFT JOIN `test_results` t8 ON t8.name=t5.test_result
     ";
 
     $wheres = array();
@@ -805,15 +972,40 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
     {
         $wheres[] = " t1.status='".$closed_audit_status."' ";
     }
+
     if($filters !== false){
-        if(!empty($filters['filter_control'])){
-            $wheres[] = " t3.short_name like :filter_control ";
-            $filters['filter_control'] = "%{$filters['filter_control']}%";
+        if(isset($filters['filter_control'])){
+            if($filters['filter_control'])
+            {
+                foreach($filters['filter_control'] as &$val){
+                    $val = (int)$val;
+                }
+                unset($val);
+
+                $wheres[] = " t3.id IN (".implode(",", $filters['filter_control']).") ";
+            }
+            else
+            {
+                $wheres[] = " 0 ";
+            }
         }
-        if(!empty($filters['filter_test_result'])){
-            $wheres[] = " t5.test_result like :filter_test_result ";
-            $filters['filter_test_result'] = "%{$filters['filter_test_result']}%";
+
+        if(isset($filters['filter_test_result'])){
+            if($filters['filter_test_result'])
+            {
+                foreach($filters['filter_test_result'] as &$val){
+                    $val = (int)$val;
+                }
+                unset($val);
+
+                $wheres[] = " t8.value IN (".implode(",", $filters['filter_test_result']).") ";
+            }
+            else
+            {
+                $wheres[] = " 0 ";
+            }
         }
+
         if(isset($filters['filter_framework'])){
             if($filters['filter_framework']){
                 $framework_wheres = [];
@@ -837,15 +1029,15 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
                         $framework_wheres[] = "(t3.framework_ids like '{$framework_filter_pattern1}' or t3.framework_ids like '{$framework_filter_pattern2}' or t3.framework_ids like '{$framework_filter_pattern3}' or t3.framework_ids like '{$framework_filter_pattern4}')";
                     }
                 }
-                
+
                 $wheres[] = "(". implode(" OR ", $framework_wheres) . ")";
             }
             else
             {
                 $wheres[] = " 0 ";
             }
-        
         }
+
         if(isset($filters['filter_status'])){
             if($filters['filter_status'])
             {
@@ -853,7 +1045,7 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
                     $val = (int)$val;
                 }
                 unset($val);
-                
+
                 $wheres[] = " t1.status IN (".implode(",", $filters['filter_status']).") ";
             }
             else
@@ -866,6 +1058,21 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
         }
         if(!empty($filters['filter_end_audit_date'])){
             $wheres[] = " t1.last_date<=:filter_end_audit_date ";
+        }
+        if(isset($filters['filter_tester'])){
+            if($filters['filter_tester'])
+            {
+                foreach($filters['filter_tester'] as &$val){
+                    $val = (int)$val;
+                }
+                unset($val);
+
+                $wheres[] = " t1.tester IN (".implode(",", $filters['filter_tester']).") ";
+            }
+            else
+            {
+                $wheres[] = " 0 ";
+            }
         }
     }
 
@@ -903,18 +1110,15 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
     elseif($columnName == "test_result"){
         $sql .= " ORDER BY t5.test_result {$columnDir} ";
     }
+    elseif($columnName == "additional_stakeholders"){
+        $sql .= " ORDER BY t7.additional_stakeholders {$columnDir} ";
+    }
     else{
         $sql .= " ORDER BY t1.created_at ";
     }
 
     $stmt = $db->prepare($sql);
     if($filters !== false){
-        if(!empty($filters['filter_control'])){
-            $stmt->bindParam(":filter_control", $filters['filter_control'], PDO::PARAM_STR, 200);
-        }
-        if(!empty($filters['filter_test_result'])){
-            $stmt->bindParam(":filter_test_result", $filters['filter_test_result'], PDO::PARAM_STR, 200);
-        }
         if(!empty($filters['filter_start_audit_date'])){
             $stmt->bindParam(":filter_start_audit_date", $filters['filter_start_audit_date'], PDO::PARAM_STR, 10);
         }
@@ -930,11 +1134,25 @@ function get_framework_control_test_audits($active, $columnName=false, $columnDi
 
     // Close the database connection
     db_close($db);
-    
+
+     // If team separation is enabled
+    if (team_separation_extra()) {
+        //Include the team separation extra
+        require_once(realpath(__DIR__ . '/../extras/separation/index.php'));
+
+        // It means that either the user is an admin
+        // or everyone has access to the tests/audits.
+        // It means we can treat Team Separation like it is disabled        
+        $separation_enabled = !should_skip_test_and_audit_permission_check();
+    } else
+        $separation_enabled = false;
+
     $filtered_test_audits = array();
-    
+
     foreach($test_audits as &$test_audit){
-        
+        if ($separation_enabled && !is_user_allowed_to_access($_SESSION['uid'], $test_audit['id'], 'audit'))
+            continue;
+
         $framework_names = explode(",", $test_audit['framework_name']);
         $decrypted_framework_names = [];
         foreach($framework_names as $framework_name){
@@ -977,10 +1195,11 @@ function save_test_comment($test_audit_id, $comment){
         $sql = "
             INSERT INTO `framework_control_test_comments`(`test_audit_id`, `user`, `comment`) VALUES(:test_audit_id, :user, :comment);
         ";
-        
+
+        $enc_comment = try_encrypt($comment);
         $stmt = $db->prepare($sql);
-        $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_STR);
-        $stmt->bindParam(":comment", $comment, PDO::PARAM_INT);
+        $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
+        $stmt->bindParam(":comment", $enc_comment, PDO::PARAM_STR);
         $stmt->bindParam(":user", $user, PDO::PARAM_INT);
         
         // Insert a test result
@@ -988,6 +1207,16 @@ function save_test_comment($test_audit_id, $comment){
         
         // Close the database connection
         db_close($db);
+        
+        // If notification is enabled
+        if (notification_extra())
+        {
+            // Include the notification extra
+            require_once(realpath(__DIR__ . '/../extras/notification/index.php'));
+
+            // Send the notification
+            notify_audit_comment($test_audit_id, $comment);
+        }        
 
         set_alert(true, "good",  "Your comment has been successfully added to the audit.");
     }
@@ -1026,16 +1255,9 @@ function display_testing()
     $test_audit_id = (int)$_GET['id'];
     
     $test_audit = get_framework_control_test_audit_by_id($test_audit_id);
-    
+
     // If test date is not set, set today as default
-    if(!$test_audit['test_date'] || $test_audit['test_date']=="0000-00-00")
-    {
-        $test_audit['test_date'] = date(get_default_date_format());
-    }
-    else
-    {
-        $test_audit['test_date'] = date(get_default_date_format(), strtotime($test_audit['test_date']));
-    }
+    $test_audit['test_date'] = format_date($test_audit['test_date'], date(get_default_date_format()));
     
     echo "
         <form class='well' method='POST' enctype='multipart/form-data'>
@@ -1054,19 +1276,15 @@ function display_testing()
                             </tr>
                             <tr>
                                 <td valign='top'>".$escaper->escapeHtml($lang['TestResult']).":&nbsp;&nbsp;</td>
-                                <td>
-                                    <select name='test_result'>
-                                        <option value=''>--</option>
-                                        <option ". ($test_audit['test_result'] == 'Pass' ? "selected" : "") ." value='Pass'>Pass</option>
-                                        <option ". ($test_audit['test_result'] == 'Inconclusive' ? "selected" : "") ." value='Inconclusive'>Inconclusive</option>
-                                        <option ". ($test_audit['test_result'] == 'Fail' ? "selected" : "") ." value='Fail'>Fail</option>
-                                    </select>
+                                <td>";
+                                    create_dropdown("test_results", $test_audit['test_result'], "test_result", true, false, false, "", "--");
+                                echo "
                                 </td>
                             </tr>
                             <tr>
                                 <td valign='top'>".$escaper->escapeHtml($lang['Tester']).":&nbsp;&nbsp;</td>
                                 <td>";
-                                    create_dropdown("user", $test_audit['tester'], "tester", false, false, false);
+                                    create_dropdown("enabled_users", $test_audit['tester'], "tester", false, false, false);
                                 echo "
                                 </td>
                             </tr>
@@ -1076,7 +1294,26 @@ function display_testing()
                                     <input name='test_date' value='{$test_audit['test_date']}' required class='datepicker form-control' type='text'>
                                 </td>
                             </tr>
-                        </table>                    
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['Teams']).":&nbsp;&nbsp;</td>
+                                <td>";
+                                    create_multiple_dropdown("team", $test_audit['teams']);
+                                echo "
+                                </td>
+                            </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['Objective']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".$escaper->escapeHtml($test_audit['objective'] ? $test_audit['objective'] : "--")."</td>
+                            </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['TestSteps']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".$escaper->escapeHtml($test_audit['test_steps'] ? $test_audit['test_steps'] : "--")."</td>
+                            </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['ApproximateTime']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".(int)$test_audit['approximate_time']. " " .$escaper->escapeHtml($test_audit['approximate_time'] > 1 ? $lang['minutes'] : $lang['minute'])."</td>
+                            </tr>
+                        </table>
                     </td>
                     <td>
                         <table width='100%'>
@@ -1105,6 +1342,18 @@ function display_testing()
                                     </div>
                                 </td>
                             </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['AdditionalStakeholders']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".$escaper->escapeHtml($test_audit['additional_stakeholders'] ? get_stakeholder_names($test_audit['additional_stakeholders']) : "--")."</td>
+                            </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['ControlOwner']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".$escaper->escapeHtml($test_audit['control_owner'] ? get_name_by_value("user", $test_audit['control_owner']) : "--")."</td>
+                            </tr>
+                            <tr>
+                                <td valign='top'>".$escaper->escapeHtml($lang['ExpectedResults']).":&nbsp;&nbsp;</td>
+                                <td align='left'>".$escaper->escapeHtml($test_audit['expected_results'] ? $test_audit['expected_results'] : "--")."</td>
+                            </tr>
                         </table>                    
                     </td>
                 </tr>
@@ -1119,7 +1368,10 @@ function display_testing()
     display_test_audit_comment($test_audit_id);
     echo "
         <script>
-            $(\".datepicker\").datepicker();
+            $( document ).ready(function() {
+                $(\"[name='team[]']\").multiselect();
+                $(\".datepicker\").datepicker();
+            });
         </script>
     ";
 }
@@ -1163,7 +1415,7 @@ function display_test_audit_trail($test_audit_id)
                 <div class=\"collapsible\" style='display:none'>
                     <div class=\"row-fluid\">
                         <div class=\"span12 audit-trail\">";
-                            get_audit_trail($test_audit_id+1000, 36500, 'test_audit');
+                            get_audit_trail_html($test_audit_id+1000, 36500, 'test_audit');
                         echo "</div>
                     </div>
                 </div>
@@ -1194,7 +1446,7 @@ function display_test_audit_comment($test_audit_id)
                     <div class=\"row-fluid\">
                         <div class=\"span12\">
 
-                            <form id=\"comment\" class=\"comment-form\" name=\"add_comment\" method=\"post\" action=\"/management/comment.php?id={$test_audit_id}\">
+                            <form id=\"comment\" class=\"comment-form\" name=\"add_comment\" method=\"post\">
                                 <input type='hidden' name='id' value='{$test_audit_id}'>
                                 <textarea style=\"width: 100%; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;\" name=\"comment\" cols=\"50\" rows=\"3\" id=\"comment-text\" class=\"comment-text\"></textarea>
                                 <div class=\"form-actions text-right\" id=\"comment-div\">
@@ -1264,11 +1516,17 @@ function display_test_audit_comment($test_audit_id)
                     processData: false,
                     success: function(data){
                         $('.comments--list', container).html(data.data);
-                        $('.comment-text', container).val('')
-                        $('.comment-text', container).focus()
+                        $('.comment-text', container).val('');
+                        $('.comment-text', container).focus();
+                        showAlertsFromArray(data.status_message);
                     },
                     error: function(xhr,status,error){
-                        if(!retryCSRF(xhr, this)){}
+                        if(xhr.responseJSON && xhr.responseJSON.status_message){
+                            showAlertsFromArray(xhr.responseJSON.status_message);
+                        }
+                        if(!retryCSRF(xhr, this))
+                        {
+                        }
                     }
                 })
             })
@@ -1313,7 +1571,7 @@ function get_testing_comment_list($test_audit_id)
         if($text != null){
             $returnHTML .= "<p class=\"comment-block\">\n";
             $returnHTML .= "<b>" . $escaper->escapeHtml($date) ." by ". $escaper->escapeHtml($user) ."</b><br />\n";
-            $returnHTML .= $escaper->escapeHtml($text);
+            $returnHTML .= $escaper->escapeHtml(try_decrypt($text));
             $returnHTML .= "</p>\n";
         }
     }
@@ -1325,7 +1583,7 @@ function get_testing_comment_list($test_audit_id)
 /********************************
  * FUNCTION: INSERT TEST RESULT *
  ********************************/
-function save_test_result($test_audit_id, $status, $test_result, $tester, $test_date, $summary)
+function save_test_result($test_audit_id, $status, $test_result, $tester, $test_date, $teams, $summary)
 {
     $test_audit = get_framework_control_test_audit_by_id($test_audit_id);
     
@@ -1361,6 +1619,9 @@ function save_test_result($test_audit_id, $status, $test_result, $tester, $test_
     // Close the database connection
     db_close($db);
     
+    // Update teams of the active audit
+    updateTeamsOfType($test_audit_id, 'audit', $teams);
+    
     // Update status in test_audit table
     update_test_audit_status($test_audit_id, $status);
     
@@ -1380,7 +1641,9 @@ function save_test_result($test_audit_id, $status, $test_result, $tester, $test_
  * FUNCTION: UPDATE TESTAUDIT, CONTROL, FRAMEWORK STATUS *
  *********************************************************/
 function update_test_audit_status($test_audit_id, $status)
-{
+{    
+    $old_status = get_framework_control_test_audit_by_id($test_audit_id)["status"];
+    
     // Open the database connection
     $db = db_open();
     
@@ -1394,6 +1657,16 @@ function update_test_audit_status($test_audit_id, $status)
     // Close the database connection
     db_close($db);
 
+    // If notification is enabled and the status changed
+    if (notification_extra() && $old_status != $status)
+    {
+        // Include the notification extra
+        require_once(realpath(__DIR__ . '/../extras/notification/index.php'));
+
+        // Send the notification
+        notify_audit_status_change($test_audit_id, $old_status, $status);
+    }    
+    
     $closed_audit_status = get_setting("closed_audit_status");
     $test_audit = get_framework_control_test_audit_by_id($test_audit_id);
     $test_audit_name = empty($test_audit["name"]) ? "" : $test_audit["name"];
@@ -1421,6 +1694,9 @@ function update_last_and_next_auditdate($test_audit_id, $last_date)
     // Get test by ID
     $test_audit = get_framework_control_test_audit_by_id($test_audit_id);
     $next_date = date("Y-m-d", strtotime($last_date) + $test_audit['test_frequency']*24*60*60);
+    if($next_date < date("Y-m-d")){
+        $next_date = date("Y-m-d");
+    }
 
     // Open the database connection
     $db = db_open();
@@ -1429,17 +1705,18 @@ function update_last_and_next_auditdate($test_audit_id, $last_date)
     
     $stmt = $db->prepare($sql);
     $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
-    $stmt->bindParam(":last_date", $last_date, PDO::PARAM_INT);
-    $stmt->bindParam(":next_date", $next_date, PDO::PARAM_INT);
+    $stmt->bindParam(":last_date", $last_date, PDO::PARAM_STR);
+    $stmt->bindParam(":next_date", $next_date, PDO::PARAM_STR);
     
     // Update test status
     $stmt->execute();
     
-    $sql = "UPDATE `framework_control_tests` t1 JOIN `framework_control_test_audits` t2 ON t1.id=t2.test_id SET t1.`last_date`=:last_date WHERE t2.id=:test_audit_id;";
+    $sql = "UPDATE `framework_control_tests` t1 JOIN `framework_control_test_audits` t2 ON t1.id=t2.test_id SET t1.`last_date`=:last_date, t1.`next_date`=:next_date WHERE t2.id=:test_audit_id;";
     
     $stmt = $db->prepare($sql);
     $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
-    $stmt->bindParam(":last_date", $last_date, PDO::PARAM_INT);
+    $stmt->bindParam(":last_date", $last_date, PDO::PARAM_STR);
+    $stmt->bindParam(":next_date", $next_date, PDO::PARAM_STR);
     
     // Update test status
     $stmt->execute();
@@ -1476,6 +1753,7 @@ function submit_test_result()
     $test_result    = $_POST['test_result'];
     $tester         = (int)$_POST['tester'];
     $test_date      = $_POST['test_date'];
+    $teams          = isset($_POST['team']) ? $_POST['team'] : [];
     $summary        = $_POST['summary'];
     
     if(!$test_audit_id || !$tester || !$test_date)
@@ -1515,7 +1793,7 @@ function submit_test_result()
             return false;
         }else{
             // Save a test result
-            save_test_result($test_audit_id, $test_audit_status, $test_result, $tester, $test_date, $summary);
+            save_test_result($test_audit_id, $test_audit_status, $test_result, $tester, $test_date, $teams, $summary);
             
             set_alert(true, "good", $escaper->escapeHtml($lang['SavedSuccess']));
             return true;
@@ -1555,7 +1833,7 @@ function download_compliance_file($unique_name)
     {
         header("Content-length: " . $array['size']);
         header("Content-type: " . $array['type']);
-        header("Content-Disposition: attachment; filename=\"" . $array['name'] ."\"");
+	header("Content-Disposition: attachment; filename=" . $escaper->escapeUrl($array['name']));
         echo $array['content'];
         exit;
     }
@@ -1564,42 +1842,50 @@ function download_compliance_file($unique_name)
 /*********************************
  * FUNCTION: DISPLAY PAST AUDITS *
  *********************************/
-function display_past_audits(){
+function display_past_audits()
+{
     global $lang, $escaper;
-    
+
     $tableID = "past-audits";
-    
+
     echo "
-        <div id='filter-container'>
-            <div class='row-fluid'>
-                <div class='span2' align='right'>
-                    <strong>".$escaper->escapeHtml($lang['FilterByText']).":&nbsp;&nbsp;&nbsp;</strong>
-                </div>
-                <div class='span2'>
-                <input type='text' id='filter_by_text' class='form-control'>
-                </div>
-                <div class='span2' align='right'>
-                    <strong>".$escaper->escapeHtml($lang['Control']).":&nbsp;&nbsp;&nbsp;</strong>
-                </div>
-                <div class='span2'>
-                    <input type='text' id='filter_by_control' class='form-control'>
-                </div>
-                <div class='span2' align='right'>
-                    <strong>".$escaper->escapeHtml($lang['TestResult']).":&nbsp;&nbsp;&nbsp;</strong>
-                </div>
-                <div class='span2'>
-                    <input type='text' id='filter_by_test_result' class='form-control'>
+        <div id='filter-container' class='well'>
+            <div class=\"row-fluid\">
+                <div class=\"span12\">
+                    <a href=\"javascript:;\" onclick=\"javascript: $('#filter-container').remove();\"><img src=\"../images/X-100.png\" width=\"10\" height=\"10\" align=\"right\" /></a>
                 </div>
             </div>
             <div class='row-fluid'>
                 <div class='span2' align='right'>
+                    <strong>".$escaper->escapeHtml($lang['TestResult']).":&nbsp;&nbsp;&nbsp;</strong>
+                </div>
+                <div class='span3'>";
+                    create_multiple_dropdown("test_results_filter", "all", "filter_by_test_result");
+    echo "
+                </div>
+                <div class='span2' align='right'>
+                    <strong>".$escaper->escapeHtml($lang['Control']).":&nbsp;&nbsp;&nbsp;</strong>
+                </div>
+                <div class='span4'>";
+                    $options = getHasBeenAuditFrameworkControlList();
+                    create_multiple_dropdown("framework_controls", "all", "filter_by_control", $options);
+    echo "      </div>
+            </div>
+            <div class='row-fluid'>
+                <div class='span2' align='right'>
+                    <strong>".$escaper->escapeHtml($lang['FilterByText']).":&nbsp;&nbsp;&nbsp;</strong>
+                </div>
+                <div class='span3'>
+                    <input type='text' id='filter_by_text' class='form-control'>
+                </div>
+                <div class='span2' align='right'>
                     <strong>".$escaper->escapeHtml($lang['Framework']).":&nbsp;&nbsp;&nbsp;</strong>
                 </div>
-                <div class='span2'>
+                <div class='span4'>
                     <div class='multiselect-content-container'>
                         <select id='filter_by_framework' class='' multiple=''>
                             <option selected value='-1'>".$escaper->escapeHtml($lang['Unassigned'])."</option>\n";
-                            $options = getAvailableControlFrameworkList();
+                            $options = getHasBeenAuditFrameworkList();
                             is_array($options) || $options = array();
                             foreach($options as $option){
                                 echo "<option selected value=\"".$escaper->escapeHtml($option['value'])."\">".$escaper->escapeHtml($option['name'])."</option>\n";
@@ -1607,7 +1893,6 @@ function display_past_audits(){
                         echo "</select>
                     </div>
                 </div>
-                
             </div>
             <div class='row-fluid'>
                 <div class='span2' align='right'>
@@ -1638,6 +1923,30 @@ function display_past_audits(){
         </table>
         <br>
         <script>
+            $('#filter_by_framework').multiselect({
+                allSelectedText: '".$escaper->escapeHtml($lang['ALL'])."',
+                maxHeight: 250,
+                buttonWidth: '100%',
+                includeSelectAllOption: true
+            });
+
+            $('#filter_by_control').multiselect({
+                enableFiltering: true,
+                enableCaseInsensitiveFiltering: true,
+                filterPlaceholder: '".$escaper->escapeHtml($lang["SelectForControls"])."',
+                allSelectedText: '".$escaper->escapeHtml($lang['ALL'])."',
+                maxHeight: 250,
+                buttonWidth: '100%',
+                includeSelectAllOption: true
+            });
+
+            $('#filter_by_test_result').multiselect({
+                allSelectedText: '".$escaper->escapeHtml($lang['ALL'])."',
+                maxHeight: 250,
+                buttonWidth: '100%',
+                includeSelectAllOption: true
+            });
+
             var pageLength = 10;
             var form = $('#{$tableID}').parents('form');
             var datatableInstance = $('#{$tableID}').DataTable({
@@ -1650,12 +1959,14 @@ function display_past_audits(){
                 dom : \"flrtip\",
                 pageLength: pageLength,
                 dom : \"flrti<'#view-all.view-all'>p\",
+                order: [[1, 'desc']],
                 createdRow: function(row, data, index){
                     var background = $('.background-class', $(row)).data('background');
                     $(row).find('td').addClass(background)
                 },
                 ajax: {
                     url: BASE_URL + '/api/compliance/past_audits',
+                    type: 'POST',
                     data: function(d){
                         d.filter_text = \$(\"#filter_by_text\").val();
                         d.filter_control    = \$(\"#filter_by_control\").val();
@@ -1713,6 +2024,9 @@ function display_past_audits(){
                         $('#{$tableID}').DataTable().draw();
                     },
                     error: function(xhr,status,error){
+                        if(xhr.responseJSON && xhr.responseJSON.status_message){
+                            showAlertsFromArray(xhr.responseJSON.status_message);
+                        }
                         if(!retryCSRF(xhr, this))
                         {
                         }
@@ -1726,32 +2040,25 @@ function display_past_audits(){
             } 
             
             // timer identifier
-            var typingTimer;                
+            var typingTimer;
             // time in ms (1 second)
-            var doneTypingInterval = 1000;  
+            var doneTypingInterval = 1000;
 
-            $('#filter_by_framework').multiselect({
-                allSelectedText: '".$escaper->escapeHtml($lang['ALL'])."',
-                includeSelectAllOption: true
-            });
-            
             $('#start_audit_date, #end_audit_date').datepicker()
+            $('#filter_by_test_result').change(function(){
+                redrawPastAudits();
+            });
 
+            $('#filter_by_framework').change(function(){
+                redrawPastAudits();
+            });
+            $('#filter_by_control').change(function(){
+                redrawPastAudits();
+            });
             // Search filter event
             $('#filter_by_text').keyup(function(){
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(redrawPastAudits, doneTypingInterval);
-            });
-            $('#filter_by_control').keyup(function(){
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(redrawPastAudits, doneTypingInterval);
-            });
-            $('#filter_by_test_result').keyup(function(){
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(redrawPastAudits, doneTypingInterval);
-            });
-            $('#filter_by_framework').change(function(){
-                redrawPastAudits();
             });
             $('#start_audit_date').change(function(){
                 clearTimeout(typingTimer);
@@ -1761,7 +2068,6 @@ function display_past_audits(){
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(redrawPastAudits, doneTypingInterval);
             });
-            
         </script>
     ";
 }
@@ -1780,7 +2086,7 @@ function display_detail_test()
     
     // Get attachement files
     $files = get_compliance_files($test_audit_id, "test_audit");
-    
+
     echo "
         <div class='well' >
             <table width='100%' id='test_detail_information'>
@@ -1823,6 +2129,12 @@ function display_detail_test()
                                     ".(int)$test_audit['approximate_time']. " " .$escaper->escapeHtml($test_audit['approximate_time'] > 1 ? $lang['minutes'] : $lang['minute'])."
                                 </td>
                             </tr>
+                            <tr>
+                                <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['Teams']).":&nbsp;&nbsp;</strong></td>
+                                <td>
+                                    ".($test_audit['teams'] ? $escaper->escapeHtml(get_names_by_multi_values('team', $test_audit['teams'])) : "--")."
+                                </td>
+                            </tr>
                         </table>                    
                     </td>
                     <td valign='top'>
@@ -1846,6 +2158,12 @@ function display_detail_test()
                                 </td>
                             </tr>
                             <tr>
+                                <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['ControlOwner']).":&nbsp;&nbsp;</strong></td>
+                                <td>
+                                    ".$escaper->escapeHtml(get_name_by_value("user", $test_audit['control_owner']))."
+                                </td>
+                            </tr>
+                            <tr>
                                 <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['DesiredFrequency']).":&nbsp;&nbsp;</strong></td>
                                 <td>
                                     ".(int)$test_audit['desired_frequency']. " " .$escaper->escapeHtml($test_audit['test_frequency'] > 1 ? $lang['days'] : $lang['Day'])."
@@ -1854,9 +2172,15 @@ function display_detail_test()
                             <tr>
                                 <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['CreatedDate']).":&nbsp;&nbsp;</strong></td>
                                 <td>
-                                    ".$test_audit['created_at']."
+                                    ".$escaper->escapeHtml(format_date($test_audit['created_at'], "--"))."
                                 </td>
-                            </tr>                            
+                            </tr>
+                            <tr>
+                                <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['AdditionalStakeholders']).":&nbsp;&nbsp;</strong></td>
+                                <td>
+                                    ".$escaper->escapeHtml(get_stakeholder_names($test_audit['additional_stakeholders']))."
+                                </td>
+                            </tr>
                         </table>                    
                     </td>
                 </tr>
@@ -1875,7 +2199,7 @@ function display_detail_test()
                             <tr>
                                 <td valign='top' class='text-right'><strong>".$escaper->escapeHtml($lang['TestDate']).":&nbsp;&nbsp;</strong></td>
                                 <td>
-                                    ".$test_audit['last_date']."
+                                    ".$escaper->escapeHtml(format_date($test_audit['last_date'], "--"))."
                                 </td>
                             </tr>
 
@@ -1925,6 +2249,33 @@ function display_detail_test()
 }
 
 /*******************************
+ * FUNCTION: DELETE TEST AUDIT *
+ *******************************/
+function delete_test_audit($test_audit_id) {
+
+    // Open the database connection
+    $db = db_open();
+
+    // Delete test audit
+    $stmt = $db->prepare("DELETE FROM `framework_control_test_audits` WHERE `id`=:test_audit_id;");
+    $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Delete test audit's teams
+    $stmt = $db->prepare("DELETE FROM `items_to_teams` WHERE `item_id`=:test_audit_id and `type`='audit';");
+    $stmt->bindParam(":test_audit_id", $test_audit_id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    // Close the database connection
+    db_close($db);
+
+    $message = _lang('TestAuditDeleteAuditTrailMessage', array('test_audit_id' => $test_audit_id, 'user' => $_SESSION['user']));
+    write_log((int)$test_audit_id + 1000, $_SESSION['uid'], $message, "test_audit");
+
+    return true;
+}
+
+/*******************************
  * FUNCTION: REOPEN TEST AUDIT *
  *******************************/
 function reopen_test_audit($test_audit_id)
@@ -1971,11 +2322,11 @@ function get_initiate_frameworks_by_filter($filter_by_text, $filter_by_status, $
     if($filter_by_status){
         
     }
-    if($filter_by_framework){
-        $where[] = "FIND_IN_SET(t1.value, :filter_by_framework)";
-    }else{
-        $where[] = "0";
-    }
+//    if($filter_by_framework){
+//        $where[] = "FIND_IN_SET(t1.value, :filter_by_framework)";
+//    }else{
+//        $where[] = "0";
+//    }
     if($filter_by_control){
         $where[] = "t2.short_name like :filter_by_control";
     }
@@ -1995,10 +2346,10 @@ function get_initiate_frameworks_by_filter($filter_by_text, $filter_by_status, $
     if($filter_by_status){
         
     }
-    if($filter_by_framework){
-        $framework_ids = implode(",", $filter_by_framework);
-        $stmt->bindParam(":filter_by_framework", $framework_ids, PDO::PARAM_STR);
-    }
+//    if($filter_by_framework){
+//        $framework_ids = implode(",", $filter_by_framework);
+//        $stmt->bindParam(":filter_by_framework", $framework_ids, PDO::PARAM_STR);
+//    }
     if($filter_by_control){
         $filter_by_control = "%{$filter_by_control}%";
         $stmt->bindParam(":filter_by_control", $filter_by_control, PDO::PARAM_STR);
@@ -2011,9 +2362,12 @@ function get_initiate_frameworks_by_filter($filter_by_text, $filter_by_status, $
     // Close the database connection
     db_close($db);
     $filtered_frameworks = [];
+
+    $all_frameworks = get_frameworks(1);
     foreach($frameworks as $framework){
-        $framework['name'] = try_decrypt($framework['name']);
-        if(!$filter_by_text || stripos($framework['name'], $filter_by_text) !== false 
+//        $framework['name'] = try_decrypt($framework['name']);
+//        if(!$filter_by_text || stripos($framework['name'], $filter_by_text) !== false 
+        if(!$filter_by_text 
             || stripos($framework['desired_frequency'], $filter_by_text) !== false 
             || stripos($framework['last_audit_date'], $filter_by_text) !== false 
             || stripos($framework['next_audit_date'], $filter_by_text) !== false 
@@ -2028,11 +2382,36 @@ function get_initiate_frameworks_by_filter($filter_by_text, $filter_by_status, $
             || stripos($framework['test_last_audit_dates'], $filter_by_text) !== false 
             || stripos($framework['test_next_audit_dates'], $filter_by_text) !== false 
         ){
-            $filtered_frameworks[] = $framework;
+            $filtered = true;
+//            $filtered_frameworks[] = $framework;
+        }
+        else{
+            $filtered = false;
+        }
+        
+
+        $parent_frameworks = array();
+        get_parent_frameworks($all_frameworks, $framework['value'], $parent_frameworks);
+        foreach($parent_frameworks as $parent_framework){
+            if($filtered || stripos($parent_framework['name'], $filter_by_text) !== false ){
+                $filtered_frameworks[] = $parent_framework;
+            }
+        }
+        
+    }
+    
+    $results = array();
+    $ids = array();
+    // Get unique array
+    foreach($filtered_frameworks as $filtered_framework){
+        if(!in_array($filtered_framework['value'], $ids) && in_array($filtered_framework['value'], $filter_by_framework))
+        {
+            $results[] = $filtered_framework;
+            $ids[] = $filtered_framework['value'];
         }
     }
     
-    return $filtered_frameworks;
+    return $results;
 
 }
 
@@ -2083,7 +2462,16 @@ function get_initiate_controls_by_filter($filter_by_text, $filter_by_status, $fi
     }
     
     if($framework_id){
-        $where[] = "t1.value = :framework_id";
+        $child_frameworks = get_all_child_frameworks($framework_id, 1);
+        
+        $selected_framework_ids = array_map(function($row){
+            return $row['value'];
+        }, $child_frameworks);
+        
+        array_push($selected_framework_ids, $framework_id);
+        $selected_framework_ids = implode(",", $selected_framework_ids);
+        
+        $where[] = "FIND_IN_SET(t1.value, :selected_framework_ids)";
     }
 
     if($where){
@@ -2114,7 +2502,7 @@ function get_initiate_controls_by_filter($filter_by_text, $filter_by_status, $fi
         $stmt->bindParam(":filter_by_control", $filter_by_control, PDO::PARAM_STR);
     }
     if($framework_id){
-        $stmt->bindParam(":framework_id", $framework_id, PDO::PARAM_INT);
+        $stmt->bindParam(":selected_framework_ids", $selected_framework_ids, PDO::PARAM_STR);
     }
 
     $stmt->execute();
@@ -2124,10 +2512,12 @@ function get_initiate_controls_by_filter($filter_by_text, $filter_by_status, $fi
     // Close the database connection
     db_close($db);
     
+    $curren_framework = get_framework($framework_id);
+    
     $filtered_controls = [];
     foreach($controls as $control){
         $control['framework_name'] = try_decrypt($control['framework_name']);
-        if(!$filter_by_text || stripos($control['framework_name'], $filter_by_text) !== false 
+        if(!$filter_by_text || stripos($curren_framework['name'], $filter_by_text) !== false 
             || stripos($control['framework_desired_frequency'], $filter_by_text) !== false 
             || stripos($control['framework_last_audit_date'], $filter_by_text) !== false 
             || stripos($control['framework_next_audit_date'], $filter_by_text) !== false 
@@ -2175,7 +2565,8 @@ function get_initiate_tests_by_filter($filter_by_text, $filter_by_status, $filte
             INNER JOIN `framework_controls` t2 on FIND_IN_SET(t1.value, t2.framework_ids) AND t2.deleted=0
             INNER JOIN `framework_control_tests` t3 on t3.framework_control_id=t2.id
         WHERE
-            t1.status=1 AND t1.value=:framework_id AND t2.id=:control_id
+            /* t1.status=1 AND t1.value=:framework_id AND t2.id=:control_id */
+            t1.status=1 AND t2.id=:control_id
     ";
     
     $where = [];
@@ -2203,7 +2594,7 @@ function get_initiate_tests_by_filter($filter_by_text, $filter_by_status, $filte
 
     $stmt = $db->prepare($sql);
     
-    $stmt->bindParam(":framework_id", $framework_id, PDO::PARAM_INT);
+//    $stmt->bindParam(":framework_id", $framework_id, PDO::PARAM_INT);
     $stmt->bindParam(":control_id", $control_id, PDO::PARAM_INT);
     if($filter_by_frequency){
         $filter_by_frequency = "%{$filter_by_frequency}%";
@@ -2228,10 +2619,12 @@ function get_initiate_tests_by_filter($filter_by_text, $filter_by_status, $filte
     // Close the database connection
     db_close($db);
     
+    $curren_framework = get_framework($framework_id);
+
     $filtered_tests = [];
     foreach($tests as $test){
         $test['framework_name'] = try_decrypt($test['framework_name']);
-        if(!$filter_by_text || stripos($test['framework_name'], $filter_by_text) !== false 
+        if(!$filter_by_text || stripos($curren_framework['name'], $filter_by_text) !== false 
             || stripos($test['framework_desired_frequency'], $filter_by_text) !== false 
             || stripos($test['framework_last_audit_date'], $filter_by_text) !== false 
             || stripos($test['framework_next_audit_date'], $filter_by_text) !== false 
@@ -2251,6 +2644,98 @@ function get_initiate_tests_by_filter($filter_by_text, $filter_by_status, $filte
     }
     
     return $filtered_tests;
+}
+
+/****************************************
+ * FUNCTION: GET AUDIT TESTS            *
+ * DEFAULT SORT: SOONEST NEXT TEST DATE *
+ ****************************************/
+function get_audit_tests($order_field=false, $order_dir=false)
+{
+    // Open the database connection
+    $db = db_open();
+
+    $sql = "
+        SELECT t1.id, t1.name, t1.last_date, t1.next_date, GROUP_CONCAT(DISTINCT t3.name) framework_names
+        FROM `framework_control_tests` t1
+            INNER JOIN `framework_controls` t2 ON t1.framework_control_id=t2.id
+            LEFT JOIN `frameworks` t3 ON FIND_IN_SET(t3.value, t2.framework_ids)
+        GROUP BY
+            t1.id
+    ";
+    
+    switch($order_field)
+    {
+        case "test_name";
+            $sql .= " ORDER BY t1.name {$order_dir} ";
+        break;
+        case "associated_frameworks";
+            // If encryption extra is disabled, sort by query
+            if(!encryption_extra())
+            {
+                $sql .= " ORDER BY framework_names {$order_dir} ";
+            }
+        break;
+        case "last_test_date";
+            $sql .= " ORDER BY t1.last_date {$order_dir} ";
+        break;
+        case "next_test_date";
+            $sql .= " ORDER BY t1.next_date {$order_dir} ";
+        break;
+    }
+    $sql .= ";";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute();
+
+    $tests = $stmt->fetchAll();
+
+    // closed the database connection
+    db_close($db);
+    
+    // If team separation is enabled
+    if (team_separation_extra()) {
+        //Include the team separation extra
+        require_once(realpath(__DIR__ . '/../extras/separation/index.php'));
+        
+        if (!should_skip_test_and_audit_permission_check()) {
+            $tests = array_filter($tests, function ($test) {
+                return is_user_allowed_to_access($_SESSION['uid'], $test['id'], 'test');
+            });
+        }
+    }
+
+    if(encryption_extra())
+    {
+        // Decrypt associtated framework names
+        foreach($tests as &$row){
+            $framework_names = explode(",", $row['framework_names']);
+            foreach($framework_names as &$framework_name)
+            {
+                $framework_name = try_decrypt($framework_name);
+            }
+            $row['framework_names'] = implode(", ", $framework_names);
+        }
+        
+        // If encryption extra is enabled and sort field is Associated Frameworks, sort by manually
+        if($order_field == "associated_frameworks")
+        {
+            usort($tests, function($a, $b) use ($order_dir)
+                {
+                    $aValue = trim($a['framework_names']);
+                    $bValue = trim($b['framework_names']);
+                    
+                    if($order_dir == 'asc'){
+                        return strcasecmp($aValue, $bValue);
+                    }else{
+                        return strcasecmp($bValue, $aValue);
+                    }
+                }
+            );
+        }
+    }
+    
+    return $tests;
 }
 
 ?>

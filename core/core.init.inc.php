@@ -583,74 +583,58 @@ class cTableStructure{
 	public $AGREGAR				= 2;	
 	public $NUEVO				= 0;
 	public $OPT_ACT_TITULO		= "actualizar_titulo";
+	public $OPT_CMT_TITULO		= "usar_comment_titulo";
 	
-	private $mTable		= "";
-	
+	private $mData				= array();
+	private $mTable				= "";
+	private $mInit				= false;
+	private $mNumeroRegistros	= 0;
 	
 	function __construct($nombre_de_la_tabla){
 		$this->mTable = $nombre_de_la_tabla;
 	}
-	function getTitulosInArray(){
-		$idx	= $this->mTable . "-general_structure-describe";
-		$xCache	= new cCache();
-		$arr	= $xCache->get($idx);
-		if(!is_array($arr)){
-			$sql 	= "SELECT * FROM general_structure WHERE
-							tabla = '" . $this->mTable . "'
-							ORDER BY tab_num, order_index ASC ";
+	function init(){
+		$idx				= $this->mTable . "-table-info";
+		$xCache				= new cCache();
+		$this->mData		= $xCache->get($idx);
+		
+		if(!is_array($this->mData)){
+			$sql 	= "SELECT * FROM general_structure WHERE tabla = '" . $this->mTable . "' ORDER BY tab_num, order_index ASC ";
 			$xQL	= new MQL();
-			$rs		= $xQL->getDataRecord($sql);
-			foreach ($rs as $rw){
-				$arr[$rw["campo"]] 	= $rw["titulo"];
+			$rs		= $xQL->getRecordset($sql);
+			while($rw = $rs->fetch_assoc()){
+				$this->mData["campos"][$rw["campo"]]	= $rw["campo"];
+				$this->mData["titulos"][$rw["campo"]]	= $rw["titulo"];
+				$this->mData["info"][$rw["campo"]]		= $rw;
+				$this->mNumeroRegistros++;
 			}
-			$xCache->set($idx, $arr);
+			$xCache->set($idx, $this->mData);
+			$xQL	= null;
 		}
-		return $arr;
+		
+		return $this->mInit;
+	}
+	function getTitulosInArray(){
+		if(!isset($this->mData["titulos"])){
+			$this->init();
+		}
+		return $this->mData["titulos"];
 	}
 	function getCampos_InArray(){
-		$sql 	= "SELECT * FROM general_structure WHERE
-						tabla = '" . $this->mTable . "'
-						ORDER BY tab_num, order_index ASC ";
-		$lsF	= array();
-		$i		= 0;
-			$rs = getRecordset($sql);
-			while($rw = mysql_fetch_array($rs) ) {
-				$lsF[ $rw["campo"] ]	= $rw["campo"]; 
-			}
-			return $lsF;
+		if(!isset($this->mData["campos"])){
+			$this->init();
+		}
+		return $this->mData["campos"];
 	}
 	function getCampos_InText(){
-		$sql 	= "SELECT * FROM general_structure WHERE
-						tabla = '" . $this->mTable . "'
-						ORDER BY tab_num, order_index ASC ";
-		$lsF	= "";
-		$i		= 0;
-			$rs = getRecordset($sql); //mysql_query($sql, cnnGeneral());
-			while($rw = mysql_fetch_array($rs) ) {
-				if ( $i == 0){
-					$lsF	.= $rw["campo"];
-				} else {
-					$lsF	.= ", ". $rw["campo"];
-				}
-				$i++;
-			}
-			return $lsF;
+		$campos	= $this->getCampos_InArray();
+		return implode(", ", $campos);
 	}
 	function getInfoField($field){
-		$table		= $this->mTable;
-		
-		$sql 		= "SELECT * FROM general_structure WHERE tabla='$table' AND campo='$field' ORDER BY order_index LIMIT 0,1";
-	
-		$rs = mysql_query($sql, cnnGeneral());
-		if(!$rs) {
-			return array();
-		} else {
-			$filas = mysql_fetch_array($rs);
-			return $filas;
+		if(!isset($this->mData["info"])){
+			$this->init();
 		}
-	
-		@mysql_free_result($rs);
-	
+		return $this->mData["info"][$field];
 	}
 	/**
 	 * Funcion que crea o actualiza una tabla en el sistema
@@ -675,24 +659,34 @@ class cTableStructure{
 			}
 	
 			//ahora a grabar
-				$sql_fields = "SHOW FIELDS IN $NTable";
+				$sql_fields = "SHOW FULL COLUMNS FROM $NTable";
 				$rs_fields 	= $xMQ->getRecordset($sql_fields);
 				
 				$i			= 0;
 				$goKey		= false;
-				while($rowf = $rs_fields->fetch_array($rs_fields)){
-					$valor 				= $rowf[4];
-					$titulo				= ucfirst(str_replace("_", " ", $rowf[0]));
+				while($rowf = $rs_fields->fetch_assoc()){
+					$valor 				= $rowf["Default"];
+					$nombreCampo		= $rowf["Field"];
+					$comment			= $rowf["Comment"];
+					
+					$titulo				= ucfirst(str_replace("_", " ", $nombreCampo));
+					if(isset( $options[$this->OPT_CMT_TITULO] ) ){
+						if(strlen($comment)>2){
+							$titulo		= $comment;
+						}
+					}
 					$ctrl 				= "text";
+					
 	
 					//$hay_div = strpos($rowf[1], "(");
-					$atype 				= explode(" ", $rowf[1]);
+					$atype 				= explode(" ", $rowf["Type"]);
 					$atype 				= $atype[0];
 					$atype 				= str_replace(")", "", $atype);
 					$atype 				= str_replace("(", "@", $atype);
 					$iType 				= explode("@", $atype);
 					$field_type			= isset($iType[0]) ? $iType[0] : "varchar";
 					$field_long 		= isset($iType[1]) ? $iType[1] : 0;
+					
 					if(!$field_long){
 						$field_long 	= 0;
 					}
@@ -714,47 +708,49 @@ class cTableStructure{
 							break;
 					}
 					//si el key es si
-					if($rowf[3] == "PRI" AND $goKey == false){
+					if($rowf["Key"] == "PRI" AND $goKey == false){
 						$valor 		= "primary_key";
 						$goKey		= true;
 					}
 					//if( $EQUIV[strtoupper($field_type)] == MQL_INT||$EQUIV[strtoupper($field_type)] == MQL_FLOAT) { $ctrl = "number"; }
 					if($field_long > 75){ $ctrl 		= "textarea"; }
 					
-					$DExiste		= $xMQ->getDataRow("SELECT COUNT(*) AS 'numero' FROM general_structure WHERE tabla='$NTable' AND campo='$rowf[0]' ");
-					$existentes		= $DExiste["numero"];
-					$sqlNuevo 		= "INSERT INTO general_structure(tabla, campo,valor,tipo,longitud,titulo,control, order_index) VALUES ('$NTable','$rowf[0]', '$valor', '$field_type', $field_long, '$titulo', '$ctrl', $i)";
+					$DExiste		= $xMQ->getDataRow("SELECT COUNT(*) AS 'numero' FROM general_structure WHERE tabla='$NTable' AND campo='$nombreCampo' ");
+					$existentes		= setNoMenorQueCero($DExiste["numero"]);
+					$sqlNuevo 		= "INSERT INTO general_structure(tabla, campo,valor,tipo,longitud,titulo,control, order_index) VALUES ('$NTable','$nombreCampo', '$valor', '$field_type', $field_long, '$titulo', '$ctrl', $i)";
 					//
 					//"SELECT COUNT(0) AS 'idcnt' FROM general_structure WHERE tabla='$NTable' AND campo='$rowf[0]'"
 					switch ($TCond){
 						case $this->NUEVO:
 							
 							$xMQ->setRawQuery($sqlNuevo);
-							$msg		.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+							$msg		.= "$NTable\t$nombreCampo\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
 							break;
 						case $this->ACTUALIZAR:
 							$upTitulo	= ( isset( $options[$this->OPT_ACT_TITULO] ) ) ? ", titulo='$titulo' " : "";
 							$upOrden	= "";
 							$sqlUpd 	= "UPDATE general_structure
-										SET valor='$valor', tipo='$field_type', longitud=$field_long $upTitulo $upOrden WHERE tabla='$NTable' AND campo='$rowf[0]' ";
+										SET valor='$valor', tipo='$field_type', longitud=$field_long $upTitulo $upOrden WHERE tabla='$NTable' AND campo='$nombreCampo' ";
 							if($existentes > 0){
 								$xMQ->setRawQuery($sqlUpd);
-								$msg	.= "$NTable\t$rowf[0]\tACTUALIZAR\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+								$msg	.= "$NTable\t$nombreCampo\tACTUALIZAR\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
 							} else {
 								$xMQ->setRawQuery($sqlNuevo);
-								$msg	.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+								$msg	.= "$NTable\t$nombreCampo\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
 							}
 							break;
 						case $this->AGREGAR:
 							if($existentes <= 0){
 								$xMQ->setRawQuery($sqlNuevo);
-								$msg	.= "$NTable\t$rowf[0]\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
+								$msg	.= "$NTable\t$nombreCampo\tNUEVO\tAgregando Campo Tipo $field_type, con Valor $valor y tamano $field_long\r\n";
 							}
 							break;
 					}
 					//echo "<p class='aviso'>$sql_i_d</p>";
 					$i++;
 				}
+			//setLog($msg);
+			
 			$rs_fields->free();
 			
 		return $msg;
@@ -762,12 +758,7 @@ class cTableStructure{
 	function setActualizar(){
 		$this->setStructureTableByDemand($this->AGREGAR);
 	}
-	function getNumeroDeCampos(){
-		$result		= 0;
-		$sql	= "SELECT COUNT(*) AS 'registros' FROM general_structure WHERE tabla='" . $this->mTable . "' ";
-		$result	= mifila($sql, "registros");
-		return $result;
-	}
+	function getNumeroDeCampos(){ return $this->mNumeroRegistros; }
 }
 
 /**
@@ -1368,6 +1359,12 @@ class cSAFEData{
 		$this->setContratoDisEn(501, $enable);
 		$this->setContratoDisEn(502, $enable);
 		$this->setContratoDisEn(70021, $enable);
+		
+		//Reportes
+		$this->setReportesDisEn(39, $enable);
+		$this->setReportesDisEn(50101, $enable);
+		//$this->setReportesDisEn($id, $enable);
+		
 	}
 	function setModSeguimientoDA($enable = false){
 		$this->setContratoDisEn(3002, $enable);
@@ -1421,6 +1418,10 @@ class cSAFEData{
 		$estatus	= ($enable == true) ? "1" : "0";
 		$this->execQuery("UPDATE `eacp_config_bases_de_integracion` SET `estatus` = '$estatus' WHERE `codigo_de_base` = '$id'");
 	}
+	private function setReportesDisEn($id, $enable = false){
+		$estatus	= ($enable == true) ? "1" : "0";
+		$this->execQuery("UPDATE `general_reports` SET `estatus` = '$estatus' WHERE `idreport` = '$id'");
+	}
 	function setModGruposDisEn($enable = false){
 		//$this->setContratoDisEn(3002, $enable);
 		$this->setContratoDisEn(5, $enable);
@@ -1448,6 +1449,8 @@ class cSAFEData{
 		$this->setOperacionDisEn(712, $enable);
 		$this->setOperacionDisEn(902, $enable);
 		$this->setBaseSisDisEn(101, $enable);
+		//$this->setReportesDisEn($id, $enable);
+		$this->setReportesDisEn(14, $enable);
 	}
 	function setModNominasDisEn($enable = false){
 		$this->setOperacionDisEn(2101, $enable);
@@ -1458,6 +1461,7 @@ class cSAFEData{
 		$this->setContratoDisEn(4001, $enable);
 		$this->setContratoDisEn(801, $enable);
 		$this->setContratoDisEn(902, $enable);
+		
 		//$this->setOperacionDisEn(510, $enable);
 	
 		
@@ -1574,6 +1578,8 @@ class cCierreDelDia {
 	private $mMessages		= "";
 	private $mFechaUltima	= false;
 	private $mForce			= false;
+	private $mMarcaActual	= "";
+	
 	
 	public $TIPO_COLOCACION		= 1;
 	public $TIPO_CAPTACION		= 2;
@@ -1583,20 +1589,46 @@ class cCierreDelDia {
 	public $TIPO_RIESGOS		= 6;
 	public $TIPO_SISTEMA		= 9;
 	
+	public $MARCA_COLOCACION	= "CIERRE_DE_COLOCACION";
+	public $MARCA_CAPTACION		= "CIERRE_DE_CAPTACION";
+	public $MARCA_SEGUIMIENTO	= "CIERRE_DE_SEGUIMIENTO";
+	public $MARCA_CONTABILIDAD	= "CIERRE_DE_CONTABILIDAD";
+	public $MARCA_AML			= "CIERRE_DE_AML";
+	public $MARCA_RIESGOS		= "CIERRE_DE_RIESGOS";
+	public $MARCA_SISTEMA		= "CIERRE_DE_SISTEMA";
+	
+	
 	function __construct($fecha = false){
-		$this->mFecha	= ($fecha == false) ? fechasys() : $fecha;
+		$xF				= new cFecha();
+		$this->mFecha	= $xF->getFechaISO($fecha);
 	}
 	function setForzar($forzar = false){ $this->mForce = $forzar; }
-	function checkCierre($fecha = false){
-		$recibos	= 0;
+	function checkCierre($fecha = false, $mark = ""){
+		$recibos			= 0;
+		$this->mMarcaActual	= $mark;
+		$xF					= new cFecha();
+		
 		if($this->mForce == false){
-			$fecha		= ($fecha == false) ? $this->mFecha : $fecha;
-			$sql		= "SELECT COUNT(idoperaciones_recibos) AS 'recibos' FROM operaciones_recibos WHERE fecha_operacion='$fecha' AND tipo_docto=12 ";
-			$recibos	= mifila($sql, "recibos");
-			$recibos	= setNoMenorQueCero($recibos);
-			$xCaja		= new cCaja();
-			if($xCaja->getCajasAbiertas($fecha) > 0 ){ $this->mMessages	.= "ERROR\tFecha $fecha tiene cortes pendientes\r\n"; }
-			if ($recibos > 0){ $this->mMessages	.= "WARN\tFecha $fecha Existe en el cierre\r\n"; }
+			if($fecha === false){
+				$fecha		= $this->mFecha;
+			}
+			$this->mFecha	= $xF->getFechaISO($fecha);
+			if($mark == $this->MARCA_SEGUIMIENTO||$mark == $this->MARCA_CONTABILIDAD||$mark == $this->MARCA_RIESGOS){
+				$xLog			= new cFileLog();
+				if($xLog->getExiste($this->getNombreUnico()) == true){
+					$this->mMessages	.= "WARN\tEl Cierre tipo " . $this->mMarcaActual . " de fecha $fecha existe en Archivo\r\n";
+					$recibos	= 1;
+				}
+			} else {
+				$wMark		= ($mark == "") ? "" : "  AND (`observacion_recibo` LIKE '$mark%')";
+				$sql		= "SELECT COUNT(idoperaciones_recibos) AS 'recibos' FROM operaciones_recibos WHERE fecha_operacion='$fecha' AND tipo_docto=12 $wMark";
+				$recibos	= mifila($sql, "recibos");
+				$recibos	= setNoMenorQueCero($recibos);
+				$xCaja		= new cCaja();
+				if($xCaja->getCajasAbiertas($fecha) > 0 ){ $this->mMessages	.= "ERROR\tFecha $fecha tiene cortes pendientes\r\n"; }
+				if ($recibos > 0){ $this->mMessages	.= "WARN\tEl Cierre tipo " . $this->mMarcaActual . " de fecha $fecha existe en registro\r\n"; }
+			}
+
 		}
 		return ($recibos == 0) ? false : true;
 	}
@@ -1682,6 +1714,15 @@ class cCierreDelDia {
 	}
 	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
 	function getFechaUltima(){ return $this->mFechaUltima; }
+	function getNombreUnico(){
+		$nn		= str_replace("_", "-", $this->mMarcaActual);
+		$nn		= strtolower($nn);
+		$aliasFil	= getSucursal() . "-eventos-al-" . $nn . "-del-dia-" . $this->mFecha;
+		return $aliasFil;
+	}
+	function getTextoUnico(){
+		return $this->mMarcaActual . "_" . $this->mFecha;
+	}
 }
 
 function estaFueraDeRango($valor, $rango_inicial, $rango_final){
@@ -2330,7 +2371,11 @@ function convertirletras_porcentaje($numero){
 	$padar 			= explode(".", $numero);
 	$numf 	= milmillon($padar[0]);
 	$cents	= milmillon(intval($padar[1]));
-	return $numf." PUNTO $cents POR CIENTO";
+	$txt	= $numf." PUNTO $cents POR CIENTO";
+	if(intval($padar[1]) == 0){
+		$txt	= $numf." POR CIENTO";
+	}
+	return $txt;
 }
 
 
@@ -2555,9 +2600,14 @@ class cBases{
 	public $BASE_CREDITOS_ESTADO_CUENTA	= 1000;
 	public $BASE_MVTOS_ELIMINAR			= 10019;
 	public $BASE_MVTOS_RECIBO			= 1001;
+	public $BASE_MORA_DEV				= 2200;
+	public $BASE_MORA_PAG				= 2210;
+	public $BASE_INTS_DEV				= 2100;
+	public $BASE_INTS_PAG				= 2110;
 	
 	public $BASE_ESTADO_APORTACIONES	= 101;
 	public $BASE_IVA_OTROS				= 7013;
+	public $BASE_RPT_INGRESOS			= 10001;
 	
 	public $TIPO_OPERACIONES			= "de_operaciones";
 	public $TIPO_AML					= "aml";
@@ -2681,17 +2731,19 @@ class cBases{
 		ORDER BY
 		`eacp_config_bases_de_integracion_miembros`.`codigo_de_base` ";
 		$xQL				= new MQL();
-		$rs  = $xQL->getDataRecord($sql);
+		$rs					= $xQL->getRecordset($sql);
+		//$rs  = $xQL->getDataRecord($sql);
 		
-		foreach ( $rs as $rw ){
+		while($rw = $rs->fetch_assoc()){
 			if ( $IncludeDocto == false ){
 				$arr[ $rw["socio_afectado"] ] = $rw["monto"];
 			} else {
 							$arr[ $rw["socio_afectado"] . "@" . $rw["docto_afectado"] ] = $rw["monto"];
 			}
 		}
-						$rs = null;
-						return $arr;
+		//$rs->free_result();
+		$rs = null;
+		return $arr;
 	}
 	function getMembers_InString($ConAfectacion = false, $base = false){
 		$xCache		= new cCache();

@@ -88,12 +88,11 @@ if($xGr->init() == true){
 	
 	$xHG->col("codigo", "TR.CODIGO", "10%");
 	$xHG->col("nombre", "TR.NOMBRE_COMPLETO", "60%");
+	
 	$xHG->OColFunction("curp", "TR.MONTO", "10%", "jsTest");
 	
-
 	
-
-	$xFRM->addJsCode( $xHG->getJs(true) );
+	$xFRM->addJsCode($xHG->getJs(true));
 	
 
 	$xFRM->addHElem($xHG->getDiv());

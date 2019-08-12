@@ -16,17 +16,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -115,6 +115,7 @@ function display()
 <html>
 
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <title>SimpleRisk: Enterprise Risk Management Simplified</title>
     <script src="../js/jquery.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
@@ -137,7 +138,9 @@ function display()
 
     <script type="text/javascript" src="../js/jquery.tree.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../css/jquery.tree.min.css" />
-
+    <?php
+        setup_alert_requirements("..");
+    ?>
     <script type="text/javascript">
     $(function(){
         $("#complianceforge_frameworks").multiselect({
@@ -174,6 +177,9 @@ function display()
       </div>
     </div>
     <?php display_set_default_date_format_script(); ?>
+    <script>
+        <?php prevent_form_double_submit_script(); ?>
+    </script>    
   </body>
 
 </html>

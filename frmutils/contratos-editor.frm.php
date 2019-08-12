@@ -27,6 +27,8 @@ $xDate		= new cHDate();
 $xSel		= new cHSelect();
 $xFMT		= new cFormato(false);
 $xLi		= new cSQLListas();
+$tipo		= 0;
+$subtipo	= 0;
 
 $xHP->addJTableSupport();
 $jxc 		= new TinyAjax();
@@ -54,105 +56,159 @@ $xHP->init("initComponents()");
 $xFRM->setTitle($xHP->getTitle());
 
 
-	$xFRM->addCerrar();
+$xFRM->OBuscar("idbuscar", "", "", "jsBuscar", "", 5);
+
+
+$xFRM->addCerrar();
 	//$xFRM->addDivSolo( $xSel->getListaDeFormatos("idcontrato")->get(false), "", "txmon" );
 	//
-	$xFRM->OHidden("idcontrato", $idcontrato);
+$xFRM->OHidden("idcontrato", $idcontrato);
 	/* ===========		GRID JS		============*/
-	$xLF	= new cFormatosDelSistema();
+$xLF	= new cFormatosDelSistema();
 	
-	$xHG	= new cHGrid("iddiv",$xHP->getTitle());
+$xHG	= new cHGrid("iddiv",$xHP->getTitle());
 	
-	//$q1		= $xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
-	//$xHG->setSQL("SELECT * FROM `general_contratos` WHERE `estatus`='alta' ORDER BY `titulo_del_contrato` LIMIT 0,20");
+//$q1		= $xHG->setSQL("SELECT * FROM `general_contratos` ORDER BY `estatus`,`titulo_del_contrato` LIMIT 0,20");
+//$xHG->setSQL("SELECT * FROM `general_contratos` WHERE `estatus`='alta' ORDER BY `titulo_del_contrato` LIMIT 0,20");
 	
-	$q1		= $xHG->setSQL($xLF->getSQL_Lista(false));
-	$xHG->setSQL( $xLF->getSQL_Lista() );
+$q1		= $xHG->setSQL($xLF->getSQL_Lista(false));
+$xHG->setSQL( $xLF->getSQL_Lista() );
 	
 	
 	
-	if($producto >0){
-		$xProd	= new cProductoDeCredito($producto);
-		if($xProd->init() == true){
-		  $subtipo	= $xProd->getTipoEnSistema();
-		  $tipo     = iDE_CREDITO;
-		  //$xFMT	= new cFormato();
-		  $q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo, $subtipo));
-		  if($subtipo == 500){
-		  	$subtipo	= 281;			//FiXME: Corregir por leasing
-		  }
-		  $xHG->setSQL( $xLF->getSQL_Lista(true, $tipo, $subtipo) );
-		}
+if($producto >0){
+	$xProd	= new cProductoDeCredito($producto);
+	if($xProd->init() == true){
+	  $subtipo	= $xProd->getTipoEnSistema();
+	  $tipo     = iDE_CREDITO;
+	  //$xFMT	= new cFormato();
+	  $q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo, $subtipo));
+	  if($subtipo == 500){
+	  	$subtipo	= 281;			//FiXME: Corregir por leasing
+	  }
+	  $xHG->setSQL( $xLF->getSQL_Lista(true, $tipo, $subtipo) );
+	}
 		
+}
+if($tipopersona > 0){
+	$xTI	= new cPersonasTipoDeIngreso($tipopersona);
+	if($xTI->init() == true){
+		//$xTI->
+		$tipo     = iDE_SOCIO;
+		$q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo));
 	}
-	if($tipopersona > 0){
-		$xTI	= new cPersonasTipoDeIngreso($tipopersona);
-		if($xTI->init() == true){
-			//$xTI->
-			$tipo     = iDE_SOCIO;
-			$q1		= $xHG->setSQL($xLF->getSQL_Lista(false, $tipo));
-		}
-	}
-	$xHG->addList();
-	$xHG->addKey("idgeneral_contratos");
-	$xHG->col("idgeneral_contratos", "TR.CLAVE", "10%");
-	$xHG->col("titulo_del_contrato", "TR.NOMBRE", "10%");
-	$xHG->col("tipo_contrato", "TR.TIPO", "10%");
-	$xHG->col("tags", "TR.TAGS", "10%");
+}
+$xFRM->OHidden("tipo", $tipo);
+$xFRM->OHidden("subtipo", $subtipo);
+$xFRM->OHidden("producto", $producto);
+$xFRM->OHidden("tipopersona", $tipopersona);
+	
+	//$xFRM->OTextArea("xx", $xHG->getSQL(), "");
+	
+	
+$xHG->addList();
+$xHG->addKey("idgeneral_contratos");
+$xHG->col("idgeneral_contratos", "TR.CLAVE", "10%");
+$xHG->col("titulo_del_contrato", "TR.NOMBRE", "10%");
+$xHG->col("tipo_contrato", "TR.TIPO", "10%");
+$xHG->col("tags", "TR.TAGS", "10%");
 	//$xHG->col("estatus", "TR.ESTATUS", "10%");
 	
 	//$xHG->col("texto_del_contrato", "TR.TEXTO DEL CONTRATO", "10%");
 	
-	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
-	$xHG->OToolbar("TR.VER TODOS", "jsVerTodos()", "grid/off.png");
+$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
+$xHG->OToolbar("TR.VER TODOS", "jsVerTodos()", "grid/off.png");
 	
-	$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idgeneral_contratos +')", "edit.png");
-	$xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idgeneral_contratos +')", "minus.png");
-	$xHG->OButton("TR.VER", "getForma('+ data.record.idgeneral_contratos +')", "view.png");
+$xHG->OButton("TR.EDITAR", "jsEdit('+ data.record.idgeneral_contratos +')", "edit.png");
+$xHG->OButton("TR.CONTENIDO", "jsEditContent('+ data.record.idgeneral_contratos +')", "new-document.png");
+
+$xHG->OButton("TR.VER", "getForma('+ data.record.idgeneral_contratos +')", "view.png");
+
+if(MODO_DEBUG == true){
+   $xHG->OButton("TR.BAJA", "jsBaja('+ data.record.idgeneral_contratos +')", "undone.png");
+}
 	
-	if(MODO_DEBUG == true){
-		$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idgeneral_contratos +')", "delete.png");
-	}
+if(MODO_DEBUG == true AND SAFE_ON_DEV == true){
+	$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.idgeneral_contratos +')", "delete.png");
+}
 	
-	$xHG->setOrdenar();
+$xHG->setOrdenar();
 	
-	$xFRM->addHElem("<div id='iddiv'></div>");
-	$xFRM->addAviso("", "idaviso");
+$xFRM->addHElem("<div id='iddiv'></div>");
+$xFRM->addAviso("", "idaviso");
 	
-	$xFRM->addJsCode( $xHG->getJs(true) );
+$xFRM->addJsCode( $xHG->getJs(true) );
+
+echo $xFRM->get();
+
+?>
+<script>
+var xG		= new Gen();
+var q1		= "<?php echo $q1; ?>";
+var Cadena	= new CadenaUtils();	
+
+function jsEdit(id){
+	//xG.w({url:"../frm/.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiv});
+	$("#idcontrato").val(id);
+	//$("#id-frmeditor").trigger("submit");
+	xG.w({url:"../frmutils/contratos-editor.upd.frm.php?idcontrato=" + id, tiny:true, w:600, callback: jsLGiddiv});
+}
+function jsEditContent(id){
+	//xG.w({url:"../frm/.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiv});
+	$("#idcontrato").val(id);
+	//$("#id-frmeditor").trigger("submit");
+	xG.w({url:"../frmutils/contratos-editor.edit.frm.php?idcontrato=" + id, tab:true, callback: jsLGiddiv});
+}
+function jsAdd(){
+	var idcontrato	= $("#idcontrato").val(); 
+	var tipo	= $("#tipo").val(); 
+	var subtipo	= $("#subtipo").val(); 
+	var producto	= $("#producto").val(); 
+	var tipopersona	= $("#tipopersona").val();
 	
-	echo $xFRM->get();
-	?>
-	<script>
-	var xG	= new Gen();
-	var q1	= "<?php echo $q1; ?>";
-	function jsEdit(id){
-		//xG.w({url:"../frm/.edit.frm.php?clave=" + id, tiny:true, callback: jsLGiddiv});
-		$("#idcontrato").val(id);
-		//$("#id-frmeditor").trigger("submit");
-		xG.w({url:"../frmutils/contratos-editor.edit.frm.php?idcontrato=" + id, tab:true, callback: jsLGiddiv});
+	var txtvars		= "";
+	var txttipo		= "";
+		
+	if(tipo >0){
+		txttipo		= "&tipo=" + tipo;
 	}
-	function jsAdd(){
-		xG.w({url:"../frmutils/contratos-editor.new.frm.php?", tiny:true, callback: jsLGiddiv});
+	if(subtipo>0){
+		txtvars		= Cadena.pegar(txtvars,subtipo);
 	}
-	function jsDel(id){
-		xG.rmRecord({tabla:"general_contratos", id:id, callback:jsLGiddiv});
+	if(producto >0){
+		txtvars		= Cadena.pegar(txtvars,producto);
 	}
-	function jsBaja(id){
-		$("#idcontrato").val(id);
-		xG.confirmar({msg:"Confirma desactivar este Formato", callback:jsBajaContrato});
-	}
-	function jsAlta(id){
-		$("#idcontrato").val(id);
-		xG.confirmar({msg:"Confirma Activar este Formato", callback:jsActivarContrato});
-	}
-	function jsVerTodos(){
-		var str		= "&q="  + q1;
-		$('#iddiv').jtable('destroy');
-		jsLGiddiv(str);		
-	}
-	</script>
-	<?php
+		
+	xG.w({url:"../frmutils/contratos-editor.new.frm.php?tags=" + txtvars + "" + txttipo, tiny:true, callback: jsLGiddiv});
+}
+function jsDel(id){
+	xG.rmRecord({tabla:"general_contratos", id:id, callback:jsLGiddiv});
+}
+function jsBaja(id){
+	$("#idcontrato").val(id);
+	xG.confirmar({msg:"Confirma desactivar este Formato", callback:jsBajaContrato});
+}
+function jsAlta(id){
+	$("#idcontrato").val(id);
+	xG.confirmar({msg:"Confirma Activar este Formato", callback:jsActivarContrato});
+}
+function jsVerTodos(){
+	var str		= "&q="  + q1;
+	$('#iddiv').jtable('destroy');
+	jsLGiddiv(str);		
+}
+function jsBuscar(){
+	var idbuscartxt = $("#idbuscar").val();
+	xG.findInGrid({ where: " AND (`titulo_del_contrato` LIKE '%" + idbuscartxt + "%' OR `texto_del_contrato` LIKE '%" + idbuscartxt + "%')",src: "iddiv" });
+}
+function initComponents(){
+	
+}
+function getForma(id){
+	xG.w({ url : "../frmutils/forma.vista_previa.rpt.php?forma=" + id});
+}
+</script>
+<?php
 		
 	
 
@@ -161,32 +217,6 @@ $xFRM->setTitle($xHP->getTitle());
 
 
 $jxc ->drawJavaScript(false, true);
-?>
-<script>
-var xG	= new Gen();
-	function jsAddText(){
-		var txt = document.getElementById("idvariables").value;
-		//var curSel = document.getSelection();
-		InsertHTML(txt);
-	}
-	function setSelectSize(mSize){
-		var mSelect = document.getElementById("idvariables");
-			mSelect.removeAttribute("size");
-			mSelect.setAttribute("size", mSize);
-	}
-	function InsertHTML(strText){
-		CKEDITOR.instances['ckeditor'].insertText(strText);
-	}
-	function jsGuardar(){
-		CKEDITOR.instances['ckeditor'].commands.save.exec();
-	}	
-	function initComponents(){
-		$("#cke_1_contents").css("height", "600px");
-	}
-	function getForma(id){
-		xG.w({ url : "../frmutils/forma.vista_previa.rpt.php?forma=" + id});
-	}
-</script>
-<?php
+
 $xHP->fin();
 ?>

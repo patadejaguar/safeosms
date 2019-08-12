@@ -82,7 +82,11 @@ $jxc->process();
 ****************************************************************************************************************** */
 
 if(MODO_DEBUG == true){
-	
+	$xPerCred		= new cPeriodoDeCredito();
+	if($xPerCred->checkPeriodoVigente($fecha_de_sesion) == false ){
+		setLog($xPerCred->getMessages(), 300);
+		header("location:frmcreditos/cambiarperiodo.frm.php?a=1");
+	}
 } else {
 	//checar cierre del dia
 	$xCierre			= new cCierreDelDia();
@@ -93,10 +97,10 @@ if(MODO_DEBUG == true){
 	}
 	//if(CREDITO_CONTROLAR_POR_PERIODOS == true){
 	$xPerCred		= new cPeriodoDeCredito();
-		if($xPerCred->checkPeriodoVigente($fecha_de_sesion) == false ){
-			setLog($xPerCred->getMessages(), 300);
-			header("location:frmcreditos/cambiarperiodo.frm.php?a=1");
-		}
+	if($xPerCred->checkPeriodoVigente($fecha_de_sesion) == false ){
+		setLog($xPerCred->getMessages(), 300);
+		header("location:frmcreditos/cambiarperiodo.frm.php?a=1");
+	}
 	//}
 }
 
@@ -113,8 +117,8 @@ $xHP->setNoCache();
 		//$xHP->addCSS("css/jmenu.css");
 		//$xHP->addJsFile("js/jmenu/jMenu.jquery.js");
 		
-$xHP->addCSS("css/jquery.mmenu.all.css");
-$xHP->addJsFile("js/jquery.mmenu.all.js");
+//$xHP->addCSS("css/jquery.mmenu.all.css");
+//$xHP->addJsFile("js/jquery.mmenu.all.js");
 		
 	//}
 	//$xHP->addJsFile("js/tinybox.js");
@@ -208,6 +212,9 @@ if($menu === null){
  
 	<nav id=\"navmenu\">" . $menu . "</nav> ";
 	
+	if(SYSTEM_ON_DEMO == true){
+		echo "<div class=\"ribbon dev\"><a href=\"\">Versi&oacute;n Demo</a></div>";
+	}
 	
 	echo $menu;
 	echo "<div id=\"wprincipal\">
@@ -257,7 +264,7 @@ $(document).ready(function(){
 		session(Configuracion.variables.sistema.isMobile, "1");
 	}
 	if(reqUpt === true){
-		xG.aviso({msg:"El Sistema requiere actualizacion, si no actualiza puede general un mal funcionamiento.<br />La ID local es : " + dbLv + ".<br />La ID en codigo es : " + dbCv + ".", tipo : "warn"});
+		xG.aviso({msg:"El Sistema requiere actualizacion, el no actualizar puede causar un mal funcionamiento.<br />La ID local es : " + dbLv + ".<br />La ID en codigo es : " + dbCv + ".", tipo : "warn"});
 	} 
 });
 

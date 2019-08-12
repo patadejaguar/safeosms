@@ -675,15 +675,18 @@ $lang["20190201"][]	= array("CREDFECHAVENC", "Fecha de Venc.", "Due Date");
 $lang["20190201"][]	= array("CREDFECHAVENCCONT", "Fecha Venc. Contrato", "Expiry Contract");
 $lang["20190201"][]	= array("CREDFECHAVENCPAG", "Fecha Venc. Pago", "Due Date");
 
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
-//$lang["20190301"][]	= array("", "", "");
+$lang["20190303"][]	= array("RECUPERACION", "Recuperacion", "Collections");
+$lang["20190303"][]	= array("PUNTUALIDAD", "Puntualidad", "Timeliness");
+$lang["20190303"][]	= array("RETRASOS", "Retrasos", "Delayed");
+
+$lang["20190305"][]	= array("PROCESOS", "Procesos", "Process");
+
+$lang["20190701"][]	= array("INFOHECHOS", "Información de los hechos", "Information about the acts");
+$lang["20190701"][]	= array("HECHOS", "Hechos", "Acts");
+$lang["20190701"][]	= array("EMPLEADO", "Empleado", "Employee");
 
 
+//$lang["20190701"][]	= array("", "", "");
 
 
 header('Content-type: application/json');

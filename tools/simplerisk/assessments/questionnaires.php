@@ -17,30 +17,23 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
 
 // Include the language file
 require_once(language_file());
-
-// Load CSRF Magic
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
-
-function csrf_startup() {
-    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
-}
 
 // Check for session timeout or renegotiation
 session_check();
@@ -59,6 +52,10 @@ if (!isset($_SESSION["assessments"]) || $_SESSION["assessments"] != "1")
     header("Location: ../index.php");
     exit(0);
 }
+
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
 
 // Check if assessment extra is enabled
 if(assessments_extra())
@@ -88,6 +85,7 @@ if($result = process_assessment_questionnaires()){
 <html>
 
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery-ui.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
@@ -105,7 +103,14 @@ if($result = process_assessment_questionnaires()){
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
-
+    <?php
+        setup_alert_requirements("..");
+    ?>
+    <style>
+        .btn[disabled] {
+            background-color: #3a3a3a !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -132,9 +137,7 @@ if($result = process_assessment_questionnaires()){
                 <?php }elseif(isset($_GET['action']) && $_GET['action']=="add"){ ?>
                     <?php display_questionnaire_add(); ?>
                 <?php }elseif(isset($_GET['action']) && $_GET['action']=="edit"){ ?>
-                    <div class="hero-unit">
                         <?php display_questionnaire_edit($_GET['id']); ?>
-                    </div>
                 <?php } ?>
             </div>
         </div>

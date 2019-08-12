@@ -441,9 +441,10 @@ class cCreditos_solicitud {
 
 /*	ORM: Tabla:	creditos_plan_de_pagos	-	Generado:	[11/6/2015 15:09]	*/
 /*	ORM: Tabla:	creditos_plan_de_pagos	-	Generado:	[21/3/2018 23:59]	*/
+/*    ORM: Tabla:    creditos_plan_de_pagos    -    Generado:    [24/4/2019 14:47]    */
 class cCreditos_plan_de_pagos {
-	private $mCampos	= array("plan_de_pago" => array("N"=>"plan_de_pago","T"=>"INT","V"=>"","L"=>11),"clave_de_credito" => array("N"=>"clave_de_credito","T"=>"BIGINT","V"=>"1","L"=>20),"numero_de_parcialidad" => array("N"=>"numero_de_parcialidad","T"=>"INT","V"=>"1","L"=>11),"fecha_de_pago" => array("N"=>"fecha_de_pago","T"=>"DATE","V"=>"","L"=>0),"capital" => array("N"=>"capital","T"=>"DOUBLE","V"=>"0.00","L"=>29),"interes" => array("N"=>"interes","T"=>"FLOAT","V"=>"0.00","L"=>25),"impuesto" => array("N"=>"impuesto","T"=>"FLOAT","V"=>"0.00","L"=>25),"otros" => array("N"=>"otros","T"=>"FLOAT","V"=>"0.00","L"=>25),"otros_codigo" => array("N"=>"otros_codigo","T"=>"INT","V"=>"0","L"=>11),"saldo_inverso" => array("N"=>"saldo_inverso","T"=>"FLOAT","V"=>"0.00","L"=>33),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"matriz","L"=>20),"ahorro" => array("N"=>"ahorro","T"=>"FLOAT","V"=>"0.00","L"=>25),"penas" => array("N"=>"penas","T"=>"FLOAT","V"=>"0.00","L"=>25),"gtoscbza" => array("N"=>"gtoscbza","T"=>"FLOAT","V"=>"0.00","L"=>25),"mora" => array("N"=>"mora","T"=>"FLOAT","V"=>"0.00","L"=>25),"descuentos" => array("N"=>"descuentos","T"=>"FLOAT","V"=>"0.00","L"=>25),"iva_castigos" => array("N"=>"iva_castigos","T"=>"FLOAT","V"=>"0.00","L"=>25),"total_base" => array("N"=>"total_base","T"=>"DOUBLE","V"=>"0.00","L"=>29),"total_c_otros" => array("N"=>"total_c_otros","T"=>"DOUBLE","V"=>"0.00","L"=>29),"total_c_castigos" => array("N"=>"total_c_castigos","T"=>"DOUBLE","V"=>"0.00","L"=>29));
-	public $PLAN_DE_PAGO = "plan_de_pago"; public $CLAVE_DE_CREDITO = "clave_de_credito"; public $NUMERO_DE_PARCIALIDAD = "numero_de_parcialidad"; public $FECHA_DE_PAGO = "fecha_de_pago"; public $CAPITAL = "capital"; public $INTERES = "interes"; public $IMPUESTO = "impuesto"; public $OTROS = "otros"; public $OTROS_CODIGO = "otros_codigo"; public $SALDO_INVERSO = "saldo_inverso"; public $SUCURSAL = "sucursal"; public $AHORRO = "ahorro"; public $PENAS = "penas"; public $GTOSCBZA = "gtoscbza"; public $MORA = "mora"; public $DESCUENTOS = "descuentos"; public $IVA_CASTIGOS = "iva_castigos"; public $TOTAL_BASE = "total_base"; public $TOTAL_C_OTROS = "total_c_otros"; public $TOTAL_C_CASTIGOS = "total_c_castigos"; 
+	private $mCampos    = array("plan_de_pago" => array("N"=>"plan_de_pago","T"=>"INT","V"=>"","L"=>11),"clave_de_credito" => array("N"=>"clave_de_credito","T"=>"BIGINT","V"=>"1","L"=>20),"numero_de_parcialidad" => array("N"=>"numero_de_parcialidad","T"=>"INT","V"=>"1","L"=>11),"fecha_de_pago" => array("N"=>"fecha_de_pago","T"=>"DATE","V"=>"","L"=>0),"capital" => array("N"=>"capital","T"=>"DOUBLE","V"=>"0.00","L"=>29),"interes" => array("N"=>"interes","T"=>"FLOAT","V"=>"0.00","L"=>25),"impuesto" => array("N"=>"impuesto","T"=>"FLOAT","V"=>"0.00","L"=>25),"otros" => array("N"=>"otros","T"=>"FLOAT","V"=>"0.00","L"=>25),"otros_codigo" => array("N"=>"otros_codigo","T"=>"INT","V"=>"414","L"=>11),"saldo_inverso" => array("N"=>"saldo_inverso","T"=>"FLOAT","V"=>"0.00","L"=>33),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"matriz","L"=>20),"ahorro" => array("N"=>"ahorro","T"=>"FLOAT","V"=>"0.00","L"=>25),"penas" => array("N"=>"penas","T"=>"FLOAT","V"=>"0.00","L"=>25),"gtoscbza" => array("N"=>"gtoscbza","T"=>"FLOAT","V"=>"0.00","L"=>25),"mora" => array("N"=>"mora","T"=>"FLOAT","V"=>"0.00","L"=>25),"descuentos" => array("N"=>"descuentos","T"=>"FLOAT","V"=>"0.00","L"=>25),"iva_castigos" => array("N"=>"iva_castigos","T"=>"FLOAT","V"=>"0.00","L"=>25),"total_base" => array("N"=>"total_base","T"=>"DOUBLE","V"=>"0.00","L"=>29),"total_c_otros" => array("N"=>"total_c_otros","T"=>"DOUBLE","V"=>"0.00","L"=>29),"total_c_castigos" => array("N"=>"total_c_castigos","T"=>"DOUBLE","V"=>"0.00","L"=>29),"estatusactivo" => array("N"=>"estatusactivo","T"=>"INT","V"=>"1","L"=>2),"pag_cap" => array("N"=>"pag_cap","T"=>"DOUBLE","V"=>"0.00","L"=>29),"pag_nums" => array("N"=>"pag_nums","T"=>"INT","V"=>"0","L"=>4),"pag_fecha" => array("N"=>"pag_fecha","T"=>"DATE","V"=>"0000-00-00","L"=>0));
+	public $PLAN_DE_PAGO = "plan_de_pago"; public $CLAVE_DE_CREDITO = "clave_de_credito"; public $NUMERO_DE_PARCIALIDAD = "numero_de_parcialidad"; public $FECHA_DE_PAGO = "fecha_de_pago"; public $CAPITAL = "capital"; public $INTERES = "interes"; public $IMPUESTO = "impuesto"; public $OTROS = "otros"; public $OTROS_CODIGO = "otros_codigo"; public $SALDO_INVERSO = "saldo_inverso"; public $SUCURSAL = "sucursal"; public $AHORRO = "ahorro"; public $PENAS = "penas"; public $GTOSCBZA = "gtoscbza"; public $MORA = "mora"; public $DESCUENTOS = "descuentos"; public $IVA_CASTIGOS = "iva_castigos"; public $TOTAL_BASE = "total_base"; public $TOTAL_C_OTROS = "total_c_otros"; public $TOTAL_C_CASTIGOS = "total_c_castigos"; public $ESTATUSACTIVO = "estatusactivo"; public $PAG_CAP = "pag_cap"; public $PAG_NUMS = "pag_nums"; public $PAG_FECHA = "pag_fecha";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_plan_de_pagos";}
 	function getKey(){ return "plan_de_pago";}
@@ -467,9 +468,12 @@ class cCreditos_plan_de_pagos {
 	function total_base($v = false){ if($v !== false){$this->mCampos["total_base"]["V"] =  $v; } return new MQLCampo($this->mCampos["total_base"]);}
 	function total_c_otros($v = false){ if($v !== false){$this->mCampos["total_c_otros"]["V"] =  $v; } return new MQLCampo($this->mCampos["total_c_otros"]);}
 	function total_c_castigos($v = false){ if($v !== false){$this->mCampos["total_c_castigos"]["V"] =  $v; } return new MQLCampo($this->mCampos["total_c_castigos"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	function estatusactivo($v = false){ if($v !== false){$this->mCampos["estatusactivo"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatusactivo"]);}
+	function pag_cap($v = false){ if($v !== false){$this->mCampos["pag_cap"]["V"] =  $v; } return new MQLCampo($this->mCampos["pag_cap"]);}
+	function pag_nums($v = false){ if($v !== false){$this->mCampos["pag_nums"]["V"] =  $v; } return new MQLCampo($this->mCampos["pag_nums"]);}
+	function pag_fecha($v = false){ if($v !== false){$this->mCampos["pag_fecha"]["V"] =  $v; } return new MQLCampo($this->mCampos["pag_fecha"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 }
 
 /*	ORM: Tabla:	creditos_firmantes	-	Generado:	[24/7/2017 15:41]	*/
@@ -713,6 +717,40 @@ class cCreditos_productos_costos {
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 }
+/*    ORM: Tabla:    creditos_prods_doctos    -    Generado:    [11/4/2019 13:08]    */
+class cCreditos_prods_doctos {
+	private $mCampos    = array("idcreditos_prods_doctos" => array("N"=>"idcreditos_prods_doctos","T"=>"INT","V"=>"","L"=>11),"producto_credito_id" => array("N"=>"producto_credito_id","T"=>"INT","V"=>"","L"=>8),"documento_id" => array("N"=>"documento_id","T"=>"INT","V"=>"","L"=>8),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"etapa_id" => array("N"=>"etapa_id","T"=>"INT","V"=>"","L"=>4),"opcional" => array("N"=>"opcional","T"=>"INT","V"=>"0","L"=>2));
+	public $IDCREDITOS_PRODS_DOCTOS = "idcreditos_prods_doctos"; public $PRODUCTO_CREDITO_ID = "producto_credito_id"; public $DOCUMENTO_ID = "documento_id"; public $ESTATUS = "estatus"; public $ETAPA_ID = "etapa_id"; public $OPCIONAL = "opcional";
+	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
+	function get(){ return "creditos_prods_doctos";}
+	function getKey(){ return "idcreditos_prods_doctos";}
+	function idcreditos_prods_doctos($v = false){ if($v !== false){$this->mCampos["idcreditos_prods_doctos"]["V"] =  $v; } return new MQLCampo($this->mCampos["idcreditos_prods_doctos"]);}
+	function producto_credito_id($v = false){ if($v !== false){$this->mCampos["producto_credito_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["producto_credito_id"]);}
+	function documento_id($v = false){ if($v !== false){$this->mCampos["documento_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["documento_id"]);}
+	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatus"]);}
+	function etapa_id($v = false){ if($v !== false){$this->mCampos["etapa_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["etapa_id"]);}
+	function opcional($v = false){ if($v !== false){$this->mCampos["opcional"]["V"] =  $v; } return new MQLCampo($this->mCampos["opcional"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
+}
+/*    ORM: Tabla:    creditos_prods_formatos    -    Generado:    [11/4/2019 13:09]    */
+class cCreditos_prods_formatos {
+	private $mCampos    = array("idcreditos_prods_contratos" => array("N"=>"idcreditos_prods_contratos","T"=>"INT","V"=>"","L"=>11),"producto_credito_id" => array("N"=>"producto_credito_id","T"=>"INT","V"=>"","L"=>8),"formato_id" => array("N"=>"formato_id","T"=>"INT","V"=>"","L"=>8),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"etapa_id" => array("N"=>"etapa_id","T"=>"INT","V"=>"","L"=>4),"opcional" => array("N"=>"opcional","T"=>"INT","V"=>"0","L"=>2));
+	public $IDCREDITOS_PRODS_CONTRATOS = "idcreditos_prods_contratos"; public $PRODUCTO_CREDITO_ID = "producto_credito_id"; public $FORMATO_ID = "formato_id"; public $ESTATUS = "estatus"; public $ETAPA_ID = "etapa_id"; public $OPCIONAL = "opcional";
+	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
+	function get(){ return "creditos_prods_formatos";}
+	function getKey(){ return "idcreditos_prods_contratos";}
+	function idcreditos_prods_contratos($v = false){ if($v !== false){$this->mCampos["idcreditos_prods_contratos"]["V"] =  $v; } return new MQLCampo($this->mCampos["idcreditos_prods_contratos"]);}
+	function producto_credito_id($v = false){ if($v !== false){$this->mCampos["producto_credito_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["producto_credito_id"]);}
+	function formato_id($v = false){ if($v !== false){$this->mCampos["formato_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["formato_id"]);}
+	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatus"]);}
+	function etapa_id($v = false){ if($v !== false){$this->mCampos["etapa_id"]["V"] =  $v; } return new MQLCampo($this->mCampos["etapa_id"]);}
+	function opcional($v = false){ if($v !== false){$this->mCampos["opcional"]["V"] =  $v; } return new MQLCampo($this->mCampos["opcional"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
+}
 /*	ORM: Tabla:	creditos_productos_otros_parametros	-	Generado:	[21/11/2014 18:24]	*/
 /*    ORM: Tabla:    creditos_productos_otros_parametros    -    Generado:    [17/8/2018 15:01]    */
 class cCreditos_productos_otros_parametros {
@@ -895,16 +933,10 @@ class cCreditos_presupuestos {
 
 }
 /*	ORM: Tabla:	creditos_periodos	-	Generado:	[29/3/2016 18:23]	*/
+/*    ORM: Tabla:    creditos_periodos    -    Generado:    [03/4/2019 19:14]    */
 class cCreditos_periodos {
-	private $mCampos	= array(
-			"idcreditos_periodos" => array("N"=>"idcreditos_periodos","T"=>"INT","V"=>"","L"=>10),
-			"descripcion_periodos" => array("N"=>"descripcion_periodos","T"=>"VARCHAR","V"=>"","L"=>45),
-			"fecha_inicial" => array("N"=>"fecha_inicial","T"=>"DATE","V"=>"0000-00-00","L"=>0),
-			"fecha_final" => array("N"=>"fecha_final","T"=>"DATE","V"=>"0000-00-00","L"=>0),
-			"fecha_reunion" => array("N"=>"fecha_reunion","T"=>"DATE","V"=>"0000-00-00","L"=>0),
-			"periodo_responsable" => array("N"=>"periodo_responsable","T"=>"INT","V"=>"99","L"=>4),
-
-	);
+	private $mCampos    = array("idcreditos_periodos" => array("N"=>"idcreditos_periodos","T"=>"INT","V"=>"","L"=>10),"descripcion_periodos" => array("N"=>"descripcion_periodos","T"=>"VARCHAR","V"=>"","L"=>45),"fecha_inicial" => array("N"=>"fecha_inicial","T"=>"DATE","V"=>"0000-00-00","L"=>0),"fecha_final" => array("N"=>"fecha_final","T"=>"DATE","V"=>"0000-00-00","L"=>0),"fecha_reunion" => array("N"=>"fecha_reunion","T"=>"DATE","V"=>"0000-00-00","L"=>0),"periodo_responsable" => array("N"=>"periodo_responsable","T"=>"INT","V"=>"99","L"=>4));
+	public $IDCREDITOS_PERIODOS = "idcreditos_periodos"; public $DESCRIPCION_PERIODOS = "descripcion_periodos"; public $FECHA_INICIAL = "fecha_inicial"; public $FECHA_FINAL = "fecha_final"; public $FECHA_REUNION = "fecha_reunion"; public $PERIODO_RESPONSABLE = "periodo_responsable";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_periodos";}
 	function getKey(){ return "idcreditos_periodos";}
@@ -914,9 +946,9 @@ class cCreditos_periodos {
 	function fecha_final($v = false){ if($v !== false){$this->mCampos["fecha_final"]["V"] =  $v; } return new MQLCampo($this->mCampos["fecha_final"]);}
 	function fecha_reunion($v = false){ if($v !== false){$this->mCampos["fecha_reunion"]["V"] =  $v; } return new MQLCampo($this->mCampos["fecha_reunion"]);}
 	function periodo_responsable($v = false){ if($v !== false){$this->mCampos["periodo_responsable"]["V"] =  $v; } return new MQLCampo($this->mCampos["periodo_responsable"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
 }
 
 /*	ORM: Tabla:	creditos_eventos	-	Generado:	[28/4/2016 15:22]	*/
@@ -1158,9 +1190,10 @@ class cCreditos_tipoconvenio {
 /*	ORM: Tabla:	creditos_montos	-	Generado:	[24/5/2018 17:19]	*/
 /*    ORM: Tabla:    creditos_montos    -    Generado:    [04/11/2018 18:54]    */
 /*    ORM: Tabla:    creditos_montos    -    Generado:    [08/2/2019 11:00]    */
+/*    ORM: Tabla:    creditos_montos    -    Generado:    [01/7/2019 13:51]    */
 class cCreditos_montos {
-	private $mCampos    = array("idcreditos_montos" => array("N"=>"idcreditos_montos","T"=>"INT","V"=>"","L"=>11),"clave_de_credito" => array("N"=>"clave_de_credito","T"=>"BIGINT","V"=>"0","L"=>20),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"matriz","L"=>20),"marca_tiempo" => array("N"=>"marca_tiempo","T"=>"INT","V"=>"0","L"=>10),"marca_acceso" => array("N"=>"marca_acceso","T"=>"INT","V"=>"0","L"=>10),"interes_n_dev" => array("N"=>"interes_n_dev","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_n_pag" => array("N"=>"interes_n_pag","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_dev" => array("N"=>"interes_m_dev","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_pag" => array("N"=>"interes_m_pag","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_n_corr" => array("N"=>"interes_n_corr","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_corr" => array("N"=>"interes_m_corr","T"=>"DOUBLE","V"=>"0.00","L"=>25),"cargos_cbza" => array("N"=>"cargos_cbza","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_int_n" => array("N"=>"imptos_int_n","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_int_m" => array("N"=>"imptos_int_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_otros" => array("N"=>"imptos_otros","T"=>"DOUBLE","V"=>"0.00","L"=>25),"penas" => array("N"=>"penas","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bonificaciones" => array("N"=>"bonificaciones","T"=>"DOUBLE","V"=>"0.00","L"=>25),"capital_exigible" => array("N"=>"capital_exigible","T"=>"DOUBLE","V"=>"0.00","L"=>25),"f_primer_atraso" => array("N"=>"f_primer_atraso","T"=>"DATE","V"=>"0000-00-00","L"=>0),"f_ultimo_atraso" => array("N"=>"f_ultimo_atraso","T"=>"DATE","V"=>"0000-00-00","L"=>0),"otros1_id" => array("N"=>"otros1_id","T"=>"INT","V"=>"0","L"=>5),"otros1_m" => array("N"=>"otros1_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"otros2_id" => array("N"=>"otros2_id","T"=>"INT","V"=>"0","L"=>5),"otros2_m" => array("N"=>"otros2_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"otros_nc" => array("N"=>"otros_nc","T"=>"DOUBLE","V"=>"0.00","L"=>25),"usuario" => array("N"=>"usuario","T"=>"INT","V"=>"0","L"=>6),"guardar" => array("N"=>"guardar","T"=>"INT","V"=>"0","L"=>2),"t_iva_int_n" => array("N"=>"t_iva_int_n","T"=>"FLOAT","V"=>"0.000","L"=>17),"t_iva_m" => array("N"=>"t_iva_m","T"=>"FLOAT","V"=>"0.000","L"=>17),"t_iva_o" => array("N"=>"t_iva_o","T"=>"FLOAT","V"=>"0.000","L"=>17),"otros_si" => array("N"=>"otros_si","T"=>"DOUBLE","V"=>"0.00","L"=>25),"dispocision" => array("N"=>"dispocision","T"=>"DOUBLE","V"=>"0.00","L"=>33),"saldo_plan" => array("N"=>"saldo_plan","T"=>"DOUBLE","V"=>"0.00","L"=>33),"abonos_ops" => array("N"=>"abonos_ops","T"=>"DOUBLE","V"=>"0.00","L"=>33),"periodo_min" => array("N"=>"periodo_min","T"=>"INT","V"=>"0","L"=>5),"periodo_max" => array("N"=>"periodo_max","T"=>"INT","V"=>"0","L"=>5),"periodo_last" => array("N"=>"periodo_last","T"=>"INT","V"=>"0","L"=>5),"bon_int" => array("N"=>"bon_int","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bon_mora" => array("N"=>"bon_mora","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bon_otros" => array("N"=>"bon_otros","T"=>"DOUBLE","V"=>"0.00","L"=>25),"sdo_exig_fut" => array("N"=>"sdo_exig_fut","T"=>"DOUBLE","V"=>"0.00","L"=>33),"sdo_exig_act" => array("N"=>"sdo_exig_act","T"=>"DOUBLE","V"=>"0.00","L"=>33),"ints_tot_calc" => array("N"=>"ints_tot_calc","T"=>"DOUBLE","V"=>"0.00","L"=>33),"periodo_pends" => array("N"=>"periodo_pends","T"=>"INT","V"=>"0","L"=>5),"hist_otros" => array("N"=>"hist_otros","T"=>"DOUBLE","V"=>"0.00","L"=>33));
-	public $IDCREDITOS_MONTOS = "idcreditos_montos"; public $CLAVE_DE_CREDITO = "clave_de_credito"; public $SUCURSAL = "sucursal"; public $MARCA_TIEMPO = "marca_tiempo"; public $MARCA_ACCESO = "marca_acceso"; public $INTERES_N_DEV = "interes_n_dev"; public $INTERES_N_PAG = "interes_n_pag"; public $INTERES_M_DEV = "interes_m_dev"; public $INTERES_M_PAG = "interes_m_pag"; public $INTERES_N_CORR = "interes_n_corr"; public $INTERES_M_CORR = "interes_m_corr"; public $CARGOS_CBZA = "cargos_cbza"; public $IMPTOS_INT_N = "imptos_int_n"; public $IMPTOS_INT_M = "imptos_int_m"; public $IMPTOS_OTROS = "imptos_otros"; public $PENAS = "penas"; public $BONIFICACIONES = "bonificaciones"; public $CAPITAL_EXIGIBLE = "capital_exigible"; public $F_PRIMER_ATRASO = "f_primer_atraso"; public $F_ULTIMO_ATRASO = "f_ultimo_atraso"; public $OTROS1_ID = "otros1_id"; public $OTROS1_M = "otros1_m"; public $OTROS2_ID = "otros2_id"; public $OTROS2_M = "otros2_m"; public $OTROS_NC = "otros_nc"; public $USUARIO = "usuario"; public $GUARDAR = "guardar"; public $T_IVA_INT_N = "t_iva_int_n"; public $T_IVA_M = "t_iva_m"; public $T_IVA_O = "t_iva_o"; public $OTROS_SI = "otros_si"; public $DISPOCISION = "dispocision"; public $SALDO_PLAN = "saldo_plan"; public $ABONOS_OPS = "abonos_ops"; public $PERIODO_MIN = "periodo_min"; public $PERIODO_MAX = "periodo_max"; public $PERIODO_LAST = "periodo_last"; public $BON_INT = "bon_int"; public $BON_MORA = "bon_mora"; public $BON_OTROS = "bon_otros"; public $SDO_EXIG_FUT = "sdo_exig_fut"; public $SDO_EXIG_ACT = "sdo_exig_act"; public $INTS_TOT_CALC = "ints_tot_calc"; public $PERIODO_PENDS = "periodo_pends"; public $HIST_OTROS = "hist_otros";
+	private $mCampos    = array("idcreditos_montos" => array("N"=>"idcreditos_montos","T"=>"INT","V"=>"","L"=>11),"clave_de_credito" => array("N"=>"clave_de_credito","T"=>"BIGINT","V"=>"0","L"=>20),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"matriz","L"=>20),"marca_tiempo" => array("N"=>"marca_tiempo","T"=>"INT","V"=>"0","L"=>10),"marca_acceso" => array("N"=>"marca_acceso","T"=>"INT","V"=>"0","L"=>10),"interes_n_dev" => array("N"=>"interes_n_dev","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_n_pag" => array("N"=>"interes_n_pag","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_dev" => array("N"=>"interes_m_dev","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_pag" => array("N"=>"interes_m_pag","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_n_corr" => array("N"=>"interes_n_corr","T"=>"DOUBLE","V"=>"0.00","L"=>25),"interes_m_corr" => array("N"=>"interes_m_corr","T"=>"DOUBLE","V"=>"0.00","L"=>25),"cargos_cbza" => array("N"=>"cargos_cbza","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_int_n" => array("N"=>"imptos_int_n","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_int_m" => array("N"=>"imptos_int_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"imptos_otros" => array("N"=>"imptos_otros","T"=>"DOUBLE","V"=>"0.00","L"=>25),"penas" => array("N"=>"penas","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bonificaciones" => array("N"=>"bonificaciones","T"=>"DOUBLE","V"=>"0.00","L"=>25),"capital_exigible" => array("N"=>"capital_exigible","T"=>"DOUBLE","V"=>"0.00","L"=>25),"f_primer_atraso" => array("N"=>"f_primer_atraso","T"=>"DATE","V"=>"0000-00-00","L"=>0),"f_ultimo_atraso" => array("N"=>"f_ultimo_atraso","T"=>"DATE","V"=>"0000-00-00","L"=>0),"otros1_id" => array("N"=>"otros1_id","T"=>"INT","V"=>"0","L"=>5),"otros1_m" => array("N"=>"otros1_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"otros2_id" => array("N"=>"otros2_id","T"=>"INT","V"=>"0","L"=>5),"otros2_m" => array("N"=>"otros2_m","T"=>"DOUBLE","V"=>"0.00","L"=>25),"otros_nc" => array("N"=>"otros_nc","T"=>"DOUBLE","V"=>"0.00","L"=>25),"usuario" => array("N"=>"usuario","T"=>"INT","V"=>"0","L"=>6),"guardar" => array("N"=>"guardar","T"=>"INT","V"=>"0","L"=>2),"t_iva_int_n" => array("N"=>"t_iva_int_n","T"=>"FLOAT","V"=>"0.000","L"=>17),"t_iva_m" => array("N"=>"t_iva_m","T"=>"FLOAT","V"=>"0.000","L"=>17),"t_iva_o" => array("N"=>"t_iva_o","T"=>"FLOAT","V"=>"0.000","L"=>17),"otros_si" => array("N"=>"otros_si","T"=>"DOUBLE","V"=>"0.00","L"=>25),"dispocision" => array("N"=>"dispocision","T"=>"DOUBLE","V"=>"0.00","L"=>33),"saldo_plan" => array("N"=>"saldo_plan","T"=>"DOUBLE","V"=>"0.00","L"=>33),"abonos_ops" => array("N"=>"abonos_ops","T"=>"DOUBLE","V"=>"0.00","L"=>33),"periodo_min" => array("N"=>"periodo_min","T"=>"INT","V"=>"0","L"=>5),"periodo_max" => array("N"=>"periodo_max","T"=>"INT","V"=>"0","L"=>5),"periodo_last" => array("N"=>"periodo_last","T"=>"INT","V"=>"0","L"=>5),"bon_int" => array("N"=>"bon_int","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bon_mora" => array("N"=>"bon_mora","T"=>"DOUBLE","V"=>"0.00","L"=>25),"bon_otros" => array("N"=>"bon_otros","T"=>"DOUBLE","V"=>"0.00","L"=>25),"sdo_exig_fut" => array("N"=>"sdo_exig_fut","T"=>"DOUBLE","V"=>"0.00","L"=>33),"sdo_exig_act" => array("N"=>"sdo_exig_act","T"=>"DOUBLE","V"=>"0.00","L"=>33),"ints_tot_calc" => array("N"=>"ints_tot_calc","T"=>"DOUBLE","V"=>"0.00","L"=>33),"periodo_pends" => array("N"=>"periodo_pends","T"=>"INT","V"=>"0","L"=>5),"hist_otros" => array("N"=>"hist_otros","T"=>"DOUBLE","V"=>"0.00","L"=>33),"cbanc_1" => array("N"=>"cbanc_1","T"=>"VARCHAR","V"=>"","L"=>20),"cbanc_2" => array("N"=>"cbanc_2","T"=>"VARCHAR","V"=>"","L"=>20),"num_meses" => array("N"=>"num_meses","T"=>"INT","V"=>"0","L"=>6));
+	public $IDCREDITOS_MONTOS = "idcreditos_montos"; public $CLAVE_DE_CREDITO = "clave_de_credito"; public $SUCURSAL = "sucursal"; public $MARCA_TIEMPO = "marca_tiempo"; public $MARCA_ACCESO = "marca_acceso"; public $INTERES_N_DEV = "interes_n_dev"; public $INTERES_N_PAG = "interes_n_pag"; public $INTERES_M_DEV = "interes_m_dev"; public $INTERES_M_PAG = "interes_m_pag"; public $INTERES_N_CORR = "interes_n_corr"; public $INTERES_M_CORR = "interes_m_corr"; public $CARGOS_CBZA = "cargos_cbza"; public $IMPTOS_INT_N = "imptos_int_n"; public $IMPTOS_INT_M = "imptos_int_m"; public $IMPTOS_OTROS = "imptos_otros"; public $PENAS = "penas"; public $BONIFICACIONES = "bonificaciones"; public $CAPITAL_EXIGIBLE = "capital_exigible"; public $F_PRIMER_ATRASO = "f_primer_atraso"; public $F_ULTIMO_ATRASO = "f_ultimo_atraso"; public $OTROS1_ID = "otros1_id"; public $OTROS1_M = "otros1_m"; public $OTROS2_ID = "otros2_id"; public $OTROS2_M = "otros2_m"; public $OTROS_NC = "otros_nc"; public $USUARIO = "usuario"; public $GUARDAR = "guardar"; public $T_IVA_INT_N = "t_iva_int_n"; public $T_IVA_M = "t_iva_m"; public $T_IVA_O = "t_iva_o"; public $OTROS_SI = "otros_si"; public $DISPOCISION = "dispocision"; public $SALDO_PLAN = "saldo_plan"; public $ABONOS_OPS = "abonos_ops"; public $PERIODO_MIN = "periodo_min"; public $PERIODO_MAX = "periodo_max"; public $PERIODO_LAST = "periodo_last"; public $BON_INT = "bon_int"; public $BON_MORA = "bon_mora"; public $BON_OTROS = "bon_otros"; public $SDO_EXIG_FUT = "sdo_exig_fut"; public $SDO_EXIG_ACT = "sdo_exig_act"; public $INTS_TOT_CALC = "ints_tot_calc"; public $PERIODO_PENDS = "periodo_pends"; public $HIST_OTROS = "hist_otros"; public $CBANC_1 = "cbanc_1"; public $CBANC_2 = "cbanc_2"; public $NUM_MESES = "num_meses";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_montos";}
 	function getKey(){ return "idcreditos_montos";}
@@ -1193,7 +1226,7 @@ class cCreditos_montos {
 	function guardar($v = false){ if($v !== false){$this->mCampos["guardar"]["V"] =  $v; } return new MQLCampo($this->mCampos["guardar"]);}
 	function t_iva_int_n($v = false){ if($v !== false){$this->mCampos["t_iva_int_n"]["V"] =  $v; } return new MQLCampo($this->mCampos["t_iva_int_n"]);}
 	function t_iva_m($v = false){ if($v !== false){$this->mCampos["t_iva_m"]["V"] =  $v; } return new MQLCampo($this->mCampos["t_iva_m"]);}
-	function t_iva_o($v = false){ if($v !== false){$this->mCampos["t_iva_o"]["V"] =  $v; } return new MQLCampo($this->mCampos["t_iva_o"]);}
+	function t_iva_o($v = false){ if($v !== false){$this->mCampos["t_iva_o"] ["V"] = $v; } return new MQLCampo($this->mCampos["t_iva_o"]);}
 	function otros_si($v = false){ if($v !== false){$this->mCampos["otros_si"]["V"] =  $v; } return new MQLCampo($this->mCampos["otros_si"]);}
 	function dispocision($v = false){ if($v !== false){$this->mCampos["dispocision"]["V"] =  $v; } return new MQLCampo($this->mCampos["dispocision"]);}
 	function saldo_plan($v = false){ if($v !== false){$this->mCampos["saldo_plan"]["V"] =  $v; } return new MQLCampo($this->mCampos["saldo_plan"]);}
@@ -1209,6 +1242,9 @@ class cCreditos_montos {
 	function ints_tot_calc($v = false){ if($v !== false){$this->mCampos["ints_tot_calc"]["V"] =  $v; } return new MQLCampo($this->mCampos["ints_tot_calc"]);}
 	function periodo_pends($v = false){ if($v !== false){$this->mCampos["periodo_pends"]["V"] =  $v; } return new MQLCampo($this->mCampos["periodo_pends"]);}
 	function hist_otros($v = false){ if($v !== false){$this->mCampos["hist_otros"]["V"] =  $v; } return new MQLCampo($this->mCampos["hist_otros"]);}
+	function cbanc_1($v = false){ if($v !== false){$this->mCampos["cbanc_1"]["V"] =  $v; } return new MQLCampo($this->mCampos["cbanc_1"]);}
+	function cbanc_2($v = false){ if($v !== false){$this->mCampos["cbanc_2"]["V"] =  $v; } return new MQLCampo($this->mCampos["cbanc_2"]);}
+	function num_meses($v = false){ if($v !== false){$this->mCampos["num_meses"]["V"] =  $v; } return new MQLCampo($this->mCampos["num_meses"]);}
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
 	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 	
@@ -1217,22 +1253,26 @@ class cCreditos_montos {
 
 /*	ORM: Tabla:	creditos_etapas	-	Generado:	[25/1/2017 11:30]	*/
 /*	ORM: Tabla:	creditos_etapas	-	Generado:	[03/4/2018 22:47]	*/
+/*    ORM: Tabla:    creditos_etapas    -    Generado:    [23/7/2019 16:19]    */
 class cCreditos_etapas {
-	private $mCampos	= array("idcreditos_etapas" => array("N"=>"idcreditos_etapas","T"=>"INT","V"=>"","L"=>11),"descripcion" => array("N"=>"descripcion","T"=>"VARCHAR","V"=>"","L"=>50),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>40));
-	public $IDCREDITOS_ETAPAS = "idcreditos_etapas"; public $DESCRIPCION = "descripcion"; public $TAGS = "tags";
+	private $mCampos    = array("idcreditos_etapas" => array("N"=>"idcreditos_etapas","T"=>"INT","V"=>"","L"=>11),"descripcion" => array("N"=>"descripcion","T"=>"VARCHAR","V"=>"","L"=>50),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>40),"orden_general" => array("N"=>"orden_general","T"=>"INT","V"=>"0","L"=>2),"etapa_sistema" => array("N"=>"etapa_sistema","T"=>"INT","V"=>"1","L"=>4));
+	public $IDCREDITOS_ETAPAS = "idcreditos_etapas"; public $DESCRIPCION = "descripcion"; public $TAGS = "tags"; public $ORDEN_GENERAL = "orden_general"; public $ETAPA_SISTEMA = "etapa_sistema";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_etapas";}
 	function getKey(){ return "idcreditos_etapas";}
 	function idcreditos_etapas($v = false){ if($v !== false){$this->mCampos["idcreditos_etapas"]["V"] =  $v; } return new MQLCampo($this->mCampos["idcreditos_etapas"]);}
 	function descripcion($v = false){ if($v !== false){$this->mCampos["descripcion"]["V"] =  $v; } return new MQLCampo($this->mCampos["descripcion"]);}
 	function tags($v = false){ if($v !== false){$this->mCampos["tags"]["V"] =  $v; } return new MQLCampo($this->mCampos["tags"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-	
+	function orden_general($v = false){ if($v !== false){$this->mCampos["orden_general"]["V"] =  $v; } return new MQLCampo($this->mCampos["orden_general"]);}
+	function etapa_sistema($v = false){ if($v !== false){$this->mCampos["etapa_sistema"]["V"] =  $v; } return new MQLCampo($this->mCampos["etapa_sistema"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 }
 /*	ORM: Tabla:	creditos_productos_etapas	-	Generado:	[25/1/2017 11:32]	*/
+/*    ORM: Tabla:    creditos_productos_etapas    -    Generado:    [11/4/2019 14:59]    */
 class cCreditos_productos_etapas {
-	private $mCampos	= array("idcreditos_productos_etapas" => array("N"=>"idcreditos_productos_etapas","T"=>"INT","V"=>"","L"=>11),"producto" => array("N"=>"producto","T"=>"INT","V"=>"","L"=>8),"etapa" => array("N"=>"etapa","T"=>"INT","V"=>"1","L"=>4),"nombre" => array("N"=>"nombre","T"=>"VARCHAR","V"=>"","L"=>80),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>50),"permisos" => array("N"=>"permisos","T"=>"VARCHAR","V"=>"","L"=>100),"orden" => array("N"=>"orden","T"=>"INT","V"=>"0","L"=>3),);
+	private $mCampos    = array("idcreditos_productos_etapas" => array("N"=>"idcreditos_productos_etapas","T"=>"INT","V"=>"","L"=>11),"producto" => array("N"=>"producto","T"=>"INT","V"=>"","L"=>8),"etapa" => array("N"=>"etapa","T"=>"INT","V"=>"1","L"=>4),"nombre" => array("N"=>"nombre","T"=>"VARCHAR","V"=>"","L"=>80),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>50),"permisos" => array("N"=>"permisos","T"=>"VARCHAR","V"=>"","L"=>100),"orden" => array("N"=>"orden","T"=>"INT","V"=>"0","L"=>3));
+	public $IDCREDITOS_PRODUCTOS_ETAPAS = "idcreditos_productos_etapas"; public $PRODUCTO = "producto"; public $ETAPA = "etapa"; public $NOMBRE = "nombre"; public $TAGS = "tags"; public $PERMISOS = "permisos"; public $ORDEN = "orden";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_productos_etapas";}
 	function getKey(){ return "idcreditos_productos_etapas";}
@@ -1243,13 +1283,15 @@ class cCreditos_productos_etapas {
 	function tags($v = false){ if($v !== false){$this->mCampos["tags"]["V"] =  $v; } return new MQLCampo($this->mCampos["tags"]);}
 	function permisos($v = false){ if($v !== false){$this->mCampos["permisos"]["V"] =  $v; } return new MQLCampo($this->mCampos["permisos"]);}
 	function orden($v = false){ if($v !== false){$this->mCampos["orden"]["V"] =  $v; } return new MQLCampo($this->mCampos["orden"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
 }
 /*	ORM: Tabla:	creditos_productos_promo	-	Generado:	[28/1/2017 09:56]	*/
+/*    ORM: Tabla:    creditos_productos_promo    -    Generado:    [11/4/2019 15:00]    */
 class cCreditos_productos_promo {
-	private $mCampos	= array("idcreditos_productos_promo" => array("N"=>"idcreditos_productos_promo","T"=>"INT","V"=>"","L"=>11),"tipo_promocion" => array("N"=>"tipo_promocion","T"=>"INT","V"=>"1","L"=>2),"fecha_inicial" => array("N"=>"fecha_inicial","T"=>"DATE","V"=>"","L"=>0),"fecha_final" => array("N"=>"fecha_final","T"=>"DATE","V"=>"","L"=>0),"tipo_operacion" => array("N"=>"tipo_operacion","T"=>"INT","V"=>"0","L"=>8),"condiciones" => array("N"=>"condiciones","T"=>"TEXT","V"=>"","L"=>0),"num_items" => array("N"=>"num_items","T"=>"INT","V"=>"0","L"=>4),"descuento" => array("N"=>"descuento","T"=>"FLOAT","V"=>"0.0000","L"=>13),"precio" => array("N"=>"precio","T"=>"DOUBLE","V"=>"0.00","L"=>25),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"todas","L"=>20),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"producto" => array("N"=>"producto","T"=>"INT","V"=>"0","L"=>8),);
+	private $mCampos    = array("idcreditos_productos_promo" => array("N"=>"idcreditos_productos_promo","T"=>"INT","V"=>"","L"=>11),"tipo_promocion" => array("N"=>"tipo_promocion","T"=>"INT","V"=>"1","L"=>2),"fecha_inicial" => array("N"=>"fecha_inicial","T"=>"DATE","V"=>"","L"=>0),"fecha_final" => array("N"=>"fecha_final","T"=>"DATE","V"=>"","L"=>0),"tipo_operacion" => array("N"=>"tipo_operacion","T"=>"INT","V"=>"0","L"=>8),"condiciones" => array("N"=>"condiciones","T"=>"TEXT","V"=>"","L"=>0),"num_items" => array("N"=>"num_items","T"=>"INT","V"=>"0","L"=>4),"descuento" => array("N"=>"descuento","T"=>"FLOAT","V"=>"0.00","L"=>13),"precio" => array("N"=>"precio","T"=>"DOUBLE","V"=>"0.00","L"=>25),"sucursal" => array("N"=>"sucursal","T"=>"VARCHAR","V"=>"todas","L"=>20),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"producto" => array("N"=>"producto","T"=>"INT","V"=>"0","L"=>8));
+	public $IDCREDITOS_PRODUCTOS_PROMO = "idcreditos_productos_promo"; public $TIPO_PROMOCION = "tipo_promocion"; public $FECHA_INICIAL = "fecha_inicial"; public $FECHA_FINAL = "fecha_final"; public $TIPO_OPERACION = "tipo_operacion"; public $CONDICIONES = "condiciones"; public $NUM_ITEMS = "num_items"; public $DESCUENTO = "descuento"; public $PRECIO = "precio"; public $SUCURSAL = "sucursal"; public $ESTATUS = "estatus"; public $PRODUCTO = "producto";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "creditos_productos_promo";}
 	function getKey(){ return "idcreditos_productos_promo";}
@@ -1265,9 +1307,9 @@ class cCreditos_productos_promo {
 	function sucursal($v = false){ if($v !== false){$this->mCampos["sucursal"]["V"] =  $v; } return new MQLCampo($this->mCampos["sucursal"]);}
 	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatus"]);}
 	function producto($v = false){ if($v !== false){$this->mCampos["producto"]["V"] =  $v; } return new MQLCampo($this->mCampos["producto"]);}
-	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());	}
-	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
-
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
 }
 /*	ORM: Tabla:	creditos_productos_req	-	Generado:	[27/1/2017 18:31]	*/
 /*	ORM: Tabla:	creditos_productos_req	-	Generado:	[22/2/2017 16:40]	*/
@@ -3111,6 +3153,30 @@ class cPersonas_seguros {
 	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 	
 }
+/*    ORM: Tabla:    personas_orden_electro    -    Generado:    [27/5/2019 12:11]    */
+class cPersonas_orden_electro {
+	private $mCampos    = array("idpersonas_orden_electro" => array("N"=>"idpersonas_orden_electro","T"=>"INT","V"=>"","L"=>11),"persona" => array("N"=>"persona","T"=>"BIGINT","V"=>"0","L"=>25),"contrato" => array("N"=>"contrato","T"=>"BIGINT","V"=>"0","L"=>25),"periodo" => array("N"=>"periodo","T"=>"INT","V"=>"0","L"=>6),"proveedor" => array("N"=>"proveedor","T"=>"VARCHAR","V"=>"","L"=>20),"canal" => array("N"=>"canal","T"=>"VARCHAR","V"=>"","L"=>20),"usuarioid" => array("N"=>"usuarioid","T"=>"INT","V"=>"","L"=>6),"vencimiento" => array("N"=>"vencimiento","T"=>"DATE","V"=>"","L"=>0),"tiempo" => array("N"=>"tiempo","T"=>"INT","V"=>"","L"=>11),"monto" => array("N"=>"monto","T"=>"DOUBLE","V"=>"0.00","L"=>33),"referencia" => array("N"=>"referencia","T"=>"VARCHAR","V"=>"","L"=>25),"tiempo_pago" => array("N"=>"tiempo_pago","T"=>"INT","V"=>"0","L"=>11),"referencia_pago" => array("N"=>"referencia_pago","T"=>"VARCHAR","V"=>"","L"=>25));
+	public $IDPERSONAS_ORDEN_ELECTRO = "idpersonas_orden_electro"; public $PERSONA = "persona"; public $CONTRATO = "contrato"; public $PERIODO = "periodo"; public $PROVEEDOR = "proveedor"; public $CANAL = "canal"; public $USUARIOID = "usuarioid"; public $VENCIMIENTO = "vencimiento"; public $TIEMPO = "tiempo"; public $MONTO = "monto"; public $REFERENCIA = "referencia"; public $TIEMPO_PAGO = "tiempo_pago"; public $REFERENCIA_PAGO = "referencia_pago";
+	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
+	function get(){ return "personas_orden_electro";}
+	function getKey(){ return "idpersonas_orden_electro";}
+	function idpersonas_orden_electro($v = false){ if($v !== false){$this->mCampos["idpersonas_orden_electro"]["V"] =  $v; } return new MQLCampo($this->mCampos["idpersonas_orden_electro"]);}
+	function persona($v = false){ if($v !== false){$this->mCampos["persona"]["V"] =  $v; } return new MQLCampo($this->mCampos["persona"]);}
+	function contrato($v = false){ if($v !== false){$this->mCampos["contrato"]["V"] =  $v; } return new MQLCampo($this->mCampos["contrato"]);}
+	function periodo($v = false){ if($v !== false){$this->mCampos["periodo"]["V"] =  $v; } return new MQLCampo($this->mCampos["periodo"]);}
+	function proveedor($v = false){ if($v !== false){$this->mCampos["proveedor"]["V"] =  $v; } return new MQLCampo($this->mCampos["proveedor"]);}
+	function canal($v = false){ if($v !== false){$this->mCampos["canal"]["V"] =  $v; } return new MQLCampo($this->mCampos["canal"]);}
+	function usuarioid($v = false){ if($v !== false){$this->mCampos["usuarioid"]["V"] =  $v; } return new MQLCampo($this->mCampos["usuarioid"]);}
+	function vencimiento($v = false){ if($v !== false){$this->mCampos["vencimiento"]["V"] =  $v; } return new MQLCampo($this->mCampos["vencimiento"]);}
+	function tiempo($v = false){ if($v !== false){$this->mCampos["tiempo"]["V"] =  $v; } return new MQLCampo($this->mCampos["tiempo"]);}
+	function monto($v = false){ if($v !== false){$this->mCampos["monto"]["V"] =  $v; } return new MQLCampo($this->mCampos["monto"]);}
+	function referencia($v = false){ if($v !== false){$this->mCampos["referencia"]["V"] =  $v; } return new MQLCampo($this->mCampos["referencia"]);}
+	function tiempo_pago($v = false){ if($v !== false){$this->mCampos["tiempo_pago"]["V"] =  $v; } return new MQLCampo($this->mCampos["tiempo_pago"]);}
+	function referencia_pago($v = false){ if($v !== false){$this->mCampos["referencia_pago"]["V"] =  $v; } return new MQLCampo($this->mCampos["referencia_pago"]);}
+	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
+	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
+	
+}
 /*	ORM: Tabla:	usuarios	-	Generado:	[10/2/2014 14:48]	*/
 class cVistaUsuarios {
 	private $mCampos	= array(
@@ -3860,9 +3926,10 @@ class cCreditos_garantias {
 /*	ORM: Tabla:	personas_documentacion_tipos	-	Generado:	[04/6/2018 11:35]	*/
 /* ORM: Tabla: personas_documentacion_tipos - Generado: [14/6/2018 18:21] */
 /*    ORM: Tabla:    personas_documentacion_tipos    -    Generado:    [03/12/2018 15:47]    */
+/*    ORM: Tabla:    personas_documentacion_tipos    -    Generado:    [11/4/2019 10:27]    */
 class cPersonas_documentacion_tipos {
-	private $mCampos    = array("clave_de_control" => array("N"=>"clave_de_control","T"=>"INT","V"=>"","L"=>11),"nombre_del_documento" => array("N"=>"nombre_del_documento","T"=>"VARCHAR","V"=>"","L"=>100),"clasificacion" => array("N"=>"clasificacion","T"=>"VARCHAR","V"=>"","L"=>4),"vigencia_dias" => array("N"=>"vigencia_dias","T"=>"INT","V"=>"90","L"=>4),"almacen" => array("N"=>"almacen","T"=>"INT","V"=>"1","L"=>2),"checklist" => array("N"=>"checklist","T"=>"VARCHAR","V"=>"","L"=>10),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>60),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"es_ident" => array("N"=>"es_ident","T"=>"INT","V"=>"0","L"=>2),"es_cont" => array("N"=>"es_cont","T"=>"INT","V"=>"0","L"=>2));
-	public $CLAVE_DE_CONTROL = "clave_de_control"; public $NOMBRE_DEL_DOCUMENTO = "nombre_del_documento"; public $CLASIFICACION = "clasificacion"; public $VIGENCIA_DIAS = "vigencia_dias"; public $ALMACEN = "almacen"; public $CHECKLIST = "checklist"; public $TAGS = "tags"; public $ESTATUS = "estatus"; public $ES_IDENT = "es_ident"; public $ES_CONT = "es_cont";
+	private $mCampos    = array("clave_de_control" => array("N"=>"clave_de_control","T"=>"INT","V"=>"","L"=>11),"nombre_del_documento" => array("N"=>"nombre_del_documento","T"=>"VARCHAR","V"=>"","L"=>100),"clasificacion" => array("N"=>"clasificacion","T"=>"VARCHAR","V"=>"","L"=>4),"vigencia_dias" => array("N"=>"vigencia_dias","T"=>"INT","V"=>"90","L"=>4),"almacen" => array("N"=>"almacen","T"=>"INT","V"=>"1","L"=>2),"checklist" => array("N"=>"checklist","T"=>"VARCHAR","V"=>"","L"=>10),"tags" => array("N"=>"tags","T"=>"VARCHAR","V"=>"","L"=>60),"estatus" => array("N"=>"estatus","T"=>"INT","V"=>"1","L"=>2),"es_ident" => array("N"=>"es_ident","T"=>"INT","V"=>"0","L"=>2),"es_cont" => array("N"=>"es_cont","T"=>"INT","V"=>"0","L"=>2),"es_mult" => array("N"=>"es_mult","T"=>"INT","V"=>"0","L"=>2));
+	public $CLAVE_DE_CONTROL = "clave_de_control"; public $NOMBRE_DEL_DOCUMENTO = "nombre_del_documento"; public $CLASIFICACION = "clasificacion"; public $VIGENCIA_DIAS = "vigencia_dias"; public $ALMACEN = "almacen"; public $CHECKLIST = "checklist"; public $TAGS = "tags"; public $ESTATUS = "estatus"; public $ES_IDENT = "es_ident"; public $ES_CONT = "es_cont"; public $ES_MULT = "es_mult";
 	function __construct($campos = false){ if(is_array($campos)){ $this->mCampos = $campos; } }
 	function get(){ return "personas_documentacion_tipos";}
 	function getKey(){ return "clave_de_control";}
@@ -3876,6 +3943,7 @@ class cPersonas_documentacion_tipos {
 	function estatus($v = false){ if($v !== false){$this->mCampos["estatus"]["V"] =  $v; } return new MQLCampo($this->mCampos["estatus"]);}
 	function es_ident($v = false){ if($v !== false){$this->mCampos["es_ident"]["V"] =  $v; } return new MQLCampo($this->mCampos["es_ident"]);}
 	function es_cont($v = false){ if($v !== false){$this->mCampos["es_cont"]["V"] =  $v; } return new MQLCampo($this->mCampos["es_cont"]);}
+	function es_mult($v = false){ if($v !== false){$this->mCampos["es_mult"]["V"] =  $v; } return new MQLCampo($this->mCampos["es_mult"]);}
 	function query(){ return new MQL($this->get(), $this->mCampos, $this->getKey());    }
 	function setData($datos){ $mql    = new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 }
@@ -5544,8 +5612,5 @@ class cGrupos_solicitud {
 	function setData($datos){ $mql	= new MQL($this->get(), $this->mCampos, $this->getKey()); $this->mCampos = $mql->setData($datos); }
 	
 }
-
-
-
 
 ?>

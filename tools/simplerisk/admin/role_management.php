@@ -17,17 +17,17 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-    session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
     session_name('SimpleRisk');
     session_start();
 }
@@ -94,7 +94,7 @@ elseif(isset($_POST['delete_role']))
     }
     else
     {
-        delete_value("role", $role_id);
+        delete_role($role_id);
         set_alert(true, "good", $escaper->escapeHtml($lang['DeletedSuccess']));
         refresh();
     }
@@ -105,6 +105,7 @@ elseif(isset($_POST['delete_role']))
 <html>
 
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery-ui.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
@@ -123,6 +124,10 @@ elseif(isset($_POST['delete_role']))
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    
+    <?php
+        setup_alert_requirements("..");
+    ?>    
 </head>
 
 <body>
@@ -213,6 +218,11 @@ elseif(isset($_POST['delete_role']))
                                                         <li><input class="hidden-checkbox" id="add_documentation" name="responsibilities[add_documentation]" type="checkbox" /> <label for="add_documentation"><?php echo $escaper->escapeHtml($lang['AbleToAddDocumentation']); ?></label></li>
                                                         <li><input class="hidden-checkbox" id="modify_documentation" name="responsibilities[modify_documentation]" type="checkbox" /> <label for="modify_documentation"><?php echo $escaper->escapeHtml($lang['AbleToModifyDocumentation']); ?></label></li>
                                                         <li><input class="hidden-checkbox" id="delete_documentation" name="responsibilities[delete_documentation]" type="checkbox" /> <label for="delete_documentation"><?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentation']); ?></label></li>
+                                                        <li><input class="hidden-checkbox" id="view_exception" name="responsibilities[view_exception]" type="checkbox" /> <label for="view_exception"><?php echo $escaper->escapeHtml($lang['AbleToViewDocumentException']); ?></label></li>
+                                                        <li><input class="hidden-checkbox" id="create_exception" name="responsibilities[create_exception]" type="checkbox" /> <label for="create_exception"><?php echo $escaper->escapeHtml($lang['AbleToCreateDocumentException']); ?></label></li>
+                                                        <li><input class="hidden-checkbox" id="update_exception" name="responsibilities[update_exception]" type="checkbox" /> <label for="update_exception"><?php echo $escaper->escapeHtml($lang['AbleToUpdateDocumentException']); ?></label></li>
+                                                        <li><input class="hidden-checkbox" id="delete_exception" name="responsibilities[delete_exception]" type="checkbox" /> <label for="delete_exception"><?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentException']); ?></label></li>
+                                                        <li><input class="hidden-checkbox" id="approve_exception" name="responsibilities[approve_exception]" type="checkbox" /> <label for="approve_exception"><?php echo $escaper->escapeHtml($lang['AbleToApproveDocumentException']); ?></label></li>
                                                     </ul>
                                                 </li>
                                             </ul>

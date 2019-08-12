@@ -279,10 +279,13 @@ class cReporteCirculoDeCredito_tipo {
 	function getText($txt	= "", $serializar = false, $limitar = false){
 		$xT		= new cTipos();
 		$xFI	= new cFileImporter();
-		$arrR	= array(",", "-", ".", "|");
+		$arrR	= array();//, "\.", "\|", "\/");
+		$xT->setForceClean();
 		$xT->setForceMayus();
 		$txt 	= $xT->setNoAcentos($txt);
 		$txt	= $xT->cChar($txt);
+		$xClean	= new cTiposLimpiadores();
+		$txt	= $xClean->cleanString($txt, $arrR);
 		if($serializar != false){
 			$txt	= $xT->cSerial($serializar, $txt);
 		}
@@ -309,6 +312,7 @@ class cReporteCirculoDeCredito_tipo {
 		$domicilio		= str_replace("\"", "", $domicilio);
 		$domicilio		= str_replace("\\\\", "", $domicilio);
 		$domicilio		= str_replace("\\", "", $domicilio);
+		$domicilio		= str_replace(",", "", $domicilio);
 		$domicilio		= trim($domicilio);
 		return $domicilio;
 	}

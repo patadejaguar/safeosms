@@ -262,6 +262,9 @@ class cReglasDeNegocioLista {
 	public $PERSONAS_OPERAR_ALTO_R				= "PERSONAS.OPERAR.CON_ALTO_RIESGO";
 	public $PERSONAS_USAR_FOTOS					= "PERSONAS.PANEL_CON_FOTOS";
 	public $PERSONAS_SE_ELIMINAN				= "PERSONAS.SE_PUEDEN_ELIMINAR";
+	
+	public $PERSONAS_RIESGO_PANEL				= "PERSONAS.RIESGO_EN_PANEL";
+	
 	public $PERSONAS_VENCEN_DOCTOS				= "PERSONAS.VENCEN_DOCTOS";
 	
 	public $SYNC_APP							= "SISTEMA.USAR_APP";
@@ -294,6 +297,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_RES_CON_ANT			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_ANT";
 	public $CREDITOS_ARREND_RES_CON_IVA			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_IVA";
 	public $CREDITOS_ARREND_ANT_NOAPP			= "CREDITOS.ARRENDAMIENTO.ANT.NOAPP";
+	public $CREDITOS_NO_CALC_INTS_CORR			= "CREDITOS.NO.CALCULA_INTS_CORRIENTE";
 	//public $CREDITOS_ARREND_ANT_SIN_IVA			= "CREDITOS.ARRENDAMIENTO.RESIDUAL_CON_IVA";
 	
 	
@@ -306,6 +310,7 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_ARREND_AJUSTM				= "CREDITOS.ARRENDAMIENTO.AJUSTESERVS";
 	public $CREDITOS_ARREND_NOUSERS				= "CREDITOS.ARRENDAMIENTO.NOUSERS";
 	public $CREDITOS_ARREND_SUM_COMS			= "CREDITOS.ARRENDAMIENTO.SUM.COMIS";
+	public $CREDITOS_ARREND_NO_BONOS			= "CREDITOS.ARRENDAMIENTO.NO_BONOS";
 	
 	public $CREDITOS_NOM_EXT_SEMANA				= "CREDITOS.NOMINA.SEMANAS.EXTRA";
 	public $CREDITOS_NOM_EXT_QNA				= "CREDITOS.NOMINA.QUINCENA.EXTRA";
@@ -332,6 +337,10 @@ class cReglasDeNegocioLista {
 	public $CREDITOS_PLAN_SDO_FCAP				= "CREDITOS.PLAN_PAGOS.SDO_FINAL_CAP";
 	
 	public $CREDITOS_ECUENTA_VALIDADOR			= "CREDITOS.ESTADO_DE_CUENTA.VALIDADOR";  //valida cada segmento del estado de cuenta
+	
+	public $CREDITOS_REEST_BLOQ_CAP				= "CREDITOS.REEST_BLOQ_CAPITAL";  //Bloquear Capital en reestructuras
+	public $CREDITOS_REEST_REQ_INT				= "CREDITOS.REEST_REQ_INTERES";  //Bloquear Requerir interes en 0
+
 	
 	public $CREDITOS_PAGO_LETRAF				= "CREDITOS.PAGOS_LETRA_FIJA";
 	public $CREDITOS_DEV_INTNOM_V				= "CREDITOS.DEV.INT_NORMAL.VENCIDO";
@@ -435,6 +444,11 @@ class cReglasDeNegocioLista {
 		$arr[$this->PERSONAS_RELS_SOLOACTIV]			= $this->PERSONAS_RELS_SOLOACTIV;
 		$arr[$this->PERSONAS_BUSQUEDA_IDINT]			= $this->PERSONAS_BUSQUEDA_IDINT;
 		$arr[$this->PERSONAS_CHECKLIST_DINA]			= $this->PERSONAS_CHECKLIST_DINA;
+		$arr[$this->PERSONAS_RIESGO_PANEL]				= $this->PERSONAS_RIESGO_PANEL;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		
 		$arr[$this->CREDITOS_REQUIERE_DOMICILIO]		= $this->CREDITOS_REQUIERE_DOMICILIO;
 		$arr[$this->CREDITOS_REQUIERE_ACTIVIDAD]		= $this->CREDITOS_REQUIERE_ACTIVIDAD;
@@ -480,6 +494,10 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_NO_CAP_ANT_INT]			= $this->CREDITOS_NO_CAP_ANT_INT;
 		$arr[$this->CREDITOS_LISTA_REQUISITOS]			= $this->CREDITOS_LISTA_REQUISITOS;
 		$arr[$this->PERSONAS_VENCEN_DOCTOS]				= $this->PERSONAS_VENCEN_DOCTOS;
+		$arr[$this->CREDITOS_ARREND_NO_BONOS]			= $this->CREDITOS_ARREND_NO_BONOS;
+		$arr[$this->CREDITOS_NO_CALC_INTS_CORR]			= $this->CREDITOS_NO_CALC_INTS_CORR;
+		//$arr[$this->]			= $this->;
+		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
@@ -499,6 +517,8 @@ class cReglasDeNegocioLista {
 		$arr[$this->CREDITOS_OFICIAL_POR_PROD]			= $this->CREDITOS_OFICIAL_POR_PROD;
 		$arr[$this->CREDITOS_OFICIAL_POR_HER]			= $this->CREDITOS_OFICIAL_POR_HER;
 		$arr[$this->CREDITOS_OFICIAL_POR_USR]			= $this->CREDITOS_OFICIAL_POR_USR;
+		$arr[$this->CREDITOS_REEST_BLOQ_CAP]			= $this->CREDITOS_REEST_BLOQ_CAP;
+		$arr[$this->CREDITOS_REEST_REQ_INT]				= $this->CREDITOS_REEST_REQ_INT;
 		
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
@@ -516,6 +536,7 @@ class cReglasDeNegocioLista {
 		$arr[$this->RECIBOS_CON_RECFISCAL]				= $this->RECIBOS_CON_RECFISCAL;
 		$arr[$this->RECIBOS_NOARRASTRA_PENAS]			= $this->RECIBOS_NOARRASTRA_PENAS;
 		$arr[$this->RECIBOS_LIQ_SOLO_EXIG]				= $this->RECIBOS_LIQ_SOLO_EXIG;
+		
 		//$arr[$this->]			= $this->;
 		//$arr[$this->]			= $this->;
 		

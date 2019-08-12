@@ -15,7 +15,7 @@
 	if($permiso === false){	header ("location:../404.php?i=999");	}
 	$_SESSION["current_file"]	= addslashes( $theFile );
 //=====================================================================================================
-$xHP		= new cHPage("", HP_FORM);
+$xHP		= new cHPage("TR.PANEL DE EMPLEADOR", HP_FORM);
 $xQL		= new MQL();
 $xLi		= new cSQLListas();
 $xF			= new cFecha();
@@ -67,11 +67,17 @@ if($xEmp->init() == true){
 	//========================== Tabla de periodos para empresas
 	$xTPeriodo	= new cTabla($xLi->getListadoDePeriodoPorEmpresa($empresa,false, false, false, false, false, false, true) );
 	$xTPeriodo->setTdClassByType();
+	
 	$xTPeriodo->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
-	$xTPeriodo->addEditar(USUARIO_TIPO_CAJERO);
+	if(MODO_DEBUG){
+		$xTPeriodo->addEditar(USUARIO_TIPO_CAJERO);
+	}
+	
 	$xTPeriodo->setColTitle("periodo", "PERIODOEMPRESA" );
 	$xTPeriodo->setOmitidos("periocidad");
 	$xTPeriodo->setUsarNullPorCero();
+	
+	$xT2->addTab("TR.Periodos de Empresa", $xTPeriodo->Show());
 	
 	$xTCreds->setTdClassByType(); $xTPers->setTdClassByType(); $xTAhorro->setTdClassByType();
 	$xTPers->setWidthTool("200px");
@@ -85,8 +91,10 @@ if($xEmp->init() == true){
 		$xTPerE	= new cTabla($xLi->getListadoDePeriodoPorEmpresaMix($empresa,1, true) );
 		
 		$xTPerE->setTdClassByType();
-		$xTPerE->OButton("TR.Panel", "var xE = new EmpGen(); xE.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
-		$xTPerE->addEditar(USUARIO_TIPO_CAJERO);
+		//$xTPerE->OButton("TR.Panel", "var xE = new EmpGen(); xE.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+		if(MODO_DEBUG){
+			$xTPerE->addEditar(USUARIO_TIPO_CAJERO);
+		}
 		$xTPerE->setOmitidos("periocidad");
 		$xTPerE->setOmitidos("fecha_de_cobro");
 		$xTPerE->setColTitle("periodo", "PERIODOEMPRESA" );
@@ -103,8 +111,11 @@ if($xEmp->init() == true){
 		$xTPerP	= new cTabla($xLi->getListadoDePeriodoPorEmpresaMix($empresa,-1) );
 		
 		$xTPerP->setTdClassByType();
-		$xTPerP->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
-		$xTPerP->addEditar(USUARIO_TIPO_CAJERO);
+		
+		//$xTPerP->OButton("TR.Panel", "var xG = new EmpGen(); xG.getTablaDeCobranza(" . HP_REPLACE_ID . ")", $xFRM->ic()->CONTROL);
+		if(MODO_DEBUG == true){
+			$xTPerP->addEditar(USUARIO_TIPO_CAJERO);
+		}
 		$xTPerP->setOmitidos("periocidad");
 		$xTPerP->setOmitidos("saldo");
 		$xTPerP->setOmitidos("unid");
@@ -119,7 +130,7 @@ if($xEmp->init() == true){
 		$xT2->addTab("TR.PAGOS", $xHPPer);
 		
 
-		$xT2->addTab("TR.Periodos de Empresa", $xTPeriodo->Show());
+		
 		
 		
 		

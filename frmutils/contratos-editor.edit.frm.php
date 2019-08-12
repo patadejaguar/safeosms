@@ -112,7 +112,7 @@ if($idcontrato <= 0){
 		//$xFRM->OButton("Test", "test()");
 	}
 	//$xFRM->addJsInit("setTimeout('jsLoadEditor()',1500);");
-	
+	$xFRM->addJsInit("jsLoadNewCommands();");
 	echo $xFRM->get();
 }
 
@@ -124,6 +124,7 @@ if($idcontrato <= 0){
 ?>
 <script>
 var xG	= new Gen();
+
 
 
 
@@ -142,11 +143,65 @@ function InsertHTML(strText){
 }
 function jsGuardar(){
 	CKEDITOR.instances['ckeditor'].commands.save.exec();
-}	
+}
 function initComponents(){
 	$("#cke_1_contents").css("height", "650px");
 }
+function jsLoadNewCommands(){
+	var editor = CKEDITOR.replace('ckeditor'); // bind editor
+
+	editor.addCommand("jsCleanTextCK", { // create named command
+	    exec: function(edt) {
+	        var str =  edt.getData();
+	        str		= String(str).replace(/background-color:#([A-Fa-f0-9]+);s+/g, "");
+	        str		= String(str).replace(/style="background-color:#([A-Fa-f0-9]+); width:(\d+)(.)([\d]+)pt"/g, "");
+	        str		= String(str).replace(/style="width:(\d+)(.)([\d]+)pt"/g, "");
+	        str		= String(str).replace(/style="height:(\d+)(.)([\d]+)pt"/g, "");
+	        str		= String(str).replace(/style="height:(\d+)(.)([\d]+)pt; width:(\d+)(.)([\d]+)pt"/g, "");
+	        str		= String(str).replace(/style="width:(\d+)(.)([\d]+)pt; height:(\d+)(.)([\d]+)pt"/g, "");
+	        str		= String(str).replace(/(&nbsp;)+/g, "");
+	        //
+	        //console.log(str);
+	        edt.setData(str);
+	    }
+	});
+
+	editor.addCommand("jsCleanColorCK", { // create named command
+	    exec: function(edt) {
+	        var str =  edt.getData();
+	        str		= String(str).replace(/background-color:#([A-Fa-f0-9]+);s+/g, "");
+	        str		= String(str).replace(/background-color:#([A-Fa-f0-9]+);/g, "");
+	        //
+	        //console.log(str);
+	        edt.setData(str);
+	    }
+	});
+	
+	editor.ui.addButton('BtnCleanTextCK', { // add new button and bind our command
+	    label: "Limpiar Texto Inicial",
+	    command: 'jsCleanTextCK',
+	    toolbar: 'others',
+	    icon:  SAFE_HOST_URL + 'images/grid/folder.png'
+	});
+	editor.ui.addButton('BtnCleanColorCK', { // add new button and bind our command
+	    label: "Limpiar Color Inicial",
+	    command: 'jsCleanColorCK',
+	    toolbar: 'others',
+	    icon:  SAFE_HOST_URL + 'images/import-export-icon.png'
+	});
+	
+}
 function test(){
+	/*var editor = CKEDITOR.instances['ckeditor'];
+	editor.ui.addButton('your-plugin', {
+	    label: 'Your Plugin Label',
+	    command: 'YourPlugin',
+	    icon: this.path + 'images/your-plugin.jpg'
+	});*/
+
+
+
+	
 	/*editor = CKEDITOR.instances.fck; //fck is just my instance name you will need to replace that with yours
 
 var edata = editor.getData();

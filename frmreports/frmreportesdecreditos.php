@@ -55,6 +55,8 @@ if(PERSONAS_CONTROLAR_POR_EMPRESA == true ){
 }
 if(MODO_DEBUG == true){
 	$xSelTS	= $xSel->getListaDeCatalogoGenerico("cpdtos_tipo_sistema", "tipoensistema");
+	$xSelTS->addTodas(true);
+	
 	$xSelTS->setDivClass("tx4 tx18 red");
 	$xRPT->addControl($xSelTS->get("TR.TIPO EN SISTEMA", true), "tipoensistema", "tipoensistema");
 	

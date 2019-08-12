@@ -39,6 +39,7 @@ $menuparent	= parametro("menuparent",9999, MQL_INT);
 $idtit		= parametro("title", "", MQL_RAW);
 $idruta		= parametro("ruta", "", MQL_RAW);
 $idsql		= parametro("idsql", "", MQL_RAW);
+$prefijoObj	= parametro("prefijo", "", MQL_RAW);
 
 $menuid		= ($menuid <=0 ) ? "NULL" : $menuid;
 
@@ -119,6 +120,7 @@ $nombreForm			= ($nombreForm == "") ? "frm$tabla" : $nombreForm;
 $gridF				= "";
 $CODE_CLASS_1		= "";
 $CODE_CLASS_2		= "";
+$CODE_CLASS_3		= "";
 
 $FRM_CLASS_1		= "";
 $FRM_CLASS_2		= "";
@@ -205,6 +207,8 @@ if($tabla != ""){
 					$funciones		.= "\tfunction $nombre(\$v = false){ if(\$v !== false){\$this->mCampos[\"$nombre\"][\"V\"] =  \$v; } return new MQLCampo(\$this->mCampos[\"$nombre\"]);}\n";
 					$nuevos			.= "\"$nombre\" => \"$valor\", ";
 					
+					
+					
 					if($create == true){
 						//TODO: TErminar proceso de agregacion de estructura
 					}
@@ -261,9 +265,9 @@ if($tabla != ""){
 					}
 					if($isKey == true){
 						$controles[$nombre] = "\$xFRM->OHidden(\"$idF\", $valor);\n";
-						$gridF				.= "\$xHG->addKey(\"$nombre\");\r\n";
+						$gridF				.= "\$xHG" . $prefijoObj . "->addKey(\"$nombre\");\r\n";
 					} else {
-						$gridF		.= "\$xHG->col(\"$nombre\", \"TR." . strtoupper( $tituloF) . "\", \"10%\");\r\n";
+						$gridF		.= "\$xHG" . $prefijoObj . "->col(\"$nombre\", \"TR." . strtoupper( $tituloF) . "\", \"10%\");\r\n";
 					}
 					$ivalor			= "";
 					$txtReplace		.= ($txtReplace == "") ? "('$tabla', '$nombre', '$ivalor', '$field_type', $field_long, 'TR.". strtoupper( $tituloF) ."', '$ictrl') \r\n": ",('$tabla', '$nombre', '$ivalor', '$field_type', $field_long, 'TR.". strtoupper( $tituloF) ."', '$ictrl') \r\n";
@@ -271,6 +275,9 @@ if($tabla != ""){
 					if($nombre == "sucursal" OR $nombre == "idusuario" OR $nombre == "eacp"){
 						$controles[$nombre] = "\$xFRM->OHidden(\"$idF\", $valor, \"TR." . strtoupper( $tituloF) . "\");\n";
 					}
+					
+					$CODE_CLASS_3	.= "\$xTabla->$nombre" . "();\r\n";
+					
 					$i++;
 				}
 			@mysqli_free_result($rs_fields);
@@ -353,28 +360,28 @@ if($tabla != ""){
 	//echo $pgrid;
 	//echo "\n\$mGridSQL			= \"$cgrid\";";
 			$FRM_CLASS_2	.= "/* ===========\t\tGRID JS\t\t============*/\n";
-			$FRM_CLASS_2	.= "\n\$xHG\t= new cHGrid(\"$idgrid\",\$xHP->getTitle());\r\n";
+			$FRM_CLASS_2	.= "\n\$xHG" . $prefijoObj . "\t= new cHGrid(\"$idgrid\",\$xHP->getTitle());\r\n";
 			$gen_sql1	= "\"SELECT * FROM `$tabla` LIMIT 0,100\"";
 			if($isSQL == true){
 				$gen_sql1	= "\"$idsql\"";
 			}
-			$FRM_CLASS_2	.= "\n\$xHG->setSQL($gen_sql1);\r\n\$xHG->addList();\r\n\$xHG->setOrdenar();\r\n";	
+			$FRM_CLASS_2	.= "\n\$xHG" . $prefijoObj . "->setSQL($gen_sql1);\r\n\$xHG" . $prefijoObj . "->addList();\r\n\$xHG" . $prefijoObj . "->setOrdenar();\r\n";	
 			$FRM_CLASS_2	.= $gridF;
 	
-			$FRM_CLASS_2	.= "\n\$xHG->OToolbar(\"TR.AGREGAR\", \"jsAdd()\", \"grid/add.png\");\r\n\$xHG->OButton(\"TR.EDITAR\", \"jsEdit('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG->OButton(\"TR.ELIMINAR\", \"jsDel('+ data.record.$loader +')\", \"delete.png\");\r\n\$xHG->OButton(\"TR.BAJA\", \"jsDeact('+ data.record.$loader +')\", \"undone.png\");
-\$xFRM->addHElem(\"<div id='". $idgrid . "'></div>\");\r\n\$xFRM->addJsCode( \$xHG->getJs(true) );\r\necho \$xFRM->get();\r\n?>
+			$FRM_CLASS_2	.= "\n\$xHG" . $prefijoObj . "->OToolbar(\"TR.AGREGAR\", \"jsAdd" . $prefijoObj . "()\", \"grid/add.png\");\r\n\$xHG" . $prefijoObj . "->OButton(\"TR.EDITAR\", \"jsEdit" . $prefijoObj . "('+ data.record.$loader +')\", \"edit.png\");\r\n\$xHG" . $prefijoObj . "->OButton(\"TR.ELIMINAR\", \"jsDel" . $prefijoObj . "('+ data.record.$loader +')\", \"delete.png\");\r\n\$xHG" . $prefijoObj . "->OButton(\"TR.BAJA\", \"jsDeact" . $prefijoObj . "('+ data.record.$loader +')\", \"undone.png\");
+\$xFRM->addHElem(\"<div id='". $idgrid . "'></div>\");\r\n\$xFRM->addJsCode( \$xHG" . $prefijoObj . "->getJs(true) );\r\necho \$xFRM->get();\r\n?>
 \r\n<script>
 var xG	= new Gen();
-function jsEdit(id){
+function jsEdit" . $prefijoObj . "(id){
 	xG.w({url:\"../$idruta/$nombreFile.edit.frm.php?clave=\" + id, tiny:true, callback: jsLG$idgrid});
 }
-function jsAdd(){
+function jsAdd" . $prefijoObj . "(){
 	xG.w({url:\"../$idruta/$nombreFile.new.frm.php?\", tiny:true, callback: jsLG$idgrid});
 }
-function jsDel(id){
+function jsDel" . $prefijoObj . "(id){
 	xG.rmRecord({tabla:\"$tabla\", id:id, callback:jsLG$idgrid });
 }
-function jsDeact(id){
+function jsDeact" . $prefijoObj . "(id){
 	xG.recordInActive({tabla:\"$tabla\", id:id, callback:jsLG$idgrid, preguntar:true });
 }
 </script>
@@ -417,6 +424,11 @@ $code2	= highlight_string($FRM_CLASS_2, true);
 $xFRM->addHElem($code2);
 $xFRM->endSeccion();
 
+
+$xFRM->addSeccion("idfrmphp-2b", "Set Form Class 3");
+$code3	= highlight_string($CODE_CLASS_3, true);
+$xFRM->addHElem($code3);
+$xFRM->endSeccion();
 
 $xFRM->addSeccion("idtsql", "sql");
 $xFRM->addHElem("<code id='sql-code' class=\"sql\">" . nl2br($codemenu) . "</code>");

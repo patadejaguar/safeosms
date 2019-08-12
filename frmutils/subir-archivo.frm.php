@@ -76,7 +76,9 @@ switch ($tipo){
 
 $rs		= $xQL->getDataRecord("SELECT   `personas_documentacion_tipos`.`clave_de_control`,
          `personas_documentacion_tipos`.`nombre_del_documento`
-FROM     `personas_documentacion_tipos` WHERE (( `personas_documentacion_tipos`.`tags` LIKE '%originacion%' ) AND ( `personas_documentacion_tipos`.`tags` LIKE '%todas%' ) $strExtra ) AND (`personas_documentacion_tipos`.`estatus`  =1)");
+FROM     `personas_documentacion_tipos` WHERE (
+( `personas_documentacion_tipos`.`tags` LIKE '%originacion%' ) /*AND ( `personas_documentacion_tipos`.`tags` LIKE '%todas%' )*/ $strExtra ) 
+AND (`personas_documentacion_tipos`.`estatus`  =1)");
 
 
 $xDocs			= new cDocumentos();
@@ -98,8 +100,8 @@ foreach ($rs as $rw){
 		$nf		= $titulo . "." . $xDocs->getExt();
 		$btn	= $xBtn->getBasic("TR.VER", "jsVerDocto('$nf')", $xFRM->ic()->VER);
 		$xFRM->addHElem("<div class='medio'>
-				<label class='button warning' onclick=\"jsVerDocto('$nf')\">El Documento $titulo Ya existe</label>
-				<div class='progress'><span class='green' style='width:100%' id='pgr-$titulo'></span></div>
+				<label class='button green' onclick=\"jsVerDocto('$nf')\">El Documento $titulo Ya existe</label>
+				<!--<div class='progress'><span class='green' style='width:100%' id='pgr-$titulo'>--></span></div>
 				</div>");
 	} else {
 		

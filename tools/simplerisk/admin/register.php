@@ -16,17 +16,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-		session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-	session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -98,14 +98,16 @@
 		if (isset($_POST['register']))
 		{
 			// Get the posted values
-			$name = $_POST['name'];
+			$name = (isset($_POST['name']) ? $_POST['name'] : "");
+			$fname = (isset($_POST['fname']) ? $_POST['fname'] : "");
+			$lname = (isset($_POST['lname']) ? $_POST['lname'] : "");
 			$company = $_POST['company'];
 			$title = $_POST['title'];
 			$phone = $_POST['phone'];
 			$email = $_POST['email'];
 
 			// Add the registration
-			$result = add_registration($name, $company, $title, $phone, $email);
+			$result = add_registration($name, $company, $title, $phone, $email, $fname, $lname);
 
 			// If the registration failed
 			if ($result == 0)
@@ -133,42 +135,46 @@
 		if (isset($_POST['register']))
 		{
 			// Get the posted values
-			$name = $_POST['name'];
+			$name = (isset($_POST['name']) ? $_POST['name'] : "");
+			$fname = (isset($_POST['fname']) ? $_POST['fname'] : "");
+			$lname = (isset($_POST['lname']) ? $_POST['lname'] : "");
 			$company = $_POST['company'];
 			$title = $_POST['title'];
 			$phone = $_POST['phone'];
 			$email = $_POST['email'];
 
 			// Update the registration
-			$result = update_registration($name, $company, $title, $phone, $email);
+			$result = update_registration($name, $company, $title, $phone, $email, $fname, $lname);
 
-            // If the registration failed
-            if ($result == 0)
-            {
-	            // Display an alert
-	            set_alert(true, "bad", "There was a problem updating your SimpleRisk instance.");
-            }
-            else
-            {
-	            // Display an alert
-	            set_alert(true, "good", "SimpleRisk instance updated successfully.");
-            }
+			// If the registration failed
+			if ($result == 0)
+			{
+				// Display an alert
+				set_alert(true, "bad", "There was a problem updating your SimpleRisk instance.");
+			}
+			else
+			{
+				// Display an alert
+				set_alert(true, "good", "SimpleRisk instance updated successfully.");
+			}
 		}
 		// Otherwise get the registration values from the database
 		else
 		{
-        		$name = get_setting("registration_name");
-	        	$company = get_setting("registration_company");
-        		$title = get_setting("registration_title");
-        		$phone = get_setting("registration_phone");
-        		$email = get_setting("registration_email");
+			$name = get_setting("registration_name");
+			$fname = get_setting("registration_fname");
+			$lname = get_setting("registration_lname");
+			$company = get_setting("registration_company");
+			$title = get_setting("registration_title");
+			$phone = get_setting("registration_phone");
+			$email = get_setting("registration_email");
 		}
 
 		// If the user wants to install the Upgrade Extra
 		if (isset($_POST['get_upgrade_extra']))
 		{
-	        	// Download the extra
-        		$result = download_extra("upgrade");
+            // Download the extra
+            $result = download_extra("upgrade");
 		}
 		// If the user wants to install the Authentication Extra
 		else if (isset($_POST['get_authentication_extra']))
@@ -179,62 +185,68 @@
 		// If the user wants to install the Encryption Extra
 		else if (isset($_POST['get_encryption_extra']))
 		{
-	        	// Download the extra
-        		$result = download_extra("encryption");
+            // Download the extra
+            $result = download_extra("encryption");
 		}
 		// If the user wants to install the Import-Export Extra
 		else if (isset($_POST['get_importexport_extra']))
 		{
-	        	// Download the extra
-        		$result = download_extra("import-export");
+            // Download the extra
+            $result = download_extra("import-export");
 		}
 		// If the user wants to install the Notification Extra
 		else if (isset($_POST['get_notification_extra']))
 		{
-	        	// Download the extra
-        		$result = download_extra("notification");
+            // Download the extra
+            $result = download_extra("notification");
 		}
 		// If the user wants to install the Separation Extra
 		else if (isset($_POST['get_separation_extra']))
 		{
-	        	// Download the extra
-        		$result = download_extra("separation");
+            // Download the extra
+            $result = download_extra("separation");
 		}
 		else if (isset($_POST['get_governance_extra']))
 		{
 			// Download the extra
 			$result = download_extra("governance");
 		}
-        	// If the user wants to install the Risk Assessments Extra
-        	else if (isset($_POST['get_assessments_extra']))
-        	{
-            		// Download the extra
-            		$result = download_extra("assessments");
-        	}
-        	// If the user wants to install the API Extra
-        	else if (isset($_POST['get_api_extra']))
-        	{
-            		// Download the extra
-            		$result = download_extra("api");
-        	}
-                // If the user wants to install the ComplianceForge Extra
-                else if (isset($_POST['get_complianceforge_extra']))
-                {
-                        // Download the extra
-                        $result = download_extra("complianceforge");
-                }
-                // If the user wants to install the ComplianceForge SCF Extra
-                else if (isset($_POST['get_complianceforge_scf_extra']))
-                {
-                        // Download the extra
-                        $result = download_extra("complianceforgescf");
-                }
-                // If the user wants to install the Customization Extra
-                else if (isset($_POST['get_customization_extra']))
-                {
-                        // Download the extra
-                        $result = download_extra("customization");
-                }
+        // If the user wants to install the Risk Assessments Extra
+        else if (isset($_POST['get_assessments_extra']))
+        {
+            // Download the extra
+            $result = download_extra("assessments");
+        }
+        // If the user wants to install the API Extra
+        else if (isset($_POST['get_api_extra']))
+        {
+            // Download the extra
+            $result = download_extra("api");
+        }
+        // If the user wants to install the ComplianceForge Extra
+        else if (isset($_POST['get_complianceforge_extra']))
+        {
+            // Download the extra
+            $result = download_extra("complianceforge");
+        }
+        // If the user wants to install the ComplianceForge SCF Extra
+        else if (isset($_POST['get_complianceforge_scf_extra']))
+        {
+            // Download the extra
+            $result = download_extra("complianceforgescf");
+        }
+        // If the user wants to install the Customization Extra
+        else if (isset($_POST['get_customization_extra']))
+        {
+            // Download the extra
+            $result = download_extra("customization");
+        }
+        // If the user wants to install the Advanced Search Extra
+        else if (isset($_POST['get_advanced_search_extra']))
+        {
+            // Download the extra
+            $result = download_extra("advanced_search");
+        }
 	}
 ?>
 
@@ -242,6 +254,7 @@
 <html>
 
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
     <title>SimpleRisk: Enterprise Risk Management Simplified</title>
@@ -257,6 +270,10 @@
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    
+    <?php
+        setup_alert_requirements("..");
+    ?>
   </head>
 
   <body>
@@ -307,7 +324,7 @@
                                     <tbody>
                                         <tr>
                                             <td width="140px">Mysqldump Path: &nbsp;</td>
-                                            <td><input  name="mysqldump_path" value="<?php echo get_settting_by_name('mysqldump_path') ?>" type="text"></td>
+                                            <td><input  name="mysqldump_path" value="<?php echo $escaper->escapeHtml(get_setting('mysqldump_path')); ?>" type="text"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -337,12 +354,12 @@
 				                if (isset($_POST['update']))
 				                {
 					                // Display the editable registration table
-					                display_registration_table_edit($name, $company, $title, $phone, $email);
+					                display_registration_table_edit($name, $company, $title, $phone, $email, $fname, $lname);
 				                }
 				                else
 				                {
 					                // Display the registration table
-					                display_registration_table($name, $company, $title, $phone, $email);
+					                display_registration_table($name, $company, $title, $phone, $email, $fname, $lname);
 				                }
 			                }
 		                ?>

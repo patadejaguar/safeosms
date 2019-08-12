@@ -1332,6 +1332,7 @@ class cNotificaciones {
 	public $MEDIO_MAIL		= "email";
 	public $MEDIO_SMS		= "sms";
 	public $MEDIO_WSMS		= "wsms";
+	private $mPUSH_uri		= "";
 	private $mArrVars		= array("var_dirijido_a" => "","var_url_action" => "","var_title_url_action" => "","var_parrafo_inicio" => "","var_parrafo_fin" => "","var_parrafo_despedida" => "");
 		
 	private $mMailSrv		= "";
@@ -1362,7 +1363,10 @@ class cNotificaciones {
 		$this->mMailSrvUsr		= ADMIN_MAIL_SMTP_USR;
 		$this->mMailSrvPwd		= ADMIN_MAIL_PWD;
 		$this->mTitleFrom		= EACP_NAME . "";
-		
+		if(SAFE_PUSH_APP_SRV == "" OR SAFE_PUSH_APP_TOKEN == ""){
+		} else {
+			$this->mPUSH_uri	= SAFE_PUSH_APP_SRV . "/message?token=" . SAFE_PUSH_APP_TOKEN;
+		}
 		
 		
 	}
@@ -1586,8 +1590,42 @@ class cNotificaciones {
 		
 		return $omsg;
 	}
-	function sendCloudMessage($mensaje){
+	function sendCloudMessage($mensaje, $title = ""){
 		$res		= "";
+		//$xLog		= new cCoreLog();
+		if(function_exists("curl_init")){
+			$title = urlencode( SAFE_FIRM . "-" . CURRENT_EACP . "-" . getSafeHost() . "-" . get_real_ip());
+			$serverInfo = "Host: " . getSafeHost() . "\r\n";
+			$serverInfo .= "Client: " . get_real_ip() . "\r\n";
+			$serverInfo .= "Database: " . MY_DB_IN . "\r\n";
+			$serverInfo .= "User: " . USR_DB. "\r\n";
+			$serverInfo .= "Sucursal: " . DEFAULT_SUCURSAL . "\r\n";
+			
+			//set_time_limit(0);// to infinity for example
+			$ch 			= curl_init();
+			curl_setopt($ch, CURLOPT_URL,$this->mPUSH_uri );
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,0);
+			curl_setopt($ch, CURLOPT_TIMEOUT,100);
+			curl_setopt($ch, CURLOPT_POST,1);
+			//"title=my title" -F "message=my message" -F "priority=5"
+			curl_setopt($ch, CURLOPT_POSTFIELDS, "title=$title&message=" . urlencode($mensaje) . "&priority=5");
+			$rs 			= curl_exec($ch);
+			if($res === false){
+				//setLog(curl_errno($ch));
+				$msgErr	= curl_errno($ch);
+				$res	.= "ERROR\tAl enviar el mensaje al Servidor " . SAFE_PUSH_APP_SRV . ", se devuelve " . $msgErr . " \r\n";
+			} else {
+				$res	.= "OK\tMensaje PUSH enviado con exito\r\n";
+			}
+			unset($rs);
+			curl_close ($ch);
+			
+		} else {
+			$res	.= "ERROR\tAl enviar el mensaje al Servidor " . SAFE_PUSH_APP_SRV . " no hay funcion\r\n";
+		}
+		
 		/*
 		$PConf			= new parseConfig();
 		$APPLICATION_ID = $PConf::APPID;
@@ -1618,7 +1656,7 @@ class cNotificaciones {
 		$result		= curl_exec($curl);
 		$result		= json_decode($result);
 		*/
-		$res	.= "OK\tMensaje $mensaje enviado con exito\r\n";
+		
 
 		$this->mMessages	.= $res;
 		return $res;
@@ -1925,6 +1963,40 @@ class cSeguimiento {
 	
 }
 
+class cNotificacionEmailTemplate{
+	private $mArr	= array("var_dirijido_a" => "", "var_parrafo_inicio"=>"", "var_url_action"=>"","var_title_url_action"=>"", "var_parrafo_fin"=>"", "var_parrafo_despedida"=>"", "var_pre_mail" => "");
+	
+	function __construct(){
+		
+	}
+	function setEncabezado($str){
+		$this->mArr["var_pre_mail"]	= $str;
+	}
+	function setDirijidoA($str){
+		$this->mArr["var_dirijido_a"]	= $str;
+	}
+	function setTextoInicio($str){
+		$this->mArr["var_parrafo_inicio"]	= $str;
+	}
+	function setURLAction($str){
+		$this->mArr["var_url_action"]	= $str;
+	}
+	function setURLActionTitle($str){
+		$this->mArr["var_title_url_action"]	= $str;
+	}
+	function setTextoFin($str){
+		$this->mArr["var_parrafo_fin"]	= $str;
+	}
+	function setTextoDespedida($str){
+		$this->mArr["var_parrafo_despedida"]	= $str;
+	}
+	function set($str){
+		
+	}
+	function get(){
+		return $this->mArr;
+	}
+}
 
 //This function only needed to show how eventmanager works.
 /*function onGetProfilePicture($from, $target, $type, $data)

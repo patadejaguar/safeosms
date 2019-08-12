@@ -52,7 +52,7 @@ min-height: 25em;
 </style>
 <?php
 $xFS		= new cFileSystem();
-$fileconf	= PATH_HTDOCS . "/core/core.config.os.lin.inc.php";
+//$fileconf	= PATH_HTDOCS . "/core/core.config.os.lin.inc.php";
 
 if($action == SYS_NINGUNO){
 	$xFRM->addSubmit("", "jsSetSave()");
@@ -87,4 +87,6 @@ function jsSetSave(){
 <?php
 //$jxc ->drawJavaScript(false, true);
 $xHP->fin();
+
+
 ?>

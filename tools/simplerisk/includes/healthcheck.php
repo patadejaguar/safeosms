@@ -197,7 +197,7 @@ function check_web_connectivity()
 function check_php_extensions()
 {
 	// List of extensions to check for
-	$extensions = array("pdo", "pdo_mysql", "mcrypt", "json", "phar", "zlib", "mbstring", "ldap");
+	$extensions = array("pdo", "pdo_mysql", "mcrypt", "json", "phar", "zlib", "mbstring", "ldap", "dom");
 
 	// For each extension
 	foreach ($extensions as $extension)
@@ -335,7 +335,7 @@ function check_only_full_group_by()
         // If the row contains ONLY_FULL_GROUP_BY
         if (preg_match("/.*ONLY_FULL_GROUP_BY.*/", $sql_mode))
         {       
-                health_check_bad("SimpleRisk will not work properly with ONLY_FULL_GROUP_BYenabled.");
+                health_check_bad("SimpleRisk will not work properly with ONLY_FULL_GROUP_BY enabled.");
         }
         else    
         {       

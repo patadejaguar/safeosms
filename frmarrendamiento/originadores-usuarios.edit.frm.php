@@ -25,11 +25,13 @@ $originador	= 0;
 $suborigen	= 0;
 $EsAdmin	= false;
 //$EsActivo	= false;
-if($xUser->getEsOriginador() == true){
+$EsOriginador	= $xUser->getEsOriginador();
+if($EsOriginador == true){
 	$xOrg	= new cLeasingUsuarios();
 	if($xOrg->initByIDUsuario($xUser->getID()) == true){
 		$originador	= $xOrg->getOriginador();
 		$suborigen	= $xOrg->getSubOriginador();
+		//setLog("hue $suborigen");
 		if($xOrg->getEsAdmin() == true){
 			$suborigen			= 0;
 			$EsAdmin			= true;
@@ -80,9 +82,24 @@ if($xUser->getEsOriginador() == false){
 $xFRM->addSeccion("idnx1", "TR.DATOS");
 
 $xFRM->OText("nombre", $xTabla->nombre()->v(), "TR.NOMBRE");
-$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
-$xFRM->ONumero("tasa_com", $xTabla->tasa_com()->v(), "TR.TASA COMISION");
 
+
+$xFRM->ODisabled("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
+
+/*if($xUser->getEsOriginador() == false){
+	$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
+} else {
+	if($EsAdmin == true){
+		$xFRM->OMail("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
+	} else {
+		$xFRM->ODisabled("correo_electronico", $xTabla->correo_electronico()->v(), "TR.CORREO_ELECTRONICO");
+	}
+}*/
+
+
+if($xUser->getEsOriginador() == false){
+	$xFRM->ONumero("tasa_com", $xTabla->tasa_com()->v(), "TR.TASA COMISION");
+}
 if($EsAdmin == true){
 	$xFRM->OSiNo("TR.ESTATUSACTIVO","estatus", $xTabla->estatus()->v());
 }

@@ -86,6 +86,8 @@ if($xUser->init() == true){
 		$xUser->setPuesto($rawpuesto);
 		$xUser->setEsCorporativo($rawcorp);
 		
+		$xUser->setCorreoElectronico($email);
+		
 		if($nivel > 0){
 			$xUser->setNivelAcceso($nivel);
 		}
@@ -100,11 +102,16 @@ if($xUser->init() == true){
 		$xFRM->addPersonaBasico("", false, $idpersona, "", "TR.PERSONA USUARIO");
 		$xFRM->OText_13("nombreusuario", $xUser->getNombreDeUsuario(), "TR.NOMBRE USUARIO");
 		$xFRM->OMail("correoelectronico", $xUser->getCorreoElectronico());
+		$xFRM->setValidacion("correoelectronico", "validacion.email", "", true);
+		
 		$xFRM->endSeccion();
 		$xFRM->addSeccion("idtct", "TR.DATOS_GENERALES");
 		
-		$xFRM->addHElem( $xSel->getListaDeNivelDeUsuario("idtipousuario", $xUser->getNivel(), $xUsrCurr->getTipoEnSistema())->get(true) );
-		
+		if($xUser->getNivel() == $xUsrCurr->getNivel() OR $xUsrCurr->getNivel() <= $xUser->getNivel()){
+			$xFRM->OHidden("idtipousuario", $xUser->getNivel());
+		} else {
+			$xFRM->addHElem( $xSel->getListaDeNivelDeUsuario("idtipousuario", $xUser->getNivel(), $xUsrCurr->getTipoEnSistema())->get(true) );
+		}
 		
 		$xFRM->OText("idpuesto", $xUser->getPuesto(), "TR.PUESTO");
 		

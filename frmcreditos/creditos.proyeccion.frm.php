@@ -111,6 +111,7 @@ if($credito <= DEFAULT_CREDITO){
 		$xTabla->addTD("SEMANAL", " class='title key' ");
 		
 		$xTabla->addTD($xTxt->getDeMoneda2("monto7", "", $monto1));
+		
 		$xTabla->addTD($xTxt->getDeConteo("pagos7", "", $numpago1));
 		
 		$xTabla->addTD($xNot->get("", "cuota7", $xNot->NOTICE));
@@ -135,7 +136,9 @@ if($credito <= DEFAULT_CREDITO){
 		
 		$xTabla->endRow();
 		
-		
+		$xFRM->addDisabledInit("monto7");
+		$xFRM->addDisabledInit("monto15");
+		$xFRM->addDisabledInit("monto30");
 	}
 	
 	$xFRM->addHElem($xTabla->get());

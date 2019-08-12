@@ -142,12 +142,21 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 		}
 		
 	}
+
 	//if(OPERACION_LIBERAR_SUCURSALES == false){
 	$extras			= ", `socios_general`.`sucursal` ";
 	//}
 	if($solofisicas == true){
 		$w1				.= " AND (`socios_figura_juridica`.`tipo_de_integracion` = " . PERSONAS_ES_FISICA . ") ";
 	}
+	if($idnextaction == "credito"){
+		$w1				.= " AND ( getNumCredsByPersona(`socios_general`.`codigo`) >0 ) ";
+	}
+	if($idnextaction == "new.pago"){
+		$w1				.= " AND ( getNumCredsSdoByPersona(`socios_general`.`codigo`) >0 ) ";
+	}
+	
+	
 	$buscar				= ( ((!isset($texto)) OR (trim($texto) == "") OR ($texto == DEFAULT_SOCIO) OR ($texto == "0")) AND ($idinterno =="") ) ? false : true;
 	if ($buscar == false) {
 		$sqllike = $sqlL->getListadoDePersonasV2($w1, "0,50", $extras);
@@ -244,7 +253,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 						INNER JOIN `socios` `socios` 
 						ON `creditos_solicitud`.`numero_socio` = `socios`.`codigo` 
 				WHERE
-					(`creditos_solicitud`.`saldo_actual` >0.99)
+					(`creditos_solicitud`.`saldo_actual` >" . TOLERANCIA_SALDOS . ")
 					AND
 					(`creditos_solicitud`.`tipo_convenio` =$texto) ORDER BY	`socios`.`nombre` ";
 				$table_s = new cTabla($sqllike);
@@ -276,6 +285,7 @@ function jsaShowSocios($texto, $tipo_de_busqueda, $todos = false, $idinterno = "
 			}
 			//setLog($sqllike);
 		}
+		//setLog($sqllike);
 	return $strTbls;
 }
 function jsaSetSocioEnSession($socio){	getPersonaEnSession($socio); }
@@ -418,6 +428,14 @@ function setSocio(id){
 	if(next == Configuracion.rutas.panel){
 		xG.go({url: "../frmsocios/socios.panel.frm.php?persona=" + id});
 		return false;
+	}
+	if(next == Configuracion.rutas.addlinea){
+		xG.go({url: "../frmcreditos/frmcreditoslineas.php?persona=" + id});
+		return false;
+	}	
+	if(next == Configuracion.rutas.addpago){
+		//xG.go({url: "../frmsocios/socios.panel.frm.php?persona=" + id});
+		//return false;
 	}
 	if(next == "addgrupo"){
 		jsAddToGrupo();

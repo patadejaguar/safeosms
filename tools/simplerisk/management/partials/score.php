@@ -18,22 +18,22 @@
     if (csp_enabled())
     {
       // Add the Content-Security-Policy header
-      header("Content-Security-Policy: default-src 'self' 'unsafe-inline';");
+      header("Content-Security-Policy: default-src 'self' 'unsafe-inline' *.highcharts.com *.googleapis.com *.gstatic.com *.jquery.com;");
     }
-
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-      session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
 
     if (!isset($_SESSION))
     {
-            session_name('SimpleRisk');
-            session_start();
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+        session_name('SimpleRisk');
+        session_start();
     }
 
     // Include the language file
@@ -91,6 +91,11 @@
           {
             custom_scoring_table($id, $custom);
           }
+          // Scoring method is Custom
+          else if ($scoring_method == "6")
+          {
+            contributing_risk_scoring_table($id, $calculated_risk, $ContributingLikelihood, $ContributingImpacts);
+          }
           ?>
         </div>
     </div>
@@ -121,6 +126,11 @@
           else if ($scoring_method == "5")
           {
             edit_custom_score($custom);
+          }
+          // Scoring method is Contributing Risk
+          else if ($scoring_method == "6")
+          {
+            edit_contributing_risk_score($ContributingLikelihood, $ContributingImpacts);
           }
           ?>
         </div>

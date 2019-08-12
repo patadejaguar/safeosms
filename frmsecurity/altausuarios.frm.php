@@ -221,19 +221,7 @@ if($xUser->getPuedeAgregarUsuarios() == false){
 						if($corporativo == true){
 							$xUsr->setEsCorporativo();
 						}
-						$xNot	= new cNotificaciones();
-						
-						$arr	= array(
-								"var_dirijido_a" 		=> $xUsr->getNombreCompleto(),
-								"var_url_action" 		=> SAFE_HOST_URL . "index.xul.php?ctx=" . $xUsr->getCTX(),
-								"var_title_url_action" 	=> "Ingresar al Sistema",
-								"var_parrafo_inicio" 	=> "Se le notifica que ha sido dado de Alta en el Sistema",
-								"var_parrafo_fin" 		=> "Credenciales de Acceso: <br />Usuario: " . $xUsr->getNombreDeUsuario() . "<br />Contrase&ntilde;a: $rawpass",
-								"var_parrafo_despedida" => "Gracias."
-						);
-						
-						$xNot->sendMailTemplate("Nueva Cuenta Activada", $xUsr->getCorreoElectronico(), $arr);
-						
+						$xUsr->setNotificarNuevoUsuario($rawpass);
 					}			
 				}
 				$xFRM->addAvisoRegistroOK($msg);

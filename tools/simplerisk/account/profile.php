@@ -17,17 +17,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-        // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -78,7 +78,8 @@
     $username = $user_info['username'];
     $name = $user_info['name'];
     $email = $user_info['email'];
-    $last_login = date(get_default_datetime_format(), strtotime($user_info['last_login']));
+    $manager = $user_info['manager'];
+    $last_login = format_date($user_info['last_login']);
     $teams = $user_info['teams'];
     $language = $user_info['lang'];
     $asset = $user_info['asset'];
@@ -109,7 +110,13 @@
     $delete_documentation = $user_info['delete_documentation'];
     $comment_risk_management = $user_info['comment_risk_management'];
     $comment_compliance = $user_info['comment_compliance'];
-    
+
+    $view_exception = $user_info['view_exception'];
+    $create_exception = $user_info['create_exception'];
+    $update_exception = $user_info['update_exception'];
+    $delete_exception = $user_info['delete_exception'];
+    $approve_exception = $user_info['approve_exception'];
+
     $role_id = $user_info['role_id'];
 
     // Check if a new password was submitted
@@ -143,22 +150,11 @@
                     // Add the old data to the pass_history table
                     add_last_password_history($_SESSION["uid"], $old_data["salt"], $old_data["password"]);
 
-
                     // Update the password
                     update_password($user, $hash);
 
-                    // If the encryption extra is enabled
-                    if (encryption_extra())
-                    {
-                        // Load the extra
-                        require_once(realpath(__DIR__ . '/../extras/encryption/index.php'));
-
-                        // Set the new encrypted password
-                        set_enc_pass($user, $new_pass, $_SESSION['encrypted_pass']);
-                    }
-
                     // Display an alert
-		    set_alert(true, "good", $lang['PasswordUpdated']);
+                    set_alert(true, "good", $lang['PasswordUpdated']);
                 }else{
                     set_alert(true, "bad", $lang['PasswordNoLongerUse']);
                 }
@@ -172,7 +168,7 @@
         else
         {
             // Display an alert
-	    set_alert(true, "bad", $lang['PasswordIncorrect']);
+            set_alert(true, "bad", $lang['PasswordIncorrect']);
         }
     }
     
@@ -189,6 +185,7 @@
 <html>
 
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=10,9,7,8">
     <script src="../js/jquery.min.js"></script>
     <script src="../js/jquery-ui.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
@@ -207,6 +204,10 @@
 
     <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../css/theme.css">
+    
+    <?php
+        setup_alert_requirements("..");
+    ?>    
     <script type="text/javascript">
         $(function(){
             $(document).ready(function(){
@@ -256,7 +257,7 @@
                         },
                         error: function(xhr,status,error){
                             if(xhr.responseJSON && xhr.responseJSON.status_message){
-                                $('#show-alert').html(xhr.responseJSON.status_message);
+                                showAlertsFromArray(xhr.responseJSON.status_message);
                             }
                         }
                     })
@@ -307,6 +308,11 @@
                     <input name="reset_custom_display_settings" value="<?php echo $lang['ResetCustomDisplaySettings']; ?>" type="submit">
                 </form>
                 
+                <h6>
+                    <u><?php echo $escaper->escapeHtml($lang['Manager']); ?></u>
+                </h6>
+                <?php create_dropdown("user", $manager, "manager"); ?>
+
                 <h6><u><?php echo $escaper->escapeHtml($lang['Teams']); ?></u></h6>
                 <?php create_multiple_dropdown("team", $teams); ?>
                 
@@ -326,7 +332,12 @@
                           <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="add_documentation" type="checkbox"<?php if ($add_documentation) echo " checked" ?> />&nbsp;<?php echo $escaper->escapeHtml($lang['AbleToAddDocumentation']); ?></td></tr>
                           <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="modify_documentation" type="checkbox"<?php if ($modify_documentation) echo " checked" ?> />&nbsp;<?php echo $escaper->escapeHtml($lang['AbleToModifyDocumentation']); ?></td></tr>
                           <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="delete_documentation" type="checkbox"<?php if ($delete_documentation) echo " checked" ?> />&nbsp;<?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentation']); ?></td></tr>
-                          
+                          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="view_exception" type="checkbox"<?php if ($view_exception) echo " checked" ?> /> &nbsp;<?php echo $escaper->escapeHtml($lang['AbleToViewDocumentException']); ?> </td></tr>
+                          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="create_exception" type="checkbox"<?php if ($create_exception) echo " checked" ?> /> &nbsp;<?php echo $escaper->escapeHtml($lang['AbleToCreateDocumentException']); ?> </td></tr>
+                          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="update_exception" type="checkbox"<?php if ($update_exception) echo " checked" ?> /> &nbsp;<?php echo $escaper->escapeHtml($lang['AbleToUpdateDocumentException']); ?> </td></tr>
+                          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="delete_exception" type="checkbox"<?php if ($delete_exception) echo " checked" ?> /> &nbsp;<?php echo $escaper->escapeHtml($lang['AbleToDeleteDocumentException']); ?> </td></tr>
+                          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="approve_exception" type="checkbox"<?php if ($approve_exception) echo " checked" ?> /> &nbsp;<?php echo $escaper->escapeHtml($lang['AbleToApproveDocumentException']); ?> </td></tr>
+
                           <tr><td colspan="2"><?php echo $escaper->escapeHtml($lang['RiskManagement']); ?></td></tr>
                           <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="riskmanagement" type="checkbox"<?php if ($riskmanagement) echo " checked" ?> />&nbsp;<?php echo $escaper->escapeHtml($lang['AllowAccessToRiskManagementMenu']); ?></td></tr>
                           <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><input name="submit_risks" type="checkbox"<?php if ($submit_risks) echo " checked" ?> />&nbsp;<?php echo $escaper->escapeHtml($lang['AbleToSubmitNewRisks']); ?></td></tr>

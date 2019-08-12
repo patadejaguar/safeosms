@@ -117,9 +117,10 @@ class cError {
 		$sqlIE	= null;
 		return $xMQL->getLastInsertID();
 	}
-	function setGoErrorPage($codigo = false){
+	function setGoErrorPage($codigo = false, $msg	= ""){
 		$codigo		= ( $codigo == false ) ? DEFAULT_CODIGO_DE_ERROR : $codigo;
-		header("location:../404.php?i=" . $codigo);
+		$msg		= urlencode($msg);
+		header("location:../404.php?i=" . $codigo . "&msg=" . $msg);
 	}
 	function init(){
 		$id					= $this->mCodigo;
@@ -137,7 +138,7 @@ class cError {
 	}
 	function getDescription(){ 	return $this->mDescripcion;	}
 	function getCodigo(){ return $this->mCodigo; }
-	function getFicha(){
+	function getFicha($msg = ""){
 		$str	= str_split($this->mCodigo);
 		$hcod	= "";
 		$tipo	= $this->mTipo;
@@ -147,12 +148,12 @@ class cError {
 			$title	= "Advertencia";
 			$cls	= "error";
 		}
-
+		$extra		= ($msg == "") ? "" : "<p class='$cls'>" . urldecode($msg) . "</p>";
 		$html	= "<div class='cuadro'>
 						<fieldset id=\"inputs\">
 						<h3>$title</h3>
 						<hr />
-						<p class='$cls'>" . $this->mDescripcion . "</p><hr /><span class='error-num'>" . $this->mCodigo . "</span>
+						<p class='$cls'>" . $this->mDescripcion . "</p>$extra<hr /><span class='error-num'>" . $this->mCodigo . "</span>
 						</fieldset>
 						<fieldset id=\"actions\">
 								<a class=\"button\" onclick=\"window.history.back(1)\"><img src='images/back-button.png' height='24px' style='margin-top:6px' alt='Atras' /></a>
@@ -183,6 +184,8 @@ class cCoreLog{
 	private $mOCat			= null;
 	private $mForceNoLog	= false;
 	private $mCoords		= "";
+	private $mFile			= null;
+	private $mSaveOnFile	= false;
 	
 	function __construct($iderror = false){
 		$this->mIDError	= $iderror;
@@ -210,6 +213,11 @@ class cCoreLog{
 		$msg					= null;
 		if($this->mForceNoLog == true){
 			$this->mMessages	= "";
+		} else {
+			if($this->mSaveOnFile == true){
+				$this->mFile->setWrite($this->mMessages);
+				$this->mMessages	= "";
+			}
 		}
 	}
 	function getMessages($put = OUT_TXT){ $xH	 = new cHObject(); return $xH->Out($this->mMessages, $put);	}
@@ -223,6 +231,11 @@ class cCoreLog{
 	function setCoords($coords = ""){
 		$this->mCoords	= $coords;
 	}
+	function setSaveOnFile(){
+		$this->mFile		= new cFileLog();
+		$this->mSaveOnFile	= true;
+	}
+	function getOFile(){ return $this->mFile; }
 }
 
 

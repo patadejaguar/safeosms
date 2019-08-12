@@ -88,11 +88,15 @@ $xFRM->OText("idtitle", "", "Titulo Forma/pagina");
 
 $xFRM->OMoneda("idmenu", 0, "MENU ID");
 $xFRM->addHElem($xSel->getListaDeMenuParents("idmenuparent")->get(true));
+
+$xFRM->OText_13("prefijo", "", "Prefijo");
+
 //$xFRM->OMoneda("idmenuparent", 0, "MENU PARENT ID");
 
 $xFRM->OTextArea("idsql", "SQL", "TR.SQL");
 
 echo $xFRM->get();
+
 ?>
 <script>
 var xG	= new Gen();
@@ -106,9 +110,10 @@ function jsGetTable(){
 	var idmnu	= $("#idmenu").val();
 	var idtit	= $("#idtitle").val();
 	var idrt	= $("#idruta").val();
+	var prefijo = $("#prefijo").val(); 
 	var idsql	= base64.encode($("#idsql").val());
 	
-	xG.w({url: "../tools/orm.php?tabla=" + n + "&idgrid=" + idgrid + "&nombrefile=" + idfil + "&nombreforma=" + idfrm + "&menuparent=" + idpar + "&menu=" + idmnu + "&title=" + idtit + "&ruta=" + idrt + "&idsql=" + idsql,  tab: true});
+	xG.w({url: "../tools/orm.php?tabla=" + n + "&idgrid=" + idgrid + "&nombrefile=" + idfil + "&nombreforma=" + idfrm + "&menuparent=" + idpar + "&menu=" + idmnu + "&title=" + idtit + "&ruta=" + idrt + "&idsql=" + idsql + "&prefijo=" + prefijo,  tab: true});
 }
 </script>
 <?php

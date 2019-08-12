@@ -25,12 +25,14 @@ $originador	= 0;
 $suborigen	= 0;
 $EsAdmin	= false;
 //$EsActivo	= false;
-if($xUser->getEsOriginador() == true){
+
+$EsOriginador	= $xUser->getEsOriginador();
+if($EsOriginador == true){
 	$xOrg	= new cLeasingUsuarios();
 	if($xOrg->initByIDUsuario($xUser->getID()) == true){
 		$originador	= $xOrg->getOriginador();
 		$suborigen	= $xOrg->getSubOriginador();
-		setLog("hue $suborigen");
+		//setLog("hue $suborigen");
 		if($xOrg->getEsAdmin() == true){
 			$suborigen			= 0;
 			$EsAdmin			= true;
@@ -69,6 +71,7 @@ $xFRM->setTitle($xHP->getTitle());
 
 $xFRM->addCerrar();
 
+
 $xHG	= new cHGrid("idlistausuarios", $xHP->getTitle());
 $xHG->setOrdenar();
 
@@ -77,8 +80,11 @@ $xHG->addList();
 
 $xHG->addKey("idleasing_usuarios");
 
-$xHG->col("nombre", "TR.NOMBRE", "40%");
-$xHG->col("correo_electronico", "TR.CORREO_ELECTRONICO", "40%");
+$xHG->col("nombre", "TR.NOMBRE", "30%");
+
+$xHG->col("grupo", "TR.GRUPO", "30%");
+
+$xHG->col("correo_electronico", "TR.CORREO_ELECTRONICO", "10%");
 $xHG->ColMoneda("comision", "TR.COMISION", "5%");
 $xHG->col("activo", "TR.ESTATUS", "5%");
 
@@ -90,7 +96,10 @@ if($EsAdmin == true OR $xUser->getEsOriginador() == false){
 	$xHG->OToolbar("TR.AGREGAR", "jsAdd()", "grid/add.png");
 	$xHG->OButton("TR.PIN", "jsPin('+ data.record.clave +')", "locked-padlock.png");
 	if($xUser->getEsOriginador() == false){
-		$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+		if(MODO_DEBUG == true){
+			$xHG->OButton("TR.ELIMINAR", "jsDel('+ data.record.clave +')", "delete.png");
+		}
+		
 	}
 }
 

@@ -48,7 +48,7 @@ $xHP->init();
 ?>
 <style>
 #microformato {
-min-height:350px;
+min-height:250px;
 }
 </style>
 <?php

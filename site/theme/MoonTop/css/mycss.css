@@ -1,0 +1,168 @@
+/* mycss.css 
+---------------*/
+
+/* ==== Fonts ====*/
+body,h1,h2,h3,h4,h5,h6{
+   font-family: 'Comfortaa', cursive, sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6{
+   font-family: 'Handlee', cursive, sans-serif;
+   color: #58639C;
+}
+
+p{
+   color: #7b7b7b;
+}
+
+.topCTA p{
+   color: #fff;
+}
+
+.topCTA h1, .callout h1{
+   color: #F8C223;
+}
+
+
+.footer .menu{
+   font-size: 0.9em;
+}
+
+.blue2BG{
+ display: block;
+ background-color: #58639C;
+ padding-top: 4em;
+ padding-bottom: 4em;
+ color:#fff;
+ border-top: 2px #24556D solid;
+ border-bottom: 2px #24556D solid;
+ background-image: url('../images/cloudsBG.png');
+ background-repeat: repeat;
+ width: 100%;
+}
+
+.greenBG h3{
+   
+}
+
+.top-bar, .top-bar ul {
+    background-color: #212833;
+    color: #fff;
+}
+
+.top-bar {
+    border-bottom: 2px #24556D solid;
+}
+
+.top-bar ul a {
+    color: #E2E4E4;
+}
+
+.blueBG, .callout{
+   background-color: #232A4E;
+   color: #fff;
+}
+
+.pinkBG{
+   background-color: #232A4E;
+   padding-top: 3em;
+   color: #fff;
+}
+
+div.wave::after{
+    content: "";
+    display: block;
+    background-image: url('../images/hero-wave.svg');
+    background-repeat: repeat-x;
+    width: 100%;
+    height: 17px;
+    position: relative;
+    top: -16px;
+    margin: 0;
+}
+
+.topText{
+ padding-top: 3em;
+ padding-bottom: 3em; 
+}
+
+.topCTA{
+margin-top: 3em;
+}
+
+.snaps{
+   padding-bottom: 3em;
+   padding-top: 3em;
+}
+
+
+
+
+#headerButton a, .menu a, .topCTA a, .topText a{
+    -webkit-border-radius: 9px;
+    -moz-border-radius: 9px;
+    border-radius: 9px;
+}
+
+#clouds p, #clouds h3, .callout h2{
+   color: #fff;
+}
+
+footer{
+   padding-top: 1.4em;
+}
+
+.callout{
+   background-image: url('../images/cloudsBG.png');
+   background-repeat: repeat;
+  
+}
+
+
+
+/* ======  Off canvas menu ===== */
+
+#topMenuOffCanvas li{
+   padding: 1.3em;
+   background-color: #212833;
+   color: #fff;
+   border-bottom: solid 1px #5D5A5A;
+   border-top: solid 1px #262626;
+   text-align: center;
+   margin-right: 1.1em;
+}
+
+#topMenuOffCanvas li a{
+   color: #fff;
+   padding:5px 7px !important;
+   outline: none !important;
+   -webkit-border-radius: 9px;
+    -moz-border-radius: 9px;
+    border-radius: 9px;
+}
+
+ul#topMenuOffCanvas{
+  list-style: none !important;
+ 
+}
+
+.off-canvas{
+  background-color: #212833;
+  padding-left: 0;
+}
+
+li.active a{
+  background-color: #2196F3 !important;
+  outline: none;
+}
+
+
+
+
+
+
+
+
+
+
+

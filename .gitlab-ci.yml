@@ -1,0 +1,9 @@
+before_script:
+  - echo "inicial"
+rspec:
+  script:
+  - echo "pruebas"
+rubocop:
+  script:
+  - echo "mas pruebas"
+

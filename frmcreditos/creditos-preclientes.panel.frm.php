@@ -268,7 +268,7 @@ function jsAgregarPersona(){
 		var email				= $("#email").val();
 		var idcontrol			= $("#idcontrol").val();
 		var idcredito			= $("#idcredito").val();
-		var xurl				= "email=" + email + "&telefono=" + telefono + "&curp=" + curp + "&rfc=" + rfc + "&nombre=" + nombres + "&primerapellido=" + apellido1 + "&segundoapellido=" + apellido2 ;
+		var xurl				= "&email=" + email + "&telefono=" + telefono + "&curp=" + curp + "&rfc=" + rfc + "&nombre=" + nombres + "&primerapellido=" + apellido1 + "&segundoapellido=" + apellido2 ;
 		xP.goToAgregarFisicas({otros: xurl, claveorigen:idcontrol,tipoorigen:270});		
 	}
 }

@@ -14,17 +14,17 @@
     // Add various security headers
     add_security_headers();
 
-    // Session handler is database
-    if (USE_DATABASE_FOR_SESSIONS == "true")
-    {
-        session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-    }
-
-    // Start the session
-    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
     if (!isset($_SESSION))
     {
+        // Session handler is database
+        if (USE_DATABASE_FOR_SESSIONS == "true")
+        {
+            session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+        }
+
+        // Start the session
+        session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
         session_name('SimpleRisk');
         session_start();
     }
@@ -32,6 +32,9 @@
     // Check for session timeout or renegotiation
     session_check();
 
+    // Include the language file
+    require_once(language_file());
+    
     // If access is authenticated
     if (is_authenticated())
     {
@@ -94,14 +97,22 @@
 
         getRoute()->post('/management/risk/saveComment', 'saveCommentForm');
         getRoute()->post('/management/risk/accept_mitigation', 'acceptMitigationForm');
+        getRoute()->post('/management/risk/fix_review_date_format', 'fixReviewDateFormat');
 
         getRoute()->post('/management/impportexport/deleteMapping', 'deleteMapping');
+
         getRoute()->post('/assessment/update', 'updateAssessment');
 
         getRoute()->get('/datatable/framework_controls', 'getFrameworkControlsDatatable');
         getRoute()->get('/datatable/mitigation_controls', 'getMitigationControlsDatatable');
         getRoute()->get('/role_responsibilities/get_responsibilities', 'getResponsibilitiesByRoleIdForm');
 
+        /******************** Risk Management Datatatable API **********************/
+        getRoute()->get('/risk_management/plan_mitigation', 'getPlanMitigationsDatatableResponse');
+        getRoute()->get('/risk_management/managment_review', 'getManagementReviewsDatatableResponse');
+        getRoute()->get('/risk_management/review_risks', 'getReviewRisksDatatableResponse');
+        getRoute()->get('/risk_management/review_date_issues', 'getReviewsWithDateIssuesDatatableResponse');
+        
         /******************** Governance and Compliance API **********************/
         getRoute()->get('/governance/frameworks', 'getFrameworksResponse');
         getRoute()->get('/governance/tabular_documents', 'getTabularDocumentsResponse');
@@ -116,15 +127,20 @@
         getRoute()->get('/governance/documents', 'getDocumentsResponse');
         getRoute()->get('/governance/document', 'getDocumentResponse');
         getRoute()->get('/governance/selected_parent_documents_dropdown', 'getSelectedParentDocumentsDropdownResponse');
+        getRoute()->get('/governance/related_controls_by_framework_ids', 'getRelatedControlsByFrameworkIdsResponse');
+        
+        getRoute()->post('/governance/update_control', 'updateControlResponse');
         
         getRoute()->get('/compliance/define_tests', 'getDefineTestsResponse');
         getRoute()->get('/compliance/test', 'getTestResponse');
         getRoute()->get('/compliance/initiate_audits', 'getInitiateTestAuditsResponse');
         getRoute()->get('/compliance/active_audits', 'getActiveTestAuditsResponse');
         getRoute()->post('/compliance/save_audit_comment', 'saveTestAuditCommentResponse');
-        getRoute()->get('/compliance/past_audits', 'getPastTestAuditsResponse');
+        getRoute()->post('/compliance/past_audits', 'getPastTestAuditsResponse');
         getRoute()->post('/compliance/reopen_audit', 'reopenTestAuditResponse');
         getRoute()->post('/compliance/audit_initiation/initiate', 'initiateFrameworkControlTestsResponse');
+        getRoute()->get('/compliance/audit_timeline', 'auditTimelineResponse');
+        getRoute()->post('/compliance/delete_audit', 'deleteTestAuditResponse');
         /*************************************************************************/
 
         /***************************** Assessment API *********************************/
@@ -139,17 +155,37 @@
         getRoute()->get('/assessment/questionnaire/template_questions/dynamic', 'assessment_extra_questionnaireTemplateQuestionsDynamicAPI');
         /******************************************************************************/
 
+        /******************************* Audit Log API **********************************/
+        getRoute()->get('/audit_logs', 'get_audit_logs_api');
+        /****************************************** *************************************/
+        
+        /******************************* Assets API *************************************/
+        getRoute()->get('/assets/verify_asset', 'assets_verify_asset');
+        getRoute()->get('/assets/discard_asset', 'assets_discard_asset');
+        getRoute()->get('/assets/delete_asset', 'assets_delete_asset');
+        getRoute()->post('/assets/update_asset', 'assets_update_asset');
+        getRoute()->get('/assets/verified_asset_body', 'assets_verified_asset_table_body');
+        getRoute()->post('/assets/verify_assets', 'assets_verify_assets');
+        getRoute()->post('/assets/discard_assets', 'assets_discard_assets');
+        getRoute()->post('/assets/delete_assets', 'assets_delete_assets');
+        getRoute()->get('/assets/options', 'get_asset_options');
+        getRoute()->post('/asset-group/create', 'asset_group_create');
+        getRoute()->post('/asset-group/update', 'asset_group_update');
+        getRoute()->post('/asset-group/delete', 'asset_group_delete');
+        getRoute()->post('/asset-group/remove_asset', 'asset_group_remove_asset');
+        getRoute()->get('/asset-group/tree', 'asset_group_tree');
+        getRoute()->get('/asset-group/info', 'asset_group_info');
+        getRoute()->get('/asset-group/options', 'get_asset_group_options');
+        /********************************************************************************/
+
+        /********************* Authentication API **************************/
+        getRoute()->get('/authentication/ldap_group_dropdown', 'authentication_extra_ldap_group_dropdown');
+        /******************************************************************/
+
         /********************* Customization API **************************/
         getRoute()->post('/customization/addOption', 'customization_extra_addOption');
         getRoute()->post('/customization/deleteOption', 'customization_extra_deleteOption');
         getRoute()->post('/customization/saveTemplate', 'customization_extra_saveTemplate');
-        /******************************************************************/
-
-        /********************* Authentication API **************************/
-        getRoute()->post('/admin/authentication/add_ldap_group', 'authentication_extra_add_ldap_group');
-        getRoute()->post('/admin/authentication/get_teams_by_ldap_group', 'authentication_extra_getTeamsByLdapGroup');
-        getRoute()->post('/admin/authentication/delete_ldap_group', 'authentication_extra_deleteLdapGroup');
-        getRoute()->post('/admin/authentication/set_ldap_group_and_teams', 'authentication_extra_setLdapGroupAndTeams');
         /******************************************************************/
 
         /********************* RISK FORMULA API ***************************/
@@ -157,13 +193,38 @@
         getRoute()->post('/riskformula/delete_impact', 'delete_impact_api');
         getRoute()->post('/riskformula/add_likelihood', 'add_likelihood_api');
         getRoute()->post('/riskformula/delete_likelihood', 'delete_likelihood_api');
-        getRoute()->post('/riskformula/update_impact_name', 'update_impact_name_api');
-        getRoute()->post('/riskformula/update_likelihood_name', 'update_likelihood_name_api');
+        getRoute()->post('/riskformula/update_impact_or_likelihood_name', 'update_impact_or_likelihood_name_api');
+        getRoute()->post('/riskformula/update_custom_score', 'update_custom_score_api');
         /******************************************************************/
+
+        /********************* RISK LEVEL API **************************/
+        getRoute()->post('/risklevel/update', 'update_risk_level_API');
+        /***************************************************************/
+
+        /***************** DOCUMENT EXCEPTIONS API *****************/
+        getRoute()->post('/exceptions/create', 'create_exception_api');
+        getRoute()->post('/exceptions/update', 'update_exception_api');
+        getRoute()->post('/exceptions/delete', 'delete_exception_api');
+        getRoute()->post('/exceptions/approve', 'approve_exception_api');
+        getRoute()->post('/exceptions/batch-delete', 'batch_delete_exception_api');
+        getRoute()->get('/exceptions/tree', 'get_exceptions_as_treegrid_api');
+        getRoute()->get('/exceptions/exception', 'get_exception_api');
+        getRoute()->get('/exceptions/info', 'get_exception_for_display_api');
+        getRoute()->get('/exceptions/audit_log', 'get_exceptions_audit_log_api');
+        /***********************************************************/
+
+        /******************************* Advanced Search API **********************************/
+        getRoute()->get('/advanced_search', 'advanced_search_api');
+        /**************************************************************************************/
+
+        getRoute()->get('/management/tag_options_of_type', 'getTagOptionsOfType');
 
         // Return scoring histories
         getRoute()->get('/management/risk/scoring_history', 'scoringHistory');
         getRoute()->get('/management/risk/residual_scoring_history', 'residualScoringHistory');
+        
+        // Get manager by owner
+        getRoute()->get('/user/manager', 'getManagerByUserAPI');
 
         // Interal api for ajax
         getRoute()->post('/set_custom_display', 'setCustomDisplay');

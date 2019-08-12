@@ -410,6 +410,7 @@ class cSucursal{
 	private $mCentroDeCosto		= 0;
 	private $mOficialAML		= 0;
 	private $mIDDomicilio		= 0;
+	private $mTabla				= "general_sucursales";
 	
 	function __construct($clave = false){	
 		if ( $clave == false ){	$clave = getSucursal(); }
@@ -754,6 +755,12 @@ class cSucursal{
 		
 		return $res;
 	}
+	function setInActivo($inactivo = false){
+		$xQL	= new MQL();
+		$in		= ($inactivo === false) ? "1" : "0";
+		$res	= $xQL->setRawQuery("UPDATE `" . $this->mTabla . "` SET `estatus`=$in WHERE `codigo_sucursal` = '" . $this->mClave .  "' ");
+		return ($res === false) ? false : true;
+	}
 }
 /**
 *	Clase de Funciones sobre socios
@@ -868,6 +875,7 @@ class cSocio{
 	
 	private $mEsExportado			= false;
 	private $mCodigoExportado		= false;
+	
 	public $ESTADO_BAJA				= 20;
 	
 	function __construct($codigo_de_socio, $init = false){
@@ -2103,12 +2111,19 @@ class cSocio{
 		
 		return ($out === false) ? $ready : $xLog->getMessages($out);
 	}
-	function addMemo($tipo = MEMOS_TIPO_PENDIENTE, $txt = "", $documento = false, $fecha = false, $notificar = false, $sms = false){ return $this->setNewMemo($tipo, $txt, $documento, $fecha, $notificar, $sms); }
-	function setNewMemo($tipo= MEMOS_TIPO_PENDIENTE, $txt = "", $documento = false, $fecha = false, $notificar = false, $sms = false){
+	function addMemo($tipo = "", $txt = "", $documento = false, $fecha = false, $notificar = false, $sms = false, $push = false){
+		$tipo	= ($tipo == "") ? MEMOS_TIPO_PENDIENTE : $tipo;
+		return $this->setNewMemo($tipo, $txt, $documento, $fecha, $notificar, $sms, $push); 
+	}
+	function setNewMemo($tipo = "", $txt = "", $documento = false, $fecha = false, $notificar = false, $sms = false, $push = false){
+		
 		$xF			= new cFecha(0);
+		$xNot		= new cNotificaciones();
+		$tipo		= ($tipo == "") ? MEMOS_TIPO_PENDIENTE : $tipo;
 		$grupo		= ($this->mGrupoAsociado == false) ? DEFAULT_GRUPO : $this->mGrupoAsociado;
 		$fecha		= $xF->getFechaISO($fecha);
 		$documento	= ($documento == false)? DEFAULT_CREDITO : $documento;
+		
 		$socio		= $this->mCodigo;
 		$usuario 	= getUsuarioActual();
 		$sucursal	= getSucursal();
@@ -2134,29 +2149,36 @@ class cSocio{
 		$x		= ($x === false) ? false : true;
 		$telefono	= $this->getTelefonoPrincipal();
 		if($x == true ){
+			$msg	.= "OK\tNota Agregada : $txt\r\n";
 			if($notificar == true){
 				if($this->mSocioIniciado == false){ $this->init(); }
-				$xNot			= new cNotificaciones();
+				
 				$xNot->sendMail("$sucursal - $mTit [$tipo]", $txt, $this->getCorreoElectronico());
+				
 				if($sms == true){
 					$xNot->sendWSMS($telefono, $txt);
 					if($xNot->isSend() == false){
 						$xNot->sendSMS($telefono, $txt);
 					}
-					
-
 				}
-				
+				if($push == true){
+					$xNot->sendCloudMessage($txt, "$sucursal - $mTit [$tipo]");
+				}
 				$this->mMessages	.= $xNot->getMessages();
 			} else {
-				$msg	.= "OK\tNota Agregada : $txt\r\n";
+				if($push == true){
+					$xNot->sendCloudMessage($txt, "$sucursal - $mTit [$tipo]");
+				}
+				$msg	.= "WARN\tNotificacion sin enviar\r\n";
 			}
 		} else {
 			$msg	.= "ERROR\tNota no Agregada\r\n";
 		}
+		//setLog($xNot->getMessages());
 		$this->mMessages	.= $msg;
 		return $msg;
 	}
+
 	/**
 	 * Modifica un numero de socio, del Anterior a uno indicado
 	 * @param integer	$nuevo_numero	Numero de Socio Nuevo
@@ -2586,7 +2608,7 @@ class cSocio{
 		if ( $id > 0 ){
 			$this->mIDVivienda	= $id;
 			
-			$xLog->add("OK\tSe agrega la Vivienda con ID $id CP $codigo_postal y Localidad $clave_de_localidad del pais $nombre_pais\r\n");
+			$xLog->add("OK\tSe agrega la Vivienda con ID $id CP $codigo_postal y Localidad $clave_de_localidad del pais $nombre_pais ( $clave_de_pais)\r\n");
 			//Actualiza el Dato de Domicilio del Grupo Solidario
 			if( ($this->getTipoDeIngreso() == TIPO_INGRESO_GRUPO) AND ($principal == true) ){
 				$xGrp	= new cGrupo($this->mCodigo);
@@ -2599,11 +2621,14 @@ class cSocio{
 				$xGrp->setUpdate($arrUp);
 				$xLog->add($xGrp->getMessages());
 			}
-			$xLog->add($xViv->getMessages(), $xLog->DEVELOPER);
+			
 			$this->setCuandoSeActualiza();
 		} else {
-			$xLog->add("ERROR\tAl agregar la Vivienda con CP $codigo_postal y Localidad $clave_de_localidad del pais $nombre_pais\r\n");
+			$xLog->add("ERROR\tAl agregar la Vivienda con CP $codigo_postal y Localidad $clave_de_localidad del pais $nombre_pais ( $clave_de_pais)\r\n");
 		}
+		$xLog->add($xViv->getMessages(), $xLog->DEVELOPER);
+		
+		
 		$this->mMessages	.= $xLog->getMessages();
 		return ($id > 0) ? true : false;
 	}
@@ -3429,7 +3454,7 @@ class cSocio{
 			$lat			= 0;
 			if($ready == true){
 				if($xDoc->isImagen() == true){
-					$exif 	= exif_read_data( $completePath);
+					$exif 	= @exif_read_data( $completePath);
 					if(is_array($exif)){
 						if(isset($exif["GPSLongitude"])){
 							$lon 		= $xDoc->getGps($exif["GPSLongitude"], $exif['GPSLongitudeRef']);
@@ -6376,7 +6401,7 @@ class cPersonasVivienda{
 				} else {
 					//Si no es vivienda manual, es false
 					$valido				= false;
-					$xLog->add("ERROR\tLa vivienda no es manual, se necesita un Codigo Postal\r\n");
+					$xLog->add("ERROR\tLa vivienda no es manual, se necesita un Codigo Postal($codigopostal)\r\n");
 				}
 			} else {
 				if($xCol->init() == true){
@@ -6428,7 +6453,7 @@ class cPersonasVivienda{
 		$xV->principal($EsPrincipal);
 		$xV->referencia($Referencias);
 		$xV->socio_numero($idpersona);
-		$xV->sucursal(getSucursal());
+		$xV->sucursal(getSucursalPorPersona($idpersona));
 		$xV->telefono_movil($TelefonoMovil);
 		$xV->telefono_residencial($TelefonoFijo);
 		$xV->tiempo_residencia($TiempoDeResidir);
@@ -6459,6 +6484,7 @@ class cPersonasVivienda{
 			}
 			$this->setCuandoSeActualiza();
 		}
+		
 		$this->mMessages	= $xLog->getMessages();
 		return ($rs == false) ? false: true;
 	}
@@ -6612,10 +6638,13 @@ class cPersonasVivienda{
 		$this->setCleanCache();
 		
 	}
-	function setSeConstruye(){
+	function setSeConstruye($option = true){
 		$xQL	= new MQL();
-		$res	= $xQL->setRawQuery("UPDATE `socios_vivienda` SET `construye`=1 WHERE `idsocios_vivienda`=" . $this->mIDCargado);
-		
+		if($option == true){
+			$res	= $xQL->setRawQuery("UPDATE `socios_vivienda` SET `construye`=1 WHERE `idsocios_vivienda`=" . $this->mIDCargado);
+		} else {
+			$res	= $xQL->setRawQuery("UPDATE `socios_vivienda` SET `construye`=0 WHERE `idsocios_vivienda`=" . $this->mIDCargado);
+		}
 		if($res === false){
 			$res	= false;
 		} else {
@@ -6650,6 +6679,164 @@ class cPersonasVivienda{
 			}
 		}
 		return $this->init(false, $data);
+	}
+	function update($acceso, $NumeroExterior = "", $NumeroInterior = "", $Referencias = "", $TelefonoFijo = false, $TelefonoMovil = false, $TipoDeAcceso = "calle", $NombreColonia = "", $TipoDeDomicilio = false,
+			$TipoDeRegimen = false, $TiempoDeResidir = false, $EsPrincipal = false, $codigopostal = 0, $idlocalidad = false, $idpais = false, $nombre_localidad = "", $nombre_municipio = "", $nombre_entidad = "",
+			$nombre_pais = "", $fecha_de_registro = false, $fecha_de_ingreso = false){
+				$xT					= new cTipos();
+				$xClean				= new cTiposLimpiadores();
+				$xF					= new cFecha();
+				$xQL				= new MQL();
+				$xPLoc				= new cLocal();
+				$xLog				= new cCoreLog();
+				$xV					= new cSocios_vivienda();
+				
+				$xV->setData( $xV->query()->initByID($this->mIDCargado));
+				
+				$valido				= true;
+				$fecha_de_registro	= $xF->getFechaISO($fecha_de_registro);
+				$idlocalidad		= setNoMenorQueCero($idlocalidad);
+				$idlocalidad		= ($idlocalidad <= 0) ? FALLBACK_CLAVE_LOCALIDAD : $idlocalidad;
+				$codigopostal		= setNoMenorQueCero($codigopostal);
+				$TipoDeDomicilio	= setNoMenorQueCero($TipoDeDomicilio);
+				$TipoDeRegimen		= setNoMenorQueCero($TipoDeRegimen);
+				$TiempoDeResidir	= setNoMenorQueCero($TiempoDeResidir);
+				$TelefonoFijo		= setNoMenorQueCero($TelefonoFijo);
+				$TelefonoMovil		= setNoMenorQueCero($TelefonoMovil);
+				
+				//validar segun el pais
+				$EsPrincipal		= $xT->cBool($EsPrincipal);
+				$EsPrincipal		= ($EsPrincipal == true) ? SYS_UNO : SYS_CERO;
+				$TipoDeDomicilio	= ($TipoDeDomicilio <= 0) ? DEFAULT_TIPO_DOMICILIO : $TipoDeDomicilio;
+				$TipoDeRegimen		= ($TipoDeRegimen <= 0) ? FALLBACK_PERSONAS_REGIMEN_VIV : $TipoDeRegimen;
+				$TiempoDeResidir	= ($TiempoDeResidir <= 0) ? DEFAULT_TIEMPO : $TiempoDeResidir;
+				$acceso				= $xClean->cleanCalle($acceso);
+				$NombreColonia		= setCadenaVal($NombreColonia);
+				$nombre_entidad		= setCadenaVal($nombre_entidad);
+				$nombre_localidad	= setCadenaVal($nombre_localidad);
+				$nombre_municipio	= setCadenaVal($nombre_municipio);
+				$nombre_pais		= setCadenaVal($nombre_pais);
+				$clave_municipio	= $xPLoc->DomicilioMunicipioClave();
+				$clave_estado		= $xPLoc->DomicilioEstadoClaveNum();
+				$idpais				= setCadenaVal($idpais);
+				
+				$idpersona			= $this->mPersona;
+				$xCol				= new cPersonasVivCodigosPostales($codigopostal);
+				//if($codigopostal > 0 AND $idpais == EACP_CLAVE_DE_PAIS){}
+				$xLoc				= new cDomicilioLocalidad($idlocalidad);
+				if(MODULO_AML_ACTIVADO == true){
+					if($xLoc->init() == true){
+						$idpais				= ($idpais == "") ? $xLoc->getClaveDePais() : $idpais;
+						if($idpais != EACP_CLAVE_DE_PAIS){
+							$nombre_localidad	= $xLoc->getNombre();
+							$nombre_municipio	= ($nombre_municipio == "") ? $nombre_localidad : $nombre_municipio;
+							$nombre_entidad		= ($nombre_entidad == "") ? $nombre_localidad : $nombre_entidad;
+						} else {
+							$nombre_localidad	= ($nombre_localidad == "") ? $xLoc->getNombre() : $nombre_localidad;
+						}
+					}
+				}
+				$xPais				= new cDomiciliosPaises($idpais);
+				if($xPais->init() == true){
+					$nombre_pais	= $xPais->getNombre();
+				}
+				if($idpais == EACP_CLAVE_DE_PAIS){
+					if(PERSONAS_VIVIENDA_MANUAL == false){
+						if($xCol->init() == true){
+							$nombre_entidad		= ($nombre_entidad == "") ? $xCol->getNombreEstado() : $nombre_entidad;
+							$nombre_localidad	= ($nombre_localidad == "") ? $xCol->getNombreLocalidad() : $nombre_localidad;
+							$nombre_municipio	= ($nombre_municipio == "") ? $xCol->getNombreMunicipio() : $nombre_municipio;
+							$NombreColonia		= ($NombreColonia == "") ? $xCol->getNombre() : $NombreColonia;
+							$clave_estado		= $xCol->getClaveDeEstado();
+							$clave_municipio	= $xCol->getClaveDeMunicipio();
+						} else {
+							//Si no es vivienda manual, es false
+							$valido				= false;
+							$xLog->add("ERROR\tLa vivienda no es manual, se necesita un Codigo Postal\r\n");
+						}
+					} else {
+						if($xCol->init() == true){
+							$nombre_entidad		= ($nombre_entidad == "") ? $xCol->getNombreEstado() : $nombre_entidad;
+							$nombre_localidad	= ($nombre_localidad == "") ? $xCol->getNombreLocalidad() : $nombre_localidad;
+							$nombre_municipio	= ($nombre_municipio == "") ? $xCol->getNombreMunicipio() : $nombre_municipio;
+							$NombreColonia		= ($NombreColonia == "") ? $xCol->getNombre() : $NombreColonia;
+							$clave_estado		= $xCol->getClaveDeEstado();
+							$clave_municipio	= $xCol->getClaveDeMunicipio();
+						}
+					}
+					
+				} else {
+					$clave_municipio		= FALLBACK_CLAVE_MUNICIPIO;
+					$clave_estado			= FALLBACK_CLAVE_ENTIDADFED;
+					//TODO: Validar si la entidad es local
+					if($nombre_localidad !== ""){
+						$nombre_municipio	= ($nombre_municipio == "") ? $nombre_localidad : $nombre_municipio;
+						$nombre_entidad		= ($nombre_entidad == "") ? $nombre_localidad : $nombre_entidad;
+					}
+				}
+				if($acceso == "" OR $NumeroExterior == ""){
+					$valido		= false;
+					$xLog->add("ERROR\tLa vivienda debe tener Acceso $acceso y Numero ext $NumeroExterior\r\n");
+				}
+				
+				$xV->calle($acceso);
+				$xV->clave_de_localidad($idlocalidad);
+				$xV->clave_de_pais($idpais);
+				
+				$xV->clave_de_municipio($clave_municipio);
+				$xV->clave_de_entidadfederativa($clave_estado);
+				$xV->codigo($idpersona);
+				$xV->codigo_postal($codigopostal);
+				$xV->colonia($NombreColonia);
+				$xV->coordenadas_gps("");
+				$xV->eacp(EACP_CLAVE);
+				$xV->estado($nombre_entidad);
+				$xV->estado_actual($this->DOMICILIO_NO_VERIFICADO);
+				$xV->fecha_alta($fecha_de_registro);
+				$xV->fecha_de_verificacion($fecha_de_registro);
+				$xV->idusuario(getUsuarioActual());
+				$xV->localidad($nombre_localidad);
+				$xV->municipio($nombre_municipio);
+				$xV->nombre_de_pais($nombre_pais);
+				$xV->numero_exterior($NumeroExterior);
+				$xV->numero_interior($NumeroInterior);
+				$xV->oficial_de_verificacion(getUsuarioActual());
+				$xV->principal($EsPrincipal);
+				$xV->referencia($Referencias);
+				$xV->socio_numero($idpersona);
+				$xV->sucursal(getSucursalPorPersona($idpersona));
+				$xV->telefono_movil($TelefonoMovil);
+				$xV->telefono_residencial($TelefonoFijo);
+				$xV->tiempo_residencia($TiempoDeResidir);
+				$xV->tipo_de_acceso($TipoDeAcceso);
+				$xV->tipo_domicilio($TipoDeDomicilio);
+				$xV->tipo_regimen($TipoDeRegimen);
+
+				
+				$rs	= false;
+				if ($valido == true){
+					$rs	= $xV->query()->update()->save($this->mIDCargado);
+					if($rs !== false){
+						$idviv	= $xV->idsocios_vivienda()->v();
+						$this->mIDCargado = $idviv;
+						$xLog->add("OK\tVivienda con ID $idviv Agregada\r\n");
+						$EsPrincipal		= $xT->cBool($EsPrincipal);
+						if($EsPrincipal == true){ //Actualizar principales
+							$xQL->setRawQuery("UPDATE socios_vivienda SET `principal`='0' WHERE `principal`='1' AND `socio_numero`= " . $this->mPersona .  " AND `idsocios_vivienda`!= $idviv ");
+						}
+						//Personas Actualizar Nivel de Riesgo
+						if(MODULO_AML_ACTIVADO == true){
+							$xAML	= new cAMLPersonas($idpersona);
+							if($xAML->init($idpersona) == true){
+								$xAML->setAnalizarNivelDeRiesgo(true);
+								
+							}
+						}
+					}
+					$this->setCuandoSeActualiza();
+				}
+				$this->mMessages	= $xLog->getMessages();
+				return ($rs == false) ? false: true;
 	}
 }
 

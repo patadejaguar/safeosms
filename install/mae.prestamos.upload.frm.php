@@ -38,6 +38,7 @@ $idtasacargos		= parametro("idtasacargos", 0, MQL_FLOAT);
 $idtipocargos		= parametro("idtipocargos",0, MQL_INT);
 $iddestinodecredito	= parametro("iddestinodecredito", 501, MQL_INT);
 $guardaruno			= parametro("idguardaruno", false, MQL_BOOL);
+$fechaMigracion		= parametro("fechaMigracion", SYS_FECHA_DE_MIGRACION, MQL_DATE);
 //$jxc ->drawJavaScript(false, true);
 
 $xHP->init();
@@ -49,25 +50,36 @@ $xHSel			= new cHSelect();
 //Si la Operacion es Configurar los Datos
 if ( $action == SYS_NINGUNO ){
 	
-$xFRM->setAction("mae.prestamos.upload.frm.php?action=" .MQL_ADD);
-$xFRM->setTitle($xHP->getTitle());
-$xFRM->setEnc("multipart/form-data");
-$xFRM->OFile("cFile1", "", "TR.Archivo");
-$xFRM->addHElem( $xHSel->getListaDeProductosDeCredito()->get(true) );
-
-$xFRM->OMoneda("idtasacargos", 0, "TR.TASA DE CARGOS");
-$selOps	= $xHSel->getListaDeTiposDeOperacion("idtipocargos", SYS_TODAS);
-$selOps->setOptionSelect(OPERACION_CLAVE_PLAN_DESGLOSE);
-$xFRM->addHElem( $selOps->get("TR.CONCEPTO OTROS CARGOS", true) );
-
-$xFRM->addHElem($xHSel->getListaDeDestinosDeCredito("", CREDITO_DEFAULT_DESTINO)->get(true));
-
-$xFRM->OCheck("TR.Aceptar creditos Capitalizados", "idcapitalizados");
-$xFRM->OCheck("TR.Aceptar creditos Negativos", "idnegativos");
-$xFRM->OCheck("TR.Generar Planes", "idconplanes");
-$xFRM->OCheck("TR.INCLUIR ACCESORIOS AL ULTIMO PAGO", "idguardaruno");
-
-$xFRM->addSubmit();
+	$xFRM->setAction("mae.prestamos.upload.frm.php?action=" .MQL_ADD);
+	$xFRM->setTitle($xHP->getTitle());
+	$xFRM->setEnc("multipart/form-data");
+	
+	$xFRM->OFechaLarga("fechaMigracion", SYS_FECHA_DE_MIGRACION, "TR.FECHA MIGRACION");
+	
+	$xFRM->OFileText("cFile1", "", "TR.Archivo");
+	$xFRM->addHElem( $xHSel->getListaDeProductosDeCredito()->get(true) );
+	
+	$xFRM->addHElem($xHSel->getListaDeDestinosDeCredito("", CREDITO_DEFAULT_DESTINO)->get(true));
+	
+	$xFRM->addSeccion("idsecc2", "TR.CARGOS");
+	
+	$xFRM->OMoneda("idtasacargos", 0, "TR.TASA DE CARGOS");
+	$selOps	= $xHSel->getListaDeTiposDeOperacion("idtipocargos", SYS_TODAS);
+	$selOps->setOptionSelect(OPERACION_CLAVE_PLAN_DESGLOSE);
+	$xFRM->addHElem( $selOps->get("TR.CONCEPTO OTROS CARGOS", true) );
+	
+	$xFRM->endSeccion();
+	
+	$xFRM->addSeccion("idsecc3", "TR.OPCIONES");
+	
+	$xFRM->OCheck("TR.Aceptar creditos Capitalizados", "idcapitalizados");
+	$xFRM->OCheck("TR.Aceptar creditos Negativos", "idnegativos");
+	$xFRM->OCheck("TR.Generar Planes", "idconplanes", true);
+	$xFRM->OCheck("TR.INCLUIR ACCESORIOS AL ULTIMO PAGO", "idguardaruno");
+	
+	$xFRM->endSeccion();
+	
+	$xFRM->addSubmit();
 
 } elseif ( $action ==  MQL_ADD ) {
 /*echo '<form name="frmConvs" method="POST" action="mae.prestamos.upload.frm.php?o=s">
@@ -253,7 +265,15 @@ if(isset($usrFiles[$i])==true){
 								$xLog->add("$iReg\t$socio\t$credito\tAgregando un Abono por $abono por el Saldo $saldo del Monto $monto\r\n");
 								$xRec			= new cReciboDeOperacion(RECIBOS_TIPO_PAGO_CREDITO, true );
 								$parcialidad	= ($parcialidad <= 0) ? 1 : $parcialidad;
-								$FechaRecibo	= $xF->getFechaISO(SYS_FECHA_DE_MIGRACION);
+								$comparaFecha	= new cFecha();
+								if(isset($datos[12])||trim($datos[12]) === ""||$datos[12] === false||strlen($datos[12])<6){
+									$FechaRecibo	= $xF->getFechaISO($fechaMigracion);
+									$xLog->add("$iReg\t$socio\t$credito\tSe usa la fecha de Migracion $fechaMigracion en lugar del ultimo pago (" . $datos[12] .  ")\r\n");
+								} else {
+									$FechaRecibo	= $xF->getFechaISO($UltimaOperacion);
+								}
+								
+								
 								/*$socio, $documento, $fecha, $parcialidad,
 						$Tipo = false, $cadena = "", $cheque_afectador = "NA",
 						$TipoPago = "", $recibo_fiscal = "", $grupo = false,

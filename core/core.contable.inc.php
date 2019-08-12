@@ -390,17 +390,19 @@ function getTabla($caption) {
 	$table 		= "";
 	$td 		= "";
 	$head 		= "";
+	$xQL           = new MQL();
 	if($caption){
 		$this->mTitle = $caption;
 		$head = "<tr>
 				<td colspan='3' class='csubtitle'>$caption</td>
 				</tr>";
 	}
-	$rs = mysql_query($this->mSql, cnnGeneral());
+	$rs =  $xQL->getRecordset($this->mSql); 
+	
 	if(!$rs){
 		saveError(2,$_SESSION["SN_b80bb7740288fda1f201890375a60c8f"], "Depurar :" . mysql_error() . "|Numero: " .mysql_errno() . "|Instruccion SQL:". $this->mSql  . "|EN:" . $_SESSION["current_file"]);
 	}
-	while ($rw = mysql_fetch_array($rs)){
+	while ($rw = $rs->fetch_assoc()){
 		$numero 		= $rw["numero"];
 		$nombre 		= $rw["nombre"];
 		$importe 		= $rw["imp" . $this->mPeriodo] * $this->factor;

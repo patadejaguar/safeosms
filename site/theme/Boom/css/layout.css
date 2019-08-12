@@ -1,0 +1,150 @@
+/*-- layout.css ------------------------------------ */
+/* Author: Oleg Svetlov http://getsimplecms.ru/ */
+iframe, object, embed {
+	max-width:100% !important; 
+}
+img {
+    max-width : 100%!important;
+	height : auto!important;
+}
+.clearfix { 
+	zoom: 1;  
+	height : 0px;  
+	clear : both;  
+	visibility : hidden;    
+}
+.hidden {
+  display: none;
+  visibility: hidden;
+}
+.text-right {
+	text-align : right;
+}
+#wrapper {
+	width : 1170px;
+}
+.container {
+	padding : 0px 2.5%;
+}
+[class*="col-"] {
+  display: inline;
+  float: left;
+  margin : 0px 1% 20px;
+  min-height : 1px;
+}
+.row {
+	margin : 0px 0px -10px;
+}
+[class*="col-"] .row {
+	margin : 0px -1% -20px;
+	overflow : hidden;
+}
+.right [class*="col-"] {
+  float: right;
+}
+.col-1 {
+	width : 6.3333333%;
+}
+.col-2 {
+	width : 14.6666666%;
+}
+.col-2_4 {
+	width : 18%;
+}
+.col-3 {
+	width : 23%;
+}
+.col-4 {
+	width : 31.3333333%;
+}
+.col-5 {
+	width : 39.6666666%;
+}
+.col-6 {
+	width : 48%;
+}
+.col-7 {
+	width : 56.3333333%;
+}
+.col-8 {
+	width : 64.6666666%;
+}
+.col-9 {
+	width : 73%;
+}
+.col-10 {
+	width : 81.3333333%;
+}
+.col-11 {
+	width : 89.6666666%;
+}
+.col-12 {
+	width : 98%;
+}
+#copy [class*="col"] {
+  margin-bottom : 0px;
+}
+/* for ie7 - ie9 =============================================*/
+.ie7 .row {
+	margin-bottom: 0px;
+}
+.ie7 [class*="col"] {
+    margin : 0px 0.95% 20px;
+}
+
+@media only screen and (max-width: 1279px) {
+
+#wrapper {
+	width : 940px;
+}
+}
+
+@media only screen and (max-width: 959px) {
+
+#wrapper {
+	width : 740px;
+}
+.row .col-1 {
+	width : 14.6666666%;
+}
+.row .col-2 {
+	width : 31.3333333%;
+}
+.row .col-1:nth-child(7), .row .col-2:nth-child(4) {
+	clear : left;
+}
+}
+@media only screen and (max-width: 767px) {
+
+#wrapper {
+	width : 460px;
+}
+[class*="col-"] {
+  width : 98%;
+}
+.row .col-3 {
+	width : 48%;
+}
+.row .col-3:nth-child(3) {
+	clear : left;
+}
+.text-right {
+	text-align : left;
+}
+#copy [class*="col"]+[class*="col"] {
+  margin : 20px 1% 5px;
+}
+#copy, #copy .text-right {
+	text-align : center;
+}
+}	
+
+@media only screen and (max-width: 479px) {
+
+#wrapper {
+	width : 96%;
+}
+.row .col-1, .row .col-2, .row .col-3 {
+	width : 98%;
+}
+}

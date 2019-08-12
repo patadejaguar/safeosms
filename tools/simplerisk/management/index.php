@@ -18,30 +18,20 @@ $escaper = new Zend\Escaper\Escaper('utf-8');
 // Add various security headers
 add_security_headers();
 
-// Session handler is database
-if (USE_DATABASE_FOR_SESSIONS == "true")
-{
-  session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
-}
-
-// Start the session
-session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
-
 if (!isset($_SESSION))
 {
-        session_name('SimpleRisk');
-        session_start();
+    // Session handler is database
+    if (USE_DATABASE_FOR_SESSIONS == "true")
+    {
+      session_set_save_handler('sess_open', 'sess_close', 'sess_read', 'sess_write', 'sess_destroy', 'sess_gc');
+    }
+
+    // Start the session
+    session_set_cookie_params(0, '/', '', isset($_SERVER["HTTPS"]), true);
+
+    session_name('SimpleRisk');
+    session_start();
 }
-
-// Load CSRF Magic
-require_once(realpath(__DIR__ . '/../includes/csrf-magic/csrf-magic.php'));
-
-function csrf_startup() {
-    csrf_conf('rewrite-js', $_SESSION['base_url'].'/includes/csrf-magic/csrf-magic.js');
-}
-
-// Include the language file
-require_once(language_file());
 
 // Check for session timeout or renegotiation
 session_check();
@@ -53,6 +43,13 @@ if (!isset($_SESSION["access"]) || $_SESSION["access"] != "granted")
   header("Location: ../index.php");
   exit(0);
 }
+
+// Include the CSRF-magic library
+// Make sure it's called after the session is properly setup
+include_csrf_magic();
+
+// Include the language file
+require_once(language_file());
 
 // Enforce that the user has access to risk management
 enforce_permission_riskmanagement();
@@ -73,7 +70,11 @@ if (isset($_POST['subject']) && $_POST['subject'] == "")
   $submit_risks = false;
 
   // Display an alert
-  set_alert(true, "bad", "The subject of a risk cannot be empty.");
+  ob_end_clean();
+  $data = array("error" => true, "message" => $escaper->escapeHtml("The subject of a risk cannot be empty."));
+  header('Content-type:application/json;charset=utf-8');
+  echo json_encode($data);
+  return;  
 }
 
 // Check if a new risk was submitted and the user has permissions to submit new risks
@@ -93,8 +94,9 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
   $manager = (int)$_POST['manager'];
   $assessment = $_POST['assessment'];
   $notes = $_POST['notes'];
-  $assets = $_POST['assets'];
+  $assets_asset_groups = is_array($_POST['assets_asset_groups']) ? $_POST['assets_asset_groups'] : [];
   $additional_stakeholders = empty($_POST['additional_stakeholders']) ? "" : implode(",", $_POST['additional_stakeholders']);
+  $risk_tags = empty($_POST['tags']) ? array() : explode(",", $_POST['tags']);
 
   // Risk scoring method
   // 1 = Classic
@@ -151,10 +153,14 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
   // Custom Risk Scoring
   $custom = (float)$_POST['Custom'];
+  
+  // Contributing Risk Scoring
+  $ContributingLikelihood = (int)$_POST["ContributingLikelihood"];
+  $ContributingImpacts = $_POST["ContributingImpacts"];
 
   // Submit risk and get back the id
   $last_insert_id = submit_risk($status, $subject, $reference_id, $regulation, $control_number, $location, $source, $category, $team, $technology, $owner, $manager, $assessment, $notes, 0, 0, false, $additional_stakeholders);
-  
+
     // If the encryption extra is enabled, updates order_by_subject
     if (encryption_extra())
     {
@@ -165,10 +171,14 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     }
 
   // Submit risk scoring
-  submit_risk_scoring($last_insert_id, $scoring_method, $CLASSIClikelihood, $CLASSICimpact, $CVSSAccessVector, $CVSSAccessComplexity, $CVSSAuthentication, $CVSSConfImpact, $CVSSIntegImpact, $CVSSAvailImpact, $CVSSExploitability, $CVSSRemediationLevel, $CVSSReportConfidence, $CVSSCollateralDamagePotential, $CVSSTargetDistribution, $CVSSConfidentialityRequirement, $CVSSIntegrityRequirement, $CVSSAvailabilityRequirement, $DREADDamage, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom);
+  submit_risk_scoring($last_insert_id, $scoring_method, $CLASSIClikelihood, $CLASSICimpact, $CVSSAccessVector, $CVSSAccessComplexity, $CVSSAuthentication, $CVSSConfImpact, $CVSSIntegImpact, $CVSSAvailImpact, $CVSSExploitability, $CVSSRemediationLevel, $CVSSReportConfidence, $CVSSCollateralDamagePotential, $CVSSTargetDistribution, $CVSSConfidentialityRequirement, $CVSSIntegrityRequirement, $CVSSAvailabilityRequirement, $DREADDamage, $DREADReproducibility, $DREADExploitability, $DREADAffectedUsers, $DREADDiscoverability, $OWASPSkillLevel, $OWASPMotive, $OWASPOpportunity, $OWASPSize, $OWASPEaseOfDiscovery, $OWASPEaseOfExploit, $OWASPAwareness, $OWASPIntrusionDetection, $OWASPLossOfConfidentiality, $OWASPLossOfIntegrity, $OWASPLossOfAvailability, $OWASPLossOfAccountability, $OWASPFinancialDamage, $OWASPReputationDamage, $OWASPNonCompliance, $OWASPPrivacyViolation, $custom, $ContributingLikelihood, $ContributingImpacts);
 
-  // Tag assets to risk
-  tag_assets_to_risk($last_insert_id, $assets);
+  // Process the data from the Affected Assets widget
+  if (!empty($assets_asset_groups))
+    process_selected_assets_asset_groups_of_type($last_insert_id, $assets_asset_groups, 'risk');
+
+  //Add tags
+  updateTagsOfType($last_insert_id, 'risk', $risk_tags);
 
   $error = 1;
   // If a file was submitted
@@ -206,7 +216,11 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
       delete_risk($last_insert_id);
 
       // Display an alert
-      set_alert(true, "bad", $error);
+      ob_end_clean();
+      $data = array("error" => true, "message" => $escaper->escapeHtml($error));
+      header('Content-type:application/json;charset=utf-8');
+      echo json_encode($data);
+      return;
   }
   else 
   {
@@ -227,7 +241,11 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
       
       // Display an alert   
       $RiskSubmitSuccess = _lang("RiskSubmitSuccess", ["subject" => $escaper->escapeHtml($subject)]);
-      set_alert(true, "good", $RiskSubmitSuccess);
+      ob_end_clean();
+      $data = array("risk_id" => $risk_id, "error" => false, "message" => $escaper->escapeHtml($RiskSubmitSuccess));
+      header('Content-type:application/json;charset=utf-8');
+      echo json_encode($data);
+      return;
   }
 
 }
@@ -240,13 +258,18 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
     <head>
         <script>
-        var simplerisk = {
-            risk: "<?php echo $lang['Risk']; ?>",
-	    newrisk: "<?php echo $lang['NewRisk']; ?>"
-        }
+            var simplerisk = {
+                risk: "<?php echo $lang['Risk']; ?>",
+	            newrisk: "<?php echo $lang['NewRisk']; ?>"
+            }
+            
         </script>
-        <script src="../js/jquery.min.js"></script>
-        <script src="../js/jquery-ui.min.js"></script>
+        <!--script src="../js/jquery.min.js"></script>
+        <script src="../js/jquery-ui.min.js"></script -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" ></script>
+
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
         <script src="../js/bootstrap.min.js"></script>
         <script src="../js/jquery.dataTables.js"></script>
         <script src="../js/cve_lookup.js?<?php echo time() ?>"></script>
@@ -255,13 +278,14 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         <script src="../js/pages/risk.js?<?php echo time() ?>"></script>
         <script src="../js/highcharts/code/highcharts.js"></script>
         <script src="../js/bootstrap-multiselect.js"></script>
+        <script src="../js/jquery.blockUI.min.js"></script>
 
         <title>SimpleRisk: Enterprise Risk Management Simplified</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
         <link rel="stylesheet" href="../css/bootstrap.css">
         <link rel="stylesheet" href="../css/bootstrap-responsive.css">
-        <link rel="stylesheet" href="../css/jquery-ui.min.css">
+<!--        <link rel="stylesheet" href="../css/jquery-ui.min.css">-->
 
         <link rel="stylesheet" href="../css/jquery.dataTables.css">
         <link rel="stylesheet" href="../css/divshot-util.css">
@@ -272,7 +296,12 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.min.css">
         <link rel="stylesheet" href="../css/theme.css">
 
-        <?php display_asset_autocomplete_script(get_entered_assets()); ?>
+        <link rel="stylesheet" href="../css/selectize.bootstrap3.css">
+        <script src="../js/selectize.min.js"></script>
+
+        <?php
+            setup_alert_requirements("..");
+        ?>
     </head>
 
     <body>
@@ -283,7 +312,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             // Get any alert messages
             get_alert();
         ?>
-        <div id="risk_hid_id" style="display: none"  > <?php if (isset($risk_id)) echo $escaper->escapeHtml($risk_id);?></div>
+        
         <div class="tabs new-tabs">
         <div class="container-fluid">
 
@@ -313,8 +342,6 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             </div>
             <div class="span9">
 
-              <div id="show-alert"></div>
-
               <div class="row-fluid" id="tab-content-container">
                 <div class='tab-data' id="tab-container">
 
@@ -339,7 +366,9 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         <input type="hidden" id="enable_popup" value="<?php echo get_setting('enable_popup'); ?>">
         <script>
             $(document).ready(function() {
-
+                
+                setupAssetsAssetGroupsWidget($('#tab-container select.assets-asset-groups-select'));
+                
                 window.onbeforeunload = function() {
                     if ($('#subject:enabled').val() != ''){
                         return "Are you sure you want to procced without saving the risk?";
@@ -372,7 +401,8 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                         "<div class='tab-data' id='tab-container"+num_tabs+"'>"+form+"</div>"
                     );
 
-                    focus_add_css_class("#AffectedAssetsTitle", "#assets", $("#tab-container" + num_tabs));
+                    setupAssetsAssetGroupsWidget($('#tab-container'+num_tabs+' select.assets-asset-groups-select'));
+                    
                     focus_add_css_class("#RiskAssessmentTitle", "#assessment", $("#tab-container" + num_tabs));
                     focus_add_css_class("#NotesTitle", "#notes", $("#tab-container" + num_tabs));
 
@@ -385,58 +415,16 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                         .attr('id', 'file_upload'+num_tabs)
                         .prev('label').attr('for', 'file_upload'+num_tabs);
                     
-
-                    $( "#tab-container"+num_tabs +" .assets" )
-                        .bind( "keydown", function( event ) {
-                            if ( event.keyCode === $.ui.keyCode.TAB && $( this ).autocomplete( "instance" ).menu.active ) {
-                                event.preventDefault();
-                            }
-                        })
-                        .autocomplete({
-                            minLength: 0,
-                            source: function( request, response ) {
-                                // delegate back to autocomplete, but extract the last term
-                                response( $.ui.autocomplete.filter(
-                                availableAssets, extractLast( request.term ) ) );
-                            },
-                            focus: function() {
-                                // prevent value inserted on focus
-                                return false;
-                            },
-                            select: function( event, ui ) {
-                                var terms = split( this.value );
-                                // remove the current input
-                                terms.pop();
-                                // add the selected item
-                                terms.push( ui.item.value );
-                                // add placeholder to get the comma-and-space at the end
-                                terms.push( "" );
-                                terms = terms.reverse().filter(function (e, i, arr) {
-                                    return arr.indexOf(e, i+1) === -1;
-                                }).reverse();
-
-                                this.value = terms.join( ", " );
-                                return false;
-                            }
-                        })
-                        .focus(function(){
-                            var self = $(this);
-                            window.setTimeout(function(){
-                                self.autocomplete("search", "");
-                            }, 1000)
-                        });
                         
                     // Add multiple selctets
-                    $('.multiselect', "#tab-container"+num_tabs).multiselect();
-
+                    $('.multiselect', "#tab-container"+num_tabs).multiselect({buttonWidth: '100%'});
+                    
+                    // Add DatePicker
+                    if($('.datepicker', "#tab-container"+num_tabs).length){
+                        $('.datepicker', "#tab-container"+num_tabs).datepicker();
+                    }
                 });
 
-
-                function sleep(ms) {
-                    return new Promise(resolve => setTimeout(resolve, ms));
-                }
-
-                focus_add_css_class("#AffectedAssetsTitle", "#assets", $("#tab-container"));
                 focus_add_css_class("#RiskAssessmentTitle", "#assessment", $("#tab-container"));
                 focus_add_css_class("#NotesTitle", "#notes", $("#tab-container"));
                 

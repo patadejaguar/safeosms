@@ -1,0 +1,25 @@
+html,body {
+	font: 10pt/11pt Helvetica;
+}
+p{
+	text-align: justify;
+}
+h1,h2 {
+	font: 12pt/14pt Helvetica;
+	font-weight: bold;
+	text-align: center;
+}
+h3,h4 {
+	font: 11pt/12pt Helvetica;
+	font-weight: bold;
+	text-align: center;
+}
+body {
+	width: 7.6in;
+}
+table {
+	width: 100% !important;
+}
+@page {
+	size: letter portrait;
+}

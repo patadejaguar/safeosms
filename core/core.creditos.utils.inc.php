@@ -527,7 +527,7 @@ class cUtileriasParaCreditos{
 				$txt					= "";
 				//======================= Evaluar Dias Tolerados
 				$xFormulaDiasTolera		= $xCred->getOProductoDeCredito()->getFormulaDeDiasTolerancia();
-				eval($xFormulaDiasTolera);
+				eval($xFormulaDiasTolera); //setError($xFormulaDiasTolera);
 				if($forzarTodos == false AND $creditoFiltrado <= DEFAULT_CREDITO){
 					$saldo				= $xCred->getSaldoActual($fechaCorte);
 				}
@@ -560,12 +560,12 @@ class cUtileriasParaCreditos{
 						$DIAS_MORA		= setNoMenorQueCero($xF->setRestarFechas($FECHA_CORTE_MORA, $fecha));
 						$moratorio		= (($BASE_MORA * $DIAS_MORA) * $TASA_MORATORIO) / EACP_DIAS_INTERES;
 						$moratorio		= setNoMenorQueCero($moratorio,2);
-						$xLog->add( "WARN\tAgregando Mora por $moratorio con Base $BASE_MORA y dias $DIAS_MORA del $fecha al $FECHA_CORTE_MORA\r\n", $xLog->DEVELOPER);
+						$xLog->add( "WARN\t$periodo\t$fecha\tAgregando Mora por $moratorio con Base $BASE_MORA y dias $DIAS_MORA del $fecha al $FECHA_CORTE_MORA\r\n", $xLog->DEVELOPER);
 						//Agregar Vencimientop 
 						//Agregar Fecha de Primer Atraso
 						if(!isset($FECHA_DE_COMPROMISO)){
 							$FECHA_DE_COMPROMISO	= $fecha;
-							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS CON CAPITAL Con saldo $saldo\r\n", $xLog->DEVELOPER);
+							$xLog->add( "WARN\t$periodo\t$fecha\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS CON CAPITAL Con saldo $saldo\r\n", $xLog->DEVELOPER);
 						//$xLog->add( , $xLog->DEVELOPER);
 						}						
 					}
@@ -576,7 +576,7 @@ class cUtileriasParaCreditos{
 					if($xF->getInt($FECHA_DE_TOLERANCIA) < $xF->getInt($fechaCorte)){
 						if(!isset($FECHA_DE_COMPROMISO)){
 							$FECHA_DE_COMPROMISO	= $fecha;
-							$xLog->add( "WARN\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS SOLO INTERES Con Saldo $saldo\r\n", $xLog->DEVELOPER);
+							$xLog->add( "WARN\t$periodo\t$fecha\tAgregando fecha de primer atraso a $fecha del pago $periodo PAGOS SOLO INTERES Con Saldo $saldo\r\n", $xLog->DEVELOPER);
 							//$xLog->add( , $xLog->DEVELOPER);
 							//Agregar el Interes sobre la Base Inicial de los Creditos sin pagos de Capital
 							$BASE_MORA		= $xCred->getSaldoActual($fechaCorte);
@@ -597,18 +597,20 @@ class cUtileriasParaCreditos{
 					$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
 					$saldo_calculado		= setNoMenorQueCero(($saldo * $dias_transcurridos), 2);
 					$FECHA_DE_ULTIMO_PAGO	= $fecha;
-					$xLog->add("WARN\tPagos sin Capital Dias $dias_transcurridos , Saldo $saldo_calculado , Fecha $fecha\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\t$periodo\t$fecha\tPagos sin Capital Dias $dias_transcurridos , Saldo $saldo_calculado , Fecha $fecha\r\n", $xLog->DEVELOPER);
 				} else {
 					if(!isset($saldo_calculado)){
 						$saldo_calculado	= 0;
-						$xLog->add("WARN\tNo existe el Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
+						$xLog->add("WARN\t$periodo\t$fecha\tNo existe el Saldo Calculado $saldo_calculado para Interes\r\n", $xLog->DEVELOPER);
 					}
+					//---------- Si el saldo es cero, el interes tambien
 					if($saldo_calculado<=0 AND $operacion == OPERACION_CLAVE_PLAN_INTERES){
 						$interes			= 0;
+						$xLog->add("WARN\t$periodo\t$fecha\tEl Saldo Calculado $saldo_calculado es 0\r\n", $xLog->DEVELOPER);
 					}
 				}
 				if($interes>0){
-					$xLog->add("WARN\tAgregando Interes por $interes de la Operacion $operacion con Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
+					$xLog->add("WARN\t$periodo\t$fecha\tAgregando Interes por $interes de la Operacion $operacion con Saldo $saldo_calculado\r\n", $xLog->DEVELOPER);
 				}
 			} else {
 				$interes				= 0;
@@ -623,7 +625,11 @@ class cUtileriasParaCreditos{
 				//setLog("MORA a $moratorio");
 			}		
 			//XXX: Checar
-			$saldo_calculado			= 0;
+			//$saldo_calculado			= 0;
+			/*if(!isset($saldo_calculado)){
+				$saldo_calculado	= 0;
+				$xLog->add("WARN\t$periodo\t$fecha\tNo existe el Saldo Calculado $saldo_calculado para Capital\r\n", $xLog->DEVELOPER);
+			}*/
 			//$xCred->getFechaUltimoMvtoCapital()
 			if($operacion == OPERACION_CLAVE_PAGO_CAPITAL OR $operacion == OPERACION_CLAVE_MINISTRACION){
 				$dias_transcurridos		= $xF->setRestarFechas($fecha, $FECHA_DE_ULTIMO_PAGO);
@@ -632,7 +638,9 @@ class cUtileriasParaCreditos{
 				$saldo					= round($saldo,2);
 				$FECHA_DE_ULTIMO_PAGO	= $fecha;
 				//disminuye de la letra
-				if($operacion == OPERACION_CLAVE_PAGO_CAPITAL){	}
+				if($operacion == OPERACION_CLAVE_PAGO_CAPITAL){
+					
+				}
 			} else {
 				$monto					= 0;
 			}
@@ -658,7 +666,7 @@ class cUtileriasParaCreditos{
 					$ESTADO_ACTUAL		= CREDITO_ESTADO_VENCIDO;
 					$ESTADO_APLICADO 	= true;
 					$ES_CREDITO_MORA	= true;				//Mrcar a Mora
-					$xLog->add( "WARN\t$periodo\tPeriodo a Vencido por $dias_de_atraso Dias de Atraso con $DIAS_PARA_VENCIMIENTO Dias Tolerados\r\n", $xLog->DEVELOPER);
+					$xLog->add( "WARN\t$periodo\t$fecha\tPeriodo a Vencido por $dias_de_atraso Dias de Atraso con $DIAS_PARA_VENCIMIENTO Dias Tolerados\r\n", $xLog->DEVELOPER);
 				}
 			}
 			if($creditoFiltrado > DEFAULT_CREDITO){ 
@@ -712,7 +720,10 @@ class cUtileriasParaCreditos{
 			}
 		}
 		$rs								= null;
-		$this->mMessages				.= $xLog->getMessages();
+		if(MODO_DEBUG == true){
+			$this->mMessages				.= $xLog->getMessages();
+		}
+		//setLog($this->mMessages);
 		return $xLog->getMessages();	
 	}
 	function setReestructurarSDPM($SoloConSaldos = false, $idcredito = false, $forzarTodos = false, $fechaCorte = false, $fechaInicial = false, $EliminarTodo = true){
@@ -1106,34 +1117,53 @@ class cUtileriasParaCreditos{
 		$xQL		= new MQL();
 		$xL			= new cSQLListas();
 		$xFil		= new cSQLFiltros();
-		$sucursal	= getSucursal();
-		if ( $Forzar == true ){ $xLog->add( "======\t\tActualizacion FORZADA\r\n");	}
-		$credito	= setNoMenorQueCero($credito);
-		$ByCredito	= $xFil->CreditoPorClave($credito);
-		$BySaldo	= ($todos == true OR $credito > DEFAULT_CREDITO) ? "" : " AND (`saldo_actual` > 0) ";
-		$sqlACero	= $xL->setCreditosSaldosDeInteres($credito, 0,0,0,0,0);
+		$xRuls		= new cReglaDeNegocio();
+		$BaseByDoc	= "";
+		$useMoraBD	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_USE_MORA_BD);
 		
+		$sucursal	= getSucursal();
+		if ( $Forzar == true ){ 
+			$xLog->add( "======\t\tActualizacion FORZADA\r\n");	
+		}
+		$credito		= setNoMenorQueCero($credito);
+		$ByCredito		= $xFil->CreditoPorClave($credito);
+		$BaseByDoc		= $xFil->OperacionesPorDocumento($credito);
+		$ByFinalPzo		= $xFil->CreditosSiFinalDePlazo();
+		$ByNoFinalPzo	= $xFil->CreditosNoFinalDePlazo();
+		
+		$BySaldo		= ($todos == true OR $credito > DEFAULT_CREDITO) ? "" : " AND (`saldo_actual` > 0) ";
+		$sqlACero		= $xL->setCreditosSaldosDeInteres($credito, 0,0,0,0,0);
 		$xQL->setRawQuery($sqlACero);
+		
+		
+		if($useMoraBD == true){
+			
+		} else {
+			
+		}
+		
 
 
 		$xB			= new cBases(0);
-		$xB->setClave(2200);
-		$aMorDev	= $xB->getBaseMvtosInArray();
-		$xB->setClave(2210);
-		$aMorPag	= $xB->getBaseMvtosInArray();
-		$xB->setClave(2100);
-		$aNorDev	= $xB->getBaseMvtosInArray();
-		$xB->setClave(2110);
-		$aNorPag	= $xB->getBaseMvtosInArray();
+		$xB->setClave($xB->BASE_MORA_DEV);
+		$aMorDev	= $xB->getBaseMvtosInArray($BaseByDoc);
+		$xB->setClave($xB->BASE_MORA_PAG);
+		$aMorPag	= $xB->getBaseMvtosInArray($BaseByDoc);
+		$xB->setClave($xB->BASE_INTS_DEV);
+		$aNorDev	= $xB->getBaseMvtosInArray($BaseByDoc);
+		$xB->setClave($xB->BASE_INTS_PAG);
+		$aNorPag	= $xB->getBaseMvtosInArray($BaseByDoc);
 
 		$conteo		= 1;
 		$sql		= "SELECT * FROM creditos_solicitud WHERE numero_solicitud !=0 $ByCredito $BySaldo ORDER BY saldo_actual, fecha_ministracion";
-		$rs			=  $xQL->getDataRecord($sql);
-        foreach ($rs as $rw ){
-			$socio		= $rw["numero_socio"];
-			$solicitud	= $rw["numero_solicitud"];
-			$saldo		= $rw["saldo_actual"];
-			$sucursal	= $rw["sucursal"];
+		$rs			=  $xQL->getRecordset($sql);
+        while ($rw = $rs->fetch_assoc()){
+        	
+			$socio				= $rw["numero_socio"];
+			$solicitud			= $rw["numero_solicitud"];
+			$saldo				= $rw["saldo_actual"];
+			$periodicidad		= $rw["periocidad_de_pago"];
+			//$sucursal	= $rw["sucursal"];
 			$IntMorDev	= 0;
 			$IntMorPag	= 0;
 					
@@ -1160,17 +1190,23 @@ class cUtileriasParaCreditos{
 					$xLog->add("$conteo\t$socio\t$solicitud\tINT_MORATORIO\tDevengado:\t$IntMorDev\tPagado:\t$IntMorPag\tSaldo\t$sdoMor \r\n ", $xLog->DEVELOPER);
 				}				
 			}
-			$sql				= $xL->setCreditosSaldosDeInteres($solicitud, $IntNorPag, $IntNorDev, $IntMorPag, $IntMorDev, 0);
-			$xQL->setRawQuery($sql);
+
+			
 			if($credito > DEFAULT_CREDITO){
 				$xIntDev		= new cCreditosMontos($solicitud);
-				if($xIntDev->init( ) == true){
-					$xIntDev->setInteresesDevengados($IntNorDev, $IntMorDev);
-					$xIntDev->setInteresesPagados($IntNorPag, $IntMorPag);
+				if($xIntDev->init() == true){
+						$xIntDev->setInteresesDevengados($IntNorDev, $IntMorDev);
+						$xIntDev->setInteresesPagados($IntNorPag, $IntMorPag);
+					
 				}
+				//$xLog->add($xIntDev->getMe)
 			} else {
 				$xQL->setRawQuery("UPDATE `creditos_montos` SET  `marca_tiempo`=UNIX_TIMESTAMP(), `marca_acceso`=UNIX_TIMESTAMP(), `interes_n_dev`=$IntNorDev,`interes_n_pag`=$IntNorPag, `interes_m_dev`=$IntMorDev, `interes_m_pag`=$IntMorPag  WHERE `clave_de_credito`=$solicitud");
 			}
+
+			$sql				= $xL->setCreditosSaldosDeInteres($solicitud, $IntNorPag, $IntNorDev, $IntMorPag, $IntMorDev, 0);
+			$xQL->setRawQuery($sql);
+			
 			
 			$conteo++;
 		}
@@ -1181,6 +1217,9 @@ class cUtileriasParaCreditos{
 		$aMorPag	= null;
 		$aNorDev	= null;
 		$aNorPag	= null;
+		if(MODO_DEBUG == true){
+			$this->mMessages	.= $xLog->getMessages();
+		}
 		//setLog($xLog->getMessages());
 		return $xLog->getMessages();	
 	}
@@ -2231,6 +2270,14 @@ class cSQLFiltros {
 	function CreditosPorSaldos($monto, $operador){
 		$BySaldo = " AND (creditos_solicitud.saldo_actual $operador $monto) ";
 		return $BySaldo;
+	}
+	function CreditosNoFinalDePlazo(){
+		$By 		= " AND (creditos_solicitud.periocidad != 360) ";
+		return $By;
+	}
+	function CreditosSiFinalDePlazo(){
+		$By 		= " AND (creditos_solicitud.periocidad = 360) ";
+		return $By;
 	}
 	function CreditosPorEmpresa($empresa){
 		$empresa	= setNoMenorQueCero($empresa);
@@ -3577,4 +3624,114 @@ class cCreditosNotasSIC {
 	function getClaveDeNota(){ return $this->mTipo; }
 }
 
+
+
+class cCreditosProductosFormatos {
+	private $mClave			= false;
+	private $mObj			= null;
+	private $mInit			= false;
+	private $mNombre		= "";
+	private $mMessages		= "";
+	private $mIDCache		= "";
+	private $mTabla			= "creditos_prods_formatos";
+	private $mTipo			= 0;
+	private $mEtapaId		= 0;
+	private $mUsuario		= 0;
+	private $mFecha			= false;
+	private $mTiempo		= 0;
+	private $mFormatoId		= 0;
+	private $mTexto			= "";
+	private $mObservacion	= "";
+	private $mOFormato		= null;
+	private $mConteoByProd	= 0;
+	private $mRuta			= "";
+	
+	function __construct($clave = false){ $this->mClave	= setNoMenorQueCero($clave); $this->setIDCache($this->mClave); }
+	private function getIDCache(){ return $this->mIDCache; }
+	private function setIDCache($clave = 0){
+		$clave = ($clave <= 0) ? $this->mClave : $clave;
+		$clave = ($clave <= 0) ? microtime() : $clave;
+		$this->mIDCache	= $this->mTabla . "-" . $clave;
+	}
+	private function setCleanCache(){if($this->mIDCache !== ""){ $xCache = new cCache(); $xCache->clean($this->mIDCache); } }
+	function init($data = false){
+		$xCache		= new cCache();
+		$inCache	= true;
+		$xT			= new cCreditos_prods_formatos();//Tabla
+		
+		
+		if(!is_array($data)){
+			$data	= $xCache->get($this->mIDCache);
+			if(!is_array($data)){
+				$xQL		= new MQL();
+				$data		= $xQL->getDataRow("SELECT * FROM `" . $this->mTabla . "` WHERE `" . $xT->getKey() . "`=". $this->mClave . " LIMIT 0,1");
+				$inCache	= false;
+			}
+		}
+		if(isset($data[$xT->getKey()])){
+			$xT->setData($data);
+			//$data[$xT->];//
+			$this->mClave		= $data[$xT->getKey()];
+			$this->mEtapaId		= $data[$xT->ETAPA_ID];
+			$this->mFormatoId	= $data[$xT->FORMATO_ID];
+			
+			$xFmt				= new cFormatosDelSistema($this->mFormatoId);
+			if($xFmt->init() == true){
+				$this->mRuta	= $xFmt->getRuta();
+				$this->mNombre	= $xFmt->getNombre();
+			}
+			$this->mObj		= $xT;
+			$this->setIDCache($this->mClave);
+			if($inCache == false){	//Si es Cache no se Guarda en Cache
+				$xCache->set($this->mIDCache, $data, $xCache->EXPIRA_UNDIA);
+			}
+			$this->mInit	= true;
+			$xT 			= null;
+		}
+		return $this->mInit;
+	}
+	function getObj(){ if($this->mObj == null){ $this->init(); }; return $this->mObj; }
+	function getMessages($put = OUT_TXT){ $xH = new cHObject(); return $xH->Out($this->mMessages, $put); }
+	function __destruct(){ $this->mObj = null; $this->mMessages	= "";	}
+	function getNombre(){return $this->mNombre; }
+	function getClave(){return $this->mClave; }
+	function getTipo(){ return $this->mTipo; }
+	function getFormatoId(){ return $this->mFormatoId; }
+	function getEtapaId(){ return $this->mEtapaId; }
+	function setCuandoSeActualiza(){ $this->setCleanCache(); }
+	function add($etapaId, $formatoId, $productoId, $opcional = false){
+		$xT			= new cCreditos_prods_formatos();
+		$xT->idcreditos_prods_contratos("NULL");
+		$xT->etapa_id($etapaId);
+		$xT->estatus(SYS_UNO);
+		$xT->formato_id($formatoId);
+		if($opcional == false){
+			$xT->opcional(SYS_CERO);
+		} else {
+			$xT->opcional(SYS_UNO);
+		}
+		$xT->producto_credito_id($productoId);
+		
+		$res	= $xT->query()->insert()->save();
+		
+		return ($res === false) ? false : true;
+	}
+	function getListByProductoCreditoId($producto){
+		$xQL	= new MQL();
+		$rs		= $xQL->getDataRecord("SELECT * FROM `creditos_prods_formatos` WHERE `estatus`=1 AND `producto_credito_id`=$producto");
+		$this->mConteoByProd = $xQL->getNumberOfRows();
+		return $rs;
+	}
+	function getConteoByProductoCredito(){ return $this->mConteoByProd; }
+	function getRuta(){ return $this->mRuta; }
+	function getRutaCredito($credito){
+		$ruta		= $this->mRuta;
+		if(strpos($ruta, "?") === false){
+			$ruta		= $ruta . "?";
+		}
+		return $ruta . "&forma=" . $this->mFormatoId . "&credito=" . $credito   . "&solicitud=" . $credito; 
+	}
+	function getRutaCreditoPDF($credito){ return $this->getRutaCredito($credito) . "&out=" . OUT_PDF; }
+	function getRutaCreditoDOC($credito){ return $this->getRutaCredito($credito) . "&out=" . OUT_DOC; }
+}
 ?>

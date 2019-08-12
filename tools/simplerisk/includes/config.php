@@ -37,10 +37,10 @@ define('LANG_DEFAULT', 'es');
 
 // Set the default Timezone
 // List of supported timezones here: http://www.php.net/manual/en/timezones.php
-date_default_timezone_set('America/Chicago');
+date_default_timezone_set('America/Mexico_City');
 
 // Turn on debugging
-define('DEBUG', 'false');
+define('DEBUG', 'true');
 
 // Debug file
 define('DEBUG_FILE', '/tmp/debug_log');

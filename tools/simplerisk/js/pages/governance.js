@@ -1,3 +1,4 @@
+var controlDatatable;
 jQuery(document).ready(function($){
 
     var controlObject = {
@@ -26,7 +27,7 @@ jQuery(document).ready(function($){
             //$(this).parents('.framework-block').fadeOut('400').delay('500').remove();
             var framework_id = $(this).attr('data-id');
             var modal = $('#framework--delete');
-            $('input', modal).val(framework_id);
+            $('.delete-id', modal).val(framework_id);
             $(modal).modal('show');
           });
 
@@ -34,7 +35,7 @@ jQuery(document).ready(function($){
             event.preventDefault();
             var control_id = $(this).attr('data-id');
             var modal = $('#control--delete');
-            $('input', modal).val(control_id);
+            $('.delete-id', modal).val(control_id);
             $(modal).modal('show');
           });
 
@@ -118,7 +119,7 @@ jQuery(document).ready(function($){
   
     // Initiate Datatable of controls
     var pageLength = 10;
-    var controlDatatable = $("#active-controls").DataTable({
+    controlDatatable = $("#active-controls").DataTable({
         scrollX: true,
         bFilter: false,
         bLengthChange: false,
@@ -207,8 +208,7 @@ function redrawFrameworkControl() {
 
 
 $(document).ready(function(){
-    $('.container-fluid').delegate('.tab-show', 'click', function(){
-        $('#show-alert').html('');
+    $('.container-fluid').delegate('.tab-show', 'click', function(){        
         $('.form-tab').removeClass('selected');
         $(this).addClass('selected');
         $('.tab-data').hide();
@@ -216,6 +216,40 @@ $(document).ready(function(){
         $(".framework-table").treegrid('resize');
         document.location.hash = $(this).data('content').replace("-content", "");
     });
+    
+    // Update control form event
+    $("#update-control-form").submit(function(){
+        var form = new FormData($(this)[0]);
+
+        $.ajax({
+            type: "POST",
+            url: BASE_URL + "/api/governance/update_control",
+            data: form,
+            async: true,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(result){
+                var data = result.data;
+                if(result.status_message){
+                    showAlertsFromArray(result.status_message);
+                }
+                $('#control--update').modal('toggle');
+                controlDatatable.ajax.reload(null, false);
+            }
+        })
+        .fail(function(xhr, textStatus){
+            if(!retryCSRF(xhr, this))
+            {
+                if(xhr.responseJSON && xhr.responseJSON.status_message){
+                    showAlertsFromArray(xhr.responseJSON.status_message);
+                }
+            }
+
+        });
+        
+        return false;
+    })
     
     // Control Class dropdown event
     $('#filter_by_control_class').change(function(){
@@ -260,3 +294,14 @@ $(document).ready(function(){
 
     
 });
+
+//Function to give some margin to the text-spans in the collapsable column to
+//force a reflow in case a text is overflowing
+function fixTreeGridCollapsableColumn() {
+    $(".datagrid .datagrid-row>td:first-child>div").each(function() {
+        if ($(this)[0].scrollWidth >  $(this).innerWidth()) {
+            var indentCount = $(this).find('.tree-indent, .tree-hit').length;
+            $(this).find('.tree-title').css('margin-right', (indentCount * 7) + 'px');
+        };
+    });
+}

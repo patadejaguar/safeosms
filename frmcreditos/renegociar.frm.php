@@ -18,6 +18,11 @@
 $xHP		= new cHPage("TR.REESTRUCTURAR Credito", HP_FORM);
 $xSel		= new cHSelect();
 $jxc		= new TinyAjax();
+$xRuls		= new cReglaDeNegocio();
+
+$BloquearCap	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_REEST_BLOQ_CAP);
+$RequiereInt	= $xRuls->getValorPorRegla($xRuls->reglas()->CREDITOS_REEST_REQ_INT);
+
 
 function jsaGuardarReestructura($credito, $monto, $pagos, $periocidad, $tasa, $observaciones, $producto, $tipopago){
     $tasa	= $tasa / 100;
@@ -55,10 +60,14 @@ $xFRM	= new cHForm("frmrenegociar", "", "idfrmrenegociar");
 
 
 
-
+ $xFRM->addSeccion("idinfocreddiv", "TR.CREDITO");
 $xFRM->addHElem($xCred->getFichaMini());
-
+$xFRM->endSeccion();
 $xFRM->setTitle($xHP->getTitle());
+
+
+
+$xFRM->addSeccion("idmodifdiv", "TR.Opciones de Reestructura");
 
 $xFRM->addHElem( $xSel->getListaDeProductosDeCredito("idpdto", $xCred->getClaveDeProducto())->get(true), true );
 
@@ -68,15 +77,21 @@ $xFRM->addHElem($xSel->getListaDePeriocidadDePago("idperiocidad",$xCred->getPeri
 
 $xFRM->addHElem($xSel->getListaDeTipoDePago("idtipopago", $xCred->getTipoDePago())->get(true));
 
+if($BloquearCap == true){
+	$xFRM->ODisabledM("idmonto", $xCred->getSaldoActual(), "TR.MONTO A REESTRUCTURAR");
+} else {
+	$xFRM->OMoneda2("idmonto", $xCred->getSaldoActual(), "TR.MONTO A REESTRUCTURAR");
+}
 
-$xFRM->OMoneda("idmonto", $xCred->getSaldoActual(), "TR.MONTO A REESTRUCTURAR");
+
+
 $xFRM->OMoneda("idpagos", $xCred->getPagosAutorizados(), "TR.PAGOS NUEVO");
 $xFRM->OMoneda("idtasa", ($xCred->getTasaDeInteres()*100), "TR.TASA NUEVA");
 
 $xFRM->addObservaciones();
 
-
-
+$xFRM->endSeccion();
+$xFRM->addSeccion("idinfodiv", "TR.CAMBIOS");
 
 $xFRM->addHTML(
 			$oUL->li("Se Clona el Credito")->
@@ -87,6 +102,7 @@ $xFRM->addHTML(
 			li("Generar Movimiento de Fin de Mes")->
 			end()
 			);
+$xFRM->endSeccion();
 
 $xFRM->addGuardar("jsGuardarCambios()");
 $xFRM->addAviso("", "resultados");
